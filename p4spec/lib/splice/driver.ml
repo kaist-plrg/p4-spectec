@@ -70,7 +70,7 @@ let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
       (fun () -> In_channel.input_all ic)
       ~finally:(fun () -> In_channel.close ic)
   in
-  let ctx = Ctx.init spec_el spec_sl in
+  let ctx = Ctx.init spec_el spec_sl filename_input in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
   let content_spliced = splice_string ctx source content in
   gen_directory filename_output;

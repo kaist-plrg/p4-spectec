@@ -1,0 +1,28 @@
+=== Unrolling
+
+// Added
+${syntax: typedefTypeIR}
+
+``typedef``s introduce indirection in types.
+
+[source,p4]
+----
+struct S {
+    bit<8> t;
+    int<8> u;
+}
+
+typedef S A;
+----
+
+The type ``A`` is an alias of the struct type ``S``. Neverthelss, the
+underlying type of ``A`` is a `structTypeIR` with two fields, ``t`` and ``u``,
+of types ``int<8>`` and ``bit<8>`` respectively. It is useful to be able to
+work with the underlying type of ``A``, when dealing with type checking, type
+equivalence, and other type-based analyses.
+
+Unrolling is the process of recursively expanding all ``typedef``s until a type
+is fully expanded to its underlying type.
+
+[[unroll_typeIR]]
+${funcprose: unroll_typeIR}

@@ -259,25 +259,25 @@ def $dom_map<K, V>(map<K, V>) : set<K> =
   ;; ../../../../spec-concrete/0-aux/0-aux.watsup:200.1-200.45
   clause 0 : ({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:202.1-202.47
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:202.1-203.31
 builtin def $find_map<K, V>(map<K, V>, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:204.1-204.49
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:205.1-206.31
 builtin def $find_maps<K, V>(map<K, V>*, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:206.1-206.56
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:208.1-209.39
 builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:208.1-208.59
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:211.1-211.59
 builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:210.1-211.74
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:213.1-214.74
 builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:213.1-213.56
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:216.1-216.56
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:214.1-217.56
+  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:217.1-220.56
   clause 0 : ({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, { K_b : V_b*{K_b <- K_b*, V_b <- V_b*} }) = { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} }
   -- let { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} } = $adds_map<K, V>({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*})
 
@@ -8428,13 +8428,13 @@ syntax typedExpressionIR =
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:184.32-184.50
 syntax typedExpressionListIR = typedExpressionIR*
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:186.1-187.35
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:186.1-187.34
 def $type_of_typedExpressionIR(typedExpressionIR) : typeIR =
 
   ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:188.1-188.60
   clause 0 : (_expressionIR # ( typeIR _ctk )) = typeIR
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:190.1-191.54
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:190.1-191.53
 def $ctk_of_typedExpressionIR(typedExpressionIR) : ctk =
 
   ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:192.1-192.53
@@ -11121,7 +11121,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_parser(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:711.1-717.47
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:710.1-716.47
   rulegroup controlObjectTypeIR
 
    match
@@ -11141,7 +11141,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_control(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:727.1-733.47
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:726.1-732.47
   rulegroup packageObjectTypeIR
 
    match
@@ -11164,7 +11164,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:55.1-58.74
 relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:749.1-759.68
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:748.1-758.68
   rulegroup 
 
    match
@@ -12128,24 +12128,23 @@ tbl def $nestable_constructor_control(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:719.1-719.49
-def $nestable_constructor_package(typeIR) : bool =
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:718.1-720.70
+tbl def $nestable_constructor_package(typeIR) : bool =
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_constructor_package(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 2 :
+    (signature) _typeIR
+    (_typeIR) -> true
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:721.1-722.40
-  clause 0 : (typeIR') = $nestable_constructor_package(typeIR)
-  -- if typeIR' <: typedefTypeIR
-  -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:723.1-723.61
-  clause 1 : (typeIR) = false
-  -- if typeIR <: tableObjectTypeIR
-  -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:724.1-725.15
-  clause 2 : (_typeIR) = true
-  -- otherwise
-
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:739.1-739.46
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:738.1-738.46
 tbl def $definable_constructor(typeIR) : bool =
   row 0 :
     (signature) typedef _typeId typeIR as typeIR
@@ -15488,7 +15487,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- output: % % % % |- % : TC f ; as statementIR
 
   ;; ../../../../spec-concrete/5-typing/5.10-typing-statement.watsup:20.1-55.2
-  rulegroup asssignmentStatement
+  rulegroup assignmentStatement
 
    match
 
@@ -26527,31 +26526,31 @@ def $inherit_e(cursor, evalContext) : evalContext =
   clause 2 : (cursor, EC) = EC
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:67.1-67.72
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:67.1-68.51
 def $add_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:70.1-71.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:71.1-72.64
   clause 0 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:72.1-73.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:73.1-74.64
   clause 1 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:74.1-75.63
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:75.1-76.63
   clause 2 : (cursor, EC, prefixedNameIR, value) = EC[block.frame = frame]
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.block.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:76.1-78.59
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:77.1-79.59
   clause 3 : (cursor, EC, prefixedNameIR, value) = EC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26561,15 +26560,15 @@ def $add_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let frame_h :: frame_t*{frame_t <- frame_t*} = frame*{frame <- frame*}
   -- let frame_h' = $add_map<id, value>(frame_h, id, value)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:68.1-68.75
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:69.1-69.75
 def $add_vars_e(cursor, evalContext, prefixedNameIR*, value*) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:80.1-80.38
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:81.1-81.38
   clause 0 : (p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value*{value <- value*}) = EC
   -- if prefixedNameIR*{prefixedNameIR <- prefixedNameIR*} matches []
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:81.1-87.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:82.1-88.64
   clause 1 : (p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value*{value <- value*}) = EC''
   -- if prefixedNameIR*{prefixedNameIR <- prefixedNameIR*} matches _ :: _
   -- let prefixedNameIR_h :: prefixedNameIR_t*{prefixedNameIR_t <- prefixedNameIR_t*} = prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}
@@ -26578,16 +26577,16 @@ def $add_vars_e(cursor, evalContext, prefixedNameIR*, value*) : evalContext =
   -- let EC' = $add_var_e(p, EC, prefixedNameIR_h, value_h)
   -- let EC'' = $add_vars_e(p, EC', prefixedNameIR_t*{prefixedNameIR_t <- prefixedNameIR_t*}, value_t*{value_t <- value_t*})
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:93.1-93.76
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:94.1-94.76
 def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:95.1-96.67
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:96.1-97.67
   clause 0 : (p, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
   -- let frame = $update_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:97.1-100.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:98.1-101.58
   clause 1 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame']
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26596,7 +26595,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame))
   -- let frame' = $update_map<id, value>(frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:101.1-104.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:102.1-105.58
   clause 2 : (cursor, EC, prefixedNameIR, value) = EC[block.frame = frame']
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26605,7 +26604,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame))
   -- let frame' = $update_map<id, value>(frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:105.1-108.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:106.1-109.53
   clause 3 : (cursor, EC, prefixedNameIR, value) = $update_var_e(global, EC, ` id, value)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26613,14 +26612,14 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let frame = EC.block.frame
   -- if ~$in_set<id>(id, $dom_map<id, value>(frame))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:109.1-111.30
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:110.1-112.30
   clause 4 : (cursor, EC, prefixedNameIR, value) = $update_var_e(block, EC, ` id, value)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if ([] = EC.local.frames)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:112.1-116.62
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:113.1-117.62
   clause 5 : (cursor, EC, prefixedNameIR, value) = EC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26631,7 +26630,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame_h))
   -- let frame_h' = $update_map<id, value>(frame_h, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:117.1-122.61
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:118.1-123.61
   clause 6 : (cursor, EC, prefixedNameIR, value) = EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26643,10 +26642,10 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let EC_pop = EC[local.frames = frame_t*{frame_t <- frame_t*}]
   -- let EC_pop' = $update_var_e(local, EC_pop, ` id, value)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:130.1-130.61
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:131.1-132.51
 def $find_var_e(cursor, evalContext, prefixedNameIR) : value =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:132.1-133.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:134.1-135.58
   clause 0 : (p, EC, prefixedNameIR) = value
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
@@ -26654,7 +26653,7 @@ def $find_var_e(cursor, evalContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:134.1-135.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:136.1-137.58
   clause 1 : (cursor, EC, prefixedNameIR) = value
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26663,7 +26662,7 @@ def $find_var_e(cursor, evalContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:136.1-137.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:138.1-139.57
   clause 2 : (cursor, EC, prefixedNameIR) = value
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26672,14 +26671,14 @@ def $find_var_e(cursor, evalContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:138.1-140.55
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:140.1-142.55
   clause 3 : (cursor, EC, prefixedNameIR) = $find_var_e(global, EC, ` id)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if (?() = $find_map<id, value>(EC.block.frame, id))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:141.1-142.59
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:143.1-144.59
   clause 4 : (cursor, EC, prefixedNameIR) = value
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26688,17 +26687,17 @@ def $find_var_e(cursor, evalContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:143.1-145.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:145.1-147.57
   clause 5 : (cursor, EC, prefixedNameIR) = $find_var_e(block, EC, ` id)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if (?() = $find_maps<id, value>(EC.local.frames, id))
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:147.1-147.69
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:149.1-149.69
 def $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:149.1-150.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:151.1-152.58
   clause 0 : (p, EC, prefixedNameIR) = global
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
@@ -26706,7 +26705,7 @@ def $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:151.1-152.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:153.1-154.58
   clause 1 : (cursor, EC, prefixedNameIR) = global
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26715,7 +26714,7 @@ def $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:153.1-154.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:155.1-156.57
   clause 2 : (cursor, EC, prefixedNameIR) = block
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26724,14 +26723,14 @@ def $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:155.1-157.55
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:157.1-159.55
   clause 3 : (cursor, EC, prefixedNameIR) = $find_var_cursor_e(global, EC, ` id)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if (?() = $find_map<id, value>(EC.block.frame, id))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:158.1-159.59
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:160.1-161.59
   clause 4 : (cursor, EC, prefixedNameIR) = local
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26740,49 +26739,49 @@ def $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:160.1-162.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:162.1-164.57
   clause 5 : (cursor, EC, prefixedNameIR) = $find_var_cursor_e(block, EC, ` id)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if (?() = $find_maps<id, value>(EC.local.frames, id))
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:166.1-166.70
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:168.1-168.70
 def $find_typeDef_e(cursor, evalContext, prefixedNameIR) : typeDefIR? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:168.1-169.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:170.1-171.57
   clause 0 : (_cursor, EC, prefixedNameIR) = $find_map<typeId, typeDefIR>(EC.global.type, nameIR)
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:170.1-171.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:172.1-173.57
   clause 1 : (_cursor, EC, prefixedNameIR) = $find_map<typeId, typeDefIR>(EC.global.type, nameIR)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:175.1-175.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:177.1-177.56
 def $find_type_e(cursor, evalContext, nameIR) : typeIR? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:177.1-178.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:179.1-180.53
   clause 0 : (cursor, EC, nameIR) = $find_map<typeId, typeIR>(EC.block.type, nameIR)
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:179.1-180.66
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:181.1-182.66
   clause 1 : (cursor, EC, nameIR) = ?(typeIR)
   -- if cursor matches `LOCAL`
   -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<typeId, typeIR>(EC.local.type, nameIR)
   -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
   -- let ?(typeIR) = typeIR'?{typeIR' <- typeIR'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:181.1-183.63
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:183.1-185.63
   clause 2 : (cursor, EC, nameIR) = $find_type_e(block, EC, nameIR)
   -- if cursor matches `LOCAL`
   -- if (?() = $find_map<typeId, typeIR>(EC.local.type, nameIR))
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:187.1-188.44
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:189.1-190.44
 def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : (cursor, callableId, callableDef, id*)? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:190.1-197.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:192.1-199.47
   clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?((global, callableId, callableDef, id_default*{id_default <- id_default*}))
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26792,7 +26791,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?} matches (_)
   -- let ?((callableId, callableDef, id_default*{id_default <- id_default*})) = (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:198.1-205.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:200.1-207.47
   clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26800,7 +26799,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:206.1-213.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:208.1-215.47
   clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?((global, callableId, callableDef, id_default*{id_default <- id_default*}))
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
@@ -26810,7 +26809,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?} matches (_)
   -- let ?((callableId, callableDef, id_default*{id_default <- id_default*})) = (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:214.1-221.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:216.1-223.47
   clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
@@ -26818,7 +26817,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:222.1-229.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:224.1-231.47
   clause 4 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?((block, callableId, callableDef, id_default*{id_default <- id_default*}))
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26828,7 +26827,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?} matches (_)
   -- let ?((callableId, callableDef, id_default*{id_default <- id_default*})) = (callableId, callableDef, nameIR*)?{(callableId, callableDef, nameIR*) <- (callableId, callableDef, nameIR*)?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:230.1-237.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:232.1-239.47
   clause 5 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(global, EC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26836,56 +26835,56 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.block.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:238.1-239.70
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:240.1-241.70
   clause 6 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(block, EC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:243.1-244.39
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:245.1-246.39
 def $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*) : (callableId, constructorDef, id*)? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:246.1-251.60
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:248.1-253.60
   clause 0 : (EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorDef>(EC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:252.1-257.60
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:254.1-259.60
   clause 1 : (EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorDef>(EC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:261.1-261.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:263.1-263.56
 def $find_state_e(cursor, evalContext, nameIR) : state? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:263.1-263.44
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:265.1-265.44
   clause 0 : (cursor, EC, nameIR) = ?()
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:264.1-265.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:266.1-267.53
   clause 1 : (cursor, EC, nameIR) = $find_map<nameIR, state>(EC.block.state, nameIR)
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:266.1-267.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:268.1-269.53
   clause 2 : (cursor, EC, nameIR) = $find_map<nameIR, state>(EC.block.state, nameIR)
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:273.1-273.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-275.56
 def $subst_type_e(cursor, evalContext, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-275.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:277.1-277.47
   clause 0 : (cursor, EC, typeIR) = typeIR
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:276.1-278.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:278.1-280.52
   clause 1 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `BLOCK`
   -- let theta = EC.block.type
   -- let typeIR_subst = $subst_typeIR(theta, typeIR)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:279.1-283.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:281.1-285.52
   clause 2 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `LOCAL`
   -- let theta_block = EC.block.type

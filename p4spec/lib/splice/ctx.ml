@@ -11,6 +11,7 @@ module FuncProseMap = Map.Make (Kinds.FuncProseId)
 module TableMap = Map.Make (Kinds.TableId)
 
 type t = {
+  filename : string;
   prose_ctx : Prose.Ctx.t;
   mutable syntax : Kinds.syntax SyntaxMap.t;
   mutable relation : Kinds.relation RelationMap.t;
@@ -81,10 +82,12 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
 let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
-let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
+let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) (filename : string) : t
+    =
   let prose_ctx = Prose.Ctx.init spec_sl in
   let ctx =
     {
+      filename;
       prose_ctx;
       syntax = SyntaxMap.empty;
       relation = RelationMap.empty;
@@ -103,12 +106,14 @@ let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) : t =
 let find_syntax (ctx : t) (id : Kinds.SyntaxId.t) : Kinds.syntax =
   match SyntaxMap.find_opt id ctx.syntax with
   | Some syntax -> syntax
-  | None -> error no_region ("syntax " ^ id ^ " was not found")
+  | None ->
+      error no_region ("syntax " ^ id ^ " was not found in " ^ ctx.filename)
 
 let find_relation (ctx : t) (id : Kinds.RelationId.t) : Kinds.relation =
   match RelationMap.find_opt id ctx.relation with
   | Some relation -> relation
-  | None -> error no_region ("relation " ^ id ^ " was not found")
+  | None ->
+      error no_region ("relation " ^ id ^ " was not found in " ^ ctx.filename)
 
 let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
   match RuleGroupMap.find_opt id ctx.rulegroup with
@@ -116,7 +121,8 @@ let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
   | None ->
       let id_rel, id_rulegroup = id in
       error no_region
-        ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
+        ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found in "
+       ^ ctx.filename)
 
 let find_ruleprose (ctx : t) (id : Kinds.RuleProseId.t) : Kinds.ruleprose =
   match RuleProseMap.find_opt id ctx.ruleprose with
@@ -124,14 +130,16 @@ let find_ruleprose (ctx : t) (id : Kinds.RuleProseId.t) : Kinds.ruleprose =
   | None ->
       let id_rel, id_rulegroup = id in
       error no_region
-        ("ruleprose " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found")
+        ("ruleprose " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found in "
+       ^ ctx.filename)
 
 let find_funcprose (ctx : t) (id : Kinds.FuncProseId.t) : Kinds.funcprose =
   match FuncProseMap.find_opt id ctx.funcprose with
   | Some funcprose -> funcprose
-  | None -> error no_region ("funcprose " ^ id ^ " was not found")
+  | None ->
+      error no_region ("funcprose " ^ id ^ " was not found in " ^ ctx.filename)
 
 let find_table (ctx : t) (id : Kinds.TableId.t) : Kinds.table =
   match TableMap.find_opt id ctx.tables with
   | Some table -> table
-  | None -> error no_region ("table " ^ id ^ " was not found")
+  | None -> error no_region ("table " ^ id ^ " was not found in " ^ ctx.filename)

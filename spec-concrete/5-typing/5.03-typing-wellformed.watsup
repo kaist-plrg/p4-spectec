@@ -700,7 +700,6 @@ rule ConstructorType_wf/parserObjectTypeIR:
 tbl dec $nestable_constructor_control(typeIR) : bool
   hint(prose_true %0 "can be used in a control constructor type")
   hint(prose_false %0 "cannot be used in a control constructor type")
-
 tbl def $nestable_constructor_control =
   | TYPEDEF _ typeIR => $nestable_constructor_control(typeIR)
   | parserObjectTypeIR => false
@@ -716,13 +715,13 @@ rule ConstructorType_wf/controlObjectTypeIR:
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_control(typeIR)*
 
-dec $nestable_constructor_package(typeIR) : bool
-
-def $nestable_constructor_package(TYPEDEF _ typeIR) =
-  $nestable_constructor_package(typeIR)
-def $nestable_constructor_package(tableObjectTypeIR) = false
-def $nestable_constructor_package(_) = true
-  -- otherwise
+tbl dec $nestable_constructor_package(typeIR) : bool
+  hint(prose_true %0 "can be used in a package constructor type")
+  hint(prose_false %0 "cannot be used in a package constructor type")
+tbl def $nestable_constructor_package =
+  | TYPEDEF _ typeIR => $nestable_constructor_package(typeIR)
+  | tableObjectTypeIR => false
+  | _ => true
 
 rule ConstructorType_wf/packageObjectTypeIR:
   bound |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object

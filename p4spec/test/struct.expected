@@ -286,22 +286,22 @@ def $dom_map<K, V>(({ ((K : V))*{K <- K*, V <- V*} }))
 
 1. Return ({ (K)*{K <- K*} })
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:202.1-202.47
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:202.1-203.31
 builtin def $find_map<K, V>(map<K, V>, K)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:204.1-204.49
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:205.1-206.31
 builtin def $find_maps<K, V>((map<K, V>)*{map<K, V> <- map<K, V>*}, K)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:206.1-206.56
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:208.1-209.39
 builtin def $add_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:208.1-208.59
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:211.1-211.59
 builtin def $adds_map<K, V>(map<K, V>, (K)*{K <- K*}, (V)*{V <- V*})
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:210.1-211.74
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:213.1-214.74
 builtin def $update_map<K, V>(map<K, V>, K, V)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:213.1-213.56
+;; ../../../../spec-concrete/0-aux/0-aux.watsup:216.1-216.56
 def $extend_map<K, V>(({ ((K_a : V_a))*{K_a <- K_a*, V_a <- V_a*} }), ({ ((K_b : V_b))*{K_b <- K_b*, V_b <- V_b*} }))
 
 1. (Let ({ ((K_c : V_c))*{K_c <- K_c*, V_c <- V_c*} }) be $adds_map<K, V>(({ ((K_a : V_a))*{K_a <- K_a*, V_a <- V_a*} }), (K_b)*{K_b <- K_b*}, (V_b)*{V_b <- V_b*}))
@@ -9664,12 +9664,12 @@ syntax typedExpressionIR =
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:184.32-184.50
 syntax typedExpressionListIR = typedExpressionIR*
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:186.1-187.35
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:186.1-187.34
 def $type_of_typedExpressionIR((_expressionIR # (( typeIR _ctk ))))
 
 1. Return typeIR
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:190.1-191.54
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:190.1-191.53
 def $ctk_of_typedExpressionIR((_expressionIR # (( _typeIR ctk ))))
 
 1. Return ctk
@@ -13993,28 +13993,30 @@ tbl def $nestable_constructor_control(typeIR'') =
 
     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:719.1-719.49
-def $nestable_constructor_package(typeIR')
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:718.1-720.70
+tbl def $nestable_constructor_package(typeIR'') =
 
-1. Case analysis on typeIR'
+  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_constructor_package(typeIR):
 
-  1. Case (% has type typedefTypeIR)
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
-    1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
+      1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
-    2. Return $nestable_constructor_package(typeIR)
+      2. Return $nestable_constructor_package(typeIR)
 
-  2. Case (% has type tableObjectTypeIR)
+  Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. (Let tableObjectTypeIR be (typeIR' as tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
-    2. Return false
+      1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
 
-2. Otherwise
+      2. Return false
 
-  1. Return true
+  Row : _typeIR -> true:
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:739.1-739.46
+    1. Return true
+
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:738.1-738.46
 tbl def $definable_constructor(typeIR'') =
 
   Row : ((typedef _typeId typeIR) as typeIR) -> $definable_constructor(typeIR):
@@ -17566,7 +17568,7 @@ relation Stmt_ok: p TC f l |- statement' : % % %
 
     1. (Let (lvalue assignop' expression ;) be (statement' as assignmentStatement))
 
-    2. Group asssignmentStatement: p TC f l |- ((lvalue assignop' expression ;) as statement) : % % %
+    2. Group assignmentStatement: p TC f l |- ((lvalue assignop' expression ;) as statement) : % % %
 
       1. Case analysis on (assignop' matches pattern `=`)
 
@@ -29561,7 +29563,7 @@ def $inherit_e(cursor, EC)
 
     1. Return EC
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:67.1-67.72
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:67.1-68.51
 def $add_var_e(cursor, EC, prefixedNameIR, value)
 
 1. Case analysis on cursor
@@ -29612,7 +29614,7 @@ def $add_var_e(cursor, EC, prefixedNameIR, value)
 
         3. Return EC[local.frames = frame_h' :: (frame_t)*{frame_t <- frame_t*}]
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:68.1-68.75
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:69.1-69.75
 def $add_vars_e(p, EC, (prefixedNameIR)*{prefixedNameIR <- prefixedNameIR*}, (value)*{value <- value*})
 
 1. Case analysis on (prefixedNameIR)*{prefixedNameIR <- prefixedNameIR*}
@@ -29637,7 +29639,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*{prefixedNameIR <- prefixedNameIR*}, (va
 
       4. Return EC''
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:93.1-93.76
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:94.1-94.76
 def $update_var_e(p, EC, prefixedNameIR, value)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -29716,7 +29718,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
             3. Return EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:130.1-130.61
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:131.1-132.51
 def $find_var_e(p, EC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -29783,7 +29785,7 @@ def $find_var_e(p, EC, prefixedNameIR)
 
         1. Return $find_var_e((block), EC, (` id))
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:147.1-147.69
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:149.1-149.69
 def $find_var_cursor_e(p, EC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -29850,7 +29852,7 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
         1. Return $find_var_cursor_e((block), EC, (` id))
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:166.1-166.70
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:168.1-168.70
 def $find_typeDef_e(_cursor, EC, prefixedNameIR)
 
 1. Case analysis on prefixedNameIR
@@ -29867,7 +29869,7 @@ def $find_typeDef_e(_cursor, EC, prefixedNameIR)
 
     2. Return $find_map<typeId, typeDefIR>(EC.global.type, nameIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:175.1-175.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:177.1-177.56
 def $find_type_e(cursor, EC, nameIR)
 
 1. Case analysis on cursor
@@ -29890,7 +29892,7 @@ def $find_type_e(cursor, EC, nameIR)
 
       1. Return $find_type_e((block), EC, nameIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:187.1-188.44
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:189.1-190.44
 def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*})
 
 1. Case analysis on cursor
@@ -29963,7 +29965,7 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*{arg
 
       2. Return $find_callableDef_overloaded_e((block), EC, (` nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:243.1-244.39
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:245.1-246.39
 def $find_constructorDef_e(EC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*})
 
 1. Case analysis on prefixedNameIR
@@ -29984,7 +29986,7 @@ def $find_constructorDef_e(EC, prefixedNameIR, (argumentIR)*{argumentIR <- argum
 
     3. Return $find_overloaded<constructorDef>(EC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:261.1-261.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:263.1-263.56
 def $find_state_e(cursor, EC, nameIR)
 
 1. Case analysis on cursor
@@ -30001,7 +30003,7 @@ def $find_state_e(cursor, EC, nameIR)
 
     1. Return $find_map<nameIR, state>(EC.block.state, nameIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:273.1-273.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-275.56
 def $subst_type_e(cursor, EC, typeIR)
 
 1. Case analysis on cursor

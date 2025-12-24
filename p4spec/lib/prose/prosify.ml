@@ -420,22 +420,27 @@ and prosify_instrs ctx (instrs : instr list) : Pl.Ast.instr list =
   let _, instrs =
     Expand.expand_with_context ctx.free_ids Expand.expand_nested_calls instrs
   in
-  let num_if_instrs =
-    List.filter
-      (fun instr ->
-        match instr.it with IfI _ | OtherwiseI _ -> true | _ -> false)
-      instrs
-    |> List.length
+  let is_branch_instr instr =
+    match instr.it with IfI _ | CaseI _ | OtherwiseI _ -> true | _ -> false
   in
-  if num_if_instrs = 1 then
+  let num_branch_instrs =
+    instrs |> List.filter is_branch_instr |> List.length
+  in
+  if num_branch_instrs = 1 then
     instrs |> List.concat_map (prosify_instr (ctx |> as_cond Check))
   else
-    List.mapi
-      (fun i instr ->
-        if i = 0 then prosify_instr (ctx |> as_cond If) instr
-        else prosify_instr (ctx |> as_cond ElseIf) instr)
-      instrs
-    |> List.concat
+    instrs
+    |> List.fold_left
+         (fun (is_first_branch, instrs) instr ->
+           if is_first_branch && is_branch_instr instr then
+             (false, instrs @ prosify_instr (ctx |> as_cond If) instr)
+           else if is_branch_instr instr then
+             (false, instrs @ prosify_instr (ctx |> as_cond ElseIf) instr)
+           else
+             ( is_first_branch,
+               instrs @ prosify_instr (ctx |> as_cond Check) instr ))
+         (true, [])
+    |> snd
 
 let prosify_table ctx id args typ tablerows =
   let args = prosify_args ctx args in

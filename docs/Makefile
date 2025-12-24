@@ -2,7 +2,7 @@ ROUGE_STYLE=github
 ROUGE_CSS=style
 
 SPECTEC=p4spectec
-SPECFILES=../spec-concrete/*.watsup
+SPECFILES=../spec-concrete/*/*.watsup
 SPEC=P4-16-spec-new
 
 grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py

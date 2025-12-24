@@ -4,8 +4,9 @@
 
 Scopes are used to organize P4 programs into nested namespaces. There are three
 kinds of scopes in P4, from outermost to innermost: the top-level scope (global
-namespace), the scope within a `parser`, `control`, or `extern` declaration (block
-namespace), and the scope within a block statement (local namespace).
+namespace), the scope within a `parser`, `control`, or `extern` declaration
+(block namespace), and the scope within a block statement (local namespace).
+Local namespaces can be nested within other local namespaces.
 
 [source,p4]
 ----
@@ -25,6 +26,10 @@ control c() {
 bit<8> f() {
   // local scope
   bit<8> local = GLOBAL;
+  {
+    // nested local scope
+    bit<8> local_nested = local;
+  }
   return local;
 }
 ----
@@ -77,6 +82,11 @@ control c() {
     apply {}
 }
 ----
+
+For example, the below helper function finds the value of a variable in the
+evaluation context.
+
+${funcprose: find_var_e}
 
 // Seciton 6.6.1 in the P4-16 Language Specification
 The order of declarations is important; with the exception of parser states,
