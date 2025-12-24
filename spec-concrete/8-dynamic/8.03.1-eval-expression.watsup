@@ -16,11 +16,11 @@ rulegroup Expr_eval/literalExpressionIR-boolean {
 
   rule Expr_eval/true:
     p EC STO |- TRUE `# _ : EC STO expressionResult
-    -- if expressionResult = `` (B true)
+    -- if expressionResult = `` (`B true)
 
   rule Expr_eval/false:
     p EC STO |- FALSE `# _ : EC STO expressionResult
-    -- if expressionResult = `` (B false)
+    -- if expressionResult = `` (`B false)
 
 }
 
@@ -114,14 +114,14 @@ rulegroup Expr_eval/binaryExpressionIR {
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
                   : EC_1 STO_1 expressionResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B false))
-    -- if expressionResult = `` (B false)
+                                : EC_1 STO_1 (`` (`B false))
+    -- if expressionResult = `` (`B false)
 
   rule Expr_eval/land-true-exit:
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
                   : EC_2 STO_2 EXIT
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B true))
+                                : EC_1 STO_1 (`` (`B true))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
                                 : EC_2 STO_2 EXIT
 
@@ -129,7 +129,7 @@ rulegroup Expr_eval/binaryExpressionIR {
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
                   : EC_2 STO_2 expressionResult_r
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B true))
+                                : EC_1 STO_1 (`` (`B true))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
                                 : EC_2 STO_2 expressionResult_r
 
@@ -143,14 +143,14 @@ rulegroup Expr_eval/binaryExpressionIR {
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
                   : EC_1 STO_1 expressionResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B true))
-    -- if expressionResult = `` (B true)
+                                : EC_1 STO_1 (`` (`B true))
+    -- if expressionResult = `` (`B true)
 
   rule Expr_eval/lor-false-exit:
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
                   : EC_2 STO_2 EXIT
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B false))
+                                : EC_1 STO_1 (`` (`B false))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
                                 : EC_2 STO_2 EXIT
 
@@ -158,7 +158,7 @@ rulegroup Expr_eval/binaryExpressionIR {
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
                   : EC_2 STO_2 expressionResult_r
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 (`` (B false))
+                                : EC_1 STO_1 (`` (`B false))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
                                 : EC_2 STO_2 expressionResult_r
 
@@ -182,7 +182,7 @@ rulegroup Expr_eval/ternaryExpressionIR {
                                             `: typedExpressionIR_false) `# _
                   : EC_2 STO_2 expressionResult_true
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond
-                                : EC_1 STO_1 (`` (B true))
+                                : EC_1 STO_1 (`` (`B true))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_true
                                 : EC_2 STO_2 expressionResult_true
 
@@ -191,7 +191,7 @@ rulegroup Expr_eval/ternaryExpressionIR {
                                             `: typedExpressionIR_false) `# _
                   : EC_2 STO_2 expressionResult_false
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond
-                                : EC_1 STO_1 (`` (B false))
+                                : EC_1 STO_1 (`` (`B false))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_false
                                 : EC_2 STO_2 expressionResult_false
 

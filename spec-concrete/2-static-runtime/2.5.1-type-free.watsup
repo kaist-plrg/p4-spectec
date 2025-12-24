@@ -4,6 +4,8 @@
 
 syntax bound = set<typeId>
 
+var B : bound
+
 dec $free_typeIR(typeIR) : bound
   hint(prose_in "free type identifiers in" %0)
 dec $free_typeDefIR(typeDefIR) : bound
@@ -114,12 +116,12 @@ def $free_typeIR(tableMetadataTypeIR) = `{ eps }
 ;;
 
 def $free_typeDefIR(typeDefIR)
-  = $diff_set<typeId>(bound_base, bound_tparams)
+  = $diff_set<typeId>(B_base, B_tparams)
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
       = $typeParameterListIR_of_typeDefIR(typeDefIR)
-  -- if bound_tparams = `{ typeParameterIR_expl* ++ typeParameterIR_impl* }
+  -- if B_tparams = `{ typeParameterIR_expl* ++ typeParameterIR_impl* }
   -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
-  -- if bound_base = $free_typeIR(typeIR)
+  -- if B_base = $free_typeIR(typeIR)
 
 ;;
 ;;;; Free type varaibles in parameter types
@@ -134,57 +136,57 @@ def $free_parameterIR(_ _ typeIR _ _) = $free_typeIR(typeIR)
 ;;; Action types
 
 def $free_callableTypeIR(ACTION `( parameterIR* ))
-  = bound_params
-  -- if bound_params
+  = B_params
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
 
 ;;; Function types
 
 def $free_callableTypeIR(
     FUNCTION `( parameterIR* ) `: typeIR)
-  = $union_set<typeId>(bound_params, bound_ret)
-  -- if bound_params
+  = $union_set<typeId>(B_params, B_ret)
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
-  -- if bound_ret = $free_typeIR(typeIR)
+  -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
     EXTERN_FUNCTION `( parameterIR* ) `: typeIR)
-  = $union_set<typeId>(bound_params, bound_ret)
-  -- if bound_params
+  = $union_set<typeId>(B_params, B_ret)
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
-  -- if bound_ret = $free_typeIR(typeIR)
+  -- if B_ret = $free_typeIR(typeIR)
 
 ;;; Method types
 
 def $free_callableTypeIR(
     BUILTIN_METHOD `( parameterIR* ) `: typeIR)
-  = $union_set<typeId>(bound_params, bound_ret)
-  -- if bound_params
+  = $union_set<typeId>(B_params, B_ret)
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
-  -- if bound_ret = $free_typeIR(typeIR)
+  -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
     EXTERN_METHOD `( parameterIR* ) `: typeIR)
-  = $union_set<typeId>(bound_params, bound_ret)
-  -- if bound_params
+  = $union_set<typeId>(B_params, B_ret)
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
-  -- if bound_ret = $free_typeIR(typeIR)
+  -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
     EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR)
-  = $union_set<typeId>(bound_params, bound_ret)
-  -- if bound_params
+  = $union_set<typeId>(B_params, B_ret)
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
-  -- if bound_ret = $free_typeIR(typeIR)
+  -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(PARSER_APPLY `( parameterIR* ))
-  = bound_params
-  -- if bound_params
+  = B_params
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
 
 def $free_callableTypeIR(CONTROL_APPLY `( parameterIR* ))
-  = bound_params
-  -- if bound_params
+  = B_params
+  -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
 
 def $free_callableTypeIR(TABLE_APPLY `: _) = `{ eps }
@@ -194,10 +196,10 @@ def $free_callableTypeIR(TABLE_APPLY `: _) = `{ eps }
 ;;
 
 def $free_callableTypeDefIR(callableTypeDefIR)
-  = $diff_set<typeId>(bound_base, bound_tparams)
+  = $diff_set<typeId>(B_base, B_tparams)
   -- if (typeId_tparam_expl*, typeId_tparam_impl*)
       = $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
-  -- if bound_tparams = `{ typeId_tparam_expl* ++ typeId_tparam_impl* }
+  -- if B_tparams = `{ typeId_tparam_expl* ++ typeId_tparam_impl* }
   -- if callableTypeIR
       = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
-  -- if bound_base = $free_callableTypeIR(callableTypeIR)
+  -- if B_base = $free_callableTypeIR(callableTypeIR)

@@ -36,35 +36,35 @@ dec $subst_constructorTypeIR'(theta, constructorTypeIR) : constructorTypeIR
 ;;;; Capture avoidance
 ;;
 
-def $capture_avoiding_(theta, typeParameterIR*, bound)
+def $capture_avoiding_(theta, typeParameterIR*, B)
   = (theta_fresh, typeParameterIR_fresh*)
   ---- ;; collect free type variables
   -- if `{ typeId_free* }
-      = $diff_set<typeId>(bound, `{ typeParameterIR* })
+      = $diff_set<typeId>(B, `{ typeParameterIR* })
   ---- ;; compute captured type variables
   -- if (typeIR_free = $find_map<typeId, typeIR>(theta, typeId_free))*
-  -- if bound_capture
+  -- if B_capture
       = $unions_set<typeId>($free_typeIR(typeIR_free)*)
   ---- ;; create fresh type variables to avoid capture
   -- if typeParameterIR_fresh* = $fresh_typeIds(|typeParameterIR*|)
-  -- if (~$in_set<typeId>(typeParameterIR_fresh, bound_capture))*
+  -- if (~$in_set<typeId>(typeParameterIR_fresh, B_capture))*
   ---- ;; update substitution mapping
   -- if theta_fresh
       = $adds_map<typeId, typeIR>(
           theta, typeParameterIR*, (`` typeParameterIR_fresh)*)
 
-def $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, bound)
+def $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, B)
   = (theta_fresh, typeParameterIR_expl_fresh*, typeParameterIR_impl_fresh*)
   ---- ;; collect free type variables
   -- if `{ typeId_free* }
-      = $diff_set<typeId>(bound, `{ typeParameterIR_expl* ++ typeParameterIR_impl* })
+      = $diff_set<typeId>(B, `{ typeParameterIR_expl* ++ typeParameterIR_impl* })
   ---- ;; compute captured type variables
   -- if (typeIR_free = $find_map<typeId, typeIR>(theta, typeId_free))*
-  -- if bound_capture
+  -- if B_capture
       = $unions_set<typeId>($free_typeIR(typeIR_free)*)
   ---- ;; create fresh type variables to avoid capture
   -- if typeId_fresh* = $fresh_typeIds(|typeParameterIR_expl* ++ typeParameterIR_impl*|)
-  -- if (~$in_set<typeId>(typeId_fresh, bound_capture))*
+  -- if (~$in_set<typeId>(typeId_fresh, B_capture))*
   -- if typeParameterIR_expl_fresh* = typeId_fresh*[0 : |typeParameterIR_expl*|]
   -- if typeParameterIR_impl_fresh* = typeId_fresh*[|typeParameterIR_expl*| : |typeParameterIR_impl*|]
   ---- ;; update substitution mapping
@@ -332,12 +332,12 @@ def $subst_callableTypeDefIR'(
       `( parameterIR* ) `: typeIR)
   = FUNCTION `< typeParameterIR_expl_fresh* `, typeParameterIR_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
-  -- if bound
+  -- if B
       = $free_callableTypeIR(
           FUNCTION `( parameterIR* ) `: typeIR
         )
   -- if (theta_fresh, typeParameterIR_expl_fresh*, typeParameterIR_impl_fresh*)
-      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, bound)
+      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, B)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
@@ -348,11 +348,11 @@ def $subst_callableTypeDefIR'(
       `( parameterIR* ) `: typeIR)
   = EXTERN_FUNCTION `< typeParameterIR_expl_fresh* `, typeParameterIR_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
-  -- if bound
+  -- if B
       = $free_callableTypeIR(
           EXTERN_FUNCTION `( parameterIR* ) `: typeIR)
   -- if (theta_fresh, typeParameterIR_expl_fresh*, typeParameterIR_impl_fresh*)
-      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, bound)
+      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, B)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
@@ -365,11 +365,11 @@ def $subst_callableTypeDefIR'(
       `( parameterIR* ) `: typeIR)
   = EXTERN_METHOD `< typeParameterIR_expl_fresh* `, typeParameterIR_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
-  -- if bound
+  -- if B
       = $free_callableTypeIR(
           EXTERN_METHOD `( parameterIR* ) `: typeIR)
   -- if (theta_fresh, typeParameterIR_expl_fresh*, typeParameterIR_impl_fresh*)
-      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, bound)
+      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, B)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
@@ -380,11 +380,11 @@ def $subst_callableTypeDefIR'(
       `( parameterIR* ) `: typeIR)
   = EXTERN_METHOD ABSTRACT `< typeParameterIR_expl_fresh* `, typeParameterIR_impl_fresh* >
       `( parameterIR_subst* ) `: typeIR_subst
-  -- if bound
+  -- if B
       = $free_callableTypeIR(
           EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR)
   -- if (theta_fresh, typeParameterIR_expl_fresh*, typeParameterIR_impl_fresh*)
-      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, bound)
+      = $capture_avoiding(theta, typeParameterIR_expl*, typeParameterIR_impl*, B)
   -- if (parameterIR_subst
       = $subst_parameterIR(theta_fresh, parameterIR))*
   -- if typeIR_subst = $subst_typeIR(theta_fresh, typeIR)

@@ -331,7 +331,7 @@ relation CallableTypeDef_alpha: `callableTypeDefIR~a~` and `callableTypeDefIR~b~
  .. The relation holds.
 
 
-relation Type_wf: `bound` and `typeIR''`
+relation Type_wf: `B` and `typeIR''`
 
 
 . If let `baseTypeIR` be `typeIR''`:
@@ -339,50 +339,50 @@ relation Type_wf: `bound` and `typeIR''`
   ... The relation holds.
 . Else if let `typeId` be `typeIR''`:
  .. Group nameTypeIR:
-  ... Check that <<in_set, `typeId` is an element of the set `bound`>>.
+  ... Check that <<in_set, `typeId` is an element of the set `B`>>.
   ... The relation holds.
 . Else if let `TYPEDEF ++_++ typeIR` be `typeIR''`:
  .. Group typedefTypeIR:
   ... Check that <<nestable_typedef, `typeIR` can be used in a typedef>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `TYPE ++_++ typeIR` be `typeIR''`:
  .. Group newTypeIR:
   ... Check that <<nestable_new, `typeIR` can be used in a new type>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `LIST < typeIR >` be `typeIR''`:
  .. Group listTypeIR:
   ... Check that <<nestable_list, `typeIR` can be nested in a list type>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `TUPLE < typeIR^{asterisk}^ >` be `typeIR''`:
  .. Group tupleTypeIR:
   ... Check that <<nestable_tuple, `typeIR` can be nested in a tuple type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
 . Else if let `typeIR [ ++_++ ]` be `typeIR''`:
  .. Group headerStackTypeIR:
   ... Check that <<nestable_headerStack, `typeIR` can be nested in a header stack type>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR''`:
  .. Group structTypeIR:
   ... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
   ... Check that <<nestable_struct, `typeIR~field~` can be nested in a struct type>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
+  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
   ... The relation holds.
 . Else if let `HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR''`:
  .. Group headerTypeIR:
   ... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
   ... Check that <<nestable_header, `typeIR~field~` can be used in a header type>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
+  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
   ... The relation holds.
 . Else if let `HEADER_UNION ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `typeIR''`:
  .. Group headerUnionTypeIR:
   ... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
   ... Check that <<nestable_headerUnion, `typeIR~field~` can be used in a header union type>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
-  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
+  ... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
   ... The relation holds.
 . Else if let `enumTypeIR` be `typeIR''`:
  .. Group enumTypeIR:
@@ -392,27 +392,27 @@ relation Type_wf: `bound` and `typeIR''`
   ... Else let `ENUM ++_++ < typeIR > { (nameIR~field~ = ++_++ ;)^{asterisk}^ }` be `enumTypeIR`:
    .... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
    .... Check that <<nestable_enum_serializable, `typeIR` can be used in a serializable enum type>>.
-   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
    .... The relation holds.
 . Else if let `EXTERN ++_++ < ++_++^{asterisk}^ > { (++_++ : externMethodTypeDefIR)^{asterisk}^ }` be `typeIR''`:
  .. Group externObjectTypeIR:
-  ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `bound`>>, for all `externMethodTypeDefIR` in `externMethodTypeDefIR^{asterisk}^`.
+  ... Check that <<CallableTypeDef_wf, `externMethodTypeDefIR` is a well-formed type, assuming bound type ids `B`>>, for all `externMethodTypeDefIR` in `externMethodTypeDefIR^{asterisk}^`.
   ... The relation holds.
 . Else if let `PARSER ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group parserObjectTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `CONTROL ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )` be `typeIR''`:
  .. Group controlObjectTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `PACKAGE ++_++ < ++_++^{asterisk}^ > { typeIR^{asterisk}^ }` be `typeIR''`:
  .. Group packageObjectTypeIR:
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR` in `typeIR^{asterisk}^`.
   ... The relation holds.
 . Else if let `TABLE ++_++ { tableMetadataStructTypeIR }` be `typeIR''`:
  .. Group tableObjectTypeIR:
-  ... Check that <<Type_wf, `tableMetadataStructTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `tableMetadataStructTypeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `defaultTypeIR` be `typeIR''`:
  .. Group defaultTypeIR:
@@ -423,38 +423,38 @@ relation Type_wf: `bound` and `typeIR''`
 . Else if let `sequenceTypeIR` be `typeIR''`:
  .. Group sequenceTypeIR:
   ... If let `SEQ < typeIR^{asterisk}^ >` be `sequenceTypeIR`:
-   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR` in `typeIR^{asterisk}^`.
    .... The relation holds.
   ... Else let `SEQ < typeIR^{asterisk}^ , ... >` be `sequenceTypeIR`:
-   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR` in `typeIR^{asterisk}^`.
+   .... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR` in `typeIR^{asterisk}^`.
    .... The relation holds.
 . Else if let `recordTypeIR` be `typeIR''`:
  .. Group recordTypeIR:
   ... If let `RECORD { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }` be `recordTypeIR`:
    .... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
-   .... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
+   .... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
    .... The relation holds.
   ... Else let `RECORD { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ , ... }` be `recordTypeIR`:
    .... Check that <<distinct_, the elements of `nameIR~field~^{asterisk}^` are distinct>>.
-   .... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `bound`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
+   .... Check that <<Type_wf, `typeIR~field~` is a well-formed type, assuming bound type ids `B`>>, for all `typeIR~field~` in `typeIR~field~^{asterisk}^`.
    .... The relation holds.
 . Else if let `SET < typeIR'^{asterisk}^ >` be `typeIR''`:
  .. Check that `typeIR'^{asterisk}^` is a list of length 1.
  .. Let `[typeIR]` be `typeIR'^{asterisk}^`.
  .. Group setTypeIR:
   ... Check that <<nestable_set, `typeIR` can be used in a set type>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Group tableMetadataTypeIR:
  .. If let `TABLE_ENUM ++_++ { nameIR^{asterisk}^ }` be `typeIR''`:
   ... Check that <<distinct_, the elements of `nameIR^{asterisk}^` are distinct>>.
   ... The relation holds.
  .. Else if let `TABLE_STRUCT ++_++ { HIT ++_++ ; MISS ++_++ ; ACTION_RUN tableMetadataEnumTypeIR ; }` be `typeIR''`:
-  ... Check that <<Type_wf, `tableMetadataEnumTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `tableMetadataEnumTypeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... The relation holds.
 
 
-relation TypeDef_wf: `bound` and `typeDefIR`
+relation TypeDef_wf: `B` and `typeDefIR`
 
 
 . Group :
@@ -462,24 +462,24 @@ relation TypeDef_wf: `bound` and `typeDefIR`
  .. Let `typeParameterIR^{asterisk}^` be `typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^`.
  .. Check that <<distinct_, the elements of `typeParameterIR^{asterisk}^` are distinct>>.
  .. Let `typeIR~base~` be <<typeIR_of_typeDefIR, the underlying type of `typeDefIR`>>.
- .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ typeParameterIR^{asterisk}^ }`>>.
- .. Check that <<Type_wf, `typeIR~base~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
+ .. Let `B~inner~` be <<union_set, the union of the sets `B` and `{ typeParameterIR^{asterisk}^ }`>>.
+ .. Check that <<Type_wf, `typeIR~base~` is a well-formed type, assuming bound type ids `B~inner~`>>.
  .. The relation holds.
 
 
-relation ParameterType_wf: `bound` and `++_++ direction typeIR ++_++ constantInitializerIR^?^`
+relation ParameterType_wf: `B` and `++_++ direction typeIR ++_++ constantInitializerIR^?^`
 
 
 . Group :
  .. If `constantInitializerIR^?^` is equal to `None`:
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR~unroll~` be <<unroll_typeIR, `typeIR` with typedefs unrolled>>.
   ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~unroll~)>>`.
   ... Check that `<<is_stringTypeIR, $is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, $is_objectTypeIR(typeIR~unroll~)>>` *implies* `direction = `.
   ... The relation holds.
  .. Let `constantInitializerOptIR` be `constantInitializerIR^?^`.
  .. Else if let `= value` be `constantInitializerOptIR`:
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR~unroll~` be <<unroll_typeIR, `typeIR` with typedefs unrolled>>.
   ... Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR(typeIR~unroll~)>>`.
   ... If `direction` matches pattern `IN`:
@@ -490,7 +490,7 @@ relation ParameterType_wf: `bound` and `++_++ direction typeIR ++_++ constantIni
    .... The relation holds.
 
 
-relation ParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
+relation ParameterTypes_wf: `B` and `parameterIR^{asterisk}^`
 
 
 . Group :
@@ -502,26 +502,26 @@ relation ParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that <<distinct_, the elements of `nameIR^{asterisk}^` are distinct>>.
- .. Check that <<ParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
+ .. Check that <<ParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `B`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
  .. The relation holds.
 
 
-relation ReturnType_wf: `bound` and `typeIR~ret~`
+relation ReturnType_wf: `B` and `typeIR~ret~`
 
 
 . Group :
- .. Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<Type_wf, `typeIR~ret~` is a well-formed type, assuming bound type ids `B`>>.
  .. Let `typeIR~unroll~` be <<unroll_typeIR, `typeIR~ret~` with typedefs unrolled>>.
  .. Check that `~<<is_stringTypeIR, $is_stringTypeIR(typeIR~unroll~)>> /\ ~<<is_arbitraryIntTypeIR, $is_arbitraryIntTypeIR(typeIR~unroll~)>>` *and* `~<<is_objectTypeIR, $is_objectTypeIR(typeIR~unroll~)>>`.
  .. The relation holds.
 
 
-relation CallableType_wf: `bound` and `callableTypeIR`
+relation CallableType_wf: `B` and `callableTypeIR`
 
 
 . If let `ACTION ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group actionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `direction^{asterisk}^` be the list of `direction` and `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -534,7 +534,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... The relation holds.
 . Else if let `FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group definedFunctionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -543,11 +543,11 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_definedFunction, `typeIR` can be used in a defined function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group externFunctionTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -556,17 +556,17 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
   ... Check that <<nestable_externFunction, `typeIR` can be used in an extern function type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `callableTypeIR`:
  .. Group builtinMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
-  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
+  ... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `B`>>.
   ... The relation holds.
 . Else if let `externMethodTypeIR` be `callableTypeIR`:
  .. Group externMethodTypeIR:
   ... If let `EXTERN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
-   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
    .... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -575,10 +575,10 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
+   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `B`>>.
    .... The relation holds.
   ... Else let `EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR~ret~` be `externMethodTypeIR`:
-   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+   .... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
    .... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -587,11 +587,11 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
    .... Check that <<nestable_externMethod, `typeIR` can be used in an extern method type>>, for all `typeIR` in `typeIR^{asterisk}^`.
-   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `bound`>>.
+   .... Check that <<ReturnType_wf, `typeIR~ret~` is a well-formed return type, assuming bound type ids `B`>>.
    .... The relation holds.
 . Else if let `PARSER_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group parserApplyMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -603,7 +603,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... The relation holds.
 . Else if let `CONTROL_APPLY ( parameterIR^{asterisk}^ )` be `callableTypeIR`:
  .. Group controlApplyMethodTypeIR:
-  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Check that <<ParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typeIR^{asterisk}^` be the list of `typeIR`, obtained by repeating:
 +
 --
@@ -618,7 +618,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
   ... The relation holds.
 
 
-relation CallableTypeDef_wf: `bound` and `callableTypeDefIR`
+relation CallableTypeDef_wf: `B` and `callableTypeDefIR`
 
 
 . Group :
@@ -626,22 +626,22 @@ relation CallableTypeDef_wf: `bound` and `callableTypeDefIR`
  .. Let `typeParameterIR^{asterisk}^` be `typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^`.
  .. Check that <<distinct_, the elements of `typeParameterIR^{asterisk}^` are distinct>>.
  .. Let `callableTypeIR~base~` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of `callableTypeDefIR`>>.
- .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ typeParameterIR^{asterisk}^ }`>>.
- .. Check that <<CallableType_wf, `callableTypeIR~base~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
+ .. Let `B~inner~` be <<union_set, the union of the sets `B` and `{ typeParameterIR^{asterisk}^ }`>>.
+ .. Check that <<CallableType_wf, `callableTypeIR~base~` is a well-formed type, assuming bound type ids `B~inner~`>>.
  .. The relation holds.
 
 
-relation ConstructorParameterType_wf: `bound` and `++_++ direction typeIR ++_++ ++_++`
+relation ConstructorParameterType_wf: `B` and `++_++ direction typeIR ++_++ ++_++`
 
 
 . Check that `direction` matches pattern ``EMPTY`.
 . Group :
- .. Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
  .. Check that `~<<is_synthesizedTypeIR, $is_synthesizedTypeIR($unroll_typeIR(typeIR))>>`.
  .. The relation holds.
 
 
-relation ConstructorParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
+relation ConstructorParameterTypes_wf: `B` and `parameterIR^{asterisk}^`
 
 
 . Group :
@@ -653,16 +653,16 @@ relation ConstructorParameterTypes_wf: `bound` and `parameterIR^{asterisk}^`
 +
 for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that <<distinct_, the elements of `nameIR^{asterisk}^` are distinct>>.
- .. Check that <<ConstructorParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `bound`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
+ .. Check that <<ConstructorParameterType_wf, `parameterIR` is a well-formed type, assuming bound type ids `B`>>, for all `parameterIR` in `parameterIR^{asterisk}^`.
  .. The relation holds.
 
 
-relation ConstructorType_wf: `bound` and `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`
+relation ConstructorType_wf: `B` and `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`
 
 
 . Group externObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
- .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
+ .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `B`>>.
  .. Let `typeIR'` be <<unroll_typeIR, `typeIR~object~` with typedefs unrolled>>.
  .. Check that `typeIR'` has type `externObjectTypeIR`.
  .. Let `externObjectTypeIR` be `typeIR'`.
@@ -676,8 +676,8 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that <<nestable_constructor_extern, `typeIR` can be used in an extern constructor type>>, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group parserObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
- .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
+ .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `B`>>.
  .. Let `typeIR'` be <<unroll_typeIR, `typeIR~object~` with typedefs unrolled>>.
  .. Check that `typeIR'` has type `parserObjectTypeIR`.
  .. Let `parserObjectTypeIR` be `typeIR'`.
@@ -691,8 +691,8 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that <<nestable_constructor_parser, `typeIR` can be used in a parser constructor type>>, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group controlObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
- .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
+ .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `B`>>.
  .. Let `typeIR'` be <<unroll_typeIR, `typeIR~object~` with typedefs unrolled>>.
  .. Check that `typeIR'` has type `controlObjectTypeIR`.
  .. Let `controlObjectTypeIR` be `typeIR'`.
@@ -706,8 +706,8 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Check that <<nestable_constructor_control, `typeIR` can be used in a control constructor type>>, for all `typeIR` in `typeIR^{asterisk}^`.
  .. The relation holds.
 . Group packageObjectTypeIR:
- .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `bound`>>.
- .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Check that <<ConstructorParameterTypes_wf, `parameterIR^{asterisk}^` is a well-formed type, assuming bound type ids `B`>>.
+ .. Check that <<Type_wf, `typeIR~object~` is a well-formed type, assuming bound type ids `B`>>.
  .. Let `typeIR'` be <<unroll_typeIR, `typeIR~object~` with typedefs unrolled>>.
  .. Check that `typeIR'` has type `packageObjectTypeIR`.
  .. Let `packageObjectTypeIR` be `typeIR'`.
@@ -722,15 +722,15 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. The relation holds.
 
 
-relation ConstructorTypeDef_wf: `bound` and `CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`
+relation ConstructorTypeDef_wf: `B` and `CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`
 
 
 . Group :
  .. Check that `<<definable_constructor, $definable_constructor(typeIR~object~)>>`.
  .. Let `typeParameterIR^{asterisk}^` be `typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^`.
  .. Check that <<distinct_, the elements of `typeParameterIR^{asterisk}^` are distinct>>.
- .. Let `bound~inner~` be <<union_set, the union of the sets `bound` and `{ typeParameterIR^{asterisk}^ }`>>.
- .. Check that <<ConstructorType_wf, `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` is a well-formed type, assuming bound type ids `bound~inner~`>>.
+ .. Let `B~inner~` be <<union_set, the union of the sets `B` and `{ typeParameterIR^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~` is a well-formed type, assuming bound type ids `B~inner~`>>.
  .. The relation holds.
 
 
@@ -1132,9 +1132,9 @@ relation Expr_eval_lctk: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
 . If let `booleanLiteral` be `expressionIR`:
  .. Group literalExpressionIR-boolean:
   ... If `booleanLiteral` matches pattern `TRUE`:
-   .... Result in the resulting value `B true`.
+   .... Result in the resulting value `true`.
   ... Else `booleanLiteral` matches pattern `FALSE`:
-   .... Result in the resulting value `B false`.
+   .... Result in the resulting value `false`.
 . Else if let `integerLiteral` be `expressionIR`:
  .. Group literalExpressionIR-number:
   ... If let `D i` be `integerLiteral`:
@@ -1165,25 +1165,25 @@ relation Expr_eval_lctk: `p`, `TC`, and <<typedExpressionIR, `expressionIR` anno
    .... Result in the resulting value <<bin_op, `value~l~` `binop'` `value~r~`>>.
   ... If `binop'` matches pattern `&&`:
    .... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... If `value` is equal to `B false`:
-    ..... Result in the resulting value `B false`.
-   .... Else if `value` is equal to `B true`:
+   .... If `value` is equal to `false`:
+    ..... Result in the resulting value `false`.
+   .... Else if `value` is equal to `true`:
     ..... Let `value~r~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
     ..... Result in the resulting value `value~r~`.
   ... Else if `binop'` matches pattern `||`:
    .... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~l~`, under cursor `p` and typing context `TC`>>.
-   .... If `value` is equal to `B true`:
-    ..... Result in the resulting value `B true`.
-   .... Else if `value` is equal to `B false`:
+   .... If `value` is equal to `true`:
+    ..... Result in the resulting value `true`.
+   .... Else if `value` is equal to `false`:
     ..... Let `value~r~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~r~`, under cursor `p` and typing context `TC`>>.
     ..... Result in the resulting value `value~r~`.
 . Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
  .. Group ternaryExpressionIR:
   ... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~cond~`, under cursor `p` and typing context `TC`>>.
-  ... If `value` is equal to `B true`:
+  ... If `value` is equal to `true`:
    .... Let `value~true~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~true~`, under cursor `p` and typing context `TC`>>.
    .... Result in the resulting value `value~true~`.
-  ... Else if `value` is equal to `B false`:
+  ... Else if `value` is equal to `false`:
    .... Let `value~false~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~false~`, under cursor `p` and typing context `TC`>>.
    .... Result in the resulting value `value~false~`.
 . Else if let `( typeIR ) typedExpressionIR` be `expressionIR`:
@@ -1352,7 +1352,7 @@ for each `direction~param_aligned~` in `direction~param_aligned~^{asterisk}^`, `
     ..... Let `value'` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function `"static_assert"`(`nameIR~param~^{asterisk}^`) under typing context `TC~callee_1~`>>.
     ..... Check that `value'` has type `boolValue`.
     ..... Let `boolValue` be `value'`.
-    ..... Check that `B true` is equal to `boolValue`.
+    ..... Check that `true` is equal to `boolValue`.
     ..... Result in the resulting value `boolValue`.
    .... Else if `prefixedNameIR` is equal to `"static_assert"`:
     ..... Let <<CallableType_ok, `p TC |- prefixedNameIR < [ ] > ( argumentIR^{asterisk}^ ) : callableTypeIR < # typeId^{asterisk}^ > ( # id^{asterisk}^ )`>>.
@@ -1399,7 +1399,7 @@ for each `direction~param_aligned~` in `direction~param_aligned~^{asterisk}^`, `
     ..... Let `value'` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function `"static_assert"`(`nameIR~param~^{asterisk}^`) under typing context `TC~callee_1~`>>.
     ..... Check that `value'` has type `boolValue`.
     ..... Let `boolValue` be `value'`.
-    ..... Check that `B true` is equal to `boolValue`.
+    ..... Check that `true` is equal to `boolValue`.
     ..... Result in the resulting value `boolValue`.
  .. Else if `typeArgumentIR^{asterisk}^` is an empty list:
   ... Check that `argumentIR^{asterisk}^` is an empty list.
@@ -3339,16 +3339,16 @@ relation Parameter_ok: `p`, `TC`, and `annotationList direction type name initia
 . Group :
  .. If `initializerOpt` matches pattern ``EMPTY`:
   ... Let `typeIR` and `typeId~fresh~^{asterisk}^` be the result of <<Type_ok, typing `type`, under cursor `p` and typing context `TC`>>.
-  ... Let `bound'` be `<<bound, $bound(p, TC)>>`.
-  ... Let `bound` be <<union_set, the union of the sets `bound'` and `{ typeId~fresh~^{asterisk}^ }`>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Let `bound` be `<<bound, $bound(p, TC)>>`.
+  ... Let `B` be <<union_set, the union of the sets `bound` and `{ typeId~fresh~^{asterisk}^ }`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `nameIR` be <<name, the name of `name`>>.
   ... Result in the parameter `annotationList direction typeIR nameIR None` and set of fresh type variables `typeId~fresh~^{asterisk}^`.
  .. Else if let `= expression~init~` be `initializerOpt`:
   ... Let `typeIR` and `typeId~fresh~^{asterisk}^` be the result of <<Type_ok, typing `type`, under cursor `p` and typing context `TC`>>.
-  ... Let `bound'` be `<<bound, $bound(p, TC)>>`.
-  ... Let `bound` be <<union_set, the union of the sets `bound'` and `{ typeId~fresh~^{asterisk}^ }`>>.
-  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `bound`>>.
+  ... Let `bound` be `<<bound, $bound(p, TC)>>`.
+  ... Let `B` be <<union_set, the union of the sets `bound` and `{ typeId~fresh~^{asterisk}^ }`>>.
+  ... Check that <<Type_wf, `typeIR` is a well-formed type, assuming bound type ids `B`>>.
   ... Let `typedExpressionIR~init~` be the result of <<Expr_ok, typing `expression~init~`, under cursor `p` and typing context `TC`>>.
   ... Let `typeIR~init~` be <<type_of_typedExpressionIR, the type of `typedExpressionIR~init~`>>.
   ... Check that `<<ctk_of_typedExpressionIR, $ctk_of_typedExpressionIR(typedExpressionIR~init~)>>` matches pattern `LCTK`.
@@ -4261,10 +4261,10 @@ relation TableProperty_ok: `TC`, `TBLC~0~`, and `tableProperty`
    .... Check that `BOOL` is equal to <<unroll_typeIR, `typeIR` with typedefs unrolled>>.
    .... Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `LOCAL` and typing context `TC`>>.
    .... Check that `value` has type `boolValue`.
-   .... Let `B b~largest_priority_wins~` be `value`.
+   .... Let `b~largest_priority_wins~` be `value`.
    .... Let `TBLC~1~` be `TBLC~0~[PRIORITIES.LARGEST_WINS = b~largest_priority_wins~]`.
    .... Let `constOptIR` be <<flatten_constOpt, the optional const qualifier in `constOpt`>>.
-   .... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = B b~largest_priority_wins~ ;`.
+   .... Let `tablePropertyIR` be `annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = b~largest_priority_wins~ ;`.
    .... Result in the updated table context `TBLC~1~` and the typed table property `tablePropertyIR`.
   ... Else if `"priority_delta"` is equal to <<tableCustomName, the name of `tableCustomName`>>:
    .... Let `typedExpressionIR` be the result of <<Expr_ok, typing `expression`, under cursor `LOCAL` and typing context `TC`>>.
@@ -5525,18 +5525,18 @@ relation ConstructorType_ok: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR'^{aste
  .. Check that `None` is equal to <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
  .. Let `(callableId, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
  .. Let `(constructorTypeIR, typeId~impl~^{asterisk}^)` be <<specialize_constructorTypeDefIR, `constructorTypeDefIR` specialized by `typeArgumentIR'^{asterisk}^`>>.
- .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
- .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ typeId~impl~^{asterisk}^ }`>>.
- .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Let `bound` be `<<bound, $bound(p, TC)>>`.
+ .. Let `B` be <<union_set, the union of the sets `bound` and `{ typeId~impl~^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `B`>>.
  .. Result in `constructorTypeIR`, `typeId~impl~^{asterisk}^`, and `id~default~^{asterisk}^`.
 . Group non-aliased-some-type:
  .. Let `typeDefIR` be <<option_get, *!*>> <<find_typeDef_t, the type definition of `prefixedNameIR` in the `p` layer of `TC`>>.
  .. Check that `~<<is_typedefTypeDefIR, $is_typedefTypeDefIR(typeDefIR)>>`.
  .. Let `(callableId, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>`.
  .. Let `(constructorTypeIR, typeId~impl~^{asterisk}^)` be <<specialize_constructorTypeDefIR, `constructorTypeDefIR` specialized by `typeArgumentIR'^{asterisk}^`>>.
- .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
- .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ typeId~impl~^{asterisk}^ }`>>.
- .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Let `bound` be `<<bound, $bound(p, TC)>>`.
+ .. Let `B` be <<union_set, the union of the sets `bound` and `{ typeId~impl~^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `B`>>.
  .. Result in `constructorTypeIR`, `typeId~impl~^{asterisk}^`, and `id~default~^{asterisk}^`.
 . Check that `typeArgumentIR'^{asterisk}^` is an empty list.
 . Group aliased:
@@ -5546,9 +5546,9 @@ relation ConstructorType_ok: `p`, `TC`, `prefixedNameIR`, `typeArgumentIR'^{aste
  .. Let `(nameIR, typeArgumentIR^{asterisk}^)` be `<<resolve_type_alias, $resolve_type_alias(typeIR~alias~)>>`.
  .. Let `(callableId, constructorTypeDefIR, id~default~^{asterisk}^)` be <<option_get, *!*>> `<<find_constructorDef_overloaded_t, $find_constructorDef_overloaded_t(TC, nameIR, argumentIR^{asterisk}^)>>`.
  .. Let `(constructorTypeIR, typeId~impl~^{asterisk}^)` be <<specialize_constructorTypeDefIR, `constructorTypeDefIR` specialized by `typeArgumentIR^{asterisk}^`>>.
- .. Let `bound'` be `<<bound, $bound(p, TC)>>`.
- .. Let `bound` be <<union_set, the union of the sets `bound'` and `{ typeId~impl~^{asterisk}^ }`>>.
- .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `bound`>>.
+ .. Let `bound` be `<<bound, $bound(p, TC)>>`.
+ .. Let `B` be <<union_set, the union of the sets `bound` and `{ typeId~impl~^{asterisk}^ }`>>.
+ .. Check that <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `B`>>.
  .. Result in `constructorTypeIR`, `typeId~impl~^{asterisk}^`, and `id~default~^{asterisk}^`.
 
 
@@ -6505,9 +6505,9 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . If let `booleanLiteral` be `expressionIR`:
  .. Group literalExpressionIR-boolean:
   ... If `booleanLiteral` matches pattern `TRUE`:
-   .... Result in `STO` and `B true`.
+   .... Result in `STO` and `true`.
   ... Else `booleanLiteral` matches pattern `FALSE`:
-   .... Result in `STO` and `B false`.
+   .... Result in `STO` and `false`.
 . Else if let `integerLiteral` be `expressionIR`:
  .. Group literalExpressionIR-number:
   ... If let `D i` be `integerLiteral`:
@@ -6538,25 +6538,25 @@ relation Expr_inst: `p`, `IC`, `STO`, and <<typedExpressionIR, `expressionIR` an
    .... Result in `STO~2~` and <<bin_op, `value~l~` `binop'` `value~r~`>>.
   ... If `binop'` matches pattern `&&`:
    .... Let <<Expr_inst, `p IC STO |- typedExpressionIR~l~ : STO~1~ value`>>.
-   .... If `value` is equal to `B false`:
-    ..... Result in `STO~1~` and `B false`.
-   .... Else if `value` is equal to `B true`:
+   .... If `value` is equal to `false`:
+    ..... Result in `STO~1~` and `false`.
+   .... Else if `value` is equal to `true`:
     ..... Let <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ : STO~2~ value~r~`>>.
     ..... Result in `STO~2~` and `value~r~`.
   ... Else if `binop'` matches pattern `||`:
    .... Let <<Expr_inst, `p IC STO |- typedExpressionIR~l~ : STO~1~ value`>>.
-   .... If `value` is equal to `B true`:
-    ..... Result in `STO~1~` and `B true`.
-   .... Else if `value` is equal to `B false`:
+   .... If `value` is equal to `true`:
+    ..... Result in `STO~1~` and `true`.
+   .... Else if `value` is equal to `false`:
     ..... Let <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~r~ : STO~2~ value~r~`>>.
     ..... Result in `STO~2~` and `value~r~`.
 . Else if let `typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~` be `expressionIR`:
  .. Group ternaryExpressionIR:
   ... Let <<Expr_inst, `p IC STO |- typedExpressionIR~cond~ : STO~1~ value`>>.
-  ... If `value` is equal to `B true`:
+  ... If `value` is equal to `true`:
    .... Let <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~true~ : STO~2~ value~true~`>>.
    .... Result in `STO~2~` and `value~true~`.
-  ... Else if `value` is equal to `B false`:
+  ... Else if `value` is equal to `false`:
    .... Let <<Expr_inst, `p IC STO~1~ |- typedExpressionIR~false~ : STO~2~ value~false~`>>.
    .... Result in `STO~2~` and `value~false~`.
 . Else if let `( typeIR ) typedExpressionIR` be `expressionIR`:
@@ -7705,10 +7705,10 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
 . If let `booleanLiteral` be `expressionIR`:
  .. Group literalExpressionIR-boolean:
   ... If `booleanLiteral` matches pattern `TRUE`:
-   .... Let `expressionResult` be `B true`.
+   .... Let `expressionResult` be `true`.
    .... Result in the resulting evaluation context `EC`, store `STO` and expression result `expressionResult`.
   ... Else `booleanLiteral` matches pattern `FALSE`:
-   .... Let `expressionResult` be `B false`.
+   .... Let `expressionResult` be `false`.
    .... Result in the resulting evaluation context `EC`, store `STO` and expression result `expressionResult`.
 . Else if let `integerLiteral` be `expressionIR`:
  .. Group literalExpressionIR-number:
@@ -7759,10 +7759,10 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
    .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
    .... If let `exitResult` be `expressionResult'`:
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-   .... Else if `expressionResult'` is equal to `B false`:
-    ..... Let `expressionResult` be `B false`.
+   .... Else if `expressionResult'` is equal to `false`:
+    ..... Let `expressionResult` be `false`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-   .... Else if `expressionResult'` is equal to `B true`:
+   .... Else if `expressionResult'` is equal to `true`:
     ..... Let `EC~2~`, `STO~2~`, and `expressionResult''` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
     ..... Check that `expressionResult''` has type `exitResult`.
     ..... Let `exitResult` be `expressionResult''`.
@@ -7773,10 +7773,10 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
    .... Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR~l~`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
    .... If let `exitResult` be `expressionResult'`:
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-   .... Else if `expressionResult'` is equal to `B true`:
-    ..... Let `expressionResult` be `B true`.
+   .... Else if `expressionResult'` is equal to `true`:
+    ..... Let `expressionResult` be `true`.
     ..... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
-   .... Else if `expressionResult'` is equal to `B false`:
+   .... Else if `expressionResult'` is equal to `false`:
     ..... Let `EC~2~`, `STO~2~`, and `expressionResult''` be the result of <<Expr_eval, evaluating `typedExpressionIR~r~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
     ..... Check that `expressionResult''` has type `exitResult`.
     ..... Let `exitResult` be `expressionResult''`.
@@ -7788,10 +7788,10 @@ relation Expr_eval: `p`, `EC`, `STO`, and <<typedExpressionIR, `expressionIR` an
   ... Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
   ... If let `exitResult` be `expressionResult`:
    .... Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
-  ... Else if `expressionResult` is equal to `B true`:
+  ... Else if `expressionResult` is equal to `true`:
    .... Let `EC~2~`, `STO~2~`, and `expressionResult~true~` be the result of <<Expr_eval, evaluating `typedExpressionIR~true~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
    .... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~true~`.
-  ... Else if `expressionResult` is equal to `B false`:
+  ... Else if `expressionResult` is equal to `false`:
    .... Let `EC~2~`, `STO~2~`, and `expressionResult~false~` be the result of <<Expr_eval, evaluating `typedExpressionIR~false~`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
    .... Result in the resulting evaluation context `EC~2~`, store `STO~2~` and expression result `expressionResult~false~`.
 . Else if let `( typeIR ) typedExpressionIR` be `expressionIR`:
@@ -8316,13 +8316,13 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 * the evaluation context `EC~cond~`,
 * the updated store `STO~cond~`,
 * and the instantiated statement `EXIT`.
-   .... Else if `expressionResult` is equal to `B true`:
+   .... Else if `expressionResult` is equal to `true`:
     ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
     ..... Result in 
 * the evaluation context `EC~then~`,
 * the updated store `STO~then~`,
 * and the instantiated statement `statementResult`.
-   .... Else if `expressionResult` is equal to `B false`:
+   .... Else if `expressionResult` is equal to `false`:
     ..... Result in 
 * the evaluation context `EC~cond~`,
 * the updated store `STO~cond~`,
@@ -8334,13 +8334,13 @@ relation Stmt_eval: `p`, `EC`, `STO`, and `statementIR`
 * the evaluation context `EC~cond~`,
 * the updated store `STO~cond~`,
 * and the instantiated statement `EXIT`.
-   .... Else if `expressionResult` is equal to `B true`:
+   .... Else if `expressionResult` is equal to `true`:
     ..... Let `EC~then~`, `STO~then~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~then~`, under cursor `p`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
     ..... Result in 
 * the evaluation context `EC~then~`,
 * the updated store `STO~then~`,
 * and the instantiated statement `statementResult`.
-   .... Else if `expressionResult` is equal to `B false`:
+   .... Else if `expressionResult` is equal to `false`:
     ..... Let `EC~else~`, `STO~else~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `statementIR~else~`, under cursor `p`, evaluation context `EC~cond~`, and store `STO~cond~`>>.
     ..... Result in 
 * the evaluation context `EC~else~`,
@@ -8512,17 +8512,17 @@ relation ParserStmt_eval: `EC~0~`, `STO~0~`, and `parserStatementIR`
  .. Group parserConditionalStatementIR:
   ... If let `IF ( typedExpressionIR~cond~ ) parserStatementIR~then~` be `parserConditionalStatementIR`:
    .... Let `EC~cond~`, `STO~cond~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
-   .... If `expressionResult` is equal to `B true`:
+   .... If `expressionResult` is equal to `true`:
     ..... Let <<ParserStmt_eval, `EC~cond~ STO~cond~ |- parserStatementIR~then~ : EC~then~ STO~then~ parserStatementResult`>>.
     ..... Result in `EC~then~`, `STO~then~`, and `parserStatementResult`.
-   .... Else if `expressionResult` is equal to `B false`:
+   .... Else if `expressionResult` is equal to `false`:
     ..... Result in `EC~cond~`, `STO~cond~`, and ``.
   ... Else let `IF ( typedExpressionIR~cond~ ) parserStatementIR~then~ ELSE parserStatementIR~else~` be `parserConditionalStatementIR`:
    .... Let `EC~cond~`, `STO~cond~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR~cond~`, under cursor `LOCAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
-   .... If `expressionResult` is equal to `B true`:
+   .... If `expressionResult` is equal to `true`:
     ..... Let <<ParserStmt_eval, `EC~cond~ STO~cond~ |- parserStatementIR~then~ : EC~then~ STO~then~ parserStatementResult`>>.
     ..... Result in `EC~then~`, `STO~then~`, and `parserStatementResult`.
-   .... Else if `expressionResult` is equal to `B false`:
+   .... Else if `expressionResult` is equal to `false`:
     ..... Let <<ParserStmt_eval, `EC~cond~ STO~cond~ |- parserStatementIR~else~ : EC~else~ STO~else~ parserStatementResult`>>.
     ..... Result in `EC~else~`, `STO~else~`, and `parserStatementResult`.
 
@@ -8662,7 +8662,7 @@ relation Table_eval: `EC~0~`, `STO~0~`, `typeId`, and `TBL`
  .. Let `b~miss~` be `~b~hit~`.
  .. Let `nameIR` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
  .. Let `tableMetadataEnumValue` be `TABLE_ENUM "action_list(" {pp} typeId {pp} ")" . nameIR`.
- .. Let `tableMetadataStructValue` be `TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT B b~hit~ ; MISS B b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }`.
+ .. Let `tableMetadataStructValue` be `TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT b~hit~ ; MISS b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }`.
  .. Result in `EC~3~`, `STO~3~`, and `RETURN tableMetadataStructValue`.
 
 
@@ -9196,13 +9196,13 @@ for each `value~back~` in `value~back~^{asterisk}^`
     ..... Let <<Lvalue_read, `p EC~0~ STO~0~ |- storageReference : value'`>>.
     ..... If let `headerValue` be `value'`:
      ...... Let `HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }` be `headerValue`.
-     ...... Let `returnResult` be `RETURN B b~valid~`.
+     ...... Let `returnResult` be `RETURN b~valid~`.
      ...... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
     ..... Else if let `headerUnionValue` be `value'`:
      ...... Let `HEADER_UNION typeId { fieldValue^{asterisk}^ }` be `headerUnionValue`.
      ...... Let `fieldValue~valid~^{asterisk}^` be `<<filter_, $filter_<fieldValue>(fieldValue^{asterisk}^, $isValid_fieldValue)>>`.
      ...... Let `b~valid~` be `fieldValue~valid~^{asterisk}^` is equal to `[ ]`.
-     ...... Let `returnResult` be `RETURN B b~valid~`.
+     ...... Let `returnResult` be `RETURN b~valid~`.
      ...... Result in the resulting evaluation context `EC~0~`, store `STO~0~`, and call result `returnResult`.
    .... Else if `text` is equal to `"setValid"`:
     ..... Check that `typeArgumentIR'^{asterisk}^` is an empty list.
