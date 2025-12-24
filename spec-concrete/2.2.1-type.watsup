@@ -3,6 +3,7 @@
 ;;
 
 syntax typeIR
+syntax typeArgumentIR
 
 ;;
 ;;;; Base types
@@ -61,13 +62,13 @@ syntax headerStackTypeIR = typeIR `[ nat ]
 syntax fieldTypeIR = typeIR nameIR `;
 
 syntax structTypeIR =
-  STRUCT typeId `< typeIR* > `{ fieldTypeIR* }
+  STRUCT typeId `< typeArgumentIR* > `{ fieldTypeIR* }
   hint(print %0#"<"#%1#">")
 syntax headerTypeIR =
-  HEADER typeId `< typeIR* > `{ fieldTypeIR* }
+  HEADER typeId `< typeArgumentIR* > `{ fieldTypeIR* }
   hint(print %0#"<"#%1#">")
 syntax headerUnionTypeIR =
-  HEADER_UNION typeId `< typeIR* > `{ fieldTypeIR* }
+  HEADER_UNION typeId `< typeArgumentIR* > `{ fieldTypeIR* }
   hint(print %0#"<"#%1#">")
 
 syntax valueFieldIR = nameIR `= value `;
@@ -97,19 +98,19 @@ syntax externMethodTypeDefEnv =
   map<callableId, externMethodTypeDefIR>
 
 syntax externObjectTypeIR =
-  EXTERN typeId `< typeIR* > externMethodTypeDefEnv
+  EXTERN typeId `< typeArgumentIR* > externMethodTypeDefEnv
   hint(print %0#"<"#%1#">")
 
 syntax parserObjectTypeIR =
-  PARSER typeId `< typeIR* > `( parameterIR* )
+  PARSER typeId `< typeArgumentIR* > `( parameterIR* )
   hint(print %0#"<"#%1#">")
 
 syntax controlObjectTypeIR =
-  CONTROL typeId `< typeIR* > `( parameterIR* )
+  CONTROL typeId `< typeArgumentIR* > `( parameterIR* )
   hint(print %0#"<"#%1#">")
 
 syntax packageObjectTypeIR =
-  PACKAGE typeId `< typeIR* > `{ typeIR* }
+  PACKAGE typeId `< typeArgumentIR* > `{ typeIR* }
   hint(print %0#"<"#%1#">")
 
 syntax tableObjectTypeIR =
@@ -174,3 +175,5 @@ syntax typeIR =
   | dataTypeIR
   | objectTypeIR
   | synthesizedTypeIR
+
+syntax typeArgumentIR = typeIR

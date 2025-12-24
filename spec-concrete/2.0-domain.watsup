@@ -54,9 +54,11 @@ syntax callableId = callTargetId
 syntax constructorId = callTargetId
 
 dec $callableId(name, parameterList) : callableId
+  hint(prose_in "the callable identifier for" %0#"("#%1#")")
 dec $callableId'(parameterList) : id*
 
 dec $constructorId(name, constructorParameterListOpt) : constructorId
+  hint(prose_in "the constructor identifier for" %0#"("#%1#")")
 
 def $callableId(name, parameterList)
   = $name(name) `( $callableId'(parameterList) )
@@ -75,10 +77,11 @@ def $callableId'(nonEmptyParameterList `, (_ _ _ name _))
 
 syntax objectId = nameIR*
 
-dec $objectId_ends_with(objectId, id) : bool
-  hint(prose_in %0 "is an object name that ends with" %1)
+dec $objectId_ends_with(objectId, nameIR) : bool
+  hint(prose_true %0 "is an object name that ends with" %1)
+  hint(prose_false %0 "is an object name that does not end with" %1)
 
-def $objectId_ends_with(objectId, id) = true
-  -- if id :: _ = $rev_<id>(objectId)
-def $objectId_ends_with(objectId, id) = false
+def $objectId_ends_with(objectId, nameIR) = true
+  -- if nameIR :: _ = $rev_<id>(objectId)
+def $objectId_ends_with(objectId, nameIR) = false
   -- otherwise

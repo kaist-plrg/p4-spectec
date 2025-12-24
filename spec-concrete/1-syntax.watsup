@@ -476,47 +476,47 @@ def $expressionNonBrace_as_expression(literalExpression) = literalExpression
 def $expressionNonBrace_as_expression(referenceExpression) = referenceExpression
 def $expressionNonBrace_as_expression(unaryExpression) = unaryExpression
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_l binop expression_r
-  )
+    expressionNonBrace_l binop expression_r)
   = expression_l binop expression_r
-  -- if expression_l = $expressionNonBrace_as_expression(expressionNonBrace_l)
+  -- if expression_l
+      = $expressionNonBrace_as_expression(expressionNonBrace_l)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_cond `? expression_true `: expression_false
-  )
+    expressionNonBrace_cond `? expression_true `: expression_false)
   = expression_cond `? expression_true `: expression_false
-  -- if expression_cond = $expressionNonBrace_as_expression(expressionNonBrace_cond)
+  -- if expression_cond
+      = $expressionNonBrace_as_expression(expressionNonBrace_cond)
 def $expressionNonBrace_as_expression(castExpression) = castExpression
 def $expressionNonBrace_as_expression(errorAccessExpression) = errorAccessExpression
 def $expressionNonBrace_as_expression(prefixedTypeName `. member)
   = prefixedTypeName `. member
 def $expressionNonBrace_as_expression(expressionNonBrace_base `. member)
   = expression_base `. member
-  -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
+  -- if expression_base
+      = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_base `[ expression_index ]
-  )
+    expressionNonBrace_base `[ expression_index ])
   = expression_base `[ expression_index ]
   -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace_base `[ expression_hi `: expression_lo ]
-  )
+    expressionNonBrace_base `[ expression_hi `: expression_lo ])
   = expression_base `[ expression_hi `: expression_lo ]
-  -- if expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
+  -- if expression_base
+      = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
-    expressionNonBrace `( argumentList )
-  )
+    expressionNonBrace `( argumentList ))
   = expression `( argumentList )
-  -- if expression = $expressionNonBrace_as_expression(expressionNonBrace)
+  -- if expression
+      = $expressionNonBrace_as_expression(expressionNonBrace)
 def $expressionNonBrace_as_expression(
-    constructorTarget `( argumentList )
-  )
+    constructorTarget `( argumentList ))
   = constructorTarget `( argumentList )
 def $expressionNonBrace_as_expression(
-    expressionNonBrace `< realTypeArgumentList > `( argumentList )
-  )
+    expressionNonBrace `< realTypeArgumentList > `( argumentList ))
   = expression `< realTypeArgumentList > `( argumentList )
-  -- if expression = $expressionNonBrace_as_expression(expressionNonBrace)
-def $expressionNonBrace_as_expression(parenthesizedExpression) = parenthesizedExpression
+  -- if expression
+      = $expressionNonBrace_as_expression(expressionNonBrace)
+def $expressionNonBrace_as_expression(parenthesizedExpression)
+  = parenthesizedExpression
 
 ;;
 ;; Keyset expressions
@@ -539,8 +539,7 @@ dec $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList)
 def $flatten_simpleKeysetExpressionList(simpleKeysetExpression)
   = simpleKeysetExpression
 def $flatten_simpleKeysetExpressionList(
-    simpleKeysetExpressionList `, simpleKeysetExpression
-  )
+    simpleKeysetExpressionList `, simpleKeysetExpression)
   = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList)
     ++ [ simpleKeysetExpression ]
 
@@ -571,8 +570,8 @@ syntax realTypeArgumentList =
 dec $flatten_realTypeArgumentList(realTypeArgumentList) : realTypeArgument*
   hint(prose_in "the list of real type arguments in" %0)
 def $flatten_realTypeArgumentList(realTypeArgument) = realTypeArgument
-def $flatten_realTypeArgumentList(realTypeArgumentList `, realTypeArgument) =
-  $flatten_realTypeArgumentList(realTypeArgumentList) ++ [ realTypeArgument ]
+def $flatten_realTypeArgumentList(realTypeArgumentList `, realTypeArgument)
+  = $flatten_realTypeArgumentList(realTypeArgumentList) ++ [ realTypeArgument ]
 
 syntax typeArgument =
   | realTypeArgument
@@ -588,8 +587,8 @@ dec $flatten_typeArgumentList(typeArgumentList) : typeArgument*
   hint(prose_in "the list of type arguments in" %0)
 def $flatten_typeArgumentList(`EMPTY) = eps
 def $flatten_typeArgumentList(typeArgument) = typeArgument
-def $flatten_typeArgumentList(typeArgumentList `, typeArgument) =
-  $flatten_typeArgumentList(typeArgumentList) ++ [ typeArgument ]
+def $flatten_typeArgumentList(typeArgumentList `, typeArgument)
+  = $flatten_typeArgumentList(typeArgumentList) ++ [ typeArgument ]
 
 ;;
 ;; Arguments
@@ -613,8 +612,8 @@ dec $flatten_argumentList(argumentList) : argument*
   hint(prose_in "the list of arguments in" %0)
 def $flatten_argumentList(`EMPTY) = eps
 def $flatten_argumentList(argument) = argument
-def $flatten_argumentList(argumentListNonEmpty `, argument) =
-  $flatten_argumentList(argumentListNonEmpty) ++ [ argument ]
+def $flatten_argumentList(argumentListNonEmpty `, argument)
+  = $flatten_argumentList(argumentListNonEmpty) ++ [ argument ]
 
 ;;
 ;; L-values
@@ -759,11 +758,15 @@ syntax forUpdateStatementList =
   | `EMPTY
   | forUpdateStatementListNonEmpty
 
-dec $flatten_forUpdateStatementList(forUpdateStatementList) : forUpdateStatement*
+dec $flatten_forUpdateStatementList(forUpdateStatementList)
+  : forUpdateStatement*
 def $flatten_forUpdateStatementList(`EMPTY) = eps
-def $flatten_forUpdateStatementList(forUpdateStatement) = forUpdateStatement
-def $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty `, forUpdateStatement)
-  = $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty) ++ [ forUpdateStatement ]
+def $flatten_forUpdateStatementList(forUpdateStatement)
+  = forUpdateStatement
+def $flatten_forUpdateStatementList(
+    forUpdateStatementListNonEmpty `, forUpdateStatement)
+  = $flatten_forUpdateStatementList(forUpdateStatementListNonEmpty)
+    ++ [ forUpdateStatement ]
 
 syntax forInitStatement =
   | annotationList type name initializerOpt
@@ -780,8 +783,10 @@ syntax forInitStatementList =
 dec $flatten_forInitStatementList(forInitStatementList) : forInitStatement*
 def $flatten_forInitStatementList(`EMPTY) = eps
 def $flatten_forInitStatementList(forInitStatement) = forInitStatement
-def $flatten_forInitStatementList(forInitStatementListNonEmpty `, forInitStatement)
-  = $flatten_forInitStatementList(forInitStatementListNonEmpty) ++ [ forInitStatement ]
+def $flatten_forInitStatementList(
+    forInitStatementListNonEmpty `, forInitStatement)
+  = $flatten_forInitStatementList(forInitStatementListNonEmpty)
+    ++ [ forInitStatement ]
 
 syntax forCollectionExpression =
   | expression
@@ -879,10 +884,9 @@ dec $flatten_blockElementStatementList(blockElementStatementList)
   hint(prose_in "the list of block element statements in" %0)
 def $flatten_blockElementStatementList(`EMPTY) = eps
 def $flatten_blockElementStatementList(
-    blockElementStatementList blockElementStatement
-  )
-  = $flatten_blockElementStatementList(blockElementStatementList) ++
-    [ blockElementStatement ]
+    blockElementStatementList blockElementStatement)
+  = $flatten_blockElementStatementList(blockElementStatementList)
+    ++ [ blockElementStatement ]
 
 ;;
 ;;;; Function declarations
@@ -926,8 +930,7 @@ dec $flatten_objectDeclarationList(objectDeclarationList) : objectDeclaration*
   hint(prose_in "the list of object declarations in" %0)
 def $flatten_objectDeclarationList(`EMPTY) = eps
 def $flatten_objectDeclarationList(
-    objectDeclarationList objectDeclaration
-  )
+    objectDeclarationList objectDeclaration)
   = $flatten_objectDeclarationList(objectDeclarationList)
     ++ [ objectDeclaration ]
 
@@ -1021,17 +1024,16 @@ syntax externConstructorOrMethodPrototypeList =
   | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
 
 dec $flatten_externConstructorOrMethodPrototypeList(
-    externConstructorOrMethodPrototypeList
-  ) : externConstructorOrMethodPrototype*
+    externConstructorOrMethodPrototypeList)
+  : externConstructorOrMethodPrototype*
   hint(prose_in "the list of extern constructor or method prototypes in" %0)
 def $flatten_externConstructorOrMethodPrototypeList(`EMPTY) = eps
 def $flatten_externConstructorOrMethodPrototypeList(
     externConstructorOrMethodPrototypeList
-    externConstructorOrMethodPrototype
-  )
+    externConstructorOrMethodPrototype)
   = $flatten_externConstructorOrMethodPrototypeList(
-      externConstructorOrMethodPrototypeList
-    ) ++ [ externConstructorOrMethodPrototype ]
+      externConstructorOrMethodPrototypeList)
+    ++ [ externConstructorOrMethodPrototype ]
 
 syntax externObjectDeclaration =
   annotationList EXTERN nonTypeName
@@ -1154,8 +1156,7 @@ dec $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   hint(prose_in "the list of parser local declarations in" %0)
 def $flatten_parserLocalDeclarationList(`EMPTY) = eps
 def $flatten_parserLocalDeclarationList(
-    parserLocalDeclarationList parserLocalDeclaration
-  )
+    parserLocalDeclarationList parserLocalDeclaration)
   = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
     ++ [ parserLocalDeclaration ]
 
@@ -1293,10 +1294,9 @@ dec $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
   hint(prose_in "the list of control local declarations in" %0)
 def $flatten_controlLocalDeclarationList(`EMPTY) = eps
 def $flatten_controlLocalDeclarationList(
-    controlLocalDeclarationList controlLocalDeclaration
-  )
-  = $flatten_controlLocalDeclarationList(controlLocalDeclarationList) ++
-    [ controlLocalDeclaration ]
+    controlLocalDeclarationList controlLocalDeclaration)
+  = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+    ++ [ controlLocalDeclaration ]
 
 syntax controlDeclaration =
   annotationList CONTROL name typeParameterListOpt
@@ -1386,8 +1386,8 @@ dec $flatten_annotationList(annotationList) : annotation*
   hint(prose_in "the list of annotations in" %0)
 def $flatten_annotationList(`EMPTY) = eps
 def $flatten_annotationList(annotation) = annotation
-def $flatten_annotationList(annotationListNonEmpty annotation) =
-  $flatten_annotationList(annotationListNonEmpty) ++ [ annotation ]
+def $flatten_annotationList(annotationListNonEmpty annotation)
+  = $flatten_annotationList(annotationListNonEmpty) ++ [ annotation ]
 
 ;;
 ;; P4 program

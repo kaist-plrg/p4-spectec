@@ -5,11 +5,16 @@
 syntax bound = set<typeId>
 
 dec $free_typeIR(typeIR) : bound
+  hint(prose_in "free type identifiers in" %0)
 dec $free_typeDefIR(typeDefIR) : bound
+  hint(prose_in "free type identifiers in" %0)
 
 dec $free_parameterIR(parameterIR) : bound
+  hint(prose_in "free type identifiers in" %0)
 dec $free_callableTypeIR(callableTypeIR) : bound
+  hint(prose_in "free type identifiers in" %0)
 dec $free_callableTypeDefIR(callableTypeDefIR) : bound
+  hint(prose_in "free type identifiers in" %0)
 
 ;;
 ;; Free type variables in types
@@ -38,19 +43,19 @@ def $free_typeIR(TUPLE `< typeIR* >)
 
 def $free_typeIR(typeIR `[ _ ]) = $free_typeIR(typeIR)
 
-def $free_typeIR(STRUCT _ `< typeIR_arg* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(STRUCT _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
 
-def $free_typeIR(HEADER _ `< typeIR_arg* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(HEADER _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
 
-def $free_typeIR(HEADER_UNION _ `< typeIR_arg* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(HEADER_UNION _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
 
 def $free_typeIR(ENUM _ `{ _ }) = `{ eps }
@@ -59,24 +64,24 @@ def $free_typeIR(ENUM _ `< typeIR > `{ _ }) = $free_typeIR(typeIR)
 
 ;;; Object types
 
-def $free_typeIR(EXTERN _ `< typeIR_arg* > `{ (_ `: externMethodTypeDefIR)* })
+def $free_typeIR(EXTERN _ `< typeArgumentIR* > `{ (_ `: externMethodTypeDefIR)* })
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_callableTypeDefIR(externMethodTypeDefIR)*))
 
-def $free_typeIR(PARSER _ `< typeIR_arg* > `( parameterIR* ))
+def $free_typeIR(PARSER _ `< typeArgumentIR* > `( parameterIR* ))
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_parameterIR(parameterIR)*))
 
-def $free_typeIR(CONTROL _ `< typeIR_arg* > `( parameterIR* ))
+def $free_typeIR(CONTROL _ `< typeArgumentIR* > `( parameterIR* ))
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_parameterIR(parameterIR)*))
 
-def $free_typeIR(PACKAGE _ `< typeIR_arg* > `{ typeIR* })
+def $free_typeIR(PACKAGE _ `< typeArgumentIR* > `{ typeIR* })
   = $union_set<typeId>(
-      $unions_set<typeId>($free_typeIR(typeIR_arg)*),
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR)*))
 
 def $free_typeIR(TABLE _ `{ _ }) = `{ eps }
@@ -113,7 +118,7 @@ def $free_typeDefIR(typeDefIR)
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
       = $typeParameterListIR_of_typeDefIR(typeDefIR)
   -- if bound_tparams = `{ typeParameterIR_expl* ++ typeParameterIR_impl* }
-  -- if typeIR = $type_of_typeDefIR(typeDefIR)
+  -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
   -- if bound_base = $free_typeIR(typeIR)
 
 ;;
@@ -194,5 +199,5 @@ def $free_callableTypeDefIR(callableTypeDefIR)
       = $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
   -- if bound_tparams = `{ typeId_tparam_expl* ++ typeId_tparam_impl* }
   -- if callableTypeIR
-      = $type_of_callableTypeDefIR(callableTypeDefIR)
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
   -- if bound_base = $free_callableTypeIR(callableTypeIR)

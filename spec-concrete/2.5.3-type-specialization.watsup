@@ -11,7 +11,7 @@
 dec $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR
   hint(prose_in %0 "specialized by" %1)
 
-def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
+def $specialize_typeDefIR(typeDefIR_base, typeArgumentIR*)
   = typeIR_spec
   ---- ;; retrieve type parameters
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
@@ -19,10 +19,10 @@ def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
   -- if typeParameterIR*
       = typeParameterIR_expl* ++ typeParameterIR_impl*
   ---- ;; check arity
-  -- if |typeParameterIR*| = |typeIR_arg*|
+  -- if |typeParameterIR*| = |typeArgumentIR*|
   ---- ;; specialize
-  -- if theta = `{ (typeParameterIR `: typeIR_arg)* }
-  -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+  -- if theta = `{ (typeParameterIR `: typeArgumentIR)* }
+  -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
   -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)
 
 ;;
@@ -31,8 +31,9 @@ def $specialize_typeDefIR(typeDefIR_base, typeIR_arg*)
 
 dec $specialize_callableTypeDefIR(callableTypeDefIR, typeIR*)
   : (callableTypeIR, typeId*)
+  hint(prose_in %0 "specialized by" %1)
 
-def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
+def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeArgumentIR*)
   = (callableTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
@@ -40,34 +41,34 @@ def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   ---- ;; if all explicit type arguments are supplied,
   ---- ;; and all implicit type arguments are omitted
-  -- if $(|typeParameterIR_expl*| = |typeIR_arg*|)
+  -- if $(|typeParameterIR_expl*| = |typeArgumentIR*|)
   ---- ;; create fresh type arguments for implicit type parameters
   -- if typeId_fresh* = $fresh_typeIds(|typeParameterIR_impl*|)
-  -- if (typeIR_arg_impl = `` typeId_fresh)*
+  -- if (typeArgumentIR_impl = `` typeId_fresh)*
   ---- ;; specialize
   -- if theta
-      = `{ (typeParameterIR_expl `: typeIR_arg)*
-           ++ (typeParameterIR_impl `: typeIR_arg_impl)* }
+      = `{ (typeParameterIR_expl `: typeArgumentIR)*
+           ++ (typeParameterIR_impl `: typeArgumentIR_impl)* }
   -- if callableTypeIR_base
-      = $type_of_callableTypeDefIR(callableTypeDefIR_base)
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_base)
   -- if callableTypeIR_spec
       = $subst_callableTypeIR(theta, callableTypeIR_base)
 
-def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
+def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeArgumentIR*)
   = (callableTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
       = $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR_base)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   ---- ;; if all type arguments are omitted
-  -- if $(|typeParameterIR_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if $(|typeParameterIR_expl*| > 0) /\ $(|typeArgumentIR*| = 0)
   ---- ;; create fresh type arguments
   -- if typeId_fresh* = $fresh_typeIds(|typeParameterIR*|)
-  -- if (typeIR_arg_fresh = `` typeId_fresh)*
+  -- if (typeArgumentIR_fresh = `` typeId_fresh)*
   ---- ;; specialize
-  -- if theta = `{ (typeParameterIR `: typeIR_arg_fresh)* }
+  -- if theta = `{ (typeParameterIR `: typeArgumentIR_fresh)* }
   -- if callableTypeIR_base
-      = $type_of_callableTypeDefIR(callableTypeDefIR_base)
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_base)
   -- if callableTypeIR_spec
       = $subst_callableTypeIR(theta, callableTypeIR_base)
 
@@ -77,24 +78,25 @@ def $specialize_callableTypeDefIR(callableTypeDefIR_base, typeIR_arg*)
 
 dec $specialize_constructorTypeDefIR(constructorTypeDefIR, typeIR*)
   : (constructorTypeIR, typeId*)
+  hint(prose_in %0 "specialized by" %1)
 
 def $specialize_constructorTypeDefIR(
     CONSTRUCTOR `< typeParameterIR_expl* `, typeParameterIR_impl* >
       `( constructorParameterIR* ) `: typeIR,
-    typeIR_arg*)
+    typeArgumentIR*)
   = (constructorTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   ---- ;; if all explicit type arguments are supplied,
   ---- ;; and all implicit type arguments are omitted
-  -- if $(|typeParameterIR_expl*| = |typeIR_arg*|)
+  -- if $(|typeParameterIR_expl*| = |typeArgumentIR*|)
   ---- ;; create fresh type arguments for implicit type parameters
   -- if typeId_fresh* = $fresh_typeIds(|typeParameterIR_impl*|)
-  -- if (typeIR_arg_impl = `` typeId_fresh)*
+  -- if (typeArgumentIR_impl = `` typeId_fresh)*
   ---- ;; specialize
   -- if theta
-      = `{ (typeParameterIR_expl `: typeIR_arg)*
-           ++ (typeParameterIR_impl `: typeIR_arg_impl)* }
+      = `{ (typeParameterIR_expl `: typeArgumentIR)*
+           ++ (typeParameterIR_impl `: typeArgumentIR_impl)* }
   -- if constructorTypeIR_spec
       = $subst_constructorTypeIR(
           theta,
@@ -103,17 +105,17 @@ def $specialize_constructorTypeDefIR(
 def $specialize_constructorTypeDefIR(
     CONSTRUCTOR `< typeParameterIR_expl* `, typeParameterIR_impl* >
       `( constructorParameterIR* ) `: typeIR,
-    typeIR_arg*)
+    typeArgumentIR*)
   = (constructorTypeIR_spec, typeId_fresh*)
   ---- ;; retrieve type parameters
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   ---- ;; if all type arguments are omitted
-  -- if $(|typeParameterIR_expl*| > 0) /\ $(|typeIR_arg*| = 0)
+  -- if $(|typeParameterIR_expl*| > 0) /\ $(|typeArgumentIR*| = 0)
   ---- ;; create fresh type arguments
   -- if typeId_fresh* = $fresh_typeIds(|typeParameterIR*|)
-  -- if (typeIR_arg_fresh = `` typeId_fresh)*
+  -- if (typeArgumentIR_fresh = `` typeId_fresh)*
   ---- ;; specialize
-  -- if theta = `{ (typeParameterIR `: typeIR_arg_fresh)* }
+  -- if theta = `{ (typeParameterIR `: typeArgumentIR_fresh)* }
   -- if constructorTypeIR_spec
       = $subst_constructorTypeIR(
           theta,

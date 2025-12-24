@@ -192,7 +192,7 @@ rulegroup Expr_eval_lctk/memberAccessExpressionIR-type {
          ~> typeId `. nameIR
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `{ nameIR_field* } = $unroll_typeIR(typeIR_base)
     -- if nameIR <- nameIR_field*
 
@@ -201,7 +201,7 @@ rulegroup Expr_eval_lctk/memberAccessExpressionIR-type {
          ~> typeId `. nameIR `. value
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR_base)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* }
         = $unroll_typeIR(typeIR_base)
     -- if value
@@ -342,7 +342,7 @@ rulegroup Expr_eval_lctk/callExpressionIR-builtin-size {
         ~> $sizeof(typeIR_base, nameIR)
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
 
   rule Expr_eval_lctk/type-polymorphic:
@@ -351,7 +351,7 @@ rulegroup Expr_eval_lctk/callExpressionIR-builtin-size {
     -- if typeDefIR_base = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR_base)
     -- if (eps, eps) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
-    -- if typeIR_base = $type_of_typeDefIR(typeDefIR_base)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if nameIR <- [ "minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes" ]
 
 }

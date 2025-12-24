@@ -73,19 +73,19 @@ rule Type_alpha/headerStackTypeIR:
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 rule Type_alpha/structTypeIR:
-  (STRUCT typeId `< typeIR_arg_a* > `{ _ })
-  ~~ (STRUCT typeId `< typeIR_arg_b* > `{ _ })
-  -- (Type_alpha: typeIR_arg_a ~~ typeIR_arg_b)*
+  (STRUCT typeId `< typeArgumentIR_a* > `{ _ })
+  ~~ (STRUCT typeId `< typeArgumentIR_b* > `{ _ })
+  -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*
 
 rule Type_alpha/headerTypeIR:
-  (HEADER typeId `< typeIR_arg_a* > `{ _ })
-  ~~ (HEADER typeId `< typeIR_arg_b* > `{ _ })
-  -- (Type_alpha: typeIR_arg_a ~~ typeIR_arg_b)*
+  (HEADER typeId `< typeArgumentIR_a* > `{ _ })
+  ~~ (HEADER typeId `< typeArgumentIR_b* > `{ _ })
+  -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*
 
 rule Type_alpha/headerUnionTypeIR:
-  (HEADER_UNION typeId `< typeIR_arg_a* > `{ _ })
-  ~~ (HEADER_UNION typeId `< typeIR_arg_b* > `{ _ })
-  -- (Type_alpha: typeIR_arg_a ~~ typeIR_arg_b)*
+  (HEADER_UNION typeId `< typeArgumentIR_a* > `{ _ })
+  ~~ (HEADER_UNION typeId `< typeArgumentIR_b* > `{ _ })
+  -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*
 
 rulegroup Type_alpha/enumTypeIR {
 
@@ -102,8 +102,8 @@ rulegroup Type_alpha/enumTypeIR {
 ;;; Object types
 
 rule Type_alpha/externObjectTypeIR:
-  (EXTERN typeId `< typeIR_arg_a* > _) ~~ (EXTERN typeId `< typeIR_arg_b* > _)
-  -- (Type_alpha: typeIR_arg_a ~~ typeIR_arg_b)*
+  (EXTERN typeId `< typeArgumentIR_a* > _) ~~ (EXTERN typeId `< typeArgumentIR_b* > _)
+  -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*
 
 rule Type_alpha/parserObjectTypeIR:
   (PARSER _ `< _ > `( parameterIR_a* )) ~~ (PARSER _ `< _ > `( parameterIR_b* ))
@@ -260,14 +260,14 @@ rule CallableTypeDef_alpha:
   -- if typeParameterIR_a* = typeParameterIR_expl_a* ++ typeParameterIR_impl_a*
   -- if theta_a = `{ (typeParameterIR_a `: (`` typeParameterIR_fresh))* }
   -- if callableTypeIR_a
-      = $type_of_callableTypeDefIR(callableTypeDefIR_a)
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_a)
   -- if callableTypeIR_a_subst
       = $subst_callableTypeIR(theta_a, callableTypeIR_a)
   ---- ;; substitute the right hand side
   -- if typeParameterIR_b* = typeParameterIR_expl_b* ++ typeParameterIR_impl_b*
   -- if theta_b = `{ (typeParameterIR_b `: (`` typeParameterIR_fresh))* }
   -- if callableTypeIR_b
-      = $type_of_callableTypeDefIR(callableTypeDefIR_b)
+      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_b)
   -- if callableTypeIR_b_subst
       = $subst_callableTypeIR(theta_b, callableTypeIR_b)
   ---- ;; compare the substituted definitions
