@@ -1,4 +1,5 @@
 open Lang
+open Pass
 module Sim = Runtime.Sim.Simulator
 module Strings = Util.Strings
 module Filesys = Util.Filesys

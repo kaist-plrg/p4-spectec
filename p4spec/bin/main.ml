@@ -1,4 +1,5 @@
 open Lang
+open Pass
 open Util.Error
 open Util.Source
 
