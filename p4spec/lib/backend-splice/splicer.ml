@@ -1,6 +1,6 @@
 open Lang
 open Util.Source
-module RenderCtx = Prose.Ctx
+module RenderCtx = Pass.Prose.Ctx
 
 (* Signature for splicing modules *)
 
@@ -110,10 +110,10 @@ module RuleProse : Splice = struct
     List.map2
       (fun ((id_rel, _) : key) ((mixop, inputs, exps, instrs) : value) ->
         let rulegroup_pl =
-          Prose.Prosify.prosify_rulegroup ctx.prose_ctx (id_rel $ no_region)
-            mixop inputs exps instrs
+          Pass.Prose.Prosify.prosify_rulegroup ctx.prose_ctx
+            (id_rel $ no_region) mixop inputs exps instrs
         in
-        Prose.Pl.Print.render_rulegroup rulegroup_pl)
+        Pl.Render.render_rulegroup rulegroup_pl)
       keys values
     |> String.concat "\n\n"
 end
@@ -138,10 +138,10 @@ module FuncProse : Splice = struct
     List.map2
       (fun (id_def : key) ((tparams, args, typ, instrs) : value) ->
         let func_pl =
-          Prose.Prosify.prosify_func ctx.prose_ctx (id_def $ no_region) tparams
-            args typ instrs
+          Pass.Prose.Prosify.prosify_func ctx.prose_ctx (id_def $ no_region)
+            tparams args typ instrs
         in
-        Prose.Pl.Print.render_func func_pl)
+        Pl.Render.render_func func_pl)
       keys values
     |> String.concat "\n\n"
 end
@@ -166,10 +166,10 @@ module Table : Splice = struct
     List.map2
       (fun (id_def : key) ((args, typ, tablerows) : value) ->
         let id, args, typ, tablerows_pl =
-          Prose.Prosify.prosify_table ctx.prose_ctx (id_def $ no_region) args
-            typ tablerows
+          Pass.Prose.Prosify.prosify_table ctx.prose_ctx (id_def $ no_region)
+            args typ tablerows
         in
-        Prose.Pl.Print.render_table id args typ tablerows_pl)
+        Pl.Render.render_table id args typ tablerows_pl)
       keys values
     |> String.concat "\n\n"
 end

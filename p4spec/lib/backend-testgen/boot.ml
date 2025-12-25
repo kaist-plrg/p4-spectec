@@ -1,6 +1,6 @@
 open Lang
 open Sl
-module MCov = Runtime.Test.Cov.Multiple
+module MCov = Runtime.Testgen.Cov.Multiple
 module Sim = Runtime.Sim.Simulator
 
 (* Measure initial coverage of phantoms *)

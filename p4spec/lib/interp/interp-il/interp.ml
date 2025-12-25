@@ -6,8 +6,8 @@ module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Il
 open Envs
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Test.Dep
-module SCov = Runtime.Test.Cov.Single
+module Dep = Runtime.Testgen.Dep
+module SCov = Runtime.Testgen.Cov.Single
 open Error
 open Attempt
 module F = Format

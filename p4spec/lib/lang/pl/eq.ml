@@ -1,5 +1,4 @@
 open Ast
-open Lang
 open Xl
 include Il.Eq
 

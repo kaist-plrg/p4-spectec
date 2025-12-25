@@ -4,8 +4,8 @@ open Sl
 module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
-module Dep = Runtime.Test.Dep
-module SCov = Runtime.Test.Cov.Single
+module Dep = Runtime.Testgen.Dep
+module SCov = Runtime.Testgen.Cov.Single
 open Util.Backtrace
 open Util.Source
 

@@ -1,7 +1,7 @@
 open Lang
 open Xl
 open Il
-open Runtime.Test
+open Runtime.Testgen
 open Envs
 open Domain.Lib
 open Util.Source

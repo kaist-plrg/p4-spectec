@@ -13,7 +13,7 @@ module TableMap = Map.Make (Kinds.TableId)
 
 type t = {
   filename : string;
-  prose_ctx : Prose.Ctx.t;
+  prose_ctx : Pass.Prose.Ctx.t;
   mutable syntax : Kinds.syntax SyntaxMap.t;
   mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
@@ -84,7 +84,7 @@ let init_sl (ctx : t) (spec_sl : Sl.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
 let init (spec_el : El.spec) (spec_sl : Sl.spec) (filename : string) : t =
-  let prose_ctx = Prose.Ctx.init spec_sl in
+  let prose_ctx = Pass.Prose.Ctx.init spec_sl in
   let ctx =
     {
       filename;

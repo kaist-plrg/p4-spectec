@@ -2,8 +2,8 @@ open Domain.Lib
 open Lang
 open Sl
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Test.Dep
-module SCov = Runtime.Test.Cov.Single
+module Dep = Runtime.Testgen.Dep
+module SCov = Runtime.Testgen.Cov.Single
 module F = Format
 
 (* Derivation of the close-AST from the dependency graph *)
@@ -61,7 +61,7 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
 
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
-  let (module Runner) = Arch.Gen.gen_placeholder () in
+  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let spec_sim = Sim.SL spec in
   match
     Runner.run_program ~derive:true spec_sim relname includes_p4 filename_p4

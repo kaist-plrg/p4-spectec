@@ -1,8 +1,8 @@
 open Lang
 module Value = Dynamic.Value
-module Dep = Test.Dep
-module SCov = Test.Cov.Single
-module MCov = Test.Cov.Multiple
+module Dep = Testgen.Dep
+module SCov = Testgen.Cov.Single
+module MCov = Testgen.Cov.Multiple
 module IO = Io
 open Util.Source
 

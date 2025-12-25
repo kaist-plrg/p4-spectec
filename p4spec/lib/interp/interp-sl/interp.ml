@@ -6,9 +6,9 @@ module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Test.Dep
-module SCov = Runtime.Test.Cov.Single
-module MCov = Runtime.Test.Cov.Multiple
+module Dep = Runtime.Testgen.Dep
+module SCov = Runtime.Testgen.Cov.Single
+module MCov = Runtime.Testgen.Cov.Multiple
 open Error
 module F = Format
 open Util.Backtrace

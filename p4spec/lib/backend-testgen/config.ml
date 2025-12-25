@@ -1,7 +1,7 @@
 open Domain.Lib
 open Lang
 open Sl
-open Runtime.Test
+open Runtime.Testgen
 open Envs
 module SCov = Cov.Single
 module MCov = Cov.Multiple
@@ -136,7 +136,7 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec_il : Il.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) : specenv =
-  let runner = Arch.Gen.gen_placeholder () in
+  let runner = Backend_sim.Gen.gen_placeholder () in
   let printer value_program =
     Format.asprintf "%a\n"
       (Interface.Unparse.pp_program_il spec_il)

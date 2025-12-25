@@ -1,5 +1,4 @@
 open Ast
-open Lang
 open Xl
 open Sl.Print
 open Util.Source
@@ -536,7 +535,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) instrs =
-  let instrs = Shorthand.apply_all_shorthands instrs in
+  (* let instrs = Shorthand.apply_all_shorthands instrs in *)
   match instrs with
   | [ { it = ReturnI ({ it = BoolE _; _ } as exp); _ } ] ->
       F.asprintf " return %s." (render_exp_as_code in_prose exp)

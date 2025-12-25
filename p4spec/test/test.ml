@@ -94,7 +94,7 @@ let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
 let prose_test specdir =
   let spec_pl = prosify specdir in
-  Prose.Pl.Print.render_spec spec_pl |> print_endline
+  Pl.Render.render_spec spec_pl |> print_endline
 
 let prose_command =
   Core.Command.basic ~summary:"run prose test"
@@ -136,7 +136,7 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Arch.Gen.gen_placeholder () in
+      let (module Runner) = Backend_sim.Gen.gen_placeholder () in
       let time_start =
         run (module Runner) negative spec_sim relname includes_p4 filename_p4
       in
@@ -267,7 +267,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Arch.Gen.gen arch in
+      let (module Runner) = Backend_sim.Gen.gen arch in
       let time_start =
         run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
       in
@@ -414,9 +414,9 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
       (fun filename_p4 -> not (List.mem filename_p4 excludes_p4))
       filenames_p4
   in
-  let (module Runner) = Arch.Gen.gen_placeholder () in
+  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let cover = Runner.cover_programs spec_sl relname includes_p4 filenames_p4 in
-  Runtime.Test.Cov.Multiple.log ~filename_cov_opt:None cover
+  Runtime.Testgen.Cov.Multiple.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
