@@ -1,8 +1,8 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
-module Value = Runtime.Dynamic.Value
 
 (* Helpers for invoking functions in the spec *)
 

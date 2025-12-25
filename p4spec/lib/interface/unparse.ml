@@ -4,7 +4,7 @@ open Il.Eq
 open Util.Source
 open Flatten
 open Hint
-module Value = Runtime.Dynamic.Value
+module Value = Runtime.Dynamic_Il.Value
 module F = Format
 
 (* Numbers *)

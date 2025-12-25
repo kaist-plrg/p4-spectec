@@ -3,7 +3,7 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
 open Interface.Flatten
-module Value = Runtime.Dynamic.Value
+module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error

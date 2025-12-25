@@ -1,7 +1,7 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
-module Value = Runtime.Dynamic.Value
+module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error

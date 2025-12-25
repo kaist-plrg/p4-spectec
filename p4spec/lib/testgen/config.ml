@@ -1,12 +1,10 @@
 open Domain.Lib
 open Lang
 open Sl
-module TypDef = Runtime.Dynamic.Typdef
-module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
-module Mixops = Runtime.Test.Mixops
-module MixopEnv = Runtime.Test.Envs.MixopEnv
-module SCov = Runtime.Test.Cov.Single
-module MCov = Runtime.Test.Cov.Multiple
+open Runtime.Test
+open Envs
+module SCov = Cov.Single
+module MCov = Cov.Multiple
 module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
@@ -119,10 +117,10 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
 let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
   | ExternTypD (id, _) ->
-      let td = TypDef.Extern in
+      let td = Typdef.Extern in
       TDEnv.add id td tdenv
   | TypD (id, tparams, deftyp, _) ->
-      let td = TypDef.Defined (tparams, deftyp) in
+      let td = Typdef.Defined (tparams, deftyp) in
       TDEnv.add id td tdenv
   | _ -> tdenv
 

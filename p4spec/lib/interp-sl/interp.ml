@@ -3,13 +3,8 @@ open Lang
 open Xl
 open Sl
 module InputHint = Runtime.Static.Rel.InputHint
-module Typ = Runtime.Dynamic.Typ
-module TypDef = Runtime.Dynamic.Typdef
-module Value = Runtime.Dynamic.Value
-module Rel = Runtime.Dynamic_Sl.Rel
-module Func = Runtime.Dynamic_Sl.Func
-module Cache = Runtime.Dynamic.Cache
-open Runtime.Dynamic_Sl.Envs
+open Runtime.Dynamic_Sl
+open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Test.Dep
 module SCov = Runtime.Test.Cov.Single
@@ -1752,7 +1747,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             TDEnv.fold
               (fun tid typdef theta ->
                 match typdef with
-                | TypDef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                | Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
                     TIdMap.add tid typ theta
                 | _ -> theta)
               tdenv_local TIdMap.empty
@@ -1826,7 +1821,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         id.at "arity mismatch in type arguments";
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          let td = TypDef.Defined ([], Il.PlainT targ $ targ.at) in
+          let td = Typdef.Defined ([], Il.PlainT targ $ targ.at) in
           TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
@@ -1859,10 +1854,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
     | ExternTypD (id, _) ->
-        let td = TypDef.Extern in
+        let td = Typdef.Extern in
         Ctx.add_typdef Global ctx id td
     | TypD (id, tparams, deftyp, _) ->
-        let td = TypDef.Defined (tparams, deftyp) in
+        let td = Typdef.Defined (tparams, deftyp) in
         Ctx.add_typdef Global ctx id td
     | ExternRelD (id, (_, inputs), _, _) ->
         let rel = Rel.Extern inputs in

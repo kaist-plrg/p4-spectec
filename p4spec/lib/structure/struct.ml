@@ -2,7 +2,7 @@ open Domain.Lib
 open Lang
 open Il
 module IEnv = Runtime.Static.Envs.IEnv
-module TypDef = Runtime.Dynamic.Typdef
+module TypDef = Runtime.Dynamic_Sl.Typdef
 module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
 open Util.Source
 

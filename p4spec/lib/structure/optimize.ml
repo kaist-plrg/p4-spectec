@@ -4,7 +4,7 @@ open Xl
 open Ol.Ast
 module InputHint = Runtime.Static.Rel.InputHint
 module IEnv = Runtime.Static.Envs.IEnv
-module Typ = Runtime.Dynamic.Typ
+module Typ = Runtime.Dynamic_Sl.Typ
 module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
 open Util.Source
 

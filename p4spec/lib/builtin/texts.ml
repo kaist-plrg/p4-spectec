@@ -1,7 +1,7 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime.Dynamic.Value
+module Value = Runtime.Dynamic_Il.Value
 open Util.Source
 
 (* dec $text_to_int(text) : int *)

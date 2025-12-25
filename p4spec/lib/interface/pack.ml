@@ -1,4 +1,4 @@
-module Value = Runtime.Dynamic.Value
+module Value = Runtime.Dynamic_Il.Value
 open Wrap
 
 (* Packs an IL value representing a P4 value from an OCaml type *)

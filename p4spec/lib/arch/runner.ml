@@ -1,5 +1,5 @@
-module MCov = Runtime.Test.Cov.Multiple
 open Lang
+module MCov = Runtime.Test.Cov.Multiple
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
 open Error

@@ -1,10 +1,9 @@
 open Domain.Lib
-module InputHint = Runtime.Static.Rel.InputHint
-open Runtime.Dynamic
-open Runtime.Dynamic_Il
-open Envs
 open Lang
 open Il
+module InputHint = Runtime.Static.Rel.InputHint
+open Runtime.Dynamic_Il
+open Envs
 open Error
 open Attempt
 open Util.Source

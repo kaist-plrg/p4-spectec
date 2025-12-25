@@ -1,13 +1,8 @@
 open Lang
 open Xl
 open Il
-module Typ = Runtime.Dynamic.Typ
-module Value = Runtime.Dynamic.Value
-module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
-module Mixops = Runtime.Test.Mixops
-module MixopEnv = Runtime.Test.Envs.MixopEnv
-module Dep = Runtime.Test.Dep
-open Config
+open Runtime.Test
+open Envs
 open Domain.Lib
 open Util.Source
 
