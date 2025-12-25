@@ -2,7 +2,7 @@ open Domain.Lib
 open Lang
 open Xl
 open El
-open Runtime_static
+open Runtime.Static
 open Error
 open Util.Source
 

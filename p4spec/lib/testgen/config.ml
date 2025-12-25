@@ -1,13 +1,13 @@
 open Domain.Lib
 open Lang
 open Sl
-module TypDef = Runtime_dynamic.Typdef
-module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
-module Mixops = Runtime_testgen.Mixops
-module MixopEnv = Runtime_testgen.Envs.MixopEnv
-module SCov = Runtime_testgen.Cov.Single
-module MCov = Runtime_testgen.Cov.Multiple
-module Sim = Runtime_simulator.Simulator
+module TypDef = Runtime.Dynamic.Typdef
+module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
+module Mixops = Runtime.Test.Mixops
+module MixopEnv = Runtime.Test.Envs.MixopEnv
+module SCov = Runtime.Test.Cov.Single
+module MCov = Runtime.Test.Cov.Multiple
+module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
 

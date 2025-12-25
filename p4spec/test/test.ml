@@ -1,5 +1,5 @@
 open Lang
-module Sim = Runtime_simulator.Simulator
+module Sim = Runtime.Sim.Simulator
 module Strings = Util.Strings
 module Filesys = Util.Filesys
 open Util.Error
@@ -185,10 +185,10 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Runtime_simulator.Simulator.IL spec_il
+        Sim.IL spec_il
     | `SL ->
         let spec_sl = structure specdir in
-        Runtime_simulator.Simulator.SL spec_sl
+        Sim.SL spec_sl
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -309,10 +309,10 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Runtime_simulator.Simulator.IL spec_il
+        Sim.IL spec_il
     | `SL ->
         let spec_sl = structure specdir in
-        Runtime_simulator.Simulator.SL spec_sl
+        Sim.SL spec_sl
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -415,7 +415,7 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
   in
   let (module Runner) = Arch.Gen.gen_placeholder () in
   let cover = Runner.cover_programs spec_sl relname includes_p4 filenames_p4 in
-  Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:None cover
+  Runtime.Test.Cov.Multiple.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"

@@ -1,8 +1,8 @@
 open Lang
-module Value = Runtime_dynamic.Value
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
-module MCov = Runtime_testgen.Cov.Multiple
+module Value = Dynamic.Value
+module Dep = Test.Dep
+module SCov = Test.Cov.Single
+module MCov = Test.Cov.Multiple
 module IO = Io
 open Util.Source
 

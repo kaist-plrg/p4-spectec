@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Il
-module TypDef = Runtime_dynamic.Typdef
-module IEnv = Runtime_static.Envs.IEnv
-module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
+module IEnv = Runtime.Static.Envs.IEnv
+module TypDef = Runtime.Dynamic.Typdef
+module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
 open Util.Source
 
 (* Structuring premises *)

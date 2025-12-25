@@ -1,4 +1,4 @@
-module Value = Runtime_dynamic.Value
+module Value = Runtime.Dynamic.Value
 open Interface.Wrap
 open Interface.Pack
 open Interface.Unpack

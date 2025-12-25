@@ -1,7 +1,7 @@
-module MCov = Runtime_testgen.Cov.Multiple
+module MCov = Runtime.Test.Cov.Multiple
 open Lang
-open Io
-open Simulator
+open Runtime.Sim.Io
+open Runtime.Sim.Simulator
 open Error
 open Interface.Wrap
 open Util.Source

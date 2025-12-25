@@ -1,9 +1,9 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
-module Value = Runtime_dynamic.Value
-module IO = Runtime_simulator.Io
-module Sim = Runtime_simulator.Simulator
+module Value = Runtime.Dynamic.Value
+module IO = Runtime.Sim.Io
+module Sim = Runtime.Sim.Simulator
 open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =

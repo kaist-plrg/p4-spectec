@@ -2,10 +2,10 @@ open Domain.Lib
 open Lang
 open Xl
 open Ol.Ast
-module InputHint = Runtime_static.Rel.InputHint
-module IEnv = Runtime_static.Envs.IEnv
-module Typ = Runtime_dynamic.Typ
-module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
+module InputHint = Runtime.Static.Rel.InputHint
+module IEnv = Runtime.Static.Envs.IEnv
+module Typ = Runtime.Dynamic.Typ
+module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
 open Util.Source
 
 (* [1] Remove redundant, trivial let aliases from the code,

@@ -1,7 +1,7 @@
 open Domain.Lib
-module InputHint = Runtime_static.Rel.InputHint
-open Runtime_dynamic
-open Runtime_dynamic_il
+module InputHint = Runtime.Static.Rel.InputHint
+open Runtime.Dynamic
+open Runtime.Dynamic_Il
 open Envs
 open Lang
 open Il

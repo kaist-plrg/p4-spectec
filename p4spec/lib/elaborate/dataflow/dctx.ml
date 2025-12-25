@@ -1,5 +1,5 @@
 open Domain.Lib
-open Runtime_static
+open Runtime.Static
 
 (* Context for dataflow analysis *)
 

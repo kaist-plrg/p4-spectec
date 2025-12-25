@@ -2,18 +2,18 @@ open Domain.Lib
 open Lang
 open Xl
 open Sl
-module InputHint = Runtime_static.Rel.InputHint
-module Typ = Runtime_dynamic.Typ
-module TypDef = Runtime_dynamic.Typdef
-module Value = Runtime_dynamic.Value
-module Rel = Runtime_dynamic_sl.Rel
-module Func = Runtime_dynamic_sl.Func
-module Cache = Runtime_dynamic.Cache
-open Runtime_dynamic_sl.Envs
-module Sim = Runtime_simulator.Simulator
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
-module MCov = Runtime_testgen.Cov.Multiple
+module InputHint = Runtime.Static.Rel.InputHint
+module Typ = Runtime.Dynamic.Typ
+module TypDef = Runtime.Dynamic.Typdef
+module Value = Runtime.Dynamic.Value
+module Rel = Runtime.Dynamic_Sl.Rel
+module Func = Runtime.Dynamic_Sl.Func
+module Cache = Runtime.Dynamic.Cache
+open Runtime.Dynamic_Sl.Envs
+module Sim = Runtime.Sim.Simulator
+module Dep = Runtime.Test.Dep
+module SCov = Runtime.Test.Cov.Single
+module MCov = Runtime.Test.Cov.Multiple
 open Error
 module F = Format
 open Util.Backtrace

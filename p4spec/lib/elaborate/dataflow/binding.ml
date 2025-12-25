@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Il
-module Typ = Runtime_static.Typ
-open Runtime_static.Rel
-open Runtime_static.Envs
+module Typ = Runtime.Static.Typ
+open Runtime.Static.Rel
+open Runtime.Static.Envs
 open Error
 open Bind
 open Util.Source

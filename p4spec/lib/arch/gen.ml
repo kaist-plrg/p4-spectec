@@ -1,5 +1,4 @@
-module Sim = Runtime_simulator.Simulator
-module Runner = Runtime_simulator.Runner
+module Sim = Runtime.Sim.Simulator
 open Error
 
 let gen arch =

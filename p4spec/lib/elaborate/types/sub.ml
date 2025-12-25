@@ -1,7 +1,7 @@
 open Lang
 open Xl
 open El
-open Runtime_static
+open Runtime.Static
 open Util.Source
 
 let rec sub_plaintyp (tdenv : Envs.TDEnv.t) (plaintyp_a : plaintyp)

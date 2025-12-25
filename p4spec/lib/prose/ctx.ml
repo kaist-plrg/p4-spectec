@@ -1,5 +1,5 @@
 open Domain.Lib
-open Runtime_static.Envs
+open Runtime.Static.Envs
 
 type cond_style = If | ElseIf | Else | Check
 type parent_def = None | Relation of RId.t

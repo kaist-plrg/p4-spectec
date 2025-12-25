@@ -1,10 +1,10 @@
 open Domain.Lib
 open Lang
 open Sl
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
-module MCov = Runtime_testgen.Cov.Multiple
-module Sim = Runtime_simulator.Simulator
+module Dep = Runtime.Test.Dep
+module SCov = Runtime.Test.Cov.Single
+module MCov = Runtime.Test.Cov.Multiple
+module Sim = Runtime.Sim.Simulator
 module F = Format
 open Util.Source
 

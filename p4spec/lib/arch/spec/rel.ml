@@ -1,6 +1,6 @@
 open Interface.Wrap
-module IO = Runtime_simulator.Io
-module Value = Runtime_dynamic.Value
+module IO = Runtime.Sim.Io
+module Value = Runtime.Dynamic.Value
 
 (* Helpers for invoking relations in the spec *)
 

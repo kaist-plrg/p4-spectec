@@ -4,11 +4,11 @@ open Domain.Lib
 
 (* Value environment *)
 
-module VEnv = Runtime_dynamic.Envs.VEnv
+module VEnv = Dynamic.Envs.VEnv
 
 (* Type definition environment *)
 
-module TDEnv = Runtime_dynamic.Envs.TDEnv
+module TDEnv = Dynamic.Envs.TDEnv
 
 (* Relation environment *)
 

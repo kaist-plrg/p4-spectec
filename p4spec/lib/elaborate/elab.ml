@@ -1,7 +1,7 @@
 open Domain.Lib
 open Lang
 open El
-open Runtime_static
+open Runtime.Static
 open Attempt
 open Error
 open Util.Source

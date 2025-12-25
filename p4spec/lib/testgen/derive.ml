@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Sl
-module Sim = Runtime_simulator.Simulator
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
+module Sim = Runtime.Sim.Simulator
+module Dep = Runtime.Test.Dep
+module SCov = Runtime.Test.Cov.Single
 module F = Format
 
 (* Derivation of the close-AST from the dependency graph *)

@@ -1,7 +1,7 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime_dynamic.Value
+module Value = Runtime.Dynamic.Value
 open Util.Source
 
 (* dec $rev_<X>(X* ) : X* *)

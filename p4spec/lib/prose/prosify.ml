@@ -4,8 +4,8 @@ open Util.Source
 open Domain.Lib
 open Ctx
 module HEnv = Hintenv
-module IEnv = Runtime_static.Envs.IEnv
-module InputHint = Runtime_static.Rel.InputHint
+module IEnv = Runtime.Static.Envs.IEnv
+module InputHint = Runtime.Static.Rel.InputHint
 
 let split_iters (exps_out : exp list) (iterexps : iterexp list) :
     var list * var list =

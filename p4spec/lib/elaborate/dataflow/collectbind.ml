@@ -1,7 +1,7 @@
 open Lang
 open Il
 open Error
-open Runtime_static.Envs
+open Runtime.Static.Envs
 open Util.Source
 
 (* Collect binding identifiers,

@@ -4,7 +4,7 @@ open Util.Source
 open Lang
 open Sl
 open Domain.Lib
-open Runtime_static.Envs
+open Runtime.Static.Envs
 
 let collect_hints (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
   List.fold_left

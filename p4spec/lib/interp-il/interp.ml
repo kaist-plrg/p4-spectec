@@ -2,17 +2,17 @@ open Domain.Lib
 open Lang
 open Xl
 open Il
-module InputHint = Runtime_static.Rel.InputHint
-module Typ = Runtime_dynamic.Typ
-module TypDef = Runtime_dynamic.Typdef
-module Value = Runtime_dynamic.Value
-module Func = Runtime_dynamic_il.Func
-module Rel = Runtime_dynamic_il.Rel
-module Cache = Runtime_dynamic.Cache
-open Runtime_dynamic_il.Envs
-module Sim = Runtime_simulator.Simulator
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
+module InputHint = Runtime.Static.Rel.InputHint
+module Typ = Runtime.Dynamic.Typ
+module TypDef = Runtime.Dynamic.Typdef
+module Value = Runtime.Dynamic.Value
+module Func = Runtime.Dynamic_Il.Func
+module Rel = Runtime.Dynamic_Il.Rel
+module Cache = Runtime.Dynamic.Cache
+open Runtime.Dynamic_Il.Envs
+module Sim = Runtime.Sim.Simulator
+module Dep = Runtime.Test.Dep
+module SCov = Runtime.Test.Cov.Single
 open Error
 open Attempt
 module F = Format

@@ -1,6 +1,6 @@
 open Lang
 open Il
-module InputHint = Runtime_static.Rel.InputHint
+module InputHint = Static.Rel.InputHint
 
 (* Relation *)
 

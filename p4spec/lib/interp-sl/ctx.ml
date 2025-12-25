@@ -1,10 +1,10 @@
 open Domain.Lib
-module InputHint = Runtime_static.Rel.InputHint
-open Runtime_dynamic
-open Runtime_dynamic_sl
+module InputHint = Runtime.Static.Rel.InputHint
+open Runtime.Dynamic
+open Runtime.Dynamic_Sl
 open Envs
-module Dep = Runtime_testgen.Dep
-module SCov = Runtime_testgen.Cov.Single
+module Dep = Runtime.Test.Dep
+module SCov = Runtime.Test.Cov.Single
 open Lang
 open Sl
 open Util.Backtrace

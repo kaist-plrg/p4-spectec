@@ -71,10 +71,10 @@ let run_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sim =
            match mode with
-           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `IL -> Runtime.Sim.Simulator.IL spec_il
            | `SL ->
                let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime_simulator.Simulator.SL spec_sl
+               Runtime.Sim.Simulator.SL spec_sl
          in
          let (module Runner) = Arch.Gen.gen_placeholder () in
          match
@@ -116,10 +116,10 @@ let sim_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sim =
            match mode with
-           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `IL -> Runtime.Sim.Simulator.IL spec_il
            | `SL ->
                let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime_simulator.Simulator.SL spec_sl
+               Runtime.Sim.Simulator.SL spec_sl
          in
          let (module Runner) = Arch.Gen.gen arch in
          match
@@ -170,7 +170,7 @@ let cover_dangling_command =
          let cover =
            Runner.cover_programs spec_sl relname includes_p4 filenames_p4
          in
-         Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
+         Runtime.Test.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
            cover
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -292,7 +292,7 @@ let interesting_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let (module Runner) = Arch.Gen.gen_placeholder () in
-         let spec_sim = Runtime_simulator.Simulator.SL spec_sl in
+         let spec_sim = Runtime.Sim.Simulator.SL spec_sl in
          let result =
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -301,7 +301,7 @@ let interesting_command =
          | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
                let branch =
-                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Test.Cov.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->
@@ -322,7 +322,7 @@ let interesting_command =
                exit 10)
              else
                let branch =
-                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Test.Cov.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->
