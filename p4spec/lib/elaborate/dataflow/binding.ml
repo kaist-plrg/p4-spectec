@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 module Typ = Runtime_static.Typ
 open Runtime_static.Rel
 open Runtime_static.Envs

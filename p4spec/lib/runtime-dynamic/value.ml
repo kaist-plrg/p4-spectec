@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Il.Ast
+open Il
 open Il.Print
 
 (* Ticker for node identifier tracking *)

@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Il.Ast
+open Il
 module Value = Runtime_dynamic.Value
 open Util.Source
 
@@ -12,7 +13,7 @@ let text_to_int (add : value -> unit) (at : region) (targs : targ list)
   let i = text |> int_of_string |> Bigint.of_int in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.NumT `IntT in
+    let typ = Il.NumT `IntT in
     NumV (`Int i) $$$ { vid; typ }
   in
   add value;
@@ -26,7 +27,7 @@ let int_to_text (add : value -> unit) (at : region) (targs : targ list)
   let num = Extract.one at values_input |> Value.get_num in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.TextT in
+    let typ = Il.TextT in
     TextV (Num.string_of_num num) $$$ { vid; typ }
   in
   add value;
@@ -47,7 +48,7 @@ let strip_prefix (add : value -> unit) (at : region) (targs : targ list)
   in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.TextT in
+    let typ = Il.TextT in
     TextV text $$$ { vid; typ }
   in
   add value;
@@ -65,7 +66,7 @@ let strip_suffix (add : value -> unit) (at : region) (targs : targ list)
   let text = String.sub text 0 (String.length text - String.length suffix) in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.TextT in
+    let typ = Il.TextT in
     TextV text $$$ { vid; typ }
   in
   add value;
@@ -82,7 +83,7 @@ let strip_all_whitespace (add : value -> unit) (at : region) (targs : targ list)
   in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.TextT in
+    let typ = Il.TextT in
     TextV text $$$ { vid; typ }
   in
   add value;

@@ -14,7 +14,8 @@
 *)
 
 {
-open Il.Ast
+open Lang
+open Il
 open Lexing
 open Context
 open Parser
@@ -297,7 +298,7 @@ rule tokenize = parse
         debug_token text;
         let value =
           let vid = Runtime_dynamic.Value.fresh () in
-          let typ = Il.Ast.TextT in
+          let typ = Il.TextT in
           TextV text $$$ { vid; typ }
         in
         NAME value }
@@ -410,7 +411,7 @@ rule tokenize = parse
         debug_token text;
         let value =
           let vid = Runtime_dynamic.Value.fresh () in
-          let typ = Il.Ast.TextT in
+          let typ = Il.TextT in
           TextV text $$$ { vid; typ }
         in
         UNEXPECTED_TOKEN value }

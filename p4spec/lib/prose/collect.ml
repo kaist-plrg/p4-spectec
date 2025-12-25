@@ -1,13 +1,14 @@
 (* Traverses SL AST and collects prose hints *)
 
 open Util.Source
-open Sl.Ast
+open Lang
+open Sl
 open Domain.Lib
 open Runtime_static.Envs
 
 let collect_hints (defid : Hintdb.def_id) (hdb : Hintdb.t) hints : Hintdb.t =
   List.fold_left
-    (fun hdb El.Ast.{ hintid; hintexp } ->
+    (fun hdb El.{ hintid; hintexp } ->
       match hintid.it with
       | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false"
       | "prose_fields" ->

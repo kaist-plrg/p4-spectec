@@ -74,58 +74,56 @@ let string_of_cmpop cmpop = Il.Print.string_of_cmpop cmpop
 
 let rec string_of_exp exp =
   match exp.it with
-  | Il.Ast.BoolE b -> string_of_bool b
-  | Il.Ast.NumE n -> string_of_num n
-  | Il.Ast.TextE text -> "\"" ^ String.escaped text ^ "\""
-  | Il.Ast.VarE varid -> string_of_varid varid
-  | Il.Ast.UnE (unop, _, exp) -> string_of_unop unop ^ string_of_exp exp
-  | Il.Ast.BinE (binop, _, exp_l, exp_r) ->
+  | Il.BoolE b -> string_of_bool b
+  | Il.NumE n -> string_of_num n
+  | Il.TextE text -> "\"" ^ String.escaped text ^ "\""
+  | Il.VarE varid -> string_of_varid varid
+  | Il.UnE (unop, _, exp) -> string_of_unop unop ^ string_of_exp exp
+  | Il.BinE (binop, _, exp_l, exp_r) ->
       "(" ^ string_of_exp exp_l ^ " " ^ string_of_binop binop ^ " "
       ^ string_of_exp exp_r ^ ")"
-  | Il.Ast.CmpE (cmpop, _, exp_l, exp_r) ->
+  | Il.CmpE (cmpop, _, exp_l, exp_r) ->
       "(" ^ string_of_exp exp_l ^ " " ^ string_of_cmpop cmpop ^ " "
       ^ string_of_exp exp_r ^ ")"
-  | Il.Ast.UpCastE (typ, exp) ->
+  | Il.UpCastE (typ, exp) ->
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
-  | Il.Ast.DownCastE (typ, exp) ->
+  | Il.DownCastE (typ, exp) ->
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
-  | Il.Ast.SubE (exp, typ) ->
+  | Il.SubE (exp, typ) ->
       "(" ^ string_of_exp exp ^ " has type " ^ string_of_typ typ ^ ")"
-  | Il.Ast.MatchE (exp, pattern) ->
+  | Il.MatchE (exp, pattern) ->
       "(" ^ string_of_exp exp ^ " matches pattern " ^ string_of_pattern pattern
       ^ ")"
-  | Il.Ast.TupleE exps -> "(" ^ string_of_exps ", " exps ^ ")"
-  | Il.Ast.CaseE notexp -> "(" ^ string_of_notexp notexp ^ ")"
-  | Il.Ast.StrE expfields ->
+  | Il.TupleE exps -> "(" ^ string_of_exps ", " exps ^ ")"
+  | Il.CaseE notexp -> "(" ^ string_of_notexp notexp ^ ")"
+  | Il.StrE expfields ->
       "{"
       ^ String.concat ", "
           (List.map
              (fun (atom, exp) -> string_of_atom atom ^ " " ^ string_of_exp exp)
              expfields)
       ^ "}"
-  | Il.Ast.OptE (Some exp) -> "?(" ^ string_of_exp exp ^ ")"
-  | Il.Ast.OptE None -> "?()"
-  | Il.Ast.ListE exps -> "[" ^ string_of_exps ", " exps ^ "]"
-  | Il.Ast.ConsE (exp_h, exp_t) ->
+  | Il.OptE (Some exp) -> "?(" ^ string_of_exp exp ^ ")"
+  | Il.OptE None -> "?()"
+  | Il.ListE exps -> "[" ^ string_of_exps ", " exps ^ "]"
+  | Il.ConsE (exp_h, exp_t) ->
       string_of_exp exp_h ^ " :: " ^ string_of_exp exp_t
-  | Il.Ast.CatE (exp_l, exp_r) ->
-      string_of_exp exp_l ^ " ++ " ^ string_of_exp exp_r
-  | Il.Ast.MemE (exp_e, exp_s) ->
+  | Il.CatE (exp_l, exp_r) -> string_of_exp exp_l ^ " ++ " ^ string_of_exp exp_r
+  | Il.MemE (exp_e, exp_s) ->
       string_of_exp exp_e ^ " is in " ^ string_of_exp exp_s
-  | Il.Ast.LenE exp -> "|" ^ string_of_exp exp ^ "|"
-  | Il.Ast.DotE (exp_b, atom) -> string_of_exp exp_b ^ "." ^ string_of_atom atom
-  | Il.Ast.IdxE (exp_b, exp_i) ->
+  | Il.LenE exp -> "|" ^ string_of_exp exp ^ "|"
+  | Il.DotE (exp_b, atom) -> string_of_exp exp_b ^ "." ^ string_of_atom atom
+  | Il.IdxE (exp_b, exp_i) ->
       string_of_exp exp_b ^ "[" ^ string_of_exp exp_i ^ "]"
-  | Il.Ast.SliceE (exp_b, exp_l, exp_h) ->
+  | Il.SliceE (exp_b, exp_l, exp_h) ->
       string_of_exp exp_b ^ "[" ^ string_of_exp exp_l ^ " : "
       ^ string_of_exp exp_h ^ "]"
-  | Il.Ast.UpdE (exp_b, path, exp_f) ->
+  | Il.UpdE (exp_b, path, exp_f) ->
       string_of_exp exp_b ^ "[" ^ string_of_path path ^ " = "
       ^ string_of_exp exp_f ^ "]"
-  | Il.Ast.CallE (defid, targs, args) ->
+  | Il.CallE (defid, targs, args) ->
       string_of_defid defid ^ string_of_targs targs ^ string_of_args args
-  | Il.Ast.IterE (exp, iterexp) ->
-      string_of_iterated string_of_exp exp [ iterexp ]
+  | Il.IterE (exp, iterexp) -> string_of_iterated string_of_exp exp [ iterexp ]
 
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
@@ -146,14 +144,13 @@ and string_of_pattern pattern = Il.Print.string_of_pattern pattern
 
 and string_of_path path =
   match path.it with
-  | Il.Ast.RootP -> ""
-  | Il.Ast.IdxP (path, exp) ->
-      string_of_path path ^ "[" ^ string_of_exp exp ^ "]"
-  | Il.Ast.SliceP (path, exp_l, exp_h) ->
+  | Il.RootP -> ""
+  | Il.IdxP (path, exp) -> string_of_path path ^ "[" ^ string_of_exp exp ^ "]"
+  | Il.SliceP (path, exp_l, exp_h) ->
       string_of_path path ^ "[" ^ string_of_exp exp_l ^ " : "
       ^ string_of_exp exp_h ^ "]"
-  | Il.Ast.DotP ({ it = Il.Ast.RootP; _ }, atom) -> string_of_atom atom
-  | Il.Ast.DotP (path, atom) -> string_of_path path ^ "." ^ string_of_atom atom
+  | Il.DotP ({ it = Il.RootP; _ }, atom) -> string_of_atom atom
+  | Il.DotP (path, atom) -> string_of_path path ^ "." ^ string_of_atom atom
 
 (* Parameters *)
 
@@ -169,8 +166,8 @@ and string_of_tparams tparams = Il.Print.string_of_tparams tparams
 
 and string_of_arg arg =
   match arg.it with
-  | Il.Ast.ExpA exp -> string_of_exp exp
-  | Il.Ast.DefA defid -> string_of_defid defid
+  | Il.ExpA exp -> string_of_exp exp
+  | Il.DefA defid -> string_of_defid defid
 
 and string_of_args args =
   match args with
@@ -385,7 +382,7 @@ and string_of_relinput mixop inputs exps_input =
       (fun idx ->
         match List.assoc_opt idx exps_input with
         | Some exp_input -> exp_input
-        | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
   in
   let notexp = (mixop, exps) in
   string_of_notexp notexp
@@ -404,7 +401,7 @@ and string_of_reloutput mixop inputs exps_output =
       (fun idx ->
         match List.assoc_opt idx exps_output with
         | Some exp_output -> exp_output
-        | None -> Il.Ast.VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
   in
   let notexp = (mixop, exps) in
   string_of_notexp notexp

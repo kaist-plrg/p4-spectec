@@ -1,5 +1,5 @@
-open El.Ast
-open El.Print (* Type definitions *)
+open Lang.El
+open Lang.El.Print (* Type definitions *)
 
 [@@@ocamlformat "disable"]
 

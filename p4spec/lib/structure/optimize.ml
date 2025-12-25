@@ -1,4 +1,5 @@
 open Domain.Lib
+open Lang
 open Xl
 open Ol.Ast
 module InputHint = Runtime_static.Rel.InputHint
@@ -168,15 +169,15 @@ let matchify_exp_eq_terminal (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
   | CmpE (`EqOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
-      Il.Ast.MatchE (exp_l, CaseP mixop) $$ (at, note)
+      Il.MatchE (exp_l, CaseP mixop) $$ (at, note)
   | CmpE (`EqOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
-      Il.Ast.MatchE (exp_r, CaseP mixop) $$ (at, note)
+      Il.MatchE (exp_r, CaseP mixop) $$ (at, note)
   | CmpE (`NeOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
-      let exp = Il.Ast.MatchE (exp_l, CaseP mixop) $$ (at, note) in
-      Il.Ast.UnE (`NotOp, `BoolT, exp) $$ (at, note)
+      let exp = Il.MatchE (exp_l, CaseP mixop) $$ (at, note) in
+      Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
   | CmpE (`NeOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
-      let exp = Il.Ast.MatchE (exp_r, CaseP mixop) $$ (at, note) in
-      Il.Ast.UnE (`NotOp, `BoolT, exp) $$ (at, note)
+      let exp = Il.MatchE (exp_r, CaseP mixop) $$ (at, note) in
+      Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
   | _ -> exp
 
 let rec matchify_if_eq_terminal (instr : instr) : instr =
@@ -499,14 +500,13 @@ let guard_as_exp (exp_target : exp) (guard : guard) : exp =
   match guard with
   | BoolG true -> exp_target
   | BoolG false ->
-      Il.Ast.UnE (`NotOp, `BoolT, exp_target) $$ (exp_target.at, Il.Ast.BoolT)
+      Il.UnE (`NotOp, `BoolT, exp_target) $$ (exp_target.at, Il.BoolT)
   | CmpG (cmpop, optyp, exp) ->
-      Il.Ast.CmpE (cmpop, optyp, exp_target, exp)
-      $$ (exp_target.at, Il.Ast.BoolT)
-  | SubG typ -> Il.Ast.SubE (exp_target, typ) $$ (exp_target.at, Il.Ast.BoolT)
+      Il.CmpE (cmpop, optyp, exp_target, exp) $$ (exp_target.at, Il.BoolT)
+  | SubG typ -> Il.SubE (exp_target, typ) $$ (exp_target.at, Il.BoolT)
   | MatchG pattern ->
-      Il.Ast.MatchE (exp_target, pattern) $$ (exp_target.at, Il.Ast.BoolT)
-  | MemG exp -> Il.Ast.MemE (exp_target, exp) $$ (exp_target.at, Il.Ast.BoolT)
+      Il.MatchE (exp_target, pattern) $$ (exp_target.at, Il.BoolT)
+  | MemG exp -> Il.MemE (exp_target, exp) $$ (exp_target.at, Il.BoolT)
 
 (* Conversion from type to its variants *)
 

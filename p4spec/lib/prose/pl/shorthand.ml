@@ -1,4 +1,5 @@
 open Ast
+open Lang
 open Util.Source
 module F = Format
 
@@ -62,10 +63,7 @@ let option_get instrs =
 let check_option_get instrs =
   match instrs with
   | { it = LetI (exp_opt, exp_call); at; _ }
-    :: {
-         it = CheckI (ExpCond { it = MatchE (exp_opt', Il.Ast.OptP `Some); _ });
-         _;
-       }
+    :: { it = CheckI (ExpCond { it = MatchE (exp_opt', Il.OptP `Some); _ }); _ }
     :: { it = LetI ({ it = OptE (Some exp_l); _ }, exp_r); _ }
     :: instrs_rest
     when Eq.eq_exp exp_opt exp_opt' && Eq.eq_exp exp_opt' exp_r ->

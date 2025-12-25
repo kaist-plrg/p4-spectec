@@ -1,4 +1,5 @@
 module MCov = Runtime_testgen.Cov.Multiple
+open Lang
 open Io
 open Simulator
 open Error
@@ -30,8 +31,8 @@ module Make
         Interp_SL.eval_program ~derive spec_sl relname includes_p4 filename_p4
     | Empty -> assert false
 
-  let run_program_internal ~(derive : bool) (spec : Sl.Ast.spec)
-      (relname : string) (value_program : Sl.Ast.value) : rel_result =
+  let run_program_internal ~(derive : bool) (spec : Sl.spec) (relname : string)
+      (value_program : Sl.value) : rel_result =
     derive |> ignore;
     Arch.init (SL spec);
     Interp_SL.eval_rel spec relname [ value_program ]
@@ -75,10 +76,10 @@ module Make
           (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
              (string_of_tx tx_output))
 
-  let run_stf_stmt (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
+  let run_stf_stmt (value_ctx : Sl.value) (value_sto : Sl.value)
       (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
-      (stmt_stf : Stf.Ast.stmt) :
-      Sl.Ast.value * Sl.Ast.value * IO.tx list * IO.tx list =
+      (stmt_stf : Stf.Ast.stmt) : Sl.value * Sl.value * IO.tx list * IO.tx list
+      =
     match stmt_stf with
     (* Packet I/O *)
     | Stf.Ast.Packet (port_in, packet_in) ->
@@ -114,7 +115,7 @@ module Make
           table_entry_priority_opt
           |> Option.map (fun table_entry_priority ->
                  table_entry_priority |> Bigint.of_int |> wrap_num_v_int)
-          |> wrap_opt_v_typed (Il.Ast.NumT `IntT)
+          |> wrap_opt_v_typed (Il.NumT `IntT)
         in
         (* Encode keys *)
         let value_tableKeysetInterface =
@@ -165,7 +166,7 @@ module Make
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
-  let run_stf_stmts (value_ctx : Sl.Ast.value) (value_sto : Sl.Ast.value)
+  let run_stf_stmts (value_ctx : Sl.value) (value_sto : Sl.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left
@@ -207,7 +208,7 @@ module Make
 
   (* Coverage runner *)
 
-  let cover_programs (spec : Sl.Ast.spec) (relname : string)
+  let cover_programs (spec : Sl.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : MCov.Cover.t =
     Arch.init (SL spec);
     Interp_SL.cover_programs spec relname includes_p4 filenames_p4

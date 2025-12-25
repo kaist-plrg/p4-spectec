@@ -204,7 +204,7 @@ and tablerow' = exp list * arg list * exp * prem list
 
 (* Hints *)
 
-and hint = El.Ast.hint
+and hint = El.hint
 
 (* Definitions *)
 

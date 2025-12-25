@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Il.Ast
+open Il
 module Typ = Runtime_dynamic.Typ
 module Value = Runtime_dynamic.Value
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv

@@ -5,7 +5,8 @@
  * - has_type_params : checks for type parameters in CaseV values
  *)
 
-open Il.Ast
+open Lang
+open Il
 open Flatten
 open Util.Error
 open Util.Source

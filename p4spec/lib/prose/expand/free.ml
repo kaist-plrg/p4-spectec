@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 open Fold
 open Util.Source
 

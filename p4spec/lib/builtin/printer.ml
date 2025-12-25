@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 module Value = Runtime_dynamic.Value
 open Util.Source
 
@@ -13,7 +14,7 @@ let print (add : value -> unit) (at : region) (targs : targ list)
   let text = !printer value in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.TextT in
+    let typ = Il.TextT in
     TextV text $$$ { vid; typ }
   in
   add value;

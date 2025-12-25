@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 module TypDef = Runtime_dynamic.Typdef
 module IEnv = Runtime_static.Envs.IEnv
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
@@ -111,12 +112,12 @@ let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
 
 (* Structuring definitions *)
 
-let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
+let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.def =
   let at = def.at in
   match def.it with
-  | ExternTypD (id, hints) -> Sl.Ast.ExternTypD (id, hints) $ at
+  | ExternTypD (id, hints) -> Sl.ExternTypD (id, hints) $ at
   | TypD (id, tparams, deftyp, hints) ->
-      Sl.Ast.TypD (id, tparams, deftyp, hints) $ at
+      Sl.TypD (id, tparams, deftyp, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
@@ -133,7 +134,7 @@ let rec struct_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.Ast.def =
 (* Structuring relation definitions *)
 
 and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
-    (inputs : int list) (hints : hint list) : Sl.Ast.def =
+    (inputs : int list) (hints : hint list) : Sl.def =
   let mixop, typs = nottyp.it in
   let typs_match = List.map (fun i -> List.nth typs i) inputs in
   let exps_match, _ =
@@ -146,11 +147,11 @@ and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
       ([], IdSet.empty) typs_match
   in
   let externrel = (id_rel, (mixop, inputs), exps_match, hints) in
-  Sl.Ast.ExternRelD externrel $ at
+  Sl.ExternRelD externrel $ at
 
 and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_rel : id) (nottyp : nottyp) (inputs : int list)
-    (rulegroups : rulegroup list) (hints : hint list) : Sl.Ast.def =
+    (rulegroups : rulegroup list) (hints : hint list) : Sl.def =
   let mixop, _ = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_group, prems_match_group =
@@ -198,12 +199,12 @@ and struct_defined_rel_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     Pretty.pretty_rel exps_match_unified instrs
   in
   let instrs = Instrument.instrument tdenv instrs in
-  Sl.Ast.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
+  Sl.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
 
 and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
-    (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
+    (params : param list) (typ : typ) (hints : hint list) : Sl.def =
   let args_input, _ =
     List.fold_left
       (fun (args_input, frees) param ->
@@ -223,10 +224,10 @@ and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
       ([], IdSet.empty) params
   in
   let externfunc = (id_dec, tparams, args_input, typ, hints) in
-  Sl.Ast.ExternDecD externfunc $ at
+  Sl.ExternDecD externfunc $ at
 
 and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
-    (params : param list) (typ : typ) (hints : hint list) : Sl.Ast.def =
+    (params : param list) (typ : typ) (hints : hint list) : Sl.def =
   let args_input, _ =
     List.fold_left
       (fun (args_input, frees) param ->
@@ -246,11 +247,11 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
       ([], IdSet.empty) params
   in
   let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
-  Sl.Ast.BuiltinDecD builtinfunc $ at
+  Sl.BuiltinDecD builtinfunc $ at
 
 and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tablerows : tablerow list) (typ : typ) (hints : hint list) :
-    Sl.Ast.def =
+    Sl.def =
   let exps_signature_group, clauses =
     tablerows
     |> List.map (fun tablerow ->
@@ -275,18 +276,18 @@ and struct_table_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
          instrs_tablerows_group
   in
   let tablefunc = (id_dec, args_input, typ, tablerows, hints) in
-  Sl.Ast.TableDecD tablefunc $ at
+  Sl.TableDecD tablefunc $ at
 
 and struct_func_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
-    (hints : hint list) : Sl.Ast.def =
+    (hints : hint list) : Sl.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
   let instrs = Optimize.optimize ienv tdenv instrs in
   let args_input, instrs = Pretty.pretty_func args_input instrs in
   let instrs = Instrument.instrument tdenv instrs in
   let func = (id_dec, tparams, args_input, typ, instrs, hints) in
-  Sl.Ast.FuncDecD func $ at
+  Sl.FuncDecD func $ at
 
 (* Load type definitions *)
 
@@ -313,6 +314,6 @@ let load_spec (ienv : IEnv.t) (tdenv : TDEnv.t) (spec : spec) : IEnv.t * TDEnv.t
 
 (* Structuring a spec *)
 
-let struct_spec (spec : spec) : Sl.Ast.spec =
+let struct_spec (spec : spec) : Sl.spec =
   let ienv, tdenv = load_spec IEnv.empty TDEnv.empty spec in
   List.map (struct_def ienv tdenv) spec

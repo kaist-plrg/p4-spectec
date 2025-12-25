@@ -1,46 +1,47 @@
+open Lang
 open Util.Source
 
 (* Numbers *)
 
-type num = Il.Ast.num
+type num = Il.num
 
 (* Texts *)
 
-type text = Il.Ast.text
+type text = Il.text
 
 (* Identifiers *)
 
-type id = Il.Ast.id
+type id = Il.id
 
 (* Atoms *)
 
-type atom = Il.Ast.atom
+type atom = Il.atom
 
 (* Mixfix operatros *)
 
-type mixop = Il.Ast.mixop
+type mixop = Il.mixop
 
 (* Iterators *)
 
-type iter = Il.Ast.iter
+type iter = Il.iter
 
 (* Variables *)
 
-type itervar = Il.Ast.var
+type itervar = Il.var
 type itervars = itervar list
 
 (* Types *)
 
-type typ = Il.Ast.typ
-type typ' = Il.Ast.typ'
+type typ = Il.typ
+type typ' = Il.typ'
 
 (* Operators *)
 
-type unop = Il.Ast.unop
-type binop = Il.Ast.binop
-type cmpop = Il.Ast.cmpop
+type unop = Il.unop
+type binop = Il.binop
+type cmpop = Il.cmpop
 
-type optyp = Il.Ast.optyp
+type optyp = Il.optyp
 
 (* Expressions *)
 and exp = (exp', typ') note_phrase
@@ -77,7 +78,7 @@ and notexp = mixop * exp list
 and iterexp = iter * itervar list
 
 (* Patterns *)
-and pattern = Il.Ast.pattern
+and pattern = Il.pattern
 
 (* Path *)
 and path = (path', typ') note_phrase
@@ -97,7 +98,7 @@ and arg' =
   | DefA of id (* `$`id *)
 
 (* Type arguments *)
-and targ = Il.Ast.targ
+and targ = Il.targ
 
 (* Function Renderers *)
 and funcprose =
@@ -108,7 +109,7 @@ and funcprose =
   (* $def<targs>(args) *)
   | Def of id
 
-and hintexp = El.Ast.exp
+and hintexp = El.exp
 
 and relcall =
   (* prose hint, outputs, inputs *)
@@ -118,7 +119,7 @@ and relcall =
 
 (* Type parameters *)
 
-type tparam = Il.Ast.tparam
+type tparam = Il.tparam
 
 (* Branch types *)
 

@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 module Value = Runtime_dynamic.Value
 open Util.Source
 
@@ -14,7 +15,7 @@ let fresh_typeId (add : value -> unit) (at : region) (targs : targ list)
   ctr := !ctr + 1;
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.VarT ("typeId" $ no_region, []) in
+    let typ = Il.VarT ("typeId" $ no_region, []) in
     TextV tid $$$ { vid; typ }
   in
   add value;

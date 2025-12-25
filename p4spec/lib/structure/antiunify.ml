@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 open Util.Source
 
 (* Unification environment: a map from original id to its unified id *)

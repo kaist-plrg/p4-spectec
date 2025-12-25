@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 open Runtime_static
 open Attempt
 open Util.Source

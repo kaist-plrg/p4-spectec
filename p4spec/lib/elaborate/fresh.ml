@@ -1,4 +1,5 @@
 open Domain.Lib
+open Lang
 open Util.Source
 
 let fresh_id (ids : IdSet.t) (id : Id.t) : Id.t =
@@ -16,15 +17,14 @@ let fresh_id (ids : IdSet.t) (id : Id.t) : Id.t =
   fresh_id' id
 
 let fresh_id_from_plaintyp ?(wildcard = false) (ids : IdSet.t)
-    (plaintyp : El.Ast.plaintyp) : Id.t =
+    (plaintyp : El.plaintyp) : Id.t =
   let id = El.Print.string_of_plaintyp plaintyp $ plaintyp.at in
   let id = if wildcard then "_" ^ id.it $ id.at else id in
   fresh_id ids id
 
 let fresh_var_from_typ ?(wildcard = false) (ids : IdSet.t) (at : region)
-    (typ : Il.Ast.typ) : Id.t * Il.Ast.typ * Il.Ast.iter list =
-  let rec fresh_var_from_typ' (typ : Il.Ast.typ) :
-      Id.t * Il.Ast.typ * Il.Ast.iter list =
+    (typ : Il.typ) : Id.t * Il.typ * Il.iter list =
+  let rec fresh_var_from_typ' (typ : Il.typ) : Id.t * Il.typ * Il.iter list =
     match typ.it with
     | IterT (typ, iter) ->
         let id, typ, iters = fresh_var_from_typ' typ in
@@ -38,24 +38,21 @@ let fresh_var_from_typ ?(wildcard = false) (ids : IdSet.t) (at : region)
   let id = fresh_id ids id in
   (id, typ, iters)
 
-let fresh_var_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : Il.Ast.exp) :
-    Id.t * Il.Ast.typ * Il.Ast.iter list =
+let fresh_var_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : Il.exp) :
+    Id.t * Il.typ * Il.iter list =
   fresh_var_from_typ ~wildcard ids exp.at (exp.note $ exp.at)
 
-let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.Ast.typ) : Il.Ast.exp * IdSet.t
-    =
+let fresh_exp_from_typ (ids : IdSet.t) (typ : Il.typ) : Il.exp * IdSet.t =
   let id_base, typ_base, iters = fresh_var_from_typ ids typ.at typ in
   let ids = IdSet.add id_base ids in
-  let exp_base = Il.Ast.VarE id_base $$ (typ_base.at, typ_base.it) in
+  let exp_base = Il.VarE id_base $$ (typ_base.at, typ_base.it) in
   let exp_match, _ =
     List.fold_left
       (fun (exp_match, iters) iter ->
-        let typ = Il.Ast.IterT (exp_match.note $ exp_match.at, iter) in
+        let typ = Il.IterT (exp_match.note $ exp_match.at, iter) in
         let var = (id_base, typ_base, iters) in
         let iterexp = (iter, [ var ]) in
-        let exp_match =
-          Il.Ast.IterE (exp_match, iterexp) $$ (exp_match.at, typ)
-        in
+        let exp_match = Il.IterE (exp_match, iterexp) $$ (exp_match.at, typ) in
         (exp_match, iters @ [ iter ]))
       (exp_base, []) iters
   in

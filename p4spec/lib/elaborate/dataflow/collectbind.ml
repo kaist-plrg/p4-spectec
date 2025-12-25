@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 open Error
 open Runtime_static.Envs
 open Util.Source

@@ -1,3 +1,4 @@
+open Lang
 open Util.Source
 module RenderCtx = Prose.Ctx
 

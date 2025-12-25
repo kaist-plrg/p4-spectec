@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 open Runtime_static
 open Error
 open Util.Source
@@ -9,7 +10,7 @@ open Util.Source
 let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
   typ |> Plaintyp.of_internal_typ |> is_singleton_case' dctx
 
-and is_singleton_case' (dctx : Dctx.t) (plaintyp : El.Ast.plaintyp) : bool =
+and is_singleton_case' (dctx : Dctx.t) (plaintyp : El.plaintyp) : bool =
   match plaintyp.it with
   | VarT (tid, targs) -> (
       let td = Dctx.find_typdef dctx tid in

@@ -1,4 +1,5 @@
-open Sl.Ast
+open Lang
+open Sl
 module MCov = Runtime_testgen.Cov.Multiple
 module Sim = Runtime_simulator.Simulator
 

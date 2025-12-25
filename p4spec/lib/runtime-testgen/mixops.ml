@@ -1,4 +1,4 @@
-open Xl
+open Lang.Xl
 
 module Group = Set.Make (struct
   type t = Mixop.t

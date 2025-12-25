@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Il.Ast
+open Il
 module Value = Runtime_dynamic.Value
 open Util.Source
 
@@ -11,7 +12,7 @@ let rev_ (add : value -> unit) (at : region) (targs : targ list)
   let values = Extract.one at values_input |> Value.get_list in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ, Il.Ast.List) in
+    let typ = Il.IterT (typ, Il.List) in
     ListV (List.rev values) $$$ { vid; typ }
   in
   add value;
@@ -29,7 +30,7 @@ let concat_ (add : value -> unit) (at : region) (targs : targ list)
   in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ, Il.Ast.List) in
+    let typ = Il.IterT (typ, Il.List) in
     ListV values $$$ { vid; typ }
   in
   add value;
@@ -44,7 +45,7 @@ let distinct_ (add : value -> unit) (at : region) (targs : targ list)
   let set = Sets.VSet.of_list values in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.BoolT in
+    let typ = Il.BoolT in
     BoolV (Sets.VSet.cardinal set = List.length values) $$$ { vid; typ }
   in
   add value;
@@ -65,20 +66,20 @@ let partition_ (add : value -> unit) (at : region) (targs : targ list)
   in
   let value_left =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ, Il.Ast.List) in
+    let typ = Il.IterT (typ, Il.List) in
     ListV (List.map snd values_left) $$$ { vid; typ }
   in
   add value_left;
   let value_right =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ, Il.Ast.List) in
+    let typ = Il.IterT (typ, Il.List) in
     ListV (List.map snd values_right) $$$ { vid; typ }
   in
   add value_right;
   let value =
     let vid = Value.fresh () in
     let typ =
-      Il.Ast.TupleT
+      Il.TupleT
         [ value_left.note.typ $ no_region; value_right.note.typ $ no_region ]
     in
     TupleV [ value_left; value_right ] $$$ { vid; typ }
@@ -110,7 +111,7 @@ let assoc_ (add : value -> unit) (at : region) (targs : targ list)
   in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
+    let typ = Il.IterT (typ_value, Il.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
   add value;

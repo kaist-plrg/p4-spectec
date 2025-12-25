@@ -1,7 +1,8 @@
 open Ast
-open Util.Source
-open Sl.Print
+open Lang
 open Xl
+open Sl.Print
+open Util.Source
 module F = Format
 
 (* Asciidoc rendering *)
@@ -104,7 +105,7 @@ let code_of_mixop mixop =
   let mixop = List.map (List.map it) mixop in
   String.concat " % "
     (List.map
-       (fun atoms -> String.concat " " (List.map Xl.Atom.string_of_atom atoms))
+       (fun atoms -> String.concat " " (List.map Atom.string_of_atom atoms))
        mixop)
   |> String.trim
 
@@ -224,15 +225,15 @@ let rec render_exp ctx exp : string =
       F.asprintf "%s has type %s"
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
-  | MatchE (exp, Il.Ast.ListP `Nil) ->
+  | MatchE (exp, Il.ListP `Nil) ->
       F.asprintf "%s is an empty list" (render_exp_as_code ctx exp)
-  | MatchE (exp, Il.Ast.ListP `Cons) ->
+  | MatchE (exp, Il.ListP `Cons) ->
       F.asprintf "%s is a non-empty list" (render_exp_as_code ctx exp)
-  | MatchE (exp, Il.Ast.ListP (`Fixed len)) ->
+  | MatchE (exp, Il.ListP (`Fixed len)) ->
       F.asprintf "%s is a list of length %d" (render_exp_as_code ctx exp) len
-  | MatchE (exp, Il.Ast.OptP `None) ->
+  | MatchE (exp, Il.OptP `None) ->
       F.asprintf "%s is None" (render_exp_as_code ctx exp)
-  | MatchE (exp, Il.Ast.OptP `Some) ->
+  | MatchE (exp, Il.OptP `Some) ->
       F.asprintf "%s is Some value" (render_exp_as_code ctx exp)
   | MatchE (exp, pattern) ->
       F.asprintf "%s matches pattern %s"
@@ -345,21 +346,21 @@ and code_of_relinput ctx notexp =
       (fun idx ->
         match List.nth_opt exps_input idx with
         | Some exp_input -> exp_input
-        | None -> VarE ("%" $ no_region) $$ (no_region, Il.Ast.TextT))
+        | None -> VarE ("%" $ no_region) $$ (no_region, Il.TextT))
   in
   let notexp = (mixop, exps) in
   code_of_notexp ctx notexp
 
-and render_hintexp ?(caps = false) ctx (exps : exp list) (hintexp : El.Ast.exp)
-    : string =
+and render_hintexp ?(caps = false) ctx (exps : exp list) (hintexp : El.exp) :
+    string =
   let _, str = render_hintexp' ctx exps hintexp 0 in
   if caps then capitalize_first str else str
 
-and render_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp) (cursor : int)
-    : int * string =
+and render_hintexp' ctx (exps : exp list) (hintexp : El.exp) (cursor : int) :
+    int * string =
   match hintexp.it with
-  | El.Ast.TextE text -> (cursor, text |> reindent_lines ~level:0)
-  | El.Ast.SeqE exps_hint ->
+  | El.TextE text -> (cursor, text |> reindent_lines ~level:0)
+  | El.SeqE exps_hint ->
       let cursor, strs =
         List.fold_left
           (fun (cur, acc) exp ->
@@ -368,16 +369,16 @@ and render_hintexp' ctx (exps : exp list) (hintexp : El.Ast.exp) (cursor : int)
           (cursor, []) exps_hint
       in
       (cursor, String.concat " " strs)
-  | El.Ast.HoleE `Next ->
+  | El.HoleE `Next ->
       (* cursor holds position for HoleE.Next *)
       let exp = List.nth exps cursor in
       (* access HoleE.Next with current cursor *)
       (cursor + 1, render_exp ctx exp)
-  | El.Ast.HoleE (`Num i) ->
+  | El.HoleE (`Num i) ->
       (* accesses HoleE.Num with index *)
       let exp = List.nth exps i in
       (cursor, render_exp ctx exp)
-  | El.Ast.FuseE (exp_l, exp_r) ->
+  | El.FuseE (exp_l, exp_r) ->
       let cursor_l, str_l = render_hintexp' ctx exps exp_l cursor in
       let cursor_r, str_r = render_hintexp' ctx exps exp_r cursor_l in
       (cursor_r, str_l ^ str_r)

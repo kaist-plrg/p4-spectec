@@ -1,5 +1,6 @@
 open Domain.Lib
-open Sl.Ast
+open Lang
+open Sl
 
 (* Get filenames per target phantom *)
 

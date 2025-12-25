@@ -1,4 +1,4 @@
-open Il.Ast
+open Lang.Il
 open Util.Source
 
 (* Variable with type and dimention *)

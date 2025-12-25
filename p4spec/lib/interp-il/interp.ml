@@ -1,6 +1,7 @@
 open Domain.Lib
+open Lang
 open Xl
-open Il.Ast
+open Il
 module InputHint = Runtime_static.Rel.InputHint
 module Typ = Runtime_dynamic.Typ
 module TypDef = Runtime_dynamic.Typdef
@@ -662,7 +663,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       | TextV s ->
           let s = String.get s idx |> String.make 1 in
           let vid = Value.fresh () in
-          let typ = Il.Ast.TextT in
+          let typ = Il.TextT in
           TextV s $$$ { vid; typ }
       | ListV values when idx < 0 || idx >= List.length values ->
           error exp_i.at
@@ -695,7 +696,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       | TextV s ->
           let s_slice = String.sub s idx_l (idx_h - idx_l) in
           let vid = Value.fresh () in
-          let typ = Il.Ast.TextT in
+          let typ = Il.TextT in
           TextV s_slice $$$ { vid; typ }
       | ListV values when idx_l < 0 || idx_h > List.length values ->
           error exp_n.at
@@ -737,8 +738,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             let s = String.get s idx |> String.make 1 in
             let value_res =
               let vid = Value.fresh () in
-              let typ = Il.Ast.TextT in
-              Il.Ast.(TextV s $$$ { vid; typ })
+              let typ = Il.TextT in
+              Il.(TextV s $$$ { vid; typ })
             in
             (ctx, value_res)
         | ListV values when idx < 0 || idx >= List.length values ->
@@ -772,8 +773,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             let s_slice = String.sub s idx_l (idx_h - idx_l) in
             let value_res =
               let vid = Value.fresh () in
-              let typ = Il.Ast.TextT in
-              Il.Ast.(TextV s_slice $$$ { vid; typ })
+              let typ = Il.TextT in
+              Il.(TextV s_slice $$$ { vid; typ })
             in
             (ctx, value_res)
         | ListV values when idx_l < 0 || idx_h > List.length values ->
@@ -791,7 +792,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             let value_res =
               let vid = Value.fresh () in
               let typ = path.note in
-              Il.Ast.(ListV values_slice $$$ { vid; typ })
+              Il.(ListV values_slice $$$ { vid; typ })
             in
             (ctx, value_res)
         | _ ->
@@ -839,8 +840,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               in
               let value =
                 let vid = Value.fresh () in
-                let typ = Il.Ast.TextT in
-                Il.Ast.(TextV s_updated $$$ { vid; typ })
+                let typ = Il.TextT in
+                Il.(TextV s_updated $$$ { vid; typ })
               in
               eval_update_path ctx value_b path value
         | ListV values when idx_target < 0 || idx_target >= List.length values
@@ -857,7 +858,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             let value =
               let vid = Value.fresh () in
               let typ = path.note in
-              Il.Ast.(ListV values_updated $$$ { vid; typ })
+              Il.(ListV values_updated $$$ { vid; typ })
             in
             eval_update_path ctx value_b path value
         | _ ->
@@ -896,8 +897,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               in
               let value =
                 let vid = Value.fresh () in
-                let typ = Il.Ast.TextT in
-                Il.Ast.(TextV s_updated $$$ { vid; typ })
+                let typ = Il.TextT in
+                Il.(TextV s_updated $$$ { vid; typ })
               in
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
@@ -925,7 +926,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               let value =
                 let vid = Value.fresh () in
                 let typ = path.note in
-                Il.Ast.(ListV values_updated $$$ { vid; typ })
+                Il.(ListV values_updated $$$ { vid; typ })
               in
               eval_update_path ctx value_b path value
         | _ ->
@@ -1324,7 +1325,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             TDEnv.fold
               (fun tid typdef theta ->
                 match typdef with
-                | TypDef.Defined ([], { it = Il.Ast.PlainT typ; _ }) ->
+                | TypDef.Defined ([], { it = Il.PlainT typ; _ }) ->
                     TIdMap.add tid typ theta
                 | _ -> theta)
               ctx.local.tdenv TIdMap.empty

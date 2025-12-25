@@ -1,3 +1,4 @@
+open Lang
 open Interface.Wrap
 open Interface.Unwrap
 module Value = Runtime_dynamic.Value
@@ -27,7 +28,7 @@ struct
 
   let init_call_rel () = Spec.Rel.register call_rel
 
-  let call_func (funcname : string) (typs_input : Sl.Ast.typ list)
+  let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
     let result =
       match !spec with

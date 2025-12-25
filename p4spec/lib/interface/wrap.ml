@@ -1,5 +1,6 @@
-open Il.Ast
+open Lang
 open Xl.Atom
+open Il
 open Util.Source
 
 (* Atom generator *)

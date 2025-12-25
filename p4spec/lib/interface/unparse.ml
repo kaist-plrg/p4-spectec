@@ -1,5 +1,6 @@
-open Il.Eq
+open Lang
 open Xl
+open Il.Eq
 open Util.Source
 open Flatten
 open Hint
@@ -8,7 +9,7 @@ module F = Format
 
 (* Numbers *)
 
-let pp_num fmt (num : Il.Ast.num) : unit =
+let pp_num fmt (num : Il.num) : unit =
   match num with
   | `Nat n -> F.fprintf fmt "%s" (Bigint.to_string n)
   | `Int i ->
@@ -18,13 +19,13 @@ let pp_num fmt (num : Il.Ast.num) : unit =
 
 (* Atoms *)
 
-let pp_atom fmt (atom : Il.Ast.atom) : unit =
+let pp_atom fmt (atom : Il.atom) : unit =
   match atom.it with
   | Atom.SilentAtom _ -> F.fprintf fmt ""
   | _ ->
       F.fprintf fmt "%s" (Atom.string_of_atom atom.it |> String.lowercase_ascii)
 
-let pp_atoms fmt (atoms : Il.Ast.atom list) : unit =
+let pp_atoms fmt (atoms : Il.atom list) : unit =
   match atoms with
   | [] -> F.fprintf fmt ""
   | _ ->
@@ -66,7 +67,7 @@ and pp_case_v (hmap : hmap) fmt (value : Value.t) : unit =
   | Some (id, _, values) -> (
       let matches_hint nottyp value =
         match value.it with
-        | Il.Ast.CaseV (mixop, _) -> eq_mixop (fst nottyp.it) mixop
+        | Il.CaseV (mixop, _) -> eq_mixop (fst nottyp.it) mixop
         | _ -> false
       in
       let find_hint id value =
@@ -81,12 +82,12 @@ and pp_case_v (hmap : hmap) fmt (value : Value.t) : unit =
       | None -> pp_default_case_v hmap fmt value)
   | _ -> assert false
 
-and pp_hint_case_v (hmap : hmap) (exp : El.Ast.exp) fmt (values : Value.t list)
-    : unit =
+and pp_hint_case_v (hmap : hmap) (exp : El.exp) fmt (values : Value.t list) :
+    unit =
   let _, str = pp_hint_case_v' hmap 0 exp values in
   F.fprintf fmt "%s" str
 
-and pp_hint_case_v' (hmap : hmap) (cur : int) (exp : El.Ast.exp)
+and pp_hint_case_v' (hmap : hmap) (cur : int) (exp : El.exp)
     (values : Value.t list) : int * string =
   match exp.it with
   | TextE text -> (cur, text)
@@ -155,10 +156,10 @@ and pp_list_v (hmap : hmap) fmt (value : Value.t) : unit =
 
 (* P4 program *)
 
-let pp_program_il (spec_il : Il.Ast.spec) fmt (value : Value.t) : unit =
+let pp_program_il (spec_il : Il.spec) fmt (value : Value.t) : unit =
   let hmap = hints_of_spec_il spec_il in
   pp_value hmap fmt value
 
-let pp_program_sl (spec_sl : Sl.Ast.spec) fmt (value : Value.t) : unit =
+let pp_program_sl (spec_sl : Sl.spec) fmt (value : Value.t) : unit =
   let hmap = hints_of_spec_sl spec_sl in
   pp_value hmap fmt value

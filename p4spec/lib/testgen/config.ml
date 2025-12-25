@@ -1,5 +1,6 @@
 open Domain.Lib
-open Sl.Ast
+open Lang
+open Sl
 module TypDef = Runtime_dynamic.Typdef
 module TDEnv = Runtime_dynamic_sl.Envs.TDEnv
 module Mixops = Runtime_testgen.Mixops
@@ -31,7 +32,7 @@ let timeout_seed = 30
 (* Environment for the spec *)
 type specenv = {
   runner : (module Sim.DRIVER);
-  printer : Sl.Ast.value -> string;
+  printer : Sl.value -> string;
   spec : spec;
   relname : string;
   tdenv : TDEnv.t;
@@ -135,7 +136,7 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 (* Constructor *)
 
-let init_specenv (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
+let init_specenv (spec_il : Il.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) : specenv =
   let runner = Arch.Gen.gen_placeholder () in
   let printer value_program =

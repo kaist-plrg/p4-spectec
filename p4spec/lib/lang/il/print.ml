@@ -427,9 +427,7 @@ and string_of_tablerows tablerows =
 (* Hints *)
 
 and string_of_hint hint =
-  " hint(" ^ hint.El.Ast.hintid.it ^ " "
-  ^ El.Print.string_of_exp hint.hintexp
-  ^ ")"
+  " hint(" ^ hint.El.hintid.it ^ " " ^ El.Print.string_of_exp hint.hintexp ^ ")"
 
 and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
 

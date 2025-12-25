@@ -1,5 +1,5 @@
-open Il.Ast
-open Il.Print
+open Lang.Il
+open Lang.Il.Print
 
 (* Type with dimension *)
 

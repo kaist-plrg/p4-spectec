@@ -1,13 +1,7 @@
 open Ast
+open Lang
 open Xl
-
-let eq_typ = Il.Eq.eq_typ
-let eq_iterexp = Il.Eq.eq_iterexp
-let eq_pattern = Il.Eq.eq_pattern
-let eq_id = Il.Eq.eq_id
-let eq_atom = Il.Eq.eq_atom
-let eq_mixop = Il.Eq.eq_mixop
-let eq_targs = Il.Eq.eq_targs
+include Il.Eq
 
 (* Function prose *)
 

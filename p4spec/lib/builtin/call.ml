@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 open Error
 open Util.Source
 
@@ -6,7 +7,7 @@ open Util.Source
 
 let init (printer : value -> string) : unit =
   Fresh.ctr := 0;
-  Print.printer := printer
+  Printer.printer := printer
 
 (* Builtin calls *)
 
@@ -15,7 +16,7 @@ module Funcs = Map.Make (String)
 let funcs =
   Funcs.empty
   (* Printing *)
-  |> Funcs.add "print_" Print.print
+  |> Funcs.add "print_" Printer.print
   (* Nats *)
   |> Funcs.add "sum_nat" Nats.sum_nat
   |> Funcs.add "max_nat" Nats.max_nat

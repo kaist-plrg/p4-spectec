@@ -1,5 +1,6 @@
 open Domain.Lib
-open Sl.Ast
+open Lang
+open Sl
 module Sim = Runtime_simulator.Simulator
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single

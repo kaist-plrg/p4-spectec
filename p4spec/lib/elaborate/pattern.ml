@@ -1,5 +1,6 @@
-open Il.Ast
+open Lang
 open Xl
+open Il
 open Util.Source
 
 (* Pattern is a set of notation types *)

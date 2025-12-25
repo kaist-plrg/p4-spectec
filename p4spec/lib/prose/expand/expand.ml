@@ -1,7 +1,10 @@
-open Util.Source
-open Sl.Ast
-open Transform
+module Vars = Free.Vars
+module VarSet = Free.VarSet
 open Domain.Lib
+open Lang
+open Sl
+open Transform
+open Util.Source
 
 (** Replaces first CallE (pre-order) in exp,
 
@@ -17,8 +20,8 @@ type call_e_count = Yes | No | SkipOne
 
 let count_call_e (seen_calls : call_e_count) e =
   match e.it with
-  | Il.Ast.CallE _ -> ( match seen_calls with No -> SkipOne | _ -> Yes)
-  | Il.Ast.IterE _ -> seen_calls
+  | Il.CallE _ -> ( match seen_calls with No -> SkipOne | _ -> Yes)
+  | Il.IterE _ -> seen_calls
   | _ -> Yes
 
 (* Transformer takes a CallE and rewrites it to exp_new, while initializing accumulated data *)
@@ -35,8 +38,8 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
           in
           let iter_state : iter_state =
             {
-              vars_inner = Free.Vars.free_args args;
-              vars_outer = Free.VarSet.empty;
+              vars_inner = Vars.free_args args;
+              vars_outer = VarSet.empty;
               var_new;
               iterexps = [];
               exp_orig = exp;

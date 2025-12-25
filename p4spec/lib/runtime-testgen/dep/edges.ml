@@ -1,4 +1,4 @@
-open Sl.Ast
+open Lang.Sl
 
 (* Label for categorizing dependency *)
 
@@ -44,22 +44,20 @@ type t = unit E.t
 (* Dot output *)
 
 let dot_of_func ((id_func, idx_arg) : func) : string =
-  Sl.Print.string_of_defid id_func ^ "/" ^ string_of_int idx_arg
-  |> String.escaped
+  Print.string_of_defid id_func ^ "/" ^ string_of_int idx_arg |> String.escaped
 
 let dot_of_rel ((id_rel, idx_arg) : rel) : string =
-  Sl.Print.string_of_relid id_rel ^ "/" ^ string_of_int idx_arg
-  |> String.escaped
+  Print.string_of_relid id_rel ^ "/" ^ string_of_int idx_arg |> String.escaped
 
 let dot_of_op (op : op) : string =
   (match op with
-  | UnOp unop -> Sl.Print.string_of_unop unop
-  | BinOp binop -> Sl.Print.string_of_binop binop
-  | CmpOp cmpop -> Sl.Print.string_of_cmpop cmpop
-  | CastOp typ -> "cast" ^ Sl.Print.string_of_typ typ
+  | UnOp unop -> Print.string_of_unop unop
+  | BinOp binop -> Print.string_of_binop binop
+  | CmpOp cmpop -> Print.string_of_cmpop cmpop
+  | CastOp typ -> "cast" ^ Print.string_of_typ typ
   | DownCastOp -> "downcast"
-  | SubOp typ -> "as " ^ Sl.Print.string_of_typ typ
-  | MatchOp pattern -> "match " ^ Sl.Print.string_of_pattern pattern
+  | SubOp typ -> "as " ^ Print.string_of_typ typ
+  | MatchOp pattern -> "match " ^ Print.string_of_pattern pattern
   | CatOp -> "cat"
   | MemOp -> "mem"
   | LenOp -> "len"

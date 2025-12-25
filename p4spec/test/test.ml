@@ -1,3 +1,4 @@
+open Lang
 module Sim = Runtime_simulator.Simulator
 module Strings = Util.Strings
 module Filesys = Util.Filesys

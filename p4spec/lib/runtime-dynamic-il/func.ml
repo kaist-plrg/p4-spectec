@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 
 (* Function *)
 

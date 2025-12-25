@@ -1,6 +1,7 @@
 open Domain.Lib
+open Lang
 open Xl
-open El.Ast
+open El
 open Runtime_static
 open Error
 open Util.Source

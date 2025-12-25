@@ -3,7 +3,8 @@ module InputHint = Runtime_static.Rel.InputHint
 open Runtime_dynamic
 open Runtime_dynamic_il
 open Envs
-open Il.Ast
+open Lang
+open Il
 open Error
 open Attempt
 open Util.Source

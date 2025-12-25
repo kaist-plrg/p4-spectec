@@ -1,3 +1,5 @@
+open Lang
+
 (* Splicing an anchor *)
 
 let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
@@ -62,7 +64,7 @@ let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
   splice ctx source buffer;
   Buffer.contents buffer
 
-let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
+let splice_file (spec_el : El.spec) (spec_sl : Sl.spec)
     (filename_input : string) (filename_output : string) : unit =
   let ic = open_in filename_input in
   let content =
@@ -79,7 +81,7 @@ let splice_file (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
     (fun () -> Out_channel.output_string oc content_spliced)
     ~finally:(fun () -> Out_channel.close oc)
 
-let splice_files (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec)
+let splice_files (spec_el : El.spec) (spec_sl : Sl.spec)
     (filenames : (string * string) list) : unit =
   List.iter
     (fun (filename_input, filename_output) ->

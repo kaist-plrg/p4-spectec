@@ -1,5 +1,5 @@
 open Domain.Lib
-open Sl.Ast
+open Lang.Sl
 open Util.Source
 
 (* Phantom branch *)

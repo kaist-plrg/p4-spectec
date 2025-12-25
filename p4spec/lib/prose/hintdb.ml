@@ -1,4 +1,5 @@
 open Domain.Lib
+open Lang
 open Xl
 module HintIdMap = Map.Make (String)
 
@@ -8,7 +9,7 @@ let empty = HintIdMap.empty
 
 type def_id = [ `Func of FId.t | `Rel of RId.t | `Typ of TId.t * Mixop.t ]
 
-let add (hintid : string) (id : def_id) (exp : El.Ast.exp) (db : t) : t =
+let add (hintid : string) (id : def_id) (exp : El.exp) (db : t) : t =
   let hint_env =
     HintIdMap.find_opt hintid db |> Option.value ~default:Hintenv.empty
   in
@@ -20,7 +21,7 @@ let add (hintid : string) (id : def_id) (exp : El.Ast.exp) (db : t) : t =
   in
   HintIdMap.add hintid new_hint_env db
 
-let get (hintid : string) (id : def_id) (db : t) : El.Ast.exp option =
+let get (hintid : string) (id : def_id) (db : t) : El.exp option =
   match HintIdMap.find_opt hintid db with
   | None -> None
   | Some hint_env -> (

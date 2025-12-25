@@ -1,7 +1,10 @@
-open Il.Ast
-open Domain.Lib
-open Util.Source
+module Var = Free.Var
+module Vars = Free.Vars
 module VarSet = Free.VarSet
+open Domain.Lib
+open Lang
+open Il
+open Util.Source
 
 let ( let* ) = Option.bind
 let ( ++ ) = VarSet.union
@@ -71,7 +74,7 @@ let transform_first_with_iters
       | BinE (binop, optyp, exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
-            let vars_r = Free.Vars.free_exp exp_r in
+            let vars_r = Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
@@ -79,7 +82,7 @@ let transform_first_with_iters
           in
           let try_right () =
             let* exp_r', iter_state = transform_exp acc exp_r in
-            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_l = Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
@@ -89,7 +92,7 @@ let transform_first_with_iters
       | CmpE (cmpop, optyp, exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
-            let vars_r = Free.Vars.free_exp exp_r in
+            let vars_r = Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
@@ -97,7 +100,7 @@ let transform_first_with_iters
           in
           let try_right () =
             let* exp_r', iter_state = transform_exp acc exp_r in
-            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_l = Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
@@ -136,7 +139,7 @@ let transform_first_with_iters
       | ConsE (exp_h, exp_t) ->
           let try_head () =
             let* exp_h', iter_state = transform_exp acc exp_h in
-            let vars_t = Free.Vars.free_exp exp_t in
+            let vars_t = Vars.free_exp exp_t in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_t }
             in
@@ -144,7 +147,7 @@ let transform_first_with_iters
           in
           let try_tail () =
             let* exp_t', iter_state = transform_exp acc exp_t in
-            let vars_h = Free.Vars.free_exp exp_h in
+            let vars_h = Vars.free_exp exp_h in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_h }
             in
@@ -154,7 +157,7 @@ let transform_first_with_iters
       | CatE (exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
-            let vars_r = Free.Vars.free_exp exp_r in
+            let vars_r = Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
@@ -162,7 +165,7 @@ let transform_first_with_iters
           in
           let try_right () =
             let* exp_r', iter_state = transform_exp acc exp_r in
-            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_l = Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
@@ -172,7 +175,7 @@ let transform_first_with_iters
       | MemE (exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
-            let vars_r = Free.Vars.free_exp exp_r in
+            let vars_r = Vars.free_exp exp_r in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_r }
             in
@@ -180,7 +183,7 @@ let transform_first_with_iters
           in
           let try_right () =
             let* exp_r', iter_state = transform_exp acc exp_r in
-            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_l = Vars.free_exp exp_l in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_l }
             in
@@ -196,7 +199,7 @@ let transform_first_with_iters
       | IdxE (exp_b, exp_i) ->
           let try_base () =
             let* exp_b', iter_state = transform_exp acc exp_b in
-            let vars_i = Free.Vars.free_exp exp_i in
+            let vars_i = Vars.free_exp exp_i in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_i }
             in
@@ -204,7 +207,7 @@ let transform_first_with_iters
           in
           let try_index () =
             let* exp_i', iter_state = transform_exp acc exp_i in
-            let vars_b = Free.Vars.free_exp exp_b in
+            let vars_b = Vars.free_exp exp_b in
             let iter_state =
               { iter_state with vars_outer = iter_state.vars_outer ++ vars_b }
             in
@@ -214,8 +217,8 @@ let transform_first_with_iters
       | SliceE (exp_b, exp_l, exp_h) ->
           let try_base () =
             let* exp_b', iter_state = transform_exp acc exp_b in
-            let vars_l = Free.Vars.free_exp exp_l in
-            let vars_h = Free.Vars.free_exp exp_h in
+            let vars_l = Vars.free_exp exp_l in
+            let vars_h = Vars.free_exp exp_h in
             let iter_state =
               {
                 iter_state with
@@ -226,8 +229,8 @@ let transform_first_with_iters
           in
           let try_low () =
             let* exp_l', iter_state = transform_exp acc exp_l in
-            let vars_b = Free.Vars.free_exp exp_b in
-            let vars_h = Free.Vars.free_exp exp_h in
+            let vars_b = Vars.free_exp exp_b in
+            let vars_h = Vars.free_exp exp_h in
             let iter_state =
               {
                 iter_state with
@@ -238,8 +241,8 @@ let transform_first_with_iters
           in
           let try_high () =
             let* exp_h', iter_state = transform_exp acc exp_h in
-            let vars_b = Free.Vars.free_exp exp_b in
-            let vars_l = Free.Vars.free_exp exp_l in
+            let vars_b = Vars.free_exp exp_b in
+            let vars_l = Vars.free_exp exp_l in
             let iter_state =
               {
                 iter_state with
@@ -252,8 +255,8 @@ let transform_first_with_iters
       | UpdE (exp_b, path, exp_f) ->
           let try_base () =
             let* exp_b', iter_state = transform_exp acc exp_b in
-            let vars_path = Free.Vars.free_path path in
-            let vars_f = Free.Vars.free_exp exp_f in
+            let vars_path = Vars.free_path path in
+            let vars_f = Vars.free_exp exp_f in
             let iter_state =
               {
                 iter_state with
@@ -264,8 +267,8 @@ let transform_first_with_iters
           in
           let try_path () =
             let* path', iter_state = transform_path acc path in
-            let vars_b = Free.Vars.free_exp exp_b in
-            let vars_f = Free.Vars.free_exp exp_f in
+            let vars_b = Vars.free_exp exp_b in
+            let vars_f = Vars.free_exp exp_f in
             let iter_state =
               {
                 iter_state with
@@ -276,8 +279,8 @@ let transform_first_with_iters
           in
           let try_field () =
             let* exp_f', iter_state = transform_exp acc exp_f in
-            let vars_b = Free.Vars.free_exp exp_b in
-            let vars_path = Free.Vars.free_path path in
+            let vars_b = Vars.free_exp exp_b in
+            let vars_path = Vars.free_path path in
             let iter_state =
               {
                 iter_state with
@@ -305,7 +308,7 @@ let transform_first_with_iters
                     else
                       var_new
                       :: List.filter
-                           (fun v -> not (Free.Var.equal v var_inner))
+                           (fun v -> not (Var.equal v var_inner))
                            vars_acc
                   in
                   let var_new_upd =
@@ -315,16 +318,14 @@ let transform_first_with_iters
                   let vars_inner_upd =
                     VarSet.map
                       (fun v ->
-                        if Free.Var.equal v var_inner then
+                        if Var.equal v var_inner then
                           let id, typ, iters = var_inner in
                           (id, typ, iters @ [ iter ])
                         else v)
                       vars_inner_acc
                   in
                   let iterexp_new =
-                    ( iter,
-                      List.filter (fun v -> Free.Var.equal v var_inner) vars_acc
-                    )
+                    (iter, List.filter (fun v -> Var.equal v var_inner) vars_acc)
                   in
                   ( vars_inner_upd,
                     var_new_upd,
@@ -339,7 +340,7 @@ let transform_first_with_iters
     in
     choice [ try_root; try_children ]
   and transform_exps acc (exps : exp list) : (exp list * iter_state) option =
-    transform_list (transform_exp acc) Free.Vars.free_exp exps
+    transform_list (transform_exp acc) Vars.free_exp exps
   and transform_arg acc (arg : arg) : (arg * iter_state) option =
     let { it; at; _ } = arg in
     match it with
@@ -348,7 +349,7 @@ let transform_first_with_iters
         Some (ExpA exp_inner' $ at, iter_state)
     | DefA _ -> None
   and transform_args acc (args : arg list) : (arg list * iter_state) option =
-    transform_list (transform_arg acc) Free.Vars.free_arg args
+    transform_list (transform_arg acc) Vars.free_arg args
   and transform_path acc (path : path) : (path * iter_state) option =
     let { it; at; note } = path in
     match it with
@@ -356,7 +357,7 @@ let transform_first_with_iters
     | IdxP (path_b, exp_i) ->
         let try_base () =
           let* path_b', iter_state = transform_path acc path_b in
-          let vars_i = Free.Vars.free_exp exp_i in
+          let vars_i = Vars.free_exp exp_i in
           let iter_state =
             { iter_state with vars_outer = iter_state.vars_outer ++ vars_i }
           in
@@ -364,7 +365,7 @@ let transform_first_with_iters
         in
         let try_index () =
           let* exp_i', iter_state = transform_exp acc exp_i in
-          let vars_b = Free.Vars.free_path path_b in
+          let vars_b = Vars.free_path path_b in
           let iter_state =
             { iter_state with vars_outer = iter_state.vars_outer ++ vars_b }
           in
@@ -374,8 +375,8 @@ let transform_first_with_iters
     | SliceP (path_b, exp_l, exp_h) ->
         let try_base () =
           let* path_b', iter_state = transform_path acc path_b in
-          let vars_l = Free.Vars.free_exp exp_l in
-          let vars_h = Free.Vars.free_exp exp_h in
+          let vars_l = Vars.free_exp exp_l in
+          let vars_h = Vars.free_exp exp_h in
           let iter_state =
             {
               iter_state with
@@ -386,8 +387,8 @@ let transform_first_with_iters
         in
         let try_low () =
           let* exp_l', iter_state = transform_exp acc exp_l in
-          let vars_b = Free.Vars.free_path path_b in
-          let vars_h = Free.Vars.free_exp exp_h in
+          let vars_b = Vars.free_path path_b in
+          let vars_h = Vars.free_exp exp_h in
           let iter_state =
             {
               iter_state with
@@ -398,8 +399,8 @@ let transform_first_with_iters
         in
         let try_high () =
           let* exp_h', iter_state = transform_exp acc exp_h in
-          let vars_b = Free.Vars.free_path path_b in
-          let vars_l = Free.Vars.free_exp exp_l in
+          let vars_b = Vars.free_path path_b in
+          let vars_l = Vars.free_exp exp_l in
           let iter_state =
             {
               iter_state with

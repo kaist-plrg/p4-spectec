@@ -1,5 +1,6 @@
 open Domain.Lib
-open Il.Ast
+open Lang
+open Il
 open Util.Source
 
 (* Rename ticks in relation input expressions

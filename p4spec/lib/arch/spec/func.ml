@@ -1,3 +1,4 @@
+open Lang
 open Interface.Wrap
 open Interface.Unwrap
 module IO = Runtime_simulator.Io
@@ -5,7 +6,7 @@ module Value = Runtime_dynamic.Value
 
 (* Helpers for invoking functions in the spec *)
 
-type call_func = string -> Sl.Ast.typ list -> Value.t list -> Value.t
+type call_func = string -> Sl.typ list -> Value.t list -> Value.t
 
 let call : call_func ref = ref (fun _ _ -> assert false)
 let register f = call := f
@@ -16,8 +17,7 @@ let write_value_from_bits (value_target : Value.t) (varsize : int)
     (bits : bool Array.t) : Value.t =
   let value_varsize = varsize |> Bigint.of_int |> wrap_num_v_nat in
   let value_bits =
-    bits |> Array.to_list |> List.map wrap_bool_v
-    |> wrap_list_v_typed Il.Ast.BoolT
+    bits |> Array.to_list |> List.map wrap_bool_v |> wrap_list_v_typed Il.BoolT
   in
   !call "write_value_from_bits" [] [ value_target; value_varsize; value_bits ]
 

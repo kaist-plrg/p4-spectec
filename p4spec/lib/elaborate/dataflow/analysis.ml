@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 
 (* Entry point of dataflow analysis *)
 

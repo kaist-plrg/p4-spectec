@@ -1,3 +1,4 @@
+open Lang
 open Error
 open Util.Source
 
@@ -23,7 +24,7 @@ type t = {
 
 (* Initialization *)
 
-let init_el_def (ctx : t) (def_el : El.Ast.def) : unit =
+let init_el_def (ctx : t) (def_el : El.def) : unit =
   match def_el.it with
   | TypD (id_syntax, tparams, deftyp, hints) ->
       let syntax = (tparams, deftyp, hints) in
@@ -37,11 +38,11 @@ let init_el_def (ctx : t) (def_el : El.Ast.def) : unit =
         RuleGroupMap.add (id_rel.it, id_rulegroup.it) rulegroup ctx.rulegroup
   | _ -> ()
 
-let init_el (ctx : t) (spec_el : El.Ast.spec) : unit =
+let init_el (ctx : t) (spec_el : El.spec) : unit =
   List.iter (init_el_def ctx) spec_el
 
-let rec init_sl_rule_instr (ctx : t) (id_rel : Sl.Ast.id) (mixop : Sl.Ast.mixop)
-    (inputs : int list) (instr : Sl.Ast.instr) : unit =
+let rec init_sl_rule_instr (ctx : t) (id_rel : Sl.id) (mixop : Sl.mixop)
+    (inputs : int list) (instr : Sl.instr) : unit =
   match instr.it with
   | IfI (_, _, instrs_then, _) ->
       init_sl_rule_instrs ctx id_rel mixop inputs instrs_then
@@ -63,11 +64,11 @@ let rec init_sl_rule_instr (ctx : t) (id_rel : Sl.Ast.id) (mixop : Sl.Ast.mixop)
         RuleProseMap.add (id_rel.it, id_rulegroup.it) ruleprose ctx.ruleprose
   | _ -> ()
 
-and init_sl_rule_instrs (ctx : t) (id_rel : Sl.Ast.id) (mixop : Sl.Ast.mixop)
-    (inputs : int list) (instrs : Sl.Ast.instr list) : unit =
+and init_sl_rule_instrs (ctx : t) (id_rel : Sl.id) (mixop : Sl.mixop)
+    (inputs : int list) (instrs : Sl.instr list) : unit =
   List.iter (init_sl_rule_instr ctx id_rel mixop inputs) instrs
 
-let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
+let init_sl_def (ctx : t) (def_sl : Sl.def) : unit =
   match def_sl.it with
   | RelD (id_rel, (mixop, inputs), _, instrs, _) ->
       init_sl_rule_instrs ctx id_rel mixop inputs instrs
@@ -79,11 +80,10 @@ let init_sl_def (ctx : t) (def_sl : Sl.Ast.def) : unit =
       ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
   | _ -> ()
 
-let init_sl (ctx : t) (spec_sl : Sl.Ast.spec) : unit =
+let init_sl (ctx : t) (spec_sl : Sl.spec) : unit =
   List.iter (init_sl_def ctx) spec_sl
 
-let init (spec_el : El.Ast.spec) (spec_sl : Sl.Ast.spec) (filename : string) : t
-    =
+let init (spec_el : El.spec) (spec_sl : Sl.spec) (filename : string) : t =
   let prose_ctx = Prose.Ctx.init spec_sl in
   let ctx =
     {

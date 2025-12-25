@@ -1,4 +1,5 @@
-open Sl.Ast
+open Lang
+open Sl
 
 (* Function *)
 

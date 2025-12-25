@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Il.Ast
+open Il
 module Value = Runtime_dynamic.Value
 open Error
 open Util.Source
@@ -40,7 +41,7 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
   let value_of_tuple ((value_key, value_value) : value * value) : value =
     let value =
       let vid = Value.fresh () in
-      let typ = Il.Ast.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in
+      let typ = Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in
       CaseV ([ []; [ Atom.Colon $ no_region ]; [] ], [ value_key; value_value ])
       $$$ { vid; typ }
     in
@@ -50,16 +51,16 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
   let value_pairs =
     let vid = Value.fresh () in
     let typ =
-      Il.Ast.IterT
-        ( Il.Ast.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region,
-          Il.Ast.List )
+      Il.IterT
+        ( Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region,
+          Il.List )
     in
     ListV (VMap.bindings map |> List.map value_of_tuple) $$$ { vid; typ }
   in
   add value_pairs;
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.VarT ("map" $ no_region, [ typ_key; typ_value ]) in
+    let typ = Il.VarT ("map" $ no_region, [ typ_key; typ_value ]) in
     CaseV
       ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
         [ value_pairs ] )
@@ -80,7 +81,7 @@ let find_map (add : value -> unit) (at : region) (targs : targ list)
   let value_opt = VMap.find_opt value_key map in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
+    let typ = Il.IterT (typ_value, Il.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
   add value;
@@ -103,7 +104,7 @@ let find_maps (add : value -> unit) (at : region) (targs : targ list)
   in
   let value =
     let vid = Value.fresh () in
-    let typ = Il.Ast.IterT (typ_value, Il.Ast.Opt) in
+    let typ = Il.IterT (typ_value, Il.Opt) in
     OptV value_opt $$$ { vid; typ }
   in
   add value;

@@ -1,5 +1,6 @@
 open Domain.Lib
-open Sl.Ast
+open Lang
+open Sl
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
 module MCov = Runtime_testgen.Cov.Multiple
@@ -554,7 +555,7 @@ let rec fuzz_loop (fuel : int) (config : Config.t) : Config.t =
 
 (* Entry point to main fuzzing loop *)
 
-let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
+let fuzzer_init (spec_il : Il.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) (dirname_gen : string)
     (name_campaign : string option) (randseed : int option)
     (logmode : Modes.logmode) (bootmode : Modes.bootmode)
@@ -631,7 +632,7 @@ let fuzzer_init (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
   let config = Config.init randseed modes specenv storage seed in
   config
 
-let fuzzer (fuel : int) (spec_il : Il.Ast.spec) (spec : spec) (relname : string)
+let fuzzer (fuel : int) (spec_il : Il.spec) (spec : spec) (relname : string)
     (includes_p4 : string list) (dirname_gen : string)
     (name_campaign : string option) (randseed : int option)
     (logmode : Modes.logmode) (bootmode : Modes.bootmode)

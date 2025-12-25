@@ -1,5 +1,5 @@
 open Domain.Lib
-open Il.Ast
+open Lang.Il
 open Util.Source
 
 (* Value dependency graph

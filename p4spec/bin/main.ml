@@ -1,3 +1,4 @@
+open Lang
 open Util.Error
 open Util.Source
 
@@ -437,7 +438,7 @@ let json_command =
              let spec = List.concat_map Frontend.Parse.parse_file filenames in
              let spec_il = Elaborate.Elab.elab_spec spec in
              let spec_sl = Structure.Struct.struct_spec spec_il in
-             let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
+             let sl_ast_json = Sl.spec_to_yojson spec_sl in
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
            with
@@ -448,9 +449,7 @@ let json_command =
        | `Parse -> (
            (* only take the first argument *)
            let filename = List.hd filenames in
-           let parsed =
-             Yojson.Safe.from_file filename |> Sl.Ast.spec_of_yojson
-           in
+           let parsed = Yojson.Safe.from_file filename |> Sl.spec_of_yojson in
            match parsed with
            | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
            | Error err ->

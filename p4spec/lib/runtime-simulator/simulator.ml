@@ -1,3 +1,4 @@
+open Lang
 module Value = Runtime_dynamic.Value
 module Dep = Runtime_testgen.Dep
 module SCov = Runtime_testgen.Cov.Single
@@ -7,7 +8,7 @@ open Util.Source
 
 (* Module signatures for interpreter-architecture interaction *)
 
-type spec = IL of Il.Ast.spec | SL of Sl.Ast.spec | Empty
+type spec = IL of Il.spec | SL of Sl.spec | Empty
 
 type program_result =
   | Pass of Value.t list * Dep.Graph.t * Value.id * SCov.Cover.t
@@ -63,34 +64,29 @@ module type INTERP_IL = sig
   (* Relation and meta-function valuation *)
 
   val eval_program :
-    Il.Ast.spec -> string -> string list -> string -> program_result
+    Il.spec -> string -> string list -> string -> program_result
 
-  val eval_rel : Il.Ast.spec -> string -> Value.t list -> rel_result
+  val eval_rel : Il.spec -> string -> Value.t list -> rel_result
 
   val eval_func :
-    Il.Ast.spec -> string -> Il.Ast.typ list -> Value.t list -> func_result
+    Il.spec -> string -> Il.typ list -> Value.t list -> func_result
 end
 
 module type INTERP_SL = sig
   (* Relation and meta-function valuation *)
 
   val eval_program :
-    derive:bool ->
-    Sl.Ast.spec ->
-    string ->
-    string list ->
-    string ->
-    program_result
+    derive:bool -> Sl.spec -> string -> string list -> string -> program_result
 
-  val eval_rel : Sl.Ast.spec -> string -> Value.t list -> rel_result
+  val eval_rel : Sl.spec -> string -> Value.t list -> rel_result
 
   val eval_func :
-    Sl.Ast.spec -> string -> Sl.Ast.typ list -> Value.t list -> func_result
+    Sl.spec -> string -> Sl.typ list -> Value.t list -> func_result
 
   (* Coverage *)
 
   val cover_programs :
-    Sl.Ast.spec -> string -> string list -> string list -> MCov.Cover.t
+    Sl.spec -> string -> string list -> string list -> MCov.Cover.t
 end
 
 module type DRIVER = sig
@@ -100,7 +96,7 @@ module type DRIVER = sig
     derive:bool -> spec -> string -> string list -> string -> program_result
 
   val run_program_internal :
-    derive:bool -> Sl.Ast.spec -> string -> Value.t -> rel_result
+    derive:bool -> Sl.spec -> string -> Value.t -> rel_result
 
   (* Run a P4 program against the spec and a STF test *)
 
@@ -109,5 +105,5 @@ module type DRIVER = sig
   (* Coverage *)
 
   val cover_programs :
-    Sl.Ast.spec -> string -> string list -> string list -> MCov.Cover.t
+    Sl.spec -> string -> string list -> string list -> MCov.Cover.t
 end

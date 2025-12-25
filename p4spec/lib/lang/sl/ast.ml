@@ -4,104 +4,104 @@ open Util.Source
 
 (* Numbers *)
 
-type num = Il.Ast.num [@@deriving yojson]
+type num = Il.num [@@deriving yojson]
 
 (* Texts *)
 
-type text = Il.Ast.text [@@deriving yojson]
+type text = Il.text [@@deriving yojson]
 
 (* Identifiers *)
 
-type id = Il.Ast.id [@@deriving yojson]
-type id' = Il.Ast.id'
+type id = Il.id [@@deriving yojson]
+type id' = Il.id'
 
 (* Atoms *)
 
-type atom = Il.Ast.atom [@@deriving yojson]
-type atom' = Il.Ast.atom'
+type atom = Il.atom [@@deriving yojson]
+type atom' = Il.atom'
 
 (* Mixfix operators *)
 
-type mixop = Il.Ast.mixop [@@deriving yojson]
+type mixop = Il.mixop [@@deriving yojson]
 
 (* Iterators *)
 
-type iter = Il.Ast.iter [@@deriving yojson]
+type iter = Il.iter [@@deriving yojson]
 
 (* Variables *)
 
-type var = Il.Ast.var [@@deriving yojson]
+type var = Il.var [@@deriving yojson]
 
 (* Types *)
 
-type typ = Il.Ast.typ [@@deriving yojson]
-type typ' = Il.Ast.typ'
+type typ = Il.typ [@@deriving yojson]
+type typ' = Il.typ'
 
-type nottyp = Il.Ast.nottyp [@@deriving yojson]
-type nottyp' = Il.Ast.nottyp'
+type nottyp = Il.nottyp [@@deriving yojson]
+type nottyp' = Il.nottyp'
 
-type deftyp = Il.Ast.deftyp [@@deriving yojson]
-type deftyp' = Il.Ast.deftyp'
+type deftyp = Il.deftyp [@@deriving yojson]
+type deftyp' = Il.deftyp'
 
-type typfield = Il.Ast.typfield [@@deriving yojson]
-type typcase = Il.Ast.typcase [@@deriving yojson]
+type typfield = Il.typfield [@@deriving yojson]
+type typcase = Il.typcase [@@deriving yojson]
 
 (* Values *)
 
-type vid = Il.Ast.vid
-type vnote = Il.Ast.vnote
+type vid = Il.vid
+type vnote = Il.vnote
 
-type value = Il.Ast.value [@@deriving yojson]
-type value' = Il.Ast.value'
+type value = Il.value [@@deriving yojson]
+type value' = Il.value'
 
 type valuefield = atom * value [@@deriving yojson]
 type valuecase = mixop * value list [@@deriving yojson]
 
 (* Operators *)
 
-type numop = Il.Ast.numop [@@deriving yojson]
-type unop = Il.Ast.unop [@@deriving yojson]
-type binop = Il.Ast.binop [@@deriving yojson]
-type cmpop = Il.Ast.cmpop [@@deriving yojson]
-type optyp = Il.Ast.optyp [@@deriving yojson]
+type numop = Il.numop [@@deriving yojson]
+type unop = Il.unop [@@deriving yojson]
+type binop = Il.binop [@@deriving yojson]
+type cmpop = Il.cmpop [@@deriving yojson]
+type optyp = Il.optyp [@@deriving yojson]
 
 (* Expressions *)
 
-type exp = Il.Ast.exp [@@deriving yojson]
-type exp' = Il.Ast.exp'
+type exp = Il.exp [@@deriving yojson]
+type exp' = Il.exp'
 
-type notexp = Il.Ast.notexp [@@deriving yojson]
-type iterexp = Il.Ast.iterexp [@@deriving yojson]
+type notexp = Il.notexp [@@deriving yojson]
+type iterexp = Il.iterexp [@@deriving yojson]
 
 (* Patterns *)
 
-type pattern = Il.Ast.pattern
+type pattern = Il.pattern
 [@@deriving yojson]
 
 (* Path *)
 
-type path = Il.Ast.path [@@deriving yojson]
-type path' = Il.Ast.path'
+type path = Il.path [@@deriving yojson]
+type path' = Il.path'
 
 (* Parameters *)
 
-type param = Il.Ast.param [@@deriving yojson]
-type param' = Il.Ast.param'
+type param = Il.param [@@deriving yojson]
+type param' = Il.param'
 
 (* Type parameters *)
 
-type tparam = Il.Ast.tparam [@@deriving yojson]
-type tparam' = Il.Ast.tparam'
+type tparam = Il.tparam [@@deriving yojson]
+type tparam' = Il.tparam'
 
 (* Arguments *)
 
-type arg = Il.Ast.arg [@@deriving yojson]
-type arg' = Il.Ast.arg'
+type arg = Il.arg [@@deriving yojson]
+type arg' = Il.arg'
 
 (* Type arguments *)
 
-type targ = Il.Ast.targ [@@deriving yojson]
-type targ' = Il.Ast.targ'
+type targ = Il.targ [@@deriving yojson]
+type targ' = Il.targ'
 
 (* Path conditions *)
 
@@ -162,7 +162,7 @@ and instr' =
 
 (* Hints *)
 
-type hint = El.Ast.hint
+type hint = El.hint
 [@@deriving yojson]
 
 (* Relations *)

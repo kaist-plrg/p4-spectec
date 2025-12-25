@@ -1,6 +1,5 @@
-(* Converts SL AST to PL AST *)
-
-open Sl.Ast
+open Lang
+open Sl
 open Util.Source
 open Domain.Lib
 open Ctx
@@ -13,7 +12,7 @@ let split_iters (exps_out : exp list) (iterexps : iterexp list) :
   let out_ids = Il.Free.free_exps exps_out in
   List.fold_left
     (fun (out_vars_acc, in_vars_acc) (iter, vars) ->
-      assert (iter = Il.Ast.List);
+      assert (iter = Il.List);
       let out_vars, in_vars =
         List.partition (fun (id, _, _) -> Domain.Lib.IdSet.mem id out_ids) vars
       in
@@ -22,18 +21,18 @@ let split_iters (exps_out : exp list) (iterexps : iterexp list) :
 
 (* Re-index hint holes based on input hints *)
 
-let rec align_hint (inputs : InputHint.t) (hintexp : El.Ast.exp) : El.Ast.exp =
+let rec align_hint (inputs : InputHint.t) (hintexp : El.exp) : El.exp =
   match hintexp.it with
-  | El.Ast.HoleE (`Num i) ->
+  | El.HoleE (`Num i) ->
       let offset = List.filter (fun inp -> inp <= i) inputs |> List.length in
-      El.Ast.HoleE (`Num (i - offset)) $ hintexp.at
-  | El.Ast.SeqE exps ->
+      El.HoleE (`Num (i - offset)) $ hintexp.at
+  | El.SeqE exps ->
       let exps = List.map (align_hint inputs) exps in
-      El.Ast.SeqE exps $ hintexp.at
-  | El.Ast.FuseE (exp_l, exp_r) ->
+      El.SeqE exps $ hintexp.at
+  | El.FuseE (exp_l, exp_r) ->
       let exp_l = align_hint inputs exp_l in
       let exp_r = align_hint inputs exp_r in
-      El.Ast.FuseE (exp_l, exp_r) $ hintexp.at
+      El.FuseE (exp_l, exp_r) $ hintexp.at
   | _ -> hintexp
 
 let prosify_iterated_let (exps_out : exp list) iterexps (instr : Pl.Ast.instr) =
@@ -344,7 +343,7 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             List.map
               (fun exp ->
                 match exp.it with
-                | El.Ast.TextE s -> s
+                | El.TextE s -> s
                 (* only TextE expected in prose_fields hint *)
                 | _ -> assert false)
               exps_hint
@@ -353,9 +352,9 @@ and prosify_instr ctx instr : Pl.Ast.instr list =
             List.map2
               (fun exp field ->
                 match exp.it with
-                | Il.Ast.VarE id when String.starts_with ~prefix:"_" id.it ->
+                | Il.VarE id when String.starts_with ~prefix:"_" id.it ->
                     Option.None
-                | Il.Ast.IterE ({ it = Il.Ast.VarE id; _ }, _)
+                | Il.IterE ({ it = Il.VarE id; _ }, _)
                   when String.starts_with ~prefix:"_" id.it ->
                     Option.None
                 | _ ->

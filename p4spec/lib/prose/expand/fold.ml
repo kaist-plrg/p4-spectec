@@ -1,4 +1,5 @@
-open Il.Ast
+open Lang
+open Il
 open Util.Source
 
 (* Fold logic: takes the results of sub-expressions and combines them into a new result *)

@@ -1,14 +1,16 @@
+open Lang
+
 (* Syntax *)
 
 module SyntaxId = String
 
-type syntax = El.Ast.tparam list * El.Ast.deftyp * El.Ast.hint list
+type syntax = El.tparam list * El.deftyp * El.hint list
 
 (* Relations *)
 
 module RelationId = String
 
-type relation = El.Ast.nottyp * El.Ast.hint list
+type relation = El.nottyp * El.hint list
 
 (* Rule groups *)
 
@@ -20,23 +22,22 @@ module RuleGroupId = struct
     if c <> 0 then c else String.compare id_rulegroup_a id_rulegroup_b
 end
 
-type rulegroup = El.Ast.rule list
+type rulegroup = El.rule list
 
 (* Rule prose *)
 
 module RuleProseId = RuleGroupId
 
-type ruleprose = Sl.Ast.mixop * int list * Sl.Ast.exp list * Sl.Ast.instr list
+type ruleprose = Sl.mixop * int list * Sl.exp list * Sl.instr list
 
 (* Function prose *)
 
 module FuncProseId = String
 
-type funcprose =
-  Sl.Ast.tparam list * Sl.Ast.arg list * Sl.Ast.typ * Sl.Ast.instr list
+type funcprose = Sl.tparam list * Sl.arg list * Sl.typ * Sl.instr list
 
 (* Table *)
 
 module TableId = String
 
-type table = Sl.Ast.arg list * Sl.Ast.typ * Sl.Ast.tablerow list
+type table = Sl.arg list * Sl.typ * Sl.tablerow list

@@ -1,4 +1,5 @@
-open El.Ast
+open Lang
+open El
 open El.Print
 
 (* Function *)
@@ -6,8 +7,8 @@ open El.Print
 type t =
   | Extern of tparam list * param list * plaintyp
   | Builtin of tparam list * param list * plaintyp
-  | Table of param list * plaintyp * Il.Ast.tablerow list
-  | Defined of tparam list * param list * plaintyp * Il.Ast.clause list
+  | Table of param list * plaintyp * Il.tablerow list
+  | Defined of tparam list * param list * plaintyp * Il.clause list
 
 let to_string = function
   | Extern (tparams, params, plaintyp) ->

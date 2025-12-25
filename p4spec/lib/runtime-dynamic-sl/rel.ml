@@ -1,5 +1,6 @@
 module InputHint = Runtime_static.Rel.InputHint
-open Sl.Ast
+open Lang
+open Sl
 
 (* Relation *)
 

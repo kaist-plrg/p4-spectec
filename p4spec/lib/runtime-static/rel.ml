@@ -1,3 +1,5 @@
+open Lang
+
 (* Input hints for rules *)
 
 module InputHint = struct
@@ -7,27 +9,27 @@ module InputHint = struct
     Format.asprintf "hint(input %s)"
       (String.concat " " (List.map (fun idx -> "%" ^ string_of_int idx) t))
 
-  let split_exps (hint : t) (exps : Il.Ast.exp list) :
-      (int * Il.Ast.exp) list * (int * Il.Ast.exp) list =
+  let split_exps (hint : t) (exps : Il.exp list) :
+      (int * Il.exp) list * (int * Il.exp) list =
     exps
     |> List.mapi (fun idx exp -> (idx, exp))
     |> List.partition (fun (idx, _) -> List.mem idx hint)
 
-  let split_exps_without_idx (hint : t) (exps : Il.Ast.exp list) :
-      Il.Ast.exp list * Il.Ast.exp list =
+  let split_exps_without_idx (hint : t) (exps : Il.exp list) :
+      Il.exp list * Il.exp list =
     exps
     |> List.mapi (fun idx exp -> (idx, exp))
     |> List.partition (fun (idx, _) -> List.mem idx hint)
     |> fun (exps_input, exps_output) ->
     (List.map snd exps_input, List.map snd exps_output)
 
-  let combine_exps (exps_input : (int * Il.Ast.exp) list)
-      (exps_output : (int * Il.Ast.exp) list) : Il.Ast.exp list =
+  let combine_exps (exps_input : (int * Il.exp) list)
+      (exps_output : (int * Il.exp) list) : Il.exp list =
     exps_input @ exps_output
     |> List.sort (fun (idx_i, _) (idx_o, _) -> compare idx_i idx_o)
     |> List.map snd
 
-  let is_conditional (hint : t) (exps : Il.Ast.exp list) : bool =
+  let is_conditional (hint : t) (exps : Il.exp list) : bool =
     let _, exps_output = split_exps hint exps in
     exps_output = []
 end
@@ -35,9 +37,8 @@ end
 (* Relation *)
 
 type t =
-  | Extern of El.Ast.nottyp * Il.Ast.nottyp * InputHint.t
-  | Defined of
-      El.Ast.nottyp * Il.Ast.nottyp * InputHint.t * Il.Ast.rulegroup list
+  | Extern of El.nottyp * Il.nottyp * InputHint.t
+  | Defined of El.nottyp * Il.nottyp * InputHint.t * Il.rulegroup list
 
 let to_string = function
   | Extern (nottyp, nottyp_il, inputs) ->

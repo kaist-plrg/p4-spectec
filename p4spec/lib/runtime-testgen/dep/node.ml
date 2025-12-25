@@ -1,5 +1,6 @@
+open Lang
 open Xl
-open Sl.Ast
+open Sl
 open Util.Source
 
 (* Mirror of the runtime values *)
@@ -49,8 +50,8 @@ let dot_of_mirror (mirror : mirror) : string =
            (List.map
               (fun (atom, vid) ->
                 Format.asprintf "%s %s"
-                  (Sl.Print.string_of_atom atom)
-                  (Sl.Print.string_of_vid vid))
+                  (Print.string_of_atom atom)
+                  (Print.string_of_vid vid))
               nodefields))
   | CaseN (mixop, vids) ->
       let atoms_h, mixop_t = (List.hd mixop, List.tl mixop) in
