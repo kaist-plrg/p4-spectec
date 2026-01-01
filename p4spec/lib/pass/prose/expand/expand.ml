@@ -104,16 +104,18 @@ let expand_nested_calls ids_used instrs =
 type 'ctx expansion =
   'ctx -> instr list -> ('ctx * instr list * instr list) option
 
-let rec expand_with_context (ctx : 'ctx) (expansion : 'ctx expansion)
-    (instrs : instr list) : 'ctx * instr list =
+let rec expand' (ctx : 'ctx) (expansion : 'ctx expansion) (instrs : instr list)
+    : 'ctx * instr list =
   match instrs with
   | [] -> (ctx, [])
   | instr_h :: instrs_t -> (
       match expansion ctx instrs with
       | Some (ctx_upd, expanded_instrs, instrs_rest) ->
-          expand_with_context ctx_upd expansion (expanded_instrs @ instrs_rest)
+          expand' ctx_upd expansion (expanded_instrs @ instrs_rest)
       | None ->
-          let ctx, instrs_t_expanded =
-            expand_with_context ctx expansion instrs_t
-          in
+          let ctx, instrs_t_expanded = expand' ctx expansion instrs_t in
           (ctx, instr_h :: instrs_t_expanded))
+
+let expand (ctx : 'ctx) (expansion : 'ctx expansion) (instrs : instr list) :
+    instr list =
+  expand' ctx expansion instrs |> snd

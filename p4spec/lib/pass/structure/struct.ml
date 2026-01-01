@@ -2,7 +2,7 @@ open Domain.Lib
 open Lang
 open Il
 module IEnv = Runtime.Static.Envs.IEnv
-module TypDef = Runtime.Dynamic_Sl.Typdef
+module Typdef = Runtime.Dynamic_Sl.Typdef
 module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
 open Util.Source
 
@@ -294,11 +294,11 @@ and struct_func_dec_def (ienv : IEnv.t) (tdenv : TDEnv.t) (at : region)
 let load_def (ienv : IEnv.t) (tdenv : TDEnv.t) (def : def) : IEnv.t * TDEnv.t =
   match def.it with
   | ExternTypD (id, _hints) ->
-      let td = TypDef.Extern in
+      let td = Typdef.Extern in
       let tdenv = TDEnv.add id td tdenv in
       (ienv, tdenv)
   | TypD (id, tparams, deftyp, _hints) ->
-      let td = TypDef.Defined (tparams, deftyp) in
+      let td = Typdef.Defined (tparams, deftyp) in
       let tdenv = TDEnv.add id td tdenv in
       (ienv, tdenv)
   | ExternRelD (id, _, inputs, _) | RelD (id, _, inputs, _, _) ->
@@ -312,7 +312,7 @@ let load_spec (ienv : IEnv.t) (tdenv : TDEnv.t) (spec : spec) : IEnv.t * TDEnv.t
     (fun (ienv, tdenv) def -> load_def ienv tdenv def)
     (ienv, tdenv) spec
 
-(* Structuring a spec *)
+(* Entry point *)
 
 let struct_spec (spec : spec) : Sl.spec =
   let ienv, tdenv = load_spec IEnv.empty TDEnv.empty spec in

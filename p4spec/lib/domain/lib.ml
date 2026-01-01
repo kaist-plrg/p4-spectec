@@ -135,6 +135,12 @@ module PId = VId
 module PIdSet = VIdSet
 module PIdMap = VIdMap
 
+(* Hint identifiers *)
+
+module HId = Id
+module HIdSet = IdSet
+module HIdMap = IdMap
+
 (* Environment functor *)
 
 module MakeVIdEnv (V : sig

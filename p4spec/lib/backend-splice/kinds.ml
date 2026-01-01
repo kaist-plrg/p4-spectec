@@ -28,16 +28,16 @@ type rulegroup = El.rule list
 
 module RuleProseId = RuleGroupId
 
-type ruleprose = Sl.mixop * int list * Sl.exp list * Sl.instr list
+type ruleprose = Pl.rulegroup
 
 (* Function prose *)
 
 module FuncProseId = String
 
-type funcprose = Sl.tparam list * Sl.arg list * Sl.typ * Sl.instr list
+type funcprose = Pl.func
 
 (* Table *)
 
 module TableId = String
 
-type table = Sl.arg list * Sl.typ * Sl.tablerow list
+type table = Pl.tablefunc

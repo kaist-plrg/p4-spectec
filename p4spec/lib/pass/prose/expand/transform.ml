@@ -11,10 +11,7 @@ let ( ++ ) = VarSet.union
 
 let rec choice = function
   | [] -> None
-  | f :: fs -> (
-      match f () with
-      | Some a -> Some a
-      | None -> ( match choice fs with Some a -> Some a | None -> None))
+  | f :: fs -> ( match f () with Some a -> Some a | None -> choice fs)
 
 type iter_state = {
   vars_inner : VarSet.t;

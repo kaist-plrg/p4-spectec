@@ -2,24 +2,18 @@ open Ast
 open Xl
 include Il.Eq
 
-(* Function prose *)
+(* Call prose using hints *)
 
-let eq_funcprose (funcprose_a : funcprose) (funcprose_b : funcprose) : bool =
-  match (funcprose_a, funcprose_b) with
-  | BoolProse (id_a, _, _), BoolProse (id_b, _, _) -> eq_id id_a id_b
-  | InputProse (id_a, _), InputProse (id_b, _) -> eq_id id_a id_b
-  | Def id_a, Def id_b -> eq_id id_a id_b
-  | _ -> false
-
-let rec eq_renderer (renderer_a : relcall) (renderer_b : relcall) : bool =
-  match (renderer_a, renderer_b) with
-  | Prose (hint_a, exps_out_a, exps_in_a), Prose (hint_b, exps_out_b, exps_in_b)
+let rec eq_func_call (func_call_a : func_call) (func_call_b : func_call) : bool
+    =
+  match (func_call_a, func_call_b) with
+  | ( ProseFuncCall (`Check (id_a, _, _, targs_a, args_a)),
+      ProseFuncCall (`Check (id_b, _, _, targs_b, args_b)) )
+  | ( ProseFuncCall (`Yield (id_a, _, targs_a, args_a)),
+      ProseFuncCall (`Yield (id_b, _, targs_b, args_b)) )
+  | MathFuncCall (id_a, targs_a, args_a), MathFuncCall (id_b, targs_b, args_b)
     ->
-      hint_a = hint_b
-      && eq_exps exps_out_a exps_out_b
-      && eq_exps exps_in_a exps_in_b
-  | Mixop (mixop_a, exps_a), Mixop (mixop_b, exps_b) ->
-      eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+      eq_id id_a id_b && eq_typs targs_a targs_b && eq_args args_a args_b
   | _ -> false
 
 (* Expressions *)
@@ -74,16 +68,15 @@ and eq_exp (exp_a : exp) (exp_b : exp) : bool =
       eq_exp exp_b_a exp_b_b && eq_exp exp_l_a exp_l_b && eq_exp exp_h_a exp_h_b
   | UpdE (exp_b_a, path_a, exp_f_a), UpdE (exp_b_b, path_b, exp_f_b) ->
       eq_exp exp_b_a exp_b_b && eq_path path_a path_b && eq_exp exp_f_a exp_f_b
-  | CallE (funcprose_a, targs_a, args_a), CallE (funcprose_b, targs_b, args_b)
-    ->
-      eq_funcprose funcprose_a funcprose_b
-      && eq_targs targs_a targs_b && eq_args args_a args_b
+  | CallE func_call_a, CallE func_call_b -> eq_func_call func_call_a func_call_b
   | IterE (exp_a, iterexp_a), IterE (exp_b, iterexp_b) ->
       eq_exp exp_a exp_b && eq_iterexp iterexp_a iterexp_b
   | _ -> false
 
 and eq_exps (exps_a : exp list) (exps_b : exp list) : bool =
   List.length exps_a = List.length exps_b && List.for_all2 eq_exp exps_a exps_b
+
+(* Paths *)
 
 and eq_path (path_a : path) (path_b : path) : bool =
   match (path_a.it, path_b.it) with
@@ -95,6 +88,8 @@ and eq_path (path_a : path) (path_b : path) : bool =
   | DotP (path_a, atom_a), DotP (path_b, atom_b) ->
       eq_path path_a path_b && Atom.eq atom_a atom_b
   | _ -> false
+
+(* Arguments *)
 
 and eq_arg (arg_a : arg) (arg_b : arg) : bool =
   match (arg_a.it, arg_b.it) with

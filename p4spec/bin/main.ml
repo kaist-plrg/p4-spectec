@@ -366,11 +366,12 @@ let splice_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
          let filenames =
            if inplace then List.combine filenames_input filenames_input
            else List.combine filenames_input filenames_output
          in
-         Backend_splice.Driver.splice_files spec spec_sl filenames
+         Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

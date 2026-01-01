@@ -13,7 +13,6 @@ module TableMap = Map.Make (Kinds.TableId)
 
 type t = {
   filename : string;
-  prose_ctx : Pass.Prose.Ctx.t;
   mutable syntax : Kinds.syntax SyntaxMap.t;
   mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
@@ -41,54 +40,45 @@ let init_el_def (ctx : t) (def_el : El.def) : unit =
 let init_el (ctx : t) (spec_el : El.spec) : unit =
   List.iter (init_el_def ctx) spec_el
 
-let rec init_sl_rule_instr (ctx : t) (id_rel : Sl.id) (mixop : Sl.mixop)
-    (inputs : int list) (instr : Sl.instr) : unit =
-  match instr.it with
-  | IfI (_, _, instrs_then, _) ->
-      init_sl_rule_instrs ctx id_rel mixop inputs instrs_then
-  | HoldI (_, _, _, holdcase) -> (
-      match holdcase with
-      | BothH (instrs_hold, instrs_nothold) ->
-          init_sl_rule_instrs ctx id_rel mixop inputs instrs_hold;
-          init_sl_rule_instrs ctx id_rel mixop inputs instrs_nothold
-      | HoldH (instrs_hold, _) ->
-          init_sl_rule_instrs ctx id_rel mixop inputs instrs_hold
-      | NotHoldH (instrs_nothold, _) ->
-          init_sl_rule_instrs ctx id_rel mixop inputs instrs_nothold)
-  | CaseI (_, cases, _) ->
-      let instrs_group = cases |> List.map snd in
-      List.iter (init_sl_rule_instrs ctx id_rel mixop inputs) instrs_group
-  | GroupI (id_rulegroup, exps_input, instrs_group) ->
-      let ruleprose = (mixop, inputs, exps_input, instrs_group) in
-      ctx.ruleprose <-
-        RuleProseMap.add (id_rel.it, id_rulegroup.it) ruleprose ctx.ruleprose
-  | _ -> ()
-
-and init_sl_rule_instrs (ctx : t) (id_rel : Sl.id) (mixop : Sl.mixop)
-    (inputs : int list) (instrs : Sl.instr list) : unit =
-  List.iter (init_sl_rule_instr ctx id_rel mixop inputs) instrs
-
-let init_sl_def (ctx : t) (def_sl : Sl.def) : unit =
+let init_pl_def (ctx : t) (def_sl : Pl.def) : unit =
   match def_sl.it with
-  | RelD (id_rel, (mixop, inputs), _, instrs, _) ->
-      init_sl_rule_instrs ctx id_rel mixop inputs instrs
-  | TableDecD (id_table, args, typ, tablerows, _) ->
-      let table = (args, typ, tablerows) in
-      ctx.tables <- TableMap.add id_table.it table ctx.tables
-  | FuncDecD (id_func, tparams, args_input, typ, instrs, _) ->
-      let funcprose = (tparams, args_input, typ, instrs) in
-      ctx.funcprose <- FuncProseMap.add id_func.it funcprose ctx.funcprose
+  | RelD (rel_title, rulegroups) ->
+      let id_rel =
+        match rel_title with
+        | Pl.ProseRelTitle (`Hold (id_rel, _, _))
+        | Pl.ProseRelTitle (`Yield (id_rel, _, _, _, _))
+        | Pl.MathRelTitle (id_rel, _, _) ->
+            id_rel
+      in
+      List.iter
+        (fun rulegroup ->
+          let rulegroup_title, _ = rulegroup in
+          let id_rulegroup =
+            match rulegroup_title with
+            | Pl.ProseRuleTitle (id_rulegroup, _, _)
+            | Pl.MathRuleTitle (id_rulegroup, _, _) ->
+                id_rulegroup
+          in
+          ctx.ruleprose <-
+            RuleProseMap.add
+              (id_rel.it, id_rulegroup.it)
+              rulegroup ctx.ruleprose)
+        rulegroups
+  | TableDecD tablefunc ->
+      let id_def, _, _, _ = tablefunc in
+      ctx.tables <- TableMap.add id_def.it tablefunc ctx.tables
+  | FuncDecD func ->
+      let id_def, _, _, _, _ = func in
+      ctx.funcprose <- FuncProseMap.add id_def.it func ctx.funcprose
   | _ -> ()
 
-let init_sl (ctx : t) (spec_sl : Sl.spec) : unit =
-  List.iter (init_sl_def ctx) spec_sl
+let init_pl (ctx : t) (spec_pl : Pl.spec) : unit =
+  List.iter (init_pl_def ctx) spec_pl
 
-let init (spec_el : El.spec) (spec_sl : Sl.spec) (filename : string) : t =
-  let prose_ctx = Pass.Prose.Ctx.init spec_sl in
+let init (spec_el : El.spec) (spec_pl : Pl.spec) (filename : string) : t =
   let ctx =
     {
       filename;
-      prose_ctx;
       syntax = SyntaxMap.empty;
       relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;
@@ -98,7 +88,7 @@ let init (spec_el : El.spec) (spec_sl : Sl.spec) (filename : string) : t =
     }
   in
   init_el ctx spec_el;
-  init_sl ctx spec_sl;
+  init_pl ctx spec_pl;
   ctx
 
 (* Finders *)

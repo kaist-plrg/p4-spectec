@@ -1990,6 +1990,8 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
     spec_il;
   spec_il
 
+(* Entry point *)
+
 let elab_spec (spec : spec) : Il.spec =
   let ctx = Ctx.init () in
   let ctx, spec_il = elab_defs ctx spec in

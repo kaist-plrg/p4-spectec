@@ -1,11 +1,11 @@
-open Lang
-open Sl
-open Util.Source
 open Domain.Lib
-open Ctx
-module HEnv = Hintenv
-module IEnv = Runtime.Static.Envs.IEnv
+open Lang
+open Xl
+open Sl
 module InputHint = Runtime.Static.Rel.InputHint
+open Util.Source
+
+(* Iteration helpers *)
 
 let split_iters (exps_out : exp list) (iterexps : iterexp list) :
     var list * var list =
@@ -14,12 +14,10 @@ let split_iters (exps_out : exp list) (iterexps : iterexp list) :
     (fun (out_vars_acc, in_vars_acc) (iter, vars) ->
       assert (iter = Il.List);
       let out_vars, in_vars =
-        List.partition (fun (id, _, _) -> Domain.Lib.IdSet.mem id out_ids) vars
+        List.partition (fun (id, _, _) -> IdSet.mem id out_ids) vars
       in
       (out_vars_acc @ out_vars, in_vars_acc @ in_vars))
     ([], []) iterexps
-
-(* Re-index hint holes based on input hints *)
 
 let rec align_hint (inputs : InputHint.t) (hintexp : El.exp) : El.exp =
   match hintexp.it with
@@ -35,156 +33,265 @@ let rec align_hint (inputs : InputHint.t) (hintexp : El.exp) : El.exp =
       El.FuseE (exp_l, exp_r) $ hintexp.at
   | _ -> hintexp
 
-let prosify_iterated_let (exps_out : exp list) iterexps (instr : Pl.instr) =
-  if List.is_empty iterexps then instr
-  else
-    let out_vars, in_vars = split_iters exps_out iterexps in
-    Pl.ForEachI (out_vars, instr, in_vars) $ no_region
+(* Expression prosification *)
 
-let prosify_iterated_cond ?(neg = false) iterexps (cond : Pl.cond) =
-  if List.is_empty iterexps then cond
-  else
-    let out_vars, in_vars = split_iters [] iterexps in
-    assert (List.is_empty out_vars);
-    if neg then Pl.ForAnyCond (cond, in_vars) else Pl.ForAllCond (cond, in_vars)
+let prosify_hole_exp () : Pl.exp =
+  Pl.VarE ("%" $ no_region) $$ (no_region, Il.TextT)
 
 let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
-  let exp' =
-    match exp.it with
-    | BoolE b -> Pl.BoolE b
-    | NumE n -> Pl.NumE n
-    | TextE s -> Pl.TextE s
-    | VarE id -> Pl.VarE id
-    | UnE (unop, optyp, exp) ->
-        let exp = prosify_exp ctx exp in
-        Pl.UnE (unop, optyp, exp)
-    | BinE (binop, optyp, exp_l, exp_r) ->
-        let exp_l = prosify_exp ctx exp_l in
-        let exp_r = prosify_exp ctx exp_r in
-        Pl.BinE (binop, optyp, exp_l, exp_r)
-    | CmpE (cmpop, optyp, exp_l, exp_r) ->
-        let exp_l = prosify_exp ctx exp_l in
-        let exp_r = prosify_exp ctx exp_r in
-        Pl.CmpE (cmpop, optyp, exp_l, exp_r)
-    | UpCastE (typ, exp) ->
-        let exp = prosify_exp ctx exp in
-        Pl.UpCastE (typ, exp)
-    | DownCastE (typ, exp) ->
-        let exp = prosify_exp ctx exp in
-        Pl.DownCastE (typ, exp)
-    | SubE (exp, typ) ->
-        let exp = prosify_exp ctx exp in
-        Pl.SubE (exp, typ)
-    | MatchE (exp, pattern) ->
-        let exp = prosify_exp ctx exp in
-        Pl.MatchE (exp, pattern)
-    | TupleE exps ->
-        let exps = List.map (prosify_exp ctx) exps in
-        Pl.TupleE exps
-    | CaseE (mixop, exps) ->
-        let exps = List.map (prosify_exp ctx) exps in
-        let typ = exp.note in
-        let id =
-          match typ with
-          | VarT (id, _) -> id
-          | _ ->
-              failwith
-                (Format.asprintf "expected VarT in CaseE, got %s"
-                   (Il.Print.string_of_typ (typ $ no_region)))
-        in
-        let prose_opt = Hintdb.get "prose" (`Typ (id, mixop)) ctx.hintdb in
-        Pl.CaseE (id, mixop, exps, prose_opt)
-    | StrE expfields ->
-        let atoms, exps = List.split expfields in
-        let exps = List.map (prosify_exp ctx) exps in
-        let expfields = List.combine atoms exps in
-        Pl.StrE expfields
-    | OptE (Some exp) ->
-        let exp = prosify_exp ctx exp in
-        Pl.OptE (Some exp)
-    | OptE None -> Pl.OptE None
-    | ListE exps ->
-        let exps = List.map (prosify_exp ctx) exps in
-        Pl.ListE exps
-    | ConsE (exp_h, exp_t) ->
-        let exp_h = prosify_exp ctx exp_h in
-        let exp_t = prosify_exp ctx exp_t in
-        Pl.ConsE (exp_h, exp_t)
-    | CatE (exp_l, exp_r) ->
-        let exp_l = prosify_exp ctx exp_l in
-        let exp_r = prosify_exp ctx exp_r in
-        Pl.CatE (exp_l, exp_r)
-    | MemE (exp_e, exp_s) ->
-        let exp_e = prosify_exp ctx exp_e in
-        let exp_s = prosify_exp ctx exp_s in
-        Pl.MemE (exp_e, exp_s)
-    | LenE exp ->
-        let exp = prosify_exp ctx exp in
-        Pl.LenE exp
-    | DotE (exp, atom) ->
-        let exp = prosify_exp ctx exp in
-        Pl.DotE (exp, atom)
-    | IdxE (exp_b, exp_i) ->
-        let exp_b = prosify_exp ctx exp_b in
-        let exp_i = prosify_exp ctx exp_i in
-        Pl.IdxE (exp_b, exp_i)
-    | SliceE (exp_b, exp_l, exp_h) ->
-        let exp_b = prosify_exp ctx exp_b in
-        let exp_l = prosify_exp ctx exp_l in
-        let exp_h = prosify_exp ctx exp_h in
-        Pl.SliceE (exp_b, exp_l, exp_h)
-    | UpdE (exp_b, path, exp_f) ->
-        let exp_b = prosify_exp ctx exp_b in
-        let path = prosify_path ctx path in
-        let exp_f = prosify_exp ctx exp_f in
-        Pl.UpdE (exp_b, path, exp_f)
-    | CallE (id, targs, args) ->
-        let funcprose =
-          match exp.note with
-          (* conditional functions have prose_true and optionally false *)
-          | BoolT -> (
-              match Hintdb.get "prose_true" (`Func id) ctx.hintdb with
-              | Some prose_true ->
-                  let prose_false_opt =
-                    Hintdb.get "prose_false" (`Func id) ctx.hintdb
-                  in
-                  Pl.BoolProse (id, prose_true, prose_false_opt)
-              | None -> Pl.Def id)
-          (* Non-boolean functions have prose_in *)
-          | _ -> (
-              match Hintdb.get "prose_in" (`Func id) ctx.hintdb with
-              | Some prose_in -> Pl.InputProse (id, prose_in)
-              | None -> Pl.Def id)
-        in
-        let args = prosify_args ctx args in
-        Pl.CallE (funcprose, targs, args)
-    | IterE (exp, iterexp) ->
-        let exp = prosify_exp ctx exp in
-        Pl.IterE (exp, iterexp)
-  in
-  exp' $$ (exp.at, exp.note)
+  prosify_exp' ctx exp $$ (exp.at, exp.note)
+
+and prosify_exp' (ctx : Ctx.t) (exp : exp) : Pl.exp' =
+  let note = exp.note in
+  match exp.it with
+  | BoolE b -> prosify_bool_exp b
+  | NumE n -> prosify_num_exp n
+  | TextE s -> prosify_text_exp s
+  | VarE id -> prosify_var_exp id
+  | UnE (unop, optyp, exp) -> prosify_un_exp ctx unop optyp exp
+  | BinE (binop, optyp, exp_l, exp_r) ->
+      prosify_bin_exp ctx binop optyp exp_l exp_r
+  | CmpE (cmpop, optyp, exp_l, exp_r) ->
+      prosify_cmp_exp ctx cmpop optyp exp_l exp_r
+  | UpCastE (typ, exp) -> prosify_upcast_exp ctx typ exp
+  | DownCastE (typ, exp) -> prosify_downcast_exp ctx typ exp
+  | SubE (exp, typ) -> prosify_sub_exp ctx exp typ
+  | MatchE (exp, pattern) -> prosify_match_exp ctx exp pattern
+  | TupleE exps -> prosify_tuple_exp ctx exps
+  | CaseE (mixop, exps) -> prosify_case_exp note ctx mixop exps
+  | StrE expfields -> prosify_str_exp ctx expfields
+  | OptE exp_opt -> prosify_opt_exp ctx exp_opt
+  | ListE exps -> prosify_list_exp ctx exps
+  | ConsE (exp_h, exp_t) -> prosify_cons_exp ctx exp_h exp_t
+  | CatE (exp_l, exp_r) -> prosify_cat_exp ctx exp_l exp_r
+  | MemE (exp_e, exp_s) -> prosify_mem_exp ctx exp_e exp_s
+  | LenE exp -> prosify_len_exp ctx exp
+  | DotE (exp, atom) -> prosify_dot_exp ctx exp atom
+  | IdxE (exp_b, exp_i) -> prosify_idx_exp ctx exp_b exp_i
+  | SliceE (exp_b, exp_l, exp_h) -> prosify_slice_exp ctx exp_b exp_l exp_h
+  | UpdE (exp_b, path, exp_f) -> prosify_upd_exp ctx exp_b path exp_f
+  | CallE (id, targs, args) -> prosify_call_exp note ctx id targs args
+  | IterE (exp, iterexp) -> prosify_iter_exp ctx exp iterexp
 
 and prosify_exps (ctx : Ctx.t) (exps : exp list) : Pl.exp list =
   List.map (prosify_exp ctx) exps
 
-and prosify_path (ctx : Ctx.t) (path : path) : Pl.path =
-  let path' =
-    match path.it with
-    | RootP -> Pl.RootP
-    | IdxP (path, exp) ->
-        let path = prosify_path ctx path in
-        let exp = prosify_exp ctx exp in
-        Pl.IdxP (path, exp)
-    | SliceP (path, exp_l, exp_h) ->
-        let path = prosify_path ctx path in
-        let exp_l = prosify_exp ctx exp_l in
-        let exp_h = prosify_exp ctx exp_h in
-        Pl.SliceP (path, exp_l, exp_h)
-    | DotP (path, atom) ->
-        let path = prosify_path ctx path in
-        Pl.DotP (path, atom)
+(* Boolean expression prosification *)
+
+and prosify_bool_exp (b : bool) : Pl.exp' = Pl.BoolE b
+
+(* Numeric expression prosification *)
+
+and prosify_num_exp (n : Num.t) : Pl.exp' = Pl.NumE n
+
+(* Text expression prosification *)
+
+and prosify_text_exp (s : string) : Pl.exp' = Pl.TextE s
+
+(* Variable expression prosification *)
+
+and prosify_var_exp (id : id) : Pl.exp' = Pl.VarE id
+
+(* Unary expression prosification *)
+
+and prosify_un_exp (ctx : Ctx.t) (unop : unop) (optyp : optyp) (exp : exp) :
+    Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.UnE (unop, optyp, exp_pl)
+
+(* Binary expression prosification *)
+
+and prosify_bin_exp (ctx : Ctx.t) (binop : binop) (optyp : optyp) (exp_l : exp)
+    (exp_r : exp) : Pl.exp' =
+  let exp_l_pl = prosify_exp ctx exp_l in
+  let exp_r_pl = prosify_exp ctx exp_r in
+  Pl.BinE (binop, optyp, exp_l_pl, exp_r_pl)
+
+(* Comparison expression prosification *)
+
+and prosify_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (optyp : optyp) (exp_l : exp)
+    (exp_r : exp) : Pl.exp' =
+  let exp_l_pl = prosify_exp ctx exp_l in
+  let exp_r_pl = prosify_exp ctx exp_r in
+  Pl.CmpE (cmpop, optyp, exp_l_pl, exp_r_pl)
+
+(* Upcast expression prosification *)
+
+and prosify_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.UpCastE (typ, exp_pl)
+
+(* Downcast expression prosification *)
+
+and prosify_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.DownCastE (typ, exp_pl)
+
+(* Subtype check expression prosification *)
+
+and prosify_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.SubE (exp_pl, typ)
+
+(* Match expression prosification *)
+
+and prosify_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.MatchE (exp_pl, pattern)
+
+(* Tuple expression prosification *)
+
+and prosify_tuple_exp (ctx : Ctx.t) (exps : exp list) : Pl.exp' =
+  let exps_pl = prosify_exps ctx exps in
+  Pl.TupleE exps_pl
+
+(* Case expression prosification *)
+
+and prosify_case_exp (note : typ') (ctx : Ctx.t) (mixop : mixop)
+    (exps : exp list) : Pl.exp' =
+  let exps_pl = prosify_exps ctx exps in
+  let id =
+    match note with
+    | VarT (id, _) -> id
+    | _ ->
+        failwith
+          (Format.asprintf "expected VarT in CaseE, got %s"
+             (Il.Print.string_of_typ (note $ no_region)))
   in
-  path' $$ (path.at, path.note)
+  let prose_opt = Ctx.find_hint_prose ctx (`Typ (id, mixop)) in
+  Pl.CaseE (id, mixop, exps_pl, prose_opt)
+
+(* Struct expression prosification *)
+
+and prosify_str_exp (ctx : Ctx.t) (expfields : (atom * exp) list) : Pl.exp' =
+  let atoms, exps = List.split expfields in
+  let exps_pl = prosify_exps ctx exps in
+  let expfields_pl = List.combine atoms exps_pl in
+  Pl.StrE expfields_pl
+
+(* Option expression prosification *)
+
+and prosify_opt_exp (ctx : Ctx.t) (exp_opt : exp option) : Pl.exp' =
+  let exp_pl_opt = Option.map (prosify_exp ctx) exp_opt in
+  Pl.OptE exp_pl_opt
+
+(* List expression prosification *)
+
+and prosify_list_exp (ctx : Ctx.t) (exps : exp list) : Pl.exp' =
+  let exps_pl = prosify_exps ctx exps in
+  Pl.ListE exps_pl
+
+(* Cons expression prosification *)
+
+and prosify_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) : Pl.exp' =
+  let exp_h_pl = prosify_exp ctx exp_h in
+  let exp_t_pl = prosify_exp ctx exp_t in
+  Pl.ConsE (exp_h_pl, exp_t_pl)
+
+(* Concatenation expression prosification *)
+
+and prosify_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Pl.exp' =
+  let exp_l_pl = prosify_exp ctx exp_l in
+  let exp_r_pl = prosify_exp ctx exp_r in
+  Pl.CatE (exp_l_pl, exp_r_pl)
+
+(* Membership expression prosification *)
+
+and prosify_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : Pl.exp' =
+  let exp_e_pl = prosify_exp ctx exp_e in
+  let exp_s_pl = prosify_exp ctx exp_s in
+  Pl.MemE (exp_e_pl, exp_s_pl)
+
+(* Length expression prosification *)
+
+and prosify_len_exp (ctx : Ctx.t) (exp : exp) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.LenE exp_pl
+
+(* Dot expression prosification *)
+
+and prosify_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.DotE (exp_pl, atom)
+
+(* Index expression prosification *)
+
+and prosify_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : Pl.exp' =
+  let exp_b_pl = prosify_exp ctx exp_b in
+  let exp_i_pl = prosify_exp ctx exp_i in
+  Pl.IdxE (exp_b_pl, exp_i_pl)
+
+(* Slice expression prosification *)
+
+and prosify_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
+    Pl.exp' =
+  let exp_b_pl = prosify_exp ctx exp_b in
+  let exp_i_pl = prosify_exp ctx exp_i in
+  let exp_n_pl = prosify_exp ctx exp_n in
+  Pl.SliceE (exp_b_pl, exp_i_pl, exp_n_pl)
+
+(* Update expression prosification *)
+
+and prosify_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
+    Pl.exp' =
+  let exp_b_pl = prosify_exp ctx exp_b in
+  let path_pl = prosify_path ctx path in
+  let exp_f_pl = prosify_exp ctx exp_f in
+  Pl.UpdE (exp_b_pl, path_pl, exp_f_pl)
+
+(* Call expression prosification *)
+
+and prosify_call_exp (note : typ') (ctx : Ctx.t) (id : id) (targs : typ list)
+    (args : arg list) : Pl.exp' =
+  let args_pl = prosify_args ctx args in
+  let typ_ret = Ctx.unroll_typ ctx (note $ no_region) in
+  let func_call =
+    match typ_ret.it with
+    | BoolT -> (
+        let prose_true_opt = Ctx.find_hint_prose_true ctx (`Func id) in
+        let prose_false_opt = Ctx.find_hint_prose_false ctx (`Func id) in
+        match (prose_true_opt, prose_false_opt) with
+        | Some prose_true, Some prose_false ->
+            Pl.(
+              ProseFuncCall
+                (`Check (id, prose_true, prose_false, targs, args_pl)))
+        | _ -> Pl.MathFuncCall (id, targs, args_pl))
+    | _ -> (
+        match Ctx.find_hint_prose_in ctx (`Func id) with
+        | Some prose_in ->
+            Pl.(ProseFuncCall (`Yield (id, prose_in, targs, args_pl)))
+        | None -> Pl.MathFuncCall (id, targs, args_pl))
+  in
+  Pl.CallE func_call
+
+(* Iterated expression prosification *)
+
+and prosify_iter_exp (ctx : Ctx.t) (exp : exp) (iterexp : iterexp) : Pl.exp' =
+  let exp_pl = prosify_exp ctx exp in
+  Pl.IterE (exp_pl, iterexp)
+
+(* Path prosification *)
+
+and prosify_path (ctx : Ctx.t) (path : path) : Pl.path =
+  prosify_path' ctx path $$ (path.at, path.note)
+
+and prosify_path' (ctx : Ctx.t) (path : path) : Pl.path' =
+  match path.it with
+  | RootP -> Pl.RootP
+  | IdxP (path, exp) ->
+      let path_pl = prosify_path ctx path in
+      let exp_pl = prosify_exp ctx exp in
+      Pl.IdxP (path_pl, exp_pl)
+  | SliceP (path, exp_l, exp_n) ->
+      let path_pl = prosify_path ctx path in
+      let exp_l_pl = prosify_exp ctx exp_l in
+      let exp_n_pl = prosify_exp ctx exp_n in
+      Pl.SliceP (path_pl, exp_l_pl, exp_n_pl)
+  | DotP (path, atom) ->
+      let path_pl = prosify_path ctx path in
+      Pl.DotP (path_pl, atom)
+
+(* Argument prosification *)
 
 and prosify_arg (ctx : Ctx.t) (arg : arg) : Pl.arg =
   match arg.it with
@@ -193,228 +300,53 @@ and prosify_arg (ctx : Ctx.t) (arg : arg) : Pl.arg =
       Pl.ExpA exp $ arg.at
   | DefA id -> Pl.DefA id $ arg.at
 
-and prosify_args ctx args = List.map (prosify_arg ctx) args
+and prosify_args (ctx : Ctx.t) (args : arg list) =
+  List.map (prosify_arg ctx) args
 
-let prosify_guard ctx (exp_case : exp) guard : Pl.cond =
-  let exp_case = prosify_exp ctx exp_case in
-  let exp_of_guard : Pl.exp' =
-    match guard with
-    | BoolG b -> if b then exp_case.it else Pl.UnE (`NotOp, `BoolT, exp_case)
-    | CmpG (cmpop, optyp, exp_r) ->
-        let exp_r = prosify_exp ctx exp_r in
-        Pl.CmpE (cmpop, optyp, exp_case, exp_r)
-    | SubG typ -> Pl.SubE (exp_case, typ)
-    | MatchG pattern -> Pl.MatchE (exp_case, pattern)
-    | MemG exp ->
-        let exp = prosify_exp ctx exp in
-        Pl.MemE (exp_case, exp)
-  in
-  Pl.ExpCond (exp_of_guard $$ (exp_case.at, exp_case.note))
+(* Instruction prosification *)
 
-let rec prosify_case ctx exp (guard, instrs) : Pl.instr list =
-  let instrs_pl = prosify_instrs ctx instrs in
-  let cond = prosify_guard ctx exp guard in
-  match ctx.cond_style with
-  | Some Check -> [ Pl.CheckI cond $ no_region ] @ instrs_pl
-  | Some If -> [ Pl.BranchI (Pl.If, cond, instrs_pl) $ no_region ]
-  | Some ElseIf -> [ Pl.BranchI (Pl.ElseIf, cond, instrs_pl) $ no_region ]
-  | Some Else -> [ Pl.BranchI (Pl.Else, cond, instrs_pl) $ no_region ]
-  | None -> assert false
+and iterate_cond (cond : Pl.cond) (iterexps : iterexp list) : Pl.cond =
+  match iterexps with
+  | [] -> cond
+  | _ ->
+      let _vars_out, vars_in = split_iters [] iterexps in
+      Pl.ForAllCond (cond, vars_in)
 
-and prosify_cases ctx ~closed exp cases : Pl.instr list =
-  let num_cases = List.length cases in
-  if num_cases = 0 then failwith "no cases"
-  else if num_cases = 1 then
-    prosify_case (ctx |> as_cond Check) exp (List.hd cases)
-  else
-    List.mapi
-      (fun i case ->
-        if i = 0 then prosify_case (ctx |> as_cond If) exp case
-        else if closed && i = num_cases - 1 then
-          prosify_case (ctx |> as_cond Else) exp case
-        else prosify_case (ctx |> as_cond ElseIf) exp case)
-      cases
-    |> List.concat
+and iterate_bind (instr : Pl.instr) (exps_bind : exp list)
+    (iterexps : iterexp list) =
+  match iterexps with
+  | [] -> instr
+  | _ ->
+      let vars_out, vars_in = split_iters exps_bind iterexps in
+      Pl.ForEachI (vars_out, instr, vars_in) $ no_region
 
-and prosify_instr ctx instr : Pl.instr list =
+and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
+  let at = instr.at in
   match instr.it with
-  | IfI (exp, iterexps, instrs, _phantom) -> (
-      match ctx.cond_style with
-      | Some Check ->
-          let instrs_pl = prosify_instrs ctx instrs in
-          let exp = prosify_exp ctx exp in
-          let cond = Pl.ExpCond exp |> prosify_iterated_cond iterexps in
-          let instr_check = Pl.CheckI cond $ instr.at in
-          [ instr_check ] @ instrs_pl
-      | Some cond_style ->
-          let branchtype =
-            match cond_style with
-            | If -> Pl.If
-            | ElseIf -> Pl.ElseIf
-            | Else -> Pl.Else
-            | Check -> assert false
-          in
-          let instrs_pl = prosify_instrs ctx instrs in
-          let exp = prosify_exp ctx exp in
-          let cond = Pl.ExpCond exp |> prosify_iterated_cond iterexps in
-          [ Pl.BranchI (branchtype, cond, instrs_pl) $ instr.at ]
-      | _ -> assert false)
-  | HoldI (id, (mixop, exps), iterexps, holdcase) -> (
-      let exps = prosify_exps ctx exps in
-      match holdcase with
-      | BothH (instrs_hold, instrs_nothold) ->
-          (* create if-branch for hold *)
-          let instrs_hold_sl = prosify_instrs ctx instrs_hold in
-          let relation_true =
-            match Hintdb.get "prose_true" (`Rel id) ctx.hintdb with
-            | Some hintexp -> Pl.Prose (hintexp, [], exps)
-            | None -> Pl.Mixop (mixop, exps)
-          in
-          let cond_if =
-            Pl.RelCond (relation_true, id)
-            |> prosify_iterated_cond ~neg:false iterexps
-          in
-          let instr_if =
-            Pl.BranchI (Pl.If, cond_if, instrs_hold_sl) $ instr.at
-          in
-          (* create else-branch for not-hold *)
-          let instrs_nothold_sl = prosify_instrs ctx instrs_nothold in
-          let relation_false =
-            match Hintdb.get "prose_false" (`Rel id) ctx.hintdb with
-            | Some hintexp -> Pl.Prose (hintexp, [], exps)
-            | None -> Pl.Mixop (mixop, exps)
-          in
-          let cond_else =
-            Pl.RelCond (relation_false, id)
-            |> prosify_iterated_cond ~neg:true iterexps
-          in
-          let instr_else =
-            Pl.BranchI (Pl.Else, cond_else, instrs_nothold_sl) $ instr.at
-          in
-          [ instr_if; instr_else ]
-      | HoldH (instrs_hold, _) ->
-          let instrs_hold_pl = prosify_instrs ctx instrs_hold in
-          let relation_true =
-            match Hintdb.get "prose_true" (`Rel id) ctx.hintdb with
-            | Some hintexp -> Pl.Prose (hintexp, [], exps)
-            | None -> Pl.Mixop (mixop, exps)
-          in
-          let cond =
-            Pl.RelCond (relation_true, id) |> prosify_iterated_cond iterexps
-          in
-          let instr = Pl.CheckI cond $ instr.at in
-          instr :: instrs_hold_pl
-      | NotHoldH (instrs_nothold, _) ->
-          let instrs_nothold_pl = prosify_instrs ctx instrs_nothold in
-          let relation_false =
-            match Hintdb.get "prose_false" (`Rel id) ctx.hintdb with
-            | Some hintexp -> Pl.Prose (hintexp, [], exps)
-            | None -> Pl.Mixop (mixop, exps)
-          in
-          let cond =
-            Pl.RelCond (relation_false, id) |> prosify_iterated_cond iterexps
-          in
-          let instr = Pl.CheckI cond $ instr.at in
-          instr :: instrs_nothold_pl)
-  | CaseI (exp, cases, Some _) -> prosify_cases ctx ~closed:false exp cases
-  | CaseI (exp, cases, None) -> prosify_cases ctx ~closed:true exp cases
-  | OtherwiseI instr ->
-      let instrs = prosify_instr ctx instr in
-      List.map (fun instr -> Pl.OtherwiseI instr $ instr.at) instrs
-  | GroupI (id, exps, instrs) ->
-      (* TODO *)
-      let instrs = prosify_instrs ctx instrs in
-      let exps = prosify_exps ctx exps in
-      [ Pl.GroupI (id, exps, instrs) $ instr.at ]
-  | LetI
-      (({ it = CaseE (mixop, exps); note = typ; _ } as exp_l), exp_r, iterexps)
-    -> (
-      let tid = match typ with VarT (id, _) -> id | _ -> assert false in
-      let hint_opt = Hintdb.get "prose_fields" (`Typ (tid, mixop)) ctx.hintdb in
-      match hint_opt with
-      | Some { it = ListE exps_hint; _ } ->
-          (* prose_fields expected to have same length as sub-expressions *)
-          assert (List.length exps_hint = List.length exps);
-          let hint_fields =
-            List.map
-              (fun exp ->
-                match exp.it with
-                | El.TextE s -> s
-                (* only TextE expected in prose_fields hint *)
-                | _ -> assert false)
-              exps_hint
-          in
-          let partial_binds =
-            List.map2
-              (fun exp field ->
-                match exp.it with
-                | Il.VarE id when String.starts_with ~prefix:"_" id.it ->
-                    Option.None
-                | Il.IterE ({ it = Il.VarE id; _ }, _)
-                  when String.starts_with ~prefix:"_" id.it ->
-                    Option.None
-                | _ ->
-                    let exp_pl = prosify_exp ctx exp in
-                    Option.Some (exp_pl, field))
-              exps hint_fields
-            |> List.filter_map (fun x -> x)
-          in
-          let exp_r = prosify_exp ctx exp_r in
-          [
-            Pl.DestructI (partial_binds, exp_r)
-            $ instr.at
-            |> prosify_iterated_let exps iterexps;
-          ]
-      | Some _ -> assert false
-      | None ->
-          let exp_l_pl = prosify_exp ctx exp_l in
-          let exp_r_pl = prosify_exp ctx exp_r in
-          [
-            Pl.LetI (exp_l_pl, exp_r_pl)
-            $ instr.at
-            |> prosify_iterated_let [ exp_l ] iterexps;
-          ])
+  | IfI (exp_cond, iterexps, instrs, _phantom_opt) ->
+      prosify_if_instr at ctx exp_cond iterexps instrs
+  | HoldI (id_rel, notexp, iterexps, holdcase) ->
+      prosify_hold_instr at ctx id_rel notexp iterexps holdcase
+  | CaseI (exp, cases, phantom_opt) ->
+      prosify_case_instr at ctx exp cases phantom_opt
+  | OtherwiseI instr -> prosify_otherwise_instr at ctx instr
+  | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterexps) ->
-      let exp_l_pl = prosify_exp ctx exp_l in
-      let exp_r_pl = prosify_exp ctx exp_r in
-      [
-        Pl.LetI (exp_l_pl, exp_r_pl)
-        $ instr.at
-        |> prosify_iterated_let [ exp_l ] iterexps;
-      ]
-  | RuleI (id, (mixop, exps), iterexps) ->
-      let hint_opt = Hintdb.get "prose_in" (`Rel id) ctx.hintdb in
-      let inputs = IEnv.find_opt id ctx.ienv |> Option.value ~default:[] in
-      let exps_in, exps_out = InputHint.split_exps_without_idx inputs exps in
-      let exps_in = prosify_exps ctx exps_in in
-      let exps_out_pl = prosify_exps ctx exps_out in
-      let exps = prosify_exps ctx exps in
-      let relation =
-        match hint_opt with
-        | Some hintexp -> Pl.Prose (hintexp, exps_out_pl, exps_in)
-        | None -> Pl.Mixop (mixop, exps)
-      in
-      [
-        Pl.RelI (relation, id)
-        $ instr.at
-        |> prosify_iterated_let exps_out iterexps;
-      ]
-  | ResultI exps ->
-      let rid = get_rel_id ctx in
-      let hint_opt = Hintdb.get "prose_out" (`Rel rid) ctx.hintdb in
-      let inputs = IEnv.find_opt rid ctx.ienv |> Option.value ~default:[] in
-      let hint_opt = Option.map (align_hint inputs) hint_opt in
-      let exps = prosify_exps ctx exps in
-      [ Pl.ResultI (hint_opt, exps) $ instr.at ]
-  | ReturnI exp ->
-      let exp = prosify_exp ctx exp in
-      [ Pl.ReturnI exp $ instr.at ]
+      prosify_let_instr at ctx exp_l exp_r iterexps
+  | RuleI (id, notexp, iterexps) -> prosify_rule_instr at ctx id notexp iterexps
+  | ResultI exps -> prosify_result_instr at ctx exps
+  | ReturnI exp -> prosify_return_instr at ctx exp
   | DebugI _ -> []
 
-and prosify_instrs ctx (instrs : instr list) : Pl.instr list =
-  let _, instrs =
-    Expand.expand_with_context ctx.free_ids Expand.expand_nested_calls instrs
-  in
+and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
+  (* Expand nested calls *)
+  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
+  (* Prosify instructions *)
+  let instrs_pl = prosify_instrs' ctx instrs in
+  (* Apply shorthands *)
+  Shorthand.apply_check_option_get instrs_pl
+
+and prosify_instrs' (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   let is_branch_instr instr =
     match instr.it with IfI _ | CaseI _ | OtherwiseI _ -> true | _ -> false
   in
@@ -422,104 +354,502 @@ and prosify_instrs ctx (instrs : instr list) : Pl.instr list =
     instrs |> List.filter is_branch_instr |> List.length
   in
   if num_branch_instrs = 1 then
-    instrs |> List.concat_map (prosify_instr (ctx |> as_cond Check))
+    let ctx = Ctx.set_branch ctx Check in
+    instrs |> List.concat_map (prosify_instr ctx)
   else
     instrs
     |> List.fold_left
-         (fun (is_first_branch, instrs) instr ->
-           if is_first_branch && is_branch_instr instr then
-             (false, instrs @ prosify_instr (ctx |> as_cond If) instr)
-           else if is_branch_instr instr then
-             (false, instrs @ prosify_instr (ctx |> as_cond ElseIf) instr)
-           else
-             ( is_first_branch,
-               instrs @ prosify_instr (ctx |> as_cond Check) instr ))
+         (fun (is_first_branch, instrs_pl) instr ->
+           let ctx, is_first_branch =
+             if is_first_branch && is_branch_instr instr then
+               let ctx = Ctx.set_branch ctx If in
+               (ctx, false)
+             else if is_branch_instr instr then
+               let ctx = Ctx.set_branch ctx ElseIf in
+               (ctx, false)
+             else
+               let ctx = Ctx.set_branch ctx Check in
+               (ctx, is_first_branch)
+           in
+           (is_first_branch, instrs_pl @ prosify_instr ctx instr))
          (true, [])
     |> snd
 
-let prosify_table ctx id args typ tablerows =
-  let args = prosify_args ctx args in
-  let tablerows_pl =
-    List.map
-      (fun (exps_sig, exp_res, instrs) ->
-        let exps_sig = prosify_exps ctx exps_sig in
-        let exp_res = prosify_exp ctx exp_res in
-        let instrs = prosify_instrs ctx instrs in
-        (exps_sig, exp_res, instrs) $ exp_res.at)
-      tablerows
-  in
-  (id, args, typ, tablerows_pl)
+(* If instruction prosification *)
 
-let prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
+and prosify_if_cond (ctx : Ctx.t) (exp : exp) (iterexps : iterexp list) :
+    Pl.cond =
+  let exp_pl = prosify_exp ctx exp in
+  let cond_pl = Pl.ExpCond exp_pl in
+  iterate_cond cond_pl iterexps
+
+and prosify_if_instr (at : region) (ctx : Ctx.t) (exp_cond : exp)
+    (iterexps : iterexp list) (instrs_then : instr list) : Pl.instr list =
+  let cond_pl = prosify_if_cond ctx exp_cond iterexps in
+  match ctx.branch with
+  | Check ->
+      let instr_pl = Pl.CheckI cond_pl $ at in
+      let instrs_then_pl = prosify_instrs ctx instrs_then in
+      instr_pl :: instrs_then_pl
+  | If ->
+      let branch_pl = Pl.If in
+      let instrs_then_pl = prosify_instrs ctx instrs_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | ElseIf ->
+      let branch_pl = Pl.ElseIf in
+      let instrs_then_pl = prosify_instrs ctx instrs_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | Else ->
+      let branch_pl = Pl.Else in
+      let instrs_then_pl = prosify_instrs ctx instrs_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | Empty -> assert false
+
+(* Hold instruction prosification *)
+
+and prosify_hold_cond ~(hold : bool) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) : Pl.cond =
+  let mixop, exps = notexp in
+  let exps_pl = prosify_exps ctx exps in
+  let hid = if hold then "prose_true" else "prose_false" in
+  let rel_call_pl =
+    match Ctx.find_hint ctx hid (`Rel id_rel) with
+    | Some prose -> Pl.ProseRelCall (`Hold (id_rel, prose, exps_pl))
+    | None -> Pl.MathRelCall (id_rel, mixop, exps_pl)
+  in
+  let cond_pl = Pl.RelCond rel_call_pl in
+  iterate_cond cond_pl iterexps
+
+and prosify_hold_instr (at : region) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) :
+    Pl.instr list =
+  match holdcase with
+  | BothH (instrs_hold, instrs_not_hold) ->
+      prosify_hold_both_instr at ctx id_rel notexp iterexps instrs_hold
+        instrs_not_hold
+  | HoldH (instrs_hold, _) ->
+      prosify_hold_only_instr at ctx id_rel notexp iterexps instrs_hold
+  | NotHoldH (instrs_not_hold, _) ->
+      prosify_not_hold_only_instr at ctx id_rel notexp iterexps instrs_not_hold
+
+and prosify_hold_both_instr (at : region) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list)
+    (instrs_not_hold : instr list) : Pl.instr list =
+  let cond_hold_pl = prosify_hold_cond ~hold:true ctx id_rel notexp iterexps in
+  let instrs_hold_pl = prosify_instrs ctx instrs_hold in
+  let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
+  let cond_not_hold_pl =
+    prosify_hold_cond ~hold:false ctx id_rel notexp iterexps
+  in
+  let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
+  let instr_not_hold_pl =
+    Pl.BranchI (Pl.Else, cond_not_hold_pl, instrs_not_hold_pl) $ at
+  in
+  [ instr_hold_pl; instr_not_hold_pl ]
+
+and prosify_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list) :
+    Pl.instr list =
+  let cond_hold_pl = prosify_hold_cond ~hold:true ctx id_rel notexp iterexps in
+  let instrs_hold_pl = prosify_instrs ctx instrs_hold in
+  let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
+  [ instr_hold_pl ]
+
+and prosify_not_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) (instrs_not_hold : instr list) :
+    Pl.instr list =
+  let cond_not_hold_pl =
+    prosify_hold_cond ~hold:false ctx id_rel notexp iterexps
+  in
+  let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
+  let instr_not_hold_pl =
+    Pl.BranchI (Pl.If, cond_not_hold_pl, instrs_not_hold_pl) $ at
+  in
+  [ instr_not_hold_pl ]
+
+(* Case instruction prosification *)
+
+and prosify_case_cond (ctx : Ctx.t) (exp : exp) (guard : guard) : Pl.cond =
+  let exp_pl = prosify_exp ctx exp in
+  let exp_pl =
+    match guard with
+    | BoolG true -> exp_pl
+    | BoolG false -> Pl.UnE (`NotOp, `BoolT, exp_pl) $$ (exp.at, exp.note)
+    | CmpG (cmpop, optyp, exp_r) ->
+        let exp_r_pl = prosify_exp ctx exp_r in
+        Pl.CmpE (cmpop, optyp, exp_pl, exp_r_pl) $$ (exp.at, exp.note)
+    | SubG typ -> Pl.SubE (exp_pl, typ) $$ (exp.at, exp.note)
+    | MatchG pattern -> Pl.MatchE (exp_pl, pattern) $$ (exp.at, exp.note)
+    | MemG exp_s ->
+        let exp_s_pl = prosify_exp ctx exp_s in
+        Pl.MemE (exp_pl, exp_s_pl) $$ (exp.at, exp.note)
+  in
+  Pl.ExpCond exp_pl
+
+and prosify_case (at : region) (ctx : Ctx.t) (exp : exp) (case : case) :
+    Pl.instr list =
+  let guard, instrs_then = case in
+  let cond_pl = prosify_case_cond ctx exp guard in
+  let instrs_then_pl = prosify_instrs ctx instrs_then in
+  match ctx.branch with
+  | Check ->
+      let instr_pl = Pl.CheckI cond_pl $ at in
+      instr_pl :: instrs_then_pl
+  | If ->
+      let branch_pl = Pl.If in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | ElseIf ->
+      let branch_pl = Pl.ElseIf in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | Else ->
+      let branch_pl = Pl.Else in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      [ instr_pl ]
+  | Empty -> assert false
+
+and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
+    (cases : case list) : Pl.instr list =
+  match cases with
+  | [] -> assert false
+  | [ case ] ->
+      let ctx = Ctx.set_branch ctx Check in
+      prosify_case at ctx exp case
+  | _ ->
+      cases
+      |> List.mapi (fun idx case ->
+             let ctx =
+               if idx = 0 then Ctx.set_branch ctx If
+               else if idx = List.length cases - 1 && total then
+                 Ctx.set_branch ctx Else
+               else Ctx.set_branch ctx ElseIf
+             in
+             prosify_case at ctx exp case)
+      |> List.concat
+
+and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
+    (cases : case list) (phantom_opt : phantom option) : Pl.instr list =
+  let total = Option.is_some phantom_opt in
+  prosify_cases ~total at ctx exp cases
+
+(* Otherwise instruction prosification *)
+
+and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instr : instr) :
+    Pl.instr list =
+  let instrs_pl = prosify_instr ctx instr in
+  let instr_pl = Pl.OtherwiseI instrs_pl $ at in
+  [ instr_pl ]
+
+(* Let instruction prosification *)
+
+and prosify_let_instr (at : region) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (iterexps : iterexp list) : Pl.instr list =
+  match prosify_let_case_instr at ctx exp_l exp_r iterexps with
+  | Some instrs_pl -> instrs_pl
+  | None -> prosify_let_non_case_instr at ctx exp_l exp_r iterexps
+
+and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
+    (exp_r : exp) (iterexps : iterexp list) : Pl.instr list option =
+  match exp_l.it with
+  | CaseE (mixop, exps_l) -> (
+      let tid =
+        match exp_l.note with VarT (id, _) -> id | _ -> assert false
+      in
+      match Ctx.find_hint_prose_fields ctx (`Typ (tid, mixop)) with
+      | Some { it = ListE exps_fields; _ } ->
+          let fields =
+            List.map
+              (fun exp ->
+                match exp.it with El.TextE s -> s | _ -> assert false)
+              exps_fields
+          in
+          let binds =
+            List.map2
+              (fun exp_l field ->
+                match exp_l.it with
+                | Il.VarE id when String.starts_with ~prefix:"_" id.it -> None
+                | Il.IterE ({ it = Il.VarE id; _ }, _)
+                  when String.starts_with ~prefix:"_" id.it ->
+                    None
+                | _ ->
+                    let exp_pl = prosify_exp ctx exp_l in
+                    Some (exp_pl, field))
+              exps_l fields
+            |> List.filter_map Fun.id
+          in
+          let exp_r_pl = prosify_exp ctx exp_r in
+          let instr_pl = Pl.DestructI (binds, exp_r_pl) $ at in
+          let instr_pl = iterate_bind instr_pl exps_l iterexps in
+          Some [ instr_pl ]
+      | _ -> None)
+  | _ -> None
+
+and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
+    (exp_r : exp) (iterexps : iterexp list) : Pl.instr list =
+  let exp_l_pl = prosify_exp ctx exp_l in
+  let exp_r_pl = prosify_exp ctx exp_r in
+  let instr_pl = Pl.LetI (exp_l_pl, exp_r_pl) $ at in
+  let instr_pl = iterate_bind instr_pl [ exp_l ] iterexps in
+  [ instr_pl ]
+
+(* Rule instruction prosification *)
+
+and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
+    (notexp : notexp) (iterexps : iterexp list) : Pl.instr list =
+  let mixop, exps = notexp in
+  let inputs = Ctx.find_inputs ctx id_rel in
+  let exps_input_indexed, exps_output_indexed =
+    InputHint.split_exps inputs exps
+  in
+  let exps_input_pl_indexed =
+    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_input_indexed
+  in
+  let exps_output_pl_indexed =
+    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_output_indexed
+  in
+  let rel_call_pl =
+    match Ctx.find_hint_prose_in ctx (`Rel id_rel) with
+    | Some prose_in ->
+        let exps_input_pl = List.map snd exps_input_pl_indexed in
+        let exps_output_pl = List.map snd exps_output_pl_indexed in
+        Pl.ProseRelCall
+          (`Yield (id_rel, prose_in, exps_input_pl, exps_output_pl))
+    | None ->
+        let exps_pl_indexed =
+          exps_input_pl_indexed @ exps_output_pl_indexed
+          |> List.sort (fun (idx_a, _) (idx_b, _) -> Int.compare idx_a idx_b)
+        in
+        let exps_pl = List.map snd exps_pl_indexed in
+        Pl.MathRelCall (id_rel, mixop, exps_pl)
+  in
+  let instr_pl = Pl.RuleI rel_call_pl $ at in
+  let instr_pl =
+    let exps_output = List.map snd exps_output_indexed in
+    iterate_bind instr_pl exps_output iterexps
+  in
+  [ instr_pl ]
+
+(* Result instruction prosification *)
+
+and prosify_result_instr (at : region) (ctx : Ctx.t) (exps : exp list) :
+    Pl.instr list =
+  let exps_pl = prosify_exps ctx exps in
+  let id_rel = Ctx.get_namespace ctx in
+  let result_pl =
+    match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
+    | Some prose_out ->
+        let inputs = Ctx.find_inputs ctx id_rel in
+        let prose_out_aligned = align_hint inputs prose_out in
+        Pl.ProseResult (prose_out_aligned, exps_pl)
+    | None -> Pl.MathResult exps_pl
+  in
+  let instr_pl = Pl.ResultI result_pl $ at in
+  [ instr_pl ]
+
+(* Return instruction prosification *)
+
+and prosify_return_instr (at : region) (ctx : Ctx.t) (exp : exp) : Pl.instr list
+    =
+  let exp_pl = prosify_exp ctx exp in
+  let instr_pl = Pl.ReturnI exp_pl $ at in
+  [ instr_pl ]
+
+(* Definition prosification *)
+
+let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
+  let wrap_some def = Some def in
   match def.it with
   | ExternTypD _ | TypD _ -> None
-  | ExternRelD (id, _, exps, _) ->
-      let ctx = ctx |> in_rel id in
-      let exps = prosify_exps ctx exps in
-      Some (Pl.ExternRelD (id, exps) $ def.at)
-  | RelD (id, _, exps, instrs, _) ->
-      let ctx = ctx |> in_rel id in
-      let free_ids =
-        IdSet.union (Sl.Free.free_exps exps) (Sl.Free.free_instrs instrs)
-      in
-      let ctx = ctx |> Ctx.with_free free_ids in
-      let instrs = prosify_instrs ctx instrs in
-      let exps = prosify_exps ctx exps in
-      Some (Pl.RelD (id, exps, instrs) $ def.at)
+  | ExternRelD externrel ->
+      prosify_extern_rel_def ctx def.at externrel |> wrap_some
+  | RelD rel -> prosify_defined_rel_def ctx def.at rel |> wrap_some
   | ExternDecD _ | BuiltinDecD _ -> None
-  | TableDecD (id, args, typ, tablerows, _) ->
-      let id, args, typ, tablerows_pl =
-        prosify_table ctx id args typ tablerows
+  | TableDecD tablefunc ->
+      prosify_table_func_def ctx def.at tablefunc |> wrap_some
+  | FuncDecD definedfunc ->
+      prosify_defined_func_def ctx def.at definedfunc |> wrap_some
+
+(* Relation prosification *)
+
+and prosify_rel_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (exps_input : exp list) : Pl.rel_title =
+  if List.length mixop - 1 = List.length inputs then
+    prosify_rel_hold_title ctx id_rel mixop inputs exps_input
+  else prosify_rel_yield_title ctx id_rel mixop inputs exps_input
+
+and prosify_rel_hold_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (exps_input : exp list) : Pl.rel_title =
+  let prose_true_opt = Ctx.find_hint_prose_true ctx (`Rel id_rel) in
+  let prose_false_opt = Ctx.find_hint_prose_false ctx (`Rel id_rel) in
+  let exps_input_pl = prosify_exps ctx exps_input in
+  match (prose_true_opt, prose_false_opt) with
+  | Some prose_true, Some _prose_false ->
+      Pl.ProseRelTitle (`Hold (id_rel, prose_true, exps_input_pl))
+  | _ -> prosify_rel_math_title ctx id_rel mixop inputs exps_input
+
+and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (exps_input : exp list) : Pl.rel_title =
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
+  let prose_out_opt = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
+  match (prose_in_opt, prose_out_opt) with
+  | Some prose_in, Some prose_out ->
+      let exps_input_pl = prosify_exps ctx exps_input in
+      let prose_out_aligned = align_hint inputs prose_out in
+      let exps_output_pl =
+        List.init
+          (List.length mixop - List.length inputs - 1)
+          (fun _ -> Pl.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
       in
-      Some (Pl.TableDecD (id, args, typ, tablerows_pl) $ def.at)
-  | FuncDecD _ -> None
+      Pl.ProseRelTitle
+        (`Yield
+          (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
+  | _ -> prosify_rel_math_title ctx id_rel mixop inputs exps_input
+
+and prosify_rel_math_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (exps_input : exp list) : Pl.rel_title =
+  let exps_input_pl = prosify_exps ctx exps_input in
+  let exps_input_pl_indexed = List.combine inputs exps_input_pl in
+  let exps_pl =
+    List.init
+      (List.length mixop - 1)
+      (fun idx ->
+        match List.assoc_opt idx exps_input_pl_indexed with
+        | Some exp_pl -> exp_pl
+        | None -> prosify_hole_exp ())
+  in
+  Pl.MathRelTitle (id_rel, mixop, exps_pl)
+
+(* Extern relation definition prosification *)
+
+and prosify_extern_rel_def (ctx : Ctx.t) (at : region) (externrel : externrel) :
+    Pl.def =
+  let id_rel, (mixop, inputs), exps_input, _ = externrel in
+  let ctx = Ctx.enter_rel ctx id_rel in
+  let rel_title_pl = prosify_rel_title ctx id_rel mixop inputs exps_input in
+  Pl.ExternRelD rel_title_pl $ at
+
+(* Defined relation definition prosification *)
+
+and collect_rulegroups_instr (instr : instr) : (id * exp list * instr list) list
+    =
+  match instr.it with
+  | IfI (_, _, instrs_then, _) -> collect_rulegroups_instrs instrs_then
+  | HoldI (_, _, _, holdcase) -> (
+      match holdcase with
+      | BothH (instrs_hold, instrs_nothold) ->
+          collect_rulegroups_instrs instrs_hold
+          @ collect_rulegroups_instrs instrs_nothold
+      | HoldH (instrs_hold, _) -> collect_rulegroups_instrs instrs_hold
+      | NotHoldH (instrs_nothold, _) -> collect_rulegroups_instrs instrs_nothold
+      )
+  | CaseI (_, cases, _) ->
+      let instrs_group = cases |> List.map snd in
+      instrs_group |> List.map collect_rulegroups_instrs |> List.concat
+  | GroupI (id_rulegroup, exps_input, instrs) ->
+      [ (id_rulegroup, exps_input, instrs) ]
+  | _ -> []
+
+and collect_rulegroups_instrs (instrs : instr list) :
+    (id * exp list * instr list) list =
+  instrs |> List.map collect_rulegroups_instr |> List.concat
+
+and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
+    (mixop : mixop) (inputs : int list) (exps_input : exp list) :
+    Pl.rulegroup_title =
+  let exps_input_pl = prosify_exps ctx exps_input in
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
+  match prose_in_opt with
+  | Some prose_in -> Pl.ProseRuleTitle (id_rulegroup, prose_in, exps_input_pl)
+  | None ->
+      let epxs_input_pl_indexed = List.combine inputs exps_input_pl in
+      let exps_pl =
+        List.init
+          (List.length mixop - 1)
+          (fun idx ->
+            match List.assoc_opt idx epxs_input_pl_indexed with
+            | Some exp_pl -> exp_pl
+            | None -> prosify_hole_exp ())
+      in
+      Pl.MathRuleTitle (id_rulegroup, mixop, exps_pl)
+
+and prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (rulegroup : id * exp list * instr list) : Pl.rulegroup
+    =
+  let id_rulegroup, exps_input, instrs = rulegroup in
+  let rulegroup_title_pl =
+    prosify_rulegroup_title ctx id_rel id_rulegroup mixop inputs exps_input
+  in
+  let ctx =
+    let frees =
+      IdSet.union (Sl.Free.free_exps exps_input) (Sl.Free.free_instrs instrs)
+    in
+    Ctx.set_free ctx frees
+  in
+  let instrs_pl = prosify_instrs ctx instrs in
+  (rulegroup_title_pl, instrs_pl)
+
+and prosify_rulegroups (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
+    (inputs : int list) (rulegroups : (id * exp list * instr list) list) :
+    Pl.rulegroup list =
+  List.map (prosify_rulegroup ctx id_rel mixop inputs) rulegroups
+
+and prosify_defined_rel_def (ctx : Ctx.t) (at : region) (rel : rel) : Pl.def =
+  let id_rel, (mixop, inputs), exps_match, instrs, _ = rel in
+  let ctx = Ctx.enter_rel ctx id_rel in
+  let rel_title_pl = prosify_rel_title ctx id_rel mixop inputs exps_match in
+  let rulegroups = collect_rulegroups_instrs instrs in
+  let rulegroups_pl = prosify_rulegroups ctx id_rel mixop inputs rulegroups in
+  Pl.RelD (rel_title_pl, rulegroups_pl) $ at
+
+(* Table function definition prosification *)
+
+and prosify_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Pl.tablerow =
+  let exps_input, exp_output, instrs = tablerow in
+  let exps_input_pl = prosify_exps ctx exps_input in
+  let exp_output_pl = prosify_exp ctx exp_output in
+  let ctx =
+    let frees =
+      IdSet.union
+        (Sl.Free.free_exps exps_input)
+        (IdSet.union (Sl.Free.free_exp exp_output) (Sl.Free.free_instrs instrs))
+    in
+    Ctx.set_free ctx frees
+  in
+  let instrs_pl = prosify_instrs ctx instrs in
+  (exps_input_pl, exp_output_pl, instrs_pl)
+
+and prosify_tablerows (ctx : Ctx.t) (tablerows : tablerow list) :
+    Pl.tablerow list =
+  List.map (prosify_tablerow ctx) tablerows
+
+and prosify_table_func_def (ctx : Ctx.t) (at : region) (tablefunc : tablefunc) :
+    Pl.def =
+  let id, args, typ_ret, tablerows, _ = tablefunc in
+  let args_pl = prosify_args ctx args in
+  let tablerows_pl = prosify_tablerows ctx tablerows in
+  Pl.TableDecD (id, args_pl, typ_ret, tablerows_pl) $ at
+
+(* Defined function definition prosification *)
+
+and prosify_defined_func_def (ctx : Ctx.t) (at : region)
+    (definedfunc : definedfunc) : Pl.def =
+  let id, tparams, args, typ_ret, instrs, _ = definedfunc in
+  let args_pl = prosify_args ctx args in
+  let ctx =
+    let frees =
+      IdSet.union (Sl.Free.free_args args) (Sl.Free.free_instrs instrs)
+    in
+    Ctx.set_free ctx frees
+  in
+  let instrs_pl = prosify_instrs ctx instrs in
+  Pl.FuncDecD (id, tparams, args_pl, typ_ret, instrs_pl) $ at
+
+(* Entry point *)
 
 let prosify_spec (spec : spec) : Pl.spec =
   let ctx = Ctx.init spec in
   List.filter_map (prosify_def ctx) spec
-
-(* Splicer entrypoints *)
-
-let prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
-    (inputs : int list) (exps_in : exp list) (instrs : instr list) =
-  assert (List.length inputs = List.length exps_in);
-  let ctx = ctx |> in_rel id_rel in
-  let relcall =
-    let prose_in_opt = Hintdb.get "prose_in" (`Rel id_rel) ctx.hintdb in
-    match prose_in_opt with
-    | Some hintexp ->
-        let exps_in = prosify_exps ctx exps_in in
-        Pl.Prose (hintexp, [], exps_in)
-    | None -> Pl.Mixop (mixop, prosify_exps ctx exps_in)
-  in
-  let free_ids =
-    IdSet.union (Sl.Free.free_exps exps_in) (Sl.Free.free_instrs instrs)
-  in
-  let ctx = ctx |> Ctx.with_free free_ids in
-  let instrs = prosify_instrs ctx instrs in
-  (relcall, id_rel, instrs)
-
-let prosify_func (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
-    (args_input : arg list) (typ : typ) (instrs : instr list) =
-  let funcprose =
-    match typ.it with
-    | BoolT -> (
-        match Hintdb.get "prose_true" (`Func id_def) ctx.hintdb with
-        | Some prose_true ->
-            let prose_false_opt =
-              Hintdb.get "prose_false" (`Func id_def) ctx.hintdb
-            in
-            Pl.BoolProse (id_def, prose_true, prose_false_opt)
-        | None -> Pl.Def id_def)
-    | _ -> (
-        match Hintdb.get "prose_in" (`Func id_def) ctx.hintdb with
-        | Some prose_in -> Pl.InputProse (id_def, prose_in)
-        | None -> Pl.Def id_def)
-  in
-  let free_ids =
-    IdSet.union (Sl.Free.free_args args_input) (Sl.Free.free_instrs instrs)
-  in
-  let args_input = prosify_args ctx args_input in
-  let ctx = ctx |> Ctx.with_free free_ids in
-  let instrs = prosify_instrs ctx instrs in
-  (funcprose, tparams, args_input, instrs)

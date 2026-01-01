@@ -1,6 +1,5 @@
 open Lang
 open Util.Source
-module RenderCtx = Pass.Prose.Ctx
 
 (* Signature for splicing modules *)
 
@@ -13,7 +12,7 @@ module type Splice = sig
   val suffix : string option
   val parse_keys : Source.t -> key list
   val find_values : Ctx.t -> key list -> value list
-  val render : Ctx.t -> key list -> value list -> string
+  val render : key list -> value list -> string
 end
 
 (* Syntax splicer *)
@@ -30,7 +29,7 @@ module Syntax : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_syntax ctx) keys
 
-  let render (_ctx : Ctx.t) (keys : key list) (values : value list) : string =
+  let render (keys : key list) (values : value list) : string =
     List.map2
       (fun (id_typ : key) ((tparams, deftyp, hints) : value) ->
         El.Render.render_type_def (id_typ $ no_region) tparams deftyp hints)
@@ -54,7 +53,7 @@ module Relation : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_relation ctx) keys
 
-  let render (_ctx : Ctx.t) (keys : key list) (value : value list) : string =
+  let render (keys : key list) (value : value list) : string =
     List.map2
       (fun (id_rel : key) ((nottyp, hints) : value) ->
         El.Render.render_relation_def (id_rel $ no_region) nottyp hints)
@@ -81,7 +80,7 @@ module RuleGroup : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_rulegroup ctx) keys
 
-  let render (_ctx : Ctx.t) (keys : key list) (values : value list) : string =
+  let render (keys : key list) (values : value list) : string =
     List.map2
       (fun ((id_rel, id_rulegroup) : key) (rules : value) ->
         El.Render.render_rulegroup_def (id_rel $ no_region)
@@ -106,14 +105,10 @@ module RuleProse : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_ruleprose ctx) keys
 
-  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
+  let render (keys : key list) (values : value list) : string =
     List.map2
-      (fun ((id_rel, _) : key) ((mixop, inputs, exps, instrs) : value) ->
-        let rulegroup_pl =
-          Pass.Prose.Prosify.prosify_rulegroup ctx.prose_ctx
-            (id_rel $ no_region) mixop inputs exps instrs
-        in
-        Pl.Render.render_rulegroup rulegroup_pl)
+      (fun ((id_rel, _) : key) (rulegroup : value) ->
+        Pl.Render.render_rulegroup (id_rel $ no_region) rulegroup)
       keys values
     |> String.concat "\n\n"
 end
@@ -134,19 +129,15 @@ module FuncProse : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_funcprose ctx) keys
 
-  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
+  let render (keys : key list) (values : value list) : string =
     List.map2
-      (fun (id_def : key) ((tparams, args, typ, instrs) : value) ->
-        let func_pl =
-          Pass.Prose.Prosify.prosify_func ctx.prose_ctx (id_def $ no_region)
-            tparams args typ instrs
-        in
-        Pl.Render.render_func func_pl)
+      (fun (_id_def : key) (func : value) ->
+        Pl.Render.render_defined_func_def func)
       keys values
     |> String.concat "\n\n"
 end
 
-(* Table Splicer *)
+(* Table splicer *)
 
 module Table : Splice = struct
   type key = Kinds.TableId.t
@@ -162,14 +153,10 @@ module Table : Splice = struct
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
     List.map (Ctx.find_table ctx) keys
 
-  let render (ctx : Ctx.t) (keys : key list) (values : value list) : string =
+  let render (keys : key list) (values : value list) : string =
     List.map2
-      (fun (id_def : key) ((args, typ, tablerows) : value) ->
-        let id, args, typ, tablerows_pl =
-          Pass.Prose.Prosify.prosify_table ctx.prose_ctx (id_def $ no_region)
-            args typ tablerows
-        in
-        Pl.Render.render_table id args typ tablerows_pl)
+      (fun (_id_def : key) (tablefunc : value) ->
+        Pl.Render.render_table_func_def tablefunc)
       keys values
     |> String.concat "\n\n"
 end
