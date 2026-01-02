@@ -1752,4 +1752,4 @@ declarationList:
 ;
 
 p4program:
-	| ds = declarationList END { ds }
+	| dl = declarationList END { dl #@@ "p4program" }

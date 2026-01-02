@@ -6,7 +6,7 @@ open Unwrap
 
 let first fs x = List.find_map (fun f -> f x) fs
 
-(* boolValue = B bool *)
+(* boolValue = `B bool *)
 
 let unpack_p4_bool (value : Value.t) : bool =
   match flatten_case_v_opt value with

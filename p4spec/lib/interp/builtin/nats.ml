@@ -3,6 +3,7 @@ open Xl
 open Il
 module Value = Runtime.Dynamic_Il.Value
 open Util.Source
+open Error
 
 (* Conversion between meta-numerics and OCaml numerics *)
 
@@ -39,8 +40,8 @@ let max_nat (add : value -> unit) (at : region) (targs : targ list)
   in
   let max =
     match values with
-    | [] -> Bigint.zero
-    | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
+    | [] -> error at "max of empty list"
+    | hd :: tl -> List.fold_left Bigint.max hd tl
   in
   value_of_bigint add max
 
@@ -54,7 +55,7 @@ let min_nat (add : value -> unit) (at : region) (targs : targ list)
   in
   let min =
     match values with
-    | [] -> Bigint.zero
-    | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
+    | [] -> error at "min of empty list"
+    | hd :: tl -> List.fold_left Bigint.min hd tl
   in
   value_of_bigint add min
