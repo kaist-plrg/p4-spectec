@@ -120,8 +120,8 @@ relation Stmt_ok:
                                       : typingContext flow statementIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in
-        "typing" %3#", under cursor" %0#", typing context"
-        %1#", abstract control flow" %2#", and loop context" %4)
+        "typing" %4#", under cursor" %0#", typing context"
+        %1#", abstract control flow" %2#", and loop context" %3)
   hint(prose_out
         "\nthe typing context" %5#",\nthe abstract control flow"
         %6#",\nand the typed statement" %7)
@@ -131,8 +131,8 @@ relation BlockElementStmt_ok:
                                : typingContext flow blockElementStatementIR
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %2#", under typing context"
-        %0#", abstract control flow" %1#", and loop context" %3)
+        "typing" %3#", under typing context"
+        %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
         "\nthe typing context" %4#",\nthe abstract control flow"
         %5#",\nand the typed block element statement" %6)
@@ -142,8 +142,8 @@ relation BlockElementStmts_ok:
                                : typingContext flow blockElementStatementIR*
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %2#", under typing context"
-        %0#", abstract control flow" %1#", and loop context" %3)
+        "typing" %3#", under typing context"
+        %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
         "\nthe typing context" %4#",\nthe abstract control flow"
         %5#",\nand the typed block element statements" %6)
@@ -153,8 +153,8 @@ relation Block_ok:
                                : typingContext flow blockStatementIR
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %2#", under typing context"
-        %0#", abstract control flow" %1#", and loop context" %3)
+        "typing" %3#", under typing context"
+        %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
         "\nthe typing context" %4#",\nthe abstract control flow"
         %5#",\nand the typed block statement" %6)
@@ -479,6 +479,9 @@ relation CallableType_ok:
   cursor typingContext |- callableTargetIR `< typeArgumentListIR > `( argumentIR* )
                         : callableTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "finding the type of" %2#"<"#%3#">("#%4#"), under cursor" %0 "and typing context" %1)
+  hint(prose_out "the callable type" %5 "with fresh type variables" %6
+            "and default parameter ids" %7)
 
 ;; Checks that an action/function/method invocation is valid,
 ;; gets the return type,
@@ -490,6 +493,11 @@ relation Call_ok:
                             `( argumentListIR `# id* )
                         : typeIR `< typeArgumentListIR > `( argumentListIR )
   hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "typing the invocation" %2#"<"#%3#">("#%5#") with omitted type arguments"
+             %4 "and omitted arguments" %6
+             ", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the return type" %7 "with inferred type arguments" %8
+             "and the casted argument list" %9)
 
 ;;
 ;;;; Constructor typing
@@ -503,6 +511,10 @@ relation ConstructorType_ok:
   cursor typingContext |- prefixedNameIR `< typeArgumentListIR > `( argumentIR* )
                         : constructorTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "finding the type of constructor"
+             %2#"<"#%3#">("#%4#"), under cursor" %0 "and typing context" %1)
+  hint(prose_out "the constructor type" %5 "with fresh type variables" %6
+             "and default parameter ids" %7)
 
 ;; Checks that a constructor invocation is valid,
 ;; gets the return type,
@@ -517,3 +529,9 @@ relation Inst_ok:
                                  : typeIR
                                     `< typeArgumentListIR > `( argumentListIR )
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "typing the instantiation" %3#"<"#%4#">("#%6#") with omitted type arguments"
+             %5 "and omitted arguments" %7
+             ", under cursor" %0 "and typing context" %1
+             #", and instantiation site context" %2)
+  hint(prose_out "the constructed type" %8 "with inferred type arguments" %9
+             "and the casted argument list" %10)

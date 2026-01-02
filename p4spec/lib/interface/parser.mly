@@ -1,5 +1,6 @@
 %{
-  open Il.Ast
+  open Lang
+  open Il
   open Context
   open Extract
   open Wrap
@@ -45,8 +46,8 @@
 (**************************** TOKENS ******************************)
 %token<Source.info> END
 %token TYPENAME IDENTIFIER
-%token<Il.Ast.value> NAME STRING_LITERAL
-%token<Il.Ast.value * string> NUMBER_INT NUMBER
+%token<Lang.Il.value> NAME STRING_LITERAL
+%token<Lang.Il.value * string> NUMBER_INT NUMBER
 %token<Source.info> LE GE SHL AND OR NE EQ
 %token<Source.info> PLUS MINUS PLUS_SAT MINUS_SAT MUL INVALID DIV MOD
 %token<Source.info> BIT_OR BIT_AND BIT_XOR COMPLEMENT
@@ -62,7 +63,7 @@
 %token<Source.info> SWITCH TABLE THIS TRANSITION TUPLE TYPEDEF TYPE VALUE_SET VARBIT VOID
 %token<Source.info> PRAGMA PRAGMA_END
 %token<Source.info> PLUS_ASSIGN PLUS_SAT_ASSIGN MINUS_ASSIGN MINUS_SAT_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN  SHL_ASSIGN SHR_ASSIGN BIT_AND_ASSIGN BIT_XOR_ASSIGN BIT_OR_ASSIGN
-%token<Il.Ast.value> UNEXPECTED_TOKEN
+%token<Lang.Il.value> UNEXPECTED_TOKEN
 
 (**************************** PRIORITY AND ASSOCIATIVITY ******************************)
 %right THEN ELSE
@@ -85,7 +86,7 @@
 %start p4program
 
 (**************************** TYPES ******************************)
-%type <Il.Ast.value>
+%type <Lang.Il.value>
   (* Aux *) int externName declarationList
   (* Misc *) trailingCommaOpt (* Booleans *) booleanLiteral
   (* Integers *) integerLiteral (* Strings *) stringLiteral
@@ -159,7 +160,7 @@
   (* >> Type declarations *) typeDeclaration
   (* >> Declaration *) declaration
   (* Annotations *) annotationToken annotationBody structuredAnnotationBody annotation annotationListNonEmpty annotationList p4program
-%type <Il.Ast.value> push_name push_externName
+%type <Lang.Il.value> push_name push_externName
 %type <unit> push_scope pop_scope go_toplevel go_local
 %%
 

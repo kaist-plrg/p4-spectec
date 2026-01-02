@@ -1,3 +1,5 @@
+open Lang
+open Pass
 open Util.Error
 open Util.Source
 
@@ -56,7 +58,7 @@ let prose_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let spec_pl = Prose.Prosify.prosify_spec spec_sl in
-         Format.printf "%s\n" (Prose.Pl.Print.render_spec spec_pl);
+         Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -89,12 +91,12 @@ let run_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sim =
            match mode with
-           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `IL -> Runtime.Sim.Simulator.IL spec_il
            | `SL ->
                let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime_simulator.Simulator.SL spec_sl
+               Runtime.Sim.Simulator.SL spec_sl
          in
-         let (module Runner) = Arch.Gen.gen_placeholder () in
+         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
          match
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -134,12 +136,12 @@ let sim_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sim =
            match mode with
-           | `IL -> Runtime_simulator.Simulator.IL spec_il
+           | `IL -> Runtime.Sim.Simulator.IL spec_il
            | `SL ->
                let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime_simulator.Simulator.SL spec_sl
+               Runtime.Sim.Simulator.SL spec_sl
          in
-         let (module Runner) = Arch.Gen.gen arch in
+         let (module Runner) = Backend_sim.Gen.gen arch in
          match
            Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
          with
@@ -184,12 +186,12 @@ let cover_dangling_command =
                not (List.exists (String.equal filename_p4) excludes_p4))
              filenames_p4
          in
-         let (module Runner) = Arch.Gen.gen_placeholder () in
+         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
          let cover =
            Runner.cover_programs spec_sl relname includes_p4 filenames_p4
          in
-         Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
-           cover
+         Runtime.Testgen_neg.Dangling.Multi.log
+           ~filename_cov_opt:(Some filename_cov) cover
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -232,13 +234,15 @@ let run_testgen_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let logmode =
-           if silent then Testgen.Modes.Silent else Testgen.Modes.Verbose
+           if silent then Backend_testgen.Modes.Silent
+           else Backend_testgen.Modes.Verbose
          in
          let bootmode =
            match (dirname_cold_boot, filename_boot) with
            | Some dirname_cold_boot, None ->
-               Testgen.Modes.Cold (excludes_p4, dirname_cold_boot)
-           | None, Some filename_boot -> Testgen.Modes.Warm filename_boot
+               Backend_testgen.Modes.Cold (excludes_p4, dirname_cold_boot)
+           | None, Some filename_boot ->
+               Backend_testgen.Modes.Warm filename_boot
            | Some _, Some _ ->
                Format.asprintf
                  "Error: should specify only one of -cold or -warm\n"
@@ -248,15 +252,17 @@ let run_testgen_command =
                |> failwith
          in
          let mutationmode =
-           if random then Testgen.Modes.Random
-           else if hybrid then Testgen.Modes.Hybrid
-           else Testgen.Modes.Derive
+           if random then Backend_testgen.Modes.Random
+           else if hybrid then Backend_testgen.Modes.Hybrid
+           else Backend_testgen.Modes.Derive
          in
          let covermode =
-           if strict then Testgen.Modes.Strict else Testgen.Modes.Relaxed
+           if strict then Backend_testgen.Modes.Strict
+           else Backend_testgen.Modes.Relaxed
          in
-         Testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4 dirname_gen
-           name_campaign randseed logmode bootmode mutationmode covermode
+         Backend_testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4
+           dirname_gen name_campaign randseed logmode bootmode mutationmode
+           covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -280,8 +286,8 @@ let run_testgen_debug_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         Testgen.Derive.debug_phantom spec_sl relname includes_p4 filename_p4
-           dirname_debug pid
+         Backend_testgen.Derive.debug_phantom spec_sl relname includes_p4
+           filename_p4 dirname_debug pid
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -309,8 +315,8 @@ let interesting_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let (module Runner) = Arch.Gen.gen_placeholder () in
-         let spec_sim = Runtime_simulator.Simulator.SL spec_sl in
+         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
+         let spec_sim = Runtime.Sim.Simulator.SL spec_sl in
          let result =
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -319,7 +325,7 @@ let interesting_command =
          | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
                let branch =
-                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->
@@ -340,7 +346,7 @@ let interesting_command =
                exit 10)
              else
                let branch =
-                 Runtime_testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->
@@ -379,11 +385,12 @@ let splice_command =
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
          let filenames =
            if inplace then List.combine filenames_input filenames_input
            else List.combine filenames_input filenames_output
          in
-         Splice.Driver.splice_files spec spec_sl filenames
+         Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -456,7 +463,7 @@ let json_ast_command =
              let spec = List.concat_map Frontend.Parse.parse_file filenames in
              let spec_il = Elaborate.Elab.elab_spec spec in
              let spec_sl = Structure.Struct.struct_spec spec_il in
-             let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
+             let sl_ast_json = Sl.spec_to_yojson spec_sl in
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
            with
@@ -467,9 +474,7 @@ let json_ast_command =
        | `Parse -> (
            (* only take the first argument *)
            let filename = List.hd filenames in
-           let parsed =
-             Yojson.Safe.from_file filename |> Sl.Ast.spec_of_yojson
-           in
+           let parsed = Yojson.Safe.from_file filename |> Sl.spec_of_yojson in
            match parsed with
            | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
            | Error err ->
@@ -487,7 +492,7 @@ let p4_program_value_json_command =
          let value_program =
            Interface.Parse.parse_file_fresh includes_p4 filename_p4
          in
-         let json = Sl.Ast.value_to_yojson value_program in
+         let json = Sl.value_to_yojson value_program in
          Yojson.Safe.to_string json |> print_string
        with ParseError (at, msg) ->
          Format.printf "ill-formed: %s\n" (string_of_error at msg))
@@ -508,7 +513,7 @@ let unparse_json_value_command =
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
          let json = Yojson.Safe.from_file filename_json in
-         let value_result = Sl.Ast.value_of_yojson json in
+         let value_result = Sl.value_of_yojson json in
          match value_result with
          | Ok value ->
              let p4_source =

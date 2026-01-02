@@ -1,0 +1,109 @@
+open Lang
+module Value = Dynamic.Value
+module Dep = Testgen_neg.Dep
+module DCov_single = Testgen_neg.Dangling.Single
+module DCov_multi = Testgen_neg.Dangling.Multi
+module IO = Io
+open Util.Source
+
+(* Module signatures for interpreter-architecture interaction *)
+
+type spec = IL of Il.spec | SL of Sl.spec | Empty
+
+type program_result =
+  | Pass of Value.t list * Dep.Graph.t * Value.id * DCov_single.t
+  | Fail of region * string * DCov_single.t
+  | IllFormed of region * string * DCov_single.t
+
+type rel_result =
+  | Pass of Value.t list * DCov_single.t
+  | Fail of region * string * DCov_single.t
+
+type func_result =
+  | Pass of Value.t * DCov_single.t
+  | Fail of region * string * DCov_single.t
+
+type stf_result =
+  | Pass
+  | Fail of region * string
+  | IllFormed of region * string
+
+module type ARCH = sig
+  (* Extern evaluation *)
+
+  val eval_extern_init : Value.t list -> Value.t
+  val eval_extern_func_lctk_call : Value.t list -> Value.t list
+  val eval_extern_func_call : Value.t list -> Value.t list
+  val eval_extern_method_call : Value.t list -> Value.t list
+
+  (* Match-action table interface *)
+
+  val table_add_entry :
+    Value.t ->
+    (* store *)
+    Value.t ->
+    (* table name *)
+    Value.t ->
+    (* table entry priority *)
+    Value.t ->
+    (* table entry keysets *)
+    Value.t ->
+    (* table entry action *)
+    Value.t (* store *)
+
+  (* Pipeline evaluation *)
+
+  val init : spec -> unit
+  val init_pipe : spec -> string list -> string -> Value.t * Value.t
+
+  val drive_pipe :
+    Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx option
+end
+
+module type INTERP_IL = sig
+  (* Relation and meta-function valuation *)
+
+  val eval_program :
+    Il.spec -> string -> string list -> string -> program_result
+
+  val eval_rel : Il.spec -> string -> Value.t list -> rel_result
+
+  val eval_func :
+    Il.spec -> string -> Il.typ list -> Value.t list -> func_result
+end
+
+module type INTERP_SL = sig
+  (* Relation and meta-function valuation *)
+
+  val eval_program :
+    derive:bool -> Sl.spec -> string -> string list -> string -> program_result
+
+  val eval_rel : Sl.spec -> string -> Value.t list -> rel_result
+
+  val eval_func :
+    Sl.spec -> string -> Sl.typ list -> Value.t list -> func_result
+
+  (* Coverage *)
+
+  val cover_programs :
+    Sl.spec -> string -> string list -> string list -> DCov_multi.t
+end
+
+module type DRIVER = sig
+  (* Run a P4 program against the spec *)
+
+  val run_program :
+    derive:bool -> spec -> string -> string list -> string -> program_result
+
+  val run_program_internal :
+    derive:bool -> Sl.spec -> string -> Value.t -> rel_result
+
+  (* Run a P4 program against the spec and a STF test *)
+
+  val run_stf_test : spec -> string list -> string -> string -> stf_result
+
+  (* Coverage *)
+
+  val cover_programs :
+    Sl.spec -> string -> string list -> string list -> DCov_multi.t
+end

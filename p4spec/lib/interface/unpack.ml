@@ -1,4 +1,4 @@
-module Value = Runtime_dynamic.Value
+module Value = Runtime.Dynamic_Il.Value
 open Flatten
 open Unwrap
 

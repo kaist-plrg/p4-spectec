@@ -1,4 +1,6 @@
-module Sim = Runtime_simulator.Simulator
+open Lang
+open Pass
+module Sim = Runtime.Sim.Simulator
 module Strings = Util.Strings
 module Filesys = Util.Filesys
 open Util.Error
@@ -92,7 +94,7 @@ let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
 let prose_test specdir =
   let spec_pl = prosify specdir in
-  Prose.Pl.Print.render_spec spec_pl |> print_endline
+  Pl.Render.render_spec spec_pl |> print_endline
 
 let prose_command =
   Core.Command.basic ~summary:"run prose test"
@@ -134,7 +136,7 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Arch.Gen.gen_placeholder () in
+      let (module Runner) = Backend_sim.Gen.gen_placeholder () in
       let time_start =
         run (module Runner) negative spec_sim relname includes_p4 filename_p4
       in
@@ -184,10 +186,10 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Runtime_simulator.Simulator.IL spec_il
+        Sim.IL spec_il
     | `SL ->
         let spec_sl = structure specdir in
-        Runtime_simulator.Simulator.SL spec_sl
+        Sim.SL spec_sl
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -265,7 +267,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Arch.Gen.gen arch in
+      let (module Runner) = Backend_sim.Gen.gen arch in
       let time_start =
         run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
       in
@@ -308,10 +310,10 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Runtime_simulator.Simulator.IL spec_il
+        Sim.IL spec_il
     | `SL ->
         let spec_sl = structure specdir in
-        Runtime_simulator.Simulator.SL spec_sl
+        Sim.SL spec_sl
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -412,9 +414,9 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
       (fun filename_p4 -> not (List.mem filename_p4 excludes_p4))
       filenames_p4
   in
-  let (module Runner) = Arch.Gen.gen_placeholder () in
+  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let cover = Runner.cover_programs spec_sl relname includes_p4 filenames_p4 in
-  Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:None cover
+  Runtime.Testgen_neg.Dangling.Multi.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"

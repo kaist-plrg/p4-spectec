@@ -1,4 +1,5 @@
-module Value = Runtime_dynamic.Value
+open Lang
+module Value = Runtime.Dynamic_Sl.Value
 open Util.Error
 
 let error = error_parse
@@ -32,16 +33,15 @@ let parse (lexbuf : Lexing.lexbuf) =
       error (Source.to_region info) msg
   | e -> raise e
 
-let parse_string (filename : string) (str : string) : Il.Ast.value =
+let parse_string (filename : string) (str : string) : Il.value =
   (* Assume str is preprocessed *)
   let tokens = lex filename str in
   parse tokens
 
-let parse_file (includes : string list) (filename : string) : Il.Ast.value =
+let parse_file (includes : string list) (filename : string) : Il.value =
   let program = preprocess includes filename in
   parse_string filename program
 
-let parse_file_fresh (includes : string list) (filename : string) : Il.Ast.value
-    =
+let parse_file_fresh (includes : string list) (filename : string) : Il.value =
   Value.refresh ();
   parse_file includes filename

@@ -8,6 +8,7 @@ module MI = MenhirLib.General
 module I = Parser.Incremental
 module Engine = Parser.MenhirInterpreter
 module P = Printf
+open Lang
 
 let get_debug_level () = Debug_config.get_parser_debug_level ()
 

@@ -1,5 +1,6 @@
-open Il.Ast
-open Xl.Atom
+open Domain.Atom
+open Lang
+open Il
 open Util.Source
 
 let flatten_case_v_opt (value : value) :
