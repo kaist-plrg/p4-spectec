@@ -7,6 +7,36 @@ let version = "0.1"
 
 exception CommandError of string
 
+(* Transformations *)
+
+let frontend filenames_spec =
+  filenames_spec |> List.concat_map Frontend.Parse.parse_file
+
+let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
+
+let structure filenames_spec =
+  filenames_spec |> elab |> Structure.Struct.struct_spec
+
+let prosify filenames_spec =
+  filenames_spec |> structure |> Prose.Prosify.prosify_spec
+
+let runner ?(arch : string option) mode filenames_spec =
+  let spec_sim =
+    match mode with
+    | `IL ->
+        let spec_il = elab filenames_spec in
+        Runtime.Sim.Simulator.IL spec_il
+    | `SL ->
+        let spec_sl = structure filenames_spec in
+        Runtime.Sim.Simulator.SL spec_sl
+  in
+  let (module Runner) =
+    match arch with
+    | Some arch -> Backend_sim.Gen.gen arch
+    | None -> Backend_sim.Gen.gen_placeholder ()
+  in
+  (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
+
 (* Commands *)
 
 let elab_command =
@@ -18,8 +48,7 @@ let elab_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_il = elab filenames_spec in
          Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
          ()
        with
@@ -36,9 +65,7 @@ let struct_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_sl = structure filenames_spec in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
@@ -54,10 +81,7 @@ let prose_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
+         let spec_pl = prosify filenames_spec in
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
@@ -87,16 +111,7 @@ let run_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sim =
-           match mode with
-           | `IL -> Runtime.Sim.Simulator.IL spec_il
-           | `SL ->
-               let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime.Sim.Simulator.SL spec_sl
-         in
-         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
+         let spec_sim, (module Runner) = runner mode filenames_spec in
          match
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -132,16 +147,7 @@ let sim_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sim =
-           match mode with
-           | `IL -> Runtime.Sim.Simulator.IL spec_il
-           | `SL ->
-               let spec_sl = Structure.Struct.struct_spec spec_il in
-               Runtime.Sim.Simulator.SL spec_sl
-         in
-         let (module Runner) = Backend_sim.Gen.gen arch in
+         let spec_sim, (module Runner) = runner ~arch mode filenames_spec in
          match
            Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
          with
@@ -171,21 +177,14 @@ let cover_dangling_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
          let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
          let filenames_p4 =
-           List.concat_map
-             (Util.Filesys.collect_files ~suffix:".p4")
-             dirnames_p4
+           dirnames_p4
+           |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
+           |> List.filter (fun filename_p4 ->
+                  not (List.exists (String.equal filename_p4) excludes_p4))
          in
-         let filenames_p4 =
-           List.filter
-             (fun filename_p4 ->
-               not (List.exists (String.equal filename_p4) excludes_p4))
-             filenames_p4
-         in
+         let spec_sl = structure filenames_spec in
          let (module Runner) = Backend_sim.Gen.gen_placeholder () in
          let cover =
            Runner.cover_programs spec_sl relname includes_p4 filenames_p4
@@ -230,19 +229,17 @@ let run_testgen_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_sl = structure filenames_spec in
          let logmode =
-           if silent then Backend_testgen.Modes.Silent
-           else Backend_testgen.Modes.Verbose
+           if silent then Backend_testgen_neg.Modes.Silent
+           else Backend_testgen_neg.Modes.Verbose
          in
          let bootmode =
            match (dirname_cold_boot, filename_boot) with
            | Some dirname_cold_boot, None ->
-               Backend_testgen.Modes.Cold (excludes_p4, dirname_cold_boot)
+               Backend_testgen_neg.Modes.Cold (excludes_p4, dirname_cold_boot)
            | None, Some filename_boot ->
-               Backend_testgen.Modes.Warm filename_boot
+               Backend_testgen_neg.Modes.Warm filename_boot
            | Some _, Some _ ->
                Format.asprintf
                  "Error: should specify only one of -cold or -warm\n"
@@ -252,15 +249,15 @@ let run_testgen_command =
                |> failwith
          in
          let mutationmode =
-           if random then Backend_testgen.Modes.Random
-           else if hybrid then Backend_testgen.Modes.Hybrid
-           else Backend_testgen.Modes.Derive
+           if random then Backend_testgen_neg.Modes.Random
+           else if hybrid then Backend_testgen_neg.Modes.Hybrid
+           else Backend_testgen_neg.Modes.Derive
          in
          let covermode =
-           if strict then Backend_testgen.Modes.Strict
-           else Backend_testgen.Modes.Relaxed
+           if strict then Backend_testgen_neg.Modes.Strict
+           else Backend_testgen_neg.Modes.Relaxed
          in
-         Backend_testgen.Gen.fuzzer fuel spec_il spec_sl relname includes_p4
+         Backend_testgen_neg.Gen.fuzzer fuel spec_sl relname includes_p4
            dirname_gen name_campaign randseed logmode bootmode mutationmode
            covermode
        with
@@ -283,10 +280,8 @@ let run_testgen_debug_command =
      and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         Backend_testgen.Derive.debug_phantom spec_sl relname includes_p4
+         let spec_sl = structure filenames_spec in
+         Backend_testgen_neg.Derive.debug_phantom spec_sl relname includes_p4
            filename_p4 dirname_debug pid
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -312,11 +307,7 @@ let interesting_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-         let spec_sim = Runtime.Sim.Simulator.SL spec_sl in
+         let spec_sim, (module Runner) = runner `SL filenames_spec in
          let result =
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
@@ -382,14 +373,12 @@ let splice_command =
            (not inplace)
            && List.length filenames_input <> List.length filenames_output
          then raise (CommandError "number of input and output files must match");
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
          let filenames =
            if inplace then List.combine filenames_input filenames_input
            else List.combine filenames_input filenames_output
          in
+         let spec = frontend filenames_spec in
+         let spec_pl = prosify filenames_spec in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -410,8 +399,7 @@ let parse_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_il = elab filenames_spec in
          let parsed_p4_file =
            Interface.Parse.parse_file includes_p4 filename_p4
          in
@@ -460,9 +448,7 @@ let json_ast_command =
        match mode with
        | `Emit -> (
            try
-             let spec = List.concat_map Frontend.Parse.parse_file filenames in
-             let spec_il = Elaborate.Elab.elab_spec spec in
-             let spec_sl = Structure.Struct.struct_spec spec_il in
+             let spec_sl = structure filenames in
              let sl_ast_json = Sl.spec_to_yojson spec_sl in
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
@@ -476,7 +462,8 @@ let json_ast_command =
            let filename = List.hd filenames in
            let parsed = Yojson.Safe.from_file filename |> Sl.spec_of_yojson in
            match parsed with
-           | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
+           | Ok spec_sl ->
+               Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
            | Error err ->
                Format.printf "Error while parsing %s: %s" filename err))
 
@@ -509,9 +496,7 @@ let unparse_json_value_command =
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_sl = structure filenames_spec in
          let json = Yojson.Safe.from_file filename_json in
          let value_result = Sl.value_of_yojson json in
          match value_result with
@@ -530,19 +515,25 @@ let unparse_json_value_command =
 
 let command =
   Core.Command.group
-    ~summary:"p4spec: a language design framework for the p4_16 language"
+    ~summary:"p4spectec: a language design framework for the p4_16 language"
     [
+      (* Transformations *)
       ("elab", elab_command);
       ("struct", struct_command);
       ("prose", prose_command);
+      (* Execution *)
       ("run", run_command);
       ("sim", sim_command);
+      (* Negative type checker test generation and coverage *)
       ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
+      (* Splicing *)
       ("splice", splice_command);
+      (* Interfacing with P4 *)
       ("parse", parse_command);
+      (* Interfacing with external tools via JSON *)
       ("json-ast", json_ast_command);
       ("p4-program-value-json", p4_program_value_json_command);
       ("unparse-json-value", unparse_json_value_command);
