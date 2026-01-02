@@ -7,9 +7,9 @@ module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Testgen.Dep
-module SCov = Runtime.Testgen.Cov.Single
-module MCov = Runtime.Testgen.Cov.Multiple
+module Dep = Runtime.Testgen_neg.Dep
+module DCov_single = Runtime.Testgen_neg.Dangling.Single
+module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 open Error
 module F = Format
 open Util.Backtrace
@@ -1920,7 +1920,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
     do_init spec;
-    let cover = ref (SCov.init spec) in
+    let cover = ref (DCov_single.init spec) in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let graph = Dep.Graph.assemble_graph value_program in
@@ -1936,7 +1936,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
     do_init spec;
-    let cover = ref (SCov.init spec) in
+    let cover = ref (DCov_single.init spec) in
     let ctx = Ctx.empty_partial cover in
     try
       let values_output = do_eval_rel ctx spec relname values_input in
@@ -1948,7 +1948,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
     do_init spec;
-    let cover = ref (SCov.init spec) in
+    let cover = ref (DCov_single.init spec) in
     let ctx = Ctx.empty_partial cover in
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
@@ -1960,8 +1960,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Entry point for coverage *)
 
   let cover_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : MCov.Cover.t =
-    let cover_multi = MCov.init spec in
+      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
+    let cover_multi = DCov_multi.init spec in
     List.fold_left
       (fun cover_multi filename_p4 ->
         let wellformed, welltyped, cover_single =
@@ -1972,6 +1972,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           | Fail (_, _, cover_single) -> (true, false, cover_single)
           | IllFormed (_, _, cover_single) -> (false, false, cover_single)
         in
-        MCov.extend cover_multi filename_p4 wellformed welltyped cover_single)
+        DCov_multi.extend cover_multi filename_p4 wellformed welltyped
+          cover_single)
       cover_multi filenames_p4
 end

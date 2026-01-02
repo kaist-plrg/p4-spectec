@@ -1,6 +1,6 @@
 open Lang
 open Sl
-module MCov = Runtime.Testgen.Cov.Multiple
+module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Measure initial coverage of phantoms *)
@@ -9,7 +9,7 @@ module Sim = Runtime.Sim.Simulator
 
 let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
     (includes_p4 : string list) (excludes_p4 : string list)
-    (dirname_p4 : string) : MCov.Cover.t =
+    (dirname_p4 : string) : DCov_multi.t =
   let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
   let filenames_p4 = Util.Filesys.collect_files ~suffix:".p4" dirname_p4 in
   let filenames_p4 =
@@ -22,4 +22,5 @@ let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
 
 (* On warm boot, load the coverage from a file *)
 
-let boot_warm (filename_cov : string) : MCov.Cover.t = MCov.load filename_cov
+let boot_warm (filename_cov : string) : DCov_multi.t =
+  DCov_multi.load filename_cov

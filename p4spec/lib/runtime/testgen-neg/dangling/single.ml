@@ -119,30 +119,34 @@ module Cover = struct
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec
 end
 
+(* Dangling coverage *)
+
+type t = Cover.t
+
 (* Querying coverage *)
 
-let is_hit (cover : Cover.t) (pid : pid) : bool =
+let is_hit (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with Hit -> true | Miss _ -> false
 
-let is_miss (cover : Cover.t) (pid : pid) : bool =
+let is_miss (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with Hit -> false | Miss _ -> true
 
-let is_close_miss (cover : Cover.t) (pid : pid) : bool =
+let is_close_miss (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with Hit -> false | Miss vids -> List.length vids > 0
 
 (* Hit and miss *)
 
-let hit (cover : Cover.t) (pid : pid) : Cover.t =
+let hit (cover : t) (pid : pid) : t =
   match Cover.find_opt pid cover with
   | Some branch ->
       let branch = { branch with status = Hit } in
       Cover.add pid branch cover
   | None -> cover
 
-let miss (cover : Cover.t) (pid : pid) (vid : vid) : Cover.t =
+let miss (cover : t) (pid : pid) (vid : vid) : t =
   match Cover.find_opt pid cover with
   | Some branch -> (
       match branch.status with
@@ -154,14 +158,14 @@ let miss (cover : Cover.t) (pid : pid) (vid : vid) : Cover.t =
 
 (* Collector *)
 
-let collect_hit (cover : Cover.t) : pid list =
+let collect_hit (cover : t) : pid list =
   Cover.fold
     (fun (pid : pid) (branch : Branch.t) (hits : pid list) ->
       match branch.status with Hit -> pid :: hits | Miss _ -> hits)
     cover []
   |> List.rev
 
-let collect_miss (cover : Cover.t) : (pid * vid list) list =
+let collect_miss (cover : t) : (pid * vid list) list =
   Cover.fold
     (fun (pid : pid) (branch : Branch.t) (misses : (pid * vid list) list) ->
       match branch.status with
@@ -172,5 +176,5 @@ let collect_miss (cover : Cover.t) : (pid * vid list) list =
 
 (* Constructor *)
 
-let init (spec : spec) : Cover.t = Cover.init_spec spec
-let empty : Cover.t = Cover.empty
+let init (spec : spec) : t = Cover.init_spec spec
+let empty : t = Cover.empty

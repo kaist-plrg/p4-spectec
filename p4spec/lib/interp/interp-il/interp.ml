@@ -7,8 +7,8 @@ module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Il
 open Envs
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Testgen.Dep
-module SCov = Runtime.Testgen.Cov.Single
+module Dep = Runtime.Testgen_neg.Dep
+module DCov_single = Runtime.Testgen_neg.Dangling.Single
 open Error
 open Attempt
 module F = Format
@@ -1581,11 +1581,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_rel ctx spec relname [ value_program ]
       in
       Ctx.profile ctx;
-      (Sim.Pass (values_output, graph, value_program.note.vid, SCov.empty)
+      (Sim.Pass (values_output, graph, value_program.note.vid, DCov_single.empty)
         : Sim.program_result)
     with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg, SCov.empty)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, SCov.empty)
+    | Util.Error.ParseError (at, msg) ->
+        Sim.IllFormed (at, msg, DCov_single.empty)
+    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, DCov_single.empty)
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
@@ -1594,8 +1595,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
       Ctx.profile ctx;
-      (Sim.Pass (values_output, SCov.empty) : Sim.rel_result)
-    with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, SCov.empty)
+      (Sim.Pass (values_output, DCov_single.empty) : Sim.rel_result)
+    with Util.Error.InterpError (at, msg) ->
+      Sim.Fail (at, msg, DCov_single.empty)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
@@ -1606,6 +1608,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_func ctx spec funcname targs values_input
       in
       Ctx.profile ctx;
-      (Sim.Pass (value_output, SCov.empty) : Sim.func_result)
-    with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, SCov.empty)
+      (Sim.Pass (value_output, DCov_single.empty) : Sim.func_result)
+    with Util.Error.InterpError (at, msg) ->
+      Sim.Fail (at, msg, DCov_single.empty)
 end

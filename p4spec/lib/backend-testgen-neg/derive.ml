@@ -2,8 +2,8 @@ open Domain.Lib
 open Lang
 open Sl
 module Sim = Runtime.Sim.Simulator
-module Dep = Runtime.Testgen.Dep
-module SCov = Runtime.Testgen.Cov.Single
+module Dep = Runtime.Testgen_neg.Dep
+module DCov_single = Runtime.Testgen_neg.Dangling.Single
 module F = Format
 
 (* Derivation of the close-AST from the dependency graph *)
@@ -31,11 +31,11 @@ let derive_vid (graph : Dep.Graph.t) (vid : vid) : VIdSet.t * int VIdMap.t =
 
 (* Entry point for deriving close-ASTs *)
 
-let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : SCov.Cover.t) :
+let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : DCov_single.t) :
     (vid * int) list =
   (* Find related values that contributed to the close-miss *)
   let vids_related =
-    let branch = SCov.Cover.find pid cover in
+    let branch = DCov_single.Cover.find pid cover in
     match branch.status with Hit -> [] | Miss vids_related -> vids_related
   in
   (* Randomly sample related vids *)
@@ -71,7 +71,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
   | Pass (_, graph, _, cover) ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
-        let branch = SCov.Cover.find pid cover in
+        let branch = DCov_single.Cover.find pid cover in
         match branch.status with Hit -> [] | Miss vids_related -> vids_related
       in
       F.asprintf "Found %d related values" (List.length vids_related)

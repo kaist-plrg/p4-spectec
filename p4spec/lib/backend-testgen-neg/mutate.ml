@@ -1,7 +1,7 @@
 open Domain
 open Lang
 open Il
-open Runtime.Testgen
+open Runtime.Testgen_neg
 open Envs
 open Domain.Lib
 open Util.Source
@@ -147,7 +147,7 @@ let mutate_mixop (mixopenv : MixopEnv.t) (value : value) : (kind * value) option
           let* mixop_family = MixopEnv.find_opt id mixopenv in
           let mixop_family =
             Mixops.Family.filter
-              (fun mixop_group -> MIdSet.exists (Mixop.eq mixop) mixop_group)
+              (fun mixop_group -> MixIdSet.exists (Mixop.eq mixop) mixop_group)
               mixop_family
           in
           let* mixop_group =
@@ -156,8 +156,8 @@ let mutate_mixop (mixopenv : MixopEnv.t) (value : value) : (kind * value) option
           in
           let* mixop =
             mixop_group
-            |> MIdSet.filter (fun mixop_e -> not (Mixop.eq mixop mixop_e))
-            |> MIdSet.elements |> Rand.random_select
+            |> MixIdSet.filter (fun mixop_e -> not (Mixop.eq mixop mixop_e))
+            |> MixIdSet.elements |> Rand.random_select
           in
           let value = CaseV (mixop, values) |> wrap_value typ in
           (MixopGroup, value) |> Option.some

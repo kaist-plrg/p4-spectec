@@ -171,8 +171,8 @@ let cover_dangling_command =
          let cover =
            Runner.cover_programs spec_sl relname includes_p4 filenames_p4
          in
-         Runtime.Testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
-           cover
+         Runtime.Testgen_neg.Dangling.Multi.log
+           ~filename_cov_opt:(Some filename_cov) cover
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -306,7 +306,7 @@ let interesting_command =
          | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
                let branch =
-                 Runtime.Testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->
@@ -327,7 +327,7 @@ let interesting_command =
                exit 10)
              else
                let branch =
-                 Runtime.Testgen.Cov.Single.Cover.find pid cover_single
+                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
                in
                match branch.status with
                | Hit ->

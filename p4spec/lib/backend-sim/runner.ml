@@ -1,5 +1,5 @@
 open Lang
-module MCov = Runtime.Testgen.Cov.Multiple
+module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
 open Error
@@ -209,7 +209,7 @@ module Make
   (* Coverage runner *)
 
   let cover_programs (spec : Sl.spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : MCov.Cover.t =
+      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
     Arch.init (SL spec);
     Interp_SL.cover_programs spec relname includes_p4 filenames_p4
 end

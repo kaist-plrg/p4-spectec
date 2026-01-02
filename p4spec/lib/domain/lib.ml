@@ -119,36 +119,36 @@ module TIdMap = IdMap
 
 (* Mixop identifiers *)
 
-module MId = struct
+module MixId = struct
   type t = Mixop.t
 
   let to_string mixop = Mixop.string_of_mixop mixop
   let compare mixop_a mixop_b = Mixop.compare mixop_a mixop_b
 end
 
-module MIdSet = struct
-  include Set.Make (MId)
+module MixIdSet = struct
+  include Set.Make (MixId)
 
   let to_string ?(with_braces = true) s =
-    let sset = String.concat ", " (List.map MId.to_string (elements s)) in
+    let sset = String.concat ", " (List.map MixId.to_string (elements s)) in
     if with_braces then "{ " ^ sset ^ " }" else sset
 
   let eq = equal
   let of_list l = List.fold_left (fun acc x -> add x acc) empty l
 end
 
-module MIdMap = struct
-  include Map.Make (MId)
+module MixIdMap = struct
+  include Map.Make (MixId)
 
   type 'v to_string_v = 'v -> string
 
   let keys m = List.map fst (bindings m)
-  let dom m = m |> keys |> MIdSet.of_list
+  let dom m = m |> keys |> MixIdSet.of_list
   let values m = List.map snd (bindings m)
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
-    let to_string_binding (k, v) = MId.to_string k ^ bind ^ to_string_v v in
+    let to_string_binding (k, v) = MixId.to_string k ^ bind ^ to_string_v v in
     let bindings = bindings m in
     let smap = String.concat ", " (List.map to_string_binding bindings) in
     if with_braces then "{ " ^ smap ^ " }" else smap
@@ -175,13 +175,13 @@ end
 (* Type case identifiers *)
 
 module CId = struct
-  type t = TId.t * Mixop.t
+  type t = TId.t * MixId.t
 
-  let to_string (tid, mixop) = TId.to_string tid ^ Mixop.string_of_mixop mixop
+  let to_string (tid, mixid) = TId.to_string tid ^ MixId.to_string mixid
 
-  let compare (tid_a, mixop_a) (tid_b, mixop_b) =
+  let compare (tid_a, mixid_a) (tid_b, mixid_b) =
     let c = TId.compare tid_a tid_b in
-    if c <> 0 then c else Mixop.compare mixop_a mixop_b
+    if c <> 0 then c else MixId.compare mixid_a mixid_b
 end
 
 module CIdSet = struct
@@ -294,18 +294,18 @@ end
 
 module MakeTIdEnv = MakeIdEnv
 
-module MakeMIdEnv (V : sig
+module MakeMixIdEnv (V : sig
   type t
 
   val to_string : t -> string
 end) =
 struct
-  include MIdMap
+  include MixIdMap
 
-  type t = V.t MIdMap.t
+  type t = V.t MixIdMap.t
 
   let to_string ?(with_braces = true) ?(bind = " : ") env =
-    MIdMap.to_string ~with_braces ~bind V.to_string env
+    MixIdMap.to_string ~with_braces ~bind V.to_string env
 
   let find id env =
     match find_opt id env with Some value -> value | None -> assert false

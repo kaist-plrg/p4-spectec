@@ -4,8 +4,8 @@ open Sl
 module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
-module Dep = Runtime.Testgen.Dep
-module SCov = Runtime.Testgen.Cov.Single
+module Dep = Runtime.Testgen_neg.Dep
+module DCov_single = Runtime.Testgen_neg.Dangling.Single
 open Util.Backtrace
 open Util.Source
 
@@ -30,7 +30,7 @@ type cursor = Global | Local
    Their references are copied when constructing sub-contexts,
    thus sharing the same graph and cover across contexts. *)
 
-type coverage = SCov.Cover.t ref
+type coverage = DCov_single.t ref
 type vdg = { graph : Dep.Graph.t; vid_program : vid }
 type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
 
@@ -83,8 +83,8 @@ type t = {
 (* Cover *)
 
 let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
-  if hit then ctx.coverage := SCov.hit !(ctx.coverage) pid
-  else ctx.coverage := SCov.miss !(ctx.coverage) pid vid
+  if hit then ctx.coverage := DCov_single.hit !(ctx.coverage) pid
+  else ctx.coverage := DCov_single.miss !(ctx.coverage) pid vid
 
 (* Value dependencies *)
 
@@ -286,15 +286,15 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : SCov.Cover.t ref) : t
-    =
+let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : DCov_single.t ref) :
+    t =
   let coverage = cover in
   let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
   let global = empty_global () in
   let local = empty_local () in
   { coverage; testing; global; local }
 
-let empty_partial (cover : SCov.Cover.t ref) : t =
+let empty_partial (cover : DCov_single.t ref) : t =
   let coverage = cover in
   let testing = Partial in
   let global = empty_global () in

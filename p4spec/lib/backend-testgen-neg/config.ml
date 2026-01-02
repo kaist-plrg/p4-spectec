@@ -2,10 +2,10 @@ open Domain
 open Lib
 open Lang
 open Sl
-open Runtime.Testgen
+open Runtime.Testgen_neg
 open Envs
-module SCov = Cov.Single
-module MCov = Cov.Multiple
+module DCov_single = Dangling.Single
+module DCov_multi = Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
@@ -52,7 +52,7 @@ type storage = {
 
 (* Seed for the fuzz campaign *)
 
-type seed = { mutable cover : MCov.Cover.t }
+type seed = { mutable cover : DCov_multi.Cover.t }
 
 (* Configuration for the fuzz campaign *)
 
@@ -72,14 +72,14 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
       match deftyp.it with
       | VariantT typcases ->
           let nottyps = List.map fst typcases in
-          let insert_into_groups (typed_groups : (typ list * MIdSet.t) list)
-              (nottyp : nottyp) : (typ list * MIdSet.t) list =
+          let insert_into_groups (typed_groups : (typ list * MixIdSet.t) list)
+              (nottyp : nottyp) : (typ list * MixIdSet.t) list =
             let mixop, typs = nottyp.it in
             let rec insert_into_groups' typed_group = function
-              | [] -> (typs, MIdSet.singleton mixop) :: typed_group
+              | [] -> (typs, MixIdSet.singleton mixop) :: typed_group
               | (typs_found, group) :: rest ->
                   if List.equal Sl.Eq.eq_typ typs typs_found then
-                    (typs, MIdSet.add mixop group)
+                    (typs, MixIdSet.add mixop group)
                     :: (List.rev typed_group @ rest)
                   else insert_into_groups' ((typs, group) :: typed_group) rest
             in
@@ -88,7 +88,7 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
           let typed_groups_new =
             List.fold_left insert_into_groups [] nottyps
             |> List.filter (fun (_, mixop_group) ->
-                   MIdSet.cardinal mixop_group > 1)
+                   MixIdSet.cardinal mixop_group > 1)
           in
           if List.length typed_groups_new = 0 then mixopenv
           else
@@ -166,7 +166,7 @@ let init_storage (dirname_gen : string) : storage =
     dirname_illtyped_p4;
   }
 
-let init_seed (cover : MCov.Cover.t) : seed = { cover }
+let init_seed (cover : DCov_multi.t) : seed = { cover }
 
 let init (randseed : int option) (modes : Modes.t) (specenv : specenv)
     (storage : storage) (seed : seed) =
@@ -182,19 +182,23 @@ let update_hit_seed (config : t) (filename_p4 : string) (welltyped : bool)
   let cover_seed =
     PIdSet.fold
       (fun pid_hit cover_seed ->
-        let branch : MCov.Branch.t = MCov.Cover.find pid_hit cover_seed in
+        let branch : DCov_multi.Branch.t =
+          DCov_multi.Cover.find pid_hit cover_seed
+        in
         let branch =
           match branch.status with
           | Hit (likely, filenames_p4) ->
               let likely = likely && not welltyped in
               let filenames_p4 = filename_p4 :: filenames_p4 in
-              MCov.Branch.{ branch with status = Hit (likely, filenames_p4) }
+              DCov_multi.Branch.
+                { branch with status = Hit (likely, filenames_p4) }
           | _ ->
               let likely = not welltyped in
               let filenames_p4 = [ filename_p4 ] in
-              MCov.Branch.{ branch with status = Hit (likely, filenames_p4) }
+              DCov_multi.Branch.
+                { branch with status = Hit (likely, filenames_p4) }
         in
-        MCov.Cover.add pid_hit branch cover_seed)
+        DCov_multi.Cover.add pid_hit branch cover_seed)
       pids_hit cover_seed
   in
   config.seed.cover <- cover_seed
@@ -205,11 +209,11 @@ let update_close_miss_seed (config : t) (filename_p4 : string)
   let cover_seed =
     PIdSet.fold
       (fun pid_close_miss cover_seed ->
-        let branch = MCov.Cover.find pid_close_miss cover_seed in
+        let branch = DCov_multi.Cover.find pid_close_miss cover_seed in
         let branch =
-          MCov.Branch.{ branch with status = Miss [ filename_p4 ] }
+          DCov_multi.Branch.{ branch with status = Miss [ filename_p4 ] }
         in
-        MCov.Cover.add pid_close_miss branch cover_seed)
+        DCov_multi.Cover.add pid_close_miss branch cover_seed)
       pids_close_miss cover_seed
   in
   config.seed.cover <- cover_seed

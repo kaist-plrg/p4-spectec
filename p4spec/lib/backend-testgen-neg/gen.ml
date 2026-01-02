@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Sl
-module Dep = Runtime.Testgen.Dep
-module SCov = Runtime.Testgen.Cov.Single
-module MCov = Runtime.Testgen.Cov.Multiple
+module Dep = Runtime.Testgen_neg.Dep
+module DCov_single = Runtime.Testgen_neg.Dangling.Single
+module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 module F = Format
 open Util.Source
@@ -33,11 +33,12 @@ exception Timeout
 (* Check if the mutated file is interesting,
    and if so, copy it to the output directory *)
 
-let find_interesting (config : Config.t) (cover : SCov.Cover.t) :
+let find_interesting (config : Config.t) (cover : DCov_single.t) :
     PIdSet.t * PIdSet.t =
-  MCov.Cover.fold
-    (fun pid (branch_fuzz : MCov.Branch.t) (pids_hit_new, pids_close_miss_new) ->
-      let branch_single = SCov.Cover.find pid cover in
+  DCov_multi.Cover.fold
+    (fun pid (branch_fuzz : DCov_multi.Branch.t)
+         (pids_hit_new, pids_close_miss_new) ->
+      let branch_single = DCov_single.Cover.find pid cover in
       match (branch_single.status, branch_fuzz.status) with
       (* Hits a new phantom *)
       | Hit, Miss _ ->
@@ -83,14 +84,15 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     Runner.run_program ~derive:false spec_sim config.specenv.relname
       config.specenv.includes_p4 filename_gen_p4
   with
-  | Pass (_, _, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new
-    ->
+  | Pass (_, _, _, cover)
+    when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind true pids_hit_new
-  | Fail (_, _, cover) when PIdSet.for_all (SCov.is_hit cover) pids_hit_new ->
+  | Fail (_, _, cover)
+    when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
       in
@@ -133,7 +135,7 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
       config.specenv.includes_p4 filename_gen_p4
   with
   | Pass (_, _, _, cover)
-    when PIdSet.for_all (SCov.is_close_miss cover) pids_close_miss_new ->
+    when PIdSet.for_all (DCov_single.is_close_miss cover) pids_close_miss_new ->
       let filename_close_miss_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
       in
@@ -251,7 +253,9 @@ let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Generate the mutated program *)
   List.iteri
     (fun idx_mutation (kind, value_source, value_mutated) ->
-      if !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid then (
+      if
+        !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
+      then (
         trials := !trials + 1;
         F.asprintf "[Source] %s\n" (Sl.Print.string_of_value value_source)
         |> Query.query query;
@@ -276,7 +280,9 @@ let fuzz_derivations (fuel : int) (pid : pid) (idx_seed : int)
     (vid_program : vid) (derivations_source : (vid * int) list) : unit =
   List.iteri
     (fun idx_derivation (vid_source, depth) ->
-      if !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid then
+      if
+        !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
+      then
         let comment_gen_p4 =
           F.asprintf "// Intended pid %d\n// Source vid %d\n// Depth %d\n" pid
             vid_source depth
@@ -302,7 +308,9 @@ let fuzz_derivations_bounded (fuel : int) (pid : pid) (idx_seed : int)
       pid idx_seed derivations_total Config.trials_seed
     |> Logger.log config.modes.logmode log;
     let trials = ref 0 in
-    while !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid do
+    while
+      !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
+    do
       fuzz_derivations fuel pid idx_seed trials config log query dirname_gen_tmp
         filename_p4 graph vid_program derivations_source
     done
@@ -315,7 +323,9 @@ let fuzz_randoms (fuel : int) (pid : pid) (idx_seed : int) (trials : int ref)
     (vid_program : vid) (vids_source : vid list) : unit =
   List.iteri
     (fun idx_random vid_source ->
-      if !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid then
+      if
+        !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
+      then
         let comment_gen_p4 =
           F.asprintf "// Intended pid %d\n// Source vid %d\n" pid vid_source
         in
@@ -334,7 +344,9 @@ let fuzz_randoms_bounded (fuel : int) (pid : pid) (idx_seed : int)
     pid idx_seed (List.length vids_source) Config.trials_seed
   |> Logger.log config.modes.logmode log;
   let trials = ref 0 in
-  while !trials < Config.trials_seed && MCov.is_miss config.seed.cover pid do
+  while
+    !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
+  do
     fuzz_randoms fuel pid idx_seed trials config log query dirname_gen_tmp
       filename_p4 graph vid_program vids_source
   done
@@ -358,7 +370,7 @@ let fuzz_seed_random (fuel : int) (pid : pid) (idx_seed : int)
 let fuzz_seed_deriving (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
     (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (cover : SCov.Cover.t) : unit =
+    (vid_program : vid) (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the phantom *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel pid
     idx_seed filename_p4
@@ -387,7 +399,7 @@ let fuzz_seed_deriving (fuel : int) (pid : pid) (idx_seed : int)
 let fuzz_seed_hybrid (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
     (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (cover : SCov.Cover.t) : unit =
+    (vid_program : vid) (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the phantom *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel pid
     idx_seed filename_p4
@@ -461,7 +473,7 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
       F.asprintf "[F %d] [P %d] [S %d] SL interpreter failed on %s" fuel pid
         idx_seed filename_p4
       |> Logger.log config.modes.logmode log);
-  let total, hits, coverage = MCov.measure_coverage config.seed.cover in
+  let total, hits, coverage = DCov_multi.measure_coverage config.seed.cover in
   F.asprintf "[F %d] [P %d] [S %d] Coverage %d/%d (%.2f%%)" fuel pid idx_seed
     hits total coverage
   |> Logger.log config.modes.logmode log
@@ -472,7 +484,7 @@ let fuzz_seeds (fuel : int) (pid : pid) (config : Config.t) (log : Logger.t)
   (* Fuzz from seed programs until the target phantom node is covered *)
   List.iteri
     (fun idx_seed filename_p4 ->
-      if MCov.is_miss config.seed.cover pid then (
+      if DCov_multi.is_miss config.seed.cover pid then (
         let _ =
           Sys.set_signal Sys.sigalrm
             (Sys.Signal_handle (fun _ -> raise Timeout))
@@ -515,10 +527,10 @@ let fuzz_phantom (fuel : int) (pid : pid) (config : Config.t) (log : Logger.t)
 
 let fuzz_phantoms (fuel : int) (config : Config.t) (log : Logger.t)
     (query : Query.t) : unit =
-  let pids = MCov.Cover.dom config.seed.cover in
+  let pids = DCov_multi.Cover.dom config.seed.cover in
   PIdSet.iter
     (fun pid ->
-      let branch = MCov.Cover.find pid config.seed.cover in
+      let branch = DCov_multi.Cover.find pid config.seed.cover in
       match branch.status with
       | Hit _ -> ()
       | Miss [] -> ()
@@ -542,7 +554,7 @@ let rec fuzz_loop (fuel : int) (config : Config.t) : Config.t =
     F.asprintf "[F %d] Start fuzzing loop" fuel
     |> Logger.log config.modes.logmode log;
     fuzz_phantoms fuel config log query;
-    let total, hits, coverage = MCov.measure_coverage config.seed.cover in
+    let total, hits, coverage = DCov_multi.measure_coverage config.seed.cover in
     F.asprintf "[F %d] End fuzzing loop with coverage %d/%d (%.2f%%)" fuel hits
       total coverage
     |> Logger.log config.modes.logmode log;
@@ -609,13 +621,13 @@ let fuzzer_init (spec_il : Il.spec) (spec : spec) (relname : string)
         in
         (* Log the initial coverage for later use in warm boot *)
         let filename_cov = dirname_gen ^ "/boot.coverage" in
-        MCov.log ~filename_cov_opt:(Some filename_cov) cover_seed;
+        DCov_multi.log ~filename_cov_opt:(Some filename_cov) cover_seed;
         cover_seed
     | Warm filename_boot -> Boot.boot_warm filename_boot
   in
   let seed = Config.init_seed cover_seed in
   (* Close the initial log *)
-  let total, hits, coverage = MCov.measure_coverage cover_seed in
+  let total, hits, coverage = DCov_multi.measure_coverage cover_seed in
   F.asprintf "Finished booting with initial coverage %d/%d (%.2f%%)" hits total
     coverage
   |> Logger.log modes.logmode log_init;
@@ -646,4 +658,4 @@ let fuzzer (fuel : int) (spec_il : Il.spec) (spec : spec) (relname : string)
   let config = fuzz_loop fuel config in
   (* Log the final coverage *)
   let filename_cov = config.storage.dirname_gen ^ "/final.coverage" in
-  MCov.log ~filename_cov_opt:(Some filename_cov) config.seed.cover
+  DCov_multi.log ~filename_cov_opt:(Some filename_cov) config.seed.cover

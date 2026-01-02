@@ -1,8 +1,8 @@
 open Lang
 module Value = Dynamic.Value
-module Dep = Testgen.Dep
-module SCov = Testgen.Cov.Single
-module MCov = Testgen.Cov.Multiple
+module Dep = Testgen_neg.Dep
+module DCov_single = Testgen_neg.Dangling.Single
+module DCov_multi = Testgen_neg.Dangling.Multi
 module IO = Io
 open Util.Source
 
@@ -11,17 +11,17 @@ open Util.Source
 type spec = IL of Il.spec | SL of Sl.spec | Empty
 
 type program_result =
-  | Pass of Value.t list * Dep.Graph.t * Value.id * SCov.Cover.t
-  | Fail of region * string * SCov.Cover.t
-  | IllFormed of region * string * SCov.Cover.t
+  | Pass of Value.t list * Dep.Graph.t * Value.id * DCov_single.t
+  | Fail of region * string * DCov_single.t
+  | IllFormed of region * string * DCov_single.t
 
 type rel_result =
-  | Pass of Value.t list * SCov.Cover.t
-  | Fail of region * string * SCov.Cover.t
+  | Pass of Value.t list * DCov_single.t
+  | Fail of region * string * DCov_single.t
 
 type func_result =
-  | Pass of Value.t * SCov.Cover.t
-  | Fail of region * string * SCov.Cover.t
+  | Pass of Value.t * DCov_single.t
+  | Fail of region * string * DCov_single.t
 
 type stf_result =
   | Pass
@@ -86,7 +86,7 @@ module type INTERP_SL = sig
   (* Coverage *)
 
   val cover_programs :
-    Sl.spec -> string -> string list -> string list -> MCov.Cover.t
+    Sl.spec -> string -> string list -> string list -> DCov_multi.t
 end
 
 module type DRIVER = sig
@@ -105,5 +105,5 @@ module type DRIVER = sig
   (* Coverage *)
 
   val cover_programs :
-    Sl.spec -> string -> string list -> string list -> MCov.Cover.t
+    Sl.spec -> string -> string list -> string list -> DCov_multi.t
 end

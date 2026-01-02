@@ -157,17 +157,21 @@ module Cover = struct
   let load_file (filename : string) : t = open_in filename |> load_lines empty
 end
 
+(* Dangling coverage *)
+
+type t = Cover.t
+
 (* Querying coverage *)
 
-let is_hit (cover : Cover.t) (pid : pid) : bool =
+let is_hit (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with Hit _ -> true | Miss _ -> false
 
-let is_miss (cover : Cover.t) (pid : pid) : bool =
+let is_miss (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with Hit _ -> false | Miss _ -> true
 
-let is_close_miss (cover : Cover.t) (pid : pid) : bool =
+let is_close_miss (cover : t) (pid : pid) : bool =
   let branch = Cover.find pid cover in
   match branch.status with
   | Hit _ -> false
@@ -175,7 +179,7 @@ let is_close_miss (cover : Cover.t) (pid : pid) : bool =
 
 (* Measuring coverage *)
 
-let measure_coverage (cover : Cover.t) : int * int * float =
+let measure_coverage (cover : t) : int * int * float =
   let total = Cover.cardinal cover in
   let hits =
     Cover.fold
@@ -192,8 +196,8 @@ let measure_coverage (cover : Cover.t) : int * int * float =
 
    A close-miss is added only if the program is well-typed and well-formed *)
 
-let extend (cover : Cover.t) (filename_p4 : string) (wellformed : bool)
-    (welltyped : bool) (cover_single : Single.Cover.t) : Cover.t =
+let extend (cover : t) (filename_p4 : string) (wellformed : bool)
+    (welltyped : bool) (cover_single : Single.t) : t =
   Cover.mapi
     (fun (pid : pid) (branch : Branch.t) ->
       let branch_single = Single.Cover.find pid cover_single in
@@ -219,7 +223,7 @@ let extend (cover : Cover.t) (filename_p4 : string) (wellformed : bool)
 
 (* Logging *)
 
-let log ~(filename_cov_opt : string option) (cover : Cover.t) : unit =
+let log ~(filename_cov_opt : string option) (cover : t) : unit =
   let output oc_opt =
     match oc_opt with Some oc -> output_string oc | None -> print_string
   in
@@ -231,7 +235,7 @@ let log ~(filename_cov_opt : string option) (cover : Cover.t) : unit =
   (* Collect covers by origin *)
   let covers_origin =
     Cover.fold
-      (fun (pid : pid) (branch : Branch.t) (covers_origin : Cover.t IdMap.t) ->
+      (fun (pid : pid) (branch : Branch.t) (covers_origin : t IdMap.t) ->
         let origin = branch.origin in
         let cover_origin =
           match IdMap.find_opt origin covers_origin with
@@ -269,5 +273,5 @@ let log ~(filename_cov_opt : string option) (cover : Cover.t) : unit =
 
 (* Constructor *)
 
-let init (spec : spec) : Cover.t = Cover.init_spec spec
-let load (filename : string) : Cover.t = Cover.load_file filename
+let init (spec : spec) : t = Cover.init_spec spec
+let load (filename : string) : t = Cover.load_file filename
