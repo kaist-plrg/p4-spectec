@@ -1,3 +1,4 @@
+open Domain
 open Ast
 open Xl
 include Il.Eq

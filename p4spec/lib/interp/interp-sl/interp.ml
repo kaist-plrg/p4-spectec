@@ -1,4 +1,5 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
 open Xl
 open Sl

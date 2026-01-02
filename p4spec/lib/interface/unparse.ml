@@ -1,5 +1,5 @@
+open Domain
 open Lang
-open Xl
 open Il.Eq
 open Util.Source
 open Flatten

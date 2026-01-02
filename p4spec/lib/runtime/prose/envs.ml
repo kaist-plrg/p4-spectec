@@ -1,6 +1,5 @@
-open Domain.Lib
-open Lang
-open Xl
+open Domain
+open Lib
 
 (* Type definition environment *)
 

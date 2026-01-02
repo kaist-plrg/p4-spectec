@@ -1,5 +1,5 @@
+open Domain.Atom
 open Lang
-open Xl.Atom
 open Il
 open Util.Source
 

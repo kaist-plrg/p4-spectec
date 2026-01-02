@@ -1,4 +1,5 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
 open Sl
 open Runtime.Testgen
@@ -71,15 +72,14 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
       match deftyp.it with
       | VariantT typcases ->
           let nottyps = List.map fst typcases in
-          let insert_into_groups
-              (typed_groups : (typ list * Mixops.Group.t) list)
-              (nottyp : nottyp) : (typ list * Mixops.Group.t) list =
+          let insert_into_groups (typed_groups : (typ list * MIdSet.t) list)
+              (nottyp : nottyp) : (typ list * MIdSet.t) list =
             let mixop, typs = nottyp.it in
             let rec insert_into_groups' typed_group = function
-              | [] -> (typs, Mixops.Group.singleton mixop) :: typed_group
+              | [] -> (typs, MIdSet.singleton mixop) :: typed_group
               | (typs_found, group) :: rest ->
                   if List.equal Sl.Eq.eq_typ typs typs_found then
-                    (typs, Mixops.Group.add mixop group)
+                    (typs, MIdSet.add mixop group)
                     :: (List.rev typed_group @ rest)
                   else insert_into_groups' ((typs, group) :: typed_group) rest
             in
@@ -88,7 +88,7 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
           let typed_groups_new =
             List.fold_left insert_into_groups [] nottyps
             |> List.filter (fun (_, mixop_group) ->
-                   Mixops.Group.cardinal mixop_group > 1)
+                   MIdSet.cardinal mixop_group > 1)
           in
           if List.length typed_groups_new = 0 then mixopenv
           else

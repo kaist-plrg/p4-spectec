@@ -1,4 +1,5 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
 open El
 open Runtime.Static
@@ -130,20 +131,20 @@ and elab_nottyp (ctx : Ctx.t) (typ : typ) : Il.nottyp =
           let mixop_t, typs_il_t =
             elab_nottyp ctx (NotationT (SeqT typs $ nottyp.at)) |> it
           in
-          let mixop = Xl.Mixop.merge mixop_h mixop_t in
+          let mixop = Mixop.merge mixop_h mixop_t in
           let typs_il = typs_il_h @ typs_il_t in
           (mixop, typs_il) $ nottyp.at
       | InfixT (typ_l, atom, typ_r) ->
           let mixop_l, typs_il_l = elab_nottyp ctx typ_l |> it in
           let mixop_r, typs_il_r = elab_nottyp ctx typ_r |> it in
-          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom ] ] in
-          let mixop = Xl.Mixop.merge mixop_l mixop_r in
+          let mixop_l = Mixop.merge mixop_l [ [ atom ] ] in
+          let mixop = Mixop.merge mixop_l mixop_r in
           let typs_il = typs_il_l @ typs_il_r in
           (mixop, typs_il) $ nottyp.at
       | BrackT (atom_l, typ, atom_r) ->
           let mixop, typs_il = elab_nottyp ctx typ |> it in
-          let mixop_l = Xl.Mixop.merge [ [ atom_l ] ] mixop in
-          let mixop = Xl.Mixop.merge mixop_l [ [ atom_r ] ] in
+          let mixop_l = Mixop.merge [ [ atom_l ] ] mixop in
+          let mixop = Mixop.merge mixop_l [ [ atom_r ] ] in
           (mixop, typs_il) $ nottyp.at)
 
 (* Elaboration of definition types *)
@@ -207,7 +208,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
   let typcases = List.concat_map (expand_typcase ctx plaintyp) typcases in
   let typcases_il = typcases |> List.map fst |> List.map (elab_typcase ctx) in
   let mixops = typcases_il |> List.map fst |> List.map it |> List.map fst in
-  let mixop_groups = groupby Xl.Mixop.eq mixops in
+  let mixop_groups = groupby Mixop.eq mixops in
   let mixop_duplicates =
     List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
   in
@@ -217,7 +218,7 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     ("variant cases are ambiguous: "
     ^ String.concat ", "
         (List.map
-           (fun mixop_group -> Xl.Mixop.string_of_mixop (List.hd mixop_group))
+           (fun mixop_group -> Mixop.string_of_mixop (List.hd mixop_group))
            mixop_duplicates));
   let deftyp_il = Il.VariantT typcases_il $ at in
   let td = Typdef.Defined (tparams, `Variant typcases) in
@@ -974,7 +975,7 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
               (NotationT (SeqT typs $ nottyp.at))
               (SeqE exps $ exp.at)
           in
-          let mixop = Xl.Mixop.merge mixop_h mixop_t in
+          let mixop = Mixop.merge mixop_h mixop_t in
           let exps_il = exps_il_h @ exps_il_t in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -986,8 +987,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
       | InfixT (typ_l, atom_t, typ_r), InfixE (exp_l, _, exp_r) ->
           let* ctx, (mixop_l, exps_il_l) = elab_exp_not ctx typ_l exp_l in
           let* ctx, (mixop_r, exps_il_r) = elab_exp_not ctx typ_r exp_r in
-          let mixop_l = Xl.Mixop.merge mixop_l [ [ atom_t ] ] in
-          let mixop = Xl.Mixop.merge mixop_l mixop_r in
+          let mixop_l = Mixop.merge mixop_l [ [ atom_t ] ] in
+          let mixop = Mixop.merge mixop_l mixop_r in
           let exps_il = exps_il_l @ exps_il_r in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
@@ -996,8 +997,8 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
           fail_elab_not exp.at "atoms do not match"
       | BrackT (_, typ, _), BrackE (atom_e_l, exp, atom_e_r) ->
           let* ctx, (mixop, exps_il) = elab_exp_not ctx typ exp in
-          let mixop_l = Xl.Mixop.merge [ [ atom_e_l ] ] mixop in
-          let mixop = Xl.Mixop.merge mixop_l [ [ atom_e_r ] ] in
+          let mixop_l = Mixop.merge [ [ atom_e_l ] ] mixop in
+          let mixop = Mixop.merge mixop_l [ [ atom_e_r ] ] in
           let notexp_il = (mixop, exps_il) in
           Ok (ctx, notexp_il)
       | _ -> fail_elab_not exp.at "expression does not match notation")

@@ -1,6 +1,6 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
-open Xl
 
 (* Hints *)
 
@@ -12,32 +12,7 @@ end
 
 (* Hints associated with type cases *)
 
-module TypCase = struct
-  type t = TId.t * Mixop.t
-
-  let compare (tid_a, mixop_a) (tid_b, mixop_b) =
-    let c = TId.compare tid_a tid_b in
-    if c <> 0 then c else Mixop.compare mixop_a mixop_b
-end
-
-module TypCaseMap = struct
-  include Map.Make (TypCase)
-end
-
-module TypHintMap = struct
-  include TypCaseMap
-
-  type t = Hint.t TypCaseMap.t
-
-  let to_string (m : t) : string =
-    let bindings = TypCaseMap.bindings m in
-    let binding_to_string ((tid, mixop), exp) =
-      Printf.sprintf "(%s, %s) -> %s" (TId.to_string tid)
-        (Mixop.string_of_mixop mixop)
-        (Hint.to_string exp)
-    in
-    String.concat "\n" (List.map binding_to_string bindings)
-end
+module TypHintMap = MakeCIdEnv (Hint)
 
 (* Hints associated with relation ids *)
 

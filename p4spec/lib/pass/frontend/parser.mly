@@ -1,4 +1,5 @@
 %{
+open Domain
 open Lang
 open Xl
 open El
