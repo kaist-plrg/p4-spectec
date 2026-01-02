@@ -34,10 +34,11 @@ let rec compare (value_l : t) (value_r : t) =
     | StructV _ -> 3
     | CaseV _ -> 4
     | TupleV _ -> 5
-    | OptV _ -> 6
-    | ListV _ -> 7
-    | FuncV _ -> 8
-    | ExternV _ -> 9
+    | OptV None -> 6
+    | OptV _ -> 7
+    | ListV _ -> 8
+    | FuncV _ -> 9
+    | ExternV _ -> 10
   in
   match (value_l.it, value_r.it) with
   | BoolV b_l, BoolV b_r -> Stdlib.compare b_l b_r
