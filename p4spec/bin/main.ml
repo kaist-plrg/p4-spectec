@@ -43,6 +43,25 @@ let struct_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let prose_command =
+  Core.Command.basic ~summary:"generate asciidoc prose from a p4_16 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
+     fun () ->
+       try
+         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
+         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
+         Format.printf "%s\n" (Prose.Pl.Print.render_spec spec_pl);
+         ()
+       with
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let run_command =
   Core.Command.basic ~summary:"run semantics of a p4_16 spec"
     (let open Core.Command.Let_syntax in
@@ -412,11 +431,11 @@ let parse_command =
        | Interface.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
-let json_command =
+let json_ast_command =
   Core.Command.basic ~summary:"Emit/Parse JSON AST for Structured Language"
     ~readme:(fun () ->
-      "./p4spectec json -emit spec/*.watsup\n\
-       ./p4spectec json -parse <ast-file.json>")
+      "./p4spectec json-ast -emit spec/*.watsup\n\
+       ./p4spectec json-ast -parse <ast-file.json>")
     (let%map_open.Command mode =
        Command.Param.choose_one
          [
@@ -456,24 +475,53 @@ let json_command =
            | Error err ->
                Format.printf "Error while parsing %s: %s" filename err))
 
-let prose_command =
-  Core.Command.basic ~summary:"generate asciidoc prose from a p4_16 spec"
+let p4_program_value_json_command =
+  Core.Command.basic
+    ~summary:"convert a P4 program to a value and output as JSON"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to convert" in
+     fun () ->
+       try
+         let value_program =
+           Interface.Parse.parse_file_fresh includes_p4 filename_p4
+         in
+         let json = Sl.Ast.value_to_yojson value_program in
+         Yojson.Safe.to_string json |> print_string
+       with ParseError (at, msg) ->
+         Format.printf "ill-formed: %s\n" (string_of_error at msg))
+
+let unparse_json_value_command =
+  Core.Command.basic
+    ~summary:"parse a JSON value and unparse it back to P4 source code"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
+     and filename_json =
+       flag "-j" (required string) ~doc:"JSON file containing value"
      in
      fun () ->
        try
          let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
          let spec_il = Elaborate.Elab.elab_spec spec in
          let spec_sl = Structure.Struct.struct_spec spec_il in
-         let spec_pl = Prose.Prosify.prosify_spec spec_sl in
-         Format.printf "%s\n" (Prose.Pl.Print.render_spec spec_pl);
-         ()
+         let json = Yojson.Safe.from_file filename_json in
+         let value_result = Sl.Ast.value_of_yojson json in
+         match value_result with
+         | Ok value ->
+             let p4_source =
+               Format.asprintf "%a\n"
+                 (Interface.Unparse.pp_program_sl spec_sl)
+                 value
+             in
+             print_string p4_source
+         | Error err -> Format.printf "Error parsing JSON value: %s\n" err
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | Sys_error msg -> Format.printf "File error: %s\n" msg
+       | Yojson.Json_error msg -> Format.printf "JSON parsing error: %s\n" msg
+       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
 let command =
   Core.Command.group
@@ -490,7 +538,9 @@ let command =
       ("interesting", interesting_command);
       ("splice", splice_command);
       ("parse", parse_command);
-      ("json", json_command);
+      ("json-ast", json_ast_command);
+      ("p4-program-value-json", p4_program_value_json_command);
+      ("unparse-json-value", unparse_json_value_command);
     ]
 
 let () = Command_unix.run ~version command

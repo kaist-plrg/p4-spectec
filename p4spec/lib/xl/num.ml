@@ -34,6 +34,13 @@ let compare (n_a : t) (n_b : t) : int =
   | `Nat _, `Int _ -> -1
   | `Int _, `Nat _ -> 1
 
+let compare_typ (t_a : typ) (t_b : typ) : int =
+  match (t_a, t_b) with
+  | `NatT, `NatT -> 0
+  | `IntT, `IntT -> 0
+  | `NatT, `IntT -> -1
+  | `IntT, `NatT -> 1
+
 (* Equality *)
 
 let eq (n_a : t) (n_b : t) : bool = compare n_a n_b = 0
