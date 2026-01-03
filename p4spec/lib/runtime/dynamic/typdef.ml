@@ -2,11 +2,21 @@ open Lang
 open Il
 open Il.Print
 
+[@@@ocamlformat "disable"]
+
 (* Type definition *)
 
-type t = Extern | Defined of tparam list * deftyp
+type t =
+  (* Type parameter *)
+  | Param
+  (* Extern type *)
+  | Extern
+  (* Defined type *)
+  | Defined of tparam list * deftyp
+[@@@ocamlformat "enable"]
 
 let to_string = function
-  | Extern -> "extern"
+  | Param -> "Param"
+  | Extern -> "Extern"
   | Defined (tparams, deftyp) ->
-      string_of_tparams tparams ^ " " ^ string_of_deftyp deftyp
+      "Defined " ^ string_of_tparams tparams ^ " " ^ string_of_deftyp deftyp

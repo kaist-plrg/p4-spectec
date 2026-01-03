@@ -85,8 +85,8 @@ let prose_command =
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
 
 let run_command =
   Core.Command.basic ~summary:"run semantics of a p4_16 spec"
@@ -156,9 +156,8 @@ let sim_command =
          | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ArchError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
 let cover_dangling_command =
@@ -193,8 +192,8 @@ let cover_dangling_command =
            ~filename_cov_opt:(Some filename_cov) cover
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_command =
   Core.Command.basic
@@ -262,8 +261,8 @@ let run_testgen_command =
            covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_debug_command =
   Core.Command.basic
@@ -285,8 +284,8 @@ let run_testgen_debug_command =
            filename_p4 dirname_debug pid
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing p4_16 programs"
@@ -354,8 +353,8 @@ let interesting_command =
              exit 12
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
@@ -382,9 +381,8 @@ let splice_command =
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | SpliceError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) | SpliceError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"

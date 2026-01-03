@@ -1,4 +1,6 @@
 open Domain.Lib
+open Lang
+open Util.Source
 
 (* Variable environment functor *)
 
@@ -28,4 +30,21 @@ module VEnv = MakeVarEnv (Value)
 
 (* Type definition environment *)
 
-module TDEnv = MakeTIdEnv (Typdef)
+module TDEnv = struct
+  include MakeTIdEnv (Typdef)
+
+  let rec unroll (tdenv : t) (typ : Il.typ) : Il.typ =
+    match typ.it with
+    | VarT (tid, targs) -> (
+        let td = find tid tdenv in
+        match td with
+        | Param | Extern -> typ
+        | Defined (tparams, deftyp) -> (
+            let theta = List.combine tparams targs |> TIdMap.of_list in
+            match deftyp.it with
+            | PlainT typ ->
+                let typ = Typ.subst_typ theta typ in
+                unroll tdenv typ
+            | _ -> typ))
+    | _ -> typ
+end

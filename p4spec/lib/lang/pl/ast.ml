@@ -174,15 +174,21 @@ type rel = rel_title * rulegroup list
 
 (* Functions *)
 
-type externfunc = id * tparam list * arg list * typ
+type func_title =
+  | ProseFuncTitle of
+    [ `Check of id * hintexp * arg list
+    | `Yield of id * hintexp * arg list ]
+  | MathFuncTitle of id * tparam list * arg list
 
-type builtinfunc = id * tparam list * arg list * typ
+type externfunc = func_title
+
+type builtinfunc = func_title
 
 type tablerow = exp list * exp * instr list
 
-type tablefunc = id * arg list * typ * tablerow list
+type tablefunc = func_title * tablerow list
 
-type func = id * tparam list * arg list * typ * instr list
+type func = func_title * instr list
 
 (* Definitions *)
 

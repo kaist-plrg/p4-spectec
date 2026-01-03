@@ -1,7 +1,10 @@
-open Lang.El
-open Lang.El.Print (* Type definitions *)
+open Lang
+open El
+open El.Print
 
 [@@@ocamlformat "disable"]
+
+(* Type definitions *)
 
 type t =
   (* Type parameter *)
@@ -25,7 +28,7 @@ let to_string = function
   | Extern -> "Extern"
   | Defining tparams -> "Defining" ^ string_of_tparams tparams
   | Defined (tparams, typdef) -> (
-      "Defined" ^ string_of_tparams tparams ^ " = "
+      "Defined " ^ string_of_tparams tparams
       ^
       match typdef with
       | `Plain plaintyp -> string_of_plaintyp plaintyp

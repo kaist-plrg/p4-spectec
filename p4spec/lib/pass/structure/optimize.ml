@@ -511,15 +511,15 @@ let guard_as_exp (exp_target : exp) (guard : guard) : exp =
 
 (* Conversion from type to its variants *)
 
-let rec typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
-  match typ.it with
+let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
+  let typ_unrolled = TDEnv.unroll tdenv typ in
+  match typ_unrolled.it with
   | VarT (tid, _) -> (
       let td = TDEnv.find tid tdenv in
       match td with
-      | Extern -> None
+      | Param | Extern -> None
       | Defined (_, deftyp) -> (
           match deftyp.it with
-          | PlainT typ -> typ_as_variant tdenv typ
           | VariantT typcases ->
               let mixops =
                 typcases |> List.map fst |> List.map it |> List.map fst
@@ -1145,18 +1145,15 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
 
    will be removed *)
 
-let rec is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
-  match typ.it with
-  | VarT (tid, targs) -> (
+let is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
+  let typ_unrolled = TDEnv.unroll tdenv typ in
+  match typ_unrolled.it with
+  | VarT (tid, _) -> (
       let td = TDEnv.find tid tdenv in
       match td with
-      | Extern -> false
-      | Defined (tparams, deftyp) -> (
-          let theta = List.combine tparams targs |> TIdMap.of_list in
+      | Param | Extern -> false
+      | Defined (_, deftyp) -> (
           match deftyp.it with
-          | PlainT typ ->
-              let typ = Typ.subst_typ theta typ in
-              is_singleton_case tdenv typ
           | VariantT typcases -> List.length typcases = 1
           | _ -> false))
   | _ -> false

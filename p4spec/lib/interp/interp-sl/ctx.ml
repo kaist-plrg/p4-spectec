@@ -168,7 +168,7 @@ let find_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : Typdef.t =
 let find_defined_typdef (cursor : cursor) (ctx : t) (tid : TId.t) :
     tparam list * deftyp =
   match find_typdef cursor ctx tid with
-  | Extern -> back_undef tid.at "defined type" tid.it
+  | Param | Extern -> back_undef tid.at "defined type" tid.it
   | Defined (tparams, deftyp) -> (tparams, deftyp)
 
 let bound_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : bool =

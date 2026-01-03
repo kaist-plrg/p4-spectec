@@ -102,6 +102,16 @@ let set_branch (ctx : t) (branch : branch) : t = { ctx with branch }
 
 let set_free (ctx : t) (frees : IdSet.t) : t = { ctx with frees }
 
+(* Adders *)
+
+let add_tparam (ctx : t) (tid : TId.t) : t =
+  let td = Typdef.Param in
+  let tdenv = TDEnv.add tid td ctx.tdenv in
+  { ctx with tdenv }
+
+let add_tparams (ctx : t) (tids : TId.t list) : t =
+  List.fold_left add_tparam ctx tids
+
 (* Finders *)
 
 let find_inputs (ctx : t) (id_rel : Id.t) : InputHint.t =
@@ -130,12 +140,4 @@ let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hint.t option =
 
 (* Unrolling types *)
 
-let rec unroll_typ (ctx : t) (typ : Sl.typ) : Sl.typ =
-  match typ.it with
-  | VarT (tid, _) -> (
-      let td = TDEnv.find tid ctx.tdenv in
-      match td with
-      | Extern -> typ
-      | Defined (_, deftyp) -> (
-          match deftyp.it with PlainT typ -> unroll_typ ctx typ | _ -> typ))
-  | _ -> typ
+let unroll_typ (ctx : t) (typ : Sl.typ) : Sl.typ = TDEnv.unroll ctx.tdenv typ
