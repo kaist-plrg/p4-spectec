@@ -5282,9 +5282,9 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 
 |===
 
-The resulting value `%` be the result of <<ExternFunctionCall_eval_lctk, Calling an extern function `nameIR`(`nameIR'^{asterisk}^`) under typing context `typingContext`>>
+<<ExternFunctionCall_eval_lctk, `typingContext |- nameIR ( nameIR'^{asterisk}^ ) ~> %`>>
 
-The resulting value `%` be the result of <<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, `expressionIR` annotated with `++_++`>>, under cursor `p` and typing context `TC`>>
+<<Expr_eval_lctk, `p TC |- expressionIR # ++_++ ~> %`>>
 
 <<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, `booleanLiteral` annotated with `++_++`>>, under cursor `p` and typing context `TC`>>:
 
@@ -5599,7 +5599,7 @@ for each `direction~param_aligned~` in `direction~param_aligned~^{asterisk}^`, `
 . Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
 . Result in the resulting value `value`.
 
-The resulting value `%` be the result of <<Argument_eval_lctk, The local compile-time evaluation of `argumentIR`, under cursor `p` and typing context `TC`>>
+<<Argument_eval_lctk, `p TC |- argumentIR ~> %`>>
 
 <<Argument_eval_lctk, The local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>:
 
@@ -5611,7 +5611,7 @@ The resulting value `%` be the result of <<Argument_eval_lctk, The local compile
 . Let `value` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR`, under cursor `p` and typing context `TC`>>.
 . Result in the resulting value `value`.
 
-The type `%` and a set of fresh type variables `%` be the result of <<Type_ok, Typing `typeOrVoid`, under cursor `p` and typing context `TC`>>
+<<Type_ok, `p TC |- typeOrVoid : % # %`>>
 
 <<Type_ok, Typing `VOID`, under cursor `p` and typing context `TC`>>:
 
@@ -5750,7 +5750,7 @@ The type `%` and a set of fresh type variables `%` be the result of <<Type_ok, T
 . Let `typeIR~arg~^{asterisk}^` and `typeId~fresh~^{asterisk}^` be the result of <<TypeArguments_ok, typing `typeArgument^{asterisk}^`, under cursor `p` and typing context `TC`>>.
 . Result in the type `TUPLE < typeIR~arg~^{asterisk}^ >` and a set of fresh type variables `typeId~fresh~^{asterisk}^`.
 
-The type argument `%` and set of fresh type variables `%` be the result of <<TypeArgument_ok, Typing `typeArgument`, under cursor `p` and typing context `TC`>>
+<<TypeArgument_ok, `p TC |- typeArgument : % # %`>>
 
 <<TypeArgument_ok, Typing `type`, under cursor `p` and typing context `TC`>>:
 
@@ -5771,7 +5771,7 @@ The type argument `%` and set of fresh type variables `%` be the result of <<Typ
 . Let `typeId~impl~` be <<fresh_typeId, a fresh type variable>>.
 . Result in the type argument `typeId~impl~` and set of fresh type variables `[typeId~impl~]`.
 
-The type argument list `%` and set of fresh type variables `%` be the result of <<TypeArguments_ok, Typing `typeArgument^{asterisk}^`, under cursor `p` and typing context `TC`>>
+<<TypeArguments_ok, `p TC |- typeArgument^{asterisk}^ : % # %`>>
 
 <<TypeArguments_ok, Typing `·`, under cursor `p` and typing context `TC`>>:
 
@@ -6384,7 +6384,7 @@ for each `typeIR'''''^?^` in `typeIR'''''^?^^{asterisk}^`
   ... Check that <<is_defaultable_typeIR, `typeIR~field_b_default~` can be default-initialized>>, for all `typeIR~field_b_default~` in `typeIR~field_b_default~^{asterisk}^`.
   ... The relation holds.
 
-The typed expression `%` be the result of <<Expr_ok, Typing `expression'''`, under cursor `p` and typing context `TC`>>
+<<Expr_ok, `p TC |- expression''' : %`>>
 
 <<Expr_ok, Typing `booleanLiteral`, under cursor `p` and typing context `TC`>>:
 
@@ -7085,7 +7085,7 @@ for each `argument` in `argument^{asterisk}^`
 . Let `expressionNoteIR` be <<expressionNoteIR, type `typeIR` and compile-time known-ness `ctk`>>.
 . Result in the typed expression <<typedExpressionIR, `( typedExpressionIR )` annotated with `expressionNoteIR`>>.
 
-The typed argument `%` be the result of <<Argument_ok, Typing `argument`, under cursor `p` and typing context `TC`>>
+<<Argument_ok, `p TC |- argument : %`>>
 
 <<Argument_ok, Typing `expression`, under cursor `p` and typing context `TC`>>:
 
@@ -7107,7 +7107,7 @@ The typed argument `%` be the result of <<Argument_ok, Typing `argument`, under 
 
 . Result in the typed argument `_`.
 
-The typed lvalue `%` be the result of <<Lvalue_ok, Typing `lvalue`, under cursor `p` and typing context `TC`>>
+<<Lvalue_ok, `p TC |- lvalue : %`>>
 
 <<Lvalue_ok, Typing `prefixedNonTypeName`, under cursor `p` and typing context `TC`>>:
 
@@ -7221,10 +7221,7 @@ The typed lvalue `%` be the result of <<Lvalue_ok, Typing `lvalue`, under cursor
 . Let `typedLvalueIR` be <<typedLvalueIR, `( typedLvalueIR~base~ )` with note `( typeIR~base~ )`>>.
 . Result in the typed lvalue `typedLvalueIR`.
 
-
-* the typing context `%`,
-* the abstract control flow `%`,
-* and the typed statement `%` be the result of <<Stmt_ok, Typing `statement'`, under cursor `p`, typing context `TC`, abstract control flow `f`, and loop context `l`>>
+<<Stmt_ok, `p TC f l |- statement' : % % %`>>
 
 <<Stmt_ok, Typing `;`, under cursor `p`, typing context `TC`, abstract control flow `f`, and loop context `l`>>:
 
@@ -7481,10 +7478,7 @@ for each `forUpdateStatement` in `forUpdateStatement^{asterisk}^`
 * the abstract control flow `f`,
 * and the typed statement `continueStatement`.
 
-
-* the typing context `%`,
-* the abstract control flow `%`,
-* and the typed block element statement `%` be the result of <<BlockElementStmt_ok, Typing `blockElementStatement`, under typing context `TC~0~`, abstract control flow `f`, and loop context `l`>>
+<<BlockElementStmt_ok, `TC~0~ f l |- blockElementStatement : % % %`>>
 
 <<BlockElementStmt_ok, Typing `constantDeclaration`, under typing context `TC~0~`, abstract control flow `f`, and loop context `l`>>:
 
@@ -7533,10 +7527,7 @@ for each `forUpdateStatement` in `forUpdateStatement^{asterisk}^`
 * the abstract control flow `f~post~`,
 * and the typed block element statement `statementIR`.
 
-
-* the typing context `%`,
-* the abstract control flow `%`,
-* and the typed block element statements `%` be the result of <<BlockElementStmts_ok, Typing `blockElementStatement^{asterisk}^`, under typing context `TC`, abstract control flow `f`, and loop context `l`>>
+<<BlockElementStmts_ok, `TC f l |- blockElementStatement^{asterisk}^ : % % %`>>
 
 <<BlockElementStmts_ok, Typing `·`, under typing context `TC`, abstract control flow `f`, and loop context `l`>>:
 
@@ -7554,10 +7545,7 @@ for each `forUpdateStatement` in `forUpdateStatement^{asterisk}^`
 * the abstract control flow `f~2~`,
 * and the typed block element statements `blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`.
 
-
-* the typing context `%`,
-* the abstract control flow `%`,
-* and the typed block statement `%` be the result of <<Block_ok, Typing `annotationList { blockElementStatementList }`, under typing context `TC~0~`, abstract control flow `f`, and loop context `l`>>
+<<Block_ok, `TC~0~ f l |- annotationList { blockElementStatementList } : % % %`>>
 
 <<Block_ok, Typing `annotationList { blockElementStatementList }`, under typing context `TC~0~`, abstract control flow `f`, and loop context `l`>>:
 
@@ -7569,7 +7557,7 @@ for each `forUpdateStatement` in `forUpdateStatement^{asterisk}^`
 * the abstract control flow `f~post~`,
 * and the typed block statement `blockStatementIR`.
 
-The parameter `%` and set of fresh type variables `%` be the result of <<Parameter_ok, Typing `annotationList direction type name initializerOpt`, under cursor `p` and typing context `TC`>>
+<<Parameter_ok, `p TC |- annotationList direction type name initializerOpt : % # %`>>
 
 <<Parameter_ok, Typing `annotationList direction type name initializerOpt`, under cursor `p` and typing context `TC`>>:
 
@@ -7593,7 +7581,7 @@ The parameter `%` and set of fresh type variables `%` be the result of <<Paramet
   ... Let `value~init~` be the result of <<Expr_eval_lctk, the local compile-time evaluation of `typedExpressionIR~init_cast~`, under cursor `p` and typing context `TC`>>.
   ... Result in the parameter `annotationList direction typeIR nameIR = value~init~` and set of fresh type variables `typeId~fresh~^{asterisk}^`.
 
-The parameter list `%` and set of fresh type variables `%` be the result of <<Parameters_ok, Typing `parameter^{asterisk}^`, under cursor `p` and typing context `TC`>>
+<<Parameters_ok, `p TC |- parameter^{asterisk}^ : % # %`>>
 
 <<Parameters_ok, Typing `·`, under cursor `p` and typing context `TC`>>:
 
@@ -7605,21 +7593,21 @@ The parameter list `%` and set of fresh type variables `%` be the result of <<Pa
 . Let `parameterIR~t~^{asterisk}^` and `typeId~fresh_t~^{asterisk}^` be the result of <<Parameters_ok, typing `parameter~t~^{asterisk}^`, under cursor `p` and typing context `TC`>>.
 . Result in the parameter list `parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^` and set of fresh type variables `typeId~fresh_h~^{asterisk}^ {pp} typeId~fresh_t~^{asterisk}^`.
 
-The constructor parameter `%` and set of fresh type variables `%` be the result of <<ConstructorParameter_ok, Typing `constructorParameter`, under cursor `p` and typing context `TC`>>
+<<ConstructorParameter_ok, `p TC |- constructorParameter : % # %`>>
 
 <<ConstructorParameter_ok, Typing `constructorParameter`, under cursor `p` and typing context `TC`>>:
 
 . Let `constructorParameterIR` and `typeId~fresh~^{asterisk}^` be the result of <<Parameter_ok, typing `constructorParameter`, under cursor `p` and typing context `TC`>>.
 . Result in the constructor parameter `constructorParameterIR` and set of fresh type variables `typeId~fresh~^{asterisk}^`.
 
-The constructor parameter list `%` and set of fresh type variables `%` be the result of <<ConstructorParameters_ok, Typing `constructorParameter^{asterisk}^`, under cursor `p` and typing context `TC`>>
+<<ConstructorParameters_ok, `p TC |- constructorParameter^{asterisk}^ : % # %`>>
 
 <<ConstructorParameters_ok, Typing `constructorParameter^{asterisk}^`, under cursor `p` and typing context `TC`>>:
 
 . Let `constructorParameterIR^{asterisk}^` and `typeId~fresh~^{asterisk}^` be the result of <<Parameters_ok, typing `constructorParameter^{asterisk}^`, under cursor `p` and typing context `TC`>>.
 . Result in the constructor parameter list `constructorParameterIR^{asterisk}^` and set of fresh type variables `typeId~fresh~^{asterisk}^`.
 
-The updated typing context `%` and the typed method prototype `%` be the result of <<ExternMethod_ok, Typing `externMethodPrototype`, under typing context `TC~0~` for an extern object `typeId~extern~`>>
+<<ExternMethod_ok, `TC~0~ typeId~extern~ |- externMethodPrototype : % %`>>
 
 <<ExternMethod_ok, Typing `annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;`, under typing context `TC~0~` for an extern object `typeId~extern~`>>:
 
@@ -7673,7 +7661,7 @@ for each `typeParameter` in `typeParameter^{asterisk}^`
  .. Let `externMethodPrototypeIR` be `annotationList ABSTRACT typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;`.
  .. Result in the updated typing context `TC~4~` and the typed method prototype `externMethodPrototypeIR`.
 
-The updated typing context `%` and the typed method prototypes `%` be the result of <<ExternMethods_ok, Typing `externMethodPrototype^{asterisk}^`, under typing context `TC` for an extern object `typeId~extern~`>>
+<<ExternMethods_ok, `TC typeId~extern~ |- externMethodPrototype^{asterisk}^ : % %`>>
 
 <<ExternMethods_ok, Typing `·`, under typing context `TC` for an extern object `typeId~extern~`>>:
 
@@ -7685,7 +7673,7 @@ The updated typing context `%` and the typed method prototypes `%` be the result
 . Let `TC~2~` and `externMethodPrototypeIR~t~^{asterisk}^` be the result of <<ExternMethods_ok, typing `externMethodPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `typeId~extern~`>>.
 . Result in the updated typing context `TC~2~` and the typed method prototypes `externMethodPrototypeIR~h~ {two-colons} externMethodPrototypeIR~t~^{asterisk}^`.
 
-The updated typing context `%` and the typed constructor prototype `%` be the result of <<ExternConstructor_ok, Typing `annotationList typeIdentifier ( parameterList ) ;`, under typing context `TC~0~` for an extern object `typeId~extern~`>>
+<<ExternConstructor_ok, `TC~0~ typeId~extern~ |- annotationList typeIdentifier ( parameterList ) ; : % %`>>
 
 <<ExternConstructor_ok, Typing `annotationList typeIdentifier ( parameterList ) ;`, under typing context `TC~0~` for an extern object `typeId~extern~`>>:
 
@@ -7706,7 +7694,7 @@ The updated typing context `%` and the typed constructor prototype `%` be the re
  .. Let `externConstructorPrototypeIR` be `annotationList nameIR < , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
  .. Result in the updated typing context `TC~1~` and the typed constructor prototype `externConstructorPrototypeIR`.
 
-The updated typing context `%` and the typed constructor prototypes `%` be the result of <<ExternConstructors_ok, Typing `externConstructorPrototype^{asterisk}^`, under typing context `TC` for an extern object `typeId~extern~`>>
+<<ExternConstructors_ok, `TC typeId~extern~ |- externConstructorPrototype^{asterisk}^ : % %`>>
 
 <<ExternConstructors_ok, Typing `·`, under typing context `TC` for an extern object `typeId~extern~`>>:
 
@@ -7718,7 +7706,7 @@ The updated typing context `%` and the typed constructor prototypes `%` be the r
 . Let `TC~2~` and `externConstructorPrototypeIR~t~^{asterisk}^` be the result of <<ExternConstructors_ok, typing `externConstructorPrototype~t~^{asterisk}^`, under typing context `TC~1~` for an extern object `typeId~extern~`>>.
 . Result in the updated typing context `TC~2~` and the typed constructor prototypes `externConstructorPrototypeIR~h~ {two-colons} externConstructorPrototypeIR~t~^{asterisk}^`.
 
-The typed transition statement `%` be the result of <<ParserTransition_ok, Typing `transitionStatement`, under typing context `TC~0~` and parser state names `nameIR~state~^{asterisk}^`>>
+<<ParserTransition_ok, `TC~0~ nameIR~state~^{asterisk}^ |- transitionStatement : %`>>
 
 <<ParserTransition_ok, Typing ``, under typing context `TC~0~` and parser state names `nameIR~state~^{asterisk}^`>>:
 
@@ -7767,7 +7755,7 @@ for each `selectCase` in `selectCase^{asterisk}^`
  .. Let `transitionStatementIR` be `TRANSITION SELECT ( typedExpressionIR~key_reduced~^{asterisk}^ ) { selectCaseIR^{asterisk}^ }`.
  .. Result in the typed transition statement `transitionStatementIR`.
 
-The updated typing context `%` and the typed parser statement `%` be the result of <<ParserStmt_ok, Typing `parserStatement'`, under typing context `TC~0~`>>
+<<ParserStmt_ok, `TC~0~ |- parserStatement' : % %`>>
 
 <<ParserStmt_ok, Typing `constantDeclaration`, under typing context `TC~0~`>>:
 
@@ -7857,7 +7845,7 @@ The updated typing context `%` and the typed parser statement `%` be the result 
  .. Let `TC~else~` and `parserStatementIR~else~` be the result of <<ParserStmt_ok, typing `parserStatement~else~`, under typing context `TC~0~`>>.
  .. Result in the updated typing context `TC~0~` and the typed parser statement `IF ( typedExpressionIR~cond~ ) parserStatementIR~then~ ELSE parserStatementIR~else~`.
 
-The updated typing context `%` and the typed parser statements `%` be the result of <<ParserStmts_ok, Typing `parserStatement^{asterisk}^`, under typing context `TC`>>
+<<ParserStmts_ok, `TC |- parserStatement^{asterisk}^ : % %`>>
 
 <<ParserStmts_ok, Typing `·`, under typing context `TC`>>:
 
@@ -7869,7 +7857,7 @@ The updated typing context `%` and the typed parser statements `%` be the result
 . Let `TC~2~` and `parserStatementIR~t~^{asterisk}^` be the result of <<ParserStmts_ok, typing `parserStatement~t~^{asterisk}^`, under typing context `TC~1~`>>.
 . Result in the updated typing context `TC~2~` and the typed parser statements `parserStatementIR~h~ {two-colons} parserStatementIR~t~^{asterisk}^`.
 
-The typed parser state `%` be the result of <<ParserState_ok, Typing `annotationList STATE name { parserStatementList transitionStatement }`, under typing context `TC~0~` and parser state names `nameIR~state~^{asterisk}^`>>
+<<ParserState_ok, `TC~0~ nameIR~state~^{asterisk}^ |- annotationList STATE name { parserStatementList transitionStatement } : %`>>
 
 <<ParserState_ok, Typing `annotationList STATE name { parserStatementList transitionStatement }`, under typing context `TC~0~` and parser state names `nameIR~state~^{asterisk}^`>>:
 
@@ -7882,7 +7870,7 @@ The typed parser state `%` be the result of <<ParserState_ok, Typing `annotation
 . Let `parserStateIR` be `annotationList STATE nameIR { parserStatementIR^{asterisk}^ transitionStatementIR }`.
 . Result in the typed parser state `parserStateIR`.
 
-The typed parser states `%` be the result of <<ParserStates_ok, Typing `parserState^{asterisk}^`, under typing context `TC`>>
+<<ParserStates_ok, `TC |- parserState^{asterisk}^ : %`>>
 
 <<ParserStates_ok, Typing `parserState^{asterisk}^`, under typing context `TC`>>:
 
@@ -7913,7 +7901,7 @@ for each `name~state~` in `name~state~^{asterisk}^`
 for each `parserState` in `parserState^{asterisk}^`
 . Result in the typed parser states `parserStateIR^{asterisk}^`.
 
-The updated typing context `%` and the typed parser local declaration `%` be the result of <<ParserLocalDecl_ok, Typing `parserLocalDeclaration`, under typing context `TC~0~`>>
+<<ParserLocalDecl_ok, `TC~0~ |- parserLocalDeclaration : % %`>>
 
 <<ParserLocalDecl_ok, Typing `constantDeclaration`, under typing context `TC~0~`>>:
 
@@ -7967,7 +7955,7 @@ The updated typing context `%` and the typed parser local declaration `%` be the
  .. Let `valueSetDeclarationIR` be `annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;`.
  .. Result in the updated typing context `TC~1~` and the typed parser local declaration `valueSetDeclarationIR`.
 
-The updated typing context `%` and the typed parser local declarations `%` be the result of <<ParserLocalDecls_ok, Typing `parserLocalDeclaration^{asterisk}^`, under typing context `TC`>>
+<<ParserLocalDecls_ok, `TC |- parserLocalDeclaration^{asterisk}^ : % %`>>
 
 <<ParserLocalDecls_ok, Typing `·`, under typing context `TC`>>:
 
@@ -7979,7 +7967,7 @@ The updated typing context `%` and the typed parser local declarations `%` be th
 . Let `TC~2~` and `parserLocalDeclarationIR~t~^{asterisk}^` be the result of <<ParserLocalDecls_ok, typing `parserLocalDeclaration~t~^{asterisk}^`, under typing context `TC~1~`>>.
 . Result in the updated typing context `TC~2~` and the typed parser local declarations `parserLocalDeclarationIR~h~ {two-colons} parserLocalDeclarationIR~t~^{asterisk}^`.
 
-The updated table context `%` and the typed table key `%` be the result of <<TableKey_ok, Typing `expression : name~matchkind~ annotationList ;`, under typing context `TC` and table context `TBLC~0~`>>
+<<TableKey_ok, `TC TBLC~0~ |- expression : name~matchkind~ annotationList ; : % %`>>
 
 <<TableKey_ok, Typing `expression : name~matchkind~ annotationList ;`, under typing context `TC` and table context `TBLC~0~`>>:
 
@@ -7995,7 +7983,7 @@ The updated table context `%` and the typed table key `%` be the result of <<Tab
  .. Let `tableKeyIR` be `typedExpressionIR~reduced~ : nameIR~matchkind~ annotationList ;`.
  .. Result in the updated table context `TBLC~2~` and the typed table key `tableKeyIR`.
 
-The updated table context `%` and the typed table keys `%` be the result of <<TableKeys_ok, Typing `tableKey^{asterisk}^`, under typing context `TC` and table context `TBLC`>>
+<<TableKeys_ok, `TC TBLC |- tableKey^{asterisk}^ : % %`>>
 
 <<TableKeys_ok, Typing `·`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8007,7 +7995,7 @@ The updated table context `%` and the typed table keys `%` be the result of <<Ta
 . Let `TBLC~2~` and `tableKeyIR~t~^{asterisk}^` be the result of <<TableKeys_ok, typing `tableKey~t~^{asterisk}^`, under typing context `TC` and table context `TBLC~1~`>>.
 . Result in the updated table context `TBLC~2~` and the typed table keys `tableKeyIR~h~ {two-colons} tableKeyIR~t~^{asterisk}^`.
 
-The typed argument list `%` be the result of <<Call_action_partial_ok, Typing `argumentIR^{asterisk}^`, under typing context `TC`>>
+<<Call_action_partial_ok, `TC |- parameterIR^{asterisk}^ @ argumentIR^{asterisk}^ : % , % @ %`>>
 
 <<Call_action_partial_ok, Typing `argumentIR^{asterisk}^`, under typing context `TC`>>:
 
@@ -8017,7 +8005,7 @@ The typed argument list `%` be the result of <<Call_action_partial_ok, Typing `a
 . Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR~data~^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
 . Result in the typed argument list `parameterIR~data~^{asterisk}^`.
 
-The updated table context `%` and the typed table action `%` be the result of <<TableAction_ok, Typing `annotationList tableActionReference ;`, under typing context `TC` and table context `TBLC~0~`>>
+<<TableAction_ok, `TC TBLC~0~ |- annotationList tableActionReference ; : % %`>>
 
 <<TableAction_ok, Typing `annotationList prefixedNonTypeName ;`, under typing context `TC` and table context `TBLC~0~`>>:
 
@@ -8050,7 +8038,7 @@ for each `argument` in `argument^{asterisk}^`
 . Let `tableActionIR` be `annotationList prefixedNameIR ( argumentIR~cast~^{asterisk}^ ) # ( parameterIR~data~^{asterisk}^ , parameterIR~control~^{asterisk}^ ) ;`.
 . Result in the updated table context `TBLC~1~` and the typed table action `tableActionIR`.
 
-The updated table context `%` and the typed table actions `%` be the result of <<TableActions_ok, Typing `tableAction^{asterisk}^`, under typing context `TC` and table context `TBLC`>>
+<<TableActions_ok, `TC TBLC |- tableAction^{asterisk}^ : % %`>>
 
 <<TableActions_ok, Typing `·`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8062,7 +8050,7 @@ The updated table context `%` and the typed table actions `%` be the result of <
 . Let `TBLC~2~` and `tableActionIR~t~^{asterisk}^` be the result of <<TableActions_ok, typing `tableAction~t~^{asterisk}^`, under typing context `TC` and table context `TBLC~1~`>>.
 . Result in the updated table context `TBLC~2~` and the typed table actions `tableActionIR~h~ {two-colons} tableActionIR~t~^{asterisk}^`.
 
-The typed argument list `%` be the result of <<Call_action_default_ok, Typing `argumentIR^{asterisk}^`, under typing context `TC`>>
+<<Call_action_default_ok, `TC |- parameterIR^{asterisk}^ @ argumentIR^{asterisk}^ : % , % @ %`>>
 
 <<Call_action_default_ok, Typing `argumentIR^{asterisk}^`, under typing context `TC`>>:
 
@@ -8071,7 +8059,7 @@ The typed argument list `%` be the result of <<Call_action_default_ok, Typing `a
 . Let `argumentIR~cast~^{asterisk}^` be the result of <<Call_convention_ok, checking the calling convention of `argumentIR^{asterisk}^` applied to parameter types `parameterIR^{asterisk}^`, under cursor `LOCAL`, typing context `TC`, and action context `ACTION`>>.
 . Result in the typed argument list `parameterIR~data~^{asterisk}^`.
 
-The typed default action `%` be the result of <<TableDefaultAction_ok, Typing `= expression`, under typing context `TC` and table context `TBLC`>>
+<<TableDefaultAction_ok, `TC TBLC |- = expression : %`>>
 
 <<TableDefaultAction_ok, Typing `= prefixedNonTypeName`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8097,7 +8085,7 @@ for each `argument` in `argument^{asterisk}^`
 . Check that `argumentIR~action_data~` is equal to `argumentIR~cast_data~`, for all `argumentIR~action_data~` in `argumentIR~action_data~^{asterisk}^` and `argumentIR~cast_data~` in `argumentIR~cast_data~^{asterisk}^`.
 . Result in the typed default action `prefixedNameIR ( argumentIR~cast~^{asterisk}^ )`.
 
-The updated table context `%` and the typed keyset expression `%` be the result of <<TableEntry_keyset_ok, Typing `keysetExpression`, under typing context `TC` and table context `TBLC`>>
+<<TableEntry_keyset_ok, `TC TBLC |- keysetExpression : % %`>>
 
 <<TableEntry_keyset_ok, Typing `expression`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8211,7 +8199,7 @@ The updated table context `%` and the typed keyset expression `%` be the result 
  .. Let `TBLS` be `NOLPM`.
  .. Result in the updated table context `TBLS` and the typed keyset expression `_`.
 
-The typed table action reference `%` be the result of <<TableEntry_action_ok, Typing `tableActionReference`, under typing context `TC` and table context `TBLC`>>
+<<TableEntry_action_ok, `TC TBLC |- tableActionReference : %`>>
 
 <<TableEntry_action_ok, Typing `prefixedNonTypeName`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8237,7 +8225,7 @@ for each `argument` in `argument^{asterisk}^`
 . Check that `argumentIR~action_data~` is equal to `argumentIR~cast_data~`, for all `argumentIR~action_data~` in `argumentIR~action_data~^{asterisk}^` and `argumentIR~cast_data~` in `argumentIR~cast_data~^{asterisk}^`.
 . Result in the typed table action reference `prefixedNameIR ( argumentIR~cast~^{asterisk}^ )`.
 
-The updated table context `%` and the typed table entry priority `%` be the result of <<TableEntry_priority_ok, Typing `tableEntryPriority'^?^`, under typing context `TC` and table context `tableContext`, and table entry state `TBLS`>>
+<<TableEntry_priority_ok, `TC tableContext TBLS |- tableEntryPriority'^?^ : % %`>>
 
 <<TableEntry_priority_ok, Typing `None`, under typing context `TC` and table context `tableContext`, and table entry state `TBLS`>>:
 
@@ -8395,7 +8383,7 @@ The updated table context `%` and the typed table entry priority `%` be the resu
   ... Let `TBLC~1~` be `<<add_table_priority, add_table_priority(tableContext, n)>>`.
   ... Result in the updated table context `TBLC~1~` and the typed table entry priority `PRIORITY = ( typedExpressionIR ) :`.
 
-The updated table context `%` and the typed table entry `%` be the result of <<TableEntry_ok, Typing `tableEntry`, under typing context `TC` and table context `TBLC~0~`>>
+<<TableEntry_ok, `TC TBLC~0~ |- tableEntry : % %`>>
 
 <<TableEntry_ok, Typing `constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;`, under typing context `TC` and table context `TBLC~0~`>>:
 
@@ -8415,7 +8403,7 @@ The updated table context `%` and the typed table entry `%` be the result of <<T
 . Let `tableEntryIR` be `constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;`.
 . Result in the updated table context `TBLC~1~` and the typed table entry `tableEntryIR`.
 
-The updated table context `%` and the typed table entries `%` be the result of <<TableEntries_ok, Typing `tableEntry^{asterisk}^`, under typing context `TC` and table context `TBLC`>>
+<<TableEntries_ok, `TC TBLC |- tableEntry^{asterisk}^ : % %`>>
 
 <<TableEntries_ok, Typing `·`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8427,7 +8415,7 @@ The updated table context `%` and the typed table entries `%` be the result of <
 . Let `TBLC~2~` and `tableEntryIR~t~^{asterisk}^` be the result of <<TableEntries_ok, typing `tableEntry~t~^{asterisk}^`, under typing context `TC` and table context `TBLC~1~`>>.
 . Result in the updated table context `TBLC~2~` and the typed table entries `tableEntryIR~h~ {two-colons} tableEntryIR~t~^{asterisk}^`.
 
-The updated table context `%` and the typed table property `%` be the result of <<TableProperty_ok, Typing `tableProperty`, under typing context `TC` and table context `TBLC~0~`>>
+<<TableProperty_ok, `TC TBLC~0~ |- tableProperty : % %`>>
 
 <<TableProperty_ok, Typing `KEY = { tableKeyList }`, under typing context `TC` and table context `TBLC~0~`>>:
 
@@ -8535,7 +8523,7 @@ The updated table context `%` and the typed table property `%` be the result of 
  .. Let `tablePropertyIR` be `annotationList constOptIR CUSTOM nameIR = typedExpressionIR ;`.
  .. Result in the updated table context `TBLC~0~` and the typed table property `tablePropertyIR`.
 
-The updated table context `%` and the typed table properties `%` be the result of <<TableProperties_ok, Typing `tableProperty^{asterisk}^`, under typing context `TC` and table context `TBLC`>>
+<<TableProperties_ok, `TC TBLC |- tableProperty^{asterisk}^ : % %`>>
 
 <<TableProperties_ok, Typing `·`, under typing context `TC` and table context `TBLC`>>:
 
@@ -8547,7 +8535,7 @@ The updated table context `%` and the typed table properties `%` be the result o
 . Let `TBLC~2~` and `tablePropertyIR~t~^{asterisk}^` be the result of <<TableProperties_ok, typing `tableProperty~t~^{asterisk}^`, under typing context `TC` and table context `TBLC~1~`>>.
 . Result in the updated table context `TBLC~2~` and the typed table properties `tablePropertyIR~h~ {two-colons} tablePropertyIR~t~^{asterisk}^`.
 
-The updated typing context `%` and the typed table `%` be the result of <<Table_ok, Typing `tableProperty^{asterisk}^`, under typing context `TC`>>
+<<Table_ok, `TC |- tableProperty^{asterisk}^ : % %`>>
 
 <<Table_ok, Typing `tableProperty^{asterisk}^`, under typing context `TC`>>:
 
@@ -8564,7 +8552,7 @@ The updated typing context `%` and the typed table `%` be the result of <<Table_
  .. Let `TBLC~1~` and `tablePropertyIR^{asterisk}^` be the result of <<TableProperties_ok, typing `tableProperty^{asterisk}^`, under typing context `TC` and table context `TBLC~0~`>>.
  .. Result in the updated typing context `TBLC~1~` and the typed table `tablePropertyIR^{asterisk}^`.
 
-The updated typing context `%` and the table type `%` be the result of <<TableType_ok, Typing `name`, under typing context `TC~0~` and table context `TBLC`>>
+<<TableType_ok, `TC~0~ TBLC |- name : % %`>>
 
 <<TableType_ok, Typing `name`, under typing context `TC~0~` and table context `TBLC`>>:
 
@@ -8599,7 +8587,7 @@ for each `value~enum_field~` in `value~enum_field~^{asterisk}^`
 . Let `typeIR~table~` be `TABLE nameIR { tableMetadataStructTypeIR }`.
 . Result in the updated typing context `TC~1~` and the table type `typeIR~table~`.
 
-The updated typing context `%` and the typed control local declaration `%` be the result of <<ControlLocalDecl_ok, Typing `controlLocalDeclaration`, under typing context `TC~0~`>>
+<<ControlLocalDecl_ok, `TC~0~ |- controlLocalDeclaration : % %`>>
 
 <<ControlLocalDecl_ok, Typing `constantDeclaration`, under typing context `TC~0~`>>:
 
@@ -8659,7 +8647,7 @@ The updated typing context `%` and the typed control local declaration `%` be th
 . Let `tableDeclarationIR` be `annotationList TABLE typeIR~table~ nameIR { tablePropertyIR^{asterisk}^ }`.
 . Result in the updated typing context `TC~3~` and the typed control local declaration `tableDeclarationIR`.
 
-The updated typing context `%` and the typed control local declarations `%` be the result of <<ControlLocalDecls_ok, Typing `controlLocalDeclaration^{asterisk}^`, under typing context `TC`>>
+<<ControlLocalDecls_ok, `TC |- controlLocalDeclaration^{asterisk}^ : % %`>>
 
 <<ControlLocalDecls_ok, Typing `·`, under typing context `TC`>>:
 
@@ -8671,7 +8659,7 @@ The updated typing context `%` and the typed control local declarations `%` be t
 . Let `TC~2~` and `controlLocalDeclarationIR~t~^{asterisk}^` be the result of <<ControlLocalDecls_ok, typing `controlLocalDeclaration~t~^{asterisk}^`, under typing context `TC~1~`>>.
 . Result in the updated typing context `TC~2~` and the typed control local declarations `controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationIR~t~^{asterisk}^`.
 
-The modified typing context `%` and the typed declaration `%` be the result of <<Decl_ok, Typing `declaration`, under cursor `p` and typing context `TC~0~`>>
+<<Decl_ok, `p TC~0~ |- declaration : % %`>>
 
 <<Decl_ok, Typing `annotationList CONST type name = expression~value~ ;`, under cursor `p` and typing context `TC~0~`>>:
 
@@ -9316,7 +9304,7 @@ for each `constructorParameterIR` in `constructorParameterIR^{asterisk}^`
   ... Let `packageTypeDeclarationIR` be `annotationList PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;`.
   ... Result in the modified typing context `TC~4~` and the typed declaration `packageTypeDeclarationIR`.
 
-The modified typing context `%` and the typed declarations `%` be the result of <<Decls_ok, Typing `declaration^{asterisk}^`, under cursor `p` and typing context `TC`, and the modified typing context>>
+<<Decls_ok, `p TC |- declaration^{asterisk}^ : % %`>>
 
 <<Decls_ok, Typing `·`, under cursor `p` and typing context `TC`, and the modified typing context>>:
 
@@ -9328,7 +9316,7 @@ The modified typing context `%` and the typed declarations `%` be the result of 
 . Let `TC~2~` and `declarationIR~t~^{asterisk}^` be the result of <<Decls_ok, typing `declaration~t~^{asterisk}^`, under cursor `p` and typing context `TC~1~`, and the modified typing context>>.
 . Result in the modified typing context `TC~2~` and the typed declarations `declarationIR~h~ {two-colons} declarationIR~t~^{asterisk}^`.
 
-The typed P4 program `%` be the result of <<Program_ok, Typing `p4program`>>
+<<Program_ok, `|- p4program : %`>>
 
 <<Program_ok, Typing `p4program`>>:
 
@@ -9419,7 +9407,7 @@ The typed P4 program `%` be the result of <<Program_ok, Typing `p4program`>>
 . Otherwise:
  .. Return `DYN`.
 
-The typed callable target `%` be the result of <<CallableTarget_ok, Typing `callableTarget`, under cursor `p` and typing context `TC`>>
+<<CallableTarget_ok, `p TC |- callableTarget : %`>>
 
 <<CallableTarget_ok, Typing `callableTarget`, under cursor `p` and typing context `TC`>>:
 
@@ -9446,7 +9434,7 @@ The typed callable target `%` be the result of <<CallableTarget_ok, Typing `call
 . Let `callableTargetIR` be the result of <<CallableTarget_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
 . Result in the typed callable target `( callableTargetIR )`.
 
-The typed callable target `%` be the result of <<CallableTarget_lvalue_ok, Typing `lvalue`, under cursor `p` and typing context `TC`>>
+<<CallableTarget_lvalue_ok, `p TC |- lvalue : %`>>
 
 <<CallableTarget_lvalue_ok, Typing `lvalue`, under cursor `p` and typing context `TC`>>:
 
@@ -9454,7 +9442,7 @@ The typed callable target `%` be the result of <<CallableTarget_lvalue_ok, Typin
 . Let `callableTargetIR` be the result of <<CallableTarget_ok, typing `expression`, under cursor `p` and typing context `TC`>>.
 . Result in the typed callable target `callableTargetIR`.
 
-The callable type `%` with fresh type variables `%` and default parameter ids `%` be the result of <<CallableType_ok, Finding the type of `callableTargetIR'`<`typeArgumentIR'^{asterisk}^`>(`argumentIR'^{asterisk}^`), under cursor `p` and typing context `TC`>>
+<<CallableType_ok, `p TC |- callableTargetIR' < typeArgumentIR'^{asterisk}^ > ( argumentIR'^{asterisk}^ ) : % < # % > ( # % )`>>
 
 <<CallableType_ok, Finding the type of `prefixedNameIR`<`typeArgumentIR'^{asterisk}^`>(`argumentIR'^{asterisk}^`), under cursor `p` and typing context `TC`>>:
 
@@ -9594,7 +9582,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 . Let `callableTypeIR`, `typeId~inserted~^{asterisk}^`, and `id~default~^{asterisk}^` be the result of <<CallableType_ok, finding the type of `callableTargetIR`<`typeArgumentIR'^{asterisk}^`>(`argumentIR'^{asterisk}^`), under cursor `p` and typing context `TC`>>.
 . Result in the callable type `callableTypeIR` with fresh type variables `typeId~inserted~^{asterisk}^` and default parameter ids `id~default~^{asterisk}^`.
 
-The return type `%` with inferred type arguments `%` and the casted argument list `%` be the result of <<Call_ok, Typing the invocation `callableTypeIR`<`typeArgumentIR^{asterisk}^`>(`argumentIR^{asterisk}^`) with omitted type arguments `typeId^{asterisk}^` and omitted arguments `id~default~^{asterisk}^` , under cursor `p` and typing context `TC`>>
+<<Call_ok, `p TC |- callableTypeIR < typeArgumentIR^{asterisk}^ # typeId^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : % < % > ( % )`>>
 
 <<Call_ok, Typing the invocation `ACTION ( parameterIR^{asterisk}^ )`<`·`>(`argumentIR^{asterisk}^`) with omitted type arguments `·` and omitted arguments `id~default~^{asterisk}^` , under cursor `p` and typing context `TC`>>:
 
@@ -9765,7 +9753,7 @@ for each `parameterIR~aligned~` in `parameterIR~aligned~^{asterisk}^`
 . Check that `<<callable_tableApplyMethod, callable_tableApplyMethod(p, TC)>>`.
 . Result in the return type `tableMetadataStructTypeIR` with inferred type arguments `·` and the casted argument list `·`.
 
-The constructor type `%` with fresh type variables `%` and default parameter ids `%` be the result of <<ConstructorType_ok, Finding the type of constructor `prefixedNameIR`<`typeArgumentIR'^{asterisk}^`>(`argumentIR^{asterisk}^`), under cursor `p` and typing context `TC`>>
+<<ConstructorType_ok, `p TC |- prefixedNameIR < typeArgumentIR'^{asterisk}^ > ( argumentIR^{asterisk}^ ) : % < # % > ( # % )`>>
 
 <<ConstructorType_ok, Finding the type of constructor `prefixedNameIR`<`typeArgumentIR'^{asterisk}^`>(`argumentIR^{asterisk}^`), under cursor `p` and typing context `TC`>>:
 
@@ -9801,7 +9789,7 @@ The constructor type `%` with fresh type variables `%` and default parameter ids
 . If <<ConstructorType_wf, `constructorTypeIR` is a well-formed type, assuming bound type ids `B`>>:
  .. Result in the constructor type `constructorTypeIR` with fresh type variables `typeId~impl~^{asterisk}^` and default parameter ids `id~default~^{asterisk}^`.
 
-The constructed type `%` with inferred type arguments `%` and the casted argument list `%` be the result of <<Inst_ok, Typing the instantiation `constructorTypeIR`<`typeArgumentIR^{asterisk}^`>(`argumentIR^{asterisk}^`) with omitted type arguments `typeId~infer~^{asterisk}^` and omitted arguments `id~default~^{asterisk}^` , under cursor `cursor` and typing context `TC`, and instantiation site context `instctxt`>>
+<<Inst_ok, `cursor TC instctxt |- constructorTypeIR < typeArgumentIR^{asterisk}^ # typeId~infer~^{asterisk}^ > ( argumentIR^{asterisk}^ # id~default~^{asterisk}^ ) : % < % > ( % )`>>
 
 <<Inst_ok, Typing the instantiation `constructorTypeIR`<`typeArgumentIR^{asterisk}^`>(`argumentIR^{asterisk}^`) with omitted type arguments `typeId~infer~^{asterisk}^` and omitted arguments `id~default~^{asterisk}^` , under cursor `GLOBAL` and typing context `TC`, and instantiation site context `instctxt`>>:
 
@@ -12283,10 +12271,7 @@ for each `objectId` in `objectId^{asterisk}^`
 . Let <<Expr_inst, `p IC STO~0~ |- typedExpressionIR : STO~1~ value`>>.
 . Result in `STO~1~` and `value`.
 
-
-* the instantiation context `%`,
-* the updated store `%`,
-* and the instantiated statement `%` be the result of <<Stmt_inst, The compile-time evaluation of `statementIR`, under cursor `p`, instantiation context `IC`, and store `STO`>>
+<<Stmt_inst, `p IC STO |- statementIR : % % %`>>
 
 <<Stmt_inst, The compile-time evaluation of `emptyStatementIR`, under cursor `p`, instantiation context `IC`, and store `STO`>>:
 
@@ -13020,9 +13005,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 . Let `IC~2~` be `<<add_constructorDef_i, add_constructorDef_i(IC~1~, callableId, constructorDef)>>`.
 . Result in `IC~2~`, `STO`, and `None`.
 
-
-* the modified instantiation context `%`,
-* the updated store `%`, and the instantiated declarations `%` be the result of <<Decls_inst, Instantiating `declarationIR^{asterisk}^`, under cursor `p`, instantiation context `IC`, and store `STO`>>
+<<Decls_inst, `p IC STO |- declarationIR^{asterisk}^ : % % %`>>
 
 <<Decls_inst, Instantiating `·`, under cursor `p`, instantiation context `IC`, and store `STO`>>:
 
@@ -13049,8 +13032,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 * the modified instantiation context `IC~2~`,
 * the updated store `STO~2~`, and the instantiated declarations `declarationIR~h_inst~ {two-colons} declarationIR~t_inst~^{asterisk}^`.
 
-
-* the global instantiation layer `%`, and the store `%` be the result of <<Program_inst, Instantiating `p4program`>>
+<<Program_inst, `|- p4program : % %`>>
 
 <<Program_inst, Instantiating `p4program`>>:
 
@@ -13655,7 +13637,7 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
  .. Let `typeIR~subst~` be <<subst_typeIR, `theta` substituted by `typeIR`>>.
  .. Return `typeIR~subst~`.
 
-The resulting evaluation context `%`, store `%` and expression result `%` be the result of <<Expr_eval, Evaluating <<typedExpressionIR, `expressionIR` annotated with `++_++`>>, under cursor `p`, evaluation context `EC`, and store `STO`>>
+<<Expr_eval, `p EC STO |- expressionIR # ++_++ : % % %`>>
 
 <<Expr_eval, Evaluating <<typedExpressionIR, `booleanLiteral` annotated with `++_++`>>, under cursor `p`, evaluation context `EC`, and store `STO`>>:
 
@@ -13947,7 +13929,7 @@ The resulting evaluation context `%`, store `%` and expression result `%` be the
 . Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
 . Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
-The resulting evaluation context `%`, store `%` and expression list result `%` be the result of <<Exprs_eval, Evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `evalContext`, and store `store`>>
+<<Exprs_eval, `p evalContext store |- typedExpressionIR^{asterisk}^ : % % %`>>
 
 <<Exprs_eval, Evaluating `typedExpressionIR^{asterisk}^`, under cursor `p`, evaluation context `evalContext`, and store `store`>>:
 
@@ -14180,10 +14162,7 @@ The resulting evaluation context `%`, store `%` and expression list result `%` b
 . Let <<Lvalue_write, `p EC~0~ STO |- storageReference -> value~base_update~ : EC~1~`>>.
 . Result in `EC~1~`.
 
-
-* the evaluation context `%`,
-* the updated store `%`,
-* and the instantiated statement `%` be the result of <<Stmt_eval, The compile-time evaluation of `statementIR`, under cursor `p`, evaluation context `EC`, and store `STO`>>
+<<Stmt_eval, `p EC STO |- statementIR : % % %`>>
 
 <<Stmt_eval, The compile-time evaluation of `;`, under cursor `p`, evaluation context `EC`, and store `STO`>>:
 
@@ -15020,7 +14999,7 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Let <<Copy_out, `STO p~caller~ EC~caller_1~ parameterIR~t~^{asterisk}^ @ p~callee~ EC~callee~ (storageReference~t~^?^)^{asterisk}^ ~> EC~caller_2~`>>.
  .. Result in `EC~caller_2~`.
 
-The resulting evaluation context `%`, store `%`, and call result `%` be the result of <<Call_eval, Calling `callee``typeArgumentListIR``argumentListIR` , under cursor `p`, evaluation context `EC~0~`, and store `STO~0~`>>
+<<Call_eval, `p EC~0~ STO~0~ |- callee @ < typeArgumentListIR > ( argumentListIR ) : % % %`>>
 
 <<Call_eval, Calling `actionCallee``·``argumentListIR` , under cursor `p`, evaluation context `EC~0~`, and store `STO~0~`>>:
 
@@ -15302,9 +15281,9 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 . Let `EC~1~` be `EC~0~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]`.
 . Result in the resulting evaluation context `EC~1~`, store `STO~1~`, and call result `returnResult`.
 
-The resulting evaluation context `%`, store `%`, and call result `%` be the result of <<ExternFunctionCall_eval, Calling an extern function `store``nameIR` , under evaluation context `evalContext`, and store `nameIR'^{asterisk}^`>>
+<<ExternFunctionCall_eval, `evalContext store |- nameIR ( nameIR'^{asterisk}^ ) : % % %`>>
 
-The resulting evaluation context `%`, store `%`, and call result `%` be the result of <<ExternMethodCall_eval, Calling an extern method `objectId``nameIR` on object `store`, under evaluation context `evalContext`, and store `nameIR'^{asterisk}^`>>
+<<ExternMethodCall_eval, `evalContext store |- objectId . nameIR ( nameIR'^{asterisk}^ ) : % % %`>>
 
 <<match_keysets, match_keysets(setValue'^{asterisk}^, value^{asterisk}^)>>
 
@@ -15723,7 +15702,7 @@ for each `nat^?^` in `nat^?^^{asterisk}^`
 
 . Return `<<isValid_header, isValid_header(value)>>`.
 
-The resulting evaluation context `%` be the result of <<Var_init, Instantiating global variable `nameIR` of type `typeIR` in the evaluation context `EC~0~`>>
+<<Var_init, `EC~0~ |- typeIR nameIR : %`>>
 
 <<Var_init, Instantiating global variable `nameIR` of type `typeIR` in the evaluation context `EC~0~`>>:
 
@@ -15731,7 +15710,7 @@ The resulting evaluation context `%` be the result of <<Var_init, Instantiating 
 . Let `EC~1~` be <<add_var_e, `EC~0~` with `nameIR` : `value` added to `GLOBAL`>>.
 . Result in the resulting evaluation context `EC~1~`.
 
-The resulting store `%` be the result of <<Extern_init, Instantiating extern `EC` in the evaluation context `STO~0~` and store `nameIR`>>
+<<Extern_init, `EC STO~0~ |- nameIR : %`>>
 
 <<Extern_init, Instantiating extern `EC` in the evaluation context `STO~0~` and store `nameIR`>>:
 
@@ -15744,7 +15723,7 @@ The resulting store `%` be the result of <<Extern_init, Instantiating extern `EC
 . Let `STO~2~` be <<add_map, `STO~1~`[`objectId~object~` := `object`]>>.
 . Result in the resulting store `STO~2~`.
 
-The resulting evaluation context `%` and store `%` be the result of <<Program_init, Initializing the evaluation context and store for `p4program`>>
+<<Program_init, `|- p4program : % %`>>
 
 <<Program_init, Initializing the evaluation context and store for `p4program`>>:
 
@@ -15754,7 +15733,7 @@ The resulting evaluation context `%` and store `%` be the result of <<Program_in
 . Let `EC` be {GLOBAL `globalEvalLayer`, BLOCK `blockEvalLayer`, LOCAL `localEvalLayer`}.
 . Result in the resulting evaluation context `EC` and store `STO`.
 
-The resulting evaluation context `%` and store `%` be the result of <<V1Model_init, Initializing the evaluation context and store for `p4program` in the V1Model architecture>>
+<<V1Model_init, `|- p4program : % %`>>
 
 <<V1Model_init, Initializing the evaluation context and store for `p4program` in the V1Model architecture>>:
 

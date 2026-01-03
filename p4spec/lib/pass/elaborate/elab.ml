@@ -5,29 +5,12 @@ open El
 open Runtime.Static
 open Attempt
 open Error
+open Util.Checks
 open Util.Source
 module Xl = Lang.Xl
 module F = Format
 
 (* Checks *)
-
-let distinct (eq : 'a -> 'a -> bool) (xs : 'a list) : bool =
-  let rec distinct' xs =
-    match xs with
-    | [] -> true
-    | x :: xs -> if List.exists (eq x) xs then false else distinct' xs
-  in
-  distinct' xs
-
-let groupby (eq : 'a -> 'a -> bool) (xs : 'a list) : 'a list list =
-  let rec groupby' acc xs =
-    match xs with
-    | [] -> List.rev acc
-    | x :: xs ->
-        let same, rest = List.partition (eq x) xs in
-        groupby' ((x :: same) :: acc) rest
-  in
-  groupby' [] xs
 
 (* Identifiers *)
 
@@ -1301,7 +1284,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
   let nottyp, _, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
-  if Rel.InputHint.is_conditional inputs exps_il then
+  if Hints.Input.is_conditional inputs exps_il then
     let prem_il = Il.IfHoldPr (id, notexp_il) in
     (ctx, prem_il)
   else
@@ -1315,7 +1298,7 @@ and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
   let+ ctx, notexp_il = elab_exp_not ctx (NotationT nottyp) exp in
   let _, exps_il = notexp_il in
   check
-    (Rel.InputHint.is_conditional inputs exps_il)
+    (Hints.Input.is_conditional inputs exps_il)
     exp.at "negated rule premises do not take inputs";
   let prem_il = Il.IfNotHoldPr (id, notexp_il) in
   (ctx, prem_il)
@@ -1477,7 +1460,7 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     List.map
       (fun notexp_il ->
         let _, exps_il = notexp_il in
-        Rel.InputHint.split_exps_without_idx inputs exps_il)
+        Hints.Input.split_without_idx inputs exps_il)
       notexps_il
     |> List.split
   in
@@ -1599,46 +1582,29 @@ and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 
 (* Elaboration of relations *)
 
-and fetch_rel_input_hint' (len : int) (hintexp : exp) : int list option =
-  match hintexp.it with
-  | SeqE exps ->
-      List.fold_left
-        (fun inputs exp ->
-          match inputs with
-          | Some inputs -> (
-              match exp.it with
-              | HoleE (`Num input) when input < len -> Some (inputs @ [ input ])
-              | _ -> None)
-          | None -> None)
-        (Some []) exps
-  | HoleE (`Num input) when input < len -> Some [ input ]
-  | _ -> None
-
 and fetch_rel_input_hint (at : region) (nottyp_il : Il.nottyp)
     (hints : hint list) : int list =
   let len = nottyp_il.it |> snd |> List.length in
   let hint_input_default = List.init len Fun.id in
-  let hint_input =
+  let hintexp_input_opt =
     List.find_map
       (fun hint -> if hint.hintid.it = "input" then Some hint.hintexp else None)
       hints
   in
-  match hint_input with
+  match hintexp_input_opt with
   | Some hintexp -> (
-      let inputs_opt = fetch_rel_input_hint' len hintexp in
+      let inputs_opt = Hints.Input.init hintexp in
       match inputs_opt with
-      | Some [] ->
-          error at "malformed input hint: at least one input should be provided"
-      | Some inputs when not (distinct ( = ) inputs) ->
-          error at "malformed input hint: inputs should be distinct"
-      | Some inputs -> inputs
+      | Some inputs -> (
+          match Hints.Input.validate inputs len with
+          | Ok () -> inputs
+          | Error msg -> error at (F.asprintf "invalid input hint: %s" msg))
       | None ->
-          warn at
+          error at
             (F.asprintf
                "malformed input hint: should be a sequence of indexed holes \
                 %%N (N < %d)"
-               len);
-          hint_input_default)
+               len))
   (* If no hint is provided, assume all fields are inputs *)
   | None ->
       warn at "no input hint provided";

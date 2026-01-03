@@ -3,10 +3,8 @@ open Lib
 open Lang
 open Xl
 open Ol.Ast
-module InputHint = Runtime.Static.Rel.InputHint
-module IEnv = Runtime.Static.Envs.IEnv
 module Typ = Runtime.Dynamic_Sl.Typ
-module TDEnv = Runtime.Dynamic_Sl.Envs.TDEnv
+open Runtime.Dynamic_Sl.Envs
 open Util.Source
 
 (* [1] Remove redundant, trivial let aliases from the code,
@@ -259,12 +257,12 @@ module Bind = struct
     let expunit_r = init_expunit exp_r iterexps in
     LetBind (expunit_l, expunit_r)
 
-  let init_rule_bind (ienv : IEnv.t) (id : id) (notexp : notexp)
+  let init_rule_bind (ienv : IHEnv.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) : t =
     let exps_l, exps_r =
       let _, exps = notexp in
-      let inputs = IEnv.find id ienv in
-      InputHint.split_exps_without_idx inputs exps
+      let inputs = IHEnv.find id ienv in
+      Hints.Input.split_without_idx inputs exps
     in
     let expunits_l =
       List.map (fun exp_l -> init_expunit exp_l iterexps) exps_l
@@ -357,7 +355,7 @@ module Bind = struct
     | _ -> None
 end
 
-let rec remove_redundant_bindings' (ienv : IEnv.t) (bind : Bind.t)
+let rec remove_redundant_bindings' (ienv : IHEnv.t) (bind : Bind.t)
     (instrs : instr list) : instr list =
   match instrs with
   | [] -> []
@@ -418,7 +416,7 @@ let rec remove_redundant_bindings' (ienv : IEnv.t) (bind : Bind.t)
       let instrs_t = remove_redundant_bindings' ienv bind instrs_t in
       instr_h :: instrs_t
 
-let rec remove_redundant_bindings (ienv : IEnv.t) (instrs : instr list) :
+let rec remove_redundant_bindings (ienv : IHEnv.t) (instrs : instr list) :
     instr list =
   match instrs with
   | [] -> []
@@ -1210,7 +1208,7 @@ let optimize_pre (instrs : instr list) : instr list =
   instrs |> remove_let_alias |> parallelize_if_disjunctions
   |> matchify_if_eq_terminals
 
-let rec optimize_loop (ienv : IEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
+let rec optimize_loop (ienv : IHEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
     instr list =
   let instrs_optimized =
     instrs
@@ -1223,6 +1221,6 @@ let rec optimize_loop (ienv : IEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
 let optimize_post (tdenv : TDEnv.t) (instrs : instr list) : instr list =
   instrs |> remove_singleton_match tdenv |> totalize_case_analysis tdenv
 
-let optimize (ienv : IEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
+let optimize (ienv : IHEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
     instr list =
   instrs |> optimize_pre |> optimize_loop ienv tdenv |> optimize_post tdenv

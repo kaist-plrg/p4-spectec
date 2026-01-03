@@ -1,8 +1,7 @@
 open Domain.Lib
 open Lang
-module InputHint = Runtime.Static.Rel.InputHint
+module Hint = Hints.Hint
 module Typdef = Runtime.Dynamic_Sl.Typdef
-module Hint = Runtime.Prose.Hints.Hint
 open Runtime.Prose.Envs
 open Util.Source
 
@@ -19,7 +18,7 @@ type t = {
   (* Prose hints *)
   henv : HEnv.t;
   (* Input hints *)
-  ienv : IEnv.t;
+  ihenv : IHEnv.t;
   (* Type definitions *)
   tdenv : TDEnv.t;
 }
@@ -45,13 +44,13 @@ let load_typcases (tid : TId.t) (henv : HEnv.t) (typcases : Sl.typcase list) :
       load_hints (`Typ (tid, mixop)) henv hints)
     henv typcases
 
-let load_defs (henv : HEnv.t) (ienv : IEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
-    HEnv.t * IEnv.t * TDEnv.t =
+let load_defs (henv : HEnv.t) (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : Sl.def)
+    : HEnv.t * IHEnv.t * TDEnv.t =
   match def.it with
   | ExternTypD (tid, _) ->
       let td = Typdef.Extern in
       let tdenv = TDEnv.add tid td tdenv in
-      (henv, ienv, tdenv)
+      (henv, ihenv, tdenv)
   | TypD (tid, tparams, deftyp, _) ->
       let henv =
         match deftyp.it with
@@ -60,28 +59,28 @@ let load_defs (henv : HEnv.t) (ienv : IEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
       in
       let td = Typdef.Defined (tparams, deftyp) in
       let tdenv = TDEnv.add tid td tdenv in
-      (henv, ienv, tdenv)
+      (henv, ihenv, tdenv)
   | ExternRelD (rid, (_, inputs), _, hints)
   | RelD (rid, (_, inputs), _, _, hints) ->
       let henv = load_hints (`Rel rid) henv hints in
-      let ienv = IEnv.add rid inputs ienv in
-      (henv, ienv, tdenv)
+      let ihenv = IHEnv.add rid inputs ihenv in
+      (henv, ihenv, tdenv)
   | ExternDecD (fid, _, _, _, hints)
   | BuiltinDecD (fid, _, _, _, hints)
   | TableDecD (fid, _, _, _, hints)
   | FuncDecD (fid, _, _, _, _, hints) ->
       let henv = load_hints (`Func fid) henv hints in
-      (henv, ienv, tdenv)
+      (henv, ihenv, tdenv)
 
-let load_spec (spec : Sl.spec) : HEnv.t * IEnv.t * TDEnv.t =
+let load_spec (spec : Sl.spec) : HEnv.t * IHEnv.t * TDEnv.t =
   List.fold_left
-    (fun (henv, ienv, tdenv) def -> load_defs henv ienv tdenv def)
-    (HEnv.empty, IEnv.empty, TDEnv.empty)
+    (fun (henv, ihenv, tdenv) def -> load_defs henv ihenv tdenv def)
+    (HEnv.empty, IHEnv.empty, TDEnv.empty)
     spec
 
 let init (spec_sl : Sl.spec) : t =
-  let henv, ienv, tdenv = load_spec spec_sl in
-  { branch = Empty; namespace = Empty; frees = IdSet.empty; henv; ienv; tdenv }
+  let henv, ihenv, tdenv = load_spec spec_sl in
+  { branch = Empty; namespace = Empty; frees = IdSet.empty; henv; ihenv; tdenv }
 
 (* Namespace *)
 
@@ -114,8 +113,8 @@ let add_tparams (ctx : t) (tids : TId.t list) : t =
 
 (* Finders *)
 
-let find_inputs (ctx : t) (id_rel : Id.t) : InputHint.t =
-  IEnv.find_opt id_rel ctx.ienv |> Option.value ~default:[]
+let find_inputs (ctx : t) (id_rel : Id.t) : Hints.Input.t =
+  IHEnv.find_opt id_rel ctx.ihenv |> Option.value ~default:[]
 
 let find_hint (ctx : t) (hid : string) (key : HEnv.key) : Hint.t option =
   HEnv.find (hid $ no_region) key ctx.henv

@@ -1,10 +1,10 @@
 open Domain
 open Lang
 open Il.Eq
-open Util.Source
 open Flatten
 open Hint
 module Value = Runtime.Dynamic_Il.Value
+open Util.Source
 module F = Format
 
 (* Numbers *)
@@ -82,44 +82,16 @@ and pp_case_v (hmap : hmap) fmt (value : Value.t) : unit =
       | None -> pp_default_case_v hmap fmt value)
   | _ -> assert false
 
-and pp_hint_case_v (hmap : hmap) (exp : El.exp) fmt (values : Value.t list) :
-    unit =
-  let _, str = pp_hint_case_v' hmap 0 exp values in
+and pp_hint_case_v (hmap : hmap) (hintexp : El.exp) fmt (values : Value.t list)
+    : unit =
+  let str =
+    Hints.Alter.alternate
+      ~base_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
+      hintexp
+      (fun value -> F.asprintf "%a" (pp_value hmap) value)
+      values
+  in
   F.fprintf fmt "%s" str
-
-and pp_hint_case_v' (hmap : hmap) (cur : int) (exp : El.exp)
-    (values : Value.t list) : int * string =
-  match exp.it with
-  | TextE text -> (cur, text)
-  | AtomE atom -> (cur, F.asprintf "%a" pp_atom atom)
-  | SeqE exps ->
-      let cur, strs =
-        List.fold_left
-          (fun (cur, l) exp ->
-            let cur, str = pp_hint_case_v' hmap cur exp values in
-            (cur, l @ [ str ]))
-          (cur, []) exps
-      in
-      (cur, String.concat " " strs)
-  | BrackE (atom_l, exp, atom_r) ->
-      let cur, exp_str = pp_hint_case_v' hmap cur exp values in
-      let strs =
-        [
-          F.asprintf "%a" pp_atom atom_l;
-          exp_str;
-          F.asprintf "%a" pp_atom atom_r;
-        ]
-      in
-      let strs = List.filter (fun s -> s <> String.empty) strs in
-      (cur, String.concat " " strs)
-  | HoleE (`Num i) -> (i, F.asprintf "%a" (pp_value hmap) (List.nth values i))
-  | HoleE `Next ->
-      (cur + 1, F.asprintf "%a" (pp_value hmap) (List.nth values cur))
-  | FuseE (exp_l, exp_r) ->
-      let cur_l, str_l = pp_hint_case_v' hmap cur exp_l values in
-      let cur_r, str_r = pp_hint_case_v' hmap cur_l exp_r values in
-      (cur_r, str_l ^ str_r)
-  | _ -> (cur, El.Print.string_of_exp exp)
 
 and pp_default_case_v (hmap : hmap) fmt (value : Value.t) : unit =
   match value.it with

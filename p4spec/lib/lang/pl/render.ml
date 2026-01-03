@@ -177,48 +177,24 @@ let render_cmpop ctx cmpop =
 
 (* Call prose using hints *)
 
-let rec render_hintexp ?(caps = false) (ctx : context)
-    (render : context -> 'a -> string) (items : 'a list) (hintexp : El.exp) :
-    string =
-  let _, s = render_hintexp' ctx render items hintexp 0 in
-  if caps then capitalize_first s else s
-
-and render_hintexp' (ctx : context) (render : context -> 'a -> string)
-    (items : 'a list) (hintexp : El.exp) (cursor : int) : int * string =
-  match hintexp.it with
-  | El.TextE text -> (cursor, text |> reindent_lines ~level:0)
-  | El.SeqE hintexps ->
-      let cursor, strs =
-        List.fold_left
-          (fun (cur, acc) hintexp ->
-            let cur, s = render_hintexp' ctx render items hintexp cur in
-            (cur, acc @ [ s ]))
-          (cursor, []) hintexps
-      in
-      (cursor, String.concat " " strs)
-  | El.HoleE `Next ->
-      let item = List.nth items cursor in
-      (cursor + 1, render ctx item)
-  | El.HoleE (`Num i) ->
-      let item = List.nth items i in
-      (cursor, render ctx item)
-  | El.FuseE (hintexp_l, hintexp_r) ->
-      let cursor_l, str_l = render_hintexp' ctx render items hintexp_l cursor in
-      let cursor_r, str_r =
-        render_hintexp' ctx render items hintexp_r cursor_l
-      in
-      (cursor_r, str_l ^ str_r)
-  | _ -> failwith "unsupported prose hint"
+let render_hintexp ?(caps = false) (ctx : context) (hintexp : El.exp)
+    (render : context -> 'a -> string) (items : 'a list) : string =
+  items
+  |> Hints.Alter.alternate
+       ~base_text:(fun s -> reindent_lines ~level:0 s)
+       hintexp
+       (fun a -> render ctx a)
+  |> fun s -> if caps then capitalize_first s else s
 
 let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
   match rel_call with
   | ProseRelCall (`Hold (id_rel, hintexp, exps_input)) ->
-      render_hintexp ctx render_exp exps_input hintexp
+      render_hintexp ctx hintexp render_exp exps_input
       |> as_link ctx ~link:(string_of_relid id_rel)
   | ProseRelCall (`Yield (id_rel, hintexp, exps_input, exps_output)) ->
       F.asprintf "%s be the result of %s"
         (render_exps in_prose exps_output)
-        (render_hintexp in_link render_exp exps_input hintexp
+        (render_hintexp in_link hintexp render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelCall (id_rel, mixop, exps) ->
       code_of_notexp in_link (mixop, exps)
@@ -283,7 +259,7 @@ and render_exp ctx exp : string =
       else
         match prose_hint with
         | Some hintexp ->
-            render_hintexp (ctx |> link) render_exp exps hintexp
+            render_hintexp (ctx |> link) hintexp render_exp exps
             |> as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
@@ -339,7 +315,7 @@ and render_exp ctx exp : string =
         |> List.filter_map (fun arg ->
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
-      render_hintexp (link ctx) render_exp exps prose_true
+      render_hintexp (link ctx) prose_true render_exp exps
       |> as_link ctx ~link:id.it
   | CallE (ProseFuncCall (`Yield (id, prose_in, _targs, args))) ->
       let exps =
@@ -347,7 +323,7 @@ and render_exp ctx exp : string =
         |> List.filter_map (fun arg ->
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
-      render_hintexp (link ctx) render_exp exps prose_in
+      render_hintexp (link ctx) prose_in render_exp exps
       |> as_link ctx ~link:id.it
   | CallE (MathFuncCall (id, targs, args)) ->
       string_of_defid id ^ string_of_targs targs
@@ -491,7 +467,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_code exp |> as_code in_prose)
   | ResultI (ProseResult (hintexp, exps)) ->
       F.asprintf "%sResult in %s." bullet
-        (render_hintexp in_prose render_exp exps hintexp)
+        (render_hintexp in_prose hintexp render_exp exps)
   | ResultI (MathResult []) -> bullet ^ "The relation holds."
   | ResultI (MathResult exps) ->
       F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
@@ -537,15 +513,15 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
   | ProseRelTitle (`Hold (id_rel, hintexp_hold, exps_input)) ->
-      render_hintexp ~caps:true in_prose render_exp exps_input hintexp_hold
+      render_hintexp ~caps:true in_prose hintexp_hold render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRelTitle
       (`Yield (id_rel, hintexp_input, exps_input, hintexp_output, exps_output))
     ->
       F.asprintf "%s be the result of %s"
-        (render_hintexp ~caps:true in_prose render_exp exps_output
-           hintexp_output)
-        (render_hintexp ~caps:true in_prose render_exp exps_input hintexp_input
+        (render_hintexp ~caps:true in_prose hintexp_output render_exp
+           exps_output)
+        (render_hintexp ~caps:true in_prose hintexp_input render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelTitle (id_rel, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -562,7 +538,7 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
   | ProseRuleTitle (_id_rulegroup, hintexp, exps_input) ->
-      render_hintexp ~caps:true in_prose render_exp exps_input hintexp
+      render_hintexp ~caps:true in_prose hintexp render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -591,10 +567,10 @@ and render_defined_rel_def (rel : rel) : string =
 and render_func_title (func_title : func_title) : string =
   match func_title with
   | ProseFuncTitle (`Check (id_func, hintexp_true, args_input)) ->
-      render_hintexp ~caps:true in_prose render_arg args_input hintexp_true
+      render_hintexp ~caps:true in_prose hintexp_true render_arg args_input
       |> as_link in_prose ~link:(string_of_defid id_func)
   | ProseFuncTitle (`Yield (id_func, hintexp_input, args_input)) ->
-      render_hintexp ~caps:true in_prose render_arg args_input hintexp_input
+      render_hintexp ~caps:true in_prose hintexp_input render_arg args_input
       |> as_link in_prose ~link:(string_of_defid id_func)
   | MathFuncTitle (id_func, tparams, args_input) ->
       string_of_defid id_func

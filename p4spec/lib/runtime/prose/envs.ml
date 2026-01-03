@@ -1,3 +1,4 @@
+open Lang
 open Domain
 open Lib
 
@@ -7,12 +8,12 @@ module TDEnv = Dynamic.Envs.TDEnv
 
 (* Relation input environment *)
 
-module IEnv = Static.Envs.IEnv
+module IHEnv = MakeHIdEnv (Hints.Input)
 
 (* Hint environemnt *)
 
 module HEnv = struct
-  type t = Hints.t HIdMap.t
+  type t = Kinds.t HIdMap.t
 
   let empty = HIdMap.empty
 
@@ -23,21 +24,21 @@ module HEnv = struct
   (* Adders and finders for hints *)
 
   let add (hid : HId.t) (key : key) (hint : Hints.Hint.t) (henv : t) : t =
-    let hints = HIdMap.find_opt hid henv |> Option.value ~default:Hints.empty in
-    let hints =
+    let kinds = HIdMap.find_opt hid henv |> Option.value ~default:Kinds.empty in
+    let kinds =
       match key with
-      | `Typ (tid, mixop) -> Hints.add_typ tid mixop hint hints
-      | `Func fid -> Hints.add_func fid hint hints
-      | `Rel rid -> Hints.add_rel rid hint hints
+      | `Typ (tid, mixop) -> Kinds.add_typ tid mixop hint kinds
+      | `Func fid -> Kinds.add_func fid hint kinds
+      | `Rel rid -> Kinds.add_rel rid hint kinds
     in
-    HIdMap.add hid hints henv
+    HIdMap.add hid kinds henv
 
   let find (hid : HId.t) (key : key) (henv : t) : Hints.Hint.t option =
     match HIdMap.find_opt hid henv with
-    | Some hints -> (
+    | Some kinds -> (
         match key with
-        | `Typ (tid, mixop) -> Hints.find_typ tid mixop hints
-        | `Func fid -> Hints.find_func fid hints
-        | `Rel rid -> Hints.find_rel rid hints)
+        | `Typ (tid, mixop) -> Kinds.find_typ tid mixop kinds
+        | `Func fid -> Kinds.find_func fid kinds
+        | `Rel rid -> Kinds.find_rel rid kinds)
     | None -> None
 end

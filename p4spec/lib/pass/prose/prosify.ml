@@ -2,85 +2,15 @@ open Domain.Lib
 open Lang
 open Xl
 open Sl
-module InputHint = Runtime.Static.Rel.InputHint
 open Error
-open Util.Error
 open Util.Source
 
 (* Hint helpers *)
 
-let rec validate_hint (hintexp : El.exp) (items : 'a list) : unit =
-  try
-    let _ = validate_hint' 0 hintexp items in
-    ()
-  with ProseError (at, msg) ->
-    error at
-      (Format.asprintf "invalid hint expression %s: %s"
-         (El.Print.string_of_exp hintexp)
-         msg)
-
-and validate_hint' (cursor : int) (hintexp : El.exp) (items : 'a list) : int =
-  match hintexp.it with
-  | El.TextE _ -> cursor
-  | El.SeqE hintexps ->
-      List.fold_left
-        (fun cursor hintexp -> validate_hint' cursor hintexp items)
-        cursor hintexps
-  | El.HoleE `Next -> cursor + 1
-  | El.HoleE (`Num idx) when idx < List.length items -> cursor
-  | El.HoleE (`Num idx) ->
-      error hintexp.at (Format.asprintf "index %d out of bounds" idx)
-  | El.FuseE (hintexp_l, hintexp_r) ->
-      let cursor_l = validate_hint' cursor hintexp_l items in
-      let cursor_r = validate_hint' cursor_l hintexp_r items in
-      cursor_r
-  | _ ->
-      error hintexp.at
-        (Format.asprintf "%s is unsupported" (El.Print.string_of_exp hintexp))
-
-let rec collect_hint (hintexp : El.exp) : int list = collect_hint' hintexp []
-
-and collect_hint' (hintexp : El.exp) (hints : int list) : int list =
-  match hintexp.it with
-  | El.TextE _ -> hints
-  | El.SeqE hintexps ->
-      List.fold_left
-        (fun hints hintexp -> collect_hint' hintexp hints)
-        hints hintexps
-  | El.HoleE (`Num i) -> i :: hints
-  | El.HoleE `Next -> hints
-  | El.FuseE (hintexp_l, hintexp_r) ->
-      let hints = collect_hint' hintexp_l hints in
-      collect_hint' hintexp_r hints
-  | _ -> hints
-
-let rec realign_hint (inputs : InputHint.t) (hintexp : El.exp) : El.exp =
-  let outputs = collect_hint hintexp in
-  let all = inputs @ outputs |> List.sort compare in
-  let realign =
-    List.fold_left
-      (fun outputs_realigned idx ->
-        if List.mem idx outputs then
-          let idx_realigned = List.length outputs_realigned in
-          outputs_realigned @ [ (idx, idx_realigned) ]
-        else outputs_realigned)
-      [] all
-  in
-  realign_hint' realign hintexp
-
-and realign_hint' (realign : (int * int) list) (hintexp : El.exp) : El.exp =
-  match hintexp.it with
-  | El.SeqE hintexps ->
-      let hintexps = List.map (realign_hint' realign) hintexps in
-      El.SeqE hintexps $ hintexp.at
-  | El.HoleE (`Num idx) ->
-      let idx_realigned = List.assoc idx realign in
-      El.HoleE (`Num idx_realigned) $ hintexp.at
-  | El.FuseE (hintexp_l, hintexp_r) ->
-      let hintexp_l = realign_hint' realign hintexp_l in
-      let hintexp_r = realign_hint' realign hintexp_r in
-      El.FuseE (hintexp_l, hintexp_r) $ hintexp.at
-  | _ -> hintexp
+let validate_hint (hint : Hints.Hint.t) (items : 'a list) : unit =
+  match Hints.Alter.validate hint items with
+  | Ok () -> ()
+  | Error msg -> error hint.at msg
 
 (* Iteration helpers *)
 
@@ -670,9 +600,7 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) : Pl.instr list =
   let mixop, exps = notexp in
   let inputs = Ctx.find_inputs ctx id_rel in
-  let exps_input_indexed, exps_output_indexed =
-    InputHint.split_exps inputs exps
-  in
+  let exps_input_indexed, exps_output_indexed = Hints.Input.split inputs exps in
   let exps_input_pl_indexed =
     List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_input_indexed
   in
@@ -712,7 +640,7 @@ and prosify_result_instr (at : region) (ctx : Ctx.t) (exps : exp list) :
     match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
     | Some prose_out ->
         let inputs = Ctx.find_inputs ctx id_rel in
-        let prose_out_aligned = realign_hint inputs prose_out in
+        let prose_out_aligned = Hints.Alter.realign prose_out inputs in
         validate_hint prose_out_aligned exps_pl;
         Pl.ProseResult (prose_out_aligned, exps_pl)
     | None -> Pl.MathResult exps_pl
@@ -750,7 +678,7 @@ let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
 
 and prosify_rel_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
     (inputs : int list) (exps_input : exp list) : Pl.rel_title =
-  if List.length mixop - 1 = List.length inputs then
+  if Hints.Input.is_conditional inputs exps_input then
     prosify_rel_hold_title ctx id_rel mixop inputs exps_input
   else prosify_rel_yield_title ctx id_rel mixop inputs exps_input
 
@@ -774,7 +702,7 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
   | Some prose_in, Some prose_out ->
       let exps_input_pl = prosify_exps ctx exps_input in
       validate_hint prose_in exps_input;
-      let prose_out_aligned = realign_hint inputs prose_out in
+      let prose_out_aligned = Hints.Alter.realign prose_out inputs in
       let exps_output_pl =
         List.init
           (List.length mixop - List.length inputs - 1)

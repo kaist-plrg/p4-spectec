@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Sl
-module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
 module Dep = Runtime.Testgen_neg.Dep
@@ -184,7 +183,7 @@ let find_rel (cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t =
   | Some rel -> rel
   | None -> back_undef rid.at "relation" rid.it
 
-let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : InputHint.t =
+let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : Hints.Input.t =
   let rel = find_rel cursor ctx rid in
   match rel with Rel.Extern inputs | Rel.Defined (inputs, _, _) -> inputs
 
