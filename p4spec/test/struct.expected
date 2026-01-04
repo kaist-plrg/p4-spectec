@@ -9356,24 +9356,19 @@ def $sizeof_minSizeInBits'(typeIR')
 
     2. Return $min_nat(($sizeof_minSizeInBits'(typeIR))*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:820.1-821.23
-def $sizeof_minSizeInBits''
-
-
-
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:823.1-824.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:821.1-822.23
 def $sizeof_minSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:826.1-827.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:824.1-825.23
 def $sizeof_maxSizeInBits(typeIR)
 
 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:828.1-829.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:826.1-827.23
 def $sizeof_maxSizeInBits'(typeIR')
 
 1. Case analysis on typeIR'
@@ -9460,12 +9455,7 @@ def $sizeof_maxSizeInBits'(typeIR')
 
     2. Return $max_nat(($sizeof_maxSizeInBits'(typeIR))*{typeIR <- typeIR*})
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:830.1-831.23
-def $sizeof_maxSizeInBits''
-
-
-
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:833.1-834.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:829.1-830.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
@@ -25361,7 +25351,7 @@ def $infer'(constraint, parameterIR, argumentIR)
 
   3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
 
-  4. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+  4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
 2. Case analysis on argumentIR
 
@@ -25373,7 +25363,7 @@ def $infer'(constraint, parameterIR, argumentIR)
 
     3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
 
-    4. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+    4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
   2. Case (% matches pattern `%=_`)
 
@@ -25413,8 +25403,8 @@ def $resolve_inference'(typeIR)
 
   1. Return typeIR
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:26.1-26.68
-def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:26.1-26.61
+def $gen_constraint(constraint, typeIR, typeIR_arg')
 
 1. Case analysis on typeIR
 
@@ -25430,7 +25420,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
     1. (Let (typedef _typeId typeIR_param) be (typeIR as typedefTypeIR))
 
-    2. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg')
+    2. Return $gen_constraint(constraint, typeIR_param, typeIR_arg')
 
   3. Case (% has type newTypeIR)
 
@@ -25442,7 +25432,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((typeId = typeId')), then
 
-        1. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+        1. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
   4. Case (% has type listTypeIR)
 
@@ -25452,7 +25442,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       1. (Let (list< typeIR_arg >) be (typeIR_arg' as listTypeIR))
 
-      2. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+      2. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
   5. Case (% has type tupleTypeIR)
 
@@ -25462,7 +25452,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       1. (Let (tuple< (typeIR_arg)*{typeIR_arg <- typeIR_arg*} >) be (typeIR_arg' as tupleTypeIR))
 
-      2. Return $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+      2. Return $gen_constraints(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
   6. Case (% has type headerStackTypeIR)
 
@@ -25474,7 +25464,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((n_size = n_size')), then
 
-        1. Return $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+        1. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
   7. Case (% has type structTypeIR)
 
@@ -25486,7 +25476,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((typeId = typeId')), then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
+        1. Return $gen_constraints(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
 
   8. Case (% has type headerTypeIR)
 
@@ -25498,7 +25488,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((typeId = typeId')), then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
+        1. Return $gen_constraints(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
 
   9. Case (% has type headerUnionTypeIR)
 
@@ -25510,7 +25500,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((typeId = typeId')), then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
+        1. Return $gen_constraints(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
 
   10. Case (% has type externObjectTypeIR)
 
@@ -25522,7 +25512,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       2. If ((typeId = typeId')), then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
+        1. Return $gen_constraints(constraint, (typeIR_arg_a)*{typeIR_arg_a <- typeIR_arg_a*}, (typeIR_arg_b)*{typeIR_arg_b <- typeIR_arg_b*})
 
   11. Case (% has type parserObjectTypeIR)
 
@@ -25538,7 +25528,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       4. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+        1. Return $gen_constraints(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
   12. Case (% has type controlObjectTypeIR)
 
@@ -25554,7 +25544,7 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       4. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
 
-        1. Return $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+        1. Return $gen_constraints(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
   13. Case (% has type packageObjectTypeIR)
 
@@ -25564,36 +25554,26 @@ def $gen_constraint_typeIR(constraint, typeIR, typeIR_arg')
 
       1. (Let (package _typeId' < (_typeArgumentIR')*{_typeArgumentIR' <- _typeArgumentIR'*} >{ (typeIR_arg)*{typeIR_arg <- typeIR_arg*} }) be (typeIR_arg' as packageObjectTypeIR))
 
-      2. Return $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+      2. Return $gen_constraints(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
 2. If ((typeIR_arg' has type typedefTypeIR)), then
 
   1. (Let (typedef _typeId typeIR_arg) be (typeIR_arg' as typedefTypeIR))
 
-  2. Return $gen_constraint_typeIR(constraint, typeIR, typeIR_arg)
+  2. Return $gen_constraint(constraint, typeIR, typeIR_arg)
 
 3. Otherwise
 
   1. Return constraint
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:27.1-27.71
-def $gen_constraint_typeIRs(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:27.1-27.64
+def $gen_constraints(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
-1. (Let constraint_pair be $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
+1. (Let constraint_pair be $gen_constraint(constraint, typeIR_param, typeIR_arg))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
 
 2. Return $merge_constraints(constraint, (constraint_pair)*{constraint_pair <- constraint_pair*})
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:28.1-31.15
-def $gen_constraint_callableTypeDefIR
-
-
-
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:32.1-35.15
-def $gen_constraint_callableTypeDefIRs
-
-
-
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:37.1-37.59
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:29.1-29.59
 def $merge_constraint(constraint_pre, constraint_post)
 
 1. (Let ({ (typeId_pre)*{typeId_pre <- typeId_pre*} }) be $dom_map<typeId, infer>(constraint_pre))
@@ -25604,7 +25584,7 @@ def $merge_constraint(constraint_pre, constraint_post)
 
   1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_pre)*{typeId_pre <- typeId_pre*}, ({ [] }))
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:38.1-38.81
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:30.1-30.81
 def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- typeId*}, constraint)
 
 1. Case analysis on (typeId)*{typeId <- typeId*}
@@ -25679,7 +25659,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- type
 
                 2. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*{typeId_t <- typeId_t*}, constraint_updated)
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:39.1-39.61
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:31.1-31.61
 def $merge_constraints(constraint_pre, (constraint)*{constraint <- constraint*})
 
 1. Case analysis on (constraint)*{constraint <- constraint*}
@@ -25698,7 +25678,7 @@ def $merge_constraints(constraint_pre, (constraint)*{constraint <- constraint*})
 
     4. Return constraint_pre_2
 
-;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:41.1-41.48
+;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:33.1-33.48
 def $resolve_constraint(({ ((typeId : infer))*{infer <- infer*, typeId <- typeId*} }))
 
 1. If ((infer matches pattern `KNOWNAS%`))*{infer <- infer*}, then

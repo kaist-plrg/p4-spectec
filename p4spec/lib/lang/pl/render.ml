@@ -210,8 +210,7 @@ and render_exp ctx exp : string =
   | TextE text -> "\"" ^ String.escaped text ^ "\"" |> as_code ctx
   | VarE id_var -> render_varid in_code id_var |> as_code ctx
   | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
-      F.asprintf "%s does not match pattern %s"
-        (render_exp_as_code ctx exp)
+      F.asprintf "%s does not match pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
       F.asprintf "%s does not have type %s"
@@ -240,18 +239,16 @@ and render_exp ctx exp : string =
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
   | MatchE (exp, Il.ListP `Nil) ->
-      F.asprintf "%s is an empty list" (render_exp_as_code ctx exp)
+      F.asprintf "%s is an empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP `Cons) ->
-      F.asprintf "%s is a non-empty list" (render_exp_as_code ctx exp)
+      F.asprintf "%s is a non-empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP (`Fixed len)) ->
-      F.asprintf "%s is a list of length %d" (render_exp_as_code ctx exp) len
-  | MatchE (exp, Il.OptP `None) ->
-      F.asprintf "%s is None" (render_exp_as_code ctx exp)
+      F.asprintf "%s is a list of length %d" (render_exp ctx exp) len
+  | MatchE (exp, Il.OptP `None) -> F.asprintf "%s is None" (render_exp ctx exp)
   | MatchE (exp, Il.OptP `Some) ->
-      F.asprintf "%s is Some value" (render_exp_as_code ctx exp)
+      F.asprintf "%s is Some value" (render_exp ctx exp)
   | MatchE (exp, pattern) ->
-      F.asprintf "%s matches pattern %s"
-        (render_exp_as_code ctx exp)
+      F.asprintf "%s matches pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
   | CaseE (id, mixop, exps, prose_hint) -> (

@@ -23,16 +23,8 @@ dec $infer'(constraint, parameterIR, argumentIR) : constraint
 dec $resolve_inference(inference) : inference
 dec $resolve_inference'(typeIR) : typeIR
 
-dec $gen_constraint_typeIR(constraint, typeIR, typeIR) : constraint
-dec $gen_constraint_typeIRs(constraint, typeIR*, typeIR*) : constraint
-dec $gen_constraint_callableTypeDefIR(
-    constraint, callableTypeDefIR, callableTypeDefIR
-  )
-  : constraint
-dec $gen_constraint_callableTypeDefIRs(
-    constraint, callableTypeDefIR*, callableTypeDefIR*
-  )
-  : constraint
+dec $gen_constraint(constraint, typeIR, typeIR) : constraint
+dec $gen_constraints(constraint, typeIR*, typeIR*) : constraint
 
 dec $merge_constraint(constraint, constraint) : constraint
 dec $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
@@ -56,12 +48,12 @@ def $infer(typeId_infer*, parameterIR*, argumentIR*) = inference_resolved
   -- if inference_resolved = $resolve_inference(inference)
 
 def $infer'(constraint, parameterIR, typedExpressionIR)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if _ _ typeIR_param _ _ = parameterIR
   -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
 
 def $infer'(constraint, parameterIR, nameIR `= typedExpressionIR)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if _ _ typeIR_param _ _ = parameterIR
   -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
 
@@ -89,105 +81,105 @@ def $resolve_inference'(typeIR) = typeIR
 
 ;;; Named types
 
-def $gen_constraint_typeIR(constraint, `` typeId_param, typeIR_arg)
+def $gen_constraint(constraint, `` typeId_param, typeIR_arg)
   = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
   -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
 
 ;;; Alias types
 
-def $gen_constraint_typeIR(constraint, TYPEDEF _ typeIR_param, typeIR_arg)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+def $gen_constraint(constraint, TYPEDEF _ typeIR_param, typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-def $gen_constraint_typeIR(constraint, typeIR_param, TYPEDEF _ typeIR_arg)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+def $gen_constraint(constraint, typeIR_param, TYPEDEF _ typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-def $gen_constraint_typeIR(constraint, TYPE typeId typeIR_param, TYPE typeId typeIR_arg)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+def $gen_constraint(constraint, TYPE typeId typeIR_param, TYPE typeId typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
 ;;; Data types
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     LIST `< typeIR_param >,
     LIST `< typeIR_arg >)
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     TUPLE `< typeIR_param* >,
     TUPLE `< typeIR_arg* >)
-  = $gen_constraint_typeIRs(constraint, typeIR_param*, typeIR_arg*)
+  = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     typeIR_param `[ n_size ],
     typeIR_arg `[ n_size ])
-  = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     STRUCT typeId `< typeIR_arg_a* > `{ _ },
     STRUCT typeId `< typeIR_arg_b* > `{ _ })
-  = $gen_constraint_typeIRs(
+  = $gen_constraints(
       constraint, typeIR_arg_a*, typeIR_arg_b*)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     HEADER typeId `< typeIR_arg_a* > `{ _ },
     HEADER typeId `< typeIR_arg_b* >`{ _ })
-  = $gen_constraint_typeIRs(
+  = $gen_constraints(
       constraint, typeIR_arg_a*, typeIR_arg_b*)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     HEADER_UNION typeId `< typeIR_arg_a* > `{ _ },
     HEADER_UNION typeId `< typeIR_arg_b* > `{ _ })
-  = $gen_constraint_typeIRs(
+  = $gen_constraints(
       constraint, typeIR_arg_a*, typeIR_arg_b*)
 
 ;;; Object types
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     EXTERN typeId `< typeIR_arg_a* > `{ _ },
     EXTERN typeId `< typeIR_arg_b* > `{ _ })
-  = $gen_constraint_typeIRs(
+  = $gen_constraints(
       constraint, typeIR_arg_a*, typeIR_arg_b*)
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     PARSER _ `< _ > `( parameterIR_param* ),
     PARSER _ `< _ > `( parameterIR_arg* ))
-  = $gen_constraint_typeIRs(constraint, typeIR_param*, typeIR_arg*)
+  = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
   -- if (_ direction typeIR_param _ _ = parameterIR_param)*
   -- if (_ direction typeIR_arg _ _ = parameterIR_arg)*
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     CONTROL _ `< _ > `( parameterIR_param* ),
     CONTROL _ `< _ > `( parameterIR_arg* ))
-  = $gen_constraint_typeIRs(constraint, typeIR_param*, typeIR_arg*)
+  = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
   -- if (_ direction typeIR_param _ _ = parameterIR_param)*
   -- if (_ direction typeIR_arg _ _ = parameterIR_arg)*
 
-def $gen_constraint_typeIR(
+def $gen_constraint(
     constraint,
     PACKAGE _ `< _ > `{ typeIR_param* },
     PACKAGE _ `< _ > `{ typeIR_arg* })
-  = $gen_constraint_typeIRs(constraint, typeIR_param*, typeIR_arg*)
+  = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
 
 ;;; Synthesized types
 
-def $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg)
+def $gen_constraint(constraint, typeIR_param, typeIR_arg)
   = constraint
   -- otherwise
 
 ;;; Multiple types
 
-def $gen_constraint_typeIRs(constraint, typeIR_param*, typeIR_arg*)
+def $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
   = $merge_constraints(constraint, constraint_pair*)
   -- if (constraint_pair
-      = $gen_constraint_typeIR(constraint, typeIR_param, typeIR_arg))*
+      = $gen_constraint(constraint, typeIR_param, typeIR_arg))*
 
 ;;
 ;;;; Constraint merging
