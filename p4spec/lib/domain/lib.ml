@@ -330,3 +330,4 @@ end
 
 module MakeRIdEnv = MakeIdEnv
 module MakeFIdEnv = MakeIdEnv
+module MakeHIdEnv = MakeIdEnv

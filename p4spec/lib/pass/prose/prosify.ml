@@ -2,7 +2,6 @@ open Domain.Lib
 open Lang
 open Xl
 open Sl
-module InputHint = Runtime.Static.Rel.InputHint
 open Util.Source
 
 (* Iteration helpers *)
@@ -19,20 +18,6 @@ let split_iters (exps_out : exp list) (iterexps : iterexp list) :
       (out_vars_acc @ out_vars, in_vars_acc @ in_vars))
     ([], []) iterexps
 
-let rec align_hint (inputs : InputHint.t) (hintexp : El.exp) : El.exp =
-  match hintexp.it with
-  | El.HoleE (`Num i) ->
-      let offset = List.filter (fun inp -> inp <= i) inputs |> List.length in
-      El.HoleE (`Num (i - offset)) $ hintexp.at
-  | El.SeqE exps ->
-      let exps = List.map (align_hint inputs) exps in
-      El.SeqE exps $ hintexp.at
-  | El.FuseE (exp_l, exp_r) ->
-      let exp_l = align_hint inputs exp_l in
-      let exp_r = align_hint inputs exp_r in
-      El.FuseE (exp_l, exp_r) $ hintexp.at
-  | _ -> hintexp
-
 (* Expression prosification *)
 
 let prosify_hole_exp () : Pl.exp =
@@ -42,6 +27,7 @@ let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
   prosify_exp' ctx exp $$ (exp.at, exp.note)
 
 and prosify_exp' (ctx : Ctx.t) (exp : exp) : Pl.exp' =
+  let at = exp.at in
   let note = exp.note in
   match exp.it with
   | BoolE b -> prosify_bool_exp b
@@ -70,7 +56,7 @@ and prosify_exp' (ctx : Ctx.t) (exp : exp) : Pl.exp' =
   | IdxE (exp_b, exp_i) -> prosify_idx_exp ctx exp_b exp_i
   | SliceE (exp_b, exp_l, exp_h) -> prosify_slice_exp ctx exp_b exp_l exp_h
   | UpdE (exp_b, path, exp_f) -> prosify_upd_exp ctx exp_b path exp_f
-  | CallE (id, targs, args) -> prosify_call_exp note ctx id targs args
+  | CallE (id, targs, args) -> prosify_call_exp at note ctx id targs args
   | IterE (exp, iterexp) -> prosify_iter_exp ctx exp iterexp
 
 and prosify_exps (ctx : Ctx.t) (exps : exp list) : Pl.exp list =
@@ -150,16 +136,10 @@ and prosify_tuple_exp (ctx : Ctx.t) (exps : exp list) : Pl.exp' =
 and prosify_case_exp (note : typ') (ctx : Ctx.t) (mixop : mixop)
     (exps : exp list) : Pl.exp' =
   let exps_pl = prosify_exps ctx exps in
-  let id =
-    match note with
-    | VarT (id, _) -> id
-    | _ ->
-        failwith
-          (Format.asprintf "expected VarT in CaseE, got %s"
-             (Il.Print.string_of_typ (note $ no_region)))
-  in
-  let prose_opt = Ctx.find_hint_prose ctx (`Typ (id, mixop)) in
-  Pl.CaseE (id, mixop, exps_pl, prose_opt)
+  let tid = match note with VarT (tid, _) -> tid | _ -> assert false in
+  let cid = (tid, mixop) in
+  let hint_prose_opt = Ctx.find_hint_prose ctx (`Typ cid) in
+  Pl.CaseE (tid, mixop, exps_pl, hint_prose_opt)
 
 (* Struct expression prosification *)
 
@@ -241,28 +221,42 @@ and prosify_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
 
 (* Call expression prosification *)
 
-and prosify_call_exp (note : typ') (ctx : Ctx.t) (id : id) (targs : typ list)
-    (args : arg list) : Pl.exp' =
-  let args_pl = prosify_args ctx args in
-  let typ_ret = Ctx.unroll_typ ctx (note $ no_region) in
+and prosify_call_exp (at : region) (note : typ') (ctx : Ctx.t) (id : id)
+    (targs : typ list) (args : arg list) : Pl.exp' =
   let func_call =
+    let typ_ret = Ctx.unroll_typ ctx (note $ no_region) in
     match typ_ret.it with
-    | BoolT -> (
-        let prose_true_opt = Ctx.find_hint_prose_true ctx (`Func id) in
-        let prose_false_opt = Ctx.find_hint_prose_false ctx (`Func id) in
-        match (prose_true_opt, prose_false_opt) with
-        | Some prose_true, Some prose_false ->
-            Pl.(
-              ProseFuncCall
-                (`Check (id, prose_true, prose_false, targs, args_pl)))
-        | _ -> Pl.MathFuncCall (id, targs, args_pl))
-    | _ -> (
-        match Ctx.find_hint_prose_in ctx (`Func id) with
-        | Some prose_in ->
-            Pl.(ProseFuncCall (`Yield (id, prose_in, targs, args_pl)))
-        | None -> Pl.MathFuncCall (id, targs, args_pl))
+    | BoolT -> prosify_call_exp_check at ctx id targs args
+    | _ -> prosify_call_exp_yield at ctx id targs args
   in
   Pl.CallE func_call
+
+and prosify_call_exp_check (at : region) (ctx : Ctx.t) (id : id)
+    (targs : typ list) (args : arg list) : Pl.func_call =
+  let prose_true_opt = Ctx.find_hint_prose_true ctx (`Func id) in
+  let prose_false_opt = Ctx.find_hint_prose_false ctx (`Func id) in
+  match (prose_true_opt, prose_false_opt) with
+  | Some prose_true, Some prose_false ->
+      let args_pl = prosify_args ctx args in
+      Ctx.validate_hint_alter at prose_true args_pl;
+      Ctx.validate_hint_alter at prose_false args_pl;
+      Pl.(ProseFuncCall (`Check (id, prose_true, prose_false, targs, args_pl)))
+  | _ -> prosify_call_exp_math ctx id targs args
+
+and prosify_call_exp_yield (at : region) (ctx : Ctx.t) (id : id)
+    (targs : typ list) (args : arg list) : Pl.func_call =
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Func id) in
+  match prose_in_opt with
+  | Some prose_in ->
+      let args_pl = prosify_args ctx args in
+      Ctx.validate_hint_alter at prose_in args_pl;
+      Pl.(ProseFuncCall (`Yield (id, prose_in, targs, args_pl)))
+  | None -> prosify_call_exp_math ctx id targs args
+
+and prosify_call_exp_math (ctx : Ctx.t) (id : id) (targs : targ list)
+    (args : arg list) : Pl.func_call =
+  let args_pl = prosify_args ctx args in
+  Pl.MathFuncCall (id, targs, args_pl)
 
 (* Iterated expression prosification *)
 
@@ -410,14 +404,16 @@ and prosify_if_instr (at : region) (ctx : Ctx.t) (exp_cond : exp)
 
 (* Hold instruction prosification *)
 
-and prosify_hold_cond ~(hold : bool) (ctx : Ctx.t) (id_rel : id)
+and prosify_hold_cond ~(hold : bool) (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) : Pl.cond =
   let mixop, exps = notexp in
   let exps_pl = prosify_exps ctx exps in
   let hid = if hold then "prose_true" else "prose_false" in
   let rel_call_pl =
-    match Ctx.find_hint ctx hid (`Rel id_rel) with
-    | Some prose -> Pl.ProseRelCall (`Hold (id_rel, prose, exps_pl))
+    match Ctx.find_hint_alter ctx hid (`Rel id_rel) with
+    | Some prose ->
+        Ctx.validate_hint_alter at prose exps;
+        Pl.ProseRelCall (`Hold (id_rel, prose, exps_pl))
     | None -> Pl.MathRelCall (id_rel, mixop, exps_pl)
   in
   let cond_pl = Pl.RelCond rel_call_pl in
@@ -438,11 +434,13 @@ and prosify_hold_instr (at : region) (ctx : Ctx.t) (id_rel : id)
 and prosify_hold_both_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list)
     (instrs_not_hold : instr list) : Pl.instr list =
-  let cond_hold_pl = prosify_hold_cond ~hold:true ctx id_rel notexp iterexps in
+  let cond_hold_pl =
+    prosify_hold_cond ~hold:true at ctx id_rel notexp iterexps
+  in
   let instrs_hold_pl = prosify_instrs ctx instrs_hold in
   let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
   let cond_not_hold_pl =
-    prosify_hold_cond ~hold:false ctx id_rel notexp iterexps
+    prosify_hold_cond ~hold:false at ctx id_rel notexp iterexps
   in
   let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
   let instr_not_hold_pl =
@@ -453,7 +451,9 @@ and prosify_hold_both_instr (at : region) (ctx : Ctx.t) (id_rel : id)
 and prosify_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list) :
     Pl.instr list =
-  let cond_hold_pl = prosify_hold_cond ~hold:true ctx id_rel notexp iterexps in
+  let cond_hold_pl =
+    prosify_hold_cond ~hold:true at ctx id_rel notexp iterexps
+  in
   let instrs_hold_pl = prosify_instrs ctx instrs_hold in
   let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
   [ instr_hold_pl ]
@@ -462,7 +462,7 @@ and prosify_not_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) (instrs_not_hold : instr list) :
     Pl.instr list =
   let cond_not_hold_pl =
-    prosify_hold_cond ~hold:false ctx id_rel notexp iterexps
+    prosify_hold_cond ~hold:false at ctx id_rel notexp iterexps
   in
   let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
   let instr_not_hold_pl =
@@ -557,19 +557,16 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
   match exp_l.it with
   | CaseE (mixop, exps_l) -> (
       let tid =
-        match exp_l.note with VarT (id, _) -> id | _ -> assert false
+        match exp_l.note with VarT (tid, _) -> tid | _ -> assert false
       in
-      match Ctx.find_hint_prose_fields ctx (`Typ (tid, mixop)) with
-      | Some { it = ListE exps_fields; _ } ->
-          let fields =
-            List.map
-              (fun exp ->
-                match exp.it with El.TextE s -> s | _ -> assert false)
-              exps_fields
-          in
-          let binds =
+      let cid = (tid, mixop) in
+      let prose_fields_opt = Ctx.find_hint_prose_fields ctx (`Typ cid) in
+      match prose_fields_opt with
+      | Some prose_fields ->
+          Ctx.validate_hint_fields at prose_fields (List.length exps_l);
+          let exps_bind_pl =
             List.map2
-              (fun exp_l field ->
+              (fun exp_l prose_field ->
                 match exp_l.it with
                 | Il.VarE id when String.starts_with ~prefix:"_" id.it -> None
                 | Il.IterE ({ it = Il.VarE id; _ }, _)
@@ -577,12 +574,12 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
                     None
                 | _ ->
                     let exp_pl = prosify_exp ctx exp_l in
-                    Some (exp_pl, field))
-              exps_l fields
+                    Some (exp_pl, prose_field))
+              exps_l prose_fields
             |> List.filter_map Fun.id
           in
           let exp_r_pl = prosify_exp ctx exp_r in
-          let instr_pl = Pl.DestructI (binds, exp_r_pl) $ at in
+          let instr_pl = Pl.DestructI (exps_bind_pl, exp_r_pl) $ at in
           let instr_pl = iterate_bind instr_pl exps_l iterexps in
           Some [ instr_pl ]
       | _ -> None)
@@ -602,9 +599,7 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) : Pl.instr list =
   let mixop, exps = notexp in
   let inputs = Ctx.find_inputs ctx id_rel in
-  let exps_input_indexed, exps_output_indexed =
-    InputHint.split_exps inputs exps
-  in
+  let exps_input_indexed, exps_output_indexed = Hints.Input.split inputs exps in
   let exps_input_pl_indexed =
     List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_input_indexed
   in
@@ -615,6 +610,7 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     match Ctx.find_hint_prose_in ctx (`Rel id_rel) with
     | Some prose_in ->
         let exps_input_pl = List.map snd exps_input_pl_indexed in
+        Ctx.validate_hint_alter at prose_in exps_input_pl;
         let exps_output_pl = List.map snd exps_output_pl_indexed in
         Pl.ProseRelCall
           (`Yield (id_rel, prose_in, exps_input_pl, exps_output_pl))
@@ -643,7 +639,8 @@ and prosify_result_instr (at : region) (ctx : Ctx.t) (exps : exp list) :
     match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
     | Some prose_out ->
         let inputs = Ctx.find_inputs ctx id_rel in
-        let prose_out_aligned = align_hint inputs prose_out in
+        let prose_out_aligned = Hints.Alter.realign prose_out inputs in
+        Ctx.validate_hint_alter at prose_out_aligned exps_pl;
         Pl.ProseResult (prose_out_aligned, exps_pl)
     | None -> Pl.MathResult exps_pl
   in
@@ -667,7 +664,10 @@ let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
   | ExternRelD externrel ->
       prosify_extern_rel_def ctx def.at externrel |> wrap_some
   | RelD rel -> prosify_defined_rel_def ctx def.at rel |> wrap_some
-  | ExternDecD _ | BuiltinDecD _ -> None
+  | ExternDecD externfunc ->
+      prosify_extern_func_def ctx def.at externfunc |> wrap_some
+  | BuiltinDecD builtinfunc ->
+      prosify_builtin_func_def ctx def.at builtinfunc |> wrap_some
   | TableDecD tablefunc ->
       prosify_table_func_def ctx def.at tablefunc |> wrap_some
   | FuncDecD definedfunc ->
@@ -677,7 +677,7 @@ let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
 
 and prosify_rel_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
     (inputs : int list) (exps_input : exp list) : Pl.rel_title =
-  if List.length mixop - 1 = List.length inputs then
+  if Hints.Input.is_conditional inputs exps_input then
     prosify_rel_hold_title ctx id_rel mixop inputs exps_input
   else prosify_rel_yield_title ctx id_rel mixop inputs exps_input
 
@@ -687,7 +687,9 @@ and prosify_rel_hold_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
   let prose_false_opt = Ctx.find_hint_prose_false ctx (`Rel id_rel) in
   let exps_input_pl = prosify_exps ctx exps_input in
   match (prose_true_opt, prose_false_opt) with
-  | Some prose_true, Some _prose_false ->
+  | Some prose_true, Some prose_false ->
+      Ctx.validate_hint_alter id_rel.at prose_true exps_input;
+      Ctx.validate_hint_alter id_rel.at prose_false exps_input;
       Pl.ProseRelTitle (`Hold (id_rel, prose_true, exps_input_pl))
   | _ -> prosify_rel_math_title ctx id_rel mixop inputs exps_input
 
@@ -698,12 +700,14 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
   match (prose_in_opt, prose_out_opt) with
   | Some prose_in, Some prose_out ->
       let exps_input_pl = prosify_exps ctx exps_input in
-      let prose_out_aligned = align_hint inputs prose_out in
+      Ctx.validate_hint_alter id_rel.at prose_in exps_input;
+      let prose_out_aligned = Hints.Alter.realign prose_out inputs in
       let exps_output_pl =
         List.init
           (List.length mixop - List.length inputs - 1)
           (fun _ -> Pl.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
       in
+      Ctx.validate_hint_alter id_rel.at prose_out_aligned exps_output_pl;
       Pl.ProseRelTitle
         (`Yield
           (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
@@ -763,7 +767,9 @@ and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
   let exps_input_pl = prosify_exps ctx exps_input in
   let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
   match prose_in_opt with
-  | Some prose_in -> Pl.ProseRuleTitle (id_rulegroup, prose_in, exps_input_pl)
+  | Some prose_in ->
+      Ctx.validate_hint_alter id_rel.at prose_in exps_input;
+      Pl.ProseRuleTitle (id_rulegroup, prose_in, exps_input_pl)
   | None ->
       let epxs_input_pl_indexed = List.combine inputs exps_input_pl in
       let exps_pl =
@@ -805,6 +811,60 @@ and prosify_defined_rel_def (ctx : Ctx.t) (at : region) (rel : rel) : Pl.def =
   let rulegroups_pl = prosify_rulegroups ctx id_rel mixop inputs rulegroups in
   Pl.RelD (rel_title_pl, rulegroups_pl) $ at
 
+(* Function prosification *)
+
+and prosify_func_title (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args : arg list) (typ_ret : typ) : Pl.func_title =
+  let typ_ret_unrolled = Ctx.unroll_typ ctx typ_ret in
+  match typ_ret_unrolled.it with
+  | BoolT -> prosify_func_title_check ctx id_def tparams args typ_ret
+  | _ -> prosify_func_title_yield ctx id_def tparams args typ_ret
+
+and prosify_func_title_check (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args : arg list) (typ_ret : typ) : Pl.func_title =
+  let prose_true_opt = Ctx.find_hint_prose_true ctx (`Func id_def) in
+  let prose_false_opt = Ctx.find_hint_prose_false ctx (`Func id_def) in
+  match (prose_true_opt, prose_false_opt) with
+  | Some prose_true, Some prose_false ->
+      let args_pl = prosify_args ctx args in
+      Ctx.validate_hint_alter id_def.at prose_true args_pl;
+      Ctx.validate_hint_alter id_def.at prose_false args_pl;
+      Pl.ProseFuncTitle (`Check (id_def, prose_true, args_pl))
+  | _ -> prosify_func_title_math ctx id_def tparams args typ_ret
+
+and prosify_func_title_yield (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args : arg list) (typ_ret : typ) : Pl.func_title =
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Func id_def) in
+  match prose_in_opt with
+  | Some prose_in ->
+      let args_pl = prosify_args ctx args in
+      Ctx.validate_hint_alter id_def.at prose_in args_pl;
+      Pl.ProseFuncTitle (`Yield (id_def, prose_in, args_pl))
+  | None -> prosify_func_title_math ctx id_def tparams args typ_ret
+
+and prosify_func_title_math (ctx : Ctx.t) (id_def : id) (tparams : tparam list)
+    (args : arg list) (_typ_ret : typ) : Pl.func_title =
+  let args_pl = prosify_args ctx args in
+  Pl.MathFuncTitle (id_def, tparams, args_pl)
+
+(* Extern function definition prosification *)
+
+and prosify_extern_func_def (ctx : Ctx.t) (at : region)
+    (externfunc : externfunc) : Pl.def =
+  let id, tparams, args, typ_ret, _ = externfunc in
+  let ctx_local = Ctx.add_tparams ctx tparams in
+  let func_title_pl = prosify_func_title ctx_local id tparams args typ_ret in
+  Pl.ExternDecD func_title_pl $ at
+
+(* Builtin function definition prosification *)
+
+and prosify_builtin_func_def (ctx : Ctx.t) (at : region)
+    (builtinfunc : builtinfunc) : Pl.def =
+  let id, tparams, args, typ_ret, _ = builtinfunc in
+  let ctx_local = Ctx.add_tparams ctx tparams in
+  let func_title_pl = prosify_func_title ctx_local id tparams args typ_ret in
+  Pl.BuiltinDecD func_title_pl $ at
+
 (* Table function definition prosification *)
 
 and prosify_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Pl.tablerow =
@@ -829,16 +889,17 @@ and prosify_tablerows (ctx : Ctx.t) (tablerows : tablerow list) :
 and prosify_table_func_def (ctx : Ctx.t) (at : region) (tablefunc : tablefunc) :
     Pl.def =
   let id, args, typ_ret, tablerows, _ = tablefunc in
-  let args_pl = prosify_args ctx args in
+  let func_title_pl = prosify_func_title ctx id [] args typ_ret in
   let tablerows_pl = prosify_tablerows ctx tablerows in
-  Pl.TableDecD (id, args_pl, typ_ret, tablerows_pl) $ at
+  Pl.TableDecD (func_title_pl, tablerows_pl) $ at
 
 (* Defined function definition prosification *)
 
 and prosify_defined_func_def (ctx : Ctx.t) (at : region)
     (definedfunc : definedfunc) : Pl.def =
   let id, tparams, args, typ_ret, instrs, _ = definedfunc in
-  let args_pl = prosify_args ctx args in
+  let ctx_local = Ctx.add_tparams ctx tparams in
+  let func_title_pl = prosify_func_title ctx_local id tparams args typ_ret in
   let ctx =
     let frees =
       IdSet.union (Sl.Free.free_args args) (Sl.Free.free_instrs instrs)
@@ -846,7 +907,7 @@ and prosify_defined_func_def (ctx : Ctx.t) (at : region)
     Ctx.set_free ctx frees
   in
   let instrs_pl = prosify_instrs ctx instrs in
-  Pl.FuncDecD (id, tparams, args_pl, typ_ret, instrs_pl) $ at
+  Pl.FuncDecD (func_title_pl, instrs_pl) $ at
 
 (* Entry point *)
 

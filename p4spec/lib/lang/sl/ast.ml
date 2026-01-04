@@ -168,11 +168,11 @@ type hint = El.hint
 (* Relations *)
 
 (* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
-type externrel = id * (mixop * int list) * exp list * hint list
+type externrel = id * (mixop * Hints.Input.t) * exp list * hint list
 [@@deriving yojson]
 
 (* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
-type rel = id * (mixop * int list) * exp list * instr list * hint list
+type rel = id * (mixop * Hints.Input.t) * exp list * instr list * hint list
 [@@deriving yojson]
 
 (* Functions *)

@@ -1,3 +1,4 @@
+open Lang
 open Domain.Lib
 
 (* Environments *)
@@ -16,8 +17,8 @@ module TDEnv = MakeTIdEnv (Typdef)
 
 (* Relation environment *)
 
-module IEnv = MakeIdEnv (Rel.InputHint)
 module REnv = MakeRIdEnv (Rel)
+module IHEnv = MakeHIdEnv (Hints.Input)
 
 (* Definition environment *)
 

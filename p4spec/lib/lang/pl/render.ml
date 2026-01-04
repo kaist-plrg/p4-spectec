@@ -76,7 +76,7 @@ let string_of_text text = Il.Print.string_of_text text
 
 let string_of_varid varid = Il.Print.string_of_varid varid
 let string_of_relid relid = Il.Print.string_of_relid relid
-let string_of_defid defid = Il.Print.string_of_defid defid
+let string_of_defid defid = Il.Print.string_of_varid defid
 
 let render_varid (ctx : context) (id_var : Sl.id) =
   if String.starts_with ~prefix:"_" id_var.it then "++_++" |> as_code ctx
@@ -175,47 +175,32 @@ let render_cmpop ctx cmpop =
     | `LeOp -> "is less than or equal to"
     | `GeOp -> "is greater than or equal to"
 
-(* Call prose using hints *)
+(* Hints *)
 
-let rec render_hintexp ?(caps = false) (ctx : context) (exps : exp list)
-    (hintexp : El.exp) : string =
-  let _, s = render_hintexp' ctx exps hintexp 0 in
-  if caps then capitalize_first s else s
+let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
+    (render : context -> 'a -> string) (items : 'a list) : string =
+  items
+  |> Hints.Alter.alternate
+       ~base_text:(fun s -> reindent_lines ~level:0 s)
+       hint
+       (fun a -> render ctx a)
+  |> fun s -> if caps then capitalize_first s else s
 
-and render_hintexp' (ctx : context) (exps : exp list) (hintexp : El.exp)
-    (cursor : int) : int * string =
-  match hintexp.it with
-  | El.TextE text -> (cursor, text |> reindent_lines ~level:0)
-  | El.SeqE exps_hint ->
-      let cursor, strs =
-        List.fold_left
-          (fun (cur, acc) exp ->
-            let cur, str = render_hintexp' ctx exps exp cur in
-            (cur, acc @ [ str ]))
-          (cursor, []) exps_hint
-      in
-      (cursor, String.concat " " strs)
-  | El.HoleE `Next ->
-      let exp = List.nth exps cursor in
-      (cursor + 1, render_exp ctx exp)
-  | El.HoleE (`Num i) ->
-      let exp = List.nth exps i in
-      (cursor, render_exp ctx exp)
-  | El.FuseE (exp_l, exp_r) ->
-      let cursor_l, str_l = render_hintexp' ctx exps exp_l cursor in
-      let cursor_r, str_r = render_hintexp' ctx exps exp_r cursor_l in
-      (cursor_r, str_l ^ str_r)
-  | _ -> failwith "unsupported prose hint"
+let render_fields_hint (_ctx : context) (_hint : Hints.Fields.t)
+    (_render : context -> 'a -> string) (_items : 'a list) : string =
+  "TODO"
 
-and render_rel_call (ctx : context) (rel_call : rel_call) : string =
+(* Call prose *)
+
+let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
   match rel_call with
-  | ProseRelCall (`Hold (id_rel, hintexp, exps_input)) ->
-      render_hintexp ctx exps_input hintexp
+  | ProseRelCall (`Hold (id_rel, hint, exps_input)) ->
+      render_alter_hint ctx hint render_exp exps_input
       |> as_link ctx ~link:(string_of_relid id_rel)
-  | ProseRelCall (`Yield (id_rel, hintexp, exps_input, exps_output)) ->
+  | ProseRelCall (`Yield (id_rel, hint, exps_input, exps_output)) ->
       F.asprintf "%s be the result of %s"
         (render_exps in_prose exps_output)
-        (render_hintexp in_link exps_input hintexp
+        (render_alter_hint ctx hint render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelCall (id_rel, mixop, exps) ->
       code_of_notexp in_link (mixop, exps)
@@ -231,8 +216,7 @@ and render_exp ctx exp : string =
   | TextE text -> "\"" ^ String.escaped text ^ "\"" |> as_code ctx
   | VarE id_var -> render_varid in_code id_var |> as_code ctx
   | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
-      F.asprintf "%s does not match pattern %s"
-        (render_exp_as_code ctx exp)
+      F.asprintf "%s does not match pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
       F.asprintf "%s does not have type %s"
@@ -261,26 +245,25 @@ and render_exp ctx exp : string =
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
   | MatchE (exp, Il.ListP `Nil) ->
-      F.asprintf "%s is an empty list" (render_exp_as_code ctx exp)
+      F.asprintf "%s is an empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP `Cons) ->
-      F.asprintf "%s is a non-empty list" (render_exp_as_code ctx exp)
+      F.asprintf "%s is a non-empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP (`Fixed len)) ->
-      F.asprintf "%s is a list of length %d" (render_exp_as_code ctx exp) len
-  | MatchE (exp, Il.OptP `None) ->
-      F.asprintf "%s is None" (render_exp_as_code ctx exp)
+      F.asprintf "%s is a list of length %d" (render_exp ctx exp) len
+  | MatchE (exp, Il.OptP `None) -> F.asprintf "%s is None" (render_exp ctx exp)
   | MatchE (exp, Il.OptP `Some) ->
-      F.asprintf "%s is Some value" (render_exp_as_code ctx exp)
+      F.asprintf "%s is Some value" (render_exp ctx exp)
   | MatchE (exp, pattern) ->
-      F.asprintf "%s matches pattern %s"
-        (render_exp_as_code ctx exp)
+      F.asprintf "%s matches pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
-  | CaseE (id, mixop, exps, prose_hint) -> (
+  | CaseE (id, mixop, exps, hint) -> (
       if ctx.in_code then code_of_notexp ctx (mixop, exps)
       else
-        match prose_hint with
-        | Some hintexp ->
-            render_hintexp (ctx |> link) exps hintexp |> as_link ctx ~link:id.it
+        match hint with
+        | Some hint ->
+            render_alter_hint (ctx |> link) hint render_exp exps
+            |> as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
       "{"
@@ -329,20 +312,17 @@ and render_exp ctx exp : string =
       string_of_defid id ^ string_of_targs targs
       ^ render_args (ctx |> link |> code) args
       |> as_link ctx ~link:id.it |> as_code ctx
-  | CallE (ProseFuncCall (`Check (id, prose_true, _, _, args))) ->
+  | CallE (ProseFuncCall (`Check (id, hint_true, _, _, args))) ->
       let exps =
         args
         |> List.filter_map (fun arg ->
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
-      render_hintexp (link ctx) exps prose_true |> as_link ctx ~link:id.it
-  | CallE (ProseFuncCall (`Yield (id, prose_in, _targs, args))) ->
-      let exps =
-        args
-        |> List.filter_map (fun arg ->
-               match arg.it with ExpA exp -> Some exp | DefA _ -> None)
-      in
-      render_hintexp (link ctx) exps prose_in |> as_link ctx ~link:id.it
+      render_alter_hint (link ctx) hint_true render_exp exps
+      |> as_link ctx ~link:id.it
+  | CallE (ProseFuncCall (`Yield (id, hint_in, _targs, args))) ->
+      render_alter_hint (link ctx) hint_in render_arg args
+      |> as_link ctx ~link:id.it
   | CallE (MathFuncCall (id, targs, args)) ->
       string_of_defid id ^ string_of_targs targs
       ^ render_args (ctx |> link |> code) args
@@ -483,8 +463,9 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | ReturnI exp ->
       F.asprintf "%sReturn %s." bullet
         (render_exp in_code exp |> as_code in_prose)
-  | ResultI (ProseResult (hintexp, exps)) ->
-      F.asprintf "%sResult in %s." bullet (render_hintexp in_prose exps hintexp)
+  | ResultI (ProseResult (hint, exps)) ->
+      F.asprintf "%sResult in %s." bullet
+        (render_alter_hint in_prose hint render_exp exps)
   | ResultI (MathResult []) -> bullet ^ "The relation holds."
   | ResultI (MathResult exps) ->
       F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
@@ -518,7 +499,8 @@ let rec render_def (def : def) : string =
   match def.it with
   | ExternRelD externrel -> render_extern_rel_def externrel
   | RelD rel -> render_defined_rel_def rel
-  | ExternDecD _ | BuiltinDecD _ -> "TODO"
+  | ExternDecD externfunc -> render_extern_func_def externfunc
+  | BuiltinDecD builtinfunc -> render_builtin_func_def builtinfunc
   | TableDecD tablefunc -> render_table_func_def tablefunc
   | FuncDecD func -> render_defined_func_def func
 
@@ -528,15 +510,15 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
-  | ProseRelTitle (`Hold (id_rel, hintexp_hold, exps_input)) ->
-      render_hintexp in_prose exps_input hintexp_hold
+  | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
+      render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRelTitle
-      (`Yield (id_rel, hintexp_input, exps_input, hintexp_output, exps_output))
-    ->
+      (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       F.asprintf "%s be the result of %s"
-        (render_hintexp in_prose exps_output hintexp_output)
-        (render_hintexp in_prose exps_input hintexp_input
+        (render_alter_hint ~caps:true in_prose hint_output render_exp
+           exps_output)
+        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelTitle (id_rel, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -553,7 +535,7 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
   | ProseRuleTitle (_id_rulegroup, hintexp, exps_input) ->
-      render_hintexp in_prose exps_input hintexp
+      render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -577,19 +559,50 @@ and render_defined_rel_def (rel : rel) : string =
   in
   render_rel_title rel_title ^ "\n\n" ^ render_rulegroups id_rel rulegroups
 
+(* Function definitions *)
+
+and render_func_title (func_title : func_title) : string =
+  match func_title with
+  | ProseFuncTitle (`Check (id_func, hint_true, args_input)) ->
+      render_alter_hint ~caps:true in_prose hint_true render_arg args_input
+      |> as_link in_prose ~link:(string_of_defid id_func)
+  | ProseFuncTitle (`Yield (id_func, hint_input, args_input)) ->
+      render_alter_hint ~caps:true in_prose hint_input render_arg args_input
+      |> as_link in_prose ~link:(string_of_defid id_func)
+  | MathFuncTitle (id_func, tparams, args_input) ->
+      string_of_defid id_func
+      ^ Sl.Print.string_of_tparams tparams
+      ^ render_args (in_link |> code) args_input
+      |> as_link in_prose ~link:(string_of_defid id_func)
+
+(* Extern function definitions *)
+
+and render_extern_func_def (externfunc : externfunc) : string =
+  render_func_title externfunc
+
+(* Builtin function definitions *)
+
+and render_builtin_func_def (builtinfunc : builtinfunc) : string =
+  render_func_title builtinfunc
+
 (* Table function definitions *)
 
 and render_table_func_def (tablefunc : tablefunc) : string =
-  let id_def, args, typ_ret, tablerows = tablefunc in
+  let func_title, tablerows = tablefunc in
+  let args =
+    match func_title with
+    | ProseFuncTitle (`Check (_, _, args))
+    | ProseFuncTitle (`Yield (_, _, args))
+    | MathFuncTitle (_, _, args) ->
+        args
+  in
   let table_meta =
     "[cols=\""
     ^ string_of_int (List.length args + 1)
     ^ "\", options=\"header\"]\n"
   in
   let table_header =
-    "|===" ^ "\n" ^ "| " ^ render_args in_prose args ^ " | "
-    ^ code_of_typ in_prose typ_ret
-    ^ "\n\n"
+    "|===" ^ "\n" ^ "| " ^ render_args in_prose args ^ " | " ^ "Result \n\n"
   in
   let table_rows =
     tablerows
@@ -601,17 +614,14 @@ and render_table_func_def (tablefunc : tablefunc) : string =
     |> String.concat "\n"
   in
   let table_footer = "\n\n|===" in
-  "\n\ntable " ^ string_of_defid id_def ^ ":\n" ^ table_meta ^ table_header
-  ^ table_rows ^ table_footer
+  render_func_title func_title
+  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer
 
 (* Defined function definitions *)
 
 and render_defined_func_def (func : func) : string =
-  let id_def, _tparams, args, typ_ret, instrs = func in
-  string_of_defid id_def ^ render_args in_code args ^ " -> "
-  ^ code_of_typ in_code typ_ret
-  ^ render_instrs instrs
-  |> as_code in_prose
+  let func_title, instrs = func in
+  render_func_title func_title ^ "\n\n" ^ render_instrs instrs
 
 (* Entrypoint for binary *)
 

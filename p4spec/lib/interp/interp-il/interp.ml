@@ -3,7 +3,6 @@ open Lib
 open Lang
 open Xl
 open Il
-module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Il
 open Envs
 module Sim = Runtime.Sim.Simulator
@@ -1067,7 +1066,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let exps_input, exps_output =
       let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
-      InputHint.split_exps_without_idx inputs exps
+      Hints.Input.split_without_idx inputs exps
     in
     let ctx, values_input = eval_exps ctx exps_input in
     let* ctx, values_output = invoke_rel ctx id values_input in

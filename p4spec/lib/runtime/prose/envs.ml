@@ -1,3 +1,4 @@
+open Lang
 open Domain
 open Lib
 
@@ -7,37 +8,62 @@ module TDEnv = Dynamic.Envs.TDEnv
 
 (* Relation input environment *)
 
-module IEnv = Static.Envs.IEnv
+module IHEnv = MakeHIdEnv (Hints.Input)
 
-(* Hint environemnt *)
+(* Prose hint environemnt
+
+   This implements a 3-level mapping:
+    - Indexed by hint id (e.g., "prose", "prose_in")
+    - Indexed by case/relation/function id (i.e., CId.t, FId.t, RId.t)
+    - Kind of hint (Alter, Fields) *)
 
 module HEnv = struct
-  type t = Hints.t HIdMap.t
+  type t = Hintkinds.t HIdMap.t
 
   let empty = HIdMap.empty
 
   (* Key for hints *)
 
-  type key = [ `Func of FId.t | `Rel of RId.t | `Typ of TId.t * Mixop.t ]
+  type key = [ `Typ of CId.t | `Func of FId.t | `Rel of RId.t ]
 
   (* Adders and finders for hints *)
 
-  let add (hid : HId.t) (key : key) (hint : Hints.Hint.t) (henv : t) : t =
-    let hints = HIdMap.find_opt hid henv |> Option.value ~default:Hints.empty in
-    let hints =
-      match key with
-      | `Typ (tid, mixop) -> Hints.add_typ tid mixop hint hints
-      | `Func fid -> Hints.add_func fid hint hints
-      | `Rel rid -> Hints.add_rel rid hint hints
+  let add (henv : t) (hid : HId.t) (key : key) (hint : Hintkinds.Kind.t) : t =
+    let kinds =
+      HIdMap.find_opt hid henv |> Option.value ~default:Hintkinds.empty
     in
-    HIdMap.add hid hints henv
+    let kinds =
+      match key with
+      | `Typ cid -> Hintkinds.add_typ cid hint kinds
+      | `Func fid -> Hintkinds.add_func fid hint kinds
+      | `Rel rid -> Hintkinds.add_rel rid hint kinds
+    in
+    HIdMap.add hid kinds henv
 
-  let find (hid : HId.t) (key : key) (henv : t) : Hints.Hint.t option =
+  let add_alter (henv : t) (hid : HId.t) (key : key)
+      (hint_alter : Hints.Alter.t) : t =
+    add henv hid key (Hintkinds.Kind.Alter hint_alter)
+
+  let add_fields (henv : t) (hid : HId.t) (key : key)
+      (hint_fields : Hints.Fields.t) : t =
+    add henv hid key (Hintkinds.Kind.Fields hint_fields)
+
+  let find (henv : t) (hid : HId.t) (key : key) : Hintkinds.Kind.t option =
     match HIdMap.find_opt hid henv with
-    | Some hints -> (
+    | Some kinds -> (
         match key with
-        | `Typ (tid, mixop) -> Hints.find_typ tid mixop hints
-        | `Func fid -> Hints.find_func fid hints
-        | `Rel rid -> Hints.find_rel rid hints)
+        | `Typ cid -> Hintkinds.find_typ cid kinds
+        | `Func fid -> Hintkinds.find_func fid kinds
+        | `Rel rid -> Hintkinds.find_rel rid kinds)
     | None -> None
+
+  let find_alter (henv : t) (hid : HId.t) (key : key) : Hints.Alter.t option =
+    match find henv hid key with
+    | Some (Hintkinds.Kind.Alter hint_alter) -> Some hint_alter
+    | _ -> None
+
+  let find_fields (henv : t) (hid : HId.t) (key : key) : Hints.Fields.t option =
+    match find henv hid key with
+    | Some (Hintkinds.Kind.Fields hint_fields) -> Some hint_fields
+    | _ -> None
 end

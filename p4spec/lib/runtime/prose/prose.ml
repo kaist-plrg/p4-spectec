@@ -1,2 +1,2 @@
-module Hints = Hints
+module Kinds = Kinds
 module Envs = Envs

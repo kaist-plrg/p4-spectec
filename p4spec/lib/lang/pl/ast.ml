@@ -45,50 +45,48 @@ type optyp = Il.optyp
 
 (* Call prose using hints *)
 
-and hintexp = El.exp
-
 and func_call = 
   | ProseFuncCall of
-    [ `Check of id * hintexp * hintexp * targ list * arg list
-    | `Yield of id * hintexp * targ list * arg list ]
+    [ `Check of id * Hints.Alter.t * Hints.Alter.t * targ list * arg list
+    | `Yield of id * Hints.Alter.t * targ list * arg list ]
   | MathFuncCall of id * targ list * arg list
 
 and rel_call = 
   | ProseRelCall of
-    [ `Hold of id * hintexp * exp list
-    | `Yield of id * hintexp * exp list * exp list ]
+    [ `Hold of id * Hints.Alter.t * exp list
+    | `Yield of id * Hints.Alter.t * exp list * exp list ]
   | MathRelCall of id * mixop * exp list
 
 (* Expressions *)
 
 and exp = (exp', typ') note_phrase
 and exp' =
-  | BoolE of bool                                   (* bool *)
-  | NumE of num                                     (* num *)
-  | TextE of text                                   (* text *)
-  | VarE of id                                      (* id *)
-  | UnE of unop * optyp * exp                       (* unop exp *)
-  | BinE of binop * optyp * exp * exp               (* exp binop exp *)
-  | CmpE of cmpop * optyp * exp * exp               (* exp cmpop exp *)
-  | UpCastE of typ * exp                            (* exp as typ *)
-  | DownCastE of typ * exp                          (* exp as typ *)
-  | SubE of exp * typ                               (* exp `<:` typ *)
-  | MatchE of exp * pattern                         (* exp `matches` pattern *)
-  | TupleE of exp list                              (* `(` exp* `)` *)
-  | CaseE of id * mixop * exp list * hintexp option (* notexp *)
-  | StrE of (atom * exp) list                       (* { (atom exp)* } *)
-  | OptE of exp option                              (* exp? *)
-  | ListE of exp list                               (* `[` exp* `]` *)
-  | ConsE of exp * exp                              (* exp `::` exp *)
-  | CatE of exp * exp                               (* exp `++` exp *)
-  | MemE of exp * exp                               (* exp `<-` exp *)
-  | LenE of exp                                     (* `|` exp `|` *)
-  | DotE of exp * atom                              (* exp.atom *)
-  | IdxE of exp * exp                               (* exp `[` exp `]` *)
-  | SliceE of exp * exp * exp                       (* exp `[` exp `:` exp `]` *)
-  | UpdE of exp * path * exp                        (* exp `[` path `=` exp `]` *)
-  | CallE of func_call                              (* func_call `<` targ* `>` `(` arg* `)` *)
-  | IterE of exp * iterexp                          (* exp iterexp *)
+  | BoolE of bool                                           (* bool *)
+  | NumE of num                                             (* num *)
+  | TextE of text                                           (* text *)
+  | VarE of id                                              (* id *)
+  | UnE of unop * optyp * exp                               (* unop exp *)
+  | BinE of binop * optyp * exp * exp                       (* exp binop exp *)
+  | CmpE of cmpop * optyp * exp * exp                       (* exp cmpop exp *)
+  | UpCastE of typ * exp                                    (* exp as typ *)
+  | DownCastE of typ * exp                                  (* exp as typ *)
+  | SubE of exp * typ                                       (* exp `<:` typ *)
+  | MatchE of exp * pattern                                 (* exp `matches` pattern *)
+  | TupleE of exp list                                      (* `(` exp* `)` *)
+  | CaseE of id * mixop * exp list * Hints.Alter.t option   (* notexp *)
+  | StrE of (atom * exp) list                               (* { (atom exp)* } *)
+  | OptE of exp option                                      (* exp? *)
+  | ListE of exp list                                       (* `[` exp* `]` *)
+  | ConsE of exp * exp                                      (* exp `::` exp *)
+  | CatE of exp * exp                                       (* exp `++` exp *)
+  | MemE of exp * exp                                       (* exp `<-` exp *)
+  | LenE of exp                                             (* `|` exp `|` *)
+  | DotE of exp * atom                                      (* exp.atom *)
+  | IdxE of exp * exp                                       (* exp `[` exp `]` *)
+  | SliceE of exp * exp * exp                               (* exp `[` exp `:` exp `]` *)
+  | UpdE of exp * path * exp                                (* exp `[` path `=` exp `]` *)
+  | CallE of func_call                                      (* func_call `<` targ* `>` `(` arg* `)` *)
+  | IterE of exp * iterexp                                  (* exp iterexp *)
 
 and notexp = mixop * exp list
 and iterexp = iter * var list
@@ -132,7 +130,7 @@ type cond =
   | ForAnyCond of cond * var list
 
 type result =
-  | ProseResult of hintexp * exp list
+  | ProseResult of Hints.Alter.t * exp list
   | MathResult of exp list
 
 type instr = instr' phrase
@@ -158,14 +156,14 @@ and instr' =
 
 type rel_title =
   | ProseRelTitle of
-    [ `Hold of id * hintexp * exp list
-    | `Yield of id * hintexp * exp list * hintexp * exp list ]
+    [ `Hold of id * Hints.Alter.t * exp list
+    | `Yield of id * Hints.Alter.t * exp list * Hints.Alter.t * exp list ]
   | MathRelTitle of id * mixop * exp list
 
 type externrel = rel_title
 
 type rulegroup_title =
-  | ProseRuleTitle of id * hintexp * exp list
+  | ProseRuleTitle of id * Hints.Alter.t * exp list
   | MathRuleTitle of id * mixop * exp list
 
 type rulegroup = rulegroup_title * instr list
@@ -174,15 +172,21 @@ type rel = rel_title * rulegroup list
 
 (* Functions *)
 
-type externfunc = id * tparam list * arg list * typ
+type func_title =
+  | ProseFuncTitle of
+    [ `Check of id * Hints.Alter.t * arg list
+    | `Yield of id * Hints.Alter.t * arg list ]
+  | MathFuncTitle of id * tparam list * arg list
 
-type builtinfunc = id * tparam list * arg list * typ
+type externfunc = func_title
+
+type builtinfunc = func_title
 
 type tablerow = exp list * exp * instr list
 
-type tablefunc = id * arg list * typ * tablerow list
+type tablefunc = func_title * tablerow list
 
-type func = id * tparam list * arg list * typ * instr list
+type func = func_title * instr list
 
 (* Definitions *)
 

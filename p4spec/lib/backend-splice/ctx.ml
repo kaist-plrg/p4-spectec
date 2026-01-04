@@ -65,10 +65,24 @@ let init_pl_def (ctx : t) (def_sl : Pl.def) : unit =
               rulegroup ctx.ruleprose)
         rulegroups
   | TableDecD tablefunc ->
-      let id_def, _, _, _ = tablefunc in
+      let func_title, _ = tablefunc in
+      let id_def =
+        match func_title with
+        | Pl.ProseFuncTitle (`Check (id_def, _, _))
+        | Pl.ProseFuncTitle (`Yield (id_def, _, _))
+        | Pl.MathFuncTitle (id_def, _, _) ->
+            id_def
+      in
       ctx.tables <- TableMap.add id_def.it tablefunc ctx.tables
   | FuncDecD func ->
-      let id_def, _, _, _, _ = func in
+      let func_title, _ = func in
+      let id_def =
+        match func_title with
+        | Pl.ProseFuncTitle (`Check (id_def, _, _))
+        | Pl.ProseFuncTitle (`Yield (id_def, _, _))
+        | Pl.MathFuncTitle (id_def, _, _) ->
+            id_def
+      in
       ctx.funcprose <- FuncProseMap.add id_def.it func ctx.funcprose
   | _ -> ()
 

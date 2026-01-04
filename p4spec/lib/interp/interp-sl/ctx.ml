@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Sl
-module InputHint = Runtime.Static.Rel.InputHint
 open Runtime.Dynamic_Sl
 open Envs
 module Dep = Runtime.Testgen_neg.Dep
@@ -168,7 +167,7 @@ let find_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : Typdef.t =
 let find_defined_typdef (cursor : cursor) (ctx : t) (tid : TId.t) :
     tparam list * deftyp =
   match find_typdef cursor ctx tid with
-  | Extern -> back_undef tid.at "defined type" tid.it
+  | Param | Extern -> back_undef tid.at "defined type" tid.it
   | Defined (tparams, deftyp) -> (tparams, deftyp)
 
 let bound_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : bool =
@@ -184,7 +183,7 @@ let find_rel (cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t =
   | Some rel -> rel
   | None -> back_undef rid.at "relation" rid.it
 
-let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : InputHint.t =
+let find_rel_inputs (cursor : cursor) (ctx : t) (rid : RId.t) : Hints.Input.t =
   let rel = find_rel cursor ctx rid in
   match rel with Rel.Extern inputs | Rel.Defined (inputs, _, _) -> inputs
 
