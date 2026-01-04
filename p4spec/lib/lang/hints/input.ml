@@ -4,7 +4,7 @@ open Util.Source
 
 (* Input hints for relations *)
 
-type t = int list
+type t = int list [@@deriving yojson]
 
 let to_string t =
   Format.asprintf "hint(input %s)"

@@ -1,8 +1,8 @@
 open Domain.Lib
 open Lang
-module Hint = Hints.Hint
 module Typdef = Runtime.Dynamic_Sl.Typdef
 open Runtime.Prose.Envs
+open Error
 open Util.Source
 
 type namespace = Rel of Id.t | Func of Id.t | Empty
@@ -30,9 +30,26 @@ let load_hints (key : HEnv.key) (henv : HEnv.t) (hints : El.hint list) : HEnv.t
   List.fold_left
     (fun henv El.{ hintid; hintexp } ->
       match hintid.it with
-      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false"
-      | "prose_fields" ->
-          HEnv.add hintid key hintexp henv
+      (* Alter hints *)
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" -> (
+          let hint_alter_opt = Hints.Alter.init hintexp in
+          match hint_alter_opt with
+          | Some hint_alter -> HEnv.add_alter henv hintid key hint_alter
+          | None ->
+              error hintexp.at
+                (Format.asprintf "invalid hint expression %s for hint %s"
+                   (El.Print.string_of_exp hintexp)
+                   hintid.it))
+      (* Field hints *)
+      | "prose_fields" -> (
+          let hint_fields_opt = Hints.Fields.init hintexp in
+          match hint_fields_opt with
+          | Some hint_fields -> HEnv.add_fields henv hintid key hint_fields
+          | None ->
+              error hintexp.at
+                (Format.asprintf "invalid hint expression %s for hint %s"
+                   (El.Print.string_of_exp hintexp)
+                   hintid.it))
       | _ -> henv)
     henv hints
 
@@ -41,7 +58,8 @@ let load_typcases (tid : TId.t) (henv : HEnv.t) (typcases : Sl.typcase list) :
   List.fold_left
     (fun henv (nottyp, hints) ->
       let mixop, _ = nottyp.it in
-      load_hints (`Typ (tid, mixop)) henv hints)
+      let cid = (tid, mixop) in
+      load_hints (`Typ cid) henv hints)
     henv typcases
 
 let load_defs (henv : HEnv.t) (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : Sl.def)
@@ -116,26 +134,45 @@ let add_tparams (ctx : t) (tids : TId.t list) : t =
 let find_inputs (ctx : t) (id_rel : Id.t) : Hints.Input.t =
   IHEnv.find_opt id_rel ctx.ihenv |> Option.value ~default:[]
 
-let find_hint (ctx : t) (hid : string) (key : HEnv.key) : Hint.t option =
-  HEnv.find (hid $ no_region) key ctx.henv
+let find_hint_alter (ctx : t) (hid : string) (key : HEnv.key) :
+    Hints.Alter.t option =
+  HEnv.find_alter ctx.henv (hid $ no_region) key
 
-let find_hint_prose (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose" key
+let find_hint_fields (ctx : t) (hid : string) (key : HEnv.key) :
+    Hints.Fields.t option =
+  HEnv.find_fields ctx.henv (hid $ no_region) key
 
-let find_hint_prose_in (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose_in" key
+let find_hint_prose (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+  find_hint_alter ctx "prose" key
 
-let find_hint_prose_out (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose_out" key
+let find_hint_prose_in (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+  find_hint_alter ctx "prose_in" key
 
-let find_hint_prose_true (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose_true" key
+let find_hint_prose_out (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+  find_hint_alter ctx "prose_out" key
 
-let find_hint_prose_false (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose_false" key
+let find_hint_prose_true (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+  find_hint_alter ctx "prose_true" key
 
-let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hint.t option =
-  find_hint ctx "prose_fields" key
+let find_hint_prose_false (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+  find_hint_alter ctx "prose_false" key
+
+let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hints.Fields.t option =
+  find_hint_fields ctx "prose_fields" key
+
+(* Validation *)
+
+let validate_hint_alter (at : region) (hint_alter : Hints.Alter.t)
+    (items : 'a list) : unit =
+  match Hints.Alter.validate hint_alter items with
+  | Ok () -> ()
+  | Error msg -> error at msg
+
+let validate_hint_fields (at : region) (hint_fields : Hints.Fields.t)
+    (arity : int) : unit =
+  match Hints.Fields.validate hint_fields arity with
+  | Ok () -> ()
+  | Error msg -> error at msg
 
 (* Unrolling types *)
 

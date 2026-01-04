@@ -175,26 +175,32 @@ let render_cmpop ctx cmpop =
     | `LeOp -> "is less than or equal to"
     | `GeOp -> "is greater than or equal to"
 
-(* Call prose using hints *)
+(* Hints *)
 
-let render_hintexp ?(caps = false) (ctx : context) (hintexp : El.exp)
+let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
     (render : context -> 'a -> string) (items : 'a list) : string =
   items
   |> Hints.Alter.alternate
        ~base_text:(fun s -> reindent_lines ~level:0 s)
-       hintexp
+       hint
        (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
 
+let render_fields_hint (_ctx : context) (_hint : Hints.Fields.t)
+    (_render : context -> 'a -> string) (_items : 'a list) : string =
+  "TODO"
+
+(* Call prose *)
+
 let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
   match rel_call with
-  | ProseRelCall (`Hold (id_rel, hintexp, exps_input)) ->
-      render_hintexp ctx hintexp render_exp exps_input
+  | ProseRelCall (`Hold (id_rel, hint, exps_input)) ->
+      render_alter_hint ctx hint render_exp exps_input
       |> as_link ctx ~link:(string_of_relid id_rel)
-  | ProseRelCall (`Yield (id_rel, hintexp, exps_input, exps_output)) ->
+  | ProseRelCall (`Yield (id_rel, hint, exps_input, exps_output)) ->
       F.asprintf "%s be the result of %s"
         (render_exps in_prose exps_output)
-        (render_hintexp in_link hintexp render_exp exps_input
+        (render_alter_hint ctx hint render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelCall (id_rel, mixop, exps) ->
       code_of_notexp in_link (mixop, exps)
@@ -251,12 +257,12 @@ and render_exp ctx exp : string =
       F.asprintf "%s matches pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
-  | CaseE (id, mixop, exps, prose_hint) -> (
+  | CaseE (id, mixop, exps, hint) -> (
       if ctx.in_code then code_of_notexp ctx (mixop, exps)
       else
-        match prose_hint with
-        | Some hintexp ->
-            render_hintexp (ctx |> link) hintexp render_exp exps
+        match hint with
+        | Some hint ->
+            render_alter_hint (ctx |> link) hint render_exp exps
             |> as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
@@ -306,21 +312,16 @@ and render_exp ctx exp : string =
       string_of_defid id ^ string_of_targs targs
       ^ render_args (ctx |> link |> code) args
       |> as_link ctx ~link:id.it |> as_code ctx
-  | CallE (ProseFuncCall (`Check (id, prose_true, _, _, args))) ->
+  | CallE (ProseFuncCall (`Check (id, hint_true, _, _, args))) ->
       let exps =
         args
         |> List.filter_map (fun arg ->
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
-      render_hintexp (link ctx) prose_true render_exp exps
+      render_alter_hint (link ctx) hint_true render_exp exps
       |> as_link ctx ~link:id.it
-  | CallE (ProseFuncCall (`Yield (id, prose_in, _targs, args))) ->
-      let exps =
-        args
-        |> List.filter_map (fun arg ->
-               match arg.it with ExpA exp -> Some exp | DefA _ -> None)
-      in
-      render_hintexp (link ctx) prose_in render_exp exps
+  | CallE (ProseFuncCall (`Yield (id, hint_in, _targs, args))) ->
+      render_alter_hint (link ctx) hint_in render_arg args
       |> as_link ctx ~link:id.it
   | CallE (MathFuncCall (id, targs, args)) ->
       string_of_defid id ^ string_of_targs targs
@@ -462,9 +463,9 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | ReturnI exp ->
       F.asprintf "%sReturn %s." bullet
         (render_exp in_code exp |> as_code in_prose)
-  | ResultI (ProseResult (hintexp, exps)) ->
+  | ResultI (ProseResult (hint, exps)) ->
       F.asprintf "%sResult in %s." bullet
-        (render_hintexp in_prose hintexp render_exp exps)
+        (render_alter_hint in_prose hint render_exp exps)
   | ResultI (MathResult []) -> bullet ^ "The relation holds."
   | ResultI (MathResult exps) ->
       F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
@@ -509,16 +510,15 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
-  | ProseRelTitle (`Hold (id_rel, hintexp_hold, exps_input)) ->
-      render_hintexp ~caps:true in_prose hintexp_hold render_exp exps_input
+  | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
+      render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRelTitle
-      (`Yield (id_rel, hintexp_input, exps_input, hintexp_output, exps_output))
-    ->
+      (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       F.asprintf "%s be the result of %s"
-        (render_hintexp ~caps:true in_prose hintexp_output render_exp
+        (render_alter_hint ~caps:true in_prose hint_output render_exp
            exps_output)
-        (render_hintexp ~caps:true in_prose hintexp_input render_exp exps_input
+        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input
         |> as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelTitle (id_rel, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -535,7 +535,7 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
   | ProseRuleTitle (_id_rulegroup, hintexp, exps_input) ->
-      render_hintexp ~caps:true in_prose hintexp render_exp exps_input
+      render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -563,11 +563,11 @@ and render_defined_rel_def (rel : rel) : string =
 
 and render_func_title (func_title : func_title) : string =
   match func_title with
-  | ProseFuncTitle (`Check (id_func, hintexp_true, args_input)) ->
-      render_hintexp ~caps:true in_prose hintexp_true render_arg args_input
+  | ProseFuncTitle (`Check (id_func, hint_true, args_input)) ->
+      render_alter_hint ~caps:true in_prose hint_true render_arg args_input
       |> as_link in_prose ~link:(string_of_defid id_func)
-  | ProseFuncTitle (`Yield (id_func, hintexp_input, args_input)) ->
-      render_hintexp ~caps:true in_prose hintexp_input render_arg args_input
+  | ProseFuncTitle (`Yield (id_func, hint_input, args_input)) ->
+      render_alter_hint ~caps:true in_prose hint_input render_arg args_input
       |> as_link in_prose ~link:(string_of_defid id_func)
   | MathFuncTitle (id_func, tparams, args_input) ->
       string_of_defid id_func

@@ -218,7 +218,7 @@ and def' =
   (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
   | ExternRelD of id * nottyp * int list * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
-  | RelD of id * nottyp * int list * rulegroup list * hint list
+  | RelD of id * nottyp * Hints.Input.t * rulegroup list * hint list
   (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
