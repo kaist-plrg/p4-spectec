@@ -442,26 +442,51 @@ relation V1Model_egress:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_egress:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR_standard_metadata
-      = $V1Model_setup_standard_metadata_argument(EC_0)
-  -- if argumentIR*
-      = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
-  ---- ;; invoke the egress object (main.eg)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_eg
-      = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_eg `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_egress {
+
+  rule V1Model_egress/continueEmptyResult:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the egress object (main.eg)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_eg
+        = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_egress/callResult:
+    EC_0 STO_0 |- EC_1 STO_1 callResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR_standard_metadata
+        = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata ]
+    ---- ;; invoke the egress object (main.eg)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_eg
+        = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 callResult
+
+}
 
 ;;
 ;; V1Model check invocation
@@ -471,23 +496,45 @@ relation V1Model_check:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_check:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
-  ---- ;; invoke the check object (main.ck)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_ck
-      = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_ck `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_check {
+
+  rule V1Model_check/continueEmptyResult:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+    ---- ;; invoke the check object (main.ck)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ck
+        = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ck `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_check/callResult:
+    EC_0 STO_0 |- EC_1 STO_1 callResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+    ---- ;; invoke the check object (main.ck)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_ck
+        = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_ck `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 callResult
+
+}
 
 ;;
 ;; V1Model deparser invocation
@@ -497,20 +544,42 @@ relation V1Model_deparse:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_deparse:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_packet_out
-      = $V1Model_setup_packet_out_argument(EC_0)
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR* = [ argumentIR_packet_out, argumentIR_hdr ]
-  ---- ;; invoke the deparse object (main.dep)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_dep
-      = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_dep `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_deparse {
+
+  rule V1Model_deparse/continueEmptyResult:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $V1Model_setup_packet_out_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_packet_out, argumentIR_hdr ]
+    ---- ;; invoke the deparse object (main.dep)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_dep
+        = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_dep `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_deparse/callResult:
+    EC_0 STO_0 |- EC_1 STO_1 callResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $V1Model_setup_packet_out_argument(EC_0)
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_packet_out, argumentIR_hdr ]
+    ---- ;; invoke the deparse object (main.dep)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_dep
+        = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_dep `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 callResult
+
+}
