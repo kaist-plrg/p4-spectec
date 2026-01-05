@@ -35199,13 +35199,21 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
   7. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( (argumentIR)*{argumentIR <- argumentIR*} );) as statementIR) : EC_1 STO_1 statementResult)
 
-  8. If ((statementResult has type continueEmptyResult)), then
+  8. Case analysis on statementResult
 
-    1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+    1. Case (% has type continueEmptyResult)
 
-    2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
+      1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:366.1-368.20
+      2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
+
+    2. Case (% has type callResult)
+
+      1. (Let callResult be (statementResult as callResult))
+
+      2. Result in : % % |- EC_1 STO_1 callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:388.1-390.20
 relation V1Model_ingress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -35240,7 +35248,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
       2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:419.1-421.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:441.1-443.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -35267,7 +35275,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:448.1-450.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:470.1-472.20
 relation V1Model_check: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %
@@ -35292,7 +35300,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
     2. Result in : % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:474.1-476.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:496.1-498.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
 
 1. Group : EC_0 STO_0 |- % % %

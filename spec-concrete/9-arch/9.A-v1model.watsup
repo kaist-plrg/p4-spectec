@@ -341,23 +341,45 @@ relation V1Model_verify:
   evalContext store |- evalContext store callResult
   hint(input %0 %1)
 
-rule V1Model_verify:
-  EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
-  ---- ;; prepare the arguments
-  -- if argumentIR_hdr
-      = $V1Model_setup_hdr_argument(STO_0)
-  -- if argumentIR_meta
-      = $V1Model_setup_meta_argument(STO_0)
-  -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
-  ---- ;; invoke the verify object (main.vr)
-  -- if typedExpressionIR_main
-      = $V1Model_setup_main_callee(EC_0, STO_0)
-  -- if typedExpressionIR_vr
-      = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
-  -- if callableTargetIR = typedExpressionIR_vr `. "apply"
-  -- Stmt_eval:
-      GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                         : EC_1 STO_1 ``
+rulegroup V1Model_verify {
+
+  rule V1Model_verify/continueEmptyResult:
+    EC_0 STO_0 |- EC_1 STO_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+    ---- ;; invoke the verify object (main.vr)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_vr
+        = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_vr `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 ``
+
+  rule V1Model_verify/callResult:
+    EC_0 STO_0 |- EC_1 STO_1 callResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $V1Model_setup_hdr_argument(STO_0)
+    -- if argumentIR_meta
+        = $V1Model_setup_meta_argument(STO_0)
+    -- if argumentIR* = [ argumentIR_hdr, argumentIR_meta ]
+    ---- ;; invoke the verify object (main.vr)
+    -- if typedExpressionIR_main
+        = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- if typedExpressionIR_vr
+        = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- if callableTargetIR = typedExpressionIR_vr `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 STO_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 STO_1 callResult
+
+}
 
 ;;
 ;; V1Model ingress invocation

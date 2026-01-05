@@ -15952,9 +15952,10 @@ for each `nat^?^` in `nat^?^^{asterisk}^`
 . Let `typedExpressionIR~vr~` be `<<V1Model_setup_verify_callee, V1Model_setup_verify_callee(EC~0~, STO~0~, typedExpressionIR~main~)>>`.
 . Let `callableTargetIR` be `typedExpressionIR~vr~ . "apply"`.
 . Let `EC~1~`, `STO~1~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `callableTargetIR < · > ( argumentIR^{asterisk}^ ) ;`, under cursor `GLOBAL`, evaluation context `EC~0~`, and store `STO~0~`>>.
-. Check that `statementResult` has type `continueEmptyResult`.
-. Let `continueEmptyResult` be `statementResult`.
-. Result in `EC~1~`, `STO~1~`, and `RETURN None`.
+. If let `continueEmptyResult` be `statementResult`:
+ .. Result in `EC~1~`, `STO~1~`, and `RETURN None`.
+. Else if let `callResult` be `statementResult`:
+ .. Result in `EC~1~`, `STO~1~`, and `callResult`.
 
 <<V1Model_ingress, `EC~0~ STO~0~ |- % % %`>>
 

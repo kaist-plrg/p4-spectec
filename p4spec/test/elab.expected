@@ -32106,7 +32106,7 @@ relation V1Model_parser: evalContext store |- evalContext store transitionResult
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:340.1-342.20
 relation V1Model_verify: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:344.1-360.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:344.1-382.2
   rulegroup 
 
    match
@@ -32116,7 +32116,7 @@ relation V1Model_verify: evalContext store |- evalContext store callResult
 
    paths
 
-    rulepath 
+    rulepath continueEmptyResult
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
@@ -32129,10 +32129,22 @@ relation V1Model_verify: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:366.1-368.20
+    rulepath callResult
+    -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
+    -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
+    -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_vr = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let callableTargetIR = typedExpressionIR_vr . "apply"
+    -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
+    -- if statementResult <: callResult
+    -- let callResult = statementResult as callResult
+    -- output: % % |- EC_1 STO_1 callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:388.1-390.20
 relation V1Model_ingress: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:370.1-413.2
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:392.1-435.2
   rulegroup 
 
    match
@@ -32170,10 +32182,10 @@ relation V1Model_ingress: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:419.1-421.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:441.1-443.20
 relation V1Model_egress: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:423.1-442.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:445.1-464.41
   rulegroup 
 
    match
@@ -32197,10 +32209,10 @@ relation V1Model_egress: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:448.1-450.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:470.1-472.20
 relation V1Model_check: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:452.1-468.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:474.1-490.41
   rulegroup 
 
    match
@@ -32223,10 +32235,10 @@ relation V1Model_check: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:474.1-476.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:496.1-498.20
 relation V1Model_deparse: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:478.1-494.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:500.1-516.41
   rulegroup 
 
    match
