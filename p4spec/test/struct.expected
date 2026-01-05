@@ -33600,19 +33600,15 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
 
-        4. If ((declarationResult has type continueEmptyResult)), then
+        4. If ((declarationResult has type exitResult)), then
 
-          1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+          1. (Let exitResult be (declarationResult as exitResult))
 
-          2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
+          2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
 
-          3. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
+          3. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_4 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
 
-            1. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
-
-            2. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_5 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
-
-            3. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
+          4. Result in : % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
 
       8. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))*{actionDef <- actionDef*, callableId <- callableId*} })])
 
@@ -33639,6 +33635,30 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_5 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
 
             4. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
+
+      10. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))*{actionDef <- actionDef*, callableId <- callableId*} })])
+
+      11. If ((copyInListResult has type continueResult<storageReference?*>)), then
+
+        1. (Let (` ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*}) be (copyInListResult as continueResult<storageReference?*>))
+
+        2. (Copy_in_default: (parameterIR_default)*{parameterIR_default <- parameterIR_default*} @ (block) EC_callee_2 (value_default)*{value_default <- value_default*} ~>@ EC_callee_3)
+
+        3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
+
+        4. If ((declarationResult has type continueEmptyResult)), then
+
+          1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+
+          2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
+
+          3. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
+
+            1. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
+
+            2. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*} @ (block) EC_callee_5 ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> EC_3)
+
+            3. Result in : % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
   6. Case (% has type tableApplyMethodCallee)
 

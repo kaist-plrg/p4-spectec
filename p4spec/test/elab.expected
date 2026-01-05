@@ -30583,7 +30583,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 rejectTransitionResult as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:622.1-709.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:622.1-749.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -30595,7 +30595,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath controlApplyMethodCallee-cont
+    rulepath controlApplyMethodCallee-localDecl-exit
     -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
@@ -30606,16 +30606,14 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ block EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3
     -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
-    -- if declarationResult <: continueEmptyResult
-    -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
-    -- if (controlBodyResult = return ?() as controlBodyResult)
-    -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
-    -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
+    -- if declarationResult <: exitResult
+    -- let exitResult = declarationResult as exitResult
+    -- if (exitResult = exit)
+    -- let EC_2 = EC_1[global.frame = EC_callee_4.global.frame]
+    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
 
-    rulepath controlApplyMethodCallee-cont-controlBodyIR-exit
+    rulepath controlApplyMethodCallee-controlBodyIR-exit
     -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
@@ -30637,7 +30635,27 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:713.1-729.62
+    rulepath controlApplyMethodCallee-cont
+    -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
+    -- let EC_callee_1 = EC_callee_0[block.frame = frame][block.callable = { callableId : actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult
+    -- if copyInListResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ block EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3
+    -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
+    -- if declarationResult <: continueEmptyResult
+    -- let continueEmptyResult = declarationResult as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
+    -- if (controlBodyResult = return ?() as controlBodyResult)
+    -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
+    -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:753.1-769.62
   rulegroup tableApplyMethodCallee
 
    match

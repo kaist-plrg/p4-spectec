@@ -15237,13 +15237,11 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 . If let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
  .. Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
  .. Let <<ControlLocalDecls_eval, `EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult`>>.
- .. Check that `declarationResult` has type `continueEmptyResult`.
- .. Let `continueEmptyResult` be `declarationResult`.
- .. Let <<ControlBody_eval, `EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult`>>.
- .. Check that `controlBodyResult` is equal to `RETURN None`.
- .. Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
- .. Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
- .. Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `RETURN None`.
+ .. Check that `declarationResult` has type `exitResult`.
+ .. Let `exitResult` be `declarationResult`.
+ .. Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]`.
+ .. Let <<Copy_out, `STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+ .. Result in the resulting evaluation context `EC~3~`, store `STO~2~`, and call result `EXIT`.
 . Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.CALLABLE = { (callableId : actionDef)^{asterisk}^ }]`.
 . Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
  .. Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
@@ -15256,6 +15254,17 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
  .. Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
  .. Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
  .. Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `EXIT`.
+. Let `EC~callee_1~` be `EC~callee_0~[BLOCK.FRAME = frame][BLOCK.CALLABLE = { (callableId : actionDef)^{asterisk}^ }]`.
+. Else if let `(storageReference^?^)^{asterisk}^` be `copyInListResult`:
+ .. Let <<Copy_in_default, `parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~`>>.
+ .. Let <<ControlLocalDecls_eval, `EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult`>>.
+ .. Check that `declarationResult` has type `continueEmptyResult`.
+ .. Let `continueEmptyResult` be `declarationResult`.
+ .. Let <<ControlBody_eval, `EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult`>>.
+ .. Check that `controlBodyResult` is equal to `RETURN None`.
+ .. Let `EC~2~` be `EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]`.
+ .. Let <<Copy_out, `STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~`>>.
+ .. Result in the resulting evaluation context `EC~3~`, store `STO~3~`, and call result `RETURN None`.
 
 <<Call_eval, Calling `tableApplyMethodCallee``typeArgumentListIR``argumentListIR` , under cursor `p`, evaluation context `EC~0~`, and store `STO~0~`>>:
 
