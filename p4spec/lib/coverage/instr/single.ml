@@ -45,7 +45,24 @@ module Cover = struct
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     let iid = instr.note.iid in
     let node = Node.init id in
-    add iid node cover
+    let cover = add iid node cover in
+    match instr.it with
+    | IfI (_, _, instrs_then, _) -> init_instrs cover id instrs_then
+    | HoldI (_, _, _, holdcase) -> (
+        match holdcase with
+        | BothH (instrs_hold, instrs_nothold) ->
+            let cover = init_instrs cover id instrs_hold in
+            init_instrs cover id instrs_nothold
+        | HoldH (instrs_hold, _) -> init_instrs cover id instrs_hold
+        | NotHoldH (instrs_nothold, _) -> init_instrs cover id instrs_nothold)
+    | CaseI (_, cases, _) ->
+        let blocks = cases |> List.split |> snd in
+        List.fold_left
+          (fun cover instrs -> init_instrs cover id instrs)
+          cover blocks
+    | OtherwiseI instr -> init_instr cover id instr
+    | GroupI (_, _, instrs_group) -> init_instrs cover id instrs_group
+    | _ -> cover
 
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
     List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs

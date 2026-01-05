@@ -82,6 +82,9 @@ type t = {
 
 (* Cover *)
 
+let cover_instr (ctx : t) (iid : iid) : unit =
+  ctx.coverage.instr := ICov_single.hit !(ctx.coverage.instr) iid
+
 let cover_dangling (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
   if hit then
     ctx.coverage.dangling := DCov_single.hit !(ctx.coverage.dangling) pid

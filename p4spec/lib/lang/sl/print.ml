@@ -281,7 +281,7 @@ and string_of_instr_short instr =
 and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
     ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
-  let order = Format.asprintf "%s%d. " indent index in
+  let order = Format.asprintf "%s%d(%d). " indent index instr.note.iid in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, None) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)

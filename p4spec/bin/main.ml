@@ -162,8 +162,8 @@ let sim_command =
            Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
-let cover_dangling_command =
-  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
+let cover_command =
+  Core.Command.basic ~summary:"measure coverage of the spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -175,6 +175,15 @@ let cover_dangling_command =
        flag "-d" (listed string) ~doc:"p4 directories of interest"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
        try
@@ -187,11 +196,21 @@ let cover_dangling_command =
          in
          let spec_sl = structure filenames_spec in
          let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-         let cover =
-           Runner.cover_dangling_programs spec_sl relname includes_p4
-             filenames_p4
-         in
-         Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov) cover
+         match mode with
+         | `Instr ->
+             let cover_instr =
+               Runner.cover_instr_programs spec_sl relname includes_p4
+                 filenames_p4
+             in
+             Coverage.Instr.Multi.log ~filename_cov_opt:(Some filename_cov)
+               cover_instr
+         | `Dangling ->
+             let cover_dangling =
+               Runner.cover_dangling_programs spec_sl relname includes_p4
+                 filenames_p4
+             in
+             Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
+               cover_dangling
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -527,8 +546,9 @@ let command =
       (* Execution *)
       ("run", run_command);
       ("sim", sim_command);
+      (* Coverage *)
+      ("cover", cover_command);
       (* Negative type checker test generation and coverage *)
-      ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
