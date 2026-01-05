@@ -4,7 +4,7 @@ open Sl
 open Runtime.Dynamic_Sl
 open Envs
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
+module DCov_single = Coverage.Dangling.Single
 open Util.Backtrace
 open Util.Source
 

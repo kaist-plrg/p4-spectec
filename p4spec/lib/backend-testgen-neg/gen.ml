@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Sl
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 module F = Format
 open Util.Source

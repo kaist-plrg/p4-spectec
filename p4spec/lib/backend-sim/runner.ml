@@ -1,5 +1,5 @@
 open Lang
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
 open Error

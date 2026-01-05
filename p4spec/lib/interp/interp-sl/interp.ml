@@ -7,8 +7,8 @@ open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 open Error
 module F = Format
 open Util.Backtrace

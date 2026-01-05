@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Sl
+module DCov_single = Coverage.Dangling.Single
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
 module F = Format
 
 (* Derivation of the close-AST from the dependency graph *)

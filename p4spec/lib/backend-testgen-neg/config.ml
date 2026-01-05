@@ -2,10 +2,10 @@ open Domain
 open Lib
 open Lang
 open Sl
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Testgen_neg
 open Envs
-module DCov_single = Dangling.Single
-module DCov_multi = Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)

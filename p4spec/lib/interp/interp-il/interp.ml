@@ -7,7 +7,7 @@ open Runtime.Dynamic_Il
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
+module DCov_single = Coverage.Dangling.Single
 open Error
 open Attempt
 module F = Format

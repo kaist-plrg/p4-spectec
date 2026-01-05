@@ -1,8 +1,8 @@
 open Lang
 module Value = Dynamic.Value
 module Dep = Testgen_neg.Dep
-module DCov_single = Testgen_neg.Dangling.Single
-module DCov_multi = Testgen_neg.Dangling.Multi
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 module IO = Io
 open Util.Source
 

@@ -416,7 +416,7 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
   in
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let cover = Runner.cover_programs spec_sl relname includes_p4 filenames_p4 in
-  Runtime.Testgen_neg.Dangling.Multi.log ~filename_cov_opt:None cover
+  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =
   Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"

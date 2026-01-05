@@ -1,6 +1,6 @@
 open Lang
 open Sl
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module DCov_multi = Coverage.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Measure initial coverage of phantoms *)
