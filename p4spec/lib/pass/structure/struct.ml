@@ -197,7 +197,7 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
   let exps_match_unified, instrs =
     Pretty.pretty_rel exps_match_unified instrs
   in
-  let instrs = Instrument.instrument tdenv instrs in
+  let instrs = Instrument.instrument instrs in
   Sl.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
@@ -264,7 +264,7 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     paths
     |> List.map struct_tablerow_path
     |> List.map (Optimize.optimize ihenv tdenv)
-    |> List.map (Instrument.instrument tdenv)
+    |> List.map Instrument.instrument
   in
   let exp_output_group = paths |> List.split |> snd in
   let tablerows =
@@ -284,7 +284,7 @@ and struct_func_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
   let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
   let instrs = Optimize.optimize ihenv tdenv instrs in
   let args_input, instrs = Pretty.pretty_func args_input instrs in
-  let instrs = Instrument.instrument tdenv instrs in
+  let instrs = Instrument.instrument instrs in
   let func = (id_dec, tparams, args_input, typ, instrs, hints) in
   Sl.FuncDecD func $ at
 

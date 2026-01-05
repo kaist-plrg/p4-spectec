@@ -50,7 +50,7 @@ module Cover = struct
     | IfI (_, _, instrs_then, phantom_opt) -> (
         let cover = init_instrs cover id instrs_then in
         match phantom_opt with
-        | Some (pid, _) ->
+        | Some pid ->
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
@@ -62,14 +62,14 @@ module Cover = struct
         | HoldH (instrs_hold, phantom_opt) -> (
             let cover = init_instrs cover id instrs_hold in
             match phantom_opt with
-            | Some (pid, _) ->
+            | Some pid ->
                 let branch = Branch.init id in
                 add pid branch cover
             | None -> cover)
         | NotHoldH (instrs_nothold, phantom_opt) -> (
             let cover = init_instrs cover id instrs_nothold in
             match phantom_opt with
-            | Some (pid, _) ->
+            | Some pid ->
                 let branch = Branch.init id in
                 add pid branch cover
             | None -> cover))
@@ -81,7 +81,7 @@ module Cover = struct
             cover blocks
         in
         match phantom_opt with
-        | Some (pid, _) ->
+        | Some pid ->
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)

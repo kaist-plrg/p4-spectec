@@ -1232,7 +1232,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) -> Ctx.cover_dangling ctx (not cond) pid vid
+    | Some pid -> Ctx.cover_dangling ctx (not cond) pid vid
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
@@ -1327,13 +1327,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           eval_instrs ctx Cont instrs_not_hold)
     | HoldH (instrs_hold, phantom_opt) ->
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover_dangling ctx (not cond) pid vid
+        | Some pid -> Ctx.cover_dangling ctx (not cond) pid vid
         | None -> ());
         if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
     | NotHoldH (instrs_not_hold, phantom_opt) ->
         ctx.coverage.dangling := cover_dangling_backup;
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover_dangling ctx cond pid vid
+        | Some pid -> Ctx.cover_dangling ctx cond pid vid
         | None -> ());
         if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
@@ -1380,7 +1380,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let instrs_opt, value_cond = eval_cases ctx exp cases in
     let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) ->
+    | Some pid ->
         let matched = Option.is_some instrs_opt in
         Ctx.cover_dangling ctx (not matched) pid vid
     | None -> ());

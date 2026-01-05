@@ -182,31 +182,7 @@ and string_of_targs targs = Il.Print.string_of_targs targs
 (* Path conditions *)
 
 and string_of_pid pid = Format.asprintf "Phantom#%d" pid
-
-and string_of_phantom phantom =
-  let pid, _ = phantom in
-  string_of_pid pid
-
-and string_of_pathcond pathcond =
-  match pathcond with
-  | ForallC (pathcond, iterexps) ->
-      Format.asprintf "(forall %s)%s"
-        (string_of_pathcond pathcond)
-        (string_of_iterexps iterexps)
-  | ExistsC (pathcond, iterexps) ->
-      Format.asprintf "(exists %s)%s"
-        (string_of_pathcond pathcond)
-        (string_of_iterexps iterexps)
-  | PlainC exp -> "(" ^ string_of_exp exp ^ ")"
-  | HoldC (relid, notexp) ->
-      Format.asprintf "(%s: %s holds)" (string_of_relid relid)
-        (string_of_notexp notexp)
-  | NotHoldC (relid, notexp) ->
-      Format.asprintf "(%s: %s does not hold)" (string_of_relid relid)
-        (string_of_notexp notexp)
-
-and string_of_pathconds pathconds =
-  List.map string_of_pathcond pathconds |> String.concat " /\\ "
+and string_of_phantom phantom = string_of_pid phantom
 
 (* Case analysis *)
 

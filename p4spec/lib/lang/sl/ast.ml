@@ -103,20 +103,10 @@ type arg' = Il.arg'
 type targ = Il.targ [@@deriving yojson]
 type targ' = Il.targ'
 
-(* Path conditions *)
+(* Phantoms *)
 
 and pid = int
-
-and phantom = pid * pathcond list
-[@@deriving yojson]
-
-and pathcond =
-  | ForallC of pathcond * iterexp list
-  | ExistsC of pathcond * iterexp list
-  | PlainC of exp
-  | HoldC of id * notexp
-  | NotHoldC of id * notexp
-[@@deriving yojson]
+and phantom = pid
 
 (* Holding conditions *)
 
