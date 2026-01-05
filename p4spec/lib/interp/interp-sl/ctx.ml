@@ -31,7 +31,7 @@ type cursor = Global | Local
    thus sharing the same graph and cover across contexts. *)
 
 type coverage = { instr : ICov_single.t ref; dangling : DCov_single.t ref }
-type vdg = { graph : Dep.Graph.t; vid_program : vid }
+type vdg = Dep.Graph.t
 type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
 
 (* Global layer *)
@@ -98,14 +98,13 @@ let deriving (ctx : t) : bool =
 
 let add_node ?(taint = false) (ctx : t) (value : value) : unit =
   match ctx.testing with
-  | EndToEnd (`On { graph; _ }) -> Dep.Graph.add_node ~taint graph value
+  | EndToEnd (`On vdg) -> Dep.Graph.add_node ~taint vdg value
   | _ -> ()
 
 let add_edge (ctx : t) (value_from : value) (value_to : value)
     (label : Dep.Edges.label) : unit =
   match ctx.testing with
-  | EndToEnd (`On { graph; _ }) ->
-      Dep.Graph.add_edge graph value_from value_to label
+  | EndToEnd (`On vdg) -> Dep.Graph.add_edge vdg value_from value_to label
   | _ -> ()
 
 (* Finders *)

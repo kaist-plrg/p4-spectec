@@ -298,7 +298,7 @@ struct
               includes_p4 filename_p4
           in
           match program_result_sl with
-          | Pass (values_output, _, _, _) -> values_output
+          | Pass (values_output, _, _) -> values_output
           | Fail (at, msg, _) | IllFormed (at, msg, _) -> error at msg)
       | Empty -> assert false
     in

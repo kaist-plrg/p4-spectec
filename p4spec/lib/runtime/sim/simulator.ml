@@ -40,7 +40,7 @@ type func_result_sl =
   | Fail of region * string * coverage_result
 
 type program_result_sl =
-  | Pass of Value.t list * Dep.Graph.t * Value.id * coverage_result
+  | Pass of Value.t list * Dep.Graph.t * coverage_result
   | Fail of region * string * coverage_result
   | IllFormed of region * string * coverage_result
 
@@ -57,7 +57,7 @@ type stf_result = stf_result_il
 let promote_program_result_sl (program_result_sl : program_result_sl) :
     program_result =
   match program_result_sl with
-  | Pass (values_output, _, _, _) -> Pass values_output
+  | Pass (values_output, _, _) -> Pass values_output
   | Fail (at, msg, _) -> Fail (at, msg)
   | IllFormed (at, msg, _) -> IllFormed (at, msg)
 

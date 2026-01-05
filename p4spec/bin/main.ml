@@ -334,7 +334,7 @@ let interesting_command =
              filename_p4
          in
          match result with
-         | Pass (_, _, _, cover_single) ->
+         | Pass (_, _, cover_single) ->
              if check_well_typed then (
                let branch =
                  Coverage.Dangling.Single.Cover.find pid cover_single.dangling

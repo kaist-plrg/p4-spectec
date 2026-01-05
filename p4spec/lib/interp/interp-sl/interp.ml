@@ -1931,15 +1931,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let cover_dangling = ref (DCov_single.init spec) in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let graph = Dep.Graph.assemble_graph value_program in
-      let vdg = Ctx.{ graph; vid_program = value_program.note.vid } in
+      let vdg = Dep.Graph.assemble_graph value_program in
       let ctx = Ctx.empty_end_to_end ~derive vdg cover_instr cover_dangling in
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
       let coverage_result =
         Sim.
           { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
       in
-      Sim.Pass (values_output, graph, value_program.note.vid, coverage_result)
+      Sim.Pass (values_output, vdg, coverage_result)
     with
     | Util.Error.ParseError (at, msg) ->
         let coverage_result =
@@ -2018,7 +2017,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           match
             eval_program ~derive:false spec relname includes_p4 filename_p4
           with
-          | Pass (_, _, _, cover_single) -> (true, true, cover_single.instr)
+          | Pass (_, _, cover_single) -> (true, true, cover_single.instr)
           | Fail (_, _, cover_single) -> (true, false, cover_single.instr)
           | IllFormed (_, _, cover_single) -> (false, false, cover_single.instr)
         in
@@ -2034,7 +2033,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           match
             eval_program ~derive:false spec relname includes_p4 filename_p4
           with
-          | Pass (_, _, _, cover_single) -> (true, true, cover_single.dangling)
+          | Pass (_, _, cover_single) -> (true, true, cover_single.dangling)
           | Fail (_, _, cover_single) -> (true, false, cover_single.dangling)
           | IllFormed (_, _, cover_single) ->
               (false, false, cover_single.dangling)

@@ -8,14 +8,14 @@ module F = Format
 
 (* Derivation of the close-AST from the dependency graph *)
 
-let derive_vid (graph : Dep.Graph.t) (vid : vid) : VIdSet.t * int VIdMap.t =
+let derive_vid (vdg : Dep.Graph.t) (vid : vid) : VIdSet.t * int VIdMap.t =
   let vids_visited = ref (VIdSet.singleton vid) in
   let depths_visited = ref (VIdMap.singleton vid 0) in
   let vids_queue = Queue.create () in
   Queue.add (vid, 0) vids_queue;
   while not (Queue.is_empty vids_queue) do
     let vid_current, depth_current = Queue.take vids_queue in
-    match Dep.Graph.G.find_opt graph.edges vid_current with
+    match Dep.Graph.G.find_opt vdg.edges vid_current with
     | Some edges ->
         Dep.Edges.E.iter
           (fun (_, vid_from) () ->
@@ -31,7 +31,7 @@ let derive_vid (graph : Dep.Graph.t) (vid : vid) : VIdSet.t * int VIdMap.t =
 
 (* Entry point for deriving close-ASTs *)
 
-let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : DCov_single.t) :
+let derive_phantom (pid : pid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
     (vid * int) list =
   (* Find related values that contributed to the close-miss *)
   let vids_related =
@@ -45,12 +45,11 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : DCov_single.t) :
   (* Find close-ASTs for each related values *)
   vids_related
   |> List.concat_map (fun vid_related ->
-         let vids_visited, depths_visited = derive_vid graph vid_related in
+         let vids_visited, depths_visited = derive_vid vdg vid_related in
          vids_visited
          |> VIdSet.filter (fun vid ->
-                vid
-                |> Dep.Graph.G.find graph.nodes
-                |> Dep.Node.taint |> Dep.Node.is_source)
+                vid |> Dep.Graph.G.find vdg.nodes |> Dep.Node.taint
+                |> Dep.Node.is_source)
          |> VIdSet.elements
          |> List.map (fun vid ->
                 let depth = VIdMap.find vid depths_visited in
@@ -67,7 +66,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
   with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
-  | Pass (_, graph, _, cover) ->
+  | Pass (_, vdg, cover) ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
         let branch = DCov_single.Cover.find pid cover.dangling in
@@ -78,13 +77,12 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
       (* Log if fail to derive a close-AST *)
       List.iter
         (fun vid_related ->
-          let vids_visited, depths_visited = derive_vid graph vid_related in
+          let vids_visited, depths_visited = derive_vid vdg vid_related in
           let derivations_source =
             vids_visited
             |> VIdSet.filter (fun vid ->
-                   vid
-                   |> Dep.Graph.G.find graph.nodes
-                   |> Dep.Node.taint |> Dep.Node.is_source)
+                   vid |> Dep.Graph.G.find vdg.nodes |> Dep.Node.taint
+                   |> Dep.Node.is_source)
             |> VIdSet.elements
             |> List.map (fun vid ->
                    let depth = VIdMap.find vid depths_visited in
@@ -98,7 +96,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
               pid vid_related
           in
           let oc_dot = open_out filename_dot in
-          Dep.Graph.dot_of_graph graph |> output_string oc_dot;
+          Dep.Graph.dot_of_graph vdg |> output_string oc_dot;
           close_out oc_dot;
           let filename_dot_sub =
             F.asprintf "%s/%s_p%d_v%d_sub.dot" dirname_debug
@@ -109,13 +107,13 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           "digraph dependencies {\n" |> output_string oc_dot_sub;
           VIdSet.iter
             (fun vid ->
-              let node = Dep.Graph.G.find graph.nodes vid in
+              let node = Dep.Graph.G.find vdg.nodes vid in
               let dot = Dep.Node.dot_of_node vid node in
               dot ^ "\n" |> output_string oc_dot_sub)
             vids_visited;
           VIdSet.iter
             (fun vid ->
-              let edges = Dep.Graph.G.find graph.edges vid in
+              let edges = Dep.Graph.G.find vdg.edges vid in
               Dep.Edges.E.iter
                 (fun (label, vid_to) () ->
                   let dot = Dep.Edges.dot_of_edge vid label vid_to in
@@ -140,8 +138,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
                 derivations_source
                 |> List.map (fun (vid_source, depth) ->
                        let value_source =
-                         Dep.Graph.reassemble_graph graph VIdMap.empty
-                           vid_source
+                         Dep.Graph.reassemble_graph vdg VIdMap.empty vid_source
                        in
                        (vid_source, value_source, depth))
               in
