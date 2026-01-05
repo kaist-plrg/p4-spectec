@@ -34,19 +34,14 @@ module Make
     Arch.init spec;
     match spec with
     | IL spec_il ->
-        let program_result_il =
-          run_program_il ~derive spec_il relname includes_p4 filename_p4
-        in
-        IL program_result_il
+        run_program_il ~derive spec_il relname includes_p4 filename_p4
     | SL spec_sl ->
-        let program_result_sl =
-          run_program_sl ~derive spec_sl relname includes_p4 filename_p4
-        in
-        SL program_result_sl
+        run_program_sl ~derive spec_sl relname includes_p4 filename_p4
+        |> promote_program_result_sl
     | Empty -> assert false
 
   let run_program_internal ~(derive : bool) (spec : Sl.spec) (relname : string)
-      (value_program : Sl.value) : rel_result_sl =
+      (value_program : Il.value) : rel_result_sl =
     derive |> ignore;
     Arch.init (SL spec);
     Interp_SL.eval_rel spec relname [ value_program ]
@@ -90,9 +85,9 @@ module Make
           (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
              (string_of_tx tx_output))
 
-  let run_stf_stmt (value_ctx : Sl.value) (value_sto : Sl.value)
+  let run_stf_stmt (value_ctx : Il.value) (value_sto : Il.value)
       (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
-      (stmt_stf : Stf.Ast.stmt) : Sl.value * Sl.value * IO.tx list * IO.tx list
+      (stmt_stf : Stf.Ast.stmt) : Il.value * Il.value * IO.tx list * IO.tx list
       =
     match stmt_stf with
     (* Packet I/O *)
@@ -180,7 +175,7 @@ module Make
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
-  let run_stf_stmts (value_ctx : Sl.value) (value_sto : Sl.value)
+  let run_stf_stmts (value_ctx : Il.value) (value_sto : Il.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left

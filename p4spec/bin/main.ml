@@ -116,11 +116,9 @@ let run_command =
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
          with
-         | IL (Pass _) | SL (Pass _) -> Format.printf "passed\n"
-         | IL (Fail (_, msg)) | SL (Fail (_, msg, _)) ->
-             Format.printf "failed: %s\n" msg
-         | IL (IllFormed (_, msg)) | SL (IllFormed (_, msg, _)) ->
-             Format.printf "ill-formed: %s\n" msg
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
+         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)

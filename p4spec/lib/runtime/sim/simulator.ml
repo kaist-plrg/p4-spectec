@@ -11,6 +11,9 @@ open Util.Source
 (* Module signatures for interpreter-architecture interaction *)
 
 type spec = IL of Il.spec | SL of Sl.spec | Empty
+
+(* IL results *)
+
 type rel_result_il = Pass of Value.t list | Fail of region * string
 type func_result_il = Pass of Value.t | Fail of region * string
 
@@ -18,6 +21,13 @@ type program_result_il =
   | Pass of Value.t list
   | Fail of region * string
   | IllFormed of region * string
+
+type stf_result_il =
+  | Pass
+  | Fail of region * string
+  | IllFormed of region * string
+
+(* SL results *)
 
 type coverage_result = { instr : ICov_single.t; dangling : DCov_single.t }
 
@@ -34,12 +44,28 @@ type program_result_sl =
   | Fail of region * string * coverage_result
   | IllFormed of region * string * coverage_result
 
-type program_result = IL of program_result_il | SL of program_result_sl
+type stf_result_sl =
+  | Pass of coverage_result
+  | Fail of region * string * coverage_result
+  | IllFormed of region * string * coverage_result
 
-type stf_result =
-  | Pass
-  | Fail of region * string
-  | IllFormed of region * string
+(* Merged results *)
+
+type program_result = program_result_il
+type stf_result = stf_result_il
+
+let promote_program_result_sl (program_result_sl : program_result_sl) :
+    program_result =
+  match program_result_sl with
+  | Pass (values_output, _, _, _) -> Pass values_output
+  | Fail (at, msg, _) -> Fail (at, msg)
+  | IllFormed (at, msg, _) -> IllFormed (at, msg)
+
+let promote_stf_result_sl (stf_result_sl : stf_result_sl) : stf_result =
+  match stf_result_sl with
+  | Pass _ -> Pass
+  | Fail (at, msg, _) -> Fail (at, msg)
+  | IllFormed (at, msg, _) -> IllFormed (at, msg)
 
 module type ARCH = sig
   (* Extern evaluation *)
