@@ -30755,9 +30755,17 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
     2. Group parenthesizedExpressionIR: p EC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % % %
 
-      1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
+      1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult')
 
-      2. Result in : % % % |- % : EC_1 STO_1 expressionResult
+      2. If ((expressionResult' has type exitResult)), then
+
+        1. (Let exitResult be (expressionResult' as exitResult))
+
+        2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+
+      3. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+      4. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:40.1-41.15
 syntax expressionListResult = 

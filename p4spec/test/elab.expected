@@ -27630,7 +27630,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let ?(value) = value'?{value' <- value'?}
     -- output: % % % |- % : EC_2 STO_2 ` value as expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:539.1-544.50
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:539.1-555.2
   rulegroup parenthesizedExpressionIR
 
    match
@@ -27642,7 +27642,14 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
 
    paths
 
-    rulepath parenthesizedExpressionIR
+    rulepath exit
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult'
+    -- if expressionResult' <: exitResult
+    -- let exitResult = expressionResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_1 STO_1 exit as expressionResult
+
+    rulepath cont
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
@@ -27654,7 +27661,7 @@ syntax expressionListResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.102
 relation Exprs_eval: cursor evalContext store |- typedExpressionIR* : evalContext store expressionListResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:552.1-579.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:563.1-590.2
   rulegroup 
 
    match

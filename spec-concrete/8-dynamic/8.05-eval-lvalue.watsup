@@ -74,6 +74,23 @@ rulegroup Lvalue_eval/typedLvalueIR-indexAccess {
 
 rulegroup Lvalue_eval/typedLvalueIR-sliceAccess {
 
+  rule Lvalue_eval/exit:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                  : EC_1 STO_1 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 EXIT
+
+  rule Lvalue_eval/cont-exit:
+    p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                  : EC_2 STO_2 EXIT
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- [ typedExpressionIR_hi, typedExpressionIR_lo ]
+                      : EC_2 STO_2 EXIT
+
   rule Lvalue_eval/cont:
     p EC_0 STO_0 |- (typedLvalueIR `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
                   : EC_1 STO_1 storageReferenceResult
