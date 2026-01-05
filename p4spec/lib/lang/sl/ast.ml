@@ -141,7 +141,10 @@ and guard =
 
 (* Instructions *)
 
-and instr = instr' phrase
+and iid = int
+and inote = { iid : iid } [@@deriving yojson]
+
+and instr = (instr', inote) note_phrase [@@deriving yojson]
 and instr' =
   (* Branching instructions *)
   | IfI of exp * iterexp list * instr list * phantom option

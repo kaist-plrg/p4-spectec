@@ -44,13 +44,22 @@ open Util.Source
       else Phantom: i < 0 && j < 0
    else Phantom: i >= 0 *)
 
+(* Instruction id generator *)
+
+let tick_iid = ref 0
+
+let iid () : Sl.iid =
+  let iid = !tick_iid in
+  tick_iid := !tick_iid + 1;
+  iid
+
 (* Phantom id generator *)
 
-let tick = ref 0
+let tick_pid = ref 0
 
-let pid () =
-  let pid = !tick in
-  tick := !tick + 1;
+let pid () : Sl.pid =
+  let pid = !tick_pid in
+  tick_pid := !tick_pid + 1;
   pid
 
 (* Path condition *)
@@ -74,7 +83,11 @@ let rec insert_phantom (tdenv : TDEnv.t) (pathconds : pathcond list)
 
 and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
     (instr : instr) : Sl.instr =
-  let at = instr.at in
+  let iid = iid () in
+  insert_phantom'' tdenv pathconds instr $$ (instr.at, { iid })
+
+and insert_phantom'' (tdenv : TDEnv.t) (pathconds : pathcond list)
+    (instr : instr) : Sl.instr' =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then) ->
       let pathcond =
@@ -90,7 +103,7 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
         let pathconds = pathconds @ [ negate_pathcond pathcond ] in
         (pid, pathconds)
       in
-      Sl.IfI (exp_cond, iterexps, instrs_then, Some phantom) $ at
+      Sl.IfI (exp_cond, iterexps, instrs_then, Some phantom)
   | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
       let pathcond_hold =
         if iterexps = [] then HoldC (id, notexp)
@@ -129,7 +142,7 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
             Sl.NotHoldH (instrs_nothold, Some phantom)
         | instrs_hold, instrs_nothold -> Sl.BothH (instrs_hold, instrs_nothold)
       in
-      Sl.HoldI (id, notexp, iterexps, holdcase) $ at
+      Sl.HoldI (id, notexp, iterexps, holdcase)
   | CaseI (exp, cases, total) ->
       let pathconds_cases =
         List.map
@@ -166,18 +179,18 @@ and insert_phantom' (tdenv : TDEnv.t) (pathconds : pathcond list)
           let pathcond = pathconds @ List.map negate_pathcond pathconds_cases in
           Some (pid, pathcond)
       in
-      Sl.CaseI (exp, cases, phantom_opt) $ at
+      Sl.CaseI (exp, cases, phantom_opt)
   | OtherwiseI instr ->
       let instr = insert_phantom' tdenv pathconds instr in
-      Sl.OtherwiseI instr $ at
+      Sl.OtherwiseI instr
   | GroupI (id_group, exps_group, instrs_group) ->
       let instrs_group = insert_phantom tdenv pathconds instrs_group in
-      Sl.GroupI (id_group, exps_group, instrs_group) $ at
-  | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps) $ at
-  | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps) $ at
-  | ResultI exps -> Sl.ResultI exps $ at
-  | ReturnI exp -> Sl.ReturnI exp $ at
-  | DebugI exp -> Sl.DebugI exp $ at
+      Sl.GroupI (id_group, exps_group, instrs_group)
+  | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps)
+  | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps)
+  | ResultI exps -> Sl.ResultI exps
+  | ReturnI exp -> Sl.ReturnI exp
+  | DebugI exp -> Sl.DebugI exp
 
 (* Nop pass *)
 
@@ -185,11 +198,14 @@ let rec insert_nothing (instrs : instr list) : Sl.instr list =
   List.map insert_nothing' instrs
 
 and insert_nothing' (instr : instr) : Sl.instr =
-  let at = instr.at in
+  let iid = iid () in
+  insert_nothing'' instr $$ (instr.at, { iid })
+
+and insert_nothing'' (instr : instr) : Sl.instr' =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then) ->
       let instrs_then = insert_nothing instrs_then in
-      Sl.IfI (exp_cond, iterexps, instrs_then, None) $ at
+      Sl.IfI (exp_cond, iterexps, instrs_then, None)
   | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
       let instrs_hold = insert_nothing instrs_hold in
       let instrs_nothold = insert_nothing instrs_nothold in
@@ -200,7 +216,7 @@ and insert_nothing' (instr : instr) : Sl.instr =
         | [], instrs_nothold -> Sl.NotHoldH (instrs_nothold, None)
         | instrs_hold, instrs_nothold -> Sl.BothH (instrs_hold, instrs_nothold)
       in
-      Sl.HoldI (id, notexp, iterexps, holdcase) $ at
+      Sl.HoldI (id, notexp, iterexps, holdcase)
   | CaseI (exp, cases, _total) ->
       let cases =
         let guards, blocks = List.split cases in
@@ -217,18 +233,18 @@ and insert_nothing' (instr : instr) : Sl.instr =
         let blocks = List.map insert_nothing blocks in
         List.combine guards blocks
       in
-      Sl.CaseI (exp, cases, None) $ at
+      Sl.CaseI (exp, cases, None)
   | OtherwiseI instr ->
       let instr = insert_nothing' instr in
-      Sl.OtherwiseI instr $ at
+      Sl.OtherwiseI instr
   | GroupI (id_group, exps_group, instrs_group) ->
       let instrs_group = insert_nothing instrs_group in
-      Sl.GroupI (id_group, exps_group, instrs_group) $ at
-  | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps) $ at
-  | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps) $ at
-  | ResultI exps -> Sl.ResultI exps $ at
-  | ReturnI exp -> Sl.ReturnI exp $ at
-  | DebugI exp -> Sl.DebugI exp $ at
+      Sl.GroupI (id_group, exps_group, instrs_group)
+  | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps)
+  | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps)
+  | ResultI exps -> Sl.ResultI exps
+  | ReturnI exp -> Sl.ReturnI exp
+  | DebugI exp -> Sl.DebugI exp
 
 (* Instrumentation *)
 
