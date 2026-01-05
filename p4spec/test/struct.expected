@@ -30755,17 +30755,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
     2. Group parenthesizedExpressionIR: p EC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % % %
 
-      1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult')
+      1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
-      2. If ((expressionResult' has type exitResult)), then
-
-        1. (Let exitResult be (expressionResult' as exitResult))
-
-        2. Result in : % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
-
-      3. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
-
-      4. Result in : % % % |- % : EC_1 STO_1 expressionResult
+      2. Result in : % % % |- % : EC_1 STO_1 expressionResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:40.1-41.15
 syntax expressionListResult = 
@@ -31003,27 +30995,53 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
-      2. If ((storageReferenceResult' has type continueResult<storageReference?>)), then
+      2. Case analysis on storageReferenceResult'
 
-        1. (Let (` (storageReference')?{storageReference' <- storageReference'?}) be (storageReferenceResult' as continueResult<storageReference?>))
+        1. Case (% has type exitResult)
 
-        2. If (((storageReference')?{storageReference' <- storageReference'?} matches pattern (_))), then
+          1. (Let exitResult be (storageReferenceResult' as exitResult))
 
-          1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
+          2. Result in : % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
 
-          2. (Exprs_eval: p EC_1 STO_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 STO_2 expressionListResult)
+        2. Case (% has type continueResult<storageReference?>)
 
-          3. If ((expressionListResult has type continueResult<value*>)), then
+          1. (Let (` (storageReference')?{storageReference' <- storageReference'?}) be (storageReferenceResult' as continueResult<storageReference?>))
 
-            1. (Let (` (value)*{value <- value*}) be (expressionListResult as continueResult<value*>))
+          2. If (((storageReference')?{storageReference' <- storageReference'?} matches pattern (_))), then
 
-            2. If (((value)*{value <- value*} matches pattern [ _/2 ])), then
+            1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-              1. (Let [value_hi, value_lo] be (value)*{value <- value*})
+            2. (Exprs_eval: p EC_1 STO_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 STO_2 expressionListResult)
 
-              2. (Let storageReferenceResult be ((` ?((storageReference [ value_hi : value_lo ]))) as storageReferenceResult))
+            3. Case analysis on expressionListResult
 
-              3. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
+              1. Case (% has type exitResult)
+
+                1. (Let exitResult be (expressionListResult as exitResult))
+
+                2. Result in : % % % |- % : EC_2 STO_2 ((exit) as storageReferenceResult)
+
+              2. Case (% has type continueResult<value*>)
+
+                1. (Let (` (value)*{value <- value*}) be (expressionListResult as continueResult<value*>))
+
+                2. If (((value)*{value <- value*} matches pattern [ _/2 ])), then
+
+                  1. (Let [value_hi, value_lo] be (value)*{value <- value*})
+
+                  2. (Let storageReferenceResult be ((` ?((storageReference [ value_hi : value_lo ]))) as storageReferenceResult))
+
+                  3. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
+
+  4. Case (% matches pattern `(%)`)
+
+    1. (Let (( typedLvalueIR )) be lvalueIR)
+
+    2. Group parenthesized: p EC STO |- ((( typedLvalueIR )) # _lvalueNoteIR) : % % %
+
+      1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
+
+      2. Result in : % % % |- % : EC_1 STO_1 storageReferenceResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
 relation Lvalue_read: p EC STO |- storageReference' : %

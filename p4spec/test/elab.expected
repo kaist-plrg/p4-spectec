@@ -27630,7 +27630,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let ?(value) = value'?{value' <- value'?}
     -- output: % % % |- % : EC_2 STO_2 ` value as expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:539.1-555.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:539.1-544.50
   rulegroup parenthesizedExpressionIR
 
    match
@@ -27642,14 +27642,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
 
    paths
 
-    rulepath exit
-    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult'
-    -- if expressionResult' <: exitResult
-    -- let exitResult = expressionResult' as exitResult
-    -- if (exitResult = exit)
-    -- output: % % % |- % : EC_1 STO_1 exit as expressionResult
-
-    rulepath cont
+    rulepath parenthesizedExpressionIR
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
@@ -27661,7 +27654,7 @@ syntax expressionListResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.102
 relation Exprs_eval: cursor evalContext store |- typedExpressionIR* : evalContext store expressionListResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:563.1-590.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:552.1-579.2
   rulegroup 
 
    match
@@ -27940,7 +27933,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value ]) as storageReferenceResult
     -- output: % % % |- % : EC_2 STO_2 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-89.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-106.2
   rulegroup typedLvalueIR-sliceAccess
 
    match
@@ -27951,6 +27944,25 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ] = lvalueIR
 
    paths
+
+    rulepath exit
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: exitResult
+    -- let exitResult = storageReferenceResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_1 STO_1 exit as storageReferenceResult
+
+    rulepath cont-exit
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Exprs_eval: p EC_1 STO_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 STO_2 expressionListResult
+    -- if expressionListResult <: exitResult
+    -- let exitResult = expressionListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_2 STO_2 exit as storageReferenceResult
 
     rulepath cont
     -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
@@ -27966,10 +27978,26 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value_hi : value_lo ]) as storageReferenceResult
     -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
 
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:108.1-113.56
+  rulegroup parenthesized
+
+   match
+
+    (signature) p EC_0 STO_0 |- ( typedLvalueIR ) # _lvalueNoteIR : % % %
+    p EC_0 STO_0 |- lvalueIR # _lvalueNoteIR : % % %
+    -- if lvalueIR matches `(%)`
+    -- let ( typedLvalueIR ) = lvalueIR
+
+   paths
+
+    rulepath parenthesized
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult
+    -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
+
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
 relation Lvalue_read: cursor evalContext store |- storageReference : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:102.1-104.51
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:126.1-128.51
   rulegroup referenceExpressionIR
 
    match
@@ -27985,7 +28013,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = $find_var_e(p, EC, prefixedNameIR)
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:108.1-165.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:132.1-189.2
   rulegroup storageReference-nameIR
 
    match
@@ -28056,7 +28084,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let ?(value) = value''?{value'' <- value''?}
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:169.1-191.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:193.1-215.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28097,7 +28125,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:195.1-199.59
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:219.1-223.59
   rulegroup sliceAccess
 
    match
@@ -28117,7 +28145,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:90.1-93.29
 relation Lvalue_write: cursor evalContext store |- storageReference -> value : evalContext
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:210.1-212.61
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:234.1-236.61
   rulegroup referenceExpressionIR
 
    match
@@ -28133,7 +28161,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:216.1-309.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:240.1-333.2
   rulegroup storageReference-nameIR
 
    match
@@ -28225,7 +28253,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:311.1-334.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:335.1-358.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28264,7 +28292,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- if (n_idx >= n_size)
     -- output: % % % |- % -> % : EC_0
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:336.1-342.65
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:360.1-366.65
   rulegroup sliceAccess
 
    match

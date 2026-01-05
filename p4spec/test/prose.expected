@@ -13906,10 +13906,6 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
 
 <<Expr_eval, Evaluating <<typedExpressionIR, `( typedExpressionIR )` annotated with `++_++`>>, under cursor `p`, evaluation context `EC`, and store `STO`>>:
 
-. Let `EC~1~`, `STO~1~`, and `expressionResult'` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
-. Check that `expressionResult'` has type `exitResult`.
-. Let `exitResult` be `expressionResult'`.
-. Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `EXIT`.
 . Let `EC~1~`, `STO~1~`, and `expressionResult` be the result of <<Expr_eval, evaluating `typedExpressionIR`, under cursor `p`, evaluation context `EC`, and store `STO`>>.
 . Result in the resulting evaluation context `EC~1~`, store `STO~1~` and expression result `expressionResult`.
 
@@ -14008,16 +14004,23 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
 <<Lvalue_eval, `p EC STO |- typedLvalueIR [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # ++_++ : % % %`>>:
 
 . Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'`>>.
-. Check that `storageReferenceResult'` has type `continueResult<storageReference?>`.
-. Let `storageReference'^?^` be `storageReferenceResult'`.
-. Check that `storageReference'^?^` is Some value.
-. Let `storageReference` be `storageReference'^?^`.
-. Let `EC~2~`, `STO~2~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
-. Check that `expressionListResult` has type `continueResult<value*>`.
-. Let `value^{asterisk}^` be `expressionListResult`.
-. Check that `value^{asterisk}^` is a list of length 2.
-. Let `[value~hi~, value~lo~]` be `value^{asterisk}^`.
-. Let `storageReferenceResult` be `storageReference [ value~hi~ : value~lo~ ]`.
+. If let `exitResult` be `storageReferenceResult'`:
+ .. Result in `EC~1~`, `STO~1~`, and `EXIT`.
+. Else if let `storageReference'^?^` be `storageReferenceResult'`:
+ .. Check that `storageReference'^?^` is Some value.
+ .. Let `storageReference` be `storageReference'^?^`.
+ .. Let `EC~2~`, `STO~2~`, and `expressionListResult` be the result of <<Exprs_eval, evaluating `[typedExpressionIR~hi~, typedExpressionIR~lo~]`, under cursor `p`, evaluation context `EC~1~`, and store `STO~1~`>>.
+ .. If let `exitResult` be `expressionListResult`:
+  ... Result in `EC~2~`, `STO~2~`, and `EXIT`.
+ .. Else if let `value^{asterisk}^` be `expressionListResult`:
+  ... Check that `value^{asterisk}^` is a list of length 2.
+  ... Let `[value~hi~, value~lo~]` be `value^{asterisk}^`.
+  ... Let `storageReferenceResult` be `storageReference [ value~hi~ : value~lo~ ]`.
+  ... Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
+
+<<Lvalue_eval, `p EC STO |- ( typedLvalueIR ) # ++_++ : % % %`>>:
+
+. Let <<Lvalue_eval, `p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult`>>.
 . Result in `EC~1~`, `STO~1~`, and `storageReferenceResult`.
 
 <<Lvalue_read, `p EC STO |- storageReference' : %`>>
