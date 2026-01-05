@@ -32204,35 +32204,59 @@ relation Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
   2. (TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult)
 
-  3. If ((tableKeysResult has type continueResult<tableKeyValue*>)), then
+  3. Case analysis on tableKeysResult
 
-    1. (Let (` (tableKeyValue)*{tableKeyValue <- tableKeyValue*}) be (tableKeysResult as continueResult<tableKeyValue*>))
+    1. Case (% has type exitResult)
 
-    2. (Let (_annotationList _constOptIR entries={ tableEntryListIR }) be TBL.entries)
+      1. (Let exitResult be (tableKeysResult as exitResult))
 
-    3. (TableMatches_eval: EC_1 STO_1 |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult)
+      2. Result in : % % |- % % : EC_1 STO_1 ((exit) as tableResult)
 
-    4. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+    2. Case (% has type continueResult<tableKeyValue*>)
 
-      1. (Let (` (tableMatch)*{tableMatch <- tableMatch*}) be (tableMatchesResult as continueResult<tableMatch*>))
+      1. (Let (` (tableKeyValue)*{tableKeyValue <- tableKeyValue*}) be (tableKeysResult as continueResult<tableKeyValue*>))
 
-      2. (Let (prefixedNameIR ( argumentListIR )) be $select_action(TBL, (tableMatch)*{tableMatch <- tableMatch*}))
+      2. (Let (_annotationList _constOptIR entries={ tableEntryListIR }) be TBL.entries)
 
-      3. (Stmt_eval: (local) EC_2 STO_2 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_3 STO_3 statementResult)
+      3. (TableMatches_eval: EC_1 STO_1 |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult)
 
-      4. If ((statementResult has type continueEmptyResult)), then
+      4. Case analysis on tableMatchesResult
 
-        1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+        1. Case (% has type exitResult)
 
-        2. (Let b_hit be ~((tableMatch)*{tableMatch <- tableMatch*} = []))
+          1. (Let exitResult be (tableMatchesResult as exitResult))
 
-        3. (Let b_miss be ~b_hit)
+          2. Result in : % % |- % % : EC_2 STO_2 ((exit) as tableResult)
 
-        4. (Let tableMetadataEnumValue be (table_enum "action_list(" ++ typeId ++ ")" . $flatten_prefixedNameIR(prefixedNameIR)))
+        2. Case (% has type continueResult<tableMatch*>)
 
-        5. (Let tableMetadataStructValue be (table_struct "apply_result(" ++ typeId ++ ")" {hit (b_hit) ;miss (b_miss) ;action_run tableMetadataEnumValue ;}))
+          1. (Let (` (tableMatch)*{tableMatch <- tableMatch*}) be (tableMatchesResult as continueResult<tableMatch*>))
 
-        6. Result in : % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
+          2. (Let (prefixedNameIR ( argumentListIR )) be $select_action(TBL, (tableMatch)*{tableMatch <- tableMatch*}))
+
+          3. (Stmt_eval: (local) EC_2 STO_2 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_3 STO_3 statementResult)
+
+          4. Case analysis on statementResult
+
+            1. Case (% has type exitResult)
+
+              1. (Let exitResult be (statementResult as exitResult))
+
+              2. Result in : % % |- % % : EC_3 STO_3 ((exit) as tableResult)
+
+            2. Case (% has type continueEmptyResult)
+
+              1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
+              2. (Let b_hit be ~((tableMatch)*{tableMatch <- tableMatch*} = []))
+
+              3. (Let b_miss be ~b_hit)
+
+              4. (Let tableMetadataEnumValue be (table_enum "action_list(" ++ typeId ++ ")" . $flatten_prefixedNameIR(prefixedNameIR)))
+
+              5. (Let tableMetadataStructValue be (table_struct "apply_result(" ++ typeId ++ ")" {hit (b_hit) ;miss (b_miss) ;action_run tableMetadataEnumValue ;}))
+
+              6. Result in : % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-195.17
 syntax controlBodyResult = 
@@ -34360,30 +34384,38 @@ relation TableMatch_eval: EC_0 STO_0 |- (tableKeyValue)*{tableKeyValue <- tableK
 
   3. (Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult)
 
-  4. If ((keysetExpressionResult has type continueResult<setValue*>)), then
+  4. Case analysis on keysetExpressionResult
 
-    1. (Let (` (setValue)*{setValue <- setValue*}) be (keysetExpressionResult as continueResult<setValue*>))
+    1. Case (% has type exitResult)
 
-    2. (Let (value_key : _nameIR) be tableKeyValue)*{_nameIR <- _nameIR*, tableKeyValue <- tableKeyValue*, value_key <- value_key*}
+      1. (Let exitResult be (keysetExpressionResult as exitResult))
 
-    3. Case analysis on $match_keysets((setValue)*{setValue <- setValue*}, (value_key)*{value_key <- value_key*})
+      2. Result in : % % |- % @ % : EC_1 STO_1 ((exit) as tableMatchResult)
 
-      1. Case false
+    2. Case (% has type continueResult<setValue*>)
 
-        1. Result in : % % |- % @ % : EC_1 STO_1 ((` ?()) as tableMatchResult)
+      1. (Let (` (setValue)*{setValue <- setValue*}) be (keysetExpressionResult as continueResult<setValue*>))
 
-      2. Case true
+      2. (Let (value_key : _nameIR) be tableKeyValue)*{_nameIR <- _nameIR*, tableKeyValue <- tableKeyValue*, value_key <- value_key*}
 
-        1. (Let tableMatch be ((n_priority)?{n_priority <- n_priority?} : tableActionReferenceIR))
+      3. Case analysis on $match_keysets((setValue)*{setValue <- setValue*}, (value_key)*{value_key <- value_key*})
 
-        2. Result in : % % |- % @ % : EC_1 STO_1 ((` ?(tableMatch)) as tableMatchResult)
+        1. Case false
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:144.1-145.15
+          1. Result in : % % |- % @ % : EC_1 STO_1 ((` ?()) as tableMatchResult)
+
+        2. Case true
+
+          1. (Let tableMatch be ((n_priority)?{n_priority <- n_priority?} : tableActionReferenceIR))
+
+          2. Result in : % % |- % @ % : EC_1 STO_1 ((` ?(tableMatch)) as tableMatchResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:159.1-160.15
 syntax tableMatchesResult = 
    | ` tableMatch*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:147.1-150.26
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:162.1-165.26
 relation TableMatches_eval: evalContext store |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} : % % %
 
 1. Group : evalContext store |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} : % % %
@@ -34392,29 +34424,45 @@ relation TableMatches_eval: evalContext store |- (tableKeyValue)*{tableKeyValue 
 
     1. Result in : % % |- % @ % : evalContext store ((` []) as tableMatchesResult)
 
-  2. (Let (tableEntryIR')*{tableEntryIR' <- tableEntryIR'*} be (tableEntryIR)*{tableEntryIR <- tableEntryIR*})
+  2. (Let (tableEntryIR''')*{tableEntryIR''' <- tableEntryIR'''*} be (tableEntryIR)*{tableEntryIR <- tableEntryIR*})
 
-  3. If (((tableEntryIR')*{tableEntryIR' <- tableEntryIR'*} matches pattern _ :: _)), then
+  3. If (((tableEntryIR''')*{tableEntryIR''' <- tableEntryIR'''*} matches pattern _ :: _)), then
 
-    1. (Let tableEntryIR_h :: (tableEntryIR_t)*{tableEntryIR_t <- tableEntryIR_t*} be (tableEntryIR')*{tableEntryIR' <- tableEntryIR'*})
+    1. (Let tableEntryIR_h :: (tableEntryIR_t)*{tableEntryIR_t <- tableEntryIR_t*} be (tableEntryIR''')*{tableEntryIR''' <- tableEntryIR'''*})
 
     2. (TableMatch_eval: evalContext store |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult)
 
-    3. If ((tableMatchResult has type continueResult<tableMatch?>)), then
+    3. Case analysis on tableMatchResult
 
-      1. (Let (` (tableMatch_h)?{tableMatch_h <- tableMatch_h?}) be (tableMatchResult as continueResult<tableMatch?>))
+      1. Case (% has type exitResult)
 
-      2. (TableMatches_eval: EC_1 STO_1 |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ (tableEntryIR_t)*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult)
+        1. (Let exitResult be (tableMatchResult as exitResult))
 
-      3. If ((tableMatchesResult has type continueResult<tableMatch*>)), then
+        2. Result in : % % |- % @ % : EC_1 STO_1 ((exit) as tableMatchesResult)
 
-        1. (Let (` (tableMatch_t)*{tableMatch_t <- tableMatch_t*}) be (tableMatchesResult as continueResult<tableMatch*>))
+      2. Case (% has type continueResult<tableMatch?>)
 
-        2. (Let (tableMatch)*{tableMatch <- tableMatch*} be $opt_as_seq_<tableMatch>((tableMatch_h)?{tableMatch_h <- tableMatch_h?}) ++ (tableMatch_t)*{tableMatch_t <- tableMatch_t*})
+        1. (Let (` (tableMatch_h)?{tableMatch_h <- tableMatch_h?}) be (tableMatchResult as continueResult<tableMatch?>))
 
-        3. Result in : % % |- % @ % : EC_2 STO_2 ((` (tableMatch)*{tableMatch <- tableMatch*}) as tableMatchesResult)
+        2. (TableMatches_eval: EC_1 STO_1 |- (tableKeyValue)*{tableKeyValue <- tableKeyValue*} @ (tableEntryIR_t)*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:176.1-176.60
+        3. Case analysis on tableMatchesResult
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (tableMatchesResult as exitResult))
+
+            2. Result in : % % |- % @ % : EC_2 STO_2 ((exit) as tableMatchesResult)
+
+          2. Case (% has type continueResult<tableMatch*>)
+
+            1. (Let (` (tableMatch_t)*{tableMatch_t <- tableMatch_t*}) be (tableMatchesResult as continueResult<tableMatch*>))
+
+            2. (Let (tableMatch)*{tableMatch <- tableMatch*} be $opt_as_seq_<tableMatch>((tableMatch_h)?{tableMatch_h <- tableMatch_h?}) ++ (tableMatch_t)*{tableMatch_t <- tableMatch_t*})
+
+            3. Result in : % % |- % @ % : EC_2 STO_2 ((` (tableMatch)*{tableMatch <- tableMatch*}) as tableMatchesResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:208.1-208.60
 def $is_largest_priority_wins(tableCustomPropertyIR)
 
 1. If ((tableCustomPropertyIR matches pattern `%%CUSTOM_CONST%%;`)), then
@@ -34429,7 +34477,7 @@ def $is_largest_priority_wins(tableCustomPropertyIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:177.1-177.55
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:209.1-209.55
 def $largest_priority_wins(TBL)
 
 1. (Let (tableCustomPropertyIR)*{tableCustomPropertyIR <- tableCustomPropertyIR*} be TBL.customs)
@@ -34454,7 +34502,7 @@ def $largest_priority_wins(TBL)
 
   1. Return true
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:197.1-198.27
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:229.1-230.27
 def $select_action(TBL, (tableMatch')*{tableMatch' <- tableMatch'*})
 
 1. Case analysis on (tableMatch')*{tableMatch' <- tableMatch'*}

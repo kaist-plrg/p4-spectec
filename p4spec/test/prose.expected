@@ -14589,22 +14589,25 @@ for each `constructorParameterIR~default~` in `constructorParameterIR~default~^{
 
 . Let `KEY = { tableKeyListIR }` be `TBL.KEYS`.
 . Let <<TableKeys_eval, `EC~0~ STO~0~ |- tableKeyListIR : EC~1~ STO~1~ tableKeysResult`>>.
-. Check that `tableKeysResult` has type `continueResult<tableKeyValue*>`.
-. Let `tableKeyValue^{asterisk}^` be `tableKeysResult`.
-. Let `++_++ ++_++ ENTRIES = { tableEntryListIR }` be `TBL.ENTRIES`.
-. Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryListIR : EC~2~ STO~2~ tableMatchesResult`>>.
-. Check that `tableMatchesResult` has type `continueResult<tableMatch*>`.
-. Let `tableMatch^{asterisk}^` be `tableMatchesResult`.
-. Let `prefixedNameIR ( argumentListIR )` be `<<select_action, select_action(TBL, tableMatch^{asterisk}^)>>`.
-. Let `EC~3~`, `STO~3~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `prefixedNameIR < · > ( argumentListIR ) ;`, under cursor `LOCAL`, evaluation context `EC~2~`, and store `STO~2~`>>.
-. Check that `statementResult` has type `continueEmptyResult`.
-. Let `continueEmptyResult` be `statementResult`.
-. Let `b~hit~` be `~tableMatch^{asterisk}^ = ·`.
-. Let `b~miss~` be `~b~hit~`.
-. Let `nameIR` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
-. Let `tableMetadataEnumValue` be `TABLE_ENUM "action_list(" {pp} typeId {pp} ")" . nameIR`.
-. Let `tableMetadataStructValue` be `TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT b~hit~ ; MISS b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }`.
-. Result in `EC~3~`, `STO~3~`, and `RETURN tableMetadataStructValue`.
+. If let `exitResult` be `tableKeysResult`:
+ .. Result in `EC~1~`, `STO~1~`, and `EXIT`.
+. Else if let `tableKeyValue^{asterisk}^` be `tableKeysResult`:
+ .. Let `++_++ ++_++ ENTRIES = { tableEntryListIR }` be `TBL.ENTRIES`.
+ .. Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryListIR : EC~2~ STO~2~ tableMatchesResult`>>.
+ .. If let `exitResult` be `tableMatchesResult`:
+  ... Result in `EC~2~`, `STO~2~`, and `EXIT`.
+ .. Else if let `tableMatch^{asterisk}^` be `tableMatchesResult`:
+  ... Let `prefixedNameIR ( argumentListIR )` be `<<select_action, select_action(TBL, tableMatch^{asterisk}^)>>`.
+  ... Let `EC~3~`, `STO~3~`, and `statementResult` be the result of <<Stmt_eval, the compile-time evaluation of `prefixedNameIR < · > ( argumentListIR ) ;`, under cursor `LOCAL`, evaluation context `EC~2~`, and store `STO~2~`>>.
+  ... If let `exitResult` be `statementResult`:
+   .... Result in `EC~3~`, `STO~3~`, and `EXIT`.
+  ... Else let `continueEmptyResult` be `statementResult`:
+   .... Let `b~hit~` be `~tableMatch^{asterisk}^ = ·`.
+   .... Let `b~miss~` be `~b~hit~`.
+   .... Let `nameIR` be <<flatten_prefixedNameIR, the string form of  `prefixedNameIR`>>.
+   .... Let `tableMetadataEnumValue` be `TABLE_ENUM "action_list(" {pp} typeId {pp} ")" . nameIR`.
+   .... Let `tableMetadataStructValue` be `TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT b~hit~ ; MISS b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }`.
+   .... Result in `EC~3~`, `STO~3~`, and `RETURN tableMetadataStructValue`.
 
 <<ControlBody_eval, `EC~0~ STO~0~ |- controlBodyIR : % % %`>>
 
@@ -15569,20 +15572,21 @@ for each `parameterIR` in `parameterIR^{asterisk}^`
 . Let `++_++ tableEntryPriorityIR^?^ keysetExpressionIR : tableActionReferenceIR ++_++ ;` be `tableEntryIR`.
 . Let <<TableEntryPriority_eval, `EC~0~ STO~0~ |- tableEntryPriorityIR^?^ : n~priority~^?^`>>.
 . Let <<Expr_eval_keyset, `EC~0~ STO~0~ |- keysetExpressionIR : EC~1~ STO~1~ keysetExpressionResult`>>.
-. Check that `keysetExpressionResult` has type `continueResult<setValue*>`.
-. Let `setValue^{asterisk}^` be `keysetExpressionResult`.
-. Let `value~key~^{asterisk}^` be the list of `value~key~`, obtained by repeating:
+. If let `exitResult` be `keysetExpressionResult`:
+ .. Result in `EC~1~`, `STO~1~`, and `EXIT`.
+. Else if let `setValue^{asterisk}^` be `keysetExpressionResult`:
+ .. Let `value~key~^{asterisk}^` be the list of `value~key~`, obtained by repeating:
 +
 --
-  * Let `value~key~ : ++_++` be `tableKeyValue`.
+    * Let `value~key~ : ++_++` be `tableKeyValue`.
 --
 +
 for each `tableKeyValue` in `tableKeyValue^{asterisk}^`
-. If `~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
- .. Result in `EC~1~`, `STO~1~`, and `None`.
-. Else if `<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
- .. Let `tableMatch` be `n~priority~^?^ : tableActionReferenceIR`.
- .. Result in `EC~1~`, `STO~1~`, and `tableMatch`.
+ .. If `~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
+  ... Result in `EC~1~`, `STO~1~`, and `None`.
+ .. Else if `<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>`:
+  ... Let `tableMatch` be `n~priority~^?^ : tableActionReferenceIR`.
+  ... Result in `EC~1~`, `STO~1~`, and `tableMatch`.
 
 <<TableMatches_eval, `evalContext store |- tableKeyValue^{asterisk}^ @ tableEntryIR^{asterisk}^ : % % %`>>
 
@@ -15590,17 +15594,19 @@ for each `tableKeyValue` in `tableKeyValue^{asterisk}^`
 
 . If `tableEntryIR^{asterisk}^` is equal to `·`:
  .. Result in `evalContext`, `store`, and `·`.
-. Let `tableEntryIR'^{asterisk}^` be `tableEntryIR^{asterisk}^`.
-. Else if let `tableEntryIR~h~ {two-colons} tableEntryIR~t~^{asterisk}^` be `tableEntryIR'^{asterisk}^`:
+. Let `tableEntryIR'''^{asterisk}^` be `tableEntryIR^{asterisk}^`.
+. Else if let `tableEntryIR~h~ {two-colons} tableEntryIR~t~^{asterisk}^` be `tableEntryIR'''^{asterisk}^`:
  .. Let <<TableMatch_eval, `evalContext store |- tableKeyValue^{asterisk}^ @ tableEntryIR~h~ : EC~1~ STO~1~ tableMatchResult`>>.
- .. Check that `tableMatchResult` has type `continueResult<tableMatch?>`.
- .. Let `tableMatch~h~^?^` be `tableMatchResult`.
- .. Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryIR~t~^{asterisk}^ : EC~2~ STO~2~ tableMatchesResult`>>.
- .. Check that `tableMatchesResult` has type `continueResult<tableMatch*>`.
- .. Let `tableMatch~t~^{asterisk}^` be `tableMatchesResult`.
- .. Let `tableMatch'^{asterisk}^` be `<<opt_as_seq_, opt_as_seq_<tableMatch>(tableMatch~h~^?^)>>`.
- .. Let `tableMatch^{asterisk}^` be `tableMatch'^{asterisk}^ {pp} tableMatch~t~^{asterisk}^`.
- .. Result in `EC~2~`, `STO~2~`, and `tableMatch^{asterisk}^`.
+ .. If let `exitResult` be `tableMatchResult`:
+  ... Result in `EC~1~`, `STO~1~`, and `EXIT`.
+ .. Else if let `tableMatch~h~^?^` be `tableMatchResult`:
+  ... Let <<TableMatches_eval, `EC~1~ STO~1~ |- tableKeyValue^{asterisk}^ @ tableEntryIR~t~^{asterisk}^ : EC~2~ STO~2~ tableMatchesResult`>>.
+  ... If let `exitResult` be `tableMatchesResult`:
+   .... Result in `EC~2~`, `STO~2~`, and `EXIT`.
+  ... Else if let `tableMatch~t~^{asterisk}^` be `tableMatchesResult`:
+   .... Let `tableMatch'^{asterisk}^` be `<<opt_as_seq_, opt_as_seq_<tableMatch>(tableMatch~h~^?^)>>`.
+   .... Let `tableMatch^{asterisk}^` be `tableMatch'^{asterisk}^ {pp} tableMatch~t~^{asterisk}^`.
+   .... Result in `EC~2~`, `STO~2~`, and `tableMatch^{asterisk}^`.
 
 <<is_largest_priority_wins, is_largest_priority_wins(tableCustomPropertyIR)>>
 

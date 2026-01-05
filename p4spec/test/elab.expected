@@ -29299,7 +29299,7 @@ syntax tableResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:188.1-191.26
 relation Table_eval: evalContext store |- typeId tableObjectProperty : evalContext store tableResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:227.1-255.54
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:259.1-329.2
   rulegroup 
 
    match
@@ -29309,7 +29309,43 @@ relation Table_eval: evalContext store |- typeId tableObjectProperty : evalConte
 
    paths
 
-    rulepath 
+    rulepath keys-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: exitResult
+    -- let exitResult = tableKeysResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_1 STO_1 exit as tableResult
+
+    rulepath keys-cont-matches-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: continueResult<tableKeyValue*>
+    -- let ` tableKeyValue*{tableKeyValue <- tableKeyValue*} = tableKeysResult as continueResult<tableKeyValue*>
+    -- let _annotationList _constOptIR entries={ tableEntryListIR } = TBL.entries
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: exitResult
+    -- let exitResult = tableMatchesResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_2 STO_2 exit as tableResult
+
+    rulepath keys-cont-matches-cont-action-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: continueResult<tableKeyValue*>
+    -- let ` tableKeyValue*{tableKeyValue <- tableKeyValue*} = tableKeysResult as continueResult<tableKeyValue*>
+    -- let _annotationList _constOptIR entries={ tableEntryListIR } = TBL.entries
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: continueResult<tableMatch*>
+    -- let ` tableMatch*{tableMatch <- tableMatch*} = tableMatchesResult as continueResult<tableMatch*>
+    -- let prefixedNameIR ( argumentListIR ) = $select_action(TBL, tableMatch*{tableMatch <- tableMatch*})
+    -- Stmt_eval: local EC_2 STO_2 |- prefixedNameIR as callableTargetIR < [] >( argumentListIR ); as statementIR : EC_3 STO_3 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_3 STO_3 exit as tableResult
+
+    rulepath keys-cont-matches-cont-action-cont
     -- let key={ tableKeyListIR } = TBL.keys
     -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
     -- if tableKeysResult <: continueResult<tableKeyValue*>
@@ -31369,7 +31405,7 @@ syntax tableMatchResult =
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:97.1-100.26
 relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : evalContext store tableMatchResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:102.1-141.2
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:102.1-156.2
   rulegroup 
 
    match
@@ -31378,6 +31414,15 @@ relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : e
     EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
 
    paths
+
+    rulepath exit
+    -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
+    -- TableEntryPriority_eval: EC_0 STO_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?}
+    -- Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult
+    -- if keysetExpressionResult <: exitResult
+    -- let exitResult = keysetExpressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_1 STO_1 exit as tableMatchResult
 
     rulepath no-match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
@@ -31400,36 +31445,63 @@ relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : e
     -- let tableMatch = n_priority?{n_priority <- n_priority?} : tableActionReferenceIR
     -- output: % % |- % @ % : EC_1 STO_1 ` ?(tableMatch) as tableMatchResult
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:144.1-145.15
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:159.1-160.15
 syntax tableMatchesResult = 
    | ` tableMatch*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:147.1-150.26
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:162.1-165.26
 relation TableMatches_eval: evalContext store |- tableKeyValue* @ tableEntryListIR : evalContext store tableMatchesResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:152.1-170.2
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:167.1-202.2
   rulegroup 
 
    match
 
-    (signature) evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
-    evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+    (signature) evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} : % % %
+    evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} : % % %
 
    paths
 
     rulepath nil
     -- let EC = evalContext
     -- let STO = store
-    -- if (tableEntryIR*{tableEntryIR <- tableEntryIR*} = [])
+    -- if (tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} = [])
     -- output: % % |- % @ % : EC STO ` [] as tableMatchesResult
+
+    rulepath cons-head-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
+    -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
+    -- if tableMatchResult <: exitResult
+    -- let exitResult = tableMatchResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_1 STO_1 exit as tableMatchesResult
+
+    rulepath cons-head-cont-tail-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
+    -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
+    -- if tableMatchResult <: continueResult<tableMatch?>
+    -- let ` tableMatch_h?{tableMatch_h <- tableMatch_h?} = tableMatchResult as continueResult<tableMatch?>
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: exitResult
+    -- let exitResult = tableMatchesResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_2 STO_2 exit as tableMatchesResult
 
     rulepath cons-head-cont-tail-cont
     -- let EC_0 = evalContext
     -- let STO_0 = store
-    -- let tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
-    -- if tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} matches _ :: _
-    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'*{tableEntryIR' <- tableEntryIR'*}
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
     -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
     -- if tableMatchResult <: continueResult<tableMatch?>
     -- let ` tableMatch_h?{tableMatch_h <- tableMatch_h?} = tableMatchResult as continueResult<tableMatch?>
@@ -31439,23 +31511,23 @@ relation TableMatches_eval: evalContext store |- tableKeyValue* @ tableEntryList
     -- let tableMatch*{tableMatch <- tableMatch*} = $opt_as_seq_<tableMatch>(tableMatch_h?{tableMatch_h <- tableMatch_h?}) ++ tableMatch_t*{tableMatch_t <- tableMatch_t*}
     -- output: % % |- % @ % : EC_2 STO_2 ` tableMatch*{tableMatch <- tableMatch*} as tableMatchesResult
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:176.1-176.60
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:208.1-208.60
 def $is_largest_priority_wins(tableCustomPropertyIR) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:179.1-182.9
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:211.1-214.9
   clause 0 : (tableCustomPropertyIR) = true
   -- if tableCustomPropertyIR matches `%%CUSTOM_CONST%%;`
   -- let _annotationList _constOptIR custom_const text _constantInitializerIR ; = tableCustomPropertyIR
   -- if (text = "largest_priority_wins")
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:183.1-184.15
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:215.1-216.15
   clause 1 : (_tableCustomPropertyIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:177.1-177.55
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:209.1-209.55
 def $largest_priority_wins(tableObjectProperty) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:186.1-190.65
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:218.1-222.65
   clause 0 : (TBL) = b
   -- let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} = TBL.customs
   -- let tableCustomPropertyIR''*{tableCustomPropertyIR'' <- tableCustomPropertyIR''*} = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins)
@@ -31466,26 +31538,26 @@ def $largest_priority_wins(tableObjectProperty) : bool =
   -- if value <: boolValue
   -- let b = value as boolValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:191.1-195.65
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:223.1-227.65
   clause 1 : (TBL) = true
   -- let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} = TBL.customs
   -- if ([] = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins))
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:197.1-198.27
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:229.1-230.27
 def $select_action(tableObjectProperty, tableMatch*) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:200.1-202.27
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:232.1-234.27
   clause 0 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR
   -- if tableMatch*{tableMatch <- tableMatch*} matches []
   -- let _annotationList _constOptIR default_action= tableActionReferenceIR ; = TBL.default_action
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:203.1-204.49
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:235.1-236.49
   clause 1 : (TBL, tableMatch'*{tableMatch' <- tableMatch'*}) = tableActionReferenceIR
   -- if tableMatch'*{tableMatch' <- tableMatch'*} matches [ _/1 ]
   -- let [tableMatch] = tableMatch'*{tableMatch' <- tableMatch'*}
   -- let _nat?{_nat <- _nat?} : tableActionReferenceIR = tableMatch
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:205.1-215.70
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:237.1-247.70
   clause 2 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR_h
   -- if (|tableMatch*{tableMatch <- tableMatch*}| > 1)
   -- (let nat?{nat <- nat?} : tableActionReferenceIR = tableMatch)*{nat? <- nat?*, tableActionReferenceIR <- tableActionReferenceIR*, tableMatch <- tableMatch*}
@@ -31497,7 +31569,7 @@ def $select_action(tableObjectProperty, tableMatch*) : tableActionReferenceIR =
   -- if tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} matches _ :: _
   -- let tableActionReferenceIR_h :: _tableActionReferenceIR*{_tableActionReferenceIR <- _tableActionReferenceIR*} = tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:216.1-225.71
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:248.1-257.71
   clause 3 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR_h
   -- if (|tableMatch*{tableMatch <- tableMatch*}| > 1)
   -- (let nat?{nat <- nat?} : tableActionReferenceIR = tableMatch)*{nat? <- nat?*, tableActionReferenceIR <- tableActionReferenceIR*, tableMatch <- tableMatch*}
