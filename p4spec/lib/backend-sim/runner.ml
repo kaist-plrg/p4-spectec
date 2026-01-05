@@ -1,4 +1,5 @@
 open Lang
+module ICov_multi = Coverage.Instr.Multi
 module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
@@ -18,21 +19,34 @@ module Make
 
   (* Relation runner *)
 
+  let run_program_il ~(derive : bool) (spec_il : Il.spec) (relname : string)
+      (includes_p4 : string list) (filename_p4 : string) : program_result_il =
+    if derive then
+      Format.eprintf "[WARNING] Derivation not supported for IL interpreter\n";
+    Interp_IL.eval_program spec_il relname includes_p4 filename_p4
+
+  let run_program_sl ~(derive : bool) (spec_sl : Sl.spec) (relname : string)
+      (includes_p4 : string list) (filename_p4 : string) : program_result_sl =
+    Interp_SL.eval_program ~derive spec_sl relname includes_p4 filename_p4
+
   let run_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : program_result =
     Arch.init spec;
     match spec with
     | IL spec_il ->
-        if derive then
-          Format.eprintf
-            "[WARNING] Derivation not supported for IL interpreter\n";
-        Interp_IL.eval_program spec_il relname includes_p4 filename_p4
+        let program_result_il =
+          run_program_il ~derive spec_il relname includes_p4 filename_p4
+        in
+        IL program_result_il
     | SL spec_sl ->
-        Interp_SL.eval_program ~derive spec_sl relname includes_p4 filename_p4
+        let program_result_sl =
+          run_program_sl ~derive spec_sl relname includes_p4 filename_p4
+        in
+        SL program_result_sl
     | Empty -> assert false
 
   let run_program_internal ~(derive : bool) (spec : Sl.spec) (relname : string)
-      (value_program : Sl.value) : rel_result =
+      (value_program : Sl.value) : rel_result_sl =
     derive |> ignore;
     Arch.init (SL spec);
     Interp_SL.eval_rel spec relname [ value_program ]
@@ -208,8 +222,13 @@ module Make
 
   (* Coverage runner *)
 
-  let cover_programs (spec : Sl.spec) (relname : string)
+  let cover_instr_programs (spec : Sl.spec) (relname : string)
+      (includes_p4 : string list) (filenames_p4 : string list) : ICov_multi.t =
+    Arch.init (SL spec);
+    Interp_SL.cover_instr_programs spec relname includes_p4 filenames_p4
+
+  let cover_dangling_programs (spec : Sl.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
     Arch.init (SL spec);
-    Interp_SL.cover_programs spec relname includes_p4 filenames_p4
+    Interp_SL.cover_dangling_programs spec relname includes_p4 filenames_p4
 end

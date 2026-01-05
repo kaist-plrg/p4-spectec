@@ -115,9 +115,12 @@ let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
     (match
        Runner.run_program ~derive:false spec_sim relname includes_p4 filename_p4
      with
-    | Pass _ -> if negative then raise (TestRunNegErr time_start)
-    | Fail (at, msg, _) -> raise (TestRunErr (msg, at, time_start))
-    | IllFormed (at, msg, _) -> raise (TestRunErr (msg, at, time_start)));
+    | IL (Pass _) | SL (Pass _) ->
+        if negative then raise (TestRunNegErr time_start)
+    | IL (Fail (at, msg)) | SL (Fail (at, msg, _)) ->
+        raise (TestRunErr (msg, at, time_start))
+    | IL (IllFormed (at, msg)) | SL (IllFormed (at, msg, _)) ->
+        raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err
@@ -186,10 +189,10 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Sim.IL spec_il
+        (Sim.IL spec_il : Sim.spec)
     | `SL ->
         let spec_sl = structure specdir in
-        Sim.SL spec_sl
+        (Sim.SL spec_sl : Sim.spec)
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -310,10 +313,10 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
     match mode with
     | `IL ->
         let spec_il = elab specdir in
-        Sim.IL spec_il
+        (Sim.IL spec_il : Sim.spec)
     | `SL ->
         let spec_sl = structure specdir in
-        Sim.SL spec_sl
+        (Sim.SL spec_sl : Sim.spec)
   in
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
@@ -415,7 +418,9 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
       filenames_p4
   in
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-  let cover = Runner.cover_programs spec_sl relname includes_p4 filenames_p4 in
+  let cover =
+    Runner.cover_dangling_programs spec_sl relname includes_p4 filenames_p4
+  in
   Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =

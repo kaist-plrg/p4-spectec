@@ -18,31 +18,39 @@ struct
   (* Call entry points *)
 
   let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
-    let result =
-      match !spec with
-      | IL spec_il -> Interp_IL.eval_rel spec_il relname values_input
-      | SL spec_sl -> Interp_SL.eval_rel spec_sl relname values_input
-      | Empty -> assert false
-    in
-    match result with
-    | Pass (values_output, _) -> values_output
-    | Fail (at, msg, _) -> error at msg
+    match !spec with
+    | IL spec_il -> (
+        let rel_result_il = Interp_IL.eval_rel spec_il relname values_input in
+        match rel_result_il with
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
+    | SL spec_sl -> (
+        let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
+        match rel_result_sl with
+        | Pass (values_output, _) -> values_output
+        | Fail (at, msg, _) -> error at msg)
+    | Empty -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
 
   let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
-    let result =
-      match !spec with
-      | IL spec_il ->
+    match !spec with
+    | IL spec_il -> (
+        let func_result_il =
           Interp_IL.eval_func spec_il funcname typs_input values_input
-      | SL spec_sl ->
+        in
+        match func_result_il with
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
+    | SL spec_sl -> (
+        let func_result_sl =
           Interp_SL.eval_func spec_sl funcname typs_input values_input
-      | Empty -> assert false
-    in
-    match result with
-    | Pass (value_output, _) -> value_output
-    | Fail (at, msg, _) -> error at msg
+        in
+        match func_result_sl with
+        | Pass (value_output, _) -> value_output
+        | Fail (at, msg, _) -> error at msg)
+    | Empty -> assert false
 
   let init_call_func () = Spec.Func.register call_func
 
@@ -274,17 +282,28 @@ struct
   let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
       (filename_p4 : string) : Value.t * Value.t =
     init spec_;
-    let result =
+    let values_output =
       match !spec with
-      | IL spec_il ->
-          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
-      | SL spec_sl ->
-          Interp_SL.eval_program ~derive:false spec_sl "V1Model_init"
-            includes_p4 filename_p4
+      | IL spec_il -> (
+          let program_result_il =
+            Interp_IL.eval_program spec_il "V1Model_init" includes_p4
+              filename_p4
+          in
+          match program_result_il with
+          | Pass values_output -> values_output
+          | Fail (at, msg) | IllFormed (at, msg) -> error at msg)
+      | SL spec_sl -> (
+          let program_result_sl =
+            Interp_SL.eval_program ~derive:false spec_sl "V1Model_init"
+              includes_p4 filename_p4
+          in
+          match program_result_sl with
+          | Pass (values_output, _, _, _) -> values_output
+          | Fail (at, msg, _) | IllFormed (at, msg, _) -> error at msg)
       | Empty -> assert false
     in
-    match result with
-    | Pass ([ value_ctx; value_sto ], _, _, _) -> (value_ctx, value_sto)
+    match values_output with
+    | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
     | _ -> error_no_region "unexpected return from V1Model_init"
 
   (* Pipeline driver *)

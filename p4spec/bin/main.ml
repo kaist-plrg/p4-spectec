@@ -25,10 +25,10 @@ let runner ?(arch : string option) mode filenames_spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
-        Runtime.Sim.Simulator.IL spec_il
+        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
     | `SL ->
         let spec_sl = structure filenames_spec in
-        Runtime.Sim.Simulator.SL spec_sl
+        (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
   in
   let (module Runner) =
     match arch with
@@ -116,9 +116,11 @@ let run_command =
            Runner.run_program ~derive:false spec_sim relname includes_p4
              filename_p4
          with
-         | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
+         | IL (Pass _) | SL (Pass _) -> Format.printf "passed\n"
+         | IL (Fail (_, msg)) | SL (Fail (_, msg, _)) ->
+             Format.printf "failed: %s\n" msg
+         | IL (IllFormed (_, msg)) | SL (IllFormed (_, msg, _)) ->
+             Format.printf "ill-formed: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -186,7 +188,8 @@ let cover_dangling_command =
          let spec_sl = structure filenames_spec in
          let (module Runner) = Backend_sim.Gen.gen_placeholder () in
          let cover =
-           Runner.cover_programs spec_sl relname includes_p4 filenames_p4
+           Runner.cover_dangling_programs spec_sl relname includes_p4
+             filenames_p4
          in
          Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov) cover
        with
@@ -306,15 +309,18 @@ let interesting_command =
      fun () ->
        try
          let spec_sim, (module Runner) = runner `SL filenames_spec in
+         let spec_sl =
+           match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
+         in
          let result =
-           Runner.run_program ~derive:false spec_sim relname includes_p4
+           Runner.run_program_sl ~derive:false spec_sl relname includes_p4
              filename_p4
          in
          match result with
          | Pass (_, _, _, cover_single) ->
              if check_well_typed then (
                let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single
+                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
                in
                match branch.status with
                | Hit ->
@@ -335,7 +341,7 @@ let interesting_command =
                exit 10)
              else
                let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single
+                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
                in
                match branch.status with
                | Hit ->

@@ -13,6 +13,9 @@ module Branch = struct
      if missed, record the value ids for closest-AST derivation *)
 
   type status = Hit | Miss of vid list
+
+  (* Type *)
+
   type t = { origin : origin; status : status }
 
   (* Constructor *)

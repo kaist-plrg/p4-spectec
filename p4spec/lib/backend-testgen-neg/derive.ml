@@ -62,16 +62,15 @@ let derive_phantom (pid : pid) (graph : Dep.Graph.t) (cover : DCov_single.t) :
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-  let spec_sim = Sim.SL spec in
   match
-    Runner.run_program ~derive:true spec_sim relname includes_p4 filename_p4
+    Runner.run_program_sl ~derive:true spec relname includes_p4 filename_p4
   with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
   | Pass (_, graph, _, cover) ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
-        let branch = DCov_single.Cover.find pid cover in
+        let branch = DCov_single.Cover.find pid cover.dangling in
         match branch.status with Hit -> [] | Miss vids_related -> vids_related
       in
       F.asprintf "Found %d related values" (List.length vids_related)

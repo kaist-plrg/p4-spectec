@@ -15,6 +15,9 @@ module Branch = struct
      note that close-missing files must be well-formed and well-typed *)
 
   type status = Hit of bool * string list | Miss of string list
+
+  (* Type *)
+
   type t = { origin : origin; status : status }
 
   (* Constructor *)
