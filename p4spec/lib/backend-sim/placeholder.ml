@@ -1,6 +1,8 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+module ICov_single = Coverage.Instr.Single
+module DCov_single = Coverage.Dangling.Single
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -10,8 +12,20 @@ module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
   (* Specification *)
 
-  let spec : Sim.spec ref = ref Sim.Empty
+  let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
+
+  (* Coverage *)
+
+  let coverage : Sim.coverage ref = ref Sim.Empty
+
+  let init_coverage (spec_ : Sim.spec) : unit =
+    match spec_ with
+    | SL spec_sl ->
+        let instr = ICov_single.init spec_sl in
+        let dangling = DCov_single.init spec_sl in
+        coverage := Sim.Cover { instr; dangling }
+    | IL _ | Empty -> ()
 
   (* Call entry points *)
 
@@ -104,6 +118,7 @@ struct
 
   let init (spec_ : Sim.spec) : unit =
     init_spec spec_;
+    init_coverage spec_;
     init_call_rel ();
     init_call_func ()
 

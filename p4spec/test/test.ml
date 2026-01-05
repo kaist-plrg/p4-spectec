@@ -374,7 +374,7 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdir
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
 
-let run_sim_command =
+let sim_command =
   Core.Command.basic ~summary:"run simulation test"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
@@ -431,6 +431,81 @@ let cover_dangling_command =
      and testdirs_p4 = flag "-d" (listed string) ~doc:"p4 test directory" in
      fun () ->
        cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4)
+
+(* Instruction coverage test - on simulation *)
+
+let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdir patchdir
+    =
+  let spec_sl = structure specdir in
+  let excludes_p4 =
+    excludes_p4 |> Filesys.collect_excludes
+    |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
+  in
+  let filenames_p4 = Filesys.collect_files ~suffix:".p4" testdir in
+  let filenames_p4 =
+    List.filter
+      (fun filename_p4 ->
+        not (List.exists (String.equal filename_p4) excludes_p4))
+      filenames_p4
+  in
+  let filenames_p4 =
+    List.filter
+      (fun filename_p4 ->
+        let contents = Filesys.read_file filename_p4 in
+        match arch with
+        | "v1model" ->
+            Strings.contains_substring "#include <v1model.p4>" contents
+            || Strings.contains_substring "#include \"v1model.p4\"" contents
+        | _ -> false)
+      filenames_p4
+  in
+  let filenames_p4_patch = Filesys.collect_files ~suffix:".p4" patchdir in
+  let filenames_p4 =
+    Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
+  in
+  let filenames_stf = Filesys.collect_files ~suffix:".stf" testdir in
+  let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
+  let filenames_stf =
+    Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
+  in
+  let filenames_p4, filenames_stf =
+    filenames_p4
+    |> List.filter_map (fun filename_p4 ->
+           let filename_base = Filesys.base ~suffix:".p4" filename_p4 in
+           let filename_stf_opt =
+             List.find_opt
+               (fun filename_stf ->
+                 let filename_stf_base =
+                   Filesys.base ~suffix:".stf" filename_stf
+                 in
+                 String.equal filename_base filename_stf_base)
+               filenames_stf
+           in
+           match filename_stf_opt with
+           | Some filename_stf -> Some (filename_p4, filename_stf)
+           | None -> None)
+    |> List.split
+  in
+  let (module Runner) = Backend_sim.Gen.gen arch in
+  let cover_instr =
+    Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4 filenames_stf
+  in
+  Coverage.Instr.Multi.log ~filename_cov_opt:None cover_instr
+
+let cover_sim_instr_command =
+  Core.Command.basic
+    ~summary:"measure instruction coverage of the P4 spec when simulated"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and testdir = flag "-d" (required string) ~doc:"p4 and stf test directory"
+     and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
+     and arch = flag "-arch" (required string) ~doc:"architecture name" in
+     fun () ->
+       cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdir
+         patchdir)
 
 (* P4 Parser test *)
 
@@ -570,8 +645,9 @@ let command =
       ("struct", structure_command);
       ("prose", prose_command);
       ("run", run_command);
-      ("sim", run_sim_command);
+      ("sim", sim_command);
       ("cover-dangling", cover_dangling_command);
+      ("cover-sim-instr", cover_sim_instr_command);
       ("parser", run_parser_command);
     ]
 

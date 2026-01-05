@@ -1934,27 +1934,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let vdg = Dep.Graph.assemble_graph value_program in
       let ctx = Ctx.empty_end_to_end ~derive vdg cover_instr cover_dangling in
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
-      let coverage_result =
+      let cover_single : Sim.cover_single =
         Sim.
           { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
       in
-      Sim.Pass (values_output, vdg, coverage_result)
+      Sim.Pass (values_output, vdg, cover_single)
     with
     | Util.Error.ParseError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.IllFormed (at, msg, coverage_result)
+        Sim.IllFormed (at, msg, cover_single)
     | Util.Error.InterpError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
     | Util.Error.ArchError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result_sl =
@@ -1964,22 +1964,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx = Ctx.empty_partial cover_instr cover_dangling in
     try
       let values_output = do_eval_rel ctx spec relname values_input in
-      let coverage_result =
+      let cover_single : Sim.cover_single =
         Sim.
           { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
       in
-      Sim.Pass (values_output, coverage_result)
+      Sim.Pass (values_output, cover_single)
     with
     | Util.Error.InterpError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
     | Util.Error.ArchError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result_sl =
@@ -1989,22 +1989,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx = Ctx.empty_partial cover_instr cover_dangling in
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
-      let coverage_result =
+      let cover_single : Sim.cover_single =
         Sim.
           { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
       in
-      Sim.Pass (value_output, coverage_result)
+      Sim.Pass (value_output, cover_single)
     with
     | Util.Error.InterpError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
     | Util.Error.ArchError (at, msg) ->
-        let coverage_result =
+        let cover_single : Sim.cover_single =
           Sim.{ instr = !cover_instr; dangling = !cover_dangling }
         in
-        Sim.Fail (at, msg, coverage_result)
+        Sim.Fail (at, msg, cover_single)
 
   (* Entry point for coverage *)
 
@@ -2013,13 +2013,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let cover_instr_multi = ICov_multi.init spec in
     List.fold_left
       (fun cover_instr_multi filename_p4 ->
-        let _, _, cover_instr_single =
+        let cover_instr_single =
           match
             eval_program ~derive:false spec relname includes_p4 filename_p4
           with
-          | Pass (_, _, cover_single) -> (true, true, cover_single.instr)
-          | Fail (_, _, cover_single) -> (true, false, cover_single.instr)
-          | IllFormed (_, _, cover_single) -> (false, false, cover_single.instr)
+          | Pass (_, _, cover_single)
+          | Fail (_, _, cover_single)
+          | IllFormed (_, _, cover_single) ->
+              cover_single.instr
         in
         ICov_multi.extend cover_instr_multi filename_p4 cover_instr_single)
       cover_instr_multi filenames_p4

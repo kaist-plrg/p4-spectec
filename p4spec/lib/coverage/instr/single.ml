@@ -107,10 +107,18 @@ let is_miss (cover : t) (iid : iid) : bool =
 
 let hit (cover : t) (iid : iid) : t =
   match Cover.find_opt iid cover with
-  | Some node ->
+  | Some node when node.status = Node.Miss ->
       let hit_node = { node with Node.status = Node.Hit } in
       Cover.add iid hit_node cover
-  | None -> cover
+  | _ -> cover
+
+(* Extending coverage *)
+
+let extend (cover : t) (cover_extend : t) : t =
+  Cover.fold
+    (fun iid (node : Node.t) cover ->
+      match node.status with Node.Hit -> hit cover iid | Node.Miss -> cover)
+    cover_extend cover
 
 (* Constructor *)
 

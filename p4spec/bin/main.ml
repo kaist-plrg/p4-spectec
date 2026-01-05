@@ -214,6 +214,100 @@ let cover_command =
        | ParseError (at, msg) | ElabError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
+let cover_sim_command =
+  Core.Command.basic ~summary:"measure coverage of the spec when simulated"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and dirname_test =
+       flag "-d" (required string) ~doc:"test directory of interest"
+     and dirname_patch =
+       flag "-p" (required string) ~doc:"directory for p4/stf patches"
+     and filename_cov =
+       flag "-cov" (required string) ~doc:"output coverage file"
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
+     in
+     fun () ->
+       try
+         let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
+         let filenames_p4 =
+           dirname_test
+           |> Util.Filesys.collect_files ~suffix:".p4"
+           |> List.filter (fun filename_p4 ->
+                  not (List.exists (String.equal filename_p4) excludes_p4))
+           |> List.filter (fun filename_p4 ->
+                  let contents = Util.Filesys.read_file filename_p4 in
+                  match arch with
+                  | "v1model" ->
+                      Util.Strings.contains_substring "#include <v1model.p4>"
+                        contents
+                      || Util.Strings.contains_substring
+                           "#include \"v1model.p4\"" contents
+                  | _ -> false)
+         in
+         let filenames_p4_patch =
+           Util.Filesys.collect_files ~suffix:".p4" dirname_patch
+         in
+         let filenames_p4 =
+           Util.Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
+         in
+         let filenames_stf =
+           Util.Filesys.collect_files ~suffix:".stf" dirname_test
+         in
+         let filenames_stf_patch =
+           Util.Filesys.collect_files ~suffix:".stf" dirname_patch
+         in
+         let filenames_stf =
+           Util.Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
+         in
+         let filenames_p4, filenames_stf =
+           filenames_p4
+           |> List.filter_map (fun filename_p4 ->
+                  let filename_base =
+                    Util.Filesys.base ~suffix:".p4" filename_p4
+                  in
+                  let filename_stf_opt =
+                    List.find_opt
+                      (fun filename_stf ->
+                        let filename_stf_base =
+                          Util.Filesys.base ~suffix:".stf" filename_stf
+                        in
+                        String.equal filename_base filename_stf_base)
+                      filenames_stf
+                  in
+                  match filename_stf_opt with
+                  | Some filename_stf -> Some (filename_p4, filename_stf)
+                  | None -> None)
+           |> List.split
+         in
+         let spec_sl = structure filenames_spec in
+         let (module Runner) = Backend_sim.Gen.gen arch in
+         match mode with
+         | `Instr ->
+             let cover_instr =
+               Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4
+                 filenames_stf
+             in
+             Coverage.Instr.Multi.log ~filename_cov_opt:(Some filename_cov)
+               cover_instr
+         | `Dangling -> assert false
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
 let run_testgen_command =
   Core.Command.basic
     ~summary:"generate negative type checker tests from a p4_16 spec"
@@ -546,6 +640,7 @@ let command =
       ("sim", sim_command);
       (* Coverage *)
       ("cover", cover_command);
+      ("cover-sim", cover_sim_command);
       (* Negative type checker test generation and coverage *)
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);

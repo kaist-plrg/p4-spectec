@@ -11,6 +11,8 @@ open Util.Source
 (* Module signatures for interpreter-architecture interaction *)
 
 type spec = IL of Il.spec | SL of Sl.spec | Empty
+type cover_single = { instr : ICov_single.t; dangling : DCov_single.t }
+type coverage = Cover of cover_single | Empty
 
 (* IL results *)
 
@@ -29,25 +31,23 @@ type stf_result_il =
 
 (* SL results *)
 
-type coverage_result = { instr : ICov_single.t; dangling : DCov_single.t }
-
 type rel_result_sl =
-  | Pass of Value.t list * coverage_result
-  | Fail of region * string * coverage_result
+  | Pass of Value.t list * cover_single
+  | Fail of region * string * cover_single
 
 type func_result_sl =
-  | Pass of Value.t * coverage_result
-  | Fail of region * string * coverage_result
+  | Pass of Value.t * cover_single
+  | Fail of region * string * cover_single
 
 type program_result_sl =
-  | Pass of Value.t list * Dep.Graph.t * coverage_result
-  | Fail of region * string * coverage_result
-  | IllFormed of region * string * coverage_result
+  | Pass of Value.t list * Dep.Graph.t * cover_single
+  | Fail of region * string * cover_single
+  | IllFormed of region * string * cover_single
 
 type stf_result_sl =
-  | Pass of coverage_result
-  | Fail of region * string * coverage_result
-  | IllFormed of region * string * coverage_result
+  | Pass of cover_single
+  | Fail of region * string * cover_single
+  | IllFormed of region * string * cover_single
 
 (* Merged results *)
 
@@ -68,6 +68,11 @@ let promote_stf_result_sl (stf_result_sl : stf_result_sl) : stf_result =
   | IllFormed (at, msg, _) -> IllFormed (at, msg)
 
 module type ARCH = sig
+  (* Coverage *)
+
+  val spec : spec ref
+  val coverage : coverage ref
+
   (* Extern evaluation *)
 
   val eval_extern_init : Value.t list -> Value.t
@@ -100,7 +105,7 @@ module type ARCH = sig
 end
 
 module type INTERP_IL = sig
-  (* Relation and meta-function valuation *)
+  (* Relation and meta-function evaluation *)
 
   val eval_program :
     Il.spec -> string -> string list -> string -> program_result_il
@@ -112,7 +117,7 @@ module type INTERP_IL = sig
 end
 
 module type INTERP_SL = sig
-  (* Relation and meta-function valuation *)
+  (* Relation and meta-function evaluation *)
 
   val eval_program :
     derive:bool ->
@@ -163,12 +168,21 @@ module type DRIVER = sig
 
   (* Run a P4 program against the spec and a STF test *)
 
+  val run_stf_test_il :
+    Il.spec -> string list -> string -> string -> stf_result_il
+
+  val run_stf_test_sl :
+    Sl.spec -> string list -> string -> string -> stf_result_sl
+
   val run_stf_test : spec -> string list -> string -> string -> stf_result
 
   (* Coverage *)
 
   val cover_instr_programs :
     Sl.spec -> string -> string list -> string list -> ICov_multi.t
+
+  val cover_instr_stfs :
+    Sl.spec -> string list -> string list -> string list -> ICov_multi.t
 
   val cover_dangling_programs :
     Sl.spec -> string -> string list -> string list -> DCov_multi.t

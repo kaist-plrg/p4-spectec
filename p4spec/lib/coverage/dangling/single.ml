@@ -159,6 +159,25 @@ let miss (cover : t) (pid : pid) (vid : vid) : t =
           Cover.add pid branch cover)
   | None -> cover
 
+(* Extending coverage *)
+
+let extend (cover : t) (cover_extend : t) : t =
+  Cover.fold
+    (fun (pid : pid) (branch_extend : Branch.t) (cover : t) ->
+      match Cover.find_opt pid cover with
+      | Some branch -> (
+          match (branch.status, branch_extend.status) with
+          | Hit, _ -> cover
+          | Miss _, Hit ->
+              let branch = { branch with status = Hit } in
+              Cover.add pid branch cover
+          | Miss vids, Miss vids_extend ->
+              let vids = vids @ vids_extend in
+              let branch = { branch with status = Miss vids } in
+              Cover.add pid branch cover)
+      | None -> cover)
+    cover_extend cover
+
 (* Collector *)
 
 let collect_hit (cover : t) : pid list =
