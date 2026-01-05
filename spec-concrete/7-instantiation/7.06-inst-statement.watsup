@@ -103,10 +103,63 @@ rulegroup Stmt_inst/conditionalStatementIR {
 }
 
 ;;; forStatementIR
+;;; syntax forStatementIR
+
+;;;; annotationList FOR
+;;;;   `( forInitStatementListIR `; typedExpressionIR `; forUpdateStatementListIR )
+;;;;   statementIR
+
+rule Stmt_inst/forStatementIR-three-clause:
+  p IC STO_0 |- annotationList FOR
+                  `( forInitStatementListIR `;
+                     typedExpressionIR `;
+                     forUpdateStatementListIR ) statementIR
+              : IC STO_1 forStatementIR
+  -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+  -- if forStatementIR
+      = annotationList FOR `( forInitStatementListIR `; typedExpressionIR `;
+          forUpdateStatementListIR ) statementIR_body
+
+;;;; annotationList FOR
+;;;;   `( typeIR nameIR IN forCollectionExpressionIR )
+;;;;   statementIR
+;;;; annotationList FOR
+;;;;   `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+;;;;   statementIR
+
+rulegroup Stmt_inst/forStatementIR-in {
+  
+  rule Stmt_inst/no-annotations:
+    p IC STO_0 |- annotationList FOR
+                    `( typeIR nameIR IN forCollectionExpressionIR )
+                    statementIR
+                : IC STO_1 forStatementIR
+    -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+    -- if forStatementIR
+        = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )
+            statementIR_body
+
+  rule Stmt_inst/annotations:
+    p IC STO_0 |- annotationList FOR
+                    `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+                    statementIR
+                : IC STO_1 forStatementIR
+    -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+    -- if forStatementIR
+        = annotationList FOR `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+            statementIR_body
+
+}
 
 ;;; breakStatementIR
 
+rule Stmt_inst/breakStatementIR:
+  p IC STO |- breakStatementIR : IC STO breakStatementIR
+
 ;;; continueStatementIR
+
+rule Stmt_inst/continueStatementIR:
+  p IC STO |- continueStatementIR : IC STO continueStatementIR
 
 ;;; switchStatementIR
 ;;; syntax switchStatementIR = SWITCH `( typedExpressionIR ) `{ switchCaseListIR }
