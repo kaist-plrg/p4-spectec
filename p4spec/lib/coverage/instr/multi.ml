@@ -93,6 +93,13 @@ end
 
 type t = Cover.t
 
+(* Querying coverage *)
+
+let is_hit (cover : t) (iid : iid) : bool =
+  match Cover.find_opt iid cover with
+  | Some node -> ( match node.Node.status with Hit _ -> true | Miss -> false)
+  | None -> false
+
 (* Measuring coverage *)
 
 let measure_coverage (cover : t) : int * int * float =
@@ -128,50 +135,6 @@ let extend (cover : t) (filename_p4 : string) (cover_single : Single.t) : t =
               { node with status = Hit filenames_p4 }
           | _ -> node))
     cover
-
-(* Logging *)
-
-let log ~(filename_cov_opt : string option) (cover : t) : unit =
-  let output oc_opt =
-    match oc_opt with Some oc -> output_string oc | None -> print_string
-  in
-  let oc_opt = Option.map open_out filename_cov_opt in
-  (* Output overall coverage *)
-  let total, hits, coverage = measure_coverage cover in
-  Format.asprintf "# Overall Coverage: %d/%d (%.2f%%)\n" hits total coverage
-  |> output oc_opt;
-  (* Collect covers by origin *)
-  let covers_origin =
-    Cover.fold
-      (fun (iid : iid) (node : Node.t) (covers_origin : t IdMap.t) ->
-        let origin = node.origin in
-        let cover_origin =
-          match IdMap.find_opt origin covers_origin with
-          | Some cover_origin -> Cover.add iid node cover_origin
-          | None -> Cover.add iid node Cover.empty
-        in
-        IdMap.add origin cover_origin covers_origin)
-      cover IdMap.empty
-  in
-  IdMap.iter
-    (fun origin cover_origin ->
-      let total, hits, coverage = measure_coverage cover_origin in
-      Format.asprintf "# Coverage for %s: %d/%d (%.2f%%)\n" origin.it hits total
-        coverage
-      |> output oc_opt;
-      Cover.iter
-        (fun (iid : iid) (node : Node.t) ->
-          let origin = node.origin in
-          match node.status with
-          | Hit filenames ->
-              let filenames = String.concat " " filenames in
-              Format.asprintf "%d Hit %s %s\n" iid origin.it filenames
-              |> output oc_opt
-          | Miss ->
-              Format.asprintf "%d Miss %s\n" iid origin.it |> output oc_opt)
-        cover_origin)
-    covers_origin;
-  Option.iter close_out oc_opt
 
 (* Constructor *)
 

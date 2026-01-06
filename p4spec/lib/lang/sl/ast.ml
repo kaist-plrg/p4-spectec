@@ -178,15 +178,15 @@ type externfunc = id * tparam list * arg list * typ * hint list
 type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
-(* arg* -> instr* *)
+(* `(` list(exp, `,`)* `)` `->` exp instr* *)
 type tablerow = exp list * exp * instr list
 [@@deriving yojson]
 
-(* id list(arg, `,`) `:` instr* hint* *)
+(* id `(` list(arg, `,`) `)` `:` typ tablerow* hint* *)
 type tablefunc = id * arg list * typ * tablerow list * hint list
 [@@deriving yojson]
 
-(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+(* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ instr* hint* *)
 type definedfunc = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
 

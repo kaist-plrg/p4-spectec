@@ -490,7 +490,7 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdir patchdir
   let cover_instr =
     Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4 filenames_stf
   in
-  Coverage.Instr.Multi.log ~filename_cov_opt:None cover_instr
+  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_instr spec_sl
 
 let cover_sim_instr_command =
   Core.Command.basic

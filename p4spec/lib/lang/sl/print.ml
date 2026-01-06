@@ -29,8 +29,13 @@ let string_of_mixop mixop = Il.Print.string_of_mixop mixop
 (* Iterators *)
 
 let string_of_iter iter = Il.Print.string_of_iter iter
-let string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
-let string_of_iterexps iterexps = Il.Print.string_of_iterexps iterexps
+
+let string_of_iterexp iterexp =
+  let iter, _ = iterexp in
+  string_of_iter iter
+
+let string_of_iterexps iterexps =
+  iterexps |> List.map string_of_iterexp |> String.concat ""
 
 let string_of_iterated string_of_item item iterexps =
   match iterexps with
@@ -186,18 +191,17 @@ and string_of_phantom phantom = string_of_pid phantom
 
 (* Case analysis *)
 
-and string_of_case ?(verbose = false) ?(signature = None) ?(level = 0)
-    ?(index = 0) case =
+and string_of_case ?(signature = None) ?(level = 0) ?(index = 0) case =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let guard, instrs = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
-    (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs)
+    (string_of_instrs ~signature ~level:(level + 1) instrs)
 
-and string_of_cases ?(verbose = false) ?(signature = None) ?(level = 0) cases =
+and string_of_cases ?(signature = None) ?(level = 0) cases =
   cases
   |> List.mapi (fun idx case ->
-         string_of_case ~verbose ~signature ~level ~index:(idx + 1) case)
+         string_of_case ~signature ~level ~index:(idx + 1) case)
   |> String.concat "\n\n"
 
 and string_of_guard guard =
@@ -211,119 +215,66 @@ and string_of_guard guard =
 
 (* Instructions *)
 
-and string_of_instr_short instr =
-  match instr.it with
-  | IfI (exp_cond, iterexps, _, _) ->
-      Format.asprintf "If %s"
-        (string_of_iterated string_of_exp exp_cond iterexps)
-  | HoldI (id, notexp, iterexps, holdcase) -> (
-      match holdcase with
-      | BothH _ | HoldH _ ->
-          Format.asprintf "If %s holds"
-            (string_of_iterated
-               (fun (id, notexp) ->
-                 Format.asprintf "%s: %s" (string_of_relid id)
-                   (string_of_notexp notexp))
-               (id, notexp) iterexps)
-      | NotHoldH _ ->
-          Format.asprintf "If %s does not hold"
-            (string_of_iterated
-               (fun (id, notexp) ->
-                 Format.asprintf "%s: %s" (string_of_relid id)
-                   (string_of_notexp notexp))
-               (id, notexp) iterexps))
-  | CaseI (exp, _, _) ->
-      Format.asprintf "Case analysis on %s" (string_of_exp exp)
-  | OtherwiseI _ -> "Otherwise"
-  | GroupI (id_group, _, _) ->
-      Format.asprintf "Group %s" (string_of_relid id_group)
-  | LetI (exp_l, exp_r, iterexps) ->
-      string_of_iterated
-        (fun (exp_l, exp_r) ->
-          Format.asprintf "Let %s be %s" (string_of_exp exp_l)
-            (string_of_exp exp_r))
-        (exp_l, exp_r) iterexps
-  | RuleI (id_rel, notexp, iterexps) ->
-      string_of_iterated
-        (fun (id_rel, notexp) ->
-          Format.asprintf "%s: %s" (string_of_relid id_rel)
-            (string_of_notexp notexp))
-        (id_rel, notexp) iterexps
-  | ResultI [] -> "The relation holds"
-  | ResultI exps -> Format.asprintf "Result in %s" (string_of_exps ", " exps)
-  | ReturnI exp -> Format.asprintf "Return %s" (string_of_exp exp)
-  | DebugI exp -> Format.asprintf "Debug: %s" (string_of_exp exp)
-
-and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
-    ?(index = 0) instr =
+and string_of_instr ?(signature = None) ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
-  let order = Format.asprintf "%s%d(%d). " indent index instr.note.iid in
+  let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, None) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_then)
+        (string_of_instrs ~signature ~level:(level + 1) instrs_then)
   | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_then)
-        (if verbose then "\n\n" ^ order ^ "Else " ^ string_of_phantom phantom
-         else "")
+        (string_of_instrs ~signature ~level:(level + 1) instrs_then)
+        ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s"
             order (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_hold)
+            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
             order
-            (string_of_instrs ~verbose ~signature ~level:(level + 1)
-               instrs_nothold)
+            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
       | HoldH (instrs_hold, None) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_hold)
+            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
       | HoldH (instrs_hold, Some phantom) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_hold)
-            (if verbose then
-               "\n\n" ^ order ^ "Else " ^ string_of_phantom phantom
-             else "")
+            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
+            ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
       | NotHoldH (instrs_nothold, None) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~verbose ~signature ~level:(level + 1)
-               instrs_nothold)
+            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
       | NotHoldH (instrs_nothold, Some phantom) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~verbose ~signature ~level:(level + 1)
-               instrs_nothold)
-            (if verbose then
-               "\n\n" ^ order ^ "Else " ^ string_of_phantom phantom
-             else ""))
+            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
+            ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
   | CaseI (exp, cases, None) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
-        (string_of_cases ~verbose ~signature ~level:(level + 1) cases)
+        (string_of_cases ~signature ~level:(level + 1) cases)
   | CaseI (exp, cases, Some phantom) ->
       Format.asprintf "%sCase analysis on %s\n\n%s%s" order (string_of_exp exp)
-        (string_of_cases ~verbose ~signature ~level:(level + 1) cases)
-        (if verbose then "\n\n" ^ order ^ "Else " ^ string_of_phantom phantom
-         else "")
+        (string_of_cases ~signature ~level:(level + 1) cases)
+        ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | OtherwiseI instr ->
       Format.asprintf "%sOtherwise\n\n%s" order
-        (string_of_instr ~verbose ~signature ~level:(level + 1) ~index:1 instr)
+        (string_of_instr ~signature ~level:(level + 1) ~index:1 instr)
   | GroupI (id_group, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
         (match signature with
         | Some (mixop, inputs) -> string_of_relinput mixop inputs exps_group
         | None -> string_of_exps ", " exps_group)
-        (string_of_instrs ~verbose ~signature ~level:(level + 1) instrs_group)
+        (string_of_instrs ~signature ~level:(level + 1) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
@@ -341,11 +292,10 @@ and string_of_instr ?(verbose = false) ?(signature = None) ?(level = 0)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
-and string_of_instrs ?(verbose = false) ?(signature = None) ?(level = 0) instrs
-    =
+and string_of_instrs ?(signature = None) ?(level = 0) instrs =
   instrs
   |> List.mapi (fun idx instr ->
-         string_of_instr ~verbose ~signature ~level ~index:(idx + 1) instr)
+         string_of_instr ~signature ~level ~index:(idx + 1) instr)
   |> String.concat "\n\n"
 
 (* Relations *)
@@ -386,12 +336,12 @@ and string_of_extern_rel externrel =
   let relid, (mixop, inputs), exps_match, _hints = externrel in
   string_of_relid relid ^ ": " ^ string_of_relinput mixop inputs exps_match
 
-and string_of_rel ?(verbose = false) rel =
+and string_of_defined_rel rel =
   let relid, (mixop, inputs), exps_match, instrs, _hints = rel in
   string_of_relid relid ^ ": "
   ^ string_of_relinput mixop inputs exps_match
   ^ "\n\n"
-  ^ string_of_instrs ~verbose ~signature:(Some (mixop, inputs)) instrs
+  ^ string_of_instrs ~signature:(Some (mixop, inputs)) instrs
 
 (* Functions *)
 
@@ -404,44 +354,45 @@ let string_of_builtin_func builtinfunc =
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
 
 let string_of_tablerow (tablerow : tablerow) =
-  let tablesig, exp_res, instrs = tablerow in
+  let exps_match, exp_result, instrs = tablerow in
   Format.asprintf "\n  Row : %s -> %s:\n\n%s"
-    (string_of_exps ", " tablesig)
-    (string_of_exp exp_res)
+    (string_of_exps ", " exps_match)
+    (string_of_exp exp_result)
     (string_of_instrs ~level:2 instrs)
 
-let string_of_tablerows tablerows =
+let string_of_tablerows (tablerows : tablerow list) =
   String.concat "\n" (List.map string_of_tablerow tablerows)
 
-let string_of_definedfunc ?(verbose = false) definedfunc =
-  let defid, tparams, args_input, _typ, instrs, _hints = definedfunc in
+let string_of_table_func (tablefunc : tablefunc) =
+  let defid, args, _typ_ret, tablerows, _hints = tablefunc in
+  string_of_defid defid ^ string_of_args args ^ "\n=\n"
+  ^ string_of_tablerows tablerows
+
+let string_of_defined_func (func : definedfunc) =
+  let defid, tparams, args_input, _typ, instrs, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
-  ^ "\n\n"
-  ^ string_of_instrs ~verbose instrs
+  ^ "\n\n" ^ string_of_instrs instrs
 
 (* Definitions *)
 
-let rec string_of_def ?(verbose = false) def =
+let rec string_of_def def =
   ";; " ^ string_of_region def.at ^ "\n"
   ^
   match def.it with
   | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
-  | TypD (typid, tparams, deftyp, _) ->
-      "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
+  | TypD (id, tparams, deftyp, _) ->
+      "syntax " ^ string_of_typid id ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
-  | ExternRelD rel -> "extern relation " ^ string_of_extern_rel rel
-  | RelD rel -> "relation " ^ string_of_rel ~verbose rel
+  | ExternRelD externrel -> "extern relation " ^ string_of_extern_rel externrel
+  | RelD rel -> "relation " ^ string_of_defined_rel rel
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD (defid, args_input, _typ, tablerows, _hints) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_args args_input ^ " =\n"
-      ^ string_of_tablerows tablerows
-  | FuncDecD definedfunc -> "def " ^ string_of_definedfunc ~verbose definedfunc
+  | TableDecD tablefunc -> "tbl def " ^ string_of_table_func tablefunc
+  | FuncDecD func -> "def " ^ string_of_defined_func func
 
-and string_of_defs ?(verbose = false) defs =
-  String.concat "\n\n" (List.map (string_of_def ~verbose) defs)
+and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 
 (* Spec *)
 
-let string_of_spec ?(verbose = false) spec = string_of_defs ~verbose spec
+let string_of_spec spec = string_of_defs spec

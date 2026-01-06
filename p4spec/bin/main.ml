@@ -200,8 +200,8 @@ let cover_command =
                Runner.cover_instr_programs spec_sl relname includes_p4
                  filenames_p4
              in
-             Coverage.Instr.Multi.log ~filename_cov_opt:(Some filename_cov)
-               cover_instr
+             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
+               cover_instr spec_sl
          | `Dangling ->
              let cover_dangling =
                Runner.cover_dangling_programs spec_sl relname includes_p4
@@ -300,8 +300,8 @@ let cover_sim_command =
                Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4
                  filenames_stf
              in
-             Coverage.Instr.Multi.log ~filename_cov_opt:(Some filename_cov)
-               cover_instr
+             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
+               cover_instr spec_sl
          | `Dangling -> assert false
        with
        | CommandError msg -> Format.printf "%s\n" msg
