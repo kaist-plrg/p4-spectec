@@ -11,7 +11,7 @@ open Util.Source
 (* Module signatures for interpreter-architecture interaction *)
 
 type spec = IL of Il.spec | SL of Sl.spec | Empty
-type cover_single = { instr : ICov_single.t; dangling : DCov_single.t }
+type cover_single = { dangling : DCov_single.t }
 type coverage = Cover of cover_single | Empty
 
 (* IL results *)
@@ -133,9 +133,6 @@ module type INTERP_SL = sig
     Sl.spec -> string -> Sl.typ list -> Value.t list -> func_result_sl
 
   (* Coverage *)
-
-  val cover_instr_programs :
-    Sl.spec -> string -> string list -> string list -> ICov_multi.t
 
   val cover_dangling_programs :
     Sl.spec -> string -> string list -> string list -> DCov_multi.t

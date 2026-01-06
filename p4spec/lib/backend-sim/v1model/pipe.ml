@@ -26,17 +26,15 @@ struct
   let init_coverage (spec_ : Sim.spec) : unit =
     match spec_ with
     | SL spec_sl ->
-        let instr = ICov_single.init spec_sl in
         let dangling = DCov_single.init spec_sl in
-        coverage := Sim.Cover { instr; dangling }
+        coverage := Sim.Cover { dangling }
     | IL _ | Empty -> ()
 
   let update_coverage (cover_single : Sim.cover_single) : unit =
     match !coverage with
-    | Sim.Cover { instr; dangling } ->
-        let instr = ICov_single.extend instr cover_single.instr in
+    | Sim.Cover { dangling } ->
         let dangling = DCov_single.extend dangling cover_single.dangling in
-        coverage := Sim.Cover { instr; dangling }
+        coverage := Sim.Cover { dangling }
     | _ -> ()
 
   (* Call entry points *)

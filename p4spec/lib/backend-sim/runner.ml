@@ -274,7 +274,21 @@ module Make
   let cover_instr_programs (spec : Sl.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : ICov_multi.t =
     Arch.init (SL spec);
-    Interp_SL.cover_instr_programs spec relname includes_p4 filenames_p4
+    let cover_multi = ICov_multi.init spec in
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+          Inst.Coverage_instr.make ()
+        in
+        Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+        Inst.Hook.init (Inst.Handler.SL spec);
+        let _ =
+          run_program_sl ~derive:false spec relname includes_p4 filename_p4
+        in
+        Inst.Hook.finish ();
+        let cover_single = read_coverage_instr () in
+        ICov_multi.extend cover_multi filename_p4 cover_single)
+      cover_multi filenames_p4
 
   let cover_instr_stfs (spec : Sl.spec) (includes_p4 : string list)
       (filenames_p4 : string list) (filenames_stf : string list) : ICov_multi.t
@@ -285,14 +299,15 @@ module Make
     List.combine filenames_p4 filenames_stf
     |> List.fold_left
          (fun cover_multi (filename_p4, filename_stf) ->
-           let stf_result_sl =
-             run_stf_test_sl spec includes_p4 filename_p4 filename_stf
+           let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+             Inst.Coverage_instr.make ()
            in
-           match stf_result_sl with
-           | Pass cover_single
-           | Fail (_, _, cover_single)
-           | IllFormed (_, _, cover_single) ->
-               ICov_multi.extend cover_multi filename_p4 cover_single.instr)
+           Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+           Inst.Hook.init (Inst.Handler.SL spec);
+           let _ = run_stf_test_sl spec includes_p4 filename_p4 filename_stf in
+           Inst.Hook.finish ();
+           let cover_single = read_coverage_instr () in
+           ICov_multi.extend cover_multi filename_p4 cover_single)
          cover_multi
 
   let cover_dangling_programs (spec : Sl.spec) (relname : string)
