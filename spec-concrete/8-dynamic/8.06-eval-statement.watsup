@@ -423,13 +423,22 @@ rulegroup ForThreeClauseLoop_eval {
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 returnResult
 
+  rule ForThreeClauseLoop_eval/cond-true-loop-break:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_2 STO_2 ``
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 BREAK
+
   rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-exit:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_3 STO_3 EXIT
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
-        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 ``
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
     -- ForUpdateStmts_eval: 
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 EXIT
 
@@ -439,8 +448,9 @@ rulegroup ForThreeClauseLoop_eval {
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
-        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 ``
-    -- ForUpdateStmts_eval: 
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- ForUpdateStmts_eval:
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 ``
     -- ForThreeClauseLoop_eval: 
         EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
@@ -549,11 +559,18 @@ rulegroup ForInLoop_eval {
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 returnResult
 
+  rule ForInLoop_eval/cons-loop-break:
+    EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
+                : EC_2 STO_1 ``
+    -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 BREAK
+
   rule ForInLoop_eval/cons-loop-cont:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
                 : EC_3 STO_2 statementResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
-    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 ``
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
     -- ForInLoop_eval:
         EC_2 STO_1 |- nameIR value_t* statementIR : EC_3 STO_2 statementResult
 
@@ -628,9 +645,15 @@ rulegroup Stmt_eval/forStatementIR-in {
 
 }
 
-;;; (TODO) breakStatement
+;;; breakStatementIR
 
-;;; (TODO) continueStatement
+rule Stmt_eval/breakStatement:
+  LOCAL EC STO |- BREAK `; : EC STO BREAK
+
+;;; continueStatementIR
+
+rule Stmt_eval/continueStatement:
+  LOCAL EC STO |- CONTINUE `; : EC STO CONTINUE
 
 ;;; switchStatementIR
 ;;; syntax switchStatementIR =
@@ -944,6 +967,20 @@ rulegroup BlockElementStmts_eval {
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
                     : EC_1 STO_1 returnResult
+
+  rule BlockElementStmts_eval/cons-head-break:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 BREAK
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 BREAK
+
+  rule BlockElementStmts_eval/cons-head-continue:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 CONTINUE
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 CONTINUE
 
   rule BlockElementStmts_eval/cons-head-cont:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
