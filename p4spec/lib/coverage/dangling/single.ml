@@ -1,5 +1,6 @@
 open Domain.Lib
-open Lang.Sl
+open Lang
+open Sl
 open Util.Source
 
 (* Phantom branch *)
@@ -44,6 +45,9 @@ module Cover = struct
   include MakeVIdEnv (Branch)
 
   (* Constructor *)
+
+  let is_ignored (hints : hint list) : bool =
+    Hints.Flag.init hints "testgen_ignore"
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     match instr.it with
@@ -103,20 +107,12 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) | FuncDecD (id, _, _, _, instrs, hints) ->
-        if
-          List.exists
-            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
-            hints
-        then cover
-        else init_instrs cover id instrs
-    | TableDecD (id, _, _, tablerows, hints) ->
-        if
-          List.exists
-            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
-            hints
-        then cover
-        else init_tablerows cover id tablerows
+    | RelD (id, _, _, instrs, hints) when not (is_ignored hints) ->
+        init_instrs cover id instrs
+    | FuncDecD (id, _, _, _, instrs, hints) when not (is_ignored hints) ->
+        init_instrs cover id instrs
+    | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
+        init_tablerows cover id tablerows
     | _ -> cover
 
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec

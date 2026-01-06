@@ -1,5 +1,6 @@
 open Domain.Lib
-open Lang.Sl
+open Lang
+open Sl
 open Util.Source
 
 (* Instruction node *)
@@ -40,7 +41,7 @@ module Cover = struct
   (* Constructor *)
 
   let is_ignored (hints : hint list) : bool =
-    List.exists (fun (hint : hint) -> hint.hintid.it = "testgen_ignore") hints
+    Hints.Flag.init hints "testgen_ignore"
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     let iid = instr.note.iid in
