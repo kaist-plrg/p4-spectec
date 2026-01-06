@@ -74,8 +74,8 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then) ->
       let instrs_then = insert_phantom instrs_then in
-      let phantom = pid () in
-      Sl.IfI (exp_cond, iterexps, instrs_then, Some phantom)
+      let phantom_opt = Some (pid ()) in
+      Sl.IfI (exp_cond, iterexps, instrs_then, phantom_opt)
   | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
       let instrs_hold = insert_phantom instrs_hold in
       let instrs_nothold = insert_phantom instrs_nothold in
@@ -83,11 +83,11 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
         match (instrs_hold, instrs_nothold) with
         | [], [] -> assert false
         | instrs_hold, [] ->
-            let phantom = pid () in
-            Sl.HoldH (instrs_hold, Some phantom)
+            let phantom_opt = Some (pid ()) in
+            Sl.HoldH (instrs_hold, phantom_opt)
         | [], instrs_nothold ->
-            let phantom = pid () in
-            Sl.NotHoldH (instrs_nothold, Some phantom)
+            let phantom_opt = Some (pid ()) in
+            Sl.NotHoldH (instrs_nothold, phantom_opt)
         | instrs_hold, instrs_nothold -> Sl.BothH (instrs_hold, instrs_nothold)
       in
       Sl.HoldI (id, notexp, iterexps, holdcase)
@@ -107,12 +107,7 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
         let blocks = List.map insert_phantom blocks in
         List.combine guards blocks
       in
-      let phantom_opt =
-        if total then None
-        else
-          let pid = pid () in
-          Some pid
-      in
+      let phantom_opt = if total then None else Some (pid ()) in
       Sl.CaseI (exp, cases, phantom_opt)
   | OtherwiseI instr ->
       let instr = insert_phantom' instr in

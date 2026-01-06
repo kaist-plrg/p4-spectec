@@ -27,6 +27,7 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
   let hit = Multi.is_hit cover instr.note.iid in
   let order = Format.asprintf "%s%d. " indent index in
   let header = (if hit then "+ " else "- ") ^ order in
+  let header_trailing = "  " ^ order in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" header (string_of_exp exp_cond)
@@ -39,7 +40,7 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
             header (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
             (log_instrs ~level:(level + 1) cover instrs_hold)
-            header
+            header_trailing
             (log_instrs ~level:(level + 1) cover instrs_nothold)
       | HoldH (instrs_hold, _) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" header
