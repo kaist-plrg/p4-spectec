@@ -1,6 +1,6 @@
 open Lang
 open Sl
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module DCov_multi = Coverage.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Measure initial coverage of phantoms *)
@@ -18,7 +18,7 @@ let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
         not (List.exists (String.equal filename_p4) excludes_p4))
       filenames_p4
   in
-  Runner.cover_programs spec relname includes_p4 filenames_p4
+  Runner.cover_dangling_programs spec relname includes_p4 filenames_p4
 
 (* On warm boot, load the coverage from a file *)
 

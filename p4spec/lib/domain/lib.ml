@@ -55,6 +55,12 @@ module VIdMap = struct
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
 end
 
+(* Instruction indentifiers *)
+
+module IId = VId
+module IIdSet = VIdSet
+module IIdMap = VIdMap
+
 (* Variable identifiers *)
 
 module Id = struct
@@ -273,6 +279,7 @@ struct
     match find_opt id env with Some value -> value | None -> assert false
 end
 
+module MakeIIdEnv = MakeVIdEnv
 module MakePIdEnv = MakeVIdEnv
 
 module MakeIdEnv (V : sig

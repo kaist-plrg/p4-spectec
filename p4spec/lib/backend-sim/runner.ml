@@ -1,5 +1,6 @@
 open Lang
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module ICov_multi = Coverage.Instr.Multi
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
 open Error
@@ -16,23 +17,36 @@ module Make
   and Interp_IL : INTERP_IL = MakeInterp_IL (Arch)
   and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
 
+  (* Logger *)
+
+  let verbose = ref true
+  let log (msg : string) : unit = if !verbose then print_endline msg
+
   (* Relation runner *)
+
+  let run_program_il ~(derive : bool) (spec_il : Il.spec) (relname : string)
+      (includes_p4 : string list) (filename_p4 : string) : program_result_il =
+    if derive then
+      Format.eprintf "[WARNING] Derivation not supported for IL interpreter\n";
+    Interp_IL.eval_program spec_il relname includes_p4 filename_p4
+
+  let run_program_sl ~(derive : bool) (spec_sl : Sl.spec) (relname : string)
+      (includes_p4 : string list) (filename_p4 : string) : program_result_sl =
+    Interp_SL.eval_program ~derive spec_sl relname includes_p4 filename_p4
 
   let run_program ~(derive : bool) (spec : spec) (relname : string)
       (includes_p4 : string list) (filename_p4 : string) : program_result =
     Arch.init spec;
     match spec with
     | IL spec_il ->
-        if derive then
-          Format.eprintf
-            "[WARNING] Derivation not supported for IL interpreter\n";
-        Interp_IL.eval_program spec_il relname includes_p4 filename_p4
+        run_program_il ~derive spec_il relname includes_p4 filename_p4
     | SL spec_sl ->
-        Interp_SL.eval_program ~derive spec_sl relname includes_p4 filename_p4
+        run_program_sl ~derive spec_sl relname includes_p4 filename_p4
+        |> promote_program_result_sl
     | Empty -> assert false
 
   let run_program_internal ~(derive : bool) (spec : Sl.spec) (relname : string)
-      (value_program : Sl.value) : rel_result =
+      (value_program : Il.value) : rel_result_sl =
     derive |> ignore;
     Arch.init (SL spec);
     Interp_SL.eval_rel spec relname [ value_program ]
@@ -51,7 +65,8 @@ module Make
             (tx_output_queue, tx_expect_queue)
         (* There is an expected packet *)
         | tx_expect :: tx_expect_queue when compare_tx tx tx_expect ->
-            Format.printf "[PASS] Transmitted %s\n" (string_of_tx tx_expect);
+            Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
+            |> log;
             (tx_output_queue, tx_expect_queue)
         | tx_expect :: _ ->
             error_stf
@@ -69,16 +84,16 @@ module Make
         (tx_output_queue, tx_expect_queue)
     (* There is an output packet *)
     | tx_output :: tx_output_queue when compare_tx tx_output tx_expect ->
-        Format.printf "[PASS] Transmitted %s\n" (string_of_tx tx_output);
+        Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
         (tx_output_queue, tx_expect_queue)
     | tx_output :: _ ->
         error_stf
           (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
              (string_of_tx tx_output))
 
-  let run_stf_stmt (value_ctx : Sl.value) (value_sto : Sl.value)
+  let run_stf_stmt (value_ctx : Il.value) (value_sto : Il.value)
       (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
-      (stmt_stf : Stf.Ast.stmt) : Sl.value * Sl.value * IO.tx list * IO.tx list
+      (stmt_stf : Stf.Ast.stmt) : Il.value * Il.value * IO.tx list * IO.tx list
       =
     match stmt_stf with
     (* Packet I/O *)
@@ -166,7 +181,7 @@ module Make
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
-  let run_stf_stmts (value_ctx : Sl.value) (value_sto : Sl.value)
+  let run_stf_stmts (value_ctx : Il.value) (value_sto : Il.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left
@@ -193,10 +208,12 @@ module Make
         in
         error_stf (msg_output ^ msg_expect)
 
-  let run_stf_test (spec : spec) (includes_p4 : string list)
-      (filename_p4 : string) (filename_stf : string) : stf_result =
+  let run_stf_test_il (spec : Il.spec) (includes_p4 : string list)
+      (filename_p4 : string) (filename_stf : string) : stf_result_il =
     try
-      let value_ctx, value_sto = Arch.init_pipe spec includes_p4 filename_p4 in
+      let value_ctx, value_sto =
+        Arch.init_pipe (IL spec) includes_p4 filename_p4
+      in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
       run_stf_stmts value_ctx value_sto stf_stmts;
       Pass
@@ -206,10 +223,80 @@ module Make
     | Util.Error.ArchError (at, msg) -> Fail (at, msg)
     | Util.Error.StfError msg -> Fail (no_region, msg)
 
+  let run_stf_test_sl (spec : Sl.spec) (includes_p4 : string list)
+      (filename_p4 : string) (filename_stf : string) : stf_result_sl =
+    try
+      let value_ctx, value_sto =
+        Arch.init_pipe (SL spec) includes_p4 filename_p4
+      in
+      let stf_stmts = Stf.Parse.parse_file filename_stf in
+      run_stf_stmts value_ctx value_sto stf_stmts;
+      let cover_single =
+        match !Arch.coverage with
+        | Cover cover_single -> cover_single
+        | _ -> assert false
+      in
+      Pass cover_single
+    with
+    | Util.Error.ParseError (at, msg) ->
+        let cover_single =
+          match !Arch.coverage with
+          | Cover cover_single -> cover_single
+          | _ -> assert false
+        in
+        IllFormed (at, msg, cover_single)
+    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+        let cover_single =
+          match !Arch.coverage with
+          | Cover cover_single -> cover_single
+          | _ -> assert false
+        in
+        Fail (at, msg, cover_single)
+    | Util.Error.StfError msg ->
+        let cover_single =
+          match !Arch.coverage with
+          | Cover cover_single -> cover_single
+          | _ -> assert false
+        in
+        Fail (no_region, msg, cover_single)
+
+  let run_stf_test (spec : spec) (includes_p4 : string list)
+      (filename_p4 : string) (filename_stf : string) : stf_result =
+    match spec with
+    | IL spec_il -> run_stf_test_il spec_il includes_p4 filename_p4 filename_stf
+    | SL spec_sl ->
+        run_stf_test_sl spec_sl includes_p4 filename_p4 filename_stf
+        |> promote_stf_result_sl
+    | Empty -> assert false
+
   (* Coverage runner *)
 
-  let cover_programs (spec : Sl.spec) (relname : string)
+  let cover_instr_programs (spec : Sl.spec) (relname : string)
+      (includes_p4 : string list) (filenames_p4 : string list) : ICov_multi.t =
+    Arch.init (SL spec);
+    Interp_SL.cover_instr_programs spec relname includes_p4 filenames_p4
+
+  let cover_instr_stfs (spec : Sl.spec) (includes_p4 : string list)
+      (filenames_p4 : string list) (filenames_stf : string list) : ICov_multi.t
+      =
+    verbose := false;
+    Arch.init (SL spec);
+    let cover_multi = ICov_multi.init spec in
+    List.combine filenames_p4 filenames_stf
+    |> List.fold_left
+         (fun cover_multi (filename_p4, filename_stf) ->
+           let stf_result_sl =
+             run_stf_test_sl spec includes_p4 filename_p4 filename_stf
+           in
+           match stf_result_sl with
+           | Pass cover_single
+           | Fail (_, _, cover_single)
+           | IllFormed (_, _, cover_single) ->
+               ICov_multi.extend cover_multi filename_p4 cover_single.instr)
+         cover_multi
+
+  let cover_dangling_programs (spec : Sl.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
     Arch.init (SL spec);
-    Interp_SL.cover_programs spec relname includes_p4 filenames_p4
+    Interp_SL.cover_dangling_programs spec relname includes_p4 filenames_p4
 end

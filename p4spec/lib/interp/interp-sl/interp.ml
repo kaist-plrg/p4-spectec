@@ -3,12 +3,14 @@ open Lib
 open Lang
 open Xl
 open Sl
+module ICov_single = Coverage.Instr.Single
+module ICov_multi = Coverage.Instr.Multi
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 open Error
 module F = Format
 open Util.Backtrace
@@ -1133,10 +1135,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-    try eval_instr' ctx instr
+    try
+      let ctx, sign = eval_instr' ctx instr in
+      Ctx.cover_instr ctx instr.note.iid;
+      (ctx, sign)
     with Backtrace traces ->
       back_nest instr.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_instr_short instr))
+        (F.asprintf "%s failed" (Sl.Print.string_of_instr instr))
         traces
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
@@ -1148,11 +1153,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | CaseI (exp, cases, phantom_opt) ->
         eval_case_instr ctx exp cases phantom_opt
     | OtherwiseI instr -> eval_instr ctx instr
-    | GroupI (id_group, exps_group, instrs_group) ->
-        eval_group_instr ctx id_group exps_group instrs_group
+    | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+        eval_group_instr ctx id_group rel_signature exps_group instrs_group
     | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
     | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
-    | ResultI exps -> eval_result_instr ctx exps
+    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
 
@@ -1227,7 +1232,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+    | Some pid -> Ctx.cover_dangling ctx (not cond) pid vid
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
@@ -1308,7 +1313,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
     (* Copy the current coverage information *)
-    let cover_backup = !(ctx.coverage) in
+    let cover_dangling_backup = !(ctx.coverage.dangling) in
     (* Evaluate the hold condition *)
     let cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
     (* Evaluate the hold case, and restore the coverage information
@@ -1318,17 +1323,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | BothH (instrs_hold, instrs_not_hold) ->
         if cond then eval_instrs ctx Cont instrs_hold
         else (
-          ctx.coverage := cover_backup;
+          ctx.coverage.dangling := cover_dangling_backup;
           eval_instrs ctx Cont instrs_not_hold)
     | HoldH (instrs_hold, phantom_opt) ->
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+        | Some pid -> Ctx.cover_dangling ctx (not cond) pid vid
         | None -> ());
         if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
     | NotHoldH (instrs_not_hold, phantom_opt) ->
-        ctx.coverage := cover_backup;
+        ctx.coverage.dangling := cover_dangling_backup;
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx cond pid vid
+        | Some pid -> Ctx.cover_dangling ctx cond pid vid
         | None -> ());
         if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
@@ -1375,7 +1380,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let instrs_opt, value_cond = eval_cases ctx exp cases in
     let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
+    | Some pid ->
+        let matched = Option.is_some instrs_opt in
+        Ctx.cover_dangling ctx (not matched) pid vid
     | None -> ());
     (* Evaluate the matching case if any *)
     match instrs_opt with
@@ -1384,7 +1391,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
+  and eval_group_instr (ctx : Ctx.t) (id_group : id)
+      (_rel_signature : rel_signature) (_exps_group : exp list)
       (instrs_group : instr list) : Ctx.t * Sign.t =
     let ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
     match sign_group with
@@ -1634,7 +1642,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Result instruction evaluation *)
 
-  and eval_result_instr (ctx : Ctx.t) (exps : exp list) : Ctx.t * Sign.t =
+  and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
+      (exps : exp list) : Ctx.t * Sign.t =
     let values = eval_exps ctx exps in
     (ctx, Sign.Res values)
 
@@ -1917,61 +1926,122 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       error no_region msg
 
   let eval_program ~(derive : bool) (spec : spec) (relname : string)
-      (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
+      (includes_p4 : string list) (filename_p4 : string) : Sim.program_result_sl
+      =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
+    let cover_instr = ref (ICov_single.init spec) in
+    let cover_dangling = ref (DCov_single.init spec) in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let graph = Dep.Graph.assemble_graph value_program in
-      let vdg = Ctx.{ graph; vid_program = value_program.note.vid } in
-      let ctx = Ctx.empty_end_to_end ~derive vdg cover in
+      let vdg = Dep.Graph.assemble_graph value_program in
+      let ctx = Ctx.empty_end_to_end ~derive vdg cover_instr cover_dangling in
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
-      Sim.Pass (values_output, graph, value_program.note.vid, !(ctx.coverage))
+      let cover_single : Sim.cover_single =
+        Sim.
+          { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
+      in
+      Sim.Pass (values_output, vdg, cover_single)
     with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg, !cover)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !cover)
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
+    | Util.Error.ParseError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.IllFormed (at, msg, cover_single)
+    | Util.Error.InterpError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
+    | Util.Error.ArchError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
-      Sim.rel_result =
+      Sim.rel_result_sl =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let cover_instr = ref (ICov_single.init spec) in
+    let cover_dangling = ref (DCov_single.init spec) in
+    let ctx = Ctx.empty_partial cover_instr cover_dangling in
     try
       let values_output = do_eval_rel ctx spec relname values_input in
-      Sim.Pass (values_output, !(ctx.coverage))
+      let cover_single : Sim.cover_single =
+        Sim.
+          { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
+      in
+      Sim.Pass (values_output, cover_single)
     with
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !(ctx.coverage))
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
+    | Util.Error.InterpError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
+    | Util.Error.ArchError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result =
+      (values_input : value list) : Sim.func_result_sl =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let cover_instr = ref (ICov_single.init spec) in
+    let cover_dangling = ref (DCov_single.init spec) in
+    let ctx = Ctx.empty_partial cover_instr cover_dangling in
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
-      Sim.Pass (value_output, !(ctx.coverage))
+      let cover_single : Sim.cover_single =
+        Sim.
+          { instr = !(ctx.coverage.instr); dangling = !(ctx.coverage.dangling) }
+      in
+      Sim.Pass (value_output, cover_single)
     with
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !(ctx.coverage))
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
+    | Util.Error.InterpError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
+    | Util.Error.ArchError (at, msg) ->
+        let cover_single : Sim.cover_single =
+          Sim.{ instr = !cover_instr; dangling = !cover_dangling }
+        in
+        Sim.Fail (at, msg, cover_single)
 
   (* Entry point for coverage *)
 
-  let cover_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
-    let cover_multi = DCov_multi.init spec in
+  let cover_instr_programs (spec : spec) (relname : string)
+      (includes_p4 : string list) (filenames_p4 : string list) : ICov_multi.t =
+    let cover_instr_multi = ICov_multi.init spec in
     List.fold_left
-      (fun cover_multi filename_p4 ->
-        let wellformed, welltyped, cover_single =
+      (fun cover_instr_multi filename_p4 ->
+        let cover_instr_single =
           match
             eval_program ~derive:false spec relname includes_p4 filename_p4
           with
-          | Pass (_, _, _, cover_single) -> (true, true, cover_single)
-          | Fail (_, _, cover_single) -> (true, false, cover_single)
-          | IllFormed (_, _, cover_single) -> (false, false, cover_single)
+          | Pass (_, _, cover_single)
+          | Fail (_, _, cover_single)
+          | IllFormed (_, _, cover_single) ->
+              cover_single.instr
         in
-        DCov_multi.extend cover_multi filename_p4 wellformed welltyped
-          cover_single)
-      cover_multi filenames_p4
+        ICov_multi.extend cover_instr_multi filename_p4 cover_instr_single)
+      cover_instr_multi filenames_p4
+
+  let cover_dangling_programs (spec : spec) (relname : string)
+      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
+    let cover_dangling_multi = DCov_multi.init spec in
+    List.fold_left
+      (fun cover_dangling_multi filename_p4 ->
+        let wellformed, welltyped, cover_dangling_single =
+          match
+            eval_program ~derive:false spec relname includes_p4 filename_p4
+          with
+          | Pass (_, _, cover_single) -> (true, true, cover_single.dangling)
+          | Fail (_, _, cover_single) -> (true, false, cover_single.dangling)
+          | IllFormed (_, _, cover_single) ->
+              (false, false, cover_single.dangling)
+        in
+        DCov_multi.extend cover_dangling_multi filename_p4 wellformed welltyped
+          cover_dangling_single)
+      cover_dangling_multi filenames_p4
 end

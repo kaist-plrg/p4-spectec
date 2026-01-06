@@ -31,6 +31,8 @@
    (ignore-outputs
     (diff cover_dangling_p4c.expected cover_dangling_p4c.actual))
    (ignore-outputs
+    (diff cover_sim_instr_p4c.expected cover_sim_instr_p4c.actual))
+   (ignore-outputs
     (diff parser_pos_p4c.expected parser_pos_p4c.actual))
    (ignore-outputs
     (diff parser_neg_p4c.expected parser_neg_p4c.actual)))))
@@ -118,11 +120,20 @@
 ;; Testgen - dangling coverage tests
 
 (rule
- (alias p4ntt)
+ (alias p4ntt-cov)
  (action
   (progn
    (ignore-outputs
     (diff cover_dangling_p4c.expected cover_dangling_p4c.actual)))))
+
+;; P4 simulation coverage tests
+
+(rule
+ (alias p4sim-cov)
+ (action
+  (progn
+   (ignore-outputs
+    (diff cover_sim_instr_p4c.expected cover_sim_instr_p4c.actual)))))
 
 ;; P4 parsing tests
 
@@ -344,6 +355,29 @@
      ../../../../p4c/testdata/p4_16_samples
      -d
      ../../../../p4c/testdata/p4_16_errors)))))
+
+(rule
+ (target cover_sim_instr_p4c.actual)
+ (action
+  (with-stdout-to
+   cover_sim_instr_p4c.actual
+   (with-stderr-to
+    cover_sim_instr_p4c.err
+    (run
+     ./test.exe
+     cover-sim-instr
+     -arch
+     v1model
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes
+     -d
+     ../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../patches/v1model)))))
 
 (rule
  (target parser_pos_p4c.actual)

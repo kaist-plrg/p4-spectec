@@ -103,20 +103,10 @@ type arg' = Il.arg'
 type targ = Il.targ [@@deriving yojson]
 type targ' = Il.targ'
 
-(* Path conditions *)
+(* Phantoms *)
 
 and pid = int
-
-and phantom = pid * pathcond list
-[@@deriving yojson]
-
-and pathcond =
-  | ForallC of pathcond * iterexp list
-  | ExistsC of pathcond * iterexp list
-  | PlainC of exp
-  | HoldC of id * notexp
-  | NotHoldC of id * notexp
-[@@deriving yojson]
+and phantom = pid
 
 (* Holding conditions *)
 
@@ -141,7 +131,10 @@ and guard =
 
 (* Instructions *)
 
-and instr = instr' phrase
+and iid = int
+and inote = { iid : iid } [@@deriving yojson]
+
+and instr = (instr', inote) note_phrase [@@deriving yojson]
 and instr' =
   (* Branching instructions *)
   | IfI of exp * iterexp list * instr list * phantom option
@@ -149,12 +142,12 @@ and instr' =
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
   (* Aggregate instructions *)
-  | GroupI of id * exp list * instr list
+  | GroupI of id * rel_signature * exp list * instr list
   (* Binding instructions *)
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
   (* Result/Return instructions *)
-  | ResultI of exp list
+  | ResultI of rel_signature * exp list
   | ReturnI of exp
   (* Debugging instructions *)
   | DebugI of exp
@@ -162,17 +155,21 @@ and instr' =
 
 (* Hints *)
 
-type hint = El.hint
+and hint = El.hint
 [@@deriving yojson]
 
 (* Relations *)
 
-(* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
-type externrel = id * (mixop * Hints.Input.t) * exp list * hint list
+(* mixop `hint(input` `%`int* `)` *)
+and rel_signature = mixop * Hints.Input.t
+[@@deriving yojson]
+
+(* id `:` rel_signature exp* hint* *)
+type externrel = id * rel_signature * exp list * hint list
 [@@deriving yojson]
 
 (* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
-type rel = id * (mixop * Hints.Input.t) * exp list * instr list * hint list
+type rel = id * rel_signature * exp list * instr list * hint list
 [@@deriving yojson]
 
 (* Functions *)
@@ -185,15 +182,15 @@ type externfunc = id * tparam list * arg list * typ * hint list
 type builtinfunc = id * tparam list * arg list * typ * hint list
 [@@deriving yojson]
 
-(* arg* -> instr* *)
+(* `(` list(exp, `,`)* `)` `->` exp instr* *)
 type tablerow = exp list * exp * instr list
 [@@deriving yojson]
 
-(* id list(arg, `,`) `:` instr* hint* *)
+(* id `(` list(arg, `,`) `)` `:` typ tablerow* hint* *)
 type tablefunc = id * arg list * typ * tablerow list * hint list
 [@@deriving yojson]
 
-(* id `<` list(tparam, `,`) `>` list(param, `,`) `:` instr* hint* *)
+(* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ instr* hint* *)
 type definedfunc = id * tparam list * arg list * typ * instr list * hint list
 [@@deriving yojson]
 

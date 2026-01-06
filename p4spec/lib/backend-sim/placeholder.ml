@@ -1,6 +1,8 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+module ICov_single = Coverage.Instr.Single
+module DCov_single = Coverage.Dangling.Single
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -10,37 +12,57 @@ module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
   (* Specification *)
 
-  let spec : Sim.spec ref = ref Sim.Empty
+  let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
+
+  (* Coverage *)
+
+  let coverage : Sim.coverage ref = ref Sim.Empty
+
+  let init_coverage (spec_ : Sim.spec) : unit =
+    match spec_ with
+    | SL spec_sl ->
+        let instr = ICov_single.init spec_sl in
+        let dangling = DCov_single.init spec_sl in
+        coverage := Sim.Cover { instr; dangling }
+    | IL _ | Empty -> ()
 
   (* Call entry points *)
 
   let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
-    let result =
-      match !spec with
-      | IL spec_il -> Interp_IL.eval_rel spec_il relname values_input
-      | SL spec_sl -> Interp_SL.eval_rel spec_sl relname values_input
-      | Empty -> assert false
-    in
-    match result with
-    | Pass (values_output, _) -> values_output
-    | Fail (at, msg, _) -> error at msg
+    match !spec with
+    | IL spec_il -> (
+        let rel_result_il = Interp_IL.eval_rel spec_il relname values_input in
+        match rel_result_il with
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
+    | SL spec_sl -> (
+        let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
+        match rel_result_sl with
+        | Pass (values_output, _) -> values_output
+        | Fail (at, msg, _) -> error at msg)
+    | Empty -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
 
   let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
-    let result =
-      match !spec with
-      | IL spec_il ->
+    match !spec with
+    | IL spec_il -> (
+        let func_result_il =
           Interp_IL.eval_func spec_il funcname typs_input values_input
-      | SL spec_sl ->
+        in
+        match func_result_il with
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
+    | SL spec_sl -> (
+        let func_result_sl =
           Interp_SL.eval_func spec_sl funcname typs_input values_input
-      | Empty -> assert false
-    in
-    match result with
-    | Pass (value_output, _) -> value_output
-    | Fail (at, msg, _) -> error at msg
+        in
+        match func_result_sl with
+        | Pass (value_output, _) -> value_output
+        | Fail (at, msg, _) -> error at msg)
+    | Empty -> assert false
 
   let init_call_func () = Spec.Func.register call_func
 
@@ -96,6 +118,7 @@ struct
 
   let init (spec_ : Sim.spec) : unit =
     init_spec spec_;
+    init_coverage spec_;
     init_call_rel ();
     init_call_func ()
 

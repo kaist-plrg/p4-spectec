@@ -1,10 +1,11 @@
 open Domain.Lib
 open Lang
 open Sl
+module ICov_single = Coverage.Instr.Single
+module DCov_single = Coverage.Dangling.Single
 open Runtime.Dynamic_Sl
 open Envs
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
 open Util.Backtrace
 open Util.Source
 
@@ -29,8 +30,8 @@ type cursor = Global | Local
    Their references are copied when constructing sub-contexts,
    thus sharing the same graph and cover across contexts. *)
 
-type coverage = DCov_single.t ref
-type vdg = { graph : Dep.Graph.t; vid_program : vid }
+type coverage = { instr : ICov_single.t ref; dangling : DCov_single.t ref }
+type vdg = Dep.Graph.t
 type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
 
 (* Global layer *)
@@ -81,9 +82,14 @@ type t = {
 
 (* Cover *)
 
-let cover (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
-  if hit then ctx.coverage := DCov_single.hit !(ctx.coverage) pid
-  else ctx.coverage := DCov_single.miss !(ctx.coverage) pid vid
+let cover_instr (ctx : t) (iid : iid) : unit =
+  ctx.coverage.instr := ICov_single.hit !(ctx.coverage.instr) iid
+
+let cover_dangling (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
+  if hit then
+    ctx.coverage.dangling := DCov_single.hit !(ctx.coverage.dangling) pid
+  else
+    ctx.coverage.dangling := DCov_single.miss !(ctx.coverage.dangling) pid vid
 
 (* Value dependencies *)
 
@@ -92,14 +98,13 @@ let deriving (ctx : t) : bool =
 
 let add_node ?(taint = false) (ctx : t) (value : value) : unit =
   match ctx.testing with
-  | EndToEnd (`On { graph; _ }) -> Dep.Graph.add_node ~taint graph value
+  | EndToEnd (`On vdg) -> Dep.Graph.add_node ~taint vdg value
   | _ -> ()
 
 let add_edge (ctx : t) (value_from : value) (value_to : value)
     (label : Dep.Edges.label) : unit =
   match ctx.testing with
-  | EndToEnd (`On { graph; _ }) ->
-      Dep.Graph.add_edge graph value_from value_to label
+  | EndToEnd (`On vdg) -> Dep.Graph.add_edge vdg value_from value_to label
   | _ -> ()
 
 (* Finders *)
@@ -285,16 +290,17 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty_end_to_end ~(derive : bool) (vdg : vdg) (cover : DCov_single.t ref) :
-    t =
-  let coverage = cover in
+let empty_end_to_end ~(derive : bool) (vdg : vdg)
+    (cover_instr : ICov_single.t ref) (cover_dangling : DCov_single.t ref) : t =
+  let coverage = { instr = cover_instr; dangling = cover_dangling } in
   let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
   let global = empty_global () in
   let local = empty_local () in
   { coverage; testing; global; local }
 
-let empty_partial (cover : DCov_single.t ref) : t =
-  let coverage = cover in
+let empty_partial (cover_instr : ICov_single.t ref)
+    (cover_dangling : DCov_single.t ref) : t =
+  let coverage = { instr = cover_instr; dangling = cover_dangling } in
   let testing = Partial in
   let global = empty_global () in
   let local = empty_local () in

@@ -7,7 +7,7 @@ open Runtime.Dynamic_Il
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
+module DCov_single = Coverage.Dangling.Single
 open Error
 open Attempt
 module F = Format
@@ -1570,36 +1570,32 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     invoke_func'' ctx (funcname $ no_region) targs values_input
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Sim.program_result =
+      (filename_p4 : string) : Sim.program_result_il =
     do_init spec;
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let graph = Dep.Graph.assemble_graph value_program in
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, values_output =
         do_eval_rel ctx spec relname [ value_program ]
       in
       Ctx.profile ctx;
-      (Sim.Pass (values_output, graph, value_program.note.vid, DCov_single.empty)
-        : Sim.program_result)
+      (Sim.Pass values_output : Sim.program_result_il)
     with
-    | Util.Error.ParseError (at, msg) ->
-        Sim.IllFormed (at, msg, DCov_single.empty)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, DCov_single.empty)
+    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
+    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
-      Sim.rel_result =
+      Sim.rel_result_il =
     do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
       Ctx.profile ctx;
-      (Sim.Pass (values_output, DCov_single.empty) : Sim.rel_result)
-    with Util.Error.InterpError (at, msg) ->
-      Sim.Fail (at, msg, DCov_single.empty)
+      (Sim.Pass values_output : Sim.rel_result_il)
+    with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result =
+      (values_input : value list) : Sim.func_result_il =
     do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
@@ -1607,7 +1603,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_func ctx spec funcname targs values_input
       in
       Ctx.profile ctx;
-      (Sim.Pass (value_output, DCov_single.empty) : Sim.func_result)
-    with Util.Error.InterpError (at, msg) ->
-      Sim.Fail (at, msg, DCov_single.empty)
+      (Sim.Pass value_output : Sim.func_result_il)
+    with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 end
