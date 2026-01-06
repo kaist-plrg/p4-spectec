@@ -144,9 +144,10 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       eq_exp exp_a exp_b && eq_cases cases_a cases_b
       && eq_phantom_opt phantom_opt_a phantom_opt_b
   | OtherwiseI instr_a, OtherwiseI instr_b -> eq_instr instr_a instr_b
-  | ( GroupI (id_group_a, exps_group_a, instrs_group_a),
-      GroupI (id_group_b, exps_group_b, instrs_group_b) ) ->
+  | ( GroupI (id_group_a, rel_signature_a, exps_group_a, instrs_group_a),
+      GroupI (id_group_b, rel_signature_b, exps_group_b, instrs_group_b) ) ->
       eq_id id_group_a id_group_b
+      && eq_rel_signature rel_signature_a rel_signature_b
       && eq_exps exps_group_a exps_group_b
       && eq_instrs instrs_group_a instrs_group_b
   | LetI (exp_l_a, exp_r_a, iterexps_a), LetI (exp_l_b, exp_r_b, iterexps_b) ->
@@ -156,7 +157,8 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       RuleI (id_b, (mixop_b, exps_b), iterexps_b) ) ->
       eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
       && eq_iterexps iterexps_a iterexps_b
-  | ResultI exps_a, ResultI exps_b -> eq_exps exps_a exps_b
+  | ResultI (rel_signature_a, exps_a), ResultI (rel_signature_b, exps_b) ->
+      eq_rel_signature rel_signature_a rel_signature_b && eq_exps exps_a exps_b
   | ReturnI exp_a, ReturnI exp_b -> eq_exp exp_a exp_b
   | DebugI exp_a, DebugI exp_b -> eq_exp exp_a exp_b
   | _ -> false
@@ -164,3 +166,11 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
 and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
   List.length instrs_a = List.length instrs_b
   && List.for_all2 eq_instr instrs_a instrs_b
+
+(* Relations *)
+
+and eq_rel_signature (rel_signature_a : rel_signature)
+    (rel_signature_b : rel_signature) : bool =
+  let mixop_a, inputs_a = rel_signature_a in
+  let mixop_b, inputs_b = rel_signature_b in
+  eq_mixop mixop_a mixop_b && Hints.Input.eq inputs_a inputs_b

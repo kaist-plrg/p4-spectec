@@ -117,12 +117,12 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
   | OtherwiseI instr ->
       let instr = insert_phantom' instr in
       Sl.OtherwiseI instr
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = insert_phantom instrs_group in
-      Sl.GroupI (id_group, exps_group, instrs_group)
+      Sl.GroupI (id_group, rel_signature, exps_group, instrs_group)
   | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps)
   | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps)
-  | ResultI exps -> Sl.ResultI exps
+  | ResultI (rel_signature, exps) -> Sl.ResultI (rel_signature, exps)
   | ReturnI exp -> Sl.ReturnI exp
   | DebugI exp -> Sl.DebugI exp
 
@@ -171,12 +171,12 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
   | OtherwiseI instr ->
       let instr = insert_nothing' instr in
       Sl.OtherwiseI instr
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = insert_nothing instrs_group in
-      Sl.GroupI (id_group, exps_group, instrs_group)
+      Sl.GroupI (id_group, rel_signature, exps_group, instrs_group)
   | LetI (exp_l, exp_r, iterexps) -> Sl.LetI (exp_l, exp_r, iterexps)
   | RuleI (id, notexp, iterexps) -> Sl.RuleI (id, notexp, iterexps)
-  | ResultI exps -> Sl.ResultI exps
+  | ResultI (rel_signature, exps) -> Sl.ResultI (rel_signature, exps)
   | ReturnI exp -> Sl.ReturnI exp
   | DebugI exp -> Sl.DebugI exp
 

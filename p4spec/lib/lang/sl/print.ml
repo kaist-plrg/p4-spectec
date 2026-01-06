@@ -191,17 +191,16 @@ and string_of_phantom phantom = string_of_pid phantom
 
 (* Case analysis *)
 
-and string_of_case ?(signature = None) ?(level = 0) ?(index = 0) case =
+and string_of_case ?(level = 0) ?(index = 0) case =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let guard, instrs = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
-    (string_of_instrs ~signature ~level:(level + 1) instrs)
+    (string_of_instrs ~level:(level + 1) instrs)
 
-and string_of_cases ?(signature = None) ?(level = 0) cases =
+and string_of_cases ?(level = 0) cases =
   cases
-  |> List.mapi (fun idx case ->
-         string_of_case ~signature ~level ~index:(idx + 1) case)
+  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) case)
   |> String.concat "\n\n"
 
 and string_of_guard guard =
@@ -215,18 +214,18 @@ and string_of_guard guard =
 
 (* Instructions *)
 
-and string_of_instr ?(signature = None) ?(level = 0) ?(index = 0) instr =
+and string_of_instr ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, None) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (string_of_instrs ~signature ~level:(level + 1) instrs_then)
+        (string_of_instrs ~level:(level + 1) instrs_then)
   | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s%s" order (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (string_of_instrs ~signature ~level:(level + 1) instrs_then)
+        (string_of_instrs ~level:(level + 1) instrs_then)
         ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
@@ -234,47 +233,45 @@ and string_of_instr ?(signature = None) ?(level = 0) ?(index = 0) instr =
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s"
             order (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
+            (string_of_instrs ~level:(level + 1) instrs_hold)
             order
-            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
+            (string_of_instrs ~level:(level + 1) instrs_nothold)
       | HoldH (instrs_hold, None) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
+            (string_of_instrs ~level:(level + 1) instrs_hold)
       | HoldH (instrs_hold, Some phantom) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~signature ~level:(level + 1) instrs_hold)
+            (string_of_instrs ~level:(level + 1) instrs_hold)
             ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
       | NotHoldH (instrs_nothold, None) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
+            (string_of_instrs ~level:(level + 1) instrs_nothold)
       | NotHoldH (instrs_nothold, Some phantom) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s%s" order
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (string_of_instrs ~signature ~level:(level + 1) instrs_nothold)
+            (string_of_instrs ~level:(level + 1) instrs_nothold)
             ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
   | CaseI (exp, cases, None) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
-        (string_of_cases ~signature ~level:(level + 1) cases)
+        (string_of_cases ~level:(level + 1) cases)
   | CaseI (exp, cases, Some phantom) ->
       Format.asprintf "%sCase analysis on %s\n\n%s%s" order (string_of_exp exp)
-        (string_of_cases ~signature ~level:(level + 1) cases)
+        (string_of_cases ~level:(level + 1) cases)
         ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | OtherwiseI instr ->
       Format.asprintf "%sOtherwise\n\n%s" order
-        (string_of_instr ~signature ~level:(level + 1) ~index:1 instr)
-  | GroupI (id_group, exps_group, instrs_group) ->
+        (string_of_instr ~level:(level + 1) ~index:1 instr)
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
-        (match signature with
-        | Some (mixop, inputs) -> string_of_relinput mixop inputs exps_group
-        | None -> string_of_exps ", " exps_group)
-        (string_of_instrs ~signature ~level:(level + 1) instrs_group)
+        (string_of_relinput rel_signature exps_group)
+        (string_of_instrs ~level:(level + 1) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
@@ -283,24 +280,22 @@ and string_of_instr ?(signature = None) ?(level = 0) ?(index = 0) instr =
       Format.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-  | ResultI [] -> Format.asprintf "%sThe relation holds" order
-  | ResultI exps ->
-      Format.asprintf "%sResult in %s" order
-        (match signature with
-        | Some (mixop, inputs) -> ": " ^ string_of_reloutput mixop inputs exps
-        | None -> string_of_exps ", " exps)
+  | ResultI (_, []) -> Format.asprintf "%sThe relation holds" order
+  | ResultI (rel_signature, exps) ->
+      Format.asprintf "%sResult in: %s" order
+        (string_of_reloutput rel_signature exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
-and string_of_instrs ?(signature = None) ?(level = 0) instrs =
+and string_of_instrs ?(level = 0) instrs =
   instrs
-  |> List.mapi (fun idx instr ->
-         string_of_instr ~signature ~level ~index:(idx + 1) instr)
+  |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
   |> String.concat "\n\n"
 
 (* Relations *)
 
-and string_of_relinput mixop inputs exps_input =
+and string_of_relinput rel_signature exps_input =
+  let mixop, inputs = rel_signature in
   let exps_input = List.combine inputs exps_input in
   let exps =
     List.init
@@ -313,7 +308,8 @@ and string_of_relinput mixop inputs exps_input =
   let notexp = (mixop, exps) in
   string_of_notexp notexp
 
-and string_of_reloutput mixop inputs exps_output =
+and string_of_reloutput rel_signature exps_output =
+  let mixop, inputs = rel_signature in
   let outputs =
     List.init
       (List.length mixop - 1)
@@ -333,15 +329,14 @@ and string_of_reloutput mixop inputs exps_output =
   string_of_notexp notexp
 
 and string_of_extern_rel externrel =
-  let relid, (mixop, inputs), exps_match, _hints = externrel in
-  string_of_relid relid ^ ": " ^ string_of_relinput mixop inputs exps_match
+  let relid, rel_signature, exps_match, _hints = externrel in
+  string_of_relid relid ^ ": " ^ string_of_relinput rel_signature exps_match
 
 and string_of_defined_rel rel =
-  let relid, (mixop, inputs), exps_match, instrs, _hints = rel in
+  let relid, rel_signature, exps_match, instrs, _hints = rel in
   string_of_relid relid ^ ": "
-  ^ string_of_relinput mixop inputs exps_match
-  ^ "\n\n"
-  ^ string_of_instrs ~signature:(Some (mixop, inputs)) instrs
+  ^ string_of_relinput rel_signature exps_match
+  ^ "\n\n" ^ string_of_instrs instrs
 
 (* Functions *)
 

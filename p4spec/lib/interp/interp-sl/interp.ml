@@ -1153,11 +1153,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | CaseI (exp, cases, phantom_opt) ->
         eval_case_instr ctx exp cases phantom_opt
     | OtherwiseI instr -> eval_instr ctx instr
-    | GroupI (id_group, exps_group, instrs_group) ->
-        eval_group_instr ctx id_group exps_group instrs_group
+    | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+        eval_group_instr ctx id_group rel_signature exps_group instrs_group
     | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
     | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
-    | ResultI exps -> eval_result_instr ctx exps
+    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
 
@@ -1391,7 +1391,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
+  and eval_group_instr (ctx : Ctx.t) (id_group : id)
+      (_rel_signature : rel_signature) (_exps_group : exp list)
       (instrs_group : instr list) : Ctx.t * Sign.t =
     let ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
     match sign_group with
@@ -1641,7 +1642,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Result instruction evaluation *)
 
-  and eval_result_instr (ctx : Ctx.t) (exps : exp list) : Ctx.t * Sign.t =
+  and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
+      (exps : exp list) : Ctx.t * Sign.t =
     let values = eval_exps ctx exps in
     (ctx, Sign.Res values)
 

@@ -501,15 +501,15 @@ relation BlockElementStmts_inst failed
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC, STO, []
+    1. Group nil: IC STO |- [] : % % %
 
-      1. Result in IC, STO, []
+      1. Result in: % % |- % : IC STO []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR)*)
 
-    2. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+    2. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
       1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -519,11 +519,11 @@ relation BlockElementStmts_inst failed
 
         2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-        3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+        3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
       2. Else Phantom#2113 failed
     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:200.28-200.33
-        0. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+        0. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
   1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -533,7 +533,7 @@ relation BlockElementStmts_inst failed
 
     2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-    3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+    3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
   2. Else Phantom#2113 failed
         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:204.6-206.62
@@ -547,7 +547,7 @@ relation BlockElementStmts_inst failed
 
     1. (Let constantDeclarationIR be (blockElementStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0, STO_0, (constantDeclarationIR as blockElementStatementIR)
+    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as blockElementStatementIR) : % % %
 
       1. (Decl_inst: (local) IC_0 STO_0 |- (constantDeclarationIR as declarationIR) : IC_1 STO_1 (declarationIR')?)
 
@@ -559,7 +559,7 @@ relation BlockElementStmts_inst failed
 
           1. (Let constantDeclarationIR_inst be (declarationIR as constantDeclarationIR))
 
-          2. Result in IC_1, STO_1, ?((constantDeclarationIR_inst as blockElementStatementIR))
+          2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR_inst as blockElementStatementIR))
 
         2. Else Phantom#2111
 
@@ -569,25 +569,25 @@ relation BlockElementStmts_inst failed
 
     1. (Let variableDeclarationIR be (blockElementStatementIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC_0, STO_0, (variableDeclarationIR as blockElementStatementIR)
+    2. Group variableDeclarationIR: IC_0 STO_0 |- (variableDeclarationIR as blockElementStatementIR) : % % %
 
-      1. Result in IC_0, STO_0, ?((variableDeclarationIR as blockElementStatementIR))
+      1. Result in: % % |- % : IC_0 STO_0 ?((variableDeclarationIR as blockElementStatementIR))
 
   3. Case (% has type statementIR)
 
     1. (Let statementIR be (blockElementStatementIR as statementIR))
 
-    2. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+    2. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
       1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-      2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+      2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:187.27-187.39
-                        0. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+                        0. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
   1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-  2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+  2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-191.64
                             0. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst) failed
                             └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-190.15
@@ -2047,23 +2047,23 @@ relation Program_inst failed
 
     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-    2. Group literalExpressionIR-boolean: p, IC, STO, ((booleanLiteral as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-boolean: p IC STO |- ((booleanLiteral as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on booleanLiteral
 
         1. Case (% matches pattern `TRUE`)
 
-          1. Result in STO, ((true) as value)
+          1. Result in: % % % |- % : STO ((true) as value)
 
         2. Case (% matches pattern `FALSE`)
 
-          1. Result in STO, ((false) as value)
+          1. Result in: % % % |- % : STO ((false) as value)
 
   2. Case (% has type integerLiteral)
 
     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
-    2. Group literalExpressionIR-number: p, IC, STO, ((integerLiteral as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-number: p IC STO |- ((integerLiteral as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on integerLiteral
 
@@ -2071,61 +2071,61 @@ relation Program_inst failed
 
           1. (Let (d i) be integerLiteral)
 
-          2. Result in STO, ((d i) as value)
+          2. Result in: % % % |- % : STO ((d i) as value)
 
         2. Case (% matches pattern `%W%`)
 
           1. (Let (n w i) be integerLiteral)
 
-          2. Result in STO, ((n w i) as value)
+          2. Result in: % % % |- % : STO ((n w i) as value)
 
         3. Case (% matches pattern `%S%`)
 
           1. (Let (n s i) be integerLiteral)
 
-          2. Result in STO, ((n s i) as value)
+          2. Result in: % % % |- % : STO ((n s i) as value)
 
   3. Case (% has type stringLiteral)
 
     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-    2. Group literalExpressionIR-stringLiteral: p, IC, STO, (((" text ") as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-stringLiteral: p IC STO |- (((" text ") as expressionIR) # _expressionNoteIR) : % %
 
-      1. Result in STO, ((" text ") as value)
+      1. Result in: % % % |- % : STO ((" text ") as value)
 
   4. Case (% has type prefixedNameIR)
 
     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-    2. Group referenceExpressionIR: p, IC, STO, ((prefixedNameIR as expressionIR) # _expressionNoteIR)
+    2. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) : % %
 
       1. (Let value be $find_var_i(p, IC, prefixedNameIR))
 
-      2. Result in STO, value
+      2. Result in: % % % |- % : STO value
 
   5. Case (% has type defaultExpression)
 
     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
-    2. Group defaultExpressionIR: p, IC, STO, (((...) as expressionIR) # _expressionNoteIR)
+    2. Group defaultExpressionIR: p IC STO |- (((...) as expressionIR) # _expressionNoteIR) : % %
 
-      1. Result in STO, ((default) as value)
+      1. Result in: % % % |- % : STO ((default) as value)
 
   6. Case (% has type unaryExpressionIR)
 
     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-    2. Group unaryExpressionIR: p, IC, STO, (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR)
+    2. Group unaryExpressionIR: p IC STO |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
-      2. Result in STO_1, $un_op(unop, value)
+      2. Result in: % % % |- % : STO_1 $un_op(unop, value)
 
   7. Case (% has type binaryExpressionIR)
 
     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-    2. Group binaryExpressionIR: p, IC, STO, (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR)
+    2. Group binaryExpressionIR: p IC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) : % %
 
       1. If (~binop' is in [(&&), (||)]), then
 
@@ -2133,7 +2133,7 @@ relation Program_inst failed
 
         2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-        3. Result in STO_2, $bin_op(binop', value_l, value_r)
+        3. Result in: % % % |- % : STO_2 $bin_op(binop', value_l, value_r)
 
       1. Else Phantom#2067
 
@@ -2145,7 +2145,7 @@ relation Program_inst failed
 
           2. If ((value = ((false) as value))), then
 
-            1. Result in STO_1, ((false) as value)
+            1. Result in: % % % |- % : STO_1 ((false) as value)
 
           2. Else Phantom#2068
 
@@ -2153,7 +2153,7 @@ relation Program_inst failed
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-            2. Result in STO_2, value_r
+            2. Result in: % % % |- % : STO_2 value_r
 
           3. Else Phantom#2069
 
@@ -2163,7 +2163,7 @@ relation Program_inst failed
 
           2. If ((value = ((true) as value))), then
 
-            1. Result in STO_1, ((true) as value)
+            1. Result in: % % % |- % : STO_1 ((true) as value)
 
           2. Else Phantom#2070
 
@@ -2171,7 +2171,7 @@ relation Program_inst failed
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-            2. Result in STO_2, value_r
+            2. Result in: % % % |- % : STO_2 value_r
 
           3. Else Phantom#2071
 
@@ -2181,7 +2181,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
-    2. Group ternaryExpressionIR: p, IC, STO, (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR)
+    2. Group ternaryExpressionIR: p IC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_cond : STO_1 value)
 
@@ -2189,7 +2189,7 @@ relation Program_inst failed
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_true : STO_2 value_true)
 
-        2. Result in STO_2, value_true
+        2. Result in: % % % |- % : STO_2 value_true
 
       2. Else Phantom#2073
 
@@ -2197,7 +2197,7 @@ relation Program_inst failed
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_false : STO_2 value_false)
 
-        2. Result in STO_2, value_false
+        2. Result in: % % % |- % : STO_2 value_false
 
       3. Else Phantom#2074
 
@@ -2205,13 +2205,13 @@ relation Program_inst failed
 
     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-    2. Group castExpressionIR: p, IC, STO, (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR)
+    2. Group castExpressionIR: p IC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
       2. (Let value_cast be $cast_op(typeIR, value))
 
-      3. Result in STO_1, value_cast
+      3. Result in: % % % |- % : STO_1 value_cast
 
   10. Case (% has type dataExpressionIR)
 
@@ -2219,13 +2219,13 @@ relation Program_inst failed
 
     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
-      1. Group dataExpressionIR-invalid: p, IC, STO, ((({#}) as expressionIR) # _expressionNoteIR)
+      1. Group dataExpressionIR-invalid: p IC STO |- ((({#}) as expressionIR) # _expressionNoteIR) : % %
 
-        1. Result in STO, (({#}) as value)
+        1. Result in: % % % |- % : STO (({#}) as value)
 
     2. Else Phantom#2075
 
-    3. Group dataExpressionIR-sequence: p, IC, STO, ((dataExpressionIR as expressionIR) # _expressionNoteIR)
+    3. Group dataExpressionIR-sequence: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on dataExpressionIR
 
@@ -2235,7 +2235,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- typedExpressionListIR : STO_1 (value)*)
 
-          3. Result in STO_1, ((seq( (value)* )) as value)
+          3. Result in: % % % |- % : STO_1 ((seq( (value)* )) as value)
 
         2. Case (% matches pattern `SEQ{%,...}`)
 
@@ -2243,11 +2243,11 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- typedExpressionListIR : STO_1 (value)*)
 
-          3. Result in STO_1, ((seq( (value)* ,...)) as value)
+          3. Result in: % % % |- % : STO_1 ((seq( (value)* ,...)) as value)
 
       1. Else Phantom#2076
 
-    4. Group dataExpressionIR-record: p, IC, STO, ((dataExpressionIR as expressionIR) # _expressionNoteIR)
+    4. Group dataExpressionIR-record: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on dataExpressionIR
 
@@ -2257,7 +2257,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- (typedExpressionIR)* : STO_1 (value)*)
 
-          3. Result in STO_1, ((record{ ((value nameIR ;))* }) as value)
+          3. Result in: % % % |- % : STO_1 ((record{ ((value nameIR ;))* }) as value)
 
         2. Case (% matches pattern `RECORD{%,...}`)
 
@@ -2265,7 +2265,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- (typedExpressionIR)* : STO_1 (value)*)
 
-          3. Result in STO_1, ((record{ ((value nameIR ;))* ,...}) as value)
+          3. Result in: % % % |- % : STO_1 ((record{ ((value nameIR ;))* ,...}) as value)
 
       1. Else Phantom#2077
 
@@ -2273,13 +2273,13 @@ relation Program_inst failed
 
     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
-    2. Group errorAccessExpressionIR: p, IC, STO, (((error. nameIR) as expressionIR) # _expressionNoteIR)
+    2. Group errorAccessExpressionIR: p IC STO |- (((error. nameIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Let nameIR_error be "error." ++ nameIR)
 
       2. (Let value_error be $find_var_i(p, IC, (` nameIR_error)))
 
-      3. Result in STO, value_error
+      3. Result in: % % % |- % : STO value_error
 
   12. Case (% has type memberAccessExpressionIR)
 
@@ -2289,7 +2289,7 @@ relation Program_inst failed
 
       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-      2. Group memberAccessExpressionIR-type: p, IC, STO, ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR)
+      2. Group memberAccessExpressionIR-type: p IC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
 
         1. (Let (typeDefIR')? be $find_typeDef_i(p, IC, prefixedNameIR))
 
@@ -2307,7 +2307,7 @@ relation Program_inst failed
 
                 1. (Let (enum typeId { (_nameIR)* }) be enumTypeIR)
 
-                2. Result in STO, ((typeId . nameIR) as value)
+                2. Result in: % % % |- % : STO ((typeId . nameIR) as value)
 
               2. Case (% matches pattern `ENUM%<%>{%}`)
 
@@ -2319,7 +2319,7 @@ relation Program_inst failed
 
                   1. (Let ?(value) be (value')?)
 
-                  2. Result in STO, ((typeId . nameIR . value) as value)
+                  2. Result in: % % % |- % : STO ((typeId . nameIR . value) as value)
 
                 3. Else Phantom#2078
 
@@ -2333,7 +2333,7 @@ relation Program_inst failed
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. Group memberAccessExpressionIR-typedExpressionIR: p, IC, STO, ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR)
+      2. Group memberAccessExpressionIR-typedExpressionIR: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
 
         1. If ((nameIR = "size")), then
 
@@ -2345,7 +2345,7 @@ relation Program_inst failed
 
             1. (Let (_typeIR [ n_size ]) be (typeIR as headerStackTypeIR))
 
-            2. Result in STO, ((d (n_size as int)) as value)
+            2. Result in: % % % |- % : STO ((d (n_size as int)) as value)
 
           3. Else Phantom#2082
 
@@ -2367,7 +2367,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2084
 
@@ -2383,7 +2383,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2085
 
@@ -2399,7 +2399,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2086
 
@@ -2411,7 +2411,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
-    2. Group indexAccessExpressionIR: p, IC, STO, (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR)
+    2. Group indexAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -2437,7 +2437,7 @@ relation Program_inst failed
 
                 1. (Let value be (value_e)*[n_index])
 
-                2. Result in STO_2, value
+                2. Result in: % % % |- % : STO_2 value
 
               2. Else Phantom#2089
 
@@ -2457,7 +2457,7 @@ relation Program_inst failed
 
                 1. (Let value be (value_e)*[n_index])
 
-                2. Result in STO_2, value
+                2. Result in: % % % |- % : STO_2 value
 
               2. Else Phantom#2091
 
@@ -2471,7 +2471,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-    2. Group sliceAccessExpressionIR: p, IC, STO, (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR)
+    2. Group sliceAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -2479,7 +2479,7 @@ relation Program_inst failed
 
       3. (Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo)
 
-      4. Result in STO_3, $bitacc_op(value_base, value_hi, value_lo)
+      4. Result in: % % % |- % : STO_3 $bitacc_op(value_base, value_hi, value_lo)
 
   15. Case (% has type callExpressionIR)
 
@@ -2491,7 +2491,7 @@ relation Program_inst failed
 
         1. (Let ((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) be callExpressionIR)
 
-        2. Group callExpressionIR-constructor: p, IC, STO, ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR)
+        2. Group callExpressionIR-constructor: p IC STO |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
 
           1. (Constructor_inst: p IC |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)* ))
 
@@ -2501,7 +2501,7 @@ relation Program_inst failed
 
           4. (Let value_ref be ((! IC.path) as value))
 
-          5. Result in STO_2, value_ref
+          5. Result in: % % % |- % : STO_2 value_ref
 
       2. Case (% matches pattern `%<%>(%)`)
 
@@ -2511,7 +2511,7 @@ relation Program_inst failed
 
           1. If (((argumentIR)* matches pattern [])), then
 
-            1. Group callExpressionIR-builtin-size: p, IC, STO, (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR)
+            1. Group callExpressionIR-builtin-size: p IC STO |- (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR) : % %
 
               1. Case analysis on callableTargetIR
 
@@ -2523,7 +2523,7 @@ relation Program_inst failed
 
                   3. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                    1. Result in STO, $sizeof(typeIR_base, nameIR)
+                    1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                   3. Else Phantom#2095
 
@@ -2545,7 +2545,7 @@ relation Program_inst failed
 
                         2. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                          1. Result in STO, $sizeof(typeIR_base, nameIR)
+                          1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                         2. Else Phantom#2096
 
@@ -2557,7 +2557,7 @@ relation Program_inst failed
 
                           2. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                            1. Result in STO, $sizeof(typeIR_base, nameIR)
+                            1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                           2. Else Phantom#2097
 
@@ -2577,11 +2577,11 @@ relation Program_inst failed
 
           1. (Let (( callableTargetIR )) be callableTargetIR')
 
-          2. Group callExpressionIR-parenthesized: p, IC, STO, ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR)
+          2. Group callExpressionIR-parenthesized: p IC STO |- ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
 
             1. (Expr_inst: p IC STO |- (((callableTargetIR < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : STO_1 value)
 
-            2. Result in STO_1, value
+            2. Result in: % % % |- % : STO_1 value
 
         4. Else Phantom#2103
 
@@ -2589,19 +2589,19 @@ relation Program_inst failed
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
-    2. Group parenthesizedExpressionIR: p, IC, STO, (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR)
+    2. Group parenthesizedExpressionIR: p IC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
-      2. Result in STO_1, value failed
+      2. Result in: % % % |- % : STO_1 value failed
 └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:126.15-126.32
-    0. Group castExpressionIR: p, IC, STO, (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR)
+    0. Group castExpressionIR: p IC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
 
   1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
   2. (Let value_cast be $cast_op(typeIR, value))
 
-  3. Result in STO_1, value_cast failed
+  3. Result in: % % % |- % : STO_1 value_cast failed
     └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:128.6-128.62
         0. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value) failed
         └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:128.6-128.15
@@ -2613,23 +2613,23 @@ relation Program_inst failed
 
     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-    2. Group literalExpressionIR-boolean: p, IC, STO, ((booleanLiteral as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-boolean: p IC STO |- ((booleanLiteral as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on booleanLiteral
 
         1. Case (% matches pattern `TRUE`)
 
-          1. Result in STO, ((true) as value)
+          1. Result in: % % % |- % : STO ((true) as value)
 
         2. Case (% matches pattern `FALSE`)
 
-          1. Result in STO, ((false) as value)
+          1. Result in: % % % |- % : STO ((false) as value)
 
   2. Case (% has type integerLiteral)
 
     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
-    2. Group literalExpressionIR-number: p, IC, STO, ((integerLiteral as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-number: p IC STO |- ((integerLiteral as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on integerLiteral
 
@@ -2637,61 +2637,61 @@ relation Program_inst failed
 
           1. (Let (d i) be integerLiteral)
 
-          2. Result in STO, ((d i) as value)
+          2. Result in: % % % |- % : STO ((d i) as value)
 
         2. Case (% matches pattern `%W%`)
 
           1. (Let (n w i) be integerLiteral)
 
-          2. Result in STO, ((n w i) as value)
+          2. Result in: % % % |- % : STO ((n w i) as value)
 
         3. Case (% matches pattern `%S%`)
 
           1. (Let (n s i) be integerLiteral)
 
-          2. Result in STO, ((n s i) as value)
+          2. Result in: % % % |- % : STO ((n s i) as value)
 
   3. Case (% has type stringLiteral)
 
     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-    2. Group literalExpressionIR-stringLiteral: p, IC, STO, (((" text ") as expressionIR) # _expressionNoteIR)
+    2. Group literalExpressionIR-stringLiteral: p IC STO |- (((" text ") as expressionIR) # _expressionNoteIR) : % %
 
-      1. Result in STO, ((" text ") as value)
+      1. Result in: % % % |- % : STO ((" text ") as value)
 
   4. Case (% has type prefixedNameIR)
 
     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-    2. Group referenceExpressionIR: p, IC, STO, ((prefixedNameIR as expressionIR) # _expressionNoteIR)
+    2. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) : % %
 
       1. (Let value be $find_var_i(p, IC, prefixedNameIR))
 
-      2. Result in STO, value
+      2. Result in: % % % |- % : STO value
 
   5. Case (% has type defaultExpression)
 
     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
-    2. Group defaultExpressionIR: p, IC, STO, (((...) as expressionIR) # _expressionNoteIR)
+    2. Group defaultExpressionIR: p IC STO |- (((...) as expressionIR) # _expressionNoteIR) : % %
 
-      1. Result in STO, ((default) as value)
+      1. Result in: % % % |- % : STO ((default) as value)
 
   6. Case (% has type unaryExpressionIR)
 
     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-    2. Group unaryExpressionIR: p, IC, STO, (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR)
+    2. Group unaryExpressionIR: p IC STO |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
-      2. Result in STO_1, $un_op(unop, value)
+      2. Result in: % % % |- % : STO_1 $un_op(unop, value)
 
   7. Case (% has type binaryExpressionIR)
 
     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-    2. Group binaryExpressionIR: p, IC, STO, (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR)
+    2. Group binaryExpressionIR: p IC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) : % %
 
       1. If (~binop' is in [(&&), (||)]), then
 
@@ -2699,7 +2699,7 @@ relation Program_inst failed
 
         2. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-        3. Result in STO_2, $bin_op(binop', value_l, value_r)
+        3. Result in: % % % |- % : STO_2 $bin_op(binop', value_l, value_r)
 
       1. Else Phantom#2067
 
@@ -2711,7 +2711,7 @@ relation Program_inst failed
 
           2. If ((value = ((false) as value))), then
 
-            1. Result in STO_1, ((false) as value)
+            1. Result in: % % % |- % : STO_1 ((false) as value)
 
           2. Else Phantom#2068
 
@@ -2719,7 +2719,7 @@ relation Program_inst failed
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-            2. Result in STO_2, value_r
+            2. Result in: % % % |- % : STO_2 value_r
 
           3. Else Phantom#2069
 
@@ -2729,7 +2729,7 @@ relation Program_inst failed
 
           2. If ((value = ((true) as value))), then
 
-            1. Result in STO_1, ((true) as value)
+            1. Result in: % % % |- % : STO_1 ((true) as value)
 
           2. Else Phantom#2070
 
@@ -2737,7 +2737,7 @@ relation Program_inst failed
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
-            2. Result in STO_2, value_r
+            2. Result in: % % % |- % : STO_2 value_r
 
           3. Else Phantom#2071
 
@@ -2747,7 +2747,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
-    2. Group ternaryExpressionIR: p, IC, STO, (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR)
+    2. Group ternaryExpressionIR: p IC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_cond : STO_1 value)
 
@@ -2755,7 +2755,7 @@ relation Program_inst failed
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_true : STO_2 value_true)
 
-        2. Result in STO_2, value_true
+        2. Result in: % % % |- % : STO_2 value_true
 
       2. Else Phantom#2073
 
@@ -2763,7 +2763,7 @@ relation Program_inst failed
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_false : STO_2 value_false)
 
-        2. Result in STO_2, value_false
+        2. Result in: % % % |- % : STO_2 value_false
 
       3. Else Phantom#2074
 
@@ -2771,13 +2771,13 @@ relation Program_inst failed
 
     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-    2. Group castExpressionIR: p, IC, STO, (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR)
+    2. Group castExpressionIR: p IC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
       2. (Let value_cast be $cast_op(typeIR, value))
 
-      3. Result in STO_1, value_cast
+      3. Result in: % % % |- % : STO_1 value_cast
 
   10. Case (% has type dataExpressionIR)
 
@@ -2785,13 +2785,13 @@ relation Program_inst failed
 
     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
-      1. Group dataExpressionIR-invalid: p, IC, STO, ((({#}) as expressionIR) # _expressionNoteIR)
+      1. Group dataExpressionIR-invalid: p IC STO |- ((({#}) as expressionIR) # _expressionNoteIR) : % %
 
-        1. Result in STO, (({#}) as value)
+        1. Result in: % % % |- % : STO (({#}) as value)
 
     2. Else Phantom#2075
 
-    3. Group dataExpressionIR-sequence: p, IC, STO, ((dataExpressionIR as expressionIR) # _expressionNoteIR)
+    3. Group dataExpressionIR-sequence: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on dataExpressionIR
 
@@ -2801,7 +2801,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- typedExpressionListIR : STO_1 (value)*)
 
-          3. Result in STO_1, ((seq( (value)* )) as value)
+          3. Result in: % % % |- % : STO_1 ((seq( (value)* )) as value)
 
         2. Case (% matches pattern `SEQ{%,...}`)
 
@@ -2809,11 +2809,11 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- typedExpressionListIR : STO_1 (value)*)
 
-          3. Result in STO_1, ((seq( (value)* ,...)) as value)
+          3. Result in: % % % |- % : STO_1 ((seq( (value)* ,...)) as value)
 
       1. Else Phantom#2076
 
-    4. Group dataExpressionIR-record: p, IC, STO, ((dataExpressionIR as expressionIR) # _expressionNoteIR)
+    4. Group dataExpressionIR-record: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
 
       1. Case analysis on dataExpressionIR
 
@@ -2823,7 +2823,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- (typedExpressionIR)* : STO_1 (value)*)
 
-          3. Result in STO_1, ((record{ ((value nameIR ;))* }) as value)
+          3. Result in: % % % |- % : STO_1 ((record{ ((value nameIR ;))* }) as value)
 
         2. Case (% matches pattern `RECORD{%,...}`)
 
@@ -2831,7 +2831,7 @@ relation Program_inst failed
 
           2. (Exprs_inst: p IC STO |- (typedExpressionIR)* : STO_1 (value)*)
 
-          3. Result in STO_1, ((record{ ((value nameIR ;))* ,...}) as value)
+          3. Result in: % % % |- % : STO_1 ((record{ ((value nameIR ;))* ,...}) as value)
 
       1. Else Phantom#2077
 
@@ -2839,13 +2839,13 @@ relation Program_inst failed
 
     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
-    2. Group errorAccessExpressionIR: p, IC, STO, (((error. nameIR) as expressionIR) # _expressionNoteIR)
+    2. Group errorAccessExpressionIR: p IC STO |- (((error. nameIR) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Let nameIR_error be "error." ++ nameIR)
 
       2. (Let value_error be $find_var_i(p, IC, (` nameIR_error)))
 
-      3. Result in STO, value_error
+      3. Result in: % % % |- % : STO value_error
 
   12. Case (% has type memberAccessExpressionIR)
 
@@ -2855,7 +2855,7 @@ relation Program_inst failed
 
       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-      2. Group memberAccessExpressionIR-type: p, IC, STO, ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR)
+      2. Group memberAccessExpressionIR-type: p IC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
 
         1. (Let (typeDefIR')? be $find_typeDef_i(p, IC, prefixedNameIR))
 
@@ -2873,7 +2873,7 @@ relation Program_inst failed
 
                 1. (Let (enum typeId { (_nameIR)* }) be enumTypeIR)
 
-                2. Result in STO, ((typeId . nameIR) as value)
+                2. Result in: % % % |- % : STO ((typeId . nameIR) as value)
 
               2. Case (% matches pattern `ENUM%<%>{%}`)
 
@@ -2885,7 +2885,7 @@ relation Program_inst failed
 
                   1. (Let ?(value) be (value')?)
 
-                  2. Result in STO, ((typeId . nameIR . value) as value)
+                  2. Result in: % % % |- % : STO ((typeId . nameIR . value) as value)
 
                 3. Else Phantom#2078
 
@@ -2899,7 +2899,7 @@ relation Program_inst failed
 
       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-      2. Group memberAccessExpressionIR-typedExpressionIR: p, IC, STO, ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR)
+      2. Group memberAccessExpressionIR-typedExpressionIR: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
 
         1. If ((nameIR = "size")), then
 
@@ -2911,7 +2911,7 @@ relation Program_inst failed
 
             1. (Let (_typeIR [ n_size ]) be (typeIR as headerStackTypeIR))
 
-            2. Result in STO, ((d (n_size as int)) as value)
+            2. Result in: % % % |- % : STO ((d (n_size as int)) as value)
 
           3. Else Phantom#2082
 
@@ -2933,7 +2933,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2084
 
@@ -2949,7 +2949,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2085
 
@@ -2965,7 +2965,7 @@ relation Program_inst failed
 
               1. (Let ?(value) be (value'')?)
 
-              2. Result in STO_1, value
+              2. Result in: % % % |- % : STO_1 value
 
             4. Else Phantom#2086
 
@@ -2977,7 +2977,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
-    2. Group indexAccessExpressionIR: p, IC, STO, (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR)
+    2. Group indexAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -3003,7 +3003,7 @@ relation Program_inst failed
 
                 1. (Let value be (value_e)*[n_index])
 
-                2. Result in STO_2, value
+                2. Result in: % % % |- % : STO_2 value
 
               2. Else Phantom#2089
 
@@ -3023,7 +3023,7 @@ relation Program_inst failed
 
                 1. (Let value be (value_e)*[n_index])
 
-                2. Result in STO_2, value
+                2. Result in: % % % |- % : STO_2 value
 
               2. Else Phantom#2091
 
@@ -3037,7 +3037,7 @@ relation Program_inst failed
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-    2. Group sliceAccessExpressionIR: p, IC, STO, (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR)
+    2. Group sliceAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -3045,7 +3045,7 @@ relation Program_inst failed
 
       3. (Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo)
 
-      4. Result in STO_3, $bitacc_op(value_base, value_hi, value_lo)
+      4. Result in: % % % |- % : STO_3 $bitacc_op(value_base, value_hi, value_lo)
 
   15. Case (% has type callExpressionIR)
 
@@ -3057,7 +3057,7 @@ relation Program_inst failed
 
         1. (Let ((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) be callExpressionIR)
 
-        2. Group callExpressionIR-constructor: p, IC, STO, ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR)
+        2. Group callExpressionIR-constructor: p IC STO |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
 
           1. (Constructor_inst: p IC |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)* ))
 
@@ -3067,7 +3067,7 @@ relation Program_inst failed
 
           4. (Let value_ref be ((! IC.path) as value))
 
-          5. Result in STO_2, value_ref
+          5. Result in: % % % |- % : STO_2 value_ref
 
       2. Case (% matches pattern `%<%>(%)`)
 
@@ -3077,7 +3077,7 @@ relation Program_inst failed
 
           1. If (((argumentIR)* matches pattern [])), then
 
-            1. Group callExpressionIR-builtin-size: p, IC, STO, (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR)
+            1. Group callExpressionIR-builtin-size: p IC STO |- (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR) : % %
 
               1. Case analysis on callableTargetIR
 
@@ -3089,7 +3089,7 @@ relation Program_inst failed
 
                   3. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                    1. Result in STO, $sizeof(typeIR_base, nameIR)
+                    1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                   3. Else Phantom#2095
 
@@ -3111,7 +3111,7 @@ relation Program_inst failed
 
                         2. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                          1. Result in STO, $sizeof(typeIR_base, nameIR)
+                          1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                         2. Else Phantom#2096
 
@@ -3123,7 +3123,7 @@ relation Program_inst failed
 
                           2. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-                            1. Result in STO, $sizeof(typeIR_base, nameIR)
+                            1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
                           2. Else Phantom#2097
 
@@ -3143,11 +3143,11 @@ relation Program_inst failed
 
           1. (Let (( callableTargetIR )) be callableTargetIR')
 
-          2. Group callExpressionIR-parenthesized: p, IC, STO, ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR)
+          2. Group callExpressionIR-parenthesized: p IC STO |- ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
 
             1. (Expr_inst: p IC STO |- (((callableTargetIR < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : STO_1 value)
 
-            2. Result in STO_1, value
+            2. Result in: % % % |- % : STO_1 value
 
         4. Else Phantom#2103
 
@@ -3155,17 +3155,17 @@ relation Program_inst failed
 
     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
-    2. Group parenthesizedExpressionIR: p, IC, STO, (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR)
+    2. Group parenthesizedExpressionIR: p IC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
-      2. Result in STO_1, value failed
+      2. Result in: % % % |- % : STO_1 value failed
                 └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:48.15-48.37
-                    0. Group referenceExpressionIR: p, IC, STO, ((prefixedNameIR as expressionIR) # _expressionNoteIR)
+                    0. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) : % %
 
   1. (Let value be $find_var_i(p, IC, prefixedNameIR))
 
-  2. Result in STO, value failed
+  2. Result in: % % % |- % : STO value failed
                     └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:50.6-50.51
                         0. (Let value be $find_var_i(p, IC, prefixedNameIR)) failed
                         └── ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:50.17-50.51
@@ -3334,15 +3334,15 @@ relation BlockElementStmts_inst failed
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC, STO, []
+    1. Group nil: IC STO |- [] : % % %
 
-      1. Result in IC, STO, []
+      1. Result in: % % |- % : IC STO []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR)*)
 
-    2. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+    2. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
       1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -3352,11 +3352,11 @@ relation BlockElementStmts_inst failed
 
         2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-        3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+        3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
       2. Else Phantom#2113 failed
     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:200.28-200.33
-        0. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+        0. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
   1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -3366,7 +3366,7 @@ relation BlockElementStmts_inst failed
 
     2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-    3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+    3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
   2. Else Phantom#2113 failed
         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:204.6-206.62
@@ -3380,7 +3380,7 @@ relation BlockElementStmts_inst failed
 
     1. (Let constantDeclarationIR be (blockElementStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0, STO_0, (constantDeclarationIR as blockElementStatementIR)
+    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as blockElementStatementIR) : % % %
 
       1. (Decl_inst: (local) IC_0 STO_0 |- (constantDeclarationIR as declarationIR) : IC_1 STO_1 (declarationIR')?)
 
@@ -3392,7 +3392,7 @@ relation BlockElementStmts_inst failed
 
           1. (Let constantDeclarationIR_inst be (declarationIR as constantDeclarationIR))
 
-          2. Result in IC_1, STO_1, ?((constantDeclarationIR_inst as blockElementStatementIR))
+          2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR_inst as blockElementStatementIR))
 
         2. Else Phantom#2111
 
@@ -3402,25 +3402,25 @@ relation BlockElementStmts_inst failed
 
     1. (Let variableDeclarationIR be (blockElementStatementIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC_0, STO_0, (variableDeclarationIR as blockElementStatementIR)
+    2. Group variableDeclarationIR: IC_0 STO_0 |- (variableDeclarationIR as blockElementStatementIR) : % % %
 
-      1. Result in IC_0, STO_0, ?((variableDeclarationIR as blockElementStatementIR))
+      1. Result in: % % |- % : IC_0 STO_0 ?((variableDeclarationIR as blockElementStatementIR))
 
   3. Case (% has type statementIR)
 
     1. (Let statementIR be (blockElementStatementIR as statementIR))
 
-    2. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+    2. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
       1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-      2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+      2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:187.27-187.39
-                        0. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+                        0. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
   1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-  2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+  2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-191.64
                             0. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst) failed
                             └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-190.15
@@ -3782,15 +3782,15 @@ relation BlockElementStmts_inst failed
 
   1. Case (% matches pattern [])
 
-    1. Group nil: IC, STO, []
+    1. Group nil: IC STO |- [] : % % %
 
-      1. Result in IC, STO, []
+      1. Result in: % % |- % : IC STO []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR)*)
 
-    2. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+    2. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
       1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -3800,11 +3800,11 @@ relation BlockElementStmts_inst failed
 
         2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-        3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+        3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
       2. Else Phantom#2113 failed
     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:200.28-200.33
-        0. Group cons: IC, STO, blockElementStatementIR_h :: (blockElementStatementIR_t)*
+        0. Group cons: IC STO |- blockElementStatementIR_h :: (blockElementStatementIR_t)* : % % %
 
   1. (BlockElementStmt_inst: IC STO |- blockElementStatementIR_h : IC_1 STO_1 (blockElementStatementIR')?)
 
@@ -3814,7 +3814,7 @@ relation BlockElementStmts_inst failed
 
     2. (BlockElementStmts_inst: IC_1 STO_1 |- (blockElementStatementIR_t)* : IC_2 STO_2 (blockElementStatementIR_t_inst)*)
 
-    3. Result in IC_2, STO_2, blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
+    3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
   2. Else Phantom#2113 failed
         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:204.6-206.62
@@ -3828,7 +3828,7 @@ relation BlockElementStmts_inst failed
 
     1. (Let constantDeclarationIR be (blockElementStatementIR as constantDeclarationIR))
 
-    2. Group constantDeclarationIR: IC_0, STO_0, (constantDeclarationIR as blockElementStatementIR)
+    2. Group constantDeclarationIR: IC_0 STO_0 |- (constantDeclarationIR as blockElementStatementIR) : % % %
 
       1. (Decl_inst: (local) IC_0 STO_0 |- (constantDeclarationIR as declarationIR) : IC_1 STO_1 (declarationIR')?)
 
@@ -3840,7 +3840,7 @@ relation BlockElementStmts_inst failed
 
           1. (Let constantDeclarationIR_inst be (declarationIR as constantDeclarationIR))
 
-          2. Result in IC_1, STO_1, ?((constantDeclarationIR_inst as blockElementStatementIR))
+          2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR_inst as blockElementStatementIR))
 
         2. Else Phantom#2111
 
@@ -3850,25 +3850,25 @@ relation BlockElementStmts_inst failed
 
     1. (Let variableDeclarationIR be (blockElementStatementIR as variableDeclarationIR))
 
-    2. Group variableDeclarationIR: IC_0, STO_0, (variableDeclarationIR as blockElementStatementIR)
+    2. Group variableDeclarationIR: IC_0 STO_0 |- (variableDeclarationIR as blockElementStatementIR) : % % %
 
-      1. Result in IC_0, STO_0, ?((variableDeclarationIR as blockElementStatementIR))
+      1. Result in: % % |- % : IC_0 STO_0 ?((variableDeclarationIR as blockElementStatementIR))
 
   3. Case (% has type statementIR)
 
     1. (Let statementIR be (blockElementStatementIR as statementIR))
 
-    2. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+    2. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
       1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-      2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+      2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                     └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:187.27-187.39
-                        0. Group statementIR: IC_0, STO_0, (statementIR as blockElementStatementIR)
+                        0. Group statementIR: IC_0 STO_0 |- (statementIR as blockElementStatementIR) : % % %
 
   1. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst)
 
-  2. Result in IC_1, STO_1, ?((statementIR_inst as blockElementStatementIR)) failed
+  2. Result in: % % |- % : IC_1 STO_1 ?((statementIR_inst as blockElementStatementIR)) failed
                         └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-191.64
                             0. (Stmt_inst: (local) IC_0 STO_0 |- statementIR : IC_1 STO_1 statementIR_inst) failed
                             └── ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:190.6-190.15

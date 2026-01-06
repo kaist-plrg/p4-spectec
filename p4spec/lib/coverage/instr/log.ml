@@ -5,26 +5,24 @@ open Util.Source
 
 (* Case analysis *)
 
-let rec log_case ?(signature = None) ?(level = 0) ?(index = 0) (cover : Multi.t)
-    (case : case) : string =
+let rec log_case ?(level = 0) ?(index = 0) (cover : Multi.t) (case : case) :
+    string =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let header = "  " ^ order in
   let guard, instrs = case in
   Format.asprintf "%sCase %s\n\n%s" header (string_of_guard guard)
-    (log_instrs ~signature ~level:(level + 1) cover instrs)
+    (log_instrs ~level:(level + 1) cover instrs)
 
-and log_cases ?(signature = None) ?(level = 0) (cover : Multi.t)
-    (cases : case list) : string =
+and log_cases ?(level = 0) (cover : Multi.t) (cases : case list) : string =
   cases
-  |> List.mapi (fun idx case ->
-         log_case ~signature ~level ~index:(idx + 1) cover case)
+  |> List.mapi (fun idx case -> log_case ~level ~index:(idx + 1) cover case)
   |> String.concat "\n\n"
 
 (* Instructions *)
 
-and log_instr ?(signature = None) ?(level = 0) ?(index = 0) (cover : Multi.t)
-    (instr : instr) : string =
+and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
+    string =
   let indent = String.make (level * 2) ' ' in
   let hit = Multi.is_hit cover instr.note.iid in
   let order = Format.asprintf "%s%d. " indent index in
@@ -33,38 +31,36 @@ and log_instr ?(signature = None) ?(level = 0) ?(index = 0) (cover : Multi.t)
   | IfI (exp_cond, iterexps, instrs_then, _) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" header (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (log_instrs ~signature ~level:(level + 1) cover instrs_then)
+        (log_instrs ~level:(level + 1) cover instrs_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s"
             header (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~signature ~level:(level + 1) cover instrs_hold)
+            (log_instrs ~level:(level + 1) cover instrs_hold)
             header
-            (log_instrs ~signature ~level:(level + 1) cover instrs_nothold)
+            (log_instrs ~level:(level + 1) cover instrs_nothold)
       | HoldH (instrs_hold, _) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" header
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~signature ~level:(level + 1) cover instrs_hold)
+            (log_instrs ~level:(level + 1) cover instrs_hold)
       | NotHoldH (instrs_nothold, _) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" header
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~signature ~level:(level + 1) cover instrs_nothold))
+            (log_instrs ~level:(level + 1) cover instrs_nothold))
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" header (string_of_exp exp)
-        (log_cases ~signature ~level:(level + 1) cover cases)
+        (log_cases ~level:(level + 1) cover cases)
   | OtherwiseI instr ->
       Format.asprintf "%sOtherwise\n\n%s" header
-        (log_instr ~signature ~level:(level + 1) ~index:1 cover instr)
-  | GroupI (id_group, exps_group, instrs_group) ->
+        (log_instr ~level:(level + 1) ~index:1 cover instr)
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" header (string_of_relid id_group)
-        (match signature with
-        | Some (mixop, inputs) -> string_of_relinput mixop inputs exps_group
-        | None -> string_of_exps ", " exps_group)
-        (log_instrs ~signature ~level:(level + 1) cover instrs_group)
+        (string_of_relinput rel_signature exps_group)
+        (log_instrs ~level:(level + 1) cover instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       Format.asprintf "%s(Let %s be %s)%s" header (string_of_exp exp_l)
         (string_of_exp exp_r)
@@ -73,30 +69,25 @@ and log_instr ?(signature = None) ?(level = 0) ?(index = 0) (cover : Multi.t)
       Format.asprintf "%s(%s: %s)%s" header (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-  | ResultI [] -> Format.asprintf "%sThe relation holds" header
-  | ResultI exps ->
-      Format.asprintf "%sResult in %s" header
-        (match signature with
-        | Some (mixop, inputs) -> ": " ^ string_of_reloutput mixop inputs exps
-        | None -> string_of_exps ", " exps)
+  | ResultI (_, []) -> Format.asprintf "%sThe relation holds" header
+  | ResultI (rel_signature, exps) ->
+      Format.asprintf "%sResult in: %s" header
+        (string_of_reloutput rel_signature exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" header (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" header (string_of_exp exp)
 
-and log_instrs ?(signature = None) ?(level = 0) (cover : Multi.t)
-    (instrs : instr list) : string =
+and log_instrs ?(level = 0) (cover : Multi.t) (instrs : instr list) : string =
   instrs
-  |> List.mapi (fun idx instr ->
-         log_instr ~signature ~level ~index:(idx + 1) cover instr)
+  |> List.mapi (fun idx instr -> log_instr ~level ~index:(idx + 1) cover instr)
   |> String.concat "\n\n"
 
 (* Relations *)
 
 let log_defined_rel (cover : Multi.t) (rel : rel) : string =
-  let relid, (mixop, inputs), exps_match, instrs, _hints = rel in
+  let relid, rel_signature, exps_match, instrs, _hints = rel in
   string_of_relid relid ^ ": "
-  ^ string_of_relinput mixop inputs exps_match
-  ^ "\n\n"
-  ^ log_instrs ~signature:(Some (mixop, inputs)) cover instrs
+  ^ string_of_relinput rel_signature exps_match
+  ^ "\n\n" ^ log_instrs cover instrs
 
 (* Functions *)
 

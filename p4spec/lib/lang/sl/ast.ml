@@ -142,12 +142,12 @@ and instr' =
   | CaseI of exp * case list * phantom option 
   | OtherwiseI of instr
   (* Aggregate instructions *)
-  | GroupI of id * exp list * instr list
+  | GroupI of id * rel_signature * exp list * instr list
   (* Binding instructions *)
   | LetI of exp * exp * iterexp list
   | RuleI of id * notexp * iterexp list
   (* Result/Return instructions *)
-  | ResultI of exp list
+  | ResultI of rel_signature * exp list
   | ReturnI of exp
   (* Debugging instructions *)
   | DebugI of exp
@@ -155,17 +155,21 @@ and instr' =
 
 (* Hints *)
 
-type hint = El.hint
+and hint = El.hint
 [@@deriving yojson]
 
 (* Relations *)
 
-(* id `:` mixop `hint(input` `%`int* `)` exp* hint* *)
-type externrel = id * (mixop * Hints.Input.t) * exp list * hint list
+(* mixop `hint(input` `%`int* `)` *)
+and rel_signature = mixop * Hints.Input.t
+[@@deriving yojson]
+
+(* id `:` rel_signature exp* hint* *)
+type externrel = id * rel_signature * exp list * hint list
 [@@deriving yojson]
 
 (* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
-type rel = id * (mixop * Hints.Input.t) * exp list * instr list * hint list
+type rel = id * rel_signature * exp list * instr list * hint list
 [@@deriving yojson]
 
 (* Functions *)

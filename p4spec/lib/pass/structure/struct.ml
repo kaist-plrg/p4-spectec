@@ -72,24 +72,25 @@ let struct_rule_matches (frees : IdSet.t)
   in
   (exps_match_input_unified, prems_match_group)
 
-let struct_rule_paths (prems_path : prem list) (exps_output : exp list) :
-    Ol.Ast.instr list =
+let struct_rule_paths (rel_signature : Ol.Ast.rel_signature)
+    (prems_path : prem list) (exps_output : exp list) : Ol.Ast.instr list =
   let at = exps_output |> List.map Util.Source.at |> over_region in
-  let instr_res = Ol.Ast.ResultI exps_output $ at in
+  let instr_res = Ol.Ast.ResultI (rel_signature, exps_output) $ at in
   struct_prems prems_path instr_res
 
-let struct_rule_group (prems_match : prem list) (id_rulegroup : id)
-    (exps_signature : exp list) (rulepaths : rulepath list) : Ol.Ast.instr list
-    =
+let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
+    (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
+    (rulepaths : rulepath list) : Ol.Ast.instr list =
   let instrs_path =
     List.map
       (fun (_, prems_path, exps_output) ->
-        struct_rule_paths prems_path exps_output)
+        struct_rule_paths rel_signature prems_path exps_output)
       rulepaths
     |> Merge.merge_blocks
   in
   let instr_group =
-    Ol.Ast.GroupI (id_rulegroup, exps_signature, instrs_path) $ id_rulegroup.at
+    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, instrs_path)
+    $ id_rulegroup.at
   in
   struct_prems prems_match instr_group
 
@@ -185,11 +186,12 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
         (exps_match, [])
     | _ -> struct_rule_matches frees exps_match_group prems_match_group
   in
+  let rel_signature = (mixop, inputs) in
   let instrs =
     List.map2
       (fun prems_match (id_rulegroup, exps_match_signature, rulepaths) ->
-        struct_rule_group prems_match id_rulegroup exps_match_signature
-          rulepaths)
+        struct_rule_group rel_signature prems_match id_rulegroup
+          exps_match_signature rulepaths)
       prems_match_group rulegroups
     |> Merge.merge_blocks
   in

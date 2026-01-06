@@ -10,6 +10,11 @@ let to_string t =
   Format.asprintf "hint(input %s)"
     (String.concat " " (List.map (fun idx -> "%" ^ string_of_int idx) t))
 
+(* Equivalence of hints *)
+
+let eq (hint_a : t) (hint_b : t) : bool =
+  List.length hint_a = List.length hint_b && List.for_all2 ( = ) hint_a hint_b
+
 (* Creating hints *)
 
 let init (hintexp : Hint.t) : t option =
