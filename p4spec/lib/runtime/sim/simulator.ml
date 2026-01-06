@@ -11,8 +11,6 @@ open Util.Source
 (* Module signatures for interpreter-architecture interaction *)
 
 type spec = IL of Il.spec | SL of Sl.spec | Empty
-type cover_single = { dangling : DCov_single.t }
-type coverage = Cover of cover_single | Empty
 
 (* IL results *)
 
@@ -31,23 +29,18 @@ type stf_result_il =
 
 (* SL results *)
 
-type rel_result_sl =
-  | Pass of Value.t list * cover_single
-  | Fail of region * string * cover_single
-
-type func_result_sl =
-  | Pass of Value.t * cover_single
-  | Fail of region * string * cover_single
+type rel_result_sl = Pass of Value.t list | Fail of region * string
+type func_result_sl = Pass of Value.t | Fail of region * string
 
 type program_result_sl =
-  | Pass of Value.t list * Dep.Graph.t * cover_single
-  | Fail of region * string * cover_single
-  | IllFormed of region * string * cover_single
+  | Pass of Value.t list * Dep.Graph.t
+  | Fail of region * string
+  | IllFormed of region * string
 
 type stf_result_sl =
-  | Pass of cover_single
-  | Fail of region * string * cover_single
-  | IllFormed of region * string * cover_single
+  | Pass
+  | Fail of region * string
+  | IllFormed of region * string
 
 (* Merged results *)
 
@@ -57,21 +50,20 @@ type stf_result = stf_result_il
 let promote_program_result_sl (program_result_sl : program_result_sl) :
     program_result =
   match program_result_sl with
-  | Pass (values_output, _, _) -> Pass values_output
-  | Fail (at, msg, _) -> Fail (at, msg)
-  | IllFormed (at, msg, _) -> IllFormed (at, msg)
+  | Pass (values_output, _) -> Pass values_output
+  | Fail (at, msg) -> Fail (at, msg)
+  | IllFormed (at, msg) -> IllFormed (at, msg)
 
 let promote_stf_result_sl (stf_result_sl : stf_result_sl) : stf_result =
   match stf_result_sl with
-  | Pass _ -> Pass
-  | Fail (at, msg, _) -> Fail (at, msg)
-  | IllFormed (at, msg, _) -> IllFormed (at, msg)
+  | Pass -> Pass
+  | Fail (at, msg) -> Fail (at, msg)
+  | IllFormed (at, msg) -> IllFormed (at, msg)
 
 module type ARCH = sig
   (* Coverage *)
 
   val spec : spec ref
-  val coverage : coverage ref
 
   (* Extern evaluation *)
 
@@ -131,11 +123,6 @@ module type INTERP_SL = sig
 
   val eval_func :
     Sl.spec -> string -> Sl.typ list -> Value.t list -> func_result_sl
-
-  (* Coverage *)
-
-  val cover_dangling_programs :
-    Sl.spec -> string -> string list -> string list -> DCov_multi.t
 end
 
 module type DRIVER = sig

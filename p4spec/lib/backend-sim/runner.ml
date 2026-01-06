@@ -231,34 +231,12 @@ module Make
       in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
       run_stf_stmts value_ctx value_sto stf_stmts;
-      let cover_single =
-        match !Arch.coverage with
-        | Cover cover_single -> cover_single
-        | _ -> assert false
-      in
-      Pass cover_single
+      Pass
     with
-    | Util.Error.ParseError (at, msg) ->
-        let cover_single =
-          match !Arch.coverage with
-          | Cover cover_single -> cover_single
-          | _ -> assert false
-        in
-        IllFormed (at, msg, cover_single)
+    | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
     | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-        let cover_single =
-          match !Arch.coverage with
-          | Cover cover_single -> cover_single
-          | _ -> assert false
-        in
-        Fail (at, msg, cover_single)
-    | Util.Error.StfError msg ->
-        let cover_single =
-          match !Arch.coverage with
-          | Cover cover_single -> cover_single
-          | _ -> assert false
-        in
-        Fail (no_region, msg, cover_single)
+        Fail (at, msg)
+    | Util.Error.StfError msg -> Fail (no_region, msg)
 
   let run_stf_test (spec : spec) (includes_p4 : string list)
       (filename_p4 : string) (filename_stf : string) : stf_result =
@@ -313,5 +291,26 @@ module Make
   let cover_dangling_programs (spec : Sl.spec) (relname : string)
       (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
     Arch.init (SL spec);
-    Interp_SL.cover_dangling_programs spec relname includes_p4 filenames_p4
+    let cover_multi = DCov_multi.init spec in
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+          Inst.Coverage_dangling.make ()
+        in
+        Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+        Inst.Hook.init (Inst.Handler.SL spec);
+        let program_result_sl =
+          run_program_sl ~derive:false spec relname includes_p4 filename_p4
+        in
+        Inst.Hook.finish ();
+        let cover_single = read_coverage_dangling () in
+        let wellformed, welltyped =
+          match program_result_sl with
+          | Pass _ -> (true, true)
+          | Fail _ -> (true, false)
+          | IllFormed _ -> (false, false)
+        in
+        DCov_multi.extend cover_multi filename_p4 wellformed welltyped
+          cover_single)
+      cover_multi filenames_p4
 end

@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Sl
-module DCov_single = Coverage.Dangling.Single
 open Runtime.Dynamic_Sl
 open Envs
 module Dep = Runtime.Testgen_neg.Dep
@@ -29,7 +28,6 @@ type cursor = Global | Local
    Their references are copied when constructing sub-contexts,
    thus sharing the same graph and cover across contexts. *)
 
-type coverage = { dangling : DCov_single.t ref }
 type vdg = Dep.Graph.t
 type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
 
@@ -71,21 +69,12 @@ type local =
 
 type t = {
   (* Testing and coverage layers *)
-  coverage : coverage;
   testing : testing;
   (* Global layer *)
   global : global;
   (* Local layer *)
   local : local;
 }
-
-(* Cover *)
-
-let cover_dangling (ctx : t) (hit : bool) (pid : pid) (vid : vid) : unit =
-  if hit then
-    ctx.coverage.dangling := DCov_single.hit !(ctx.coverage.dangling) pid
-  else
-    ctx.coverage.dangling := DCov_single.miss !(ctx.coverage.dangling) pid vid
 
 (* Value dependencies *)
 
@@ -286,20 +275,17 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty_end_to_end ~(derive : bool) (vdg : vdg)
-    (cover_dangling : DCov_single.t ref) : t =
-  let coverage = { dangling = cover_dangling } in
+let empty_end_to_end ~(derive : bool) (vdg : vdg) : t =
   let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  { testing; global; local }
 
-let empty_partial (cover_dangling : DCov_single.t ref) : t =
-  let coverage = { dangling = cover_dangling } in
+let empty_partial () : t =
   let testing = Partial in
   let global = empty_global () in
   let local = empty_local () in
-  { coverage; testing; global; local }
+  { testing; global; local }
 
 (* Constructing a local context *)
 

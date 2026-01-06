@@ -1,8 +1,6 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
-module ICov_single = Coverage.Instr.Single
-module DCov_single = Coverage.Dangling.Single
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -14,17 +12,6 @@ struct
 
   let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
-
-  (* Coverage *)
-
-  let coverage : Sim.coverage ref = ref Sim.Empty
-
-  let init_coverage (spec_ : Sim.spec) : unit =
-    match spec_ with
-    | SL spec_sl ->
-        let dangling = DCov_single.init spec_sl in
-        coverage := Sim.Cover { dangling }
-    | IL _ | Empty -> ()
 
   (* Call entry points *)
 
@@ -38,8 +25,8 @@ struct
     | SL spec_sl -> (
         let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
         match rel_result_sl with
-        | Pass (values_output, _) -> values_output
-        | Fail (at, msg, _) -> error at msg)
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
@@ -59,8 +46,8 @@ struct
           Interp_SL.eval_func spec_sl funcname typs_input values_input
         in
         match func_result_sl with
-        | Pass (value_output, _) -> value_output
-        | Fail (at, msg, _) -> error at msg)
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_func () = Spec.Func.register call_func
@@ -117,7 +104,6 @@ struct
 
   let init (spec_ : Sim.spec) : unit =
     init_spec spec_;
-    init_coverage spec_;
     init_call_rel ();
     init_call_func ()
 

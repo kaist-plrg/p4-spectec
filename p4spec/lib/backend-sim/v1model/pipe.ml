@@ -3,10 +3,6 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
 open Interface.Flatten
-module ICov_single = Coverage.Instr.Single
-module ICov_multi = Coverage.Instr.Multi
-module DCov_single = Coverage.Dangling.Single
-module DCov_multi = Coverage.Dangling.Multi
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -18,24 +14,6 @@ struct
 
   let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
-
-  (* Coverage *)
-
-  let coverage : Sim.coverage ref = ref Sim.Empty
-
-  let init_coverage (spec_ : Sim.spec) : unit =
-    match spec_ with
-    | SL spec_sl ->
-        let dangling = DCov_single.init spec_sl in
-        coverage := Sim.Cover { dangling }
-    | IL _ | Empty -> ()
-
-  let update_coverage (cover_single : Sim.cover_single) : unit =
-    match !coverage with
-    | Sim.Cover { dangling } ->
-        let dangling = DCov_single.extend dangling cover_single.dangling in
-        coverage := Sim.Cover { dangling }
-    | _ -> ()
 
   (* Call entry points *)
 
@@ -49,12 +27,8 @@ struct
     | SL spec_sl -> (
         let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
         match rel_result_sl with
-        | Pass (values_output, cover_single) ->
-            update_coverage cover_single;
-            values_output
-        | Fail (at, msg, cover_single) ->
-            update_coverage cover_single;
-            error at msg)
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
@@ -74,12 +48,8 @@ struct
           Interp_SL.eval_func spec_sl funcname typs_input values_input
         in
         match func_result_sl with
-        | Pass (value_output, cover_single) ->
-            update_coverage cover_single;
-            value_output
-        | Fail (at, msg, cover_single) ->
-            update_coverage cover_single;
-            error at msg)
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_func () = Spec.Func.register call_func
@@ -304,7 +274,6 @@ struct
 
   let init (spec_ : Sim.spec) : unit =
     init_spec spec_;
-    init_coverage spec_;
     init_call_rel ();
     init_call_func ()
 
@@ -329,12 +298,8 @@ struct
               includes_p4 filename_p4
           in
           match program_result_sl with
-          | Pass (values_output, _, cover_single) ->
-              update_coverage cover_single;
-              values_output
-          | Fail (at, msg, cover_single) | IllFormed (at, msg, cover_single) ->
-              update_coverage cover_single;
-              error at msg)
+          | Pass (values_output, _) -> values_output
+          | Fail (at, msg) | IllFormed (at, msg) -> error at msg)
       | Empty -> assert false
     in
     match values_output with

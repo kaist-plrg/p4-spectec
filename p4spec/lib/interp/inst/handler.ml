@@ -13,6 +13,11 @@ module type HANDLER = sig
   val init : spec -> unit
   val finish : unit -> unit
 
+  (* Backup and restore *)
+
+  val backup : unit -> unit
+  val restore : unit -> unit
+
   (* Common events *)
 
   val on_value : Value.t -> (Value.t -> unit) -> unit
@@ -28,6 +33,7 @@ module type HANDLER = sig
   (* SL events *)
 
   val on_instr : Sl.instr -> unit
+  val on_instr_dangling : bool -> PId.t -> Value.t -> unit
 end
 
 (* Default handler *)
@@ -37,6 +43,11 @@ module Default : HANDLER = struct
 
   let init _ = ()
   let finish () = ()
+
+  (* Backup and restore *)
+
+  let backup () = ()
+  let restore () = ()
 
   (* Common events *)
 
@@ -53,4 +64,5 @@ module Default : HANDLER = struct
   (* SL events *)
 
   let on_instr _ = ()
+  let on_instr_dangling _ _ _ = ()
 end

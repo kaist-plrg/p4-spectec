@@ -423,16 +423,21 @@ let interesting_command =
          let spec_sl =
            match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
          in
+         let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+           Inst.Coverage_dangling.make ()
+         in
+         Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+         Inst.Hook.init (Inst.Handler.SL spec_sl);
          let result =
            Runner.run_program_sl ~derive:false spec_sl relname includes_p4
              filename_p4
          in
+         Inst.Hook.finish ();
+         let cover = read_coverage_dangling () in
          match result with
-         | Pass (_, _, cover_single) ->
+         | Pass (_, _) ->
              if check_well_typed then (
-               let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -446,14 +451,12 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | Fail (_, _, cover_single) -> (
+         | Fail (_, _) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";

@@ -18,6 +18,18 @@ let finish () : unit =
   | [] -> ()
   | _ -> List.iter (fun (module H : HANDLER) -> H.finish ()) !handlers
 
+(* Backup and restore *)
+
+let backup () : unit =
+  match !handlers with
+  | [] -> ()
+  | _ -> List.iter (fun (module H : HANDLER) -> H.backup ()) !handlers
+
+let restore () : unit =
+  match !handlers with
+  | [] -> ()
+  | _ -> List.iter (fun (module H : HANDLER) -> H.restore ()) !handlers
+
 (* Common events *)
 
 let on_value (value : Value.t) (value_handler : Value.t -> unit) : unit =
@@ -67,3 +79,11 @@ let on_instr (instr : Sl.instr) : unit =
   match !handlers with
   | [] -> ()
   | _ -> List.iter (fun (module H : HANDLER) -> H.on_instr instr) !handlers
+
+let on_instr_dangling (cond : bool) (pid : PId.t) (value : Value.t) : unit =
+  match !handlers with
+  | [] -> ()
+  | _ ->
+      List.iter
+        (fun (module H : HANDLER) -> H.on_instr_dangling cond pid value)
+        !handlers
