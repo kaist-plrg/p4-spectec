@@ -1,4 +1,4 @@
-;; Instruction coverage: 7779/11464 (67.86%)
+;; Instruction coverage: 8327/12674 (65.70%)
 ;; ../../../../spec-concrete/0-aux/0-aux.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -6848,15 +6848,15 @@ builtin def $bitacc_replace(int, int', int'', int''')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:23.1-25.23
 def $un_op(unop, value)
 
-- 1. Case analysis on unop
++ 1. Case analysis on unop
 
     1. Case (% matches pattern `~`)
 
--     1. Return $un_bnot(value)
++     1. Return $un_bnot(value)
 
     2. Case (% matches pattern `!`)
 
--     1. Return $un_lnot(value)
++     1. Return $un_lnot(value)
 
     3. Case (% matches pattern `+`)
 
@@ -6864,33 +6864,33 @@ def $un_op(unop, value)
 
     4. Case (% matches pattern `-`)
 
--     1. Return $un_minus(value)
++     1. Return $un_minus(value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:29.1-30.23
 def $un_bnot(value)
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. If ((integerLiteral matches pattern `%W%`)), then
++   2. If ((integerLiteral matches pattern `%W%`)), then
 
--     1. (Let (w w i) be integerLiteral)
++     1. (Let (w w i) be integerLiteral)
 
--     2. (Let i' be $bneg(i))
++     2. (Let i' be $bneg(i))
 
--     3. (Let i'' be $ite<int>((i' >= (0 as int)), i', ($pow2(w) + i')))
++     3. (Let i'' be $ite<int>((i' >= (0 as int)), i', ($pow2(w) + i')))
 
--     4. Return ((w w i'') as value)
++     4. Return ((w w i'') as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:40.1-41.23
 def $un_lnot(value)
 
-- 1. If ((value has type boolValue)), then
++ 1. If ((value has type boolValue)), then
 
--   1. (Let (b) be (value as boolValue))
++   1. (Let (b) be (value as boolValue))
 
--   2. Return ((~b) as value)
++   2. Return ((~b) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:49.1-50.23
 def $un_plus(value)
@@ -6922,25 +6922,25 @@ def $un_plus(value)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:60.1-61.23
 def $un_minus(value)
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
--       1. (Let (d i) be integerLiteral)
++       1. (Let (d i) be integerLiteral)
 
--       2. Return ((d -i) as value)
++       2. Return ((d -i) as value)
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i) be integerLiteral)
++       1. (Let (w w i) be integerLiteral)
 
--       2. (Let i' be ($pow2(w) - i))
++       2. (Let i' be ($pow2(w) - i))
 
--       3. Return ((w w i') as value)
++       3. Return ((w w i') as value)
 
       3. Case (% matches pattern `%S%`)
 
@@ -6953,31 +6953,31 @@ def $un_minus(value)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:75.1-77.26
 def $bin_op(binop, value_l, value_r)
 
-- 1. Case analysis on binop
++ 1. Case analysis on binop
 
     1. Case (% matches pattern `+`)
 
--     1. Return $bin_plus(value_l, value_r)
++     1. Return $bin_plus(value_l, value_r)
 
     2. Case (% matches pattern `|+|`)
 
--     1. Return $bin_satplus(value_l, value_r)
++     1. Return $bin_satplus(value_l, value_r)
 
     3. Case (% matches pattern `-`)
 
--     1. Return $bin_minus(value_l, value_r)
++     1. Return $bin_minus(value_l, value_r)
 
     4. Case (% matches pattern `|-|`)
 
--     1. Return $bin_satminus(value_l, value_r)
++     1. Return $bin_satminus(value_l, value_r)
 
     5. Case (% matches pattern `*`)
 
--     1. Return $bin_mul(value_l, value_r)
++     1. Return $bin_mul(value_l, value_r)
 
     6. Case (% matches pattern `/`)
 
--     1. Return $bin_div(value_l, value_r)
++     1. Return $bin_div(value_l, value_r)
 
     7. Case (% matches pattern `%`)
 
@@ -6985,60 +6985,60 @@ def $bin_op(binop, value_l, value_r)
 
     8. Case (% matches pattern `<<`)
 
--     1. Return $bin_shl(value_l, value_r)
++     1. Return $bin_shl(value_l, value_r)
 
     9. Case (% matches pattern `>>`)
 
--     1. Return $bin_shr(value_l, value_r)
++     1. Return $bin_shr(value_l, value_r)
 
     10. Case (% matches pattern `<=`)
 
--     1. Return (($bin_le(value_l, value_r)) as value)
++     1. Return (($bin_le(value_l, value_r)) as value)
 
     11. Case (% matches pattern `>=`)
 
--     1. Return (($bin_ge(value_l, value_r)) as value)
++     1. Return (($bin_ge(value_l, value_r)) as value)
 
     12. Case (% matches pattern `<`)
 
--     1. Return (($bin_lt(value_l, value_r)) as value)
++     1. Return (($bin_lt(value_l, value_r)) as value)
 
     13. Case (% matches pattern `>`)
 
--     1. Return (($bin_gt(value_l, value_r)) as value)
++     1. Return (($bin_gt(value_l, value_r)) as value)
 
     14. Case (% matches pattern `==`)
 
--     1. Return (($bin_eq(value_l, value_r)) as value)
++     1. Return (($bin_eq(value_l, value_r)) as value)
 
     15. Case (% matches pattern `!=`)
 
--     1. Return (($bin_ne(value_l, value_r)) as value)
++     1. Return (($bin_ne(value_l, value_r)) as value)
 
     16. Case (% matches pattern `&`)
 
--     1. Return $bin_band(value_l, value_r)
++     1. Return $bin_band(value_l, value_r)
 
     17. Case (% matches pattern `^`)
 
--     1. Return $bin_bxor(value_l, value_r)
++     1. Return $bin_bxor(value_l, value_r)
 
     18. Case (% matches pattern `|`)
 
--     1. Return $bin_bor(value_l, value_r)
++     1. Return $bin_bor(value_l, value_r)
 
     19. Case (% matches pattern `++`)
 
--     1. Return $bin_concat(value_l, value_r)
++     1. Return $bin_concat(value_l, value_r)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:81.1-82.23
 def $bin_plus(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7056,47 +7056,47 @@ def $bin_plus(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be $int_to_bitstr((w as int), (i_l' + i_r')))
++             3. (Let i' be $int_to_bitstr((w as int), (i_l' + i_r')))
 
--             4. Return ((w w i') as value)
++             4. Return ((w w i') as value)
 
       3. Case (% matches pattern `%S%`)
 
--       1. (Let (w s i_l) be integerLiteral)
++       1. (Let (w s i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%S%`)), then
++         2. If ((integerLiteral' matches pattern `%S%`)), then
 
--           1. (Let (w' s i_r) be integerLiteral')
++           1. (Let (w' s i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be $int_to_bitstr((w as int), (i_l' + i_r')))
++             3. (Let i' be $int_to_bitstr((w as int), (i_l' + i_r')))
 
--             4. Return ((w s i') as value)
++             4. Return ((w s i') as value)
 
 -             5. (Let i' be $int_to_bitstr((w as int), (i_l' - i_r')))
 
@@ -7105,246 +7105,246 @@ def $bin_plus(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:98.1-99.23
 def $bin_satplus(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i be (i_l + i_r))
++             1. (Let i be (i_l + i_r))
 
--             2. (Let i' be $min_int([i, ($pow2(w) - (1 as int))]))
++             2. (Let i' be $min_int([i, ($pow2(w) - (1 as int))]))
 
--             3. Return ((w w i') as value)
++             3. Return ((w w i') as value)
 
       2. Case (% matches pattern `%S%`)
 
--       1. (Let (w s i_l) be integerLiteral)
++       1. (Let (w s i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%S%`)), then
++         2. If ((integerLiteral' matches pattern `%S%`)), then
 
--           1. (Let (w'' s i_r) be integerLiteral')
++           1. (Let (w'' s i_r) be integerLiteral')
 
--           2. If ((w = w'')), then
++           2. If ((w = w'')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be (i_l' + i_r'))
++             3. (Let i' be (i_l' + i_r'))
 
--             4. If ((i' > (0 as int))), then
++             4. If ((i' > (0 as int))), then
 
--               1. (Let int be (w - 1))
++               1. (Let int be (w - 1))
 
--               2. If ((int has type nat)), then
++               2. If ((int has type nat)), then
 
--                 1. (Let w' be (int as nat))
++                 1. (Let w' be (int as nat))
 
--                 2. (Let i'' be $min_int([i', ($pow2(w') - (1 as int))]))
++                 2. (Let i'' be $min_int([i', ($pow2(w') - (1 as int))]))
 
--                 3. (Let i''' be $int_to_bitstr((w as int), i''))
++                 3. (Let i''' be $int_to_bitstr((w as int), i''))
 
--                 4. Return ((w s i''') as value)
++                 4. Return ((w s i''') as value)
 
--             5. If ((i' <= (0 as int))), then
++             5. If ((i' <= (0 as int))), then
 
--               1. (Let int be (w - 1))
++               1. (Let int be (w - 1))
 
--               2. If ((int has type nat)), then
++               2. If ((int has type nat)), then
 
--                 1. (Let w' be (int as nat))
++                 1. (Let w' be (int as nat))
 
--                 2. (Let i'' be $max_int([i', -$pow2(w')]))
++                 2. (Let i'' be $max_int([i', -$pow2(w')]))
 
--                 3. (Let i''' be $int_to_bitstr((w as int), i''))
++                 3. (Let i''' be $int_to_bitstr((w as int), i''))
 
--                 4. Return ((w s i''') as value)
++                 4. Return ((w s i''') as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:125.1-126.23
 def $bin_minus(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
--       1. (Let (d i_l) be integerLiteral)
++       1. (Let (d i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `D%`)), then
++         2. If ((integerLiteral' matches pattern `D%`)), then
 
--           1. (Let (d i_r) be integerLiteral')
++           1. (Let (d i_r) be integerLiteral')
 
--           2. Return ((d (i_l - i_r)) as value)
++           2. Return ((d (i_l - i_r)) as value)
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be $int_to_bitstr((w as int), (i_l' - i_r')))
++             3. (Let i' be $int_to_bitstr((w as int), (i_l' - i_r')))
 
--             4. Return ((w w i') as value)
++             4. Return ((w w i') as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:142.1-143.23
 def $bin_satminus(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i be (i_l - i_r))
++             1. (Let i be (i_l - i_r))
 
--             2. (Let i' be $ite<int>((i >= (0 as int)), i, (0 as int)))
++             2. (Let i' be $ite<int>((i >= (0 as int)), i, (0 as int)))
 
--             3. Return ((w w i') as value)
++             3. Return ((w w i') as value)
 
       2. Case (% matches pattern `%S%`)
 
--       1. (Let (w s i_l) be integerLiteral)
++       1. (Let (w s i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%S%`)), then
++         2. If ((integerLiteral' matches pattern `%S%`)), then
 
--           1. (Let (w'' s i_r) be integerLiteral')
++           1. (Let (w'' s i_r) be integerLiteral')
 
--           2. If ((w = w'')), then
++           2. If ((w = w'')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be (i_l' - i_r'))
++             3. (Let i' be (i_l' - i_r'))
 
--             4. If ((i' > (0 as int))), then
++             4. If ((i' > (0 as int))), then
 
--               1. (Let int be (w - 1))
++               1. (Let int be (w - 1))
 
--               2. If ((int has type nat)), then
++               2. If ((int has type nat)), then
 
--                 1. (Let w' be (int as nat))
++                 1. (Let w' be (int as nat))
 
--                 2. (Let i'' be $min_int([i', ($pow2(w') - (1 as int))]))
++                 2. (Let i'' be $min_int([i', ($pow2(w') - (1 as int))]))
 
--                 3. (Let i''' be $int_to_bitstr((w as int), i''))
++                 3. (Let i''' be $int_to_bitstr((w as int), i''))
 
--                 4. Return ((w s i''') as value)
++                 4. Return ((w s i''') as value)
 
--             5. If ((i' <= (0 as int))), then
++             5. If ((i' <= (0 as int))), then
 
--               1. (Let int be (w - 1))
++               1. (Let int be (w - 1))
 
--               2. If ((int has type nat)), then
++               2. If ((int has type nat)), then
 
--                 1. (Let w' be (int as nat))
++                 1. (Let w' be (int as nat))
 
--                 2. (Let i'' be $max_int([i', -$pow2(w')]))
++                 2. (Let i'' be $max_int([i', -$pow2(w')]))
 
--                 3. (Let i''' be $int_to_bitstr((w as int), i''))
++                 3. (Let i''' be $int_to_bitstr((w as int), i''))
 
--                 4. Return ((w s i''') as value)
++                 4. Return ((w s i''') as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:169.1-170.23
 def $bin_mul(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
--       1. (Let (d i_l) be integerLiteral)
++       1. (Let (d i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `D%`)), then
++         2. If ((integerLiteral' matches pattern `D%`)), then
 
--           1. (Let (d i_r) be integerLiteral')
++           1. (Let (d i_r) be integerLiteral')
 
--           2. Return ((d (i_l * i_r)) as value)
++           2. Return ((d (i_l * i_r)) as value)
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
++             3. (Let i' be $int_to_bitstr((w as int), (i_l' * i_r')))
 
--             4. Return ((w w i') as value)
++             4. Return ((w w i') as value)
 
       3. Case (% matches pattern `%S%`)
 
@@ -7371,23 +7371,23 @@ def $bin_mul(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:186.1-187.23
 def $bin_div(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. If ((integerLiteral matches pattern `D%`)), then
++   2. If ((integerLiteral matches pattern `D%`)), then
 
--     1. (Let (d i_l) be integerLiteral)
++     1. (Let (d i_l) be integerLiteral)
 
--     2. If ((value' has type integerLiteral)), then
++     2. If ((value' has type integerLiteral)), then
 
--       1. (Let integerLiteral' be (value' as integerLiteral))
++       1. (Let integerLiteral' be (value' as integerLiteral))
 
--       2. If ((integerLiteral' matches pattern `D%`)), then
++       2. If ((integerLiteral' matches pattern `D%`)), then
 
--         1. (Let (d i_r) be integerLiteral')
++         1. (Let (d i_r) be integerLiteral')
 
--         2. Return ((d (i_l / i_r)) as value)
++         2. Return ((d (i_l / i_r)) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:195.1-196.23
 def $bin_mod(value, value')
@@ -7413,11 +7413,11 @@ def $bin_mod(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:204.1-205.23
 def $bin_shl(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7451,27 +7451,27 @@ def $bin_shl(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w_l w i_l) be integerLiteral)
++       1. (Let (w_l w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. Case analysis on integerLiteral'
++         2. Case analysis on integerLiteral'
 
             1. Case (% matches pattern `D%`)
 
--             1. (Let (d i_r) be integerLiteral')
++             1. (Let (d i_r) be integerLiteral')
 
--             2. Return $bin_shl(((w_l w i_l) as value), ((w_l w $bitstr_to_int((w_l as int), i_r)) as value))
++             2. Return $bin_shl(((w_l w i_l) as value), ((w_l w $bitstr_to_int((w_l as int), i_r)) as value))
 
             2. Case (% matches pattern `%W%`)
 
--             1. (Let (w_r w i_r) be integerLiteral')
++             1. (Let (w_r w i_r) be integerLiteral')
 
--             2. (Let i' be $int_to_bitstr((w_l as int), $shl(i_l, i_r)))
++             2. (Let i' be $int_to_bitstr((w_l as int), $shl(i_l, i_r)))
 
--             3. Return ((w_l w i') as value)
++             3. Return ((w_l w i') as value)
 
             3. Case (% matches pattern `%S%`)
 
@@ -7524,11 +7524,11 @@ def $bin_shl(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:234.1-235.23
 def $bin_shr(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7562,13 +7562,13 @@ def $bin_shr(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w_l w i_l) be integerLiteral)
++       1. (Let (w_l w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. Case analysis on integerLiteral'
++         2. Case analysis on integerLiteral'
 
             1. Case (% matches pattern `D%`)
 
@@ -7578,11 +7578,11 @@ def $bin_shr(value, value')
 
             2. Case (% matches pattern `%W%`)
 
--             1. (Let (w_r w i_r) be integerLiteral')
++             1. (Let (w_r w i_r) be integerLiteral')
 
--             2. (Let i' be $int_to_bitstr((w_l as int), $shr(i_l, i_r)))
++             2. (Let i' be $int_to_bitstr((w_l as int), $shr(i_l, i_r)))
 
--             3. Return ((w_l w i') as value)
++             3. Return ((w_l w i') as value)
 
             3. Case (% matches pattern `%S%`)
 
@@ -7596,13 +7596,13 @@ def $bin_shr(value, value')
 
       3. Case (% matches pattern `%S%`)
 
--       1. (Let (w_l s i_l) be integerLiteral)
++       1. (Let (w_l s i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. Case analysis on integerLiteral'
++         2. Case analysis on integerLiteral'
 
             1. Case (% matches pattern `D%`)
 
@@ -7634,31 +7634,31 @@ def $bin_shr(value, value')
 
             2. Case (% matches pattern `%W%`)
 
--             1. (Let (w_r w i_r) be integerLiteral')
++             1. (Let (w_r w i_r) be integerLiteral')
 
--             2. (Let i_l' be $bitstr_to_int((w_l as int), i_l))
++             2. (Let i_l' be $bitstr_to_int((w_l as int), i_l))
 
--             3. If ((i_l' < (0 as int))), then
++             3. If ((i_l' < (0 as int))), then
 
--               1. (Let int be (w_l - 1))
++               1. (Let int be (w_l - 1))
 
--               2. If ((int has type nat)), then
++               2. If ((int has type nat)), then
 
--                 1. (Let w_l' be (int as nat))
++                 1. (Let w_l' be (int as nat))
 
--                 2. (Let i' be $shr_arith(i_l, i_r, $pow2(w_l')))
++                 2. (Let i' be $shr_arith(i_l, i_r, $pow2(w_l')))
 
--                 3. (Let i'' be $int_to_bitstr((w_l as int), i'))
++                 3. (Let i'' be $int_to_bitstr((w_l as int), i'))
 
--                 4. Return ((w_l s i'') as value)
++                 4. Return ((w_l s i'') as value)
 
--             4. If ((i_l' >= (0 as int))), then
++             4. If ((i_l' >= (0 as int))), then
 
--               1. (Let i' be $shr(i_l, i_r))
++               1. (Let i' be $shr(i_l, i_r))
 
--               2. (Let i'' be $int_to_bitstr((w_l as int), i'))
++               2. (Let i'' be $int_to_bitstr((w_l as int), i'))
 
--               3. Return ((w_l s i'') as value)
++               3. Return ((w_l s i'') as value)
 
             3. Case (% matches pattern `%S%`)
 
@@ -7693,11 +7693,11 @@ def $bin_shr(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:290.1-291.23
 def $bin_le(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7715,19 +7715,19 @@ def $bin_le(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. Return (i_l <= i_r)
++             1. Return (i_l <= i_r)
 
       3. Case (% matches pattern `%S%`)
 
@@ -7752,11 +7752,11 @@ def $bin_le(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:303.1-304.23
 def $bin_ge(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7774,19 +7774,19 @@ def $bin_ge(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. Return (i_l >= i_r)
++             1. Return (i_l >= i_r)
 
       3. Case (% matches pattern `%S%`)
 
@@ -7811,11 +7811,11 @@ def $bin_ge(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:316.1-317.23
 def $bin_lt(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7833,48 +7833,48 @@ def $bin_lt(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. Return (i_l < i_r)
++             1. Return (i_l < i_r)
 
       3. Case (% matches pattern `%S%`)
 
--       1. (Let (w s i_l) be integerLiteral)
++       1. (Let (w s i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%S%`)), then
++         2. If ((integerLiteral' matches pattern `%S%`)), then
 
--           1. (Let (w' s i_r) be integerLiteral')
++           1. (Let (w' s i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
++             1. (Let i_l' be $bitstr_to_int((w as int), i_l))
 
--             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
++             2. (Let i_r' be $bitstr_to_int((w as int), i_r))
 
--             3. Return (i_l' < i_r')
++             3. Return (i_l' < i_r')
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:329.1-330.23
 def $bin_gt(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `D%`)
 
@@ -7892,19 +7892,19 @@ def $bin_gt(value, value')
 
       2. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. Return (i_l > i_r)
++             1. Return (i_l > i_r)
 
       3. Case (% matches pattern `%S%`)
 
@@ -7929,27 +7929,27 @@ def $bin_gt(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:342.1-343.23
 def $bin_eq(value, value')
 
-- 1. Case analysis on value
++ 1. Case analysis on value
 
     1. Case (% has type boolValue)
 
--     1. (Let (b_a) be (value as boolValue))
++     1. (Let (b_a) be (value as boolValue))
 
--     2. If ((value' has type boolValue)), then
++     2. If ((value' has type boolValue)), then
 
--       1. (Let (b_b) be (value' as boolValue))
++       1. (Let (b_b) be (value' as boolValue))
 
--       2. Return (b_a = b_b)
++       2. Return (b_a = b_b)
 
     2. Case (% has type errorValue)
 
--     1. (Let (error. id_a) be (value as errorValue))
++     1. (Let (error. id_a) be (value as errorValue))
 
--     2. If ((value' has type errorValue)), then
++     2. If ((value' has type errorValue)), then
 
--       1. (Let (error. id_b) be (value' as errorValue))
++       1. (Let (error. id_b) be (value' as errorValue))
 
--       2. Return (id_a = id_b)
++       2. Return (id_a = id_b)
 
     3. Case (% has type matchKindValue)
 
@@ -7973,9 +7973,9 @@ def $bin_eq(value, value')
 
     5. Case (% has type integerLiteral)
 
--     1. (Let integerLiteral be (value as integerLiteral))
++     1. (Let integerLiteral be (value as integerLiteral))
 
--     2. Case analysis on integerLiteral
++     2. Case analysis on integerLiteral
 
         1. Case (% matches pattern `D%`)
 
@@ -7993,17 +7993,17 @@ def $bin_eq(value, value')
 
         2. Case (% matches pattern `%W%`)
 
--         1. (Let (w_a w i_a) be integerLiteral)
++         1. (Let (w_a w i_a) be integerLiteral)
 
--         2. If ((value' has type integerLiteral)), then
++         2. If ((value' has type integerLiteral)), then
 
--           1. (Let integerLiteral' be (value' as integerLiteral))
++           1. (Let integerLiteral' be (value' as integerLiteral))
 
--           2. If ((integerLiteral' matches pattern `%W%`)), then
++           2. If ((integerLiteral' matches pattern `%W%`)), then
 
--             1. (Let (w_b w i_b) be integerLiteral')
++             1. (Let (w_b w i_b) be integerLiteral')
 
--             2. Return ((w_a = w_b) /\ (i_a = i_b))
++             2. Return ((w_a = w_b) /\ (i_a = i_b))
 
         3. Case (% matches pattern `%S%`)
 
@@ -8041,13 +8041,13 @@ def $bin_eq(value, value')
 
     8. Case (% has type headerStackValue)
 
--     1. (Let (header_stack[ (value_a)* ( _nat ; n_size_a )]) be (value as headerStackValue))
++     1. (Let (header_stack[ (value_a)* ( _nat ; n_size_a )]) be (value as headerStackValue))
 
--     2. If ((value' has type headerStackValue)), then
++     2. If ((value' has type headerStackValue)), then
 
--       1. (Let (header_stack[ (value_b)* ( _nat' ; n_size_b )]) be (value' as headerStackValue))
++       1. (Let (header_stack[ (value_b)* ( _nat' ; n_size_b )]) be (value' as headerStackValue))
 
--       2. Return ($bin_eqs((value_a)*, (value_b)*) /\ (n_size_a = n_size_b))
++       2. Return ($bin_eqs((value_a)*, (value_b)*) /\ (n_size_a = n_size_b))
 
     9. Case (% has type structValue)
 
@@ -8061,13 +8061,13 @@ def $bin_eq(value, value')
 
     10. Case (% has type headerValue)
 
--     1. (Let (header typeId_a { _bool ; ((value_field_a nameIR_field_a ;))* }) be (value as headerValue))
++     1. (Let (header typeId_a { _bool ; ((value_field_a nameIR_field_a ;))* }) be (value as headerValue))
 
--     2. If ((value' has type headerValue)), then
++     2. If ((value' has type headerValue)), then
 
--       1. (Let (header typeId_b { _bool' ; ((value_field_b nameIR_field_b ;))* }) be (value' as headerValue))
++       1. (Let (header typeId_b { _bool' ; ((value_field_b nameIR_field_b ;))* }) be (value' as headerValue))
 
--       2. Return ((typeId_a = typeId_b) /\ $bin_eqs_fields(((value_field_a, nameIR_field_a))*, ((value_field_b, nameIR_field_b))*))
++       2. Return ((typeId_a = typeId_b) /\ $bin_eqs_fields(((value_field_a, nameIR_field_a))*, ((value_field_b, nameIR_field_b))*))
 
     11. Case (% has type headerUnionValue)
 
@@ -8081,23 +8081,23 @@ def $bin_eq(value, value')
 
     12. Case (% has type enumValue)
 
--     1. (Let enumValue be (value as enumValue))
++     1. (Let enumValue be (value as enumValue))
 
--     2. Case analysis on enumValue
++     2. Case analysis on enumValue
 
         1. Case (% matches pattern `%.%`)
 
--         1. (Let (typeId_a . nameIR_field_a) be enumValue)
++         1. (Let (typeId_a . nameIR_field_a) be enumValue)
 
--         2. If ((value' has type enumValue)), then
++         2. If ((value' has type enumValue)), then
 
--           1. (Let enumValue' be (value' as enumValue))
++           1. (Let enumValue' be (value' as enumValue))
 
--           2. If ((enumValue' matches pattern `%.%`)), then
++           2. If ((enumValue' matches pattern `%.%`)), then
 
--             1. (Let (typeId_b . nameIR_field_b) be enumValue')
++             1. (Let (typeId_b . nameIR_field_b) be enumValue')
 
--             2. Return ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
++             2. Return ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
 
         2. Case (% matches pattern `%.%.%`)
 
@@ -8123,36 +8123,36 @@ def $bin_eq(value, value')
 
 -       2. Return true
 
-- 2. If ((value has type integerValue)), then
++ 2. If ((value has type integerValue)), then
 
--   1. (Let integerValue be (value as integerValue))
++   1. (Let integerValue be (value as integerValue))
 
--   2. If ((integerValue matches pattern `%.%V%`)), then
++   2. If ((integerValue matches pattern `%.%V%`)), then
 
--     1. (Let (w_max_a . _nat v i_a) be integerValue)
++     1. (Let (w_max_a . _nat v i_a) be integerValue)
 
--     2. If ((value' has type integerValue)), then
++     2. If ((value' has type integerValue)), then
 
--       1. (Let integerValue' be (value' as integerValue))
++       1. (Let integerValue' be (value' as integerValue))
 
--       2. If ((integerValue' matches pattern `%.%V%`)), then
++       2. If ((integerValue' matches pattern `%.%V%`)), then
 
--         1. (Let (w_max_b . _nat' v i_b) be integerValue')
++         1. (Let (w_max_b . _nat' v i_b) be integerValue')
 
--         2. Return ((w_max_a = w_max_b) /\ (i_a = i_b))
++         2. Return ((w_max_a = w_max_b) /\ (i_a = i_b))
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:344.1-345.23
 def $bin_eqs((value)*, (value')*)
 
-- 1. Case analysis on (value)*
++ 1. Case analysis on (value)*
 
     1. Case (% matches pattern [])
 
--     1. Case analysis on (value')*
++     1. Case analysis on (value')*
 
         1. Case (% matches pattern [])
 
--         1. Return true
++         1. Return true
 
         2. Case (% matches pattern _ :: _)
 
@@ -8162,32 +8162,32 @@ def $bin_eqs((value)*, (value')*)
 
     2. Case (% matches pattern _ :: _)
 
--     1. (Let _value :: (_value')* be (value)*)
++     1. (Let _value :: (_value')* be (value)*)
 
--     2. If (((value')* matches pattern [])), then
++     2. If (((value')* matches pattern [])), then
 
 -       1. Return false
 
--     3. (Let value_a_h :: (value_a_t)* be (value)*)
++     3. (Let value_a_h :: (value_a_t)* be (value)*)
 
--     4. If (((value')* matches pattern _ :: _)), then
++     4. If (((value')* matches pattern _ :: _)), then
 
--       1. (Let value_b_h :: (value_b_t)* be (value')*)
++       1. (Let value_b_h :: (value_b_t)* be (value')*)
 
--       2. Return ($bin_eq(value_a_h, value_b_h) /\ $bin_eqs((value_a_t)*, (value_b_t)*))
++       2. Return ($bin_eq(value_a_h, value_b_h) /\ $bin_eqs((value_a_t)*, (value_b_t)*))
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:346.1-347.23
 def $bin_eqs_fields(((value, id))*, ((value, id)')*)
 
-- 1. Case analysis on ((value, id))*
++ 1. Case analysis on ((value, id))*
 
     1. Case (% matches pattern [])
 
--     1. Case analysis on ((value, id)')*
++     1. Case analysis on ((value, id)')*
 
         1. Case (% matches pattern [])
 
--         1. Return true
++         1. Return true
 
         2. Case (% matches pattern _ :: _)
 
@@ -8197,51 +8197,51 @@ def $bin_eqs_fields(((value, id))*, ((value, id)')*)
 
     2. Case (% matches pattern _ :: _)
 
--     1. (Let _(value, id) :: (_(value, id)')* be ((value, id))*)
++     1. (Let _(value, id) :: (_(value, id)')* be ((value, id))*)
 
--     2. If ((((value, id)')* matches pattern [])), then
++     2. If ((((value, id)')* matches pattern [])), then
 
 -       1. Return false
 
--     3. (Let (value_a_h, id_a_h) :: ((value_a_t, id_a_t))* be ((value, id))*)
++     3. (Let (value_a_h, id_a_h) :: ((value_a_t, id_a_t))* be ((value, id))*)
 
--     4. If ((((value, id)')* matches pattern _ :: _)), then
++     4. If ((((value, id)')* matches pattern _ :: _)), then
 
--       1. (Let (value_b_h, id_b_h) :: ((value_b_t, id_b_t))* be ((value, id)')*)
++       1. (Let (value_b_h, id_b_h) :: ((value_b_t, id_b_t))* be ((value, id)')*)
 
--       2. Return (((id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)) /\ $bin_eqs_fields(((value_a_t, id_a_t))*, ((value_b_t, id_b_t))*))
++       2. Return (((id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)) /\ $bin_eqs_fields(((value_a_t, id_a_t))*, ((value_b_t, id_b_t))*))
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:425.1-426.23
 def $bin_ne(value_l, value_r)
 
-- 1. Return ~$bin_eq(value_l, value_r)
++ 1. Return ~$bin_eq(value_l, value_r)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:434.1-435.23
 def $bin_band(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i' be $int_to_bitstr((w as int), $band(i_l, i_r)))
++             1. (Let i' be $int_to_bitstr((w as int), $band(i_l, i_r)))
 
--             2. Return ((w w i') as value)
++             2. Return ((w w i') as value)
 
       2. Case (% matches pattern `%S%`)
 
@@ -8268,29 +8268,29 @@ def $bin_band(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:448.1-449.23
 def $bin_bxor(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i' be $int_to_bitstr((w as int), $bxor(i_l, i_r)))
++             1. (Let i' be $int_to_bitstr((w as int), $bxor(i_l, i_r)))
 
--             2. Return ((w w i') as value)
++             2. Return ((w w i') as value)
 
       2. Case (% matches pattern `%S%`)
 
@@ -8317,29 +8317,29 @@ def $bin_bxor(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:462.1-463.23
 def $bin_bor(value, value')
 
-- 1. If ((value has type integerLiteral)), then
++ 1. If ((value has type integerLiteral)), then
 
--   1. (Let integerLiteral be (value as integerLiteral))
++   1. (Let integerLiteral be (value as integerLiteral))
 
--   2. Case analysis on integerLiteral
++   2. Case analysis on integerLiteral
 
       1. Case (% matches pattern `%W%`)
 
--       1. (Let (w w i_l) be integerLiteral)
++       1. (Let (w w i_l) be integerLiteral)
 
--       2. If ((value' has type integerLiteral)), then
++       2. If ((value' has type integerLiteral)), then
 
--         1. (Let integerLiteral' be (value' as integerLiteral))
++         1. (Let integerLiteral' be (value' as integerLiteral))
 
--         2. If ((integerLiteral' matches pattern `%W%`)), then
++         2. If ((integerLiteral' matches pattern `%W%`)), then
 
--           1. (Let (w' w i_r) be integerLiteral')
++           1. (Let (w' w i_r) be integerLiteral')
 
--           2. If ((w = w')), then
++           2. If ((w = w')), then
 
--             1. (Let i' be $int_to_bitstr((w as int), $bor(i_l, i_r)))
++             1. (Let i' be $int_to_bitstr((w as int), $bor(i_l, i_r)))
 
--             2. Return ((w w i') as value)
++             2. Return ((w w i') as value)
 
       2. Case (% matches pattern `%S%`)
 
@@ -8366,7 +8366,7 @@ def $bin_bor(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:476.1-477.23
 def $bin_concat(value, value')
 
-- 1. Case analysis on value
++ 1. Case analysis on value
 
     1. Case (% has type stringLiteral)
 
@@ -8380,33 +8380,33 @@ def $bin_concat(value, value')
 
     2. Case (% has type integerLiteral)
 
--     1. (Let integerLiteral be (value as integerLiteral))
++     1. (Let integerLiteral be (value as integerLiteral))
 
--     2. Case analysis on integerLiteral
++     2. Case analysis on integerLiteral
 
         1. Case (% matches pattern `%W%`)
 
--         1. (Let (w_l w i_l) be integerLiteral)
++         1. (Let (w_l w i_l) be integerLiteral)
 
--         2. If ((value' has type integerLiteral)), then
++         2. If ((value' has type integerLiteral)), then
 
--           1. (Let integerLiteral' be (value' as integerLiteral))
++           1. (Let integerLiteral' be (value' as integerLiteral))
 
--           2. Case analysis on integerLiteral'
++           2. Case analysis on integerLiteral'
 
               1. Case (% matches pattern `%W%`)
 
--               1. (Let (w_r w i_r) be integerLiteral')
++               1. (Let (w_r w i_r) be integerLiteral')
 
--               2. (Let i_l' be $shl(i_l, (w_r as int)))
++               2. (Let i_l' be $shl(i_l, (w_r as int)))
 
--               3. (Let i_l'' be (i_l' + i_r))
++               3. (Let i_l'' be (i_l' + i_r))
 
--               4. (Let w be (w_l + w_r))
++               4. (Let w be (w_l + w_r))
 
--               5. (Let i'' be $int_to_bitstr((w as int), i_l''))
++               5. (Let i'' be $int_to_bitstr((w as int), i_l''))
 
--               6. Return ((w w i'') as value)
++               6. Return ((w w i'') as value)
 
               2. Case (% matches pattern `%S%`)
 
@@ -8493,37 +8493,37 @@ def $bin_lor(value, value')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:523.1-525.40
 def $cast_op(typeIR, value')
 
-- 1. Case analysis on value'
++ 1. Case analysis on value'
 
     1. Case (% has type boolValue)
 
--     1. (Let (b) be (value' as boolValue))
++     1. (Let (b) be (value' as boolValue))
 
--     2. Return $cast_bool(typeIR, b)
++     2. Return $cast_bool(typeIR, b)
 
     2. Case (% has type integerLiteral)
 
--     1. (Let integerLiteral be (value' as integerLiteral))
++     1. (Let integerLiteral be (value' as integerLiteral))
 
--     2. Case analysis on integerLiteral
++     2. Case analysis on integerLiteral
 
         1. Case (% matches pattern `D%`)
 
--         1. (Let (d i) be integerLiteral)
++         1. (Let (d i) be integerLiteral)
 
--         2. Return $cast_arbint(typeIR, i)
++         2. Return $cast_arbint(typeIR, i)
 
         2. Case (% matches pattern `%W%`)
 
--         1. (Let (w w i) be integerLiteral)
++         1. (Let (w w i) be integerLiteral)
 
--         2. Return $cast_fixbit(typeIR, w, i)
++         2. Return $cast_fixbit(typeIR, w, i)
 
         3. Case (% matches pattern `%S%`)
 
--         1. (Let (w s i) be integerLiteral)
++         1. (Let (w s i) be integerLiteral)
 
--         2. Return $cast_fixint(typeIR, w, i)
++         2. Return $cast_fixint(typeIR, w, i)
 
     3. Case (% has type structValue)
 
@@ -8539,23 +8539,23 @@ def $cast_op(typeIR, value')
 
     5. Case (% has type enumValue)
 
--     1. (Let enumValue be (value' as enumValue))
++     1. (Let enumValue be (value' as enumValue))
 
--     2. If ((enumValue matches pattern `%.%.%`)), then
++     2. If ((enumValue matches pattern `%.%.%`)), then
 
--       1. (Let (_typeId . _nameIR . value) be enumValue)
++       1. (Let (_typeId . _nameIR . value) be enumValue)
 
--       2. Return $cast_op(typeIR, value)
++       2. Return $cast_op(typeIR, value)
 
     6. Case (% has type sequenceValue)
 
--     1. (Let sequenceValue be (value' as sequenceValue))
++     1. (Let sequenceValue be (value' as sequenceValue))
 
--     2. If ((sequenceValue matches pattern `SEQ(%)`)), then
++     2. If ((sequenceValue matches pattern `SEQ(%)`)), then
 
--       1. (Let (seq( (value)* )) be sequenceValue)
++       1. (Let (seq( (value)* )) be sequenceValue)
 
--       2. Return $cast_sequence(typeIR, (value)*)
++       2. Return $cast_sequence(typeIR, (value)*)
 
     7. Case (% has type recordValue)
 
@@ -8603,15 +8603,15 @@ def $cast_op(typeIR, value')
 
 -         2. Return $cast_set_range(typeIR, value_l, value_u)
 
-- 2. If ((value' has type integerValue)), then
++ 2. If ((value' has type integerValue)), then
 
--   1. (Let integerValue be (value' as integerValue))
++   1. (Let integerValue be (value' as integerValue))
 
--   2. If ((integerValue matches pattern `%.%V%`)), then
++   2. If ((integerValue matches pattern `%.%V%`)), then
 
--     1. (Let (w_max . w v i) be integerValue)
++     1. (Let (w_max . w v i) be integerValue)
 
--     2. Return $cast_varbit(typeIR, w_max, w, i)
++     2. Return $cast_varbit(typeIR, w_max, w, i)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:527.1-528.49
 def $default(typeIR')
@@ -8743,31 +8743,31 @@ def $default(typeIR')
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:532.1-533.23
 def $cast_bool(typeIR', b)
 
-- 1. Case analysis on typeIR'
++ 1. Case analysis on typeIR'
 
     1. Case (% has type boolTypeIR)
 
--     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
++     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
--     2. Return ((b) as value)
++     2. Return ((b) as value)
 
     2. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
 
--     2. If ((integerTypeIR matches pattern `BIT<%>`)), then
++     2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
--       1. (Let (bit< w >) be integerTypeIR)
++       1. (Let (bit< w >) be integerTypeIR)
 
--       2. Case analysis on b
++       2. Case analysis on b
 
           1. Case (% = true)
 
--           1. Return ((w w (1 as int)) as value)
++           1. Return ((w w (1 as int)) as value)
 
           2. Case (% = false)
 
--           1. Return ((w w (0 as int)) as value)
++           1. Return ((w w (0 as int)) as value)
 
     3. Case (% has type typedefTypeIR)
 
@@ -8784,19 +8784,19 @@ def $cast_bool(typeIR', b)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:545.1-546.23
 def $cast_arbint(typeIR'', i)
 
-- 1. Case analysis on typeIR''
++ 1. Case analysis on typeIR''
 
     1. Case (% has type boolTypeIR)
 
--     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
++     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
--     2. Return (((i =/= (0 as int))) as value)
++     2. Return (((i =/= (0 as int))) as value)
 
     2. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
 
--     2. Case analysis on integerTypeIR
++     2. Case analysis on integerTypeIR
 
         1. Case (% matches pattern `INT`)
 
@@ -8804,21 +8804,21 @@ def $cast_arbint(typeIR'', i)
 
         2. Case (% matches pattern `BIT<%>`)
 
--         1. (Let (bit< w >) be integerTypeIR)
++         1. (Let (bit< w >) be integerTypeIR)
 
--         2. Return ((w w $int_to_bitstr((w as int), i)) as value)
++         2. Return ((w w $int_to_bitstr((w as int), i)) as value)
 
         3. Case (% matches pattern `INT<%>`)
 
--         1. (Let (int< w >) be integerTypeIR)
++         1. (Let (int< w >) be integerTypeIR)
 
--         2. Return ((w s $int_to_bitstr((w as int), i)) as value)
++         2. Return ((w s $int_to_bitstr((w as int), i)) as value)
 
     3. Case (% has type typedefTypeIR)
 
--     1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
++     1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
--     2. Return $cast_arbint(typeIR, i)
++     2. Return $cast_arbint(typeIR, i)
 
     4. Case (% has type newTypeIR)
 
@@ -8828,30 +8828,30 @@ def $cast_arbint(typeIR'', i)
 
     5. Case (% has type setTypeIR)
 
--     1. (Let (set< (typeIR')* >) be (typeIR'' as setTypeIR))
++     1. (Let (set< (typeIR')* >) be (typeIR'' as setTypeIR))
 
--     2. If (((typeIR')* matches pattern [ _/1 ])), then
++     2. If (((typeIR')* matches pattern [ _/1 ])), then
 
--       1. (Let [typeIR] be (typeIR')*)
++       1. (Let [typeIR] be (typeIR')*)
 
--       2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
++       2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:560.1-561.23
 def $cast_fixbit(typeIR'', w, i)
 
-- 1. Case analysis on typeIR''
++ 1. Case analysis on typeIR''
 
     1. Case (% has type boolTypeIR)
 
--     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
++     1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
--     2. Return (((i =/= (0 as int))) as value)
++     2. Return (((i =/= (0 as int))) as value)
 
     2. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
 
--     2. Case analysis on integerTypeIR
++     2. Case analysis on integerTypeIR
 
         1. Case (% matches pattern `INT`)
 
@@ -8859,11 +8859,11 @@ def $cast_fixbit(typeIR'', w, i)
 
         2. Case (% matches pattern `BIT<%>`)
 
--         1. (Let (bit< w_to >) be integerTypeIR)
++         1. (Let (bit< w_to >) be integerTypeIR)
 
--         2. (Let i' be $int_to_bitstr((w_to as int), i))
++         2. (Let i' be $int_to_bitstr((w_to as int), i))
 
--         3. Return ((w_to w i') as value)
++         3. Return ((w_to w i') as value)
 
         3. Case (% matches pattern `INT<%>`)
 
@@ -8875,9 +8875,9 @@ def $cast_fixbit(typeIR'', w, i)
 
     3. Case (% has type typedefTypeIR)
 
--     1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
++     1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
--     2. Return $cast_fixbit(typeIR, w, i)
++     2. Return $cast_fixbit(typeIR, w, i)
 
     4. Case (% has type newTypeIR)
 
@@ -8887,24 +8887,24 @@ def $cast_fixbit(typeIR'', w, i)
 
     5. Case (% has type setTypeIR)
 
--     1. (Let (set< (typeIR')* >) be (typeIR'' as setTypeIR))
++     1. (Let (set< (typeIR')* >) be (typeIR'' as setTypeIR))
 
--     2. If (((typeIR')* matches pattern [ _/1 ])), then
++     2. If (((typeIR')* matches pattern [ _/1 ])), then
 
--       1. (Let [typeIR] be (typeIR')*)
++       1. (Let [typeIR] be (typeIR')*)
 
--       2. Return ((set{ $cast_fixbit(typeIR, w, i) }) as value)
++       2. Return ((set{ $cast_fixbit(typeIR, w, i) }) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:577.1-578.23
 def $cast_fixint(typeIR'', w, i)
 
-- 1. Case analysis on typeIR''
++ 1. Case analysis on typeIR''
 
     1. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
 
--     2. Case analysis on integerTypeIR
++     2. Case analysis on integerTypeIR
 
         1. Case (% matches pattern `INT`)
 
@@ -8920,11 +8920,11 @@ def $cast_fixint(typeIR'', w, i)
 
         3. Case (% matches pattern `INT<%>`)
 
--         1. (Let (int< w_to >) be integerTypeIR)
++         1. (Let (int< w_to >) be integerTypeIR)
 
--         2. (Let i' be $int_to_bitstr((w_to as int), $bitstr_to_int((w as int), i)))
++         2. (Let i' be $int_to_bitstr((w_to as int), $bitstr_to_int((w as int), i)))
 
--         3. Return ((w_to s i') as value)
++         3. Return ((w_to s i') as value)
 
     2. Case (% has type typedefTypeIR)
 
@@ -8951,19 +8951,19 @@ def $cast_fixint(typeIR'', w, i)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:593.1-594.23
 def $cast_varbit(typeIR', w_max', w, i)
 
-- 1. Case analysis on typeIR'
++ 1. Case analysis on typeIR'
 
     1. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
 
--     2. If ((integerTypeIR matches pattern `VARBIT<%>`)), then
++     2. If ((integerTypeIR matches pattern `VARBIT<%>`)), then
 
--       1. (Let (varbit< w_max >) be integerTypeIR)
++       1. (Let (varbit< w_max >) be integerTypeIR)
 
--       2. If ((w_max = w_max')), then
++       2. If ((w_max = w_max')), then
 
--         1. Return ((w_max . w v i) as value)
++         1. Return ((w_max . w v i) as value)
 
     2. Case (% has type typedefTypeIR)
 
@@ -9016,7 +9016,7 @@ def $cast_header(typeIR', typeId', b, ((value', id'))*)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:634.1-635.23
 def $cast_sequence(typeIR', (value)*)
 
-- 1. Case analysis on typeIR'
++ 1. Case analysis on typeIR'
 
     1. Case (% has type typedefTypeIR)
 
@@ -9032,9 +9032,9 @@ def $cast_sequence(typeIR', (value)*)
 
     3. Case (% has type tupleTypeIR)
 
--     1. (Let (tuple< (typeIR)* >) be (typeIR' as tupleTypeIR))
++     1. (Let (tuple< (typeIR)* >) be (typeIR' as tupleTypeIR))
 
--     2. Return ((tuple( ($cast_op(typeIR, value))* )) as value)
++     2. Return ((tuple( ($cast_op(typeIR, value))* )) as value)
 
     4. Case (% has type headerStackTypeIR)
 
@@ -9048,19 +9048,19 @@ def $cast_sequence(typeIR', (value)*)
 
     5. Case (% has type structTypeIR)
 
--     1. (Let (struct typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as structTypeIR))
++     1. (Let (struct typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as structTypeIR))
 
--     2. (Let value_cast be $cast_op(typeIR_field, value))*
++     2. (Let value_cast be $cast_op(typeIR_field, value))*
 
--     3. Return ((struct typeId { ((value_cast nameIR_field ;))* }) as value)
++     3. Return ((struct typeId { ((value_cast nameIR_field ;))* }) as value)
 
     6. Case (% has type headerTypeIR)
 
--     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerTypeIR))
++     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerTypeIR))
 
--     2. (Let value_cast be $cast_op(typeIR_field, value))*
++     2. (Let value_cast be $cast_op(typeIR_field, value))*
 
--     3. Return ((header typeId { true ; ((value_cast nameIR_field ;))* }) as value)
++     3. Return ((header typeId { true ; ((value_cast nameIR_field ;))* }) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:665.1-666.23
 def $cast_record(typeIR', ((value', id'))*)
@@ -9176,76 +9176,76 @@ def $cast_set_range(typeIR'', value_l, value_u)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:785.1-786.23
 def $bitacc_op(value, value', value'')
 
-- 1. If ((value has type integerValue)), then
++ 1. If ((value has type integerValue)), then
 
--   1. (Let integerValue_b be (value as integerValue))
++   1. (Let integerValue_b be (value as integerValue))
 
--   2. If ((value' has type integerValue)), then
++   2. If ((value' has type integerValue)), then
 
--     1. (Let integerValue_h be (value' as integerValue))
++     1. (Let integerValue_h be (value' as integerValue))
 
--     2. If ((value'' has type integerValue)), then
++     2. If ((value'' has type integerValue)), then
 
--       1. (Let integerValue_l be (value'' as integerValue))
++       1. (Let integerValue_l be (value'' as integerValue))
 
--       2. (Let i_b be $int_of_integerValue(integerValue_b))
++       2. (Let i_b be $int_of_integerValue(integerValue_b))
 
--       3. (Let i_h be $int_of_integerValue(integerValue_h))
++       3. (Let i_h be $int_of_integerValue(integerValue_h))
 
--       4. (Let i_l be $int_of_integerValue(integerValue_l))
++       4. (Let i_l be $int_of_integerValue(integerValue_l))
 
--       5. (Let int be ((i_h + (1 as int)) - i_l))
++       5. (Let int be ((i_h + (1 as int)) - i_l))
 
--       6. If ((int has type nat)), then
++       6. If ((int has type nat)), then
 
--         1. (Let w be (int as nat))
++         1. (Let w be (int as nat))
 
--         2. (Let i be $bitacc(i_b, i_h, i_l))
++         2. (Let i be $bitacc(i_b, i_h, i_l))
 
--         3. Return ((w w i) as value)
++         3. Return ((w w i) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:799.1-800.23
 def $bitacc_replace_op(value, value', value'', value''')
 
-- 1. If ((value has type integerValue)), then
++ 1. If ((value has type integerValue)), then
 
--   1. (Let integerValue_b be (value as integerValue))
++   1. (Let integerValue_b be (value as integerValue))
 
--   2. If ((value' has type integerValue)), then
++   2. If ((value' has type integerValue)), then
 
--     1. (Let integerValue_h be (value' as integerValue))
++     1. (Let integerValue_h be (value' as integerValue))
 
--     2. If ((value'' has type integerValue)), then
++     2. If ((value'' has type integerValue)), then
 
--       1. (Let integerValue_l be (value'' as integerValue))
++       1. (Let integerValue_l be (value'' as integerValue))
 
--       2. If ((value''' has type integerValue)), then
++       2. If ((value''' has type integerValue)), then
 
--         1. (Let integerValue_r be (value''' as integerValue))
++         1. (Let integerValue_r be (value''' as integerValue))
 
--         2. If ((integerValue_b has type integerLiteral)), then
++         2. If ((integerValue_b has type integerLiteral)), then
 
--           1. (Let integerLiteral be (integerValue_b as integerLiteral))
++           1. (Let integerLiteral be (integerValue_b as integerLiteral))
 
--           2. If ((integerLiteral matches pattern `%W%`)), then
++           2. If ((integerLiteral matches pattern `%W%`)), then
 
--             1. (Let (w w i_b) be integerLiteral)
++             1. (Let (w w i_b) be integerLiteral)
 
--             2. (Let i_h be $int_of_integerValue(integerValue_h))
++             2. (Let i_h be $int_of_integerValue(integerValue_h))
 
--             3. (Let i_l be $int_of_integerValue(integerValue_l))
++             3. (Let i_l be $int_of_integerValue(integerValue_l))
 
--             4. If ((integerValue_r has type integerLiteral)), then
++             4. If ((integerValue_r has type integerLiteral)), then
 
--               1. (Let integerLiteral' be (integerValue_r as integerLiteral))
++               1. (Let integerLiteral' be (integerValue_r as integerLiteral))
 
--               2. If ((integerLiteral' matches pattern `%W%`)), then
++               2. If ((integerLiteral' matches pattern `%W%`)), then
 
--                 1. (Let (_nat w i_r) be integerLiteral')
++                 1. (Let (_nat w i_r) be integerLiteral')
 
--                 2. (Let i be $bitacc_replace(i_b, i_h, i_l, i_r))
++                 2. (Let i be $bitacc_replace(i_b, i_h, i_l, i_r))
 
--                 3. Return ((w w i) as value)
++                 3. Return ((w w i) as value)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:813.1-814.23
 def $sizeof(typeIR, text)
@@ -9276,7 +9276,7 @@ def $sizeof_minSizeInBits(typeIR)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:818.1-819.23
 def $sizeof_minSizeInBits'(typeIR')
 
-- 1. Case analysis on typeIR'
++ 1. Case analysis on typeIR'
 
     1. Case (% has type boolTypeIR)
 
@@ -9286,9 +9286,9 @@ def $sizeof_minSizeInBits'(typeIR')
 
     2. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
 
--     2. Case analysis on integerTypeIR
++     2. Case analysis on integerTypeIR
 
         1. Case (% matches pattern `INT<%>`)
 
@@ -9298,21 +9298,21 @@ def $sizeof_minSizeInBits'(typeIR')
 
         2. Case (% matches pattern `BIT<%>`)
 
--         1. (Let (bit< w >) be integerTypeIR)
++         1. (Let (bit< w >) be integerTypeIR)
 
--         2. Return w
++         2. Return w
 
         3. Case (% matches pattern `VARBIT<%>`)
 
--         1. (Let (varbit< _nat >) be integerTypeIR)
++         1. (Let (varbit< _nat >) be integerTypeIR)
 
--         2. Return 0
++         2. Return 0
 
     3. Case (% has type typedefTypeIR)
 
--     1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
++     1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
 
--     2. Return $sizeof_minSizeInBits'(typeIR)
++     2. Return $sizeof_minSizeInBits'(typeIR)
 
     4. Case (% has type newTypeIR)
 
@@ -9350,9 +9350,9 @@ def $sizeof_minSizeInBits'(typeIR')
 
     9. Case (% has type headerTypeIR)
 
--     1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as headerTypeIR))
++     1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as headerTypeIR))
 
--     2. Return $sum_nat(($sizeof_minSizeInBits'(typeIR))*)
++     2. Return $sum_nat(($sizeof_minSizeInBits'(typeIR))*)
 
     10. Case (% has type headerUnionTypeIR)
 
@@ -9375,43 +9375,43 @@ def $sizeof_maxSizeInBits(typeIR)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:826.1-827.23
 def $sizeof_maxSizeInBits'(typeIR')
 
-- 1. Case analysis on typeIR'
++ 1. Case analysis on typeIR'
 
     1. Case (% has type boolTypeIR)
 
--     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
++     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
--     2. Return 1
++     2. Return 1
 
     2. Case (% has type integerTypeIR)
 
--     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
++     1. (Let integerTypeIR be (typeIR' as integerTypeIR))
 
--     2. Case analysis on integerTypeIR
++     2. Case analysis on integerTypeIR
 
         1. Case (% matches pattern `INT<%>`)
 
--         1. (Let (int< w >) be integerTypeIR)
++         1. (Let (int< w >) be integerTypeIR)
 
--         2. Return w
++         2. Return w
 
         2. Case (% matches pattern `BIT<%>`)
 
--         1. (Let (bit< w >) be integerTypeIR)
++         1. (Let (bit< w >) be integerTypeIR)
 
--         2. Return w
++         2. Return w
 
         3. Case (% matches pattern `VARBIT<%>`)
 
--         1. (Let (varbit< w >) be integerTypeIR)
++         1. (Let (varbit< w >) be integerTypeIR)
 
--         2. Return w
++         2. Return w
 
     3. Case (% has type typedefTypeIR)
 
--     1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
++     1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
 
--     2. Return $sizeof_maxSizeInBits'(typeIR)
++     2. Return $sizeof_maxSizeInBits'(typeIR)
 
     4. Case (% has type newTypeIR)
 
@@ -9421,13 +9421,13 @@ def $sizeof_maxSizeInBits'(typeIR')
 
     5. Case (% has type enumTypeIR)
 
--     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
++     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
--     2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
++     2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
--       1. (Let (enum _typeId < typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
++       1. (Let (enum _typeId < typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
 
--       2. Return $sizeof_maxSizeInBits'(typeIR)
++       2. Return $sizeof_maxSizeInBits'(typeIR)
 
     6. Case (% has type tupleTypeIR)
 
@@ -9443,15 +9443,15 @@ def $sizeof_maxSizeInBits'(typeIR')
 
     8. Case (% has type structTypeIR)
 
--     1. (Let (struct _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as structTypeIR))
++     1. (Let (struct _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as structTypeIR))
 
--     2. Return $sum_nat(($sizeof_maxSizeInBits'(typeIR))*)
++     2. Return $sum_nat(($sizeof_maxSizeInBits'(typeIR))*)
 
     9. Case (% has type headerTypeIR)
 
--     1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as headerTypeIR))
++     1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR _nameIR ;))* }) be (typeIR' as headerTypeIR))
 
--     2. Return $sum_nat(($sizeof_maxSizeInBits'(typeIR))*)
++     2. Return $sum_nat(($sizeof_maxSizeInBits'(typeIR))*)
 
     10. Case (% has type headerUnionTypeIR)
 
@@ -14082,15 +14082,15 @@ extern relation ExternFunctionCall_eval_lctk: typingContext |- nameIR ( (nameIR'
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:13.1-18.43
 rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
-- 1. Case analysis on expressionIR
++ 1. Case analysis on expressionIR
 
     1. Case (% has type booleanLiteral)
 
--     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
++     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
--     2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # _expressionNoteIR) ~> %
++     2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # _expressionNoteIR) ~> %
 
--       1. Case analysis on booleanLiteral
++       1. Case analysis on booleanLiteral
 
           1. Case (% matches pattern `TRUE`)
 
@@ -14098,27 +14098,27 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
           2. Case (% matches pattern `FALSE`)
 
--           1. Result in: % % |- % ~> ((false) as value)
++           1. Result in: % % |- % ~> ((false) as value)
 
     2. Case (% has type integerLiteral)
 
--     1. (Let integerLiteral be (expressionIR as integerLiteral))
++     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
--     2. Group literalExpressionIR-number: p TC |- ((integerLiteral as expressionIR) # _expressionNoteIR) ~> %
++     2. Group literalExpressionIR-number: p TC |- ((integerLiteral as expressionIR) # _expressionNoteIR) ~> %
 
--       1. Case analysis on integerLiteral
++       1. Case analysis on integerLiteral
 
           1. Case (% matches pattern `D%`)
 
--           1. (Let (d i) be integerLiteral)
++           1. (Let (d i) be integerLiteral)
 
--           2. Result in: % % |- % ~> ((d i) as value)
++           2. Result in: % % |- % ~> ((d i) as value)
 
           2. Case (% matches pattern `%W%`)
 
--           1. (Let (n w i) be integerLiteral)
++           1. (Let (n w i) be integerLiteral)
 
--           2. Result in: % % |- % ~> ((n w i) as value)
++           2. Result in: % % |- % ~> ((n w i) as value)
 
           3. Case (% matches pattern `%S%`)
 
@@ -14164,17 +14164,17 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
     7. Case (% has type binaryExpressionIR)
 
--     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
++     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
--     2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) ~> %
++     2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) ~> %
 
--       1. If (~binop' is in [(&&), (||)]), then
++       1. If (~binop' is in [(&&), (||)]), then
 
--         1. (Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l)
++         1. (Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l)
 
--         2. (Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r)
++         2. (Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r)
 
--         3. Result in: % % |- % ~> $bin_op(binop', value_l, value_r)
++         3. Result in: % % |- % ~> $bin_op(binop', value_l, value_r)
 
 -       2. Case analysis on binop'
 
@@ -14228,15 +14228,15 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
     9. Case (% has type castExpressionIR)
 
--     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
++     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
--     2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) ~> %
++     2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) ~> %
 
--       1. (Expr_eval_lctk: p TC |- typedExpressionIR ~> value)
++       1. (Expr_eval_lctk: p TC |- typedExpressionIR ~> value)
 
--       2. (Let value_cast be $cast_op(typeIR, value))
++       2. (Let value_cast be $cast_op(typeIR, value))
 
--       3. Result in: % % |- % ~> value_cast
++       3. Result in: % % |- % ~> value_cast
 
 - 2. (Let (( _typeIR _ctk )) be _expressionNoteIR)
 

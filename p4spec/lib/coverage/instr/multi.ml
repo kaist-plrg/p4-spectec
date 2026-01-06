@@ -41,7 +41,7 @@ module Cover = struct
   (* Constructor *)
 
   let is_ignored (hints : hint list) : bool =
-    Hints.Flag.init hints "testgen_ignore"
+    Hints.Flag.init hints "cover_instr_ignore"
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     let iid = instr.note.iid in
