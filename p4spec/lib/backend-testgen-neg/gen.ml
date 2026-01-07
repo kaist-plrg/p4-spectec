@@ -78,21 +78,19 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Re-run the SL interpreter to make sure of the new hits *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec = config.specenv.spec in
-  match
-    Runner.run_program_sl ~derive:false spec config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  with
-  | Pass (_, _, cover)
-    when PIdSet.for_all (DCov_single.is_hit cover.dangling) pids_hit_new ->
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+  in
+  match program_result with
+  | Pass _ when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind true pids_hit_new
-  | Fail (_, _, cover)
-    when PIdSet.for_all (DCov_single.is_hit cover.dangling) pids_hit_new ->
+  | Fail (`Runtime _)
+    when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
       in
@@ -128,16 +126,13 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
      and update the running coverage *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec = config.specenv.spec in
-  match
-    Runner.run_program_sl ~derive:false spec config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  with
-  | Pass (_, _, cover)
-    when PIdSet.for_all
-           (DCov_single.is_close_miss cover.dangling)
-           pids_close_miss_new ->
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+  in
+  match program_result with
+  | Pass _
+    when PIdSet.for_all (DCov_single.is_close_miss cover) pids_close_miss_new ->
       let filename_close_miss_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
       in
@@ -157,13 +152,11 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
     filename_gen_p4
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
-    let (module Runner : Sim.DRIVER) = config.specenv.runner in
-    match
-      Runner.run_program_internal ~derive:false config.specenv.spec
-        config.specenv.relname value_program
-    with
-    | Pass (_, cover) -> (true, cover.dangling)
-    | Fail (_, _, cover) -> (false, cover.dangling)
+    let rel_result, cover =
+      Runner.run_program_internal_with_dangling config.specenv.runner
+        config.specenv.spec config.specenv.relname value_program
+    in
+    match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
   in
   let time_end = Unix.gettimeofday () in
   F.asprintf
@@ -444,19 +437,18 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   in
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec = config.specenv.spec in
-  (match
-     Runner.run_program_sl ~derive spec config.specenv.relname
-       config.specenv.includes_p4 filename_p4
-   with
-  | Pass (_, vdg, cover) ->
+  let program_result, cover, vdg =
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.runner
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      filename_p4
+  in
+  (match program_result with
+  | Pass _ ->
       let time_end = Unix.gettimeofday () in
       F.asprintf
         "[F %d] [P %d] [S %d] SL interpreter succeeded on %s (took %.2f)" fuel
         pid idx_seed filename_p4 (time_end -. time_start)
       |> Logger.log config.modes.logmode log;
-      let cover = cover.dangling in
       (match config.modes.mutationmode with
       | Random ->
           fuzz_seed_random fuel pid idx_seed config log query dirname_gen_tmp
@@ -469,7 +461,7 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
             filename_p4 vdg cover);
       Dep.Graph.G.reset vdg.nodes;
       Dep.Graph.G.reset vdg.edges
-  | Fail _ | IllFormed _ ->
+  | Fail _ ->
       F.asprintf "[F %d] [P %d] [S %d] SL interpreter failed on %s" fuel pid
         idx_seed filename_p4
       |> Logger.log config.modes.logmode log);

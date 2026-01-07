@@ -37,6 +37,19 @@ let runner ?(arch : string option) mode filenames_spec =
   in
   (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
 
+let run_with_dangling ?(arch : string option) mode filenames_spec relname
+    includes_p4 filename_p4 =
+  let spec_sim, (module Runner) = runner ?arch mode filenames_spec in
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Runner.run_program spec_sim relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
 (* Commands *)
 
 let elab_command =
@@ -97,8 +110,7 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
-     and _debug = flag "-dbg" no_arg ~doc:"print debug traces"
-     and _profile = flag "-profile" no_arg ~doc:"profiling"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
        Command.Param.choose_one
          [
@@ -112,13 +124,22 @@ let run_command =
      fun () ->
        try
          let spec_sim, (module Runner) = runner mode filenames_spec in
-         match
-           Runner.run_program ~derive:false spec_sim relname includes_p4
-             filename_p4
-         with
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result =
+           Runner.run_program spec_sim relname includes_p4 filename_p4
+         in
+         Inst.Hook.finish ();
+         match result with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -152,8 +173,8 @@ let sim_command =
            Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
          with
          | Pass -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
@@ -419,20 +440,13 @@ let interesting_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner `SL filenames_spec in
-         let spec_sl =
-           match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
-         in
-         let result =
-           Runner.run_program_sl ~derive:false spec_sl relname includes_p4
-             filename_p4
+         let result, cover =
+           run_with_dangling `SL filenames_spec relname includes_p4 filename_p4
          in
          match result with
-         | Pass (_, _, cover_single) ->
+         | Pass _ ->
              if check_well_typed then (
-               let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -446,14 +460,15 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | Fail (_, _, cover_single) -> (
+         | Fail (`Syntax _) ->
+             Printf.printf "IllFormed";
+             exit 12
+         | Fail (`Runtime _) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch =
-                 Coverage.Dangling.Single.Cover.find pid cover_single.dangling
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";
@@ -464,9 +479,6 @@ let interesting_command =
                | Miss [] ->
                    Printf.printf "IllTyped: Miss\n";
                    exit 1)
-         | IllFormed _ ->
-             Printf.printf "IllFormed";
-             exit 12
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->

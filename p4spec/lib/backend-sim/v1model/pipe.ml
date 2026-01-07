@@ -3,10 +3,6 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
 open Interface.Flatten
-module ICov_single = Coverage.Instr.Single
-module ICov_multi = Coverage.Instr.Multi
-module DCov_single = Coverage.Dangling.Single
-module DCov_multi = Coverage.Dangling.Multi
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -18,26 +14,6 @@ struct
 
   let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
   let init_spec (spec_ : Sim.spec) : unit = spec := spec_
-
-  (* Coverage *)
-
-  let coverage : Sim.coverage ref = ref Sim.Empty
-
-  let init_coverage (spec_ : Sim.spec) : unit =
-    match spec_ with
-    | SL spec_sl ->
-        let instr = ICov_single.init spec_sl in
-        let dangling = DCov_single.init spec_sl in
-        coverage := Sim.Cover { instr; dangling }
-    | IL _ | Empty -> ()
-
-  let update_coverage (cover_single : Sim.cover_single) : unit =
-    match !coverage with
-    | Sim.Cover { instr; dangling } ->
-        let instr = ICov_single.extend instr cover_single.instr in
-        let dangling = DCov_single.extend dangling cover_single.dangling in
-        coverage := Sim.Cover { instr; dangling }
-    | _ -> ()
 
   (* Call entry points *)
 
@@ -51,12 +27,8 @@ struct
     | SL spec_sl -> (
         let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
         match rel_result_sl with
-        | Pass (values_output, cover_single) ->
-            update_coverage cover_single;
-            values_output
-        | Fail (at, msg, cover_single) ->
-            update_coverage cover_single;
-            error at msg)
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
@@ -76,12 +48,8 @@ struct
           Interp_SL.eval_func spec_sl funcname typs_input values_input
         in
         match func_result_sl with
-        | Pass (value_output, cover_single) ->
-            update_coverage cover_single;
-            value_output
-        | Fail (at, msg, cover_single) ->
-            update_coverage cover_single;
-            error at msg)
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
     | Empty -> assert false
 
   let init_call_func () = Spec.Func.register call_func
@@ -306,7 +274,6 @@ struct
 
   let init (spec_ : Sim.spec) : unit =
     init_spec spec_;
-    init_coverage spec_;
     init_call_rel ();
     init_call_func ()
 
@@ -315,33 +282,18 @@ struct
   let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
       (filename_p4 : string) : Value.t * Value.t =
     init spec_;
-    let values_output =
+    let program_result =
       match !spec with
-      | IL spec_il -> (
-          let program_result_il =
-            Interp_IL.eval_program spec_il "V1Model_init" includes_p4
-              filename_p4
-          in
-          match program_result_il with
-          | Pass values_output -> values_output
-          | Fail (at, msg) | IllFormed (at, msg) -> error at msg)
-      | SL spec_sl -> (
-          let program_result_sl =
-            Interp_SL.eval_program ~derive:false spec_sl "V1Model_init"
-              includes_p4 filename_p4
-          in
-          match program_result_sl with
-          | Pass (values_output, _, cover_single) ->
-              update_coverage cover_single;
-              values_output
-          | Fail (at, msg, cover_single) | IllFormed (at, msg, cover_single) ->
-              update_coverage cover_single;
-              error at msg)
+      | IL spec_il ->
+          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
+      | SL spec_sl ->
+          Interp_SL.eval_program spec_sl "V1Model_init" includes_p4 filename_p4
       | Empty -> assert false
     in
-    match values_output with
-    | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
-    | _ -> error_no_region "unexpected return from V1Model_init"
+    match program_result with
+    | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+    | Pass _ -> error_no_region "unexpected return from V1Model_init"
+    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
 
   (* Pipeline driver *)
 
