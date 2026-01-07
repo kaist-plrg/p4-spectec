@@ -110,8 +110,7 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
-     and _debug = flag "-dbg" no_arg ~doc:"print debug traces"
-     and _profile = flag "-profile" no_arg ~doc:"profiling"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
        Command.Param.choose_one
          [
@@ -125,7 +124,19 @@ let run_command =
      fun () ->
        try
          let spec_sim, (module Runner) = runner mode filenames_spec in
-         match Runner.run_program spec_sim relname includes_p4 filename_p4 with
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result =
+           Runner.run_program spec_sim relname includes_p4 filename_p4
+         in
+         Inst.Hook.finish ();
+         match result with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg

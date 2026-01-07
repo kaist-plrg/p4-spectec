@@ -8,6 +8,7 @@ open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
 module DCov_single = Coverage.Dangling.Single
+module Hook = Inst.Hook
 open Error
 open Attempt
 module F = Format
@@ -970,7 +971,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Ctx.trace_open_iter ctx_sub (Il.Print.string_of_exp exp)
         in
         let ctx_sub, value = eval_exp ctx_sub exp in
-        let ctx_sub = Ctx.trace_close ctx_sub in
+        Ctx.trace_close ctx_sub;
         let ctx = Ctx.trace_commit ctx ctx_sub.trace in
         let value_res =
           let vid = Value.fresh () in
@@ -996,7 +997,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             Ctx.trace_open_iter ctx_sub (Il.Print.string_of_exp exp)
           in
           let ctx_sub, value = eval_exp ctx_sub exp in
-          let ctx_sub = Ctx.trace_close ctx_sub in
+          Ctx.trace_close ctx_sub;
           let ctx = Ctx.trace_commit ctx ctx_sub.trace in
           (ctx, values @ [ value ]))
         (ctx, []) ctxs_sub
@@ -1151,7 +1152,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                   Ctx.trace_open_iter ctx_sub (Il.Print.string_of_prem prem)
                 in
                 let* ctx_sub = eval_prem ctx_sub prem in
-                let ctx_sub = Ctx.trace_close ctx_sub in
+                Ctx.trace_close ctx_sub;
                 let ctx = Ctx.trace_commit ctx ctx_sub.trace in
                 let value_binding_batch =
                   List.map
@@ -1214,8 +1215,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt_reason =
-    invoke_rel' ctx id values_input
-    |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
+    Hook.on_rel_enter id values_input;
+    let result = invoke_rel' ctx id values_input in
+    Hook.on_rel_exit id;
+    result |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt_reason =
@@ -1249,7 +1252,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           (exps_output : exp list) : (Ctx.t * value list) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, values_output = eval_exps ctx_local exps_output in
-        let ctx_local = Ctx.trace_close ctx_local in
+        Ctx.trace_close ctx_local;
         let ctx = Ctx.trace_commit ctx ctx_local.trace in
         Ok (ctx, values_output)
       in
@@ -1284,17 +1287,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       in
       choice attempt_rules
     in
-    if Cache.is_cached_rule id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
-      | Some (subtraces, values_output) ->
-          let ctx = Ctx.trace_replace ctx subtraces in
-          Ok (ctx, values_output)
+      | Some values_output -> Ok (ctx, values_output)
       | None ->
           let* ctx, values_output = attempt_rules () in
-          let subtraces = Trace.wipe_subtraces ctx.trace in
-          Cache.Cache.add !rule_cache (id.it, values_input)
-            (subtraces, values_output);
+          Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Ok (ctx, values_output))
     else attempt_rules ()
 
@@ -1330,20 +1329,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (* Evaluate arguments *)
     let ctx, values_input = eval_args ctx args in
     (* Invoke the function *)
-    invoke_func'' ctx id targs values_input
+    invoke_func_with_values ctx id targs values_input
 
-  and invoke_func'' (ctx : Ctx.t) (id : id) (targs : targ list)
+  and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt_reason =
+    Hook.on_func_enter id values_input;
     (* Find the function *)
     let func = Ctx.find_func Local ctx id in
     (* Invoke the function *)
-    match func with
-    | Func.Extern -> invoke_extern_func ctx id targs values_input
-    | Func.Builtin -> invoke_builtin_func ctx id targs values_input
-    | Func.Table (_, tablerows) ->
-        invoke_table_func ctx id tablerows values_input
-    | Func.Defined (tparams, clauses) ->
-        invoke_defined_func ctx id tparams clauses targs values_input
+    let result =
+      match func with
+      | Func.Extern -> invoke_extern_func ctx id targs values_input
+      | Func.Builtin -> invoke_builtin_func ctx id targs values_input
+      | Func.Table (_, tablerows) ->
+          invoke_table_func ctx id tablerows values_input
+      | Func.Defined (tparams, clauses) ->
+          invoke_defined_func ctx id tparams clauses targs values_input
+    in
+    Hook.on_func_exit id;
+    result
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt_reason =
@@ -1365,21 +1369,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         try Builtin.Call.invoke (fun _ -> ()) id targs values_input
         with Util.Error.BuiltinError (at, msg) -> error at msg
       in
-      let ctx_local = Ctx.trace_close ctx_local in
+      Ctx.trace_close ctx_local;
       let ctx = Ctx.trace_commit ctx ctx_local.trace in
       Ok (ctx, value_output)
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
-      | Some (subtraces, value_output) ->
-          let ctx = Ctx.trace_replace ctx subtraces in
-          Ok (ctx, value_output)
+      | Some value_output -> Ok (ctx, value_output)
       | None ->
           let* ctx, value_output = invoke_func_builtin' () in
-          let subtraces = Trace.wipe_subtraces ctx.trace in
-          Cache.Cache.add !func_cache (id.it, values_input)
-            (subtraces, value_output);
+          Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok (ctx, value_output))
     else
       let* ctx, value_output = invoke_func_builtin' () in
@@ -1402,7 +1402,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           (exp_output : exp) : (Ctx.t * value) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, value_output = eval_exp ctx_local exp_output in
-        let ctx_local = Ctx.trace_close ctx_local in
+        Ctx.trace_close ctx_local;
         let ctx = Ctx.trace_commit ctx ctx_local.trace in
         Ok (ctx, value_output)
       in
@@ -1433,14 +1433,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
-      | Some (subtraces, value_output) ->
-          let ctx = Ctx.trace_replace ctx subtraces in
-          Ok (ctx, value_output)
+      | Some value_output -> Ok (ctx, value_output)
       | None ->
           let* ctx, value_output = attempt_tablerows () in
-          let subtraces = Trace.wipe_subtraces ctx.trace in
-          Cache.Cache.add !func_cache (id.it, values_input)
-            (subtraces, value_output);
+          Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok (ctx, value_output))
     else attempt_tablerows ()
 
@@ -1462,7 +1458,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           (exp_output : exp) : (Ctx.t * value) attempt_reason =
         let* ctx_local = eval_prems ctx_local prems in
         let ctx_local, value_output = eval_exp ctx_local exp_output in
-        let ctx_local = Ctx.trace_close ctx_local in
+        Ctx.trace_close ctx_local;
         let ctx = Ctx.trace_commit ctx ctx_local.trace in
         Ok (ctx, value_output)
       in
@@ -1504,14 +1500,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
-      | Some (subtraces, value_output) ->
-          let ctx = Ctx.trace_replace ctx subtraces in
-          Ok (ctx, value_output)
+      | Some value_output -> Ok (ctx, value_output)
       | None ->
           let* ctx, value_output = attempt_clauses () in
-          let subtraces = Trace.wipe_subtraces ctx.trace in
-          Cache.Cache.add !func_cache (id.it, values_input)
-            (subtraces, value_output);
+          Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok (ctx, value_output))
     else attempt_clauses ()
 
@@ -1567,18 +1559,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (targs : targ list) (values_input : value list) :
       (Ctx.t * value) attempt_reason =
     let ctx = load_spec ctx spec in
-    invoke_func'' ctx (funcname $ no_region) targs values_input
+    invoke_func_with_values ctx (funcname $ no_region) targs values_input
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
     do_init spec;
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let ctx = Ctx.empty ~debug:false ~profile:false in
-      let+ ctx, values_output =
+      let ctx = Ctx.empty ~debug:false in
+      let+ _ctx, values_output =
         do_eval_rel ctx spec relname [ value_program ]
       in
-      Ctx.profile ctx;
       (Sim.Pass values_output : Sim.program_result)
     with
     | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
@@ -1588,9 +1579,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       Sim.rel_result =
     do_init spec;
     try
-      let ctx = Ctx.empty ~debug:false ~profile:false in
-      let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
-      Ctx.profile ctx;
+      let ctx = Ctx.empty ~debug:false in
+      let+ _ctx, values_output = do_eval_rel ctx spec relname values_input in
       (Sim.Pass values_output : Sim.rel_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 
@@ -1598,11 +1588,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (values_input : value list) : Sim.func_result =
     do_init spec;
     try
-      let ctx = Ctx.empty ~debug:false ~profile:false in
-      let+ ctx, value_output =
+      let ctx = Ctx.empty ~debug:false in
+      let+ _ctx, value_output =
         do_eval_func ctx spec funcname targs values_input
       in
-      Ctx.profile ctx;
       (Sim.Pass value_output : Sim.func_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 end

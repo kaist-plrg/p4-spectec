@@ -23,7 +23,7 @@ type cursor = Global | Local
 
 (* Config *)
 
-type config = { debug : bool; profile : bool }
+type config = { debug : bool }
 
 (* Global layer *)
 
@@ -58,11 +58,6 @@ type t = {
   local : local;
 }
 
-(* Profiling *)
-
-let profile (ctx : t) : unit =
-  if ctx.config.profile then Trace.profile ctx.trace
-
 (* Tracing *)
 
 let trace_open_rel (ctx : t) (id_rel : id) (id_rule : id)
@@ -91,29 +86,23 @@ let trace_open_iter (ctx : t) (inner : string) : t =
   let trace = Trace.open_iter inner in
   { ctx with trace }
 
-let trace_close (ctx : t) : t =
-  let trace = Trace.close ctx.trace in
-  (if ctx.config.debug then
-     match trace with
-     | Rel { id_rel; id_rule; _ } ->
-         Format.asprintf "Closing rule %s/%s\n" id_rel.it id_rule.it
-         |> print_endline
-     | Dec { id_func; idx_clause; _ } ->
-         Format.asprintf "Closing clause $%s/%d\n" id_func.it idx_clause
-         |> print_endline
-     | Iter _ -> Format.asprintf "Closing iteration\n" |> print_endline
-     | _ -> ());
-  { ctx with trace }
+let trace_close (ctx : t) : unit =
+  if ctx.config.debug then
+    match ctx.trace with
+    | Rel { id_rel; id_rule; _ } ->
+        Format.asprintf "Closing rule %s/%s\n" id_rel.it id_rule.it
+        |> print_endline
+    | Dec { id_func; idx_clause; _ } ->
+        Format.asprintf "Closing clause $%s/%d\n" id_func.it idx_clause
+        |> print_endline
+    | Iter _ -> Format.asprintf "Closing iteration\n" |> print_endline
+    | _ -> ()
 
 let trace_extend (ctx : t) (prem : prem) : t =
   let trace = Trace.extend ctx.trace prem in
   if ctx.config.debug then
     Format.asprintf "Premise: %s\n" (prem |> Il.Print.string_of_prem)
     |> print_endline;
-  { ctx with trace }
-
-let trace_replace (ctx : t) (subtraces : Trace.t list) : t =
-  let trace = Trace.replace_subtraces ctx.trace subtraces in
   { ctx with trace }
 
 let trace_commit (ctx : t) (trace : Trace.t) : t =
@@ -255,8 +244,8 @@ let empty_global () : global =
 let empty_local () : local =
   { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
 
-let empty ~(debug : bool) ~(profile : bool) : t =
-  let config = { debug; profile } in
+let empty ~(debug : bool) : t =
+  let config = { debug } in
   let trace = Trace.Empty in
   let global = empty_global () in
   let local = empty_local () in

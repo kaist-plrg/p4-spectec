@@ -20,11 +20,14 @@ module type HANDLER = sig
   val backup : unit -> unit
   val restore : unit -> unit
 
-  (* Common events *)
+  (* Common events - values *)
 
   val on_program : Value.t -> unit
   val on_value : Value.t -> unit
   val on_value_dependency : Value.t -> Value.t -> Dep.Edges.label -> unit
+
+  (* Common events - relations, functions, and iterations *)
+
   val on_rel_enter : RId.t -> Value.t list -> unit
   val on_rel_exit : RId.t -> unit
   val on_func_enter : FId.t -> Value.t list -> unit
