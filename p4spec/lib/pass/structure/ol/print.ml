@@ -1,23 +1,23 @@
 open Lang
-open Il.Print
+open Sl.Print
 open Ast
 open Util.Source
 
 (* Case analysis *)
 
-let rec string_of_case ?(level = 0) ?(index = 0) case =
+let rec string_of_case ?(level = 0) ?(index = 0) (case : case) : string =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let guard, instrs = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
     (string_of_instrs ~level:(level + 1) instrs)
 
-and string_of_cases ?(level = 0) cases =
+and string_of_cases ?(level = 0) (cases : case list) : string =
   cases
   |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) case)
   |> String.concat "\n\n"
 
-and string_of_guard guard =
+and string_of_guard (guard : guard) : string =
   match guard with
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
@@ -28,7 +28,7 @@ and string_of_guard guard =
 
 (* Instructions *)
 
-and string_of_instr ?(level = 0) ?(index = 0) instr =
+and string_of_instr ?(level = 0) ?(index = 0) (instr : instr) : string =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
@@ -49,9 +49,9 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
   | OtherwiseI instr ->
       Format.asprintf "%sOtherwise\n\n%s" order
         (string_of_instr ~level:(level + 1) ~index:1 instr)
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
-        (string_of_exps ", " exps_group)
+        (string_of_relinput rel_signature exps_group)
         (string_of_instrs ~level:(level + 1) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
       Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
@@ -61,13 +61,14 @@ and string_of_instr ?(level = 0) ?(index = 0) instr =
       Format.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterexps iterexps)
-  | ResultI [] -> Format.asprintf "%sThe relation holds" order
-  | ResultI exps ->
-      Format.asprintf "%sResult in %s" order (string_of_exps ", " exps)
+  | ResultI (_, []) -> Format.asprintf "%sThe relation holds" order
+  | ResultI (rel_signature, exps) ->
+      Format.asprintf "%sResult in %s" order
+        (string_of_reloutput rel_signature exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
 
-and string_of_instrs ?(level = 0) instrs =
+and string_of_instrs ?(level = 0) (instrs : instr list) : string =
   instrs
   |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
   |> String.concat "\n\n"

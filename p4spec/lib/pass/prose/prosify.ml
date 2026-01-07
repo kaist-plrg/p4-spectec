@@ -328,7 +328,8 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
   | LetI (exp_l, exp_r, iterexps) ->
       prosify_let_instr at ctx exp_l exp_r iterexps
   | RuleI (id, notexp, iterexps) -> prosify_rule_instr at ctx id notexp iterexps
-  | ResultI exps -> prosify_result_instr at ctx exps
+  | ResultI (rel_signature, exps) ->
+      prosify_result_instr at ctx rel_signature exps
   | ReturnI exp -> prosify_return_instr at ctx exp
   | DebugI _ -> []
 
@@ -631,8 +632,8 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
 
 (* Result instruction prosification *)
 
-and prosify_result_instr (at : region) (ctx : Ctx.t) (exps : exp list) :
-    Pl.instr list =
+and prosify_result_instr (at : region) (ctx : Ctx.t)
+    (_rel_signature : rel_signature) (exps : exp list) : Pl.instr list =
   let exps_pl = prosify_exps ctx exps in
   let id_rel = Ctx.get_namespace ctx in
   let result_pl =
@@ -738,8 +739,8 @@ and prosify_extern_rel_def (ctx : Ctx.t) (at : region) (externrel : externrel) :
 
 (* Defined relation definition prosification *)
 
-and collect_rulegroups_instr (instr : instr) : (id * exp list * instr list) list
-    =
+and collect_rulegroups_instr (instr : instr) :
+    (id * rel_signature * exp list * instr list) list =
   match instr.it with
   | IfI (_, _, instrs_then, _) -> collect_rulegroups_instrs instrs_then
   | HoldI (_, _, _, holdcase) -> (
@@ -753,12 +754,12 @@ and collect_rulegroups_instr (instr : instr) : (id * exp list * instr list) list
   | CaseI (_, cases, _) ->
       let instrs_group = cases |> List.map snd in
       instrs_group |> List.map collect_rulegroups_instrs |> List.concat
-  | GroupI (id_rulegroup, exps_input, instrs) ->
-      [ (id_rulegroup, exps_input, instrs) ]
+  | GroupI (id_rulegroup, rel_signature, exps_input, instrs) ->
+      [ (id_rulegroup, rel_signature, exps_input, instrs) ]
   | _ -> []
 
 and collect_rulegroups_instrs (instrs : instr list) :
-    (id * exp list * instr list) list =
+    (id * rel_signature * exp list * instr list) list =
   instrs |> List.map collect_rulegroups_instr |> List.concat
 
 and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
@@ -783,9 +784,9 @@ and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
       Pl.MathRuleTitle (id_rulegroup, mixop, exps_pl)
 
 and prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
-    (inputs : int list) (rulegroup : id * exp list * instr list) : Pl.rulegroup
-    =
-  let id_rulegroup, exps_input, instrs = rulegroup in
+    (inputs : int list) (rulegroup : id * rel_signature * exp list * instr list)
+    : Pl.rulegroup =
+  let id_rulegroup, _rel_signature, exps_input, instrs = rulegroup in
   let rulegroup_title_pl =
     prosify_rulegroup_title ctx id_rel id_rulegroup mixop inputs exps_input
   in
@@ -799,7 +800,8 @@ and prosify_rulegroup (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
   (rulegroup_title_pl, instrs_pl)
 
 and prosify_rulegroups (ctx : Ctx.t) (id_rel : id) (mixop : mixop)
-    (inputs : int list) (rulegroups : (id * exp list * instr list) list) :
+    (inputs : int list)
+    (rulegroups : (id * rel_signature * exp list * instr list) list) :
     Pl.rulegroup list =
   List.map (prosify_rulegroup ctx id_rel mixop inputs) rulegroups
 

@@ -1,5 +1,6 @@
 open Domain.Lib
-open Lang.Sl
+open Lang
+open Sl
 open Util.Source
 
 (* Phantom branch *)
@@ -13,6 +14,9 @@ module Branch = struct
      if missed, record the value ids for closest-AST derivation *)
 
   type status = Hit | Miss of vid list
+
+  (* Type *)
+
   type t = { origin : origin; status : status }
 
   (* Constructor *)
@@ -42,12 +46,15 @@ module Cover = struct
 
   (* Constructor *)
 
+  let is_ignored (hints : hint list) : bool =
+    Hints.Flag.init hints "testgen_ignore"
+
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     match instr.it with
     | IfI (_, _, instrs_then, phantom_opt) -> (
         let cover = init_instrs cover id instrs_then in
         match phantom_opt with
-        | Some (pid, _) ->
+        | Some pid ->
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
@@ -59,14 +66,14 @@ module Cover = struct
         | HoldH (instrs_hold, phantom_opt) -> (
             let cover = init_instrs cover id instrs_hold in
             match phantom_opt with
-            | Some (pid, _) ->
+            | Some pid ->
                 let branch = Branch.init id in
                 add pid branch cover
             | None -> cover)
         | NotHoldH (instrs_nothold, phantom_opt) -> (
             let cover = init_instrs cover id instrs_nothold in
             match phantom_opt with
-            | Some (pid, _) ->
+            | Some pid ->
                 let branch = Branch.init id in
                 add pid branch cover
             | None -> cover))
@@ -78,12 +85,12 @@ module Cover = struct
             cover blocks
         in
         match phantom_opt with
-        | Some (pid, _) ->
+        | Some pid ->
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
     | OtherwiseI instr -> init_instr cover id instr
-    | GroupI (_, _, instrs_group) -> init_instrs cover id instrs_group
+    | GroupI (_, _, _, instrs_group) -> init_instrs cover id instrs_group
     | _ -> cover
 
   and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
@@ -100,20 +107,12 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) | FuncDecD (id, _, _, _, instrs, hints) ->
-        if
-          List.exists
-            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
-            hints
-        then cover
-        else init_instrs cover id instrs
-    | TableDecD (id, _, _, tablerows, hints) ->
-        if
-          List.exists
-            (fun (hint : hint) -> hint.hintid.it = "testgen_ignore")
-            hints
-        then cover
-        else init_tablerows cover id tablerows
+    | RelD (id, _, _, instrs, hints) when not (is_ignored hints) ->
+        init_instrs cover id instrs
+    | FuncDecD (id, _, _, _, instrs, hints) when not (is_ignored hints) ->
+        init_instrs cover id instrs
+    | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
+        init_tablerows cover id tablerows
     | _ -> cover
 
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec
@@ -155,6 +154,25 @@ let miss (cover : t) (pid : pid) (vid : vid) : t =
           let branch = { branch with status = Miss (vid :: vids) } in
           Cover.add pid branch cover)
   | None -> cover
+
+(* Extending coverage *)
+
+let extend (cover : t) (cover_extend : t) : t =
+  Cover.fold
+    (fun (pid : pid) (branch_extend : Branch.t) (cover : t) ->
+      match Cover.find_opt pid cover with
+      | Some branch -> (
+          match (branch.status, branch_extend.status) with
+          | Hit, _ -> cover
+          | Miss _, Hit ->
+              let branch = { branch with status = Hit } in
+              Cover.add pid branch cover
+          | Miss vids, Miss vids_extend ->
+              let vids = vids @ vids_extend in
+              let branch = { branch with status = Miss vids } in
+              Cover.add pid branch cover)
+      | None -> cover)
+    cover_extend cover
 
 (* Collector *)
 

@@ -2,10 +2,10 @@ open Domain
 open Lib
 open Lang
 open Sl
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Testgen_neg
 open Envs
-module DCov_single = Dangling.Single
-module DCov_multi = Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
@@ -32,7 +32,7 @@ let timeout_seed = 30
 type specenv = {
   runner : (module Sim.DRIVER);
   printer : Sl.value -> string;
-  spec : spec;
+  spec : Sim.spec;
   relname : string;
   tdenv : TDEnv.t;
   mixopenv : MixopEnv.t;
@@ -141,6 +141,7 @@ let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
+  let spec = Sim.SL spec in
   { runner; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =

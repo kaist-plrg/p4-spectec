@@ -3,12 +3,15 @@ open Lib
 open Lang
 open Xl
 open Sl
+module ICov_single = Coverage.Instr.Single
+module ICov_multi = Coverage.Instr.Multi
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
+module Hook = Inst.Hook
 open Error
 module F = Format
 open Util.Backtrace
@@ -32,7 +35,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
-            Ctx.add_edge ctx value_inner value Dep.Edges.Assign)
+            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
     | CaseE notexp, CaseV (_mixop_value, values_inner) ->
@@ -40,14 +43,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
-            Ctx.add_edge ctx value_inner value Dep.Edges.Assign)
+            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
     | OptE exp_opt, OptV value_opt -> (
         match (exp_opt, value_opt) with
         | Some exp_inner, Some value_inner ->
             let ctx = assign_exp ctx exp_inner value_inner in
-            Ctx.add_edge ctx value_inner value Dep.Edges.Assign;
+            Hook.on_value_dependency value_inner value Dep.Edges.Assign;
             ctx
         | None, None -> ctx
         | _ -> assert false)
@@ -55,7 +58,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
-            Ctx.add_edge ctx value_inner value Dep.Edges.Assign)
+            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
     | ConsE (exp_h, exp_t), ListV values_inner ->
@@ -65,11 +68,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = note in
           Il.(ListV (List.tl values_inner) $$$ { vid; typ })
         in
-        Ctx.add_node ctx value_t;
+        Hook.on_value value_t;
         let ctx = assign_exp ctx exp_h value_h in
-        Ctx.add_edge ctx value_h value Dep.Edges.Assign;
+        Hook.on_value_dependency value_h value Dep.Edges.Assign;
         let ctx = assign_exp ctx exp_t value_t in
-        Ctx.add_edge ctx value_t value Dep.Edges.Assign;
+        Hook.on_value_dependency value_t value Dep.Edges.Assign;
         ctx
     | IterE (_, (Opt, vars)), OptV None ->
         (* Per iterated variable, make an option out of the value *)
@@ -80,8 +83,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
               Il.(OptV None $$$ { vid; typ = typ.it })
             in
-            Ctx.add_node ctx value_sub;
-            Ctx.add_edge ctx value_sub value Dep.Edges.Assign;
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
             Ctx.add_value Local ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
     | IterE (exp, (Opt, vars)), OptV (Some value) ->
@@ -96,8 +99,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
               Il.(OptV (Some value) $$$ { vid; typ = typ.it })
             in
-            Ctx.add_node ctx value_sub;
-            Ctx.add_edge ctx value_sub value Dep.Edges.Assign;
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
             Ctx.add_value Local ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
     | IterE (exp, (List, vars)), ListV values ->
@@ -122,8 +125,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Typ.iterate typ (iters @ [ Il.List ]) in
               Il.(ListV values $$$ { vid; typ = typ.it })
             in
-            Ctx.add_node ctx value_sub;
-            Ctx.add_edge ctx value_sub value Dep.Edges.Assign;
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
             Ctx.add_value Local ctx (id, iters @ [ Il.List ]) value_sub)
           ctx vars
     | _ ->
@@ -241,10 +244,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(BoolV b $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iter
       (fun value_input ->
-        Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -256,10 +259,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(NumV n $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iter
       (fun value_input ->
-        Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -271,10 +274,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(TextV s $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iter
       (fun value_input ->
-        Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
       (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -306,8 +309,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(value_res $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value (Dep.Edges.Op (UnOp unop));
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value (Dep.Edges.Op (UnOp unop));
     value_res
 
   (* Binary expression evaluation *)
@@ -342,9 +345,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(value_res $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (BinOp binop));
-    Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (BinOp binop));
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value_l (Dep.Edges.Op (BinOp binop));
+    Hook.on_value_dependency value_res value_r (Dep.Edges.Op (BinOp binop));
     value_res
 
   (* Comparison expression evaluation *)
@@ -374,9 +377,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(value_res $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value_l (Dep.Edges.Op (CmpOp cmpop));
-    Ctx.add_edge ctx value_res value_r (Dep.Edges.Op (CmpOp cmpop));
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value_l (Dep.Edges.Op (CmpOp cmpop));
+    Hook.on_value_dependency value_res value_r (Dep.Edges.Op (CmpOp cmpop));
     value_res
 
   (* Upcast expression evaluation *)
@@ -397,8 +400,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = typ.it in
               Il.(NumV (`Int n) $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
-            Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | NumV (`Int _) -> value
         | _ -> error_backtrace_upcast ())
@@ -419,8 +422,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = typ.it in
               Il.(TupleV values $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
-            Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> error_backtrace_upcast ())
     | _ -> value
@@ -449,8 +452,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = typ.it in
               Il.(NumV (`Nat i) $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
-            Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> error_backtrace_downcast ())
     | VarT (tid, targs) -> (
@@ -470,8 +473,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = typ.it in
               Il.(TupleV values $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
-            Ctx.add_edge ctx value_res value (Dep.Edges.Op (CastOp typ));
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> error_backtrace_downcast ())
     | _ -> value
@@ -520,8 +523,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(BoolV sub $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value (Dep.Edges.Op (SubOp typ));
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value (Dep.Edges.Op (SubOp typ));
     value_res
 
   (* Pattern match check expression evaluation *)
@@ -547,8 +550,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(BoolV matches $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value (Dep.Edges.Op (MatchOp pattern));
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value (Dep.Edges.Op (MatchOp pattern));
     value_res
 
   (* Tuple expression evaluation *)
@@ -560,11 +563,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(TupleV values $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
         (fun value_input ->
-          Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -578,11 +581,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(CaseV (mixop, values) $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
         (fun value_input ->
-          Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -598,11 +601,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(StructV fields $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
         (fun value_input ->
-          Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -615,11 +618,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(OptV value_opt $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     if Option.is_none value_opt then
       List.iter
         (fun value_input ->
-          Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -632,11 +635,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(ListV values $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
         (fun value_input ->
-          Ctx.add_edge ctx value_res value_input Dep.Edges.Control)
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
         (Ctx.find_values_input Ctx.Local ctx);
     value_res
 
@@ -652,7 +655,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(ListV (value_h :: values_t) $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     value_res
 
   (* Concatenation expression evaluation *)
@@ -678,9 +681,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(value_res $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value_l (Dep.Edges.Op CatOp);
-    Ctx.add_edge ctx value_res value_r (Dep.Edges.Op CatOp);
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value_l (Dep.Edges.Op CatOp);
+    Hook.on_value_dependency value_res value_r (Dep.Edges.Op CatOp);
     value_res
 
   (* Membership expression evaluation *)
@@ -695,9 +698,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(BoolV (List.exists (Value.eq value_e) values_s) $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value_e (Dep.Edges.Op MemOp);
-    Ctx.add_edge ctx value_res value_s (Dep.Edges.Op MemOp);
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value_e (Dep.Edges.Op MemOp);
+    Hook.on_value_dependency value_res value_s (Dep.Edges.Op MemOp);
     value_res
 
   (* Length expression evaluation *)
@@ -719,8 +722,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(NumV (`Nat len) $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
-    Ctx.add_edge ctx value_res value (Dep.Edges.Op LenOp);
+    Hook.on_value value_res;
+    Hook.on_value_dependency value_res value (Dep.Edges.Op LenOp);
     value_res
 
   (* Dot expression evaluation *)
@@ -754,7 +757,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = Il.TextT in
           Il.(TextV s $$$ { vid; typ })
         in
-        Ctx.add_node ctx value_res;
+        Hook.on_value value_res;
         value_res
     | ListV values when idx < 0 || idx >= List.length values ->
         back exp_i.at
@@ -787,7 +790,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = Il.TextT in
           Il.(TextV s_slice $$$ { vid; typ })
         in
-        Ctx.add_node ctx value_res;
+        Hook.on_value value_res;
         value_res
     | ListV values when idx_l < 0 || idx_h > List.length values ->
         back exp_n.at
@@ -806,7 +809,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = note in
           Il.(ListV values_slice $$$ { vid; typ })
         in
-        Ctx.add_node ctx value_res;
+        Hook.on_value value_res;
         value_res
     | _ ->
         back exp_b.at
@@ -833,7 +836,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Il.TextT in
               Il.(TextV s $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
+            Hook.on_value value_res;
             value_res
         | ListV values when idx < 0 || idx >= List.length values ->
             back exp_i.at
@@ -867,7 +870,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Il.TextT in
               Il.(TextV s_slice $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
+            Hook.on_value value_res;
             value_res
         | ListV values when idx_l < 0 || idx_h > List.length values ->
             back exp_n.at
@@ -886,7 +889,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = path.note in
               Il.(ListV values_slice $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_res;
+            Hook.on_value value_res;
             value_res
         | _ ->
             back path.at
@@ -933,7 +936,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 let typ = Il.TextT in
                 Il.(TextV s_updated $$$ { vid; typ })
               in
-              Ctx.add_node ctx value;
+              Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_target < 0 || idx_target >= List.length values
           ->
@@ -951,7 +954,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = path.note in
               Il.(ListV values_updated $$$ { vid; typ })
             in
-            Ctx.add_node ctx value;
+            Hook.on_value value;
             eval_update_path ctx value_b path value
         | _ ->
             back path.at
@@ -992,7 +995,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 let typ = Il.TextT in
                 Il.(TextV s_updated $$$ { vid; typ })
               in
-              Ctx.add_node ctx value;
+              Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
             back exp_n.at
@@ -1021,7 +1024,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 let typ = path.note in
                 Il.(ListV values_updated $$$ { vid; typ })
               in
-              Ctx.add_node ctx value;
+              Hook.on_value value;
               eval_update_path ctx value_b path value
         | _ ->
             back path.at
@@ -1042,7 +1045,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = path.note in
           Il.(StructV fields $$$ { vid; typ })
         in
-        Ctx.add_node ctx value;
+        Hook.on_value value;
         eval_update_path ctx value_b path value
 
   and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
@@ -1074,11 +1077,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = note in
           Il.(OptV None $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iter
       (fun (id, _typ, iters) ->
         let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.Opt ]) in
-        Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
+        Hook.on_value_dependency value_res value_sub Dep.Edges.Iter)
       vars;
     value_res
 
@@ -1091,11 +1094,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = note in
       Il.(ListV values $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iter
       (fun (id, _typ, iters) ->
         let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.List ]) in
-        Ctx.add_edge ctx value_res value_sub Dep.Edges.Iter)
+        Hook.on_value_dependency value_res value_sub Dep.Edges.Iter)
       vars;
     value_res
 
@@ -1124,7 +1127,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = Il.FuncT in
           Il.(FuncV id $$$ { vid; typ })
         in
-        Ctx.add_node ctx value_res;
+        Hook.on_value value_res;
         value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list =
@@ -1133,10 +1136,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-    try eval_instr' ctx instr
+    Hook.on_instr instr;
+    try
+      let ctx, sign = eval_instr' ctx instr in
+      (ctx, sign)
     with Backtrace traces ->
       back_nest instr.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_instr_short instr))
+        (F.asprintf "%s failed" (Sl.Print.string_of_instr instr))
         traces
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
@@ -1148,11 +1154,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | CaseI (exp, cases, phantom_opt) ->
         eval_case_instr ctx exp cases phantom_opt
     | OtherwiseI instr -> eval_instr ctx instr
-    | GroupI (id_group, exps_group, instrs_group) ->
-        eval_group_instr ctx id_group exps_group instrs_group
+    | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+        eval_group_instr ctx id_group rel_signature exps_group instrs_group
     | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
     | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
-    | ResultI exps -> eval_result_instr ctx exps
+    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
 
@@ -1205,13 +1211,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
               Il.(ListV values_cond $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_cond;
+            Hook.on_value value_cond;
             List.iter
               (fun (id, _typ, iters) ->
                 let value_sub =
                   Ctx.find_value Local ctx (id, iters @ [ Il.List ])
                 in
-                Ctx.add_edge ctx value_cond value_sub Dep.Edges.Iter)
+                Hook.on_value_dependency value_cond value_sub Dep.Edges.Iter)
               vars_h;
             (cond, value_cond))
 
@@ -1225,9 +1231,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       =
     (* Evaluate the if condition and mark phantom *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
-    let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+    | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
@@ -1248,10 +1253,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = Il.BoolT in
       Il.(BoolV hold $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_res;
+    Hook.on_value value_res;
     List.iteri
       (fun idx value_input ->
-        Ctx.add_edge ctx value_res value_input (Dep.Edges.Rel (id, idx)))
+        Hook.on_value_dependency value_res value_input (Dep.Edges.Rel (id, idx)))
       values_input;
     (hold, value_res)
 
@@ -1290,13 +1295,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
               Il.(ListV values_cond $$$ { vid; typ })
             in
-            Ctx.add_node ctx value_cond;
+            Hook.on_value value_cond;
             List.iter
               (fun (id, _typ, iters) ->
                 let value_sub =
                   Ctx.find_value Local ctx (id, iters @ [ Il.List ])
                 in
-                Ctx.add_edge ctx value_cond value_sub Dep.Edges.Iter)
+                Hook.on_value_dependency value_cond value_sub Dep.Edges.Iter)
               vars_h;
             (cond, value_cond))
 
@@ -1307,28 +1312,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
-    (* Copy the current coverage information *)
-    let cover_backup = !(ctx.coverage) in
+    (* Backup in case of failure *)
+    Hook.backup ();
     (* Evaluate the hold condition *)
     let cond, value_cond = eval_hold_cond_iter ctx id notexp iterexps in
     (* Evaluate the hold case, and restore the coverage information
        if the expected behavior is the relation not holding *)
-    let vid = value_cond.note.vid in
     match holdcase with
     | BothH (instrs_hold, instrs_not_hold) ->
         if cond then eval_instrs ctx Cont instrs_hold
         else (
-          ctx.coverage := cover_backup;
+          Hook.restore ();
           eval_instrs ctx Cont instrs_not_hold)
     | HoldH (instrs_hold, phantom_opt) ->
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx (not cond) pid vid
+        | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
         | None -> ());
         if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
     | NotHoldH (instrs_not_hold, phantom_opt) ->
-        ctx.coverage := cover_backup;
+        Hook.restore ();
         (match phantom_opt with
-        | Some (pid, _) -> Ctx.cover ctx cond pid vid
+        | Some pid -> Hook.on_instr_dangling cond pid value_cond
         | None -> ());
         if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
 
@@ -1366,16 +1370,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
       Il.(ListV values_cond $$$ { vid; typ })
     in
-    Ctx.add_node ctx value_cond;
+    Hook.on_value value_cond;
     (block_match, value_cond)
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
       (phantom_opt : phantom option) : Ctx.t * Sign.t =
     (* Evaluate the matching case and mark phantom *)
     let instrs_opt, value_cond = eval_cases ctx exp cases in
-    let vid = value_cond.note.vid in
     (match phantom_opt with
-    | Some (pid, _) -> Ctx.cover ctx (Option.is_none instrs_opt) pid vid
+    | Some pid ->
+        let matched = Option.is_some instrs_opt in
+        Hook.on_instr_dangling (not matched) pid value_cond
     | None -> ());
     (* Evaluate the matching case if any *)
     match instrs_opt with
@@ -1384,7 +1389,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (id_group : id) (_exps_group : exp list)
+  and eval_group_instr (ctx : Ctx.t) (id_group : id)
+      (_rel_signature : rel_signature) (_exps_group : exp list)
       (instrs_group : instr list) : Ctx.t * Sign.t =
     let ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
     match sign_group with
@@ -1423,13 +1429,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   in
                   Il.(OptV None $$$ { vid; typ = typ.it })
                 in
-                Ctx.add_node ctx value_binding;
+                Hook.on_value value_binding;
                 List.iter
                   (fun (id, _typ, iters) ->
                     let value_sub =
                       Ctx.find_value Local ctx (id, iters @ [ Il.Opt ])
                     in
-                    Ctx.add_edge ctx value_binding value_sub Dep.Edges.Iter)
+                    Hook.on_value_dependency value_binding value_sub
+                      Dep.Edges.Iter)
                   vars_bound;
                 value_binding)
               vars_binding
@@ -1451,13 +1458,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   in
                   Il.(OptV (Some value_binding) $$$ { vid; typ = typ.it })
                 in
-                Ctx.add_node ctx value_binding;
+                Hook.on_value value_binding;
                 List.iter
                   (fun (id, _typ, iters) ->
                     let value_sub =
                       Ctx.find_value Local ctx (id, iters @ [ Il.Opt ])
                     in
-                    Ctx.add_edge ctx value_binding value_sub Dep.Edges.Iter)
+                    Hook.on_value_dependency value_binding value_sub
+                      Dep.Edges.Iter)
                   vars_bound;
                 value_binding)
               vars_binding
@@ -1511,13 +1519,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
           Il.(ListV values_binding $$$ { vid; typ = typ.it })
         in
-        Ctx.add_node ctx value_binding;
+        Hook.on_value value_binding;
         List.iter
           (fun (id, _typ, iters) ->
             let value_sub =
               Ctx.find_value Local ctx (id, iters @ [ Il.List ])
             in
-            Ctx.add_edge ctx value_binding value_sub Dep.Edges.Iter)
+            Hook.on_value_dependency value_binding value_sub Dep.Edges.Iter)
           vars_bound;
         Ctx.add_value Local ctx
           (id_binding, iters_binding @ [ Il.List ])
@@ -1599,13 +1607,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
           Il.(ListV values_binding $$$ { vid; typ = typ.it })
         in
-        Ctx.add_node ctx value_binding;
+        Hook.on_value value_binding;
         List.iter
           (fun (id, _typ, iters) ->
             let value_sub =
               Ctx.find_value Local ctx (id, iters @ [ Il.List ])
             in
-            Ctx.add_edge ctx value_binding value_sub Dep.Edges.Iter)
+            Hook.on_value_dependency value_binding value_sub Dep.Edges.Iter)
           vars_bound;
         Ctx.add_value Local ctx
           (id_binding, iters_binding @ [ Il.List ])
@@ -1634,7 +1642,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Result instruction evaluation *)
 
-  and eval_result_instr (ctx : Ctx.t) (exps : exp list) : Ctx.t * Sign.t =
+  and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
+      (exps : exp list) : Ctx.t * Sign.t =
     let values = eval_exps ctx exps in
     (ctx, Sign.Res values)
 
@@ -1657,8 +1666,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list =
-    try invoke_rel' ctx id values_input
+    try
+      Hook.on_rel_enter id values_input;
+      let values_output = invoke_rel' ctx id values_input in
+      Hook.on_rel_exit id;
+      values_output
     with Backtrace traces ->
+      Hook.on_rel_exit id;
       back_nest id.at (F.asprintf "relation %s failed" id.it) traces
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1683,7 +1697,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (fun idx_arg value_input ->
         List.iter
           (fun value_output ->
-            Ctx.add_edge _ctx value_output value_input
+            Hook.on_value_dependency value_output value_input
               (Dep.Edges.Rel (id, idx_arg)))
           values_output)
       values_input;
@@ -1701,14 +1715,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             (fun idx_arg value_input ->
               List.iter
                 (fun value_output ->
-                  Ctx.add_edge ctx value_output value_input
+                  Hook.on_value_dependency value_output value_input
                     (Dep.Edges.Rel (id, idx_arg)))
                 values_output)
             values_input;
           values_output
       | _ -> back id.at "relation did not produce results"
     in
-    if (not (Ctx.deriving ctx)) && Cache.is_cached_rule id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> values_output
@@ -1721,18 +1735,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Invoke a function *)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value =
-    try invoke_func' ctx id targs args
-    with Backtrace traces ->
-      back_nest id.at (F.asprintf "function %s failed" id.it) traces
-
-  and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value =
-    try invoke_func'' ctx id targs values_input
-    with Backtrace traces ->
-      back_nest id.at (F.asprintf "function %s failed" id.it) traces
-
-  and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value =
     let targs =
       match targs with
@@ -1755,20 +1757,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           List.map (Typ.subst_typ theta) targs
     in
     let values_input = eval_args ctx args in
-    invoke_func'' ctx id targs values_input
+    invoke_func_with_values ctx id targs values_input
 
-  and invoke_func'' (ctx : Ctx.t) (id : id) (targs : targ list)
+  and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
       (values_input : value list) : value =
-    let func = Ctx.find_func Local ctx id in
-    match func with
-    | Func.Extern -> invoke_extern_func ctx id targs values_input
-    | Func.Builtin -> invoke_builtin_func ctx id targs values_input
-    | Func.Table (args, tablerows) ->
-        invoke_table_func ctx id args tablerows values_input
-    | Func.Defined (tparams, args_input, instrs) ->
-        invoke_defined_func ctx id tparams args_input instrs targs values_input
+    try
+      Hook.on_func_enter id values_input;
+      let func = Ctx.find_func Local ctx id in
+      let value_output =
+        match func with
+        | Func.Extern -> invoke_extern_func id targs values_input
+        | Func.Builtin -> invoke_builtin_func id targs values_input
+        | Func.Table (args, tablerows) ->
+            invoke_table_func ctx id args tablerows values_input
+        | Func.Defined (tparams, args_input, instrs) ->
+            invoke_defined_func ctx id tparams args_input instrs targs
+              values_input
+      in
+      Hook.on_func_exit id;
+      value_output
+    with Backtrace traces ->
+      Hook.on_func_exit id;
+      back_nest id.at (F.asprintf "function %s failed" id.it) traces
 
-  and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
+  and invoke_extern_func (id : id) (_targs : targ list)
       (values_input : value list) : value =
     let value_output =
       match id.it with
@@ -1777,22 +1789,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     List.iteri
       (fun idx_arg value_input ->
-        Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
+        Hook.on_value_dependency value_output value_input
+          (Dep.Edges.Func (id, idx_arg)))
       values_input;
     value_output
 
-  and invoke_builtin_func (ctx : Ctx.t) (id : id) (targs : targ list)
+  and invoke_builtin_func (id : id) (targs : targ list)
       (values_input : value list) : value =
     let value_output =
       try
         Builtin.Call.invoke
-          (fun value -> Ctx.add_node ctx value)
+          (fun value -> Hook.on_value value)
           id targs values_input
       with Util.Error.BuiltinError (at, msg) -> back at msg
     in
     List.iteri
       (fun idx_arg value_input ->
-        Ctx.add_edge ctx value_output value_input (Dep.Edges.Func (id, idx_arg)))
+        Hook.on_value_dependency value_output value_input
+          (Dep.Edges.Func (id, idx_arg)))
       values_input;
     value_output
 
@@ -1806,7 +1820,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Ret value_output ->
         List.iteri
           (fun idx_arg value_input ->
-            Ctx.add_edge ctx value_output value_input
+            Hook.on_value_dependency value_output value_input
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
         value_output
@@ -1833,13 +1847,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Ret value_output ->
           List.iteri
             (fun idx_arg value_input ->
-              Ctx.add_edge ctx value_output value_input
+              Hook.on_value_dependency value_output value_input
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
           value_output
       | _ -> back id.at "function did not return a value"
     in
-    if (not (Ctx.deriving ctx)) && Cache.is_cached_func id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
@@ -1916,62 +1930,37 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 
-  let eval_program ~(derive : bool) (spec : spec) (relname : string)
-      (includes_p4 : string list) (filename_p4 : string) : Sim.program_result =
+  let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
+      (filename_p4 : string) : Sim.program_result =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
+    let ctx = Ctx.empty () in
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      let graph = Dep.Graph.assemble_graph value_program in
-      let vdg = Ctx.{ graph; vid_program = value_program.note.vid } in
-      let ctx = Ctx.empty_end_to_end ~derive vdg cover in
+      Hook.on_program value_program;
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
-      Sim.Pass (values_output, graph, value_program.note.vid, !(ctx.coverage))
+      Sim.Pass values_output
     with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg, !cover)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !cover)
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
+    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+        Sim.Fail (`Runtime (at, msg))
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let ctx = Ctx.empty () in
     try
       let values_output = do_eval_rel ctx spec relname values_input in
-      Sim.Pass (values_output, !(ctx.coverage))
-    with
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !(ctx.coverage))
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
+      Sim.Pass values_output
+    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+      Sim.Fail (at, msg)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
     do_init spec;
-    let cover = ref (DCov_single.init spec) in
-    let ctx = Ctx.empty_partial cover in
+    let ctx = Ctx.empty () in
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
-      Sim.Pass (value_output, !(ctx.coverage))
-    with
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg, !(ctx.coverage))
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg, !cover)
-
-  (* Entry point for coverage *)
-
-  let cover_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
-    let cover_multi = DCov_multi.init spec in
-    List.fold_left
-      (fun cover_multi filename_p4 ->
-        let wellformed, welltyped, cover_single =
-          match
-            eval_program ~derive:false spec relname includes_p4 filename_p4
-          with
-          | Pass (_, _, _, cover_single) -> (true, true, cover_single)
-          | Fail (_, _, cover_single) -> (true, false, cover_single)
-          | IllFormed (_, _, cover_single) -> (false, false, cover_single)
-        in
-        DCov_multi.extend cover_multi filename_p4 wellformed welltyped
-          cover_single)
-      cover_multi filenames_p4
+      Sim.Pass value_output
+    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+      Sim.Fail (at, msg)
 end

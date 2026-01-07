@@ -27933,7 +27933,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value ]) as storageReferenceResult
     -- output: % % % |- % : EC_2 STO_2 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-89.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-106.2
   rulegroup typedLvalueIR-sliceAccess
 
    match
@@ -27944,6 +27944,25 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ] = lvalueIR
 
    paths
+
+    rulepath exit
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: exitResult
+    -- let exitResult = storageReferenceResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_1 STO_1 exit as storageReferenceResult
+
+    rulepath cont-exit
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Exprs_eval: p EC_1 STO_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 STO_2 expressionListResult
+    -- if expressionListResult <: exitResult
+    -- let exitResult = expressionListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % : EC_2 STO_2 exit as storageReferenceResult
 
     rulepath cont
     -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
@@ -27959,10 +27978,26 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value_hi : value_lo ]) as storageReferenceResult
     -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
 
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:108.1-113.56
+  rulegroup parenthesized
+
+   match
+
+    (signature) p EC_0 STO_0 |- ( typedLvalueIR ) # _lvalueNoteIR : % % %
+    p EC_0 STO_0 |- lvalueIR # _lvalueNoteIR : % % %
+    -- if lvalueIR matches `(%)`
+    -- let ( typedLvalueIR ) = lvalueIR
+
+   paths
+
+    rulepath parenthesized
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult
+    -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
+
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
 relation Lvalue_read: cursor evalContext store |- storageReference : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:102.1-104.51
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:126.1-128.51
   rulegroup referenceExpressionIR
 
    match
@@ -27978,7 +28013,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = $find_var_e(p, EC, prefixedNameIR)
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:108.1-165.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:132.1-189.2
   rulegroup storageReference-nameIR
 
    match
@@ -28049,7 +28084,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let ?(value) = value''?{value'' <- value''?}
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:169.1-191.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:193.1-215.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28090,7 +28125,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:195.1-199.59
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:219.1-223.59
   rulegroup sliceAccess
 
    match
@@ -28110,7 +28145,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:90.1-93.29
 relation Lvalue_write: cursor evalContext store |- storageReference -> value : evalContext
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:210.1-212.61
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:234.1-236.61
   rulegroup referenceExpressionIR
 
    match
@@ -28126,7 +28161,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:216.1-309.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:240.1-333.2
   rulegroup storageReference-nameIR
 
    match
@@ -28218,7 +28253,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:311.1-334.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:335.1-358.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28257,7 +28292,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- if (n_idx >= n_size)
     -- output: % % % |- % -> % : EC_0
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:336.1-342.65
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:360.1-366.65
   rulegroup sliceAccess
 
    match
@@ -29264,7 +29299,7 @@ syntax tableResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:188.1-191.26
 relation Table_eval: evalContext store |- typeId tableObjectProperty : evalContext store tableResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:227.1-255.54
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:259.1-329.2
   rulegroup 
 
    match
@@ -29274,7 +29309,43 @@ relation Table_eval: evalContext store |- typeId tableObjectProperty : evalConte
 
    paths
 
-    rulepath 
+    rulepath keys-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: exitResult
+    -- let exitResult = tableKeysResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_1 STO_1 exit as tableResult
+
+    rulepath keys-cont-matches-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: continueResult<tableKeyValue*>
+    -- let ` tableKeyValue*{tableKeyValue <- tableKeyValue*} = tableKeysResult as continueResult<tableKeyValue*>
+    -- let _annotationList _constOptIR entries={ tableEntryListIR } = TBL.entries
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: exitResult
+    -- let exitResult = tableMatchesResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_2 STO_2 exit as tableResult
+
+    rulepath keys-cont-matches-cont-action-exit
+    -- let key={ tableKeyListIR } = TBL.keys
+    -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
+    -- if tableKeysResult <: continueResult<tableKeyValue*>
+    -- let ` tableKeyValue*{tableKeyValue <- tableKeyValue*} = tableKeysResult as continueResult<tableKeyValue*>
+    -- let _annotationList _constOptIR entries={ tableEntryListIR } = TBL.entries
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryListIR : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: continueResult<tableMatch*>
+    -- let ` tableMatch*{tableMatch <- tableMatch*} = tableMatchesResult as continueResult<tableMatch*>
+    -- let prefixedNameIR ( argumentListIR ) = $select_action(TBL, tableMatch*{tableMatch <- tableMatch*})
+    -- Stmt_eval: local EC_2 STO_2 |- prefixedNameIR as callableTargetIR < [] >( argumentListIR ); as statementIR : EC_3 STO_3 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % : EC_3 STO_3 exit as tableResult
+
+    rulepath keys-cont-matches-cont-action-cont
     -- let key={ tableKeyListIR } = TBL.keys
     -- TableKeys_eval: EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 tableKeysResult
     -- if tableKeysResult <: continueResult<tableKeyValue*>
@@ -30114,7 +30185,7 @@ relation Copy_out: store cursor evalContext parameterListIR @ cursor evalContext
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-281.92
 relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( argumentListIR ): evalContext store callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:45.1-192.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:45.1-233.2
   rulegroup actionCallee
 
    match
@@ -30127,22 +30198,18 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath global-return
+    rulepath global-copyin-exit
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
     -- if cursor matches `GLOBAL`
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
     -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
-    -- if copyInListResult <: continueResult<storageReference?*>
-    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
-    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
-    -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
-    -- if (actionResult = return ?() as actionResult)
-    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame]
-    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
 
-    rulepath global-exit
+    rulepath global-copyin-cont-ActionBody-exit
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
     -- if cursor matches `GLOBAL`
     -- let EC_callee_0 = $inherit_e(global, EC_0)
@@ -30159,10 +30226,10 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
 
-    rulepath block-return
+    rulepath global-return
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
-    -- if cursor matches `BLOCK`
-    -- let EC_callee_0 = $inherit_e(block, EC_0)
+    -- if cursor matches `GLOBAL`
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
     -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
     -- if copyInListResult <: continueResult<storageReference?*>
@@ -30170,11 +30237,22 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
     -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
     -- if (actionResult = return ?() as actionResult)
-    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
+    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame]
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
 
-    rulepath block-exit
+    rulepath block-copyin-exit
+    -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
+    -- if cursor matches `BLOCK`
+    -- let EC_callee_0 = $inherit_e(block, EC_0)
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
+
+    rulepath block-copyin-cont-ActionBody-exit
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
     -- if cursor matches `BLOCK`
     -- let EC_callee_0 = $inherit_e(block, EC_0)
@@ -30191,7 +30269,22 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:232.1-267.14
+    rulepath block-return
+    -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
+    -- if cursor matches `BLOCK`
+    -- let EC_callee_0 = $inherit_e(block, EC_0)
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_0 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_1 # copyInListResult
+    -- if copyInListResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_1 value_default*{value_default <- value_default*} ~>@ EC_callee_2
+    -- ActionBody_eval: EC_callee_2 STO_1 |- blockStatementIR : EC_callee_3 STO_2 actionResult
+    -- if (actionResult = return ?() as actionResult)
+    -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
+    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:273.1-334.2
   rulegroup definedFunctionCallee
 
    match
@@ -30203,7 +30296,18 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath definedFunctionCallee
+    rulepath definedFunctionCallee-copyin-exit
+    -- let function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = definedFunctionCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
+
+    rulepath definedFunctionCallee-cont
     -- let function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = definedFunctionCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
@@ -30217,7 +30321,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 definedFunctionResult as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:274.1-310.14
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:341.1-404.2
   rulegroup externFunctionCallee
 
    match
@@ -30229,7 +30333,18 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath externFunctionCallee
+    rulepath externFunctionCallee-copyin-exit
+    -- let extern_function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) = externFunctionCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
+
+    rulepath externFunctionCallee-cont
     -- let extern_function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) = externFunctionCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
@@ -30244,7 +30359,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:323.1-481.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:417.1-575.2
   rulegroup builtinMethodCallee
 
    match
@@ -30435,7 +30550,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let returnResult = return ?()
     -- output: % % % |- % @< % >( % ): EC_1 STO returnResult as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:488.1-532.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:582.1-653.2
   rulegroup externMethodCallee
 
    match
@@ -30446,6 +30561,20 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let externMethodCallee = callee as externMethodCallee
 
    paths
+
+    rulepath copyin-exit
+    -- let extern_method objectId . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ){ theta ; frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} } = externMethodCallee
+    -- if blockStatementIR?{blockStatementIR <- blockStatementIR?} matches ()
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let EC_callee_1 = EC_callee_0[block.type = theta]
+    -- let EC_callee_2 = EC_callee_1[block.frame = frame]
+    -- let EC_callee_3 = EC_callee_2[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_4 # copyInListResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
 
     rulepath non-abstract-return
     -- let extern_method objectId . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ){ theta ; frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} } = externMethodCallee
@@ -30465,7 +30594,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_6 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:536.1-618.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:657.1-739.2
   rulegroup parserApplyMethodCallee
 
    match
@@ -30512,7 +30641,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 rejectTransitionResult as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:622.1-709.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:743.1-895.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -30524,7 +30653,19 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath controlApplyMethodCallee-cont
+    rulepath controlApplyMethodCallee-copyin-exit
+    -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
+    -- let EC_callee_1 = EC_callee_0[block.frame = frame][block.callable = { callableId : actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult
+    -- if copyInListResult <: exitResult
+    -- let exitResult = copyInListResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
+
+    rulepath controlApplyMethodCallee-localDecl-exit
     -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
@@ -30535,16 +30676,14 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ block EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3
     -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
-    -- if declarationResult <: continueEmptyResult
-    -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
-    -- if (controlBodyResult = return ?() as controlBodyResult)
-    -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
-    -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
+    -- if declarationResult <: exitResult
+    -- let exitResult = declarationResult as exitResult
+    -- if (exitResult = exit)
+    -- let EC_2 = EC_1[global.frame = EC_callee_4.global.frame]
+    -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
 
-    rulepath controlApplyMethodCallee-cont-controlBodyIR-exit
+    rulepath controlApplyMethodCallee-controlBodyIR-exit
     -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
@@ -30566,7 +30705,27 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 exit as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:713.1-729.62
+    rulepath controlApplyMethodCallee-cont
+    -- let control _objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR } = controlApplyMethodCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } = actionDefEnv
+    -- let EC_callee_1 = EC_callee_0[block.frame = frame][block.callable = { callableId : actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} }]
+    -- let (parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, value_default*{value_default <- value_default*}) = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*})
+    -- Copy_in: STO_0 p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_1 argumentIR_aligned*{argumentIR_aligned <- argumentIR_aligned*} ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult
+    -- if copyInListResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInListResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ block EC_callee_2 value_default*{value_default <- value_default*} ~>@ EC_callee_3
+    -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
+    -- if declarationResult <: continueEmptyResult
+    -- let continueEmptyResult = declarationResult as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
+    -- if (controlBodyResult = return ?() as controlBodyResult)
+    -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
+    -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
+    -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:899.1-915.62
   rulegroup tableApplyMethodCallee
 
    match
@@ -31334,7 +31493,7 @@ syntax tableMatchResult =
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:97.1-100.26
 relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : evalContext store tableMatchResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:102.1-141.2
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:102.1-156.2
   rulegroup 
 
    match
@@ -31343,6 +31502,15 @@ relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : e
     EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR : % % %
 
    paths
+
+    rulepath exit
+    -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
+    -- TableEntryPriority_eval: EC_0 STO_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?}
+    -- Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult
+    -- if keysetExpressionResult <: exitResult
+    -- let exitResult = keysetExpressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_1 STO_1 exit as tableMatchResult
 
     rulepath no-match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
@@ -31365,36 +31533,63 @@ relation TableMatch_eval: evalContext store |- tableKeyValue* @ tableEntryIR : e
     -- let tableMatch = n_priority?{n_priority <- n_priority?} : tableActionReferenceIR
     -- output: % % |- % @ % : EC_1 STO_1 ` ?(tableMatch) as tableMatchResult
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:144.1-145.15
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:159.1-160.15
 syntax tableMatchesResult = 
    | ` tableMatch*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:147.1-150.26
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:162.1-165.26
 relation TableMatches_eval: evalContext store |- tableKeyValue* @ tableEntryListIR : evalContext store tableMatchesResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:152.1-170.2
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:167.1-202.2
   rulegroup 
 
    match
 
-    (signature) evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
-    evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
+    (signature) evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} : % % %
+    evalContext store |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} : % % %
 
    paths
 
     rulepath nil
     -- let EC = evalContext
     -- let STO = store
-    -- if (tableEntryIR*{tableEntryIR <- tableEntryIR*} = [])
+    -- if (tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*} = [])
     -- output: % % |- % @ % : EC STO ` [] as tableMatchesResult
+
+    rulepath cons-head-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
+    -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
+    -- if tableMatchResult <: exitResult
+    -- let exitResult = tableMatchResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_1 STO_1 exit as tableMatchesResult
+
+    rulepath cons-head-cont-tail-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
+    -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
+    -- if tableMatchResult <: continueResult<tableMatch?>
+    -- let ` tableMatch_h?{tableMatch_h <- tableMatch_h?} = tableMatchResult as continueResult<tableMatch?>
+    -- TableMatches_eval: EC_1 STO_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 STO_2 tableMatchesResult
+    -- if tableMatchesResult <: exitResult
+    -- let exitResult = tableMatchesResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % @ % : EC_2 STO_2 exit as tableMatchesResult
 
     rulepath cons-head-cont-tail-cont
     -- let EC_0 = evalContext
     -- let STO_0 = store
-    -- let tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
-    -- if tableEntryIR'*{tableEntryIR' <- tableEntryIR'*} matches _ :: _
-    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'*{tableEntryIR' <- tableEntryIR'*}
+    -- let tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} = tableEntryIR''*{tableEntryIR'' <- tableEntryIR''*}
+    -- if tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*} matches _ :: _
+    -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR'''*{tableEntryIR''' <- tableEntryIR'''*}
     -- TableMatch_eval: EC_0 STO_0 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} @ tableEntryIR_h : EC_1 STO_1 tableMatchResult
     -- if tableMatchResult <: continueResult<tableMatch?>
     -- let ` tableMatch_h?{tableMatch_h <- tableMatch_h?} = tableMatchResult as continueResult<tableMatch?>
@@ -31404,23 +31599,23 @@ relation TableMatches_eval: evalContext store |- tableKeyValue* @ tableEntryList
     -- let tableMatch*{tableMatch <- tableMatch*} = $opt_as_seq_<tableMatch>(tableMatch_h?{tableMatch_h <- tableMatch_h?}) ++ tableMatch_t*{tableMatch_t <- tableMatch_t*}
     -- output: % % |- % @ % : EC_2 STO_2 ` tableMatch*{tableMatch <- tableMatch*} as tableMatchesResult
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:176.1-176.60
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:208.1-208.60
 def $is_largest_priority_wins(tableCustomPropertyIR) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:179.1-182.9
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:211.1-214.9
   clause 0 : (tableCustomPropertyIR) = true
   -- if tableCustomPropertyIR matches `%%CUSTOM_CONST%%;`
   -- let _annotationList _constOptIR custom_const text _constantInitializerIR ; = tableCustomPropertyIR
   -- if (text = "largest_priority_wins")
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:183.1-184.15
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:215.1-216.15
   clause 1 : (_tableCustomPropertyIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:177.1-177.55
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:209.1-209.55
 def $largest_priority_wins(tableObjectProperty) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:186.1-190.65
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:218.1-222.65
   clause 0 : (TBL) = b
   -- let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} = TBL.customs
   -- let tableCustomPropertyIR''*{tableCustomPropertyIR'' <- tableCustomPropertyIR''*} = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins)
@@ -31431,26 +31626,26 @@ def $largest_priority_wins(tableObjectProperty) : bool =
   -- if value <: boolValue
   -- let b = value as boolValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:191.1-195.65
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:223.1-227.65
   clause 1 : (TBL) = true
   -- let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} = TBL.customs
   -- if ([] = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins))
 
-;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:197.1-198.27
+;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:229.1-230.27
 def $select_action(tableObjectProperty, tableMatch*) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:200.1-202.27
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:232.1-234.27
   clause 0 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR
   -- if tableMatch*{tableMatch <- tableMatch*} matches []
   -- let _annotationList _constOptIR default_action= tableActionReferenceIR ; = TBL.default_action
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:203.1-204.49
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:235.1-236.49
   clause 1 : (TBL, tableMatch'*{tableMatch' <- tableMatch'*}) = tableActionReferenceIR
   -- if tableMatch'*{tableMatch' <- tableMatch'*} matches [ _/1 ]
   -- let [tableMatch] = tableMatch'*{tableMatch' <- tableMatch'*}
   -- let _nat?{_nat <- _nat?} : tableActionReferenceIR = tableMatch
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:205.1-215.70
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:237.1-247.70
   clause 2 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR_h
   -- if (|tableMatch*{tableMatch <- tableMatch*}| > 1)
   -- (let nat?{nat <- nat?} : tableActionReferenceIR = tableMatch)*{nat? <- nat?*, tableActionReferenceIR <- tableActionReferenceIR*, tableMatch <- tableMatch*}
@@ -31462,7 +31657,7 @@ def $select_action(tableObjectProperty, tableMatch*) : tableActionReferenceIR =
   -- if tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*} matches _ :: _
   -- let tableActionReferenceIR_h :: _tableActionReferenceIR*{_tableActionReferenceIR <- _tableActionReferenceIR*} = tableActionReferenceIR'*{tableActionReferenceIR' <- tableActionReferenceIR'*}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:216.1-225.71
+  ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:248.1-257.71
   clause 3 : (TBL, tableMatch*{tableMatch <- tableMatch*}) = tableActionReferenceIR_h
   -- if (|tableMatch*{tableMatch <- tableMatch*}| > 1)
   -- (let nat?{nat <- nat?} : tableActionReferenceIR = tableMatch)*{nat? <- nat?*, tableActionReferenceIR <- tableActionReferenceIR*, tableMatch <- tableMatch*}
@@ -31511,15 +31706,15 @@ relation ActionBody_eval: evalContext store |- blockStatementIR : evalContext st
     -- if (statementResult = return ?() as statementResult)
     -- output: % % |- % : EC_1 STO_1 return ?() as actionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:195.1-196.17
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:236.1-237.17
 syntax definedFunctionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:198.1-201.23
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:239.1-242.23
 relation DefinedFunctionBody_eval: evalContext store |- blockStatementIR : evalContext store definedFunctionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:203.1-226.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:244.1-267.2
   rulegroup 
 
    match
@@ -31549,10 +31744,10 @@ relation DefinedFunctionBody_eval: evalContext store |- blockStatementIR : evalC
     -- let returnResult = statementResult as returnResult
     -- output: % % |- % : EC_1 STO_1 returnResult as definedFunctionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:320.1-320.43
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:414.1-414.43
 def $isValid_fieldValue(fieldValue) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:321.1-321.62
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:415.1-415.62
   clause 0 : (value id ;) = $isValid_header(value)
 
 ;; ../../../../spec-concrete/9-arch/9.0-eval-arch.watsup:9.1-15.56
@@ -31981,7 +32176,7 @@ relation V1Model_parser: evalContext store |- evalContext store transitionResult
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:340.1-342.20
 relation V1Model_verify: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:344.1-360.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:344.1-382.2
   rulegroup 
 
    match
@@ -31991,7 +32186,7 @@ relation V1Model_verify: evalContext store |- evalContext store callResult
 
    paths
 
-    rulepath 
+    rulepath continueEmptyResult
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
@@ -32004,10 +32199,23 @@ relation V1Model_verify: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:366.1-368.20
+    rulepath exit
+    -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
+    -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
+    -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_vr = $V1Model_setup_verify_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let callableTargetIR = typedExpressionIR_vr . "apply"
+    -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- EC_1 STO_1 exit as callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:388.1-390.20
 relation V1Model_ingress: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:370.1-413.2
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:392.1-435.2
   rulegroup 
 
    match
@@ -32045,10 +32253,10 @@ relation V1Model_ingress: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:419.1-421.20
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:441.1-443.20
 relation V1Model_egress: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:423.1-442.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:445.1-489.2
   rulegroup 
 
    match
@@ -32058,7 +32266,7 @@ relation V1Model_egress: evalContext store |- evalContext store callResult
 
    paths
 
-    rulepath 
+    rulepath continueEmptyResult
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR_standard_metadata = $V1Model_setup_standard_metadata_argument(EC_0)
@@ -32072,10 +32280,24 @@ relation V1Model_egress: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:448.1-450.20
+    rulepath exit
+    -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
+    -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
+    -- let argumentIR_standard_metadata = $V1Model_setup_standard_metadata_argument(EC_0)
+    -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta, argumentIR_standard_metadata]
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_eg = $V1Model_setup_egress_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let callableTargetIR = typedExpressionIR_eg . "apply"
+    -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- EC_1 STO_1 exit as callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:495.1-497.20
 relation V1Model_check: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:452.1-468.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:499.1-537.2
   rulegroup 
 
    match
@@ -32085,7 +32307,7 @@ relation V1Model_check: evalContext store |- evalContext store callResult
 
    paths
 
-    rulepath 
+    rulepath continueEmptyResult
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
@@ -32098,10 +32320,23 @@ relation V1Model_check: evalContext store |- evalContext store callResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
-;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:474.1-476.20
+    rulepath exit
+    -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
+    -- let argumentIR_meta = $V1Model_setup_meta_argument(STO_0)
+    -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_hdr, argumentIR_meta]
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_ck = $V1Model_setup_check_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let callableTargetIR = typedExpressionIR_ck . "apply"
+    -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- EC_1 STO_1 exit as callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:543.1-545.20
 relation V1Model_deparse: evalContext store |- evalContext store callResult
 
-  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:478.1-494.41
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:547.1-585.2
   rulegroup 
 
    match
@@ -32111,7 +32346,7 @@ relation V1Model_deparse: evalContext store |- evalContext store callResult
 
    paths
 
-    rulepath 
+    rulepath continueEmptyResult
     -- let argumentIR_packet_out = $V1Model_setup_packet_out_argument(EC_0)
     -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
     -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_packet_out, argumentIR_hdr]
@@ -32123,3 +32358,16 @@ relation V1Model_deparse: evalContext store |- evalContext store callResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
     -- if (continueEmptyResult = `)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
+
+    rulepath exit
+    -- let argumentIR_packet_out = $V1Model_setup_packet_out_argument(EC_0)
+    -- let argumentIR_hdr = $V1Model_setup_hdr_argument(STO_0)
+    -- let argumentIR*{argumentIR <- argumentIR*} = [argumentIR_packet_out, argumentIR_hdr]
+    -- let typedExpressionIR_main = $V1Model_setup_main_callee(EC_0, STO_0)
+    -- let typedExpressionIR_dep = $V1Model_setup_deparse_callee(EC_0, STO_0, typedExpressionIR_main)
+    -- let callableTargetIR = typedExpressionIR_dep . "apply"
+    -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
+    -- if statementResult <: exitResult
+    -- let exitResult = statementResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- EC_1 STO_1 exit as callResult

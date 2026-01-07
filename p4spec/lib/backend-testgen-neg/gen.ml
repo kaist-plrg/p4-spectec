@@ -1,9 +1,9 @@
 open Domain.Lib
 open Lang
 open Sl
+module DCov_single = Coverage.Dangling.Single
+module DCov_multi = Coverage.Dangling.Multi
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Runtime.Testgen_neg.Dangling.Single
-module DCov_multi = Runtime.Testgen_neg.Dangling.Multi
 module Sim = Runtime.Sim.Simulator
 module F = Format
 open Util.Source
@@ -78,20 +78,18 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Re-run the SL interpreter to make sure of the new hits *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec_sim = Sim.SL config.specenv.spec in
-  match
-    Runner.run_program ~derive:false spec_sim config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  with
-  | Pass (_, _, _, cover)
-    when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+  in
+  match program_result with
+  | Pass _ when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind true pids_hit_new
-  | Fail (_, _, cover)
+  | Fail (`Runtime _)
     when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
@@ -128,13 +126,12 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
      and update the running coverage *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec_sim = Sim.SL config.specenv.spec in
-  match
-    Runner.run_program ~derive:false spec_sim config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  with
-  | Pass (_, _, _, cover)
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+  in
+  match program_result with
+  | Pass _
     when PIdSet.for_all (DCov_single.is_close_miss cover) pids_close_miss_new ->
       let filename_close_miss_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
@@ -155,13 +152,11 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
     filename_gen_p4
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
-    let (module Runner : Sim.DRIVER) = config.specenv.runner in
-    match
-      Runner.run_program_internal ~derive:false config.specenv.spec
-        config.specenv.relname value_program
-    with
-    | Pass (_, cover) -> (true, cover)
-    | Fail (_, _, cover) -> (false, cover)
+    let rel_result, cover =
+      Runner.run_program_internal_with_dangling config.specenv.runner
+        config.specenv.spec config.specenv.relname value_program
+    in
+    match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
   in
   let time_end = Unix.gettimeofday () in
   F.asprintf
@@ -223,11 +218,11 @@ let classify_mutation (fuel : int) (pid : pid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
     (trials : int ref) (config : Config.t) (log : Logger.t)
     (dirname_gen_tmp : string) (filename_p4 : string) (comment_gen_p4 : string)
-    (graph : Dep.Graph.t) (vid_program : vid) (kind : Mutate.kind)
-    (value_source : value) (value_mutated : value) : unit =
+    (vdg : Dep.Graph.t) (kind : Mutate.kind) (value_source : value)
+    (value_mutated : value) : unit =
   (* Reassemble the program with the mutated AST *)
   let renamer = VIdMap.singleton value_source.note.vid value_mutated in
-  let value_program = Dep.Graph.reassemble_graph graph renamer vid_program in
+  let value_program = Dep.Graph.reassemble_graph_from_root vdg renamer in
   (* Mutation may yield a syntactically ill-formed AST, so have a try block *)
   try
     classify_mutation' fuel pid idx_seed strategy idx_method idx_mutation trials
@@ -240,15 +235,14 @@ let classify_mutation (fuel : int) (pid : pid) (idx_seed : int)
 let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
     (idx_method : int) (trials : int ref) (config : Config.t) (log : Logger.t)
     (query : Query.t) (dirname_gen_tmp : string) (filename_p4 : string)
-    (comment_gen_p4 : string) (graph : Dep.Graph.t) (vid_program : vid)
-    (vid_source : vid) : unit =
+    (comment_gen_p4 : string) (vdg : Dep.Graph.t) (vid_source : vid) : unit =
   F.asprintf "[F %d] [P %d] [S %d] [%s %d]\n[File] %s\n" fuel pid idx_seed
     strategy idx_method filename_p4
   |> Query.query query;
   (* Mutate the AST *)
   let mutations =
     Mutate.mutates Config.trials_mutation config.specenv.tdenv
-      config.specenv.mixopenv graph vid_program vid_source
+      config.specenv.mixopenv vdg vid_source
   in
   (* Generate the mutated program *)
   List.iteri
@@ -268,16 +262,16 @@ let fuzz_mutation (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
             (Mutate.string_of_kind kind)
         in
         classify_mutation fuel pid idx_seed strategy idx_method idx_mutation
-          trials config log dirname_gen_tmp filename_p4 comment_gen_p4 graph
-          vid_program kind value_source value_mutated))
+          trials config log dirname_gen_tmp filename_p4 comment_gen_p4 vdg kind
+          value_source value_mutated))
     mutations
 
 (* Fuzzing from derivations *)
 
 let fuzz_derivations (fuel : int) (pid : pid) (idx_seed : int)
     (trials : int ref) (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (derivations_source : (vid * int) list) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (derivations_source : (vid * int) list) : unit =
   List.iteri
     (fun idx_derivation (vid_source, depth) ->
       if
@@ -289,14 +283,13 @@ let fuzz_derivations (fuel : int) (pid : pid) (idx_seed : int)
         in
         let strategy = "Derive" in
         fuzz_mutation fuel pid idx_seed strategy idx_derivation trials config
-          log query dirname_gen_tmp filename_p4 comment_gen_p4 graph vid_program
-          vid_source)
+          log query dirname_gen_tmp filename_p4 comment_gen_p4 vdg vid_source)
     derivations_source
 
 let fuzz_derivations_bounded (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (derivations_source : (vid * int) list) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (derivations_source : (vid * int) list) : unit =
   if derivations_source = [] then
     F.asprintf "[F %d] [P %d] [S %d] Skipping, no derivation found" fuel pid
       idx_seed
@@ -312,15 +305,15 @@ let fuzz_derivations_bounded (fuel : int) (pid : pid) (idx_seed : int)
       !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
     do
       fuzz_derivations fuel pid idx_seed trials config log query dirname_gen_tmp
-        filename_p4 graph vid_program derivations_source
+        filename_p4 vdg derivations_source
     done
 
 (* Fuzzing from a random value id *)
 
 let fuzz_randoms (fuel : int) (pid : pid) (idx_seed : int) (trials : int ref)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (vids_source : vid list) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (vids_source : vid list) : unit =
   List.iteri
     (fun idx_random vid_source ->
       if
@@ -331,14 +324,13 @@ let fuzz_randoms (fuel : int) (pid : pid) (idx_seed : int) (trials : int ref)
         in
         let strategy = "Random" in
         fuzz_mutation fuel pid idx_seed strategy idx_random trials config log
-          query dirname_gen_tmp filename_p4 comment_gen_p4 graph vid_program
-          vid_source)
+          query dirname_gen_tmp filename_p4 comment_gen_p4 vdg vid_source)
     vids_source
 
 let fuzz_randoms_bounded (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (vids_source : vid list) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (vids_source : vid list) : unit =
   F.asprintf
     "[F %d] [P %d] [S %d] Fuzzing from %d random values, until %d trials" fuel
     pid idx_seed (List.length vids_source) Config.trials_seed
@@ -348,35 +340,35 @@ let fuzz_randoms_bounded (fuel : int) (pid : pid) (idx_seed : int)
     !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover pid
   do
     fuzz_randoms fuel pid idx_seed trials config log query dirname_gen_tmp
-      filename_p4 graph vid_program vids_source
+      filename_p4 vdg vids_source
   done
 
 (* Fuzzing from a seed program *)
 
 let fuzz_seed_random (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t) : unit
+    =
   (* Randomly sample N vids from the program *)
   let vids_source =
-    List.init vid_program Fun.id
-    |> List.filter (fun vid -> Dep.Graph.G.mem graph.nodes vid)
+    List.init vdg.root Fun.id
+    |> List.filter (fun vid -> Dep.Graph.G.mem vdg.nodes vid)
     |> Rand.random_sample Config.samples_related_vid
   in
   (* Mutate the ASTs and dump to file *)
   fuzz_randoms_bounded fuel pid idx_seed config log query dirname_gen_tmp
-    filename_p4 graph vid_program vids_source
+    filename_p4 vdg vids_source
 
 let fuzz_seed_deriving (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (cover : DCov_single.t) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the phantom *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel pid
     idx_seed filename_p4
   |> Logger.log config.modes.logmode log;
   let time_start = Unix.gettimeofday () in
-  let derivations_source = Derive.derive_phantom pid graph cover in
+  let derivations_source = Derive.derive_phantom pid vdg cover in
   let time_end = Unix.gettimeofday () in
   (* Take top ranked derivations, i.e., the ones with the smallest depth *)
   F.asprintf
@@ -394,18 +386,18 @@ let fuzz_seed_deriving (fuel : int) (pid : pid) (idx_seed : int)
   in
   (* Mutate the close-ASTs and dump to file *)
   fuzz_derivations_bounded fuel pid idx_seed config log query dirname_gen_tmp
-    filename_p4 graph vid_program derivations_source
+    filename_p4 vdg derivations_source
 
 let fuzz_seed_hybrid (fuel : int) (pid : pid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (graph : Dep.Graph.t)
-    (vid_program : vid) (cover : DCov_single.t) : unit =
+    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the phantom *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel pid
     idx_seed filename_p4
   |> Logger.log config.modes.logmode log;
   let time_start = Unix.gettimeofday () in
-  let derivations_source = Derive.derive_phantom pid graph cover in
+  let derivations_source = Derive.derive_phantom pid vdg cover in
   let time_end = Unix.gettimeofday () in
   (* Take top ranked derivations, i.e., the ones with the smallest depth *)
   F.asprintf
@@ -425,10 +417,10 @@ let fuzz_seed_hybrid (fuel : int) (pid : pid) (idx_seed : int)
   match derivations_source with
   | [] ->
       fuzz_seed_random fuel pid idx_seed config log query dirname_gen_tmp
-        filename_p4 graph vid_program
+        filename_p4 vdg
   | _ ->
       fuzz_derivations_bounded fuel pid idx_seed config log query
-        dirname_gen_tmp filename_p4 graph vid_program derivations_source
+        dirname_gen_tmp filename_p4 vdg derivations_source
 
 let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
     (log : Logger.t) (query : Query.t) (dirname_gen_tmp : string)
@@ -445,13 +437,13 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   in
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let spec_sim = Sim.SL config.specenv.spec in
-  (match
-     Runner.run_program ~derive spec_sim config.specenv.relname
-       config.specenv.includes_p4 filename_p4
-   with
-  | Pass (_, graph, vid_program, cover) ->
+  let program_result, cover, vdg =
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.runner
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      filename_p4
+  in
+  (match program_result with
+  | Pass _ ->
       let time_end = Unix.gettimeofday () in
       F.asprintf
         "[F %d] [P %d] [S %d] SL interpreter succeeded on %s (took %.2f)" fuel
@@ -460,16 +452,16 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
       (match config.modes.mutationmode with
       | Random ->
           fuzz_seed_random fuel pid idx_seed config log query dirname_gen_tmp
-            filename_p4 graph vid_program
+            filename_p4 vdg
       | Derive ->
           fuzz_seed_deriving fuel pid idx_seed config log query dirname_gen_tmp
-            filename_p4 graph vid_program cover
+            filename_p4 vdg cover
       | Hybrid ->
           fuzz_seed_hybrid fuel pid idx_seed config log query dirname_gen_tmp
-            filename_p4 graph vid_program cover);
-      Dep.Graph.G.reset graph.nodes;
-      Dep.Graph.G.reset graph.edges
-  | Fail _ | IllFormed _ ->
+            filename_p4 vdg cover);
+      Dep.Graph.G.reset vdg.nodes;
+      Dep.Graph.G.reset vdg.edges
+  | Fail _ ->
       F.asprintf "[F %d] [P %d] [S %d] SL interpreter failed on %s" fuel pid
         idx_seed filename_p4
       |> Logger.log config.modes.logmode log);

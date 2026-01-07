@@ -86,10 +86,15 @@ test-p4sim:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4sim --profile=release && echo OK || (echo "####>" Failure running dune build @p4sim. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
-test-p4ntt:
-	echo "#### Running (dune build @p4ntt)"
+test-p4ntt-cov:
+	echo "#### Running (dune build @p4ntt-cov)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4ntt --profile=release && echo OK || (echo "####>" Failure running dune build @p4ntt. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+	cd p4spec && opam exec -- dune build @p4ntt-cov --profile=release && echo OK || (echo "####>" Failure running dune build @p4ntt. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4sim-cov:
+	echo "#### Running (dune build @p4sim-cov)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4sim-cov --profile=release && echo OK || (echo "####>" Failure running dune build @p4ntt. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4parse:
 	echo "#### Running (dune build @p4parse)"

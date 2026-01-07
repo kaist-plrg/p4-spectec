@@ -361,10 +361,10 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
 
 (* Find parent node, if any, in the dependency graph *)
 
-let find_parent (graph : Dep.Graph.t) (vid_source : vid) : vid option =
+let find_parent (vdg : Dep.Graph.t) (vid_source : vid) : vid option =
   let parents =
     (* for all edges from v *)
-    match Dep.Graph.G.find_opt graph.edges vid_source with
+    match Dep.Graph.G.find_opt vdg.edges vid_source with
     | None -> []
     | Some edges ->
         (* follow Expand edges to source nodes *)
@@ -379,11 +379,11 @@ let find_parent (graph : Dep.Graph.t) (vid_source : vid) : vid option =
 (* Entry point for mutation *)
 
 let mutate (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
-    (graph : Dep.Graph.t) (vid_source : vid) : (kind * value * value) option =
+    (vdg : Dep.Graph.t) (vid_source : vid) : (kind * value * value) option =
   (* Expand the node randomly *)
   let expansions =
     [
-      (fun () -> find_parent graph vid_source);
+      (fun () -> find_parent vdg vid_source);
       (fun () -> vid_source |> Option.some);
     ]
   in
@@ -393,23 +393,22 @@ let mutate (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
   in
   (* reassemble value from vid *)
   let value_to_mutate =
-    Dep.Graph.reassemble_graph graph VIdMap.empty vid_to_mutate
+    Dep.Graph.reassemble_graph vdg VIdMap.empty vid_to_mutate
   in
   (* Mutate the node *)
   let* kind, value_mutated = mutate_walk tdenv mixopenv texts value_to_mutate in
   (kind, value_to_mutate, value_mutated) |> Option.some
 
 let mutates (fuel_mutate : int) (tdenv : TDEnv.t) (mixopenv : MixopEnv.t)
-    (graph : Dep.Graph.t) (vid_program : vid) (vid_source : vid) :
-    (kind * value * value) list =
+    (vdg : Dep.Graph.t) (vid_source : vid) : (kind * value * value) list =
   (* Collect the text pool *)
   let texts =
-    List.init (vid_program + 1) Fun.id
+    List.init (vdg.root + 1) Fun.id
     |> List.filter_map (fun vid ->
-           let* mirror, _ = Dep.Graph.find_node graph vid in
+           let* mirror, _ = Dep.Graph.find_node vdg vid in
            match mirror.it with TextN text -> Some (TextV text) | _ -> None)
   in
   let texts = texts @ [ TextV "lazy"; TextV "fox" ] in
   (* Do mutations *)
-  List.init fuel_mutate (fun _ -> mutate tdenv mixopenv texts graph vid_source)
+  List.init fuel_mutate (fun _ -> mutate tdenv mixopenv texts vdg vid_source)
   |> List.filter_map Fun.id

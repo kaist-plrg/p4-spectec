@@ -90,15 +90,18 @@ let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
           ([], (id, typ, []))
           iter_combined
       in
-      let instr_let = LetI (exp_new, exp_orig, iterexps_instr) $ no_region in
+      let instr_let =
+        LetI (exp_new, exp_orig, iterexps_instr) $$ (no_region, { iid = -1 })
+      in
       Some (instr_let, exp_new_full, ids_used)
   | None -> None
 
 let expand_nested_calls ids_used instrs =
   match instrs with
-  | { it = LetI (exp_l, exp_r, iterexps); at; _ } :: instrs_rest ->
-      let* instr_new, exp_r', ids = replace_call_exp ids_used exp_r in
-      Some (ids, [ instr_new; LetI (exp_l, exp_r', iterexps) $ at ], instrs_rest)
+  | { it = LetI (exp_l, exp_r, iterexps); at; note } :: instrs_rest ->
+      let* instr_new, exp_r, ids = replace_call_exp ids_used exp_r in
+      let instr_let = LetI (exp_l, exp_r, iterexps) $$ (at, note) in
+      Some (ids, [ instr_new; instr_let ], instrs_rest)
   | _ -> None
 
 type 'ctx expansion =

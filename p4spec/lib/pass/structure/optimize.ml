@@ -59,11 +59,12 @@ let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
           let instr_h = CaseI (exp, cases, total) $ instr_h.at in
           let instrs_t = rename_let_alias rename instrs_t in
           instr_h :: instrs_t
-      | GroupI (id_group, exps_group, instrs_group) ->
+      | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
           let instrs_group = rename_let_alias rename instrs_group in
           let exps_group = List.map (Renamer.rename_exp rename) exps_group in
           let instr_h =
-            GroupI (id_group, exps_group, instrs_group) $ instr_h.at
+            GroupI (id_group, rel_signature, exps_group, instrs_group)
+            $ instr_h.at
           in
           let instrs_t = rename_let_alias rename instrs_t in
           instr_h :: instrs_t
@@ -103,10 +104,11 @@ let rec remove_let_alias (instrs : instr list) : instr list =
           let instr_h = CaseI (exp, cases, total) $ instr_h.at in
           let instrs_t = remove_let_alias instrs_t in
           instr_h :: instrs_t
-      | GroupI (id_group, exps_group, instrs_group) ->
+      | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
           let instrs_group = remove_let_alias instrs_group in
           let instr_h =
-            GroupI (id_group, exps_group, instrs_group) $ instr_h.at
+            GroupI (id_group, rel_signature, exps_group, instrs_group)
+            $ instr_h.at
           in
           let instrs_t = remove_let_alias instrs_t in
           instr_h :: instrs_t
@@ -154,9 +156,9 @@ let rec parallelize_if_disjunction (instr : instr) : instr list =
         List.combine guards blocks
       in
       [ CaseI (exp, cases, total) $ at ]
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = parallelize_if_disjunctions instrs_group in
-      [ GroupI (id_group, exps_group, instrs_group) $ at ]
+      [ GroupI (id_group, rel_signature, exps_group, instrs_group) $ at ]
   | _ -> [ instr ]
 
 and parallelize_if_disjunctions (instrs : instr list) : instr list =
@@ -197,9 +199,9 @@ let rec matchify_if_eq_terminal (instr : instr) : instr =
         List.combine guards blocks
       in
       CaseI (exp, cases, total) $ at
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = matchify_if_eq_terminals instrs_group in
-      GroupI (id_group, exps_group, instrs_group) $ at
+      GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
   | _ -> instr
 
 and matchify_if_eq_terminals (instrs : instr list) : instr list =
@@ -406,10 +408,13 @@ let rec remove_redundant_bindings' (ienv : IHEnv.t) (bind : Bind.t)
       | None ->
           let instrs_t = remove_redundant_bindings' ienv bind instrs_t in
           instr_h :: instrs_t)
-  | ({ it = GroupI (id_group, exps_group, instrs_group); _ } as instr_h)
+  | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
+     instr_h)
     :: instrs_t ->
       let instrs_group = instrs_group |> remove_redundant_bindings' ienv bind in
-      let instr_h = GroupI (id_group, exps_group, instrs_group) $ instr_h.at in
+      let instr_h =
+        GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
+      in
       let instrs_t = remove_redundant_bindings' ienv bind instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
@@ -459,10 +464,13 @@ let rec remove_redundant_bindings (ienv : IHEnv.t) (instrs : instr list) :
         |> remove_redundant_bindings ienv
       in
       instr_h :: instrs_t
-  | ({ it = GroupI (id_group, exps_group, instrs_group); _ } as instr_h)
+  | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
+     instr_h)
     :: instrs_t ->
       let instrs_group = instrs_group |> remove_redundant_bindings ienv in
-      let instr_h = GroupI (id_group, exps_group, instrs_group) $ instr_h.at in
+      let instr_h =
+        GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
+      in
       let instrs_t = remove_redundant_bindings ienv instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
@@ -748,9 +756,12 @@ let rec merge_if (tdenv : TDEnv.t) (instrs : instr list) : instr list =
       in
       let instrs_t = merge_if tdenv instrs_t in
       instr_h :: instrs_t
-  | { it = GroupI (id_group, exps_group, instrs_group); at; _ } :: instrs_t ->
+  | { it = GroupI (id_group, rel_signature, exps_group, instrs_group); at; _ }
+    :: instrs_t ->
       let instrs_group = merge_if tdenv instrs_group in
-      let instr_h = GroupI (id_group, exps_group, instrs_group) $ at in
+      let instr_h =
+        GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
+      in
       let instrs_t = merge_if tdenv instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
@@ -818,9 +829,12 @@ and merge_hold (instrs : instr list) : instr list =
       in
       let instrs_t = merge_hold instrs_t in
       instr_h :: instrs_t
-  | { it = GroupI (id_group, exps_group, instrs_group); at; _ } :: instrs_t ->
+  | { it = GroupI (id_group, rel_signature, exps_group, instrs_group); at; _ }
+    :: instrs_t ->
       let instrs_group = merge_hold instrs_group in
-      let instr_h = GroupI (id_group, exps_group, instrs_group) $ at in
+      let instr_h =
+        GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
+      in
       let instrs_t = merge_hold instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
@@ -1073,9 +1087,12 @@ let rec casify (tdenv : TDEnv.t) (instrs : instr list) : instr list =
           in
           let instrs_t = casify tdenv instrs_t in
           instr_h :: instrs_t)
-  | { it = GroupI (id_group, exps_group, instrs_group); at; _ } :: instrs_t ->
+  | { it = GroupI (id_group, rel_signature, exps_group, instrs_group); at; _ }
+    :: instrs_t ->
       let instrs_group = casify tdenv instrs_group in
-      let instr_h = GroupI (id_group, exps_group, instrs_group) $ at in
+      let instr_h =
+        GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
+      in
       let instrs_t = casify tdenv instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
@@ -1130,9 +1147,9 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
           let total = Set.equal mixops_case mixops_total in
           CaseI (exp, cases, total) $ at
       | None -> CaseI (exp, cases, total) $ at)
-  | GroupI (id_group, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = totalize_case_analysis tdenv instrs_group in
-      GroupI (id_group, exps_group, instrs_group) $ at
+      GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
   | _ -> instr
 
 (* [6] Remove redundant match on singleton case
@@ -1193,10 +1210,11 @@ let rec remove_singleton_match (tdenv : TDEnv.t) (instrs : instr list) :
           let instr_h = CaseI (exp, cases, total) $ instr_h.at in
           let instrs_t = remove_singleton_match tdenv instrs_t in
           instr_h :: instrs_t
-      | GroupI (id_group, exps_group, instrs_group) ->
+      | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
           let instrs_group = remove_singleton_match tdenv instrs_group in
           let instr_h =
-            GroupI (id_group, exps_group, instrs_group) $ instr_h.at
+            GroupI (id_group, rel_signature, exps_group, instrs_group)
+            $ instr_h.at
           in
           let instrs_t = remove_singleton_match tdenv instrs_t in
           instr_h :: instrs_t

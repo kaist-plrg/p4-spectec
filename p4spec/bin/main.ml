@@ -25,10 +25,10 @@ let runner ?(arch : string option) mode filenames_spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
-        Runtime.Sim.Simulator.IL spec_il
+        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
     | `SL ->
         let spec_sl = structure filenames_spec in
-        Runtime.Sim.Simulator.SL spec_sl
+        (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
   in
   let (module Runner) =
     match arch with
@@ -36,6 +36,19 @@ let runner ?(arch : string option) mode filenames_spec =
     | None -> Backend_sim.Gen.gen_placeholder ()
   in
   (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
+
+let run_with_dangling ?(arch : string option) mode filenames_spec relname
+    includes_p4 filename_p4 =
+  let spec_sim, (module Runner) = runner ?arch mode filenames_spec in
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Runner.run_program spec_sim relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
 
 (* Commands *)
 
@@ -97,8 +110,7 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
-     and _debug = flag "-dbg" no_arg ~doc:"print debug traces"
-     and _profile = flag "-profile" no_arg ~doc:"profiling"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
        Command.Param.choose_one
          [
@@ -112,13 +124,22 @@ let run_command =
      fun () ->
        try
          let spec_sim, (module Runner) = runner mode filenames_spec in
-         match
-           Runner.run_program ~derive:false spec_sim relname includes_p4
-             filename_p4
-         with
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result =
+           Runner.run_program spec_sim relname includes_p4 filename_p4
+         in
+         Inst.Hook.finish ();
+         match result with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg, _) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -152,16 +173,16 @@ let sim_command =
            Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
          with
          | Pass -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
-let cover_dangling_command =
-  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
+let cover_command =
+  Core.Command.basic ~summary:"measure coverage of the spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -173,6 +194,15 @@ let cover_dangling_command =
        flag "-d" (listed string) ~doc:"p4 directories of interest"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
        try
@@ -185,11 +215,115 @@ let cover_dangling_command =
          in
          let spec_sl = structure filenames_spec in
          let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-         let cover =
-           Runner.cover_programs spec_sl relname includes_p4 filenames_p4
+         match mode with
+         | `Instr ->
+             let cover_instr =
+               Runner.cover_instr_programs spec_sl relname includes_p4
+                 filenames_p4
+             in
+             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
+               cover_instr spec_sl
+         | `Dangling ->
+             let cover_dangling =
+               Runner.cover_dangling_programs spec_sl relname includes_p4
+                 filenames_p4
+             in
+             Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
+               cover_dangling
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) | ElabError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
+let cover_sim_command =
+  Core.Command.basic ~summary:"measure coverage of the spec when simulated"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and dirname_test =
+       flag "-d" (required string) ~doc:"test directory of interest"
+     and dirname_patch =
+       flag "-p" (required string) ~doc:"directory for p4/stf patches"
+     and filename_cov =
+       flag "-cov" (required string) ~doc:"output coverage file"
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
+     in
+     fun () ->
+       try
+         let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
+         let filenames_p4 =
+           dirname_test
+           |> Util.Filesys.collect_files ~suffix:".p4"
+           |> List.filter (fun filename_p4 ->
+                  not (List.exists (String.equal filename_p4) excludes_p4))
+           |> List.filter (fun filename_p4 ->
+                  let contents = Util.Filesys.read_file filename_p4 in
+                  match arch with
+                  | "v1model" ->
+                      Util.Strings.contains_substring "#include <v1model.p4>"
+                        contents
+                      || Util.Strings.contains_substring
+                           "#include \"v1model.p4\"" contents
+                  | _ -> false)
          in
-         Runtime.Testgen_neg.Dangling.Multi.log
-           ~filename_cov_opt:(Some filename_cov) cover
+         let filenames_p4_patch =
+           Util.Filesys.collect_files ~suffix:".p4" dirname_patch
+         in
+         let filenames_p4 =
+           Util.Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
+         in
+         let filenames_stf =
+           Util.Filesys.collect_files ~suffix:".stf" dirname_test
+         in
+         let filenames_stf_patch =
+           Util.Filesys.collect_files ~suffix:".stf" dirname_patch
+         in
+         let filenames_stf =
+           Util.Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
+         in
+         let filenames_p4, filenames_stf =
+           filenames_p4
+           |> List.filter_map (fun filename_p4 ->
+                  let filename_base =
+                    Util.Filesys.base ~suffix:".p4" filename_p4
+                  in
+                  let filename_stf_opt =
+                    List.find_opt
+                      (fun filename_stf ->
+                        let filename_stf_base =
+                          Util.Filesys.base ~suffix:".stf" filename_stf
+                        in
+                        String.equal filename_base filename_stf_base)
+                      filenames_stf
+                  in
+                  match filename_stf_opt with
+                  | Some filename_stf -> Some (filename_p4, filename_stf)
+                  | None -> None)
+           |> List.split
+         in
+         let spec_sl = structure filenames_spec in
+         let (module Runner) = Backend_sim.Gen.gen arch in
+         match mode with
+         | `Instr ->
+             let cover_instr =
+               Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4
+                 filenames_stf
+             in
+             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
+               cover_instr spec_sl
+         | `Dangling -> assert false
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -306,17 +440,13 @@ let interesting_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner `SL filenames_spec in
-         let result =
-           Runner.run_program ~derive:false spec_sim relname includes_p4
-             filename_p4
+         let result, cover =
+           run_with_dangling `SL filenames_spec relname includes_p4 filename_p4
          in
          match result with
-         | Pass (_, _, _, cover_single) ->
+         | Pass _ ->
              if check_well_typed then (
-               let branch =
-                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -330,14 +460,15 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | Fail (_, _, cover_single) -> (
+         | Fail (`Syntax _) ->
+             Printf.printf "IllFormed";
+             exit 12
+         | Fail (`Runtime _) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch =
-                 Runtime.Testgen_neg.Dangling.Single.Cover.find pid cover_single
-               in
+               let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";
@@ -348,9 +479,6 @@ let interesting_command =
                | Miss [] ->
                    Printf.printf "IllTyped: Miss\n";
                    exit 1)
-         | IllFormed _ ->
-             Printf.printf "IllFormed";
-             exit 12
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -522,8 +650,10 @@ let command =
       (* Execution *)
       ("run", run_command);
       ("sim", sim_command);
+      (* Coverage *)
+      ("cover", cover_command);
+      ("cover-sim", cover_sim_command);
       (* Negative type checker test generation and coverage *)
-      ("cover-dangling", cover_dangling_command);
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);

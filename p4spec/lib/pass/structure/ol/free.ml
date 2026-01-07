@@ -21,10 +21,10 @@ let rec free_instr (instr : instr) : t =
       free_exps exps + free_instrs instrs_then + free_instrs instrs_else
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
   | OtherwiseI instr -> free_instr instr
-  | GroupI (_, exps, instrs) -> free_exps exps + free_instrs instrs
+  | GroupI (_, _, exps, instrs) -> free_exps exps + free_instrs instrs
   | LetI (exp_l, exp_r, _) -> free_exp exp_l + free_exp exp_r
   | RuleI (_, (_, exps), _) -> free_exps exps
-  | ResultI exps -> free_exps exps
+  | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
   | DebugI exp -> free_exp exp
 

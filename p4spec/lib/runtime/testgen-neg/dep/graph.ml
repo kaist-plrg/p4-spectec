@@ -14,12 +14,14 @@ module G = Hashtbl.Make (struct
   let hash = Hashtbl.hash
 end)
 
-type t = { nodes : Node.t G.t; edges : Edges.t G.t }
+type t = { root : vid; nodes : Node.t G.t; edges : Edges.t G.t }
 
 (* Constructor *)
 
-let empty () : t = { nodes = G.create 0; edges = G.create 0 }
-let init () : t = { nodes = G.create 100000; edges = G.create 100000 }
+let empty () : t = { root = -1; nodes = G.create 0; edges = G.create 0 }
+
+let init () : t =
+  { root = -1; nodes = G.create 100000; edges = G.create 100000 }
 
 (* Size *)
 
@@ -95,7 +97,7 @@ let find_node (graph : t) (vid : vid) : Node.t option =
 let rec assemble_graph (value : value) : t =
   let graph = init () in
   assemble_graph' graph value;
-  graph
+  { graph with root = value.note.vid }
 
 and assemble_graph' (graph : t) (value : value) : unit =
   (match value.it with
@@ -148,6 +150,9 @@ and reassemble_graph' (graph : t) (renamer : value VIdMap.t) (vid : vid) : value
     | ExternN json -> ExternV json
   in
   value $$$ { vid; typ }
+
+let reassemble_graph_from_root (graph : t) (renamer : value VIdMap.t) : value =
+  reassemble_graph graph renamer graph.root
 
 (* Dot output *)
 
