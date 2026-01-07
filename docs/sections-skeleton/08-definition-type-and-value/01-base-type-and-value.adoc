@@ -6,16 +6,16 @@ P4 supports the following built-in base types:
 [[baseType]]
 ${syntax: baseType}
 
+* `bool`, which represents Boolean values
 * The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
-* The `string` type, which can be used with compile-time known
-  values of type string.
 * The `match_kind` type, which is used for describing the implementation of
   table lookups,
-* `bool`, which represents Boolean values
+* The `string` type, which can be used with compile-time known
+  values of type string.
 * `int`, which represents arbitrary-sized integer values
-* Bit-strings of fixed width, denoted by `bit<>`
 * Fixed-width signed integers represented using two's complement `int<>`
+* Bit-strings of fixed width, denoted by `bit<>`
 * Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`
 
 // Added
@@ -90,7 +90,7 @@ ${syntax: errorTypeIR errorValue}
 // Section 7.1.2 of the P4-16 Language Specification
 The error type contains opaque distinct values that can be used to signal
 errors. It is written as `error`. New elements of the error type
-are defined with the syntax:
+are defined with the following syntax:
 
 ${syntax: errorDeclaration}
 
@@ -174,12 +174,12 @@ ${syntax: stringTypeIR stringValue}
 
 // Section 7.1.5 of the P4-16 Language Specification
 The type `string` represents strings. The values of type `string` are either
-string literals, or concatenations of multiple `string`-typed expression.
+string literals, or concatenations of multiple `string`-typed expressions.
 // Operations that can be performed on strings are described in Section
 // <<sec-string-ops>>.
 
 One cannot declare variables with a `string` type. Parameters with type
-`string` can be only directionless (see Section <<#sec-calling-convention>>).
+`string` can be only directionless (see Section <<sec-call-convention>>).
 P4 does not support string manipulation in the dataplane; the `string` type is
 only allowed for describing compile-time known values (i.e., string literals,
 as discussed in Section <<sec-string-literals>>). Even so, the string type is
@@ -267,7 +267,7 @@ precision. This type is written as `int`.
 
 This type is reserved for integer literals and expressions that involve only
 literals. No P4 runtime value can have an `int` type; at compile time the
-compiler will convert all int values that have a runtime component to
+compiler will convert all `int` values that have a runtime component to
 fixed-width types, according to the rules described below.
 
 // All operations that can be performed on arbitrary-precision integers are
@@ -286,13 +286,51 @@ Parameters with type `int` are not supported for actions. Parameters with type
 `int` for other callable entities of a program, e.g. controls, parsers, or
 functions, must be directionless, indicating that all calls must provide a
 compile-time known value as an argument for such a parameter.  See
-<<sec-calling-convention>> for more details on directionless parameters.
+<<sec-call-convention>> for more details on directionless parameters.
 
 [discrete]
 ====== Type checking
 
 ${rulegroup: Type_ok/arbitraryInt}
 ${ruleprose: Type_ok/arbitraryInt}
+
+===== Fixed-width unsigned integers (bit-strings)
+
+// Section 7.1.6.2 of the P4-16 Language Specification
+An unsigned integer (which we also call a "bit-string") has an arbitrary width,
+expressed in bits. A bit-string of width `W` is declared as: `bit<W>`. `W` must
+be an expression that evaluates to a local compile-time known value (see
+<<sec-compile-time-known>>) that is a non-negative integer. When using an
+expression for the size, the expression must be parenthesized. Bitstrings with
+width 0 are allowed; they have no actual bits, and can only have the value 0.
+See <<sec-uninitialized-values-and-writing-invalid-headers>> for additional
+details. Note that `bit<W>` type refers to both cases of `bit<W>` and
+`bit<(expression)>` where the width is a local compile-time known value.
+
+[source,p4]
+----
+const bit<32> x = 10;   // 32-bit constant with value 10.
+const bit<(x + 2)> y = 15;  // 12-bit constant with value 15.
+                            // expression for width must use ()
+----
+
+Bits within a bit-string are numbered from `0` to `W-1`. Bit `0` is the least
+significant, and bit `W-1` is the most significant.
+
+For example, the type `bit<128>` denotes the type of bit-string values with 128
+bits numbered from 0 to 127, where bit 127 is the most significant.
+
+The type `bit` is a shorthand for `bit<1>`.
+
+P4 architectures may impose additional constraints on bit types: for example,
+they may limit the maximum size, or they may only support some arithmetic
+operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
+
+[discrete]
+====== Type checking
+
+${rulegroup: Type_ok/fixedBit}
+${ruleprose: Type_ok/fixedBit}
 
 ===== Fixed-width signed integers
 
@@ -323,44 +361,6 @@ A signed integer with width 1 can only have two legal values: 0 and -1.
 ${rulegroup: Type_ok/fixedInt}
 ${ruleprose: Type_ok/fixedInt}
 
-===== Fixed-width unsigned integers (bit-strings)
-
-// Section 7.1.6.2 of the P4-16 Language Specification
-An unsigned integer (which we also call a "bit-string") has an arbitrary width,
-expressed in bits. A bit-string of width `W` is declared as: `bit<W>`. `W` must
-be an expression that evaluates to a local compile-time known value (see
-<<sec-compile-time-known>>) that is a non-negative integer. When using an
-expression for the size, the expression must be parenthesized. Bitstrings with
-width 0 are allowed; they have no actual bits, and can only have the value 0.
-See <<sec-uninitialized-values-and-writing-invalid-headers>> for additional
-details. Note that `bit<W>` type refers to both cases of `bit<W>` and
-`bit<(expression)>` where the width is a compile-time known value.
-
-[source,p4]
-----
-const bit<32> x = 10;   // 32-bit constant with value 10.
-const bit<(x + 2)> y = 15;  // 12-bit constant with value 15.
-                            // expression for width must use ()
-----
-
-Bits within a bit-string are numbered from `0` to `W-1`. Bit `0` is the least
-significant, and bit `W-1` is the most significant.
-
-For example, the type `bit<128>` denotes the type of bit-string values with 128
-bits numbered from 0 to 127, where bit 127 is the most significant.
-
-The type `bit` is a shorthand for `bit<1>`.
-
-P4 architectures may impose additional constraints on bit types: for example,
-they may limit the maximum size, or they may only support some arithmetic
-operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
-
-[discrete]
-====== Type checking
-
-${rulegroup: Type_ok/fixedBit}
-${ruleprose: Type_ok/fixedBit}
-
 ===== Dynamically-sized bit-strings
 
 Some network protocols use fields whose size is only known at runtime (e.g.,
@@ -374,7 +374,7 @@ type `varbit<120>` denotes the type of bit-string values that may have between
 0 and 120 bits. Most operations that are applicable to fixed-size bit-strings
 (unsigned numbers) *cannot* be performed on dynamically sized bit-strings.
 Note that `varbit<W>` type refers to both cases of `varbit<W>` and
-`varbit<(expression)>` where the width is a compile-time known value.
+`varbit<(expression)>` where the width is a local compile-time known value.
 
 P4 architectures may impose additional constraints on varbit types: for
 example, they may limit the maximum size, or they may require `varbit` values
