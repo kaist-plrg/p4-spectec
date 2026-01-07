@@ -114,8 +114,8 @@ let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
   try
     (match Runner.run_program spec_sim relname includes_p4 filename_p4 with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
-    | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start))
-    | IllFormed (at, msg) -> raise (TestRunErr (msg, at, time_start)));
+    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
+        raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err
@@ -246,8 +246,8 @@ let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
        Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
      with
     | Pass -> ()
-    | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start))
-    | IllFormed (at, msg) -> raise (TestRunErr (msg, at, time_start)));
+    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
+        raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err

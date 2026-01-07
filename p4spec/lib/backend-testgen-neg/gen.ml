@@ -89,7 +89,8 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
       in
       update_hit_new' fuel pid idx_seed strategy idx_method idx_mutation config
         log filename_hit_p4 kind true pids_hit_new
-  | Fail (_, _) when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
+  | Fail (`Runtime _)
+    when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
       in
@@ -460,7 +461,7 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
             filename_p4 vdg cover);
       Dep.Graph.G.reset vdg.nodes;
       Dep.Graph.G.reset vdg.edges
-  | Fail _ | IllFormed _ ->
+  | Fail _ ->
       F.asprintf "[F %d] [P %d] [S %d] SL interpreter failed on %s" fuel pid
         idx_seed filename_p4
       |> Logger.log config.modes.logmode log);

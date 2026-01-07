@@ -1572,8 +1572,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       in
       (Sim.Pass values_output : Sim.program_result)
     with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
+    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+    | Util.Error.InterpError (at, msg) -> Sim.Fail (`Runtime (at, msg))
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =

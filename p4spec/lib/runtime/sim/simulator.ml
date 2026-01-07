@@ -16,13 +16,11 @@ type func_result = Pass of Value.t | Fail of region * string
 
 type program_result =
   | Pass of Value.t list
-  | Fail of region * string
-  | IllFormed of region * string
+  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
 type stf_result =
   | Pass
-  | Fail of region * string
-  | IllFormed of region * string
+  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
 module type ARCH = sig
   (* Coverage *)

@@ -138,8 +138,8 @@ let run_command =
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -173,8 +173,8 @@ let sim_command =
            Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
          with
          | Pass -> Format.printf "passed\n"
-         | Fail (_, msg) -> Format.printf "failed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
@@ -460,7 +460,10 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | Fail (_, _) -> (
+         | Fail (`Syntax _) ->
+             Printf.printf "IllFormed";
+             exit 12
+         | Fail (`Runtime _) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
@@ -476,9 +479,6 @@ let interesting_command =
                | Miss [] ->
                    Printf.printf "IllTyped: Miss\n";
                    exit 1)
-         | IllFormed _ ->
-             Printf.printf "IllFormed";
-             exit 12
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->

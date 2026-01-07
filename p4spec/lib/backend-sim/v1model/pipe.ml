@@ -293,7 +293,7 @@ struct
     match program_result with
     | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
     | Pass _ -> error_no_region "unexpected return from V1Model_init"
-    | Fail (at, msg) | IllFormed (at, msg) -> error at msg
+    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
 
   (* Pipeline driver *)
 

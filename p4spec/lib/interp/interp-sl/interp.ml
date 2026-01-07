@@ -1940,9 +1940,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let values_output = do_eval_rel ctx spec relname [ value_program ] in
       Sim.Pass values_output
     with
-    | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
+    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
     | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-        Sim.Fail (at, msg)
+        Sim.Fail (`Runtime (at, msg))
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
       Sim.rel_result =
@@ -1961,7 +1961,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let value_output = do_eval_func ctx spec funcname targs values_input in
       Sim.Pass value_output
-    with
-    | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
-    | Util.Error.ArchError (at, msg) -> Sim.Fail (at, msg)
+    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+      Sim.Fail (at, msg)
 end

@@ -69,7 +69,6 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
   in
   match program_result with
   | Fail _ -> print_endline "failed"
-  | IllFormed _ -> print_endline "ill-formed"
   | Pass _ ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =

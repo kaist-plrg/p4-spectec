@@ -207,10 +207,10 @@ module Make
       run_stf_stmts value_ctx value_sto stf_stmts;
       Pass
     with
-    | Util.Error.ParseError (at, msg) -> IllFormed (at, msg)
-    | Util.Error.InterpError (at, msg) -> Fail (at, msg)
-    | Util.Error.ArchError (at, msg) -> Fail (at, msg)
-    | Util.Error.StfError msg -> Fail (no_region, msg)
+    | Util.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))
+    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+        Fail (`Runtime (at, msg))
+    | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
 
   (* Coverage runner *)
 
@@ -273,8 +273,8 @@ module Make
         let wellformed, welltyped =
           match program_result_sl with
           | Pass _ -> (true, true)
-          | Fail _ -> (true, false)
-          | IllFormed _ -> (false, false)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
         in
         DCov_multi.extend cover_multi filename_p4 wellformed welltyped
           cover_single)
