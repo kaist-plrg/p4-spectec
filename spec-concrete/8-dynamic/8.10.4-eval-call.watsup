@@ -159,7 +159,7 @@ rulegroup Call_eval/actionCallee {
   rule Call_eval/block-copyin-cont-ActionBody-exit:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_3 STO_2 (RETURN eps)
+                  : EC_3 STO_2 EXIT
     ---- ;; unpack the action callee
     ---- ;; if the action is in a block
     -- if ACTION BLOCK `. nameIR
@@ -896,20 +896,43 @@ rulegroup Call_eval/controlApplyMethodCallee {
 
 ;;;; tableApplyMethodCallee
 
-rule Call_eval/tableApplyMethodCallee:
-  p EC_0 STO_0 |- tableApplyMethodCallee
-                  `@ `< typeArgumentListIR > `( argumentListIR )
-                : EC_1 STO_1 returnResult
-  ---- ;; unpack the table apply method callee
-  -- if TABLE objectId `. APPLY `{ frame `; TBL }
-      = tableApplyMethodCallee
-  ---- ;; create the callee context
-  -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
-  -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
-  ---- ;; evaluate match-action
-  -- if typeId :: _ = $rev_<id>(objectId)
-  -- Table_eval:
-      EC_callee_1 STO_0 |- typeId TBL
-                         : EC_callee_2 STO_1 returnResult
-  ---- ;; propagate shared layers
-  -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
+rulegroup Call_eval/tableApplyMethodCallee {
+
+    rule Call_eval/tableApplyMethodCallee-return:
+      p EC_0 STO_0 |- tableApplyMethodCallee
+                      `@ `< typeArgumentListIR > `( argumentListIR )
+                    : EC_1 STO_1 returnResult
+      ---- ;; unpack the table apply method callee
+      -- if TABLE objectId `. APPLY `{ frame `; TBL }
+          = tableApplyMethodCallee
+      ---- ;; create the callee context
+      -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+      -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
+      ---- ;; evaluate match-action
+      -- if typeId :: _ = $rev_<id>(objectId)
+      -- Table_eval:
+          EC_callee_1 STO_0 |- typeId TBL
+                             : EC_callee_2 STO_1 returnResult
+      ---- ;; propagate shared layers
+      -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
+
+    rule Call_eval/tableApplyMethodCallee-exit:
+      p EC_0 STO_0 |- tableApplyMethodCallee
+                      `@ `< typeArgumentListIR > `( argumentListIR )
+                    : EC_1 STO_1 EXIT
+      ---- ;; unpack the table apply method callee
+      -- if TABLE objectId `. APPLY `{ frame `; TBL }
+          = tableApplyMethodCallee
+      ---- ;; create the callee context
+      -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+      -- if EC_callee_1 = EC_callee_0[ .LOCAL.FRAMES = [ frame ] ]
+      ---- ;; evaluate match-action
+      -- if typeId :: _ = $rev_<id>(objectId)
+      -- Table_eval:
+          EC_callee_1 STO_0 |- typeId TBL
+                             : EC_callee_2 STO_1 EXIT
+      ---- ;; propagate shared layers
+      -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
+
+}
+
