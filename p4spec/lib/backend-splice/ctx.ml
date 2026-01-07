@@ -5,8 +5,8 @@ open Util.Source
 (* Context *)
 
 module SyntaxMap = Map.Make (Kinds.SyntaxId)
-module RelationMap = Map.Make (Kinds.RelationId)
 module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
+module RelationProseMap = Map.Make (Kinds.RelationId)
 module RuleProseMap = Map.Make (Kinds.RuleProseId)
 module FuncProseMap = Map.Make (Kinds.FuncProseId)
 module TableMap = Map.Make (Kinds.TableId)
@@ -14,8 +14,8 @@ module TableMap = Map.Make (Kinds.TableId)
 type t = {
   filename : string;
   mutable syntax : Kinds.syntax SyntaxMap.t;
-  mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
+  mutable relationprose : Kinds.relationprose RelationProseMap.t;
   mutable ruleprose : Kinds.ruleprose RuleProseMap.t;
   mutable funcprose : Kinds.funcprose FuncProseMap.t;
   mutable tables : Kinds.table TableMap.t;
@@ -28,9 +28,6 @@ let init_el_def (ctx : t) (def_el : El.def) : unit =
   | TypD (id_syntax, tparams, deftyp, hints) ->
       let syntax = (tparams, deftyp, hints) in
       ctx.syntax <- SyntaxMap.add id_syntax.it syntax ctx.syntax
-  | RelD (id_rel, nottyp, hints) ->
-      let relation = (nottyp, hints) in
-      ctx.relation <- RelationMap.add id_rel.it relation ctx.relation
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       let rulegroup = rules in
       ctx.rulegroup <-
@@ -50,6 +47,8 @@ let init_pl_def (ctx : t) (def_sl : Pl.def) : unit =
         | Pl.MathRelTitle (id_rel, _, _) ->
             id_rel
       in
+      ctx.relationprose <-
+        RelationProseMap.add id_rel.it rel_title ctx.relationprose;
       List.iter
         (fun rulegroup ->
           let rulegroup_title, _ = rulegroup in
@@ -94,8 +93,8 @@ let init (spec_el : El.spec) (spec_pl : Pl.spec) (filename : string) : t =
     {
       filename;
       syntax = SyntaxMap.empty;
-      relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;
+      relationprose = RelationProseMap.empty;
       ruleprose = RuleProseMap.empty;
       funcprose = FuncProseMap.empty;
       tables = TableMap.empty;
@@ -113,12 +112,6 @@ let find_syntax (ctx : t) (id : Kinds.SyntaxId.t) : Kinds.syntax =
   | None ->
       error no_region ("syntax " ^ id ^ " was not found in " ^ ctx.filename)
 
-let find_relation (ctx : t) (id : Kinds.RelationId.t) : Kinds.relation =
-  match RelationMap.find_opt id ctx.relation with
-  | Some relation -> relation
-  | None ->
-      error no_region ("relation " ^ id ^ " was not found in " ^ ctx.filename)
-
 let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
   match RuleGroupMap.find_opt id ctx.rulegroup with
   | Some rulegroup -> rulegroup
@@ -127,6 +120,14 @@ let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
       error no_region
         ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found in "
        ^ ctx.filename)
+
+let find_relationprose (ctx : t) (id : Kinds.RelationId.t) : Kinds.relationprose
+    =
+  match RelationProseMap.find_opt id ctx.relationprose with
+  | Some relationprose -> relationprose
+  | None ->
+      error no_region
+        ("relationprose " ^ id ^ " was not found in " ^ ctx.filename)
 
 let find_ruleprose (ctx : t) (id : Kinds.RuleProseId.t) : Kinds.ruleprose =
   match RuleProseMap.find_opt id ctx.ruleprose with

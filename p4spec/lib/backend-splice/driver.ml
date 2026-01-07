@@ -27,8 +27,8 @@ and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
   let result = ref "" in
   ignore
     (try_splice_anchor (module Splicer.Syntax) ctx source result
-    || try_splice_anchor (module Splicer.Relation) ctx source result
     || try_splice_anchor (module Splicer.RuleGroup) ctx source result
+    || try_splice_anchor (module Splicer.RelationProse) ctx source result
     || try_splice_anchor (module Splicer.RuleProse) ctx source result
     || try_splice_anchor (module Splicer.FuncProse) ctx source result
     || try_splice_anchor (module Splicer.Table) ctx source result);

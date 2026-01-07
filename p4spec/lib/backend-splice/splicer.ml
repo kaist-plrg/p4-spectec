@@ -37,30 +37,6 @@ module Syntax : Splice = struct
     |> String.concat "\n\n"
 end
 
-(* Relation splicer *)
-
-module Relation : Splice = struct
-  type key = Kinds.RelationId.t
-  type value = Kinds.relation
-
-  let name = "relation"
-  let prefix = Some "\n----\n"
-  let suffix = Some "\n----"
-
-  let parse_keys (source : Source.t) : key list =
-    Parser.parse_relation_ids source
-
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_relation ctx) keys
-
-  let render (keys : key list) (value : value list) : string =
-    List.map2
-      (fun (id_rel : key) ((nottyp, hints) : value) ->
-        El.Render.render_relation_def (id_rel $ no_region) nottyp hints)
-      keys value
-    |> String.concat "\n\n"
-end
-
 (* Rule group splicer *)
 
 module RuleGroup : Splice = struct
@@ -86,6 +62,30 @@ module RuleGroup : Splice = struct
         El.Render.render_rulegroup_def (id_rel $ no_region)
           (id_rulegroup $ no_region) rules)
       keys values
+    |> String.concat "\n\n"
+end
+
+(* Relation prose splicer *)
+
+module RelationProse : Splice = struct
+  type key = Kinds.RelationId.t
+  type value = Kinds.relationprose
+
+  let name = "relation"
+  let prefix = None
+  let suffix = None
+
+  let parse_keys (source : Source.t) : key list =
+    Parser.parse_relation_ids source
+
+  let find_values (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.find_relationprose ctx) keys
+
+  let render (keys : key list) (value : value list) : string =
+    List.map2
+      (fun (_id_rel : key) (rel_title : value) ->
+        Pl.Render.render_rel_title rel_title)
+      keys value
     |> String.concat "\n\n"
 end
 

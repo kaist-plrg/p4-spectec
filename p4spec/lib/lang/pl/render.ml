@@ -511,17 +511,22 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
   | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input
+      F.asprintf "%s: %s"
+        (Sl.Print.string_of_relid id_rel)
+        (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
-      F.asprintf "%s be the result of %s"
-        (render_alter_hint ~caps:true in_prose hint_output render_exp
+      F.asprintf "%s: %s results in %s"
+        (Sl.Print.string_of_relid id_rel)
+        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input)
+        (render_alter_hint ~caps:false in_prose hint_output render_exp
            exps_output)
-        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input
-        |> as_link in_prose ~link:(string_of_relid id_rel))
+      |> as_link in_prose ~link:(string_of_relid id_rel)
   | MathRelTitle (id_rel, mixop, exps) ->
-      code_of_notexp in_prose (mixop, exps)
+      F.asprintf "%s: %s"
+        (Sl.Print.string_of_relid id_rel)
+        (code_of_notexp in_prose (mixop, exps))
       |> as_link in_prose ~link:(string_of_relid id_rel)
 
 (* Extern relation definitions *)

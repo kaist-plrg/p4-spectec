@@ -753,7 +753,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_tables">7.3.1.1.2. Tables</a></li>
 <li><a href="#_keys">7.3.1.1.3. Keys</a></li>
 <li><a href="#_actions">7.3.1.1.4. Actions</a></li>
-<li><a href="#_instances">7.3.1.1.5. Instances</a></li>
+<li><a href="#sec-cp-names">7.3.1.1.5. Instances</a></li>
 </ul>
 </li>
 <li><a href="#_annotations_controlling_naming">7.3.1.2. Annotations controlling naming</a></li>
@@ -768,8 +768,8 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#_evaluating_a_p4_program">7.4.1. Evaluating a P4 program</a></li>
 <li><a href="#_evaluation_context">7.4.2. Evaluation context</a></li>
-<li><a href="#sec-abstract-machine-dynamic-evaluation-parser">7.4.3. The Parser abstract machine</a></li>
-<li><a href="#_the_match_action_pipeline_abstract_machine">7.4.4. The Match-Action Pipeline Abstract Machine</a></li>
+<li><a href="#sec-abstract-machine-dynamic-evaluation-parser">7.4.3. The parser abstract machine</a></li>
+<li><a href="#_the_match_action_pipeline_abstract_machine">7.4.4. The match-action pipeline abstract machine</a></li>
 <li><a href="#_concurrency_model">7.4.5. Concurrency model</a></li>
 </ul>
 </li>
@@ -2905,121 +2905,6 @@ may provide a warning if multiple resolutions are possible for the same name
 </div>
 </div>
 <div class="paragraph">
-<p>For example, the below helper function finds the value of a variable in the
-evaluation context.</p>
-</div>
-<div class="paragraph">
-<p><a href="#find_var_e">The value of <code>prefixedNameIR</code> in <code>EC</code> at <code>p</code></a></p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>. id</code> be <code>prefixedNameIR</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_map"><code>EC.GLOBAL.FRAME</code>[<code>id</code>]</a>.</p>
-</li>
-<li>
-<p>Return <code>value</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> matches pattern <code>GLOBAL</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>` %</code>.</p>
-</li>
-<li>
-<p>Let <code>id</code> be <code>prefixedNameIR</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_map"><code>EC.GLOBAL.FRAME</code>[<code>id</code>]</a>.</p>
-</li>
-<li>
-<p>Return <code>value</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>p</code> matches pattern <code>BLOCK</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>` %</code>.</p>
-</li>
-<li>
-<p>Let <code>id</code> be <code>prefixedNameIR</code>.</p>
-</li>
-<li>
-<p>Let <code>value'<sup>?</sup></code> be <a href="#find_map"><code>EC.BLOCK.FRAME</code>[<code>id</code>]</a>.</p>
-</li>
-<li>
-<p>If let <code>value</code> be <code>value'<sup>?</sup></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Return <code>value</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>None</code> is equal to <a href="#find_map"><code>EC.BLOCK.FRAME</code>[<code>id</code>]</a>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Return <code><a href="#find_var_e">find_var_e(GLOBAL, EC, id)</a></code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>p</code> matches pattern <code>LOCAL</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>` %</code>.</p>
-</li>
-<li>
-<p>Let <code>id</code> be <code>prefixedNameIR</code>.</p>
-</li>
-<li>
-<p>Let <code>value'<sup>?</sup></code> be <a href="#find_maps"><code>EC.LOCAL.FRAMES</code>[<code>id</code>]</a>.</p>
-</li>
-<li>
-<p>If let <code>value</code> be <code>value'<sup>?</sup></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Return <code>value</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>None</code> is equal to <a href="#find_maps"><code>EC.LOCAL.FRAMES</code>[<code>id</code>]</a>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Return <code><a href="#find_var_e">find_var_e(BLOCK, EC, id)</a></code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-<div class="paragraph">
 <p>The order of declarations is important; with the exception of parser states,
 all uses of a symbol must follow the symbol&#8217;s declaration. (This is a departure
 from P4<sub>14</sub>, which allows declarations in any order. This requirement
@@ -3512,15 +3397,15 @@ unions, etc.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>preprocessing</strong>: at compile time the P4 program is preprocessed to handle
+<p><strong>preprocessing</strong>: at compile time, the P4 program is preprocessed to handle
 directives such as <code>#include</code> and <code>#define</code>.</p>
 </li>
 <li>
-<p><strong>type checking</strong>: at compile time the P4 program is type checked according to
+<p><strong>type checking</strong>: at compile time, the P4 program is type checked according to
 the P4 type system.</p>
 </li>
 <li>
-<p><strong>instantiation</strong>: at compile time all stateful blocks in the P4 program are
+<p><strong>instantiation</strong>: at compile time, all stateful blocks in the P4 program are
 instantiated.</p>
 </li>
 <li>
@@ -3548,7 +3433,7 @@ holds all instantiated stateful blocks.</p>
 </div>
 <div class="paragraph">
 <p>The dynamic evaluation stage is described in
-<a href="#sec-abstract-machine-dynamic-evaluation">Section 7.4</a>. It describes how each P4 blocks,
+<a href="#sec-abstract-machine-dynamic-evaluation">Section 7.4</a>. It describes how each P4 block,
 represented as stateful objects within the global store, is executed to
 completion. These blocks are orchestrated by the architecture to compose the
 overall packet processing pipeline.</p>
@@ -3569,7 +3454,7 @@ added or gathered from various sections of the P4 Language Specification.
 <div class="sect2">
 <h3 id="sec-abstract-machine-preprocessing">7.1. Preprocessing</h3>
 <div class="paragraph">
-<p>To aid composition of programs from multiple source files P4 compilers should
+<p>To aid the composition of programs from multiple source files, P4 compilers should
 support the following subset of the C preprocessor functionality:</p>
 </div>
 <div class="ulist">
@@ -3775,7 +3660,7 @@ program, <code>p4programIR</code>:</p>
 <p>Let <code>TC<sub>0</sub></code> be <a href="#empty_typingContext">an empty typing context</a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR<sup>*</sup></code> be the result of <a href="#Decls_ok">typing <code>declaration<sup>*</sup></code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code>, and the modified typing context</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> and <code>declarationIR<sup>*</sup></code> be the result of <a href="#Decls_ok">typing <code>declaration<sup>*</sup></code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in the typed P4 program <code>declarationIR<sup>*</sup> ;</code>.</p>
@@ -3838,7 +3723,7 @@ and whether it is associated with a compile-time known value (<code>value?</code
 <p>The compile-time known-ness is discussed in <a href="#sec-compile-time-known">[sec-compile-time-known]</a>.</p>
 </div>
 <div class="paragraph">
-<p>Notice that <code>localTypingLayer</code> contains multiple `frame`s. This is because a
+<p>Notice that <code>localTypingLayer</code> contains multiple `typeFrame`s. This is because a
 local scope can be nested with block statements.</p>
 </div>
 <div class="listingblock">
@@ -4252,7 +4137,7 @@ action. For example:</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_instances">7.3.1.1.5. Instances</h6>
+<h6 id="sec-cp-names">7.3.1.1.5. Instances</h6>
 <div class="paragraph">
 <p>The local names of <code>extern</code>, <code>parser</code>, and <code>control</code> instances are derived
 based on how the instance is used. If the instance is bound to a name, that
@@ -4283,7 +4168,7 @@ example, if <code>extern</code> <code>E</code> and <code>control</code> <code>C<
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> E <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
-<span style="color: #cf222e">control</span> C<span style="color: #24292f;background-color: #f6f8fa">(</span> <span style="color: #6e7781">/* parameters omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">)(</span>E e_in<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+<span style="color: #cf222e">control</span> C<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)(</span>E e_in<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4403,8 +4288,8 @@ Consider the following example.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">(</span> <span style="color: #6e7781">/* parameters omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">)()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
-    <span style="color: #cf222e">action</span> a <span style="color: #24292f;background-color: #f6f8fa">(</span> <span style="color: #6e7781">/* parameters omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">action</span> a <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
     <span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
         keys <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
         <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
@@ -4419,7 +4304,7 @@ table which action <code>a</code> refers to.</p>
 </div>
 <div class="paragraph">
 <p>Not all unambiguous postfix shortcuts are recommended. For instance, consider
-the first example in <a href="#sec-cp-names">[sec-cp-names]</a>. One might be tempted to refer to <code>s.c1</code>
+the last example in <a href="#sec-cp-names">Section 7.3.1.1.5</a>. One might be tempted to refer to <code>s.c1</code>
 simply as <code>c1</code>, as no other instance named <code>c1</code> appears in the program.
 However, this leads to a brittle program since future modifications can never
 introduce an instance named <code>c1</code>, or include libraries of P4 code that contain
@@ -4567,7 +4452,7 @@ callableDefEnv = map&lt;callableId, callableDef&gt;</code></pre>
 </div>
 <div class="paragraph">
 <p><code>callableDefEnv</code> is a map from callable names to their definitions,
-<code>callableDefIR</code>.</p>
+<code>callableDef</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -4584,7 +4469,7 @@ constructorDefEnv = map&lt;callableId, constructorDef&gt;</code></pre>
 </div>
 <div class="paragraph">
 <p>Stateful objects are instantiated using constructors. <code>constructorDefEnv</code> is a
-map from constructor names to their definitions, <code>constructorDefIR</code>.</p>
+map from constructor names to their definitions, <code>constructorDef</code>.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -4607,7 +4492,7 @@ Added explanation for the typing context. Is this the right place?
 model. Each architecture model needs to specify the order and the conditions
 under which the various P4 component programs are dynamically executed. For
 example, in the Simple Switch example from <a href="#sec-vss-arch">Section 5.1</a> the execution flow
-goes <code>Parser&#8594;Pipe&#8594;Deparser</code>.</p>
+goes <code>Parser &#8594; Pipe &#8594; Deparser</code>.</p>
 </div>
 <div class="paragraph">
 <p>Once a P4 execution block is invoked its execution proceeds until termination
@@ -4635,14 +4520,8 @@ Edited contents from Section 18.4.
 <div class="paragraph">
 <p>A call to a programmable block invokes the corresponding abstract machine:</p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation Call_eval:
-   cursor evalContext store |- callee @ `&lt; typeArgumentListIR &gt; `( argumentListIR ) : evalContext store callResult
-   hint(input %0 %1 %2 %3 %4 %5)
-   hint(prose_in "calling" %3#%4#%5 ", under cursor" %0#", evaluation context" %1#", and store" %2)
-   hint(prose_out "the resulting evaluation context" %6#", store" %7#", and call result" %8)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Call_eval">Call_eval: <code>p EC<sub>0</sub> STO<sub>0</sub> |- callee @ &lt; typeArgumentListIR &gt; ( argumentListIR ) : % % %</code></a></p>
 </div>
 <div class="paragraph">
 <p>A call to an extern method invokes the corresponding extern method:</p>
@@ -4715,7 +4594,7 @@ Added explanation for the evaluation context. Is this the right place?
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-abstract-machine-dynamic-evaluation-parser">7.4.3. The Parser abstract machine</h4>
+<h4 id="sec-abstract-machine-dynamic-evaluation-parser">7.4.3. The parser abstract machine</h4>
 <div class="paragraph">
 <p>The semantics of a P4 parser can be formulated in terms of an abstract machine
 that manipulates a <code>ParserModel</code> data structure. This section describes this
@@ -4746,7 +4625,7 @@ along with the error recorded.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_the_match_action_pipeline_abstract_machine">7.4.4. The Match-Action Pipeline Abstract Machine</h4>
+<h4 id="_the_match_action_pipeline_abstract_machine">7.4.4. The match-action pipeline abstract machine</h4>
 <div class="paragraph">
 <p>We can describe the computational model of a match-action pipeline, embodied by
 a control block: the body of the control block is executed, similarly to the
@@ -4759,8 +4638,8 @@ execution of a traditional imperative program:</p>
 the control block.</p>
 </li>
 <li>
-<p>Execution of the <code>return</code> statement causes immediate termination of the
-execution of the current <code>control</code> block, and a return to the caller.</p>
+<p>Execution of the <code>return</code> statement causes the immediate termination of the
+execution of the current <code>control</code> block and a return to the caller.</p>
 </li>
 <li>
 <p>Execution of the <code>exit</code> statement causes the immediate termination of the
@@ -4920,27 +4799,16 @@ typeOrVoid
 <p><code>typeIR</code> is constructed from type checking the surface syntax of P4 types
 (<code>type</code>) with the following relation:</p>
 </div>
-<div id="Type_ok" class="listingblock">
-<div class="content">
-<pre>relation Type_ok:
-   cursor typingContext |- typeOrVoid : typeIR # typeId*
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the type" %3 "and a set of fresh type variables" %4)</pre>
-</div>
+<div id="Type_ok" class="paragraph">
+<p><a href="#Type_ok">Type_ok: <code>p TC |- typeOrVoid : % # %</code></a></p>
 </div>
 <div class="paragraph">
 <p>The P4 type system also imposes well-formedness constraints on types, which
 enforce additional restrictions on the structure of types, such as type
 nesting.</p>
 </div>
-<div id="Type_wf" class="listingblock">
-<div class="content">
-<pre>relation Type_wf:
-   bound |- typeIR
-   hint(input %0 %1)
-   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)</pre>
-</div>
+<div id="Type_wf" class="paragraph">
+<p><a href="#Type_wf">Type_wf: <code>B |- typeIR''</code></a></p>
 </div>
 <div class="paragraph">
 <p>The types represent the kinds of values that can be used in P4 programs. The
@@ -9149,13 +9017,8 @@ specialization:</p>
 <div class="paragraph">
 <p>The well-formedness rules for callable types are checked by:</p>
 </div>
-<div id="CallableType_wf" class="listingblock">
-<div class="content">
-<pre>relation CallableType_wf:
-   bound |- callableTypeIR
-   hint(input %0 %1)
-   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)</pre>
-</div>
+<div id="CallableType_wf" class="paragraph">
+<p><a href="#CallableType_wf">CallableType_wf: <code>B |- callableTypeIR</code></a></p>
 </div>
 <div class="paragraph">
 <p>The runtime representation of a callable is given by:</p>
@@ -9206,14 +9069,8 @@ the formal typing and well-formedness rules for parameters that implement the
 restrictions described there.</p>
 </div>
 <h4 id="_type_checking_25" class="discrete">Type checking</h4>
-<div class="listingblock">
-<div class="content">
-<pre>relation Parameter_ok:
-   cursor typingContext |- parameter : parameterIR # typeId*
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the parameter" %3 "and set of fresh type variables" %4)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Parameter_ok">Parameter_ok: <code>p TC |- annotationList direction type name initializerOpt : % # %</code></a></p>
 </div>
 <div class="paragraph">
 <p>Typing a parameter produces a <code>parameterIR</code> if it is well-typed. A parameter
@@ -9333,13 +9190,8 @@ rule Parameter_ok/initializer:
 </ol>
 </div>
 <h4 id="_well_formedness_16" class="discrete">Well-formedness</h4>
-<div class="listingblock">
-<div class="content">
-<pre>relation ParameterType_wf:
-   bound |- parameterIR
-   hint(input %0 %1)
-   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#ParameterType_wf">ParameterType_wf: <code>B |- _ direction typeIR _ constantInitializerIR<sup>?</sup></code></a></p>
 </div>
 <div class="paragraph">
 <p>A parameter type is well-formed when its type is well-formed. Also, the type
@@ -11845,7 +11697,7 @@ following are all legal constant declarations:</p>
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>constantDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12069,7 +11921,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sup>*</sup> ) nameIR None ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12126,7 +11978,7 @@ rule Decl_ok/instantiation-non-objectInitializer/specializedType:
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> ) nameIR None ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12516,7 +12368,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12600,7 +12452,7 @@ rule Decl_ok/instantiation-objectInitializer/specializedType:
 <p>Let <code>instantiationIR</code> be <code>annotationList typeIR<sub>object_init</sub> prefixedNameIR &lt; typeArgumentIR<sub>inferred</sub><sup>*</sup> &gt; ( argumentIR<sub>cast</sub><sup>*</sup> ) nameIR = { objectDeclarationIR<sup>*</sup> } ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12963,7 +12815,7 @@ functionDeclarationIR
 <p>Let <code>functionDeclarationIR</code> be <code>annotationList typeIR<sub>ret</sub> nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>4</sub></code> and the typed declaration <code>functionDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and the typed declaration <code>functionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -12995,7 +12847,7 @@ functionDeclarationIR
 <p>Let <code>functionDeclarationIR</code> be <code>annotationList typeIR<sub>ret</sub> nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>4</sub></code> and the typed declaration <code>functionDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and the typed declaration <code>functionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13129,7 +12981,7 @@ actionDeclarationIR
 <p>Let <code>actionDeclarationIR</code> be <code>annotationList ACTION nameIR ( parameterIR<sup>*</sup> ) blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>3</sub></code> and the typed declaration <code>actionDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>3</sub></code> and the typed declaration <code>actionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13321,7 +13173,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sub>error</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>ERROR { nameIR<sup>*</sup> }</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>ERROR { nameIR<sup>*</sup> }</code>.</p>
 </li>
 </ol>
 </div>
@@ -13523,7 +13375,7 @@ cannot declare new match kinds.</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>nameIR<sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>MATCH_KIND { nameIR<sup>*</sup> }</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>MATCH_KIND { nameIR<sup>*</sup> }</code>.</p>
 </li>
 </ol>
 </div>
@@ -13702,7 +13554,7 @@ externFunctionDeclarationIR
 <p>Let <code>externFunctionDeclarationIR</code> be <code>annotationList EXTERN typeIR<sub>ret</sub> nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>4</sub></code> and the typed declaration <code>externFunctionDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and the typed declaration <code>externFunctionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -13899,7 +13751,7 @@ externObjectDeclarationIR
 <p>Let <code>externObjectDeclarationIR</code> be <code>annotationList EXTERN nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , &gt; { externConstructorPrototypeIR<sup>*</sup> externMethodPrototypeIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>8</sub></code> and the typed declaration <code>externObjectDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>8</sub></code> and the typed declaration <code>externObjectDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -14209,7 +14061,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>parserDeclarationIR</code> be <code>annotationList PARSER nameIR &lt; · &gt; ( parameterIR<sup>*</sup> ) ( constructorParameterIR<sup>*</sup> ) { parserLocalDeclarationIR<sup>*</sup> parserStateIR<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>6</sub></code> and the typed declaration <code>parserDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>6</sub></code> and the typed declaration <code>parserDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -14372,7 +14224,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>controlDeclarationIR</code> be <code>annotationList CONTROL nameIR &lt; · &gt; ( parameterIR<sup>*</sup> ) ( constructorParameterIR<sup>*</sup> ) { controlLocalDeclarationIR<sup>*</sup> APPLY controlBodyIR }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>6</sub></code> and the typed declaration <code>controlDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>6</sub></code> and the typed declaration <code>controlDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -14611,7 +14463,7 @@ enumTypeDeclarationIR
 <p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>enumTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>enumTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -14880,7 +14732,7 @@ enumTypeDeclarationIR
 <p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList ENUM typeIR nameIR { namedExpressionIR<sub>field</sub><sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>3</sub></code> and the typed declaration <code>enumTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>3</sub></code> and the typed declaration <code>enumTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15087,7 +14939,7 @@ enumTypeDeclarationIR
 <p>Let <code>structTypeDeclarationIR</code> be <code>annotationList STRUCT nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>field</sub> typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>structTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>structTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15264,7 +15116,7 @@ enumTypeDeclarationIR
 <p>Let <code>headerTypeDeclarationIR</code> be <code>annotationList HEADER nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15441,7 +15293,7 @@ enumTypeDeclarationIR
 <p>Let <code>headerUnionTypeDeclarationIR</code> be <code>annotationList HEADER_UNION nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (annotationList<sub>f</sub> typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerUnionTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>2</sub></code> and the typed declaration <code>headerUnionTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15616,7 +15468,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPEDEF typeIR nameIR ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15682,7 +15534,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15717,7 +15569,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15921,7 +15773,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPE typeIR nameIR ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and the typed declaration <code>typedefDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -16052,7 +15904,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>parserTypeDeclarationIR</code> be <code>annotationList PARSER nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>3</sub></code> and the typed declaration <code>parserTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>3</sub></code> and the typed declaration <code>parserTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -16182,7 +16034,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>controlTypeDeclarationIR</code> be <code>annotationList CONTROL nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>3</sub></code> and the typed declaration <code>controlTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>3</sub></code> and the typed declaration <code>controlTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -16348,7 +16200,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>packageTypeDeclarationIR</code> be <code>annotationList PACKAGE nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( constructorParameterIR<sup>*</sup> ) ;</code>.</p>
 </li>
 <li>
-<p>Result in the modified typing context <code>TC<sub>4</sub></code> and the typed declaration <code>packageTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and the typed declaration <code>packageTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -16472,24 +16324,12 @@ statementIR
    ;</code></pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation Stmt_ok:
-   cursor typingContext flow loopctxt |- statement : typingContext flow statementIR
-   hint(input %0 %1 %2 %3 %4)
-   hint(prose_in "typing" %4#", under cursor" %0#", typing context" %1#", abstract control flow" %2#", and loop context" %3)
-   hint(prose_out "\nthe typing context" %5#",\nthe abstract control flow" %6#",\nand the typed statement" %7)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Stmt_ok">Stmt_ok: <code>p TC f l |- statement' : % % %</code></a></p>
 </div>
 <h5 id="_compile_time_evaluation_2" class="discrete">Compile-time evaluation</h5>
-<div class="listingblock">
-<div class="content">
-<pre>relation Stmt_inst:
-   cursor instContext store |- statementIR : instContext store statementIR
-   hint(input %0 %1 %2 %3)
-   hint(prose_in "the compile-time evaluation of" %3#", under cursor" %0#", instantiation context" %1#", and store" %2)
-   hint(prose_out "\nthe instantiation context" %4#",\nthe updated store" %5#",\nand the instantiated statement" %6)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Stmt_inst">Stmt_inst: <code>p IC STO |- statementIR : % % %</code></a></p>
 </div>
 <div class="sect2">
 <h3 id="sec-emptyStatement">12.1. Empty statements</h3>
@@ -16777,14 +16617,8 @@ rule Stmt_ok/assignmentStatement/compound:
    ;</code></pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation Lvalue_ok:
-   cursor typingContext |- lvalue : typedLvalueIR
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the typed lvalue" %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Lvalue_ok">Lvalue_ok: <code>p TC |- lvalue : %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -17559,23 +17393,9 @@ rule Stmt_ok/callStatement/callStatement-typeArgumentList:
    ;</code></pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation CallableTarget_ok:
-   cursor typingContext |- callableTarget : callableTargetIR
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the typed callable target" %3)</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>relation CallableTarget_lvalue_ok:
-   cursor typingContext |- lvalue : callableTargetIR
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the typed callable target" %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#CallableTarget_ok">CallableTarget_ok: <code>p TC |- callableTarget : %</code></a>
+<a href="#CallableTarget_lvalue_ok">CallableTarget_lvalue_ok: <code>p TC |- lvalue : %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -18522,14 +18342,8 @@ are only visible within the block.</p>
 </li>
 </ol>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation BlockElementStmt_ok:
-   typingContext flow loopctxt |- blockElementStatement : typingContext flow blockElementStatementIR
-   hint(input %0 %1 %2 %3)
-   hint(prose_in "typing" %3#", under typing context" %0#", abstract control flow" %1#", and loop context" %2)
-   hint(prose_out "\nthe typing context" %4#",\nthe abstract control flow" %5#",\nand the typed block element statement" %6)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#BlockElementStmt_ok">BlockElementStmt_ok: <code>TC<sub>0</sub> f l |- blockElementStatement : % % %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -18817,12 +18631,8 @@ rule BlockElementStmt_ok/variableDeclaration/initializer:
 </li>
 </ol>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation BlockElementStmt_inst:
-   instContext store |- blockElementStatementIR : instContext store blockElementStatementIR?
-   hint(input %0 %1 %2)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#BlockElementStmt_inst">BlockElementStmt_inst: <code>IC<sub>0</sub> STO<sub>0</sub> |- blockElementStatementIR : % % %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -19557,12 +19367,8 @@ table hit or miss. The <code>default</code> label does not indicate that the
 table missed and the <code>default_action</code> was executed.</p>
 </div>
 <h5 id="sem-type-check-switchStatement-table" class="discrete">Type checking</h5>
-<div class="listingblock">
-<div class="content">
-<pre>relation SwitchLabel_table_ok:
-   typingContext typeId bool |- switchLabel : switchLabelIR
-   hint(input %0 %1 %2 %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#SwitchLabel_table_ok">SwitchLabel_table_ok: <code>TC typeId<sub>table</sub> bool |- switchLabel : %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -19649,12 +19455,8 @@ rule SwitchLabel_table_ok/expressionNonBrace-prefixedNonTypeName:
 </li>
 </ol>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation SwitchCase_table_ok:
-   typingContext flow loopctxt typeId bool |- switchCase : flow switchCaseIR # switchLabel
-   hint(input %0 %1 %2 %3 %4 %5)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#SwitchCase_table_ok">SwitchCase_table_ok: <code>TC f l typeId<sub>table</sub> b<sub>last</sub> |- switchCase : % % # %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -19844,12 +19646,8 @@ ambiguity with a block statement.</p>
 <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation SwitchLabel_general_ok:
-   typingContext typeIR bool |- switchLabel : switchLabelIR
-   hint(input %0 %1 %2 %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#SwitchLabel_general_ok">SwitchLabel_general_ok: <code>TC typeIR bool |- switchLabel : %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -19919,12 +19717,8 @@ rule SwitchLabel_general_ok/expressionNonBrace:
 </li>
 </ol>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>relation SwitchCase_general_ok:
-   typingContext flow loopctxt typeIR bool |- switchCase : flow switchCaseIR # switchLabel
-   hint(input %0 %1 %2 %3 %4 %5)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#SwitchCase_general_ok">SwitchCase_general_ok: <code>TC f l typeIR<sub>switch</sub> b<sub>last</sub> |- switchCase : % % # %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -20060,12 +19854,8 @@ rule SwitchCase_general_ok/non-blockStatement:
 </ol>
 </div>
 <h4 id="sem-compile-time-eval-switchStatement" class="discrete">Compile-time evaluation</h4>
-<div class="listingblock">
-<div class="content">
-<pre>relation SwitchCase_inst:
-   cursor instContext store |- switchCaseIR : store switchCaseIR
-   hint(input %0 %1 %2 %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#SwitchCase_inst">SwitchCase_inst: <code>p IC store |- switchCaseIR : % %</code></a></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -20216,14 +20006,8 @@ typedExpressionIR
 </div>
 </div>
 <h5 id="_type_checking_26" class="discrete">Type checking</h5>
-<div id="Expr_ok" class="listingblock">
-<div class="content">
-<pre>relation Expr_ok:
-   cursor typingContext |- expression : typedExpressionIR
-   hint(input %0 %1 %2)
-   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the typed expression" %3)</pre>
-</div>
+<div id="Expr_ok" class="paragraph">
+<p><a href="#Expr_ok">Expr_ok: <code>p TC |- expression''' : %</code></a></p>
 </div>
 <div id="type_of_typedExpressionIR" class="paragraph">
 <p><a href="#type_of_typedExpressionIR">The type of &lt;&lt;typedExpressionIR, <code>_</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>_</code></a>&gt;&gt;</p>
@@ -20236,23 +20020,12 @@ typedExpressionIR
 </ol>
 </div>
 <h5 id="_local_compile_time_evaluation" class="discrete">Local compile-time evaluation</h5>
-<div class="listingblock">
-<div class="content">
-<pre>relation Expr_eval_lctk:
-   cursor typingContext |- typedExpressionIR ~&gt; value
-   hint(input %0 %1 %2)
-   hint(testgen_ignore )
-   hint(prose_in "the local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)
-   hint(prose_out "the resulting value" %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Expr_eval_lctk">Expr_eval_lctk: <code>p TC |- expressionIR # _ ~&gt; %</code></a></p>
 </div>
 <h5 id="_compile_time_evaluation_3" class="discrete">Compile-time evaluation</h5>
-<div class="listingblock">
-<div class="content">
-<pre>relation Expr_inst:
-   cursor instContext store |- typedExpressionIR : store value
-   hint(input %0 %1 %2 %3)</pre>
-</div>
+<div class="paragraph">
+<p><a href="#Expr_inst">Expr_inst: <code>p IC STO |- expressionIR # _ : % %</code></a></p>
 </div>
 <div class="sect2">
 <h3 id="sec-literal-expression">13.1. Literal expressions</h3>
@@ -20362,7 +20135,7 @@ rule Expr_eval_lctk/literalExpressionIR-boolean/false:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the resulting value <code>true</code>.</p>
+<p>Result in the value <code>true</code>.</p>
 </li>
 </ol>
 </div>
@@ -20372,7 +20145,7 @@ rule Expr_eval_lctk/literalExpressionIR-boolean/false:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the resulting value <code>false</code>.</p>
+<p>Result in the value <code>false</code>.</p>
 </li>
 </ol>
 </div>
@@ -20603,7 +20376,7 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the resulting value <code>D i</code>.</p>
+<p>Result in the value <code>D i</code>.</p>
 </li>
 </ol>
 </div>
@@ -20613,7 +20386,7 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the resulting value <code>n W i</code>.</p>
+<p>Result in the value <code>n W i</code>.</p>
 </li>
 </ol>
 </div>
@@ -20623,7 +20396,7 @@ rule Expr_eval_lctk/literalExpressionIR-number/fixedInt:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the resulting value <code>n S i</code>.</p>
+<p>Result in the value <code>n S i</code>.</p>
 </li>
 </ol>
 </div>
@@ -20754,7 +20527,7 @@ rule Expr_inst/literalExpressionIR-number/fixedInt:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in the resulting value <code>" text "</code>.</p>
+<p>Result in the value <code>" text "</code>.</p>
 </li>
 </ol>
 </div>
@@ -20897,7 +20670,7 @@ rule Expr_ok/referenceExpression/this:
 <p>Let <code>value</code> be <a href="#find_var_value_t">the value of variable <code>prefixedNameIR</code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -20998,7 +20771,7 @@ defaultExpressionIR = defaultExpression</code></pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in the resulting value <code>DEFAULT</code>.</p>
+<p>Result in the value <code>DEFAULT</code>.</p>
 </li>
 </ol>
 </div>
@@ -21259,7 +21032,7 @@ unaryExpressionIR
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <a href="#un_op"><code>unop</code> <code>value</code></a>.</p>
+<p>Result in the value <a href="#un_op"><code>unop</code> <code>value</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22148,7 +21921,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <a href="#bin_op"><code>value<sub>l</sub></code> <code>binop'</code> <code>value<sub>r</sub></code></a>.</p>
+<p>Result in the value <a href="#bin_op"><code>value<sub>l</sub></code> <code>binop'</code> <code>value<sub>r</sub></code></a>.</p>
 </li>
 </ol>
 </div>
@@ -22165,7 +21938,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in the resulting value <code>false</code>.</p>
+<p>Result in the value <code>false</code>.</p>
 </li>
 </ol>
 </div>
@@ -22178,7 +21951,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>r</sub></code>.</p>
+<p>Result in the value <code>value<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -22198,7 +21971,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in the resulting value <code>true</code>.</p>
+<p>Result in the value <code>true</code>.</p>
 </li>
 </ol>
 </div>
@@ -22211,7 +21984,7 @@ rule Expr_eval_lctk/binaryExpressionIR/lor-false:
 <p>Let <code>value<sub>r</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>r</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>r</sub></code>.</p>
+<p>Result in the value <code>value<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -22480,7 +22253,7 @@ rule Expr_eval_lctk/ternaryExpressionIR/false:
 <p>Let <code>value<sub>true</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>true</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>true</sub></code>.</p>
+<p>Result in the value <code>value<sub>true</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -22493,7 +22266,7 @@ rule Expr_eval_lctk/ternaryExpressionIR/false:
 <p>Let <code>value<sub>false</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>false</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>false</sub></code>.</p>
+<p>Result in the value <code>value<sub>false</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -22671,7 +22444,7 @@ castExpressionIR
 <p>Let <code>value<sub>cast</sub></code> be <a href="#cast_op">cast <code>value</code> to type <code>typeIR</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>cast</sub></code>.</p>
+<p>Result in the value <code>value<sub>cast</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -22790,7 +22563,7 @@ dataExpressionIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in the resulting value <code>{#}</code>.</p>
+<p>Result in the value <code>{#}</code>.</p>
 </li>
 </ol>
 </div>
@@ -23092,7 +22865,7 @@ rule Expr_eval_lctk/dataExpressionIR-sequence/default:
 </div>
 </li>
 <li>
-<p>Result in the resulting value <code>SEQ ( value<sup>*</sup> )</code>.</p>
+<p>Result in the value <code>SEQ ( value<sup>*</sup> )</code>.</p>
 </li>
 </ol>
 </div>
@@ -23119,7 +22892,7 @@ rule Expr_eval_lctk/dataExpressionIR-sequence/default:
 </div>
 </li>
 <li>
-<p>Result in the resulting value <code>SEQ ( value<sup>*</sup> , &#8230;&#8203; )</code>.</p>
+<p>Result in the value <code>SEQ ( value<sup>*</sup> , &#8230;&#8203; )</code>.</p>
 </li>
 </ol>
 </div>
@@ -23556,7 +23329,7 @@ rule Expr_eval_lctk/dataExpressionIR-record/default:
 </div>
 </li>
 <li>
-<p>Result in the resulting value <code>RECORD { (value nameIR ;)<sup>*</sup> }</code>.</p>
+<p>Result in the value <code>RECORD { (value nameIR ;)<sup>*</sup> }</code>.</p>
 </li>
 </ol>
 </div>
@@ -23583,7 +23356,7 @@ rule Expr_eval_lctk/dataExpressionIR-record/default:
 </div>
 </li>
 <li>
-<p>Result in the resulting value <code>RECORD { (value nameIR ;)<sup>*</sup> , &#8230;&#8203; }</code>.</p>
+<p>Result in the value <code>RECORD { (value nameIR ;)<sup>*</sup> , &#8230;&#8203; }</code>.</p>
 </li>
 </ol>
 </div>
@@ -23753,7 +23526,7 @@ errorAccessExpressionIR
 <p>Let <code>value<sub>error</sub></code> be <a href="#find_var_value_t">the value of variable <code>nameIR<sub>error</sub></code> in the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value<sub>error</sub></code>.</p>
+<p>Result in the value <code>value<sub>error</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -23981,7 +23754,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 <p>Check that <code>nameIR</code> is in <code>nameIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>typeId . nameIR</code>.</p>
+<p>Result in the value <code>typeId . nameIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -23994,7 +23767,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-type/serenum:
 <p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#assoc_">assoc_&lt;nameIR, value&gt;(nameIR, nameIR<sub>field</sub>, value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>typeId . nameIR . value</code>.</p>
+<p>Result in the value <code>typeId . nameIR . value</code>.</p>
 </li>
 </ol>
 </div>
@@ -24573,7 +24346,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-typedExpressionIR/header-union:
 <p>Let <code>_ [ n<sub>size</sub> ]</code> be <code>typeIR</code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>D n<sub>size</sub></code>.</p>
+<p>Result in the value <code>D n<sub>size</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -24592,7 +24365,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-typedExpressionIR/header-union:
 <p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#assoc_">assoc_&lt;nameIR, value&gt;(nameIR, nameIR<sub>field</sub>, value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -24608,7 +24381,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-typedExpressionIR/header-union:
 <p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#assoc_">assoc_&lt;nameIR, value&gt;(nameIR, nameIR<sub>field</sub>, value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -24624,7 +24397,7 @@ rule Expr_eval_lctk/memberAccessExpressionIR-typedExpressionIR/header-union:
 <p>Let <code>value</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#assoc_">assoc_&lt;nameIR, value&gt;(nameIR, nameIR<sub>field</sub>, value<sub>field</sub><sup>*</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -25142,7 +24915,7 @@ sliceAccessExpressionIR
 <p>Let <code>value<sub>lo</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>lo</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code><a href="#bitacc_op">bitacc_op(value<sub>base</sub>, value<sub>hi</sub>, value<sub>lo</sub>)</a></code>.</p>
+<p>Result in the value <code><a href="#bitacc_op">bitacc_op(value<sub>base</sub>, value<sub>hi</sub>, value<sub>lo</sub>)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -25439,7 +25212,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
+<p>Result in the value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -25462,7 +25235,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
+<p>Result in the value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -25481,7 +25254,7 @@ rule Expr_eval_lctk/callExpressionIR-builtin-size/type-polymorphic:
 <p>Check that <code>nameIR</code> is in <code>["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]</code>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
+<p>Result in the value <code><a href="#sizeof">sizeof(typeIR<sub>base</sub>, nameIR)</a></code>.</p>
 </li>
 </ol>
 </div>
@@ -25928,7 +25701,7 @@ rule Expr_ok/callExpression-constructor/specializedType:
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of &lt;&lt;typedExpressionIR, <code>callableTargetIR &lt; typeArgumentIR<sup>*</sup> &gt; ( argumentIR<sup>*</sup> )</code> annotated with type <code>_</code> and compile-time known-ness <code>_</code></a>, under cursor <code>p</code> and typing context <code>TC</code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -26048,7 +25821,7 @@ parenthesizedExpressionIR
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the resulting value <code>value</code>.</p>
+<p>Result in the value <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -26982,7 +26755,7 @@ of keys is empty (<a href="#sec-table-keys">[sec-table-keys]</a>).</p>
 <p>Added support for direct invocation of controls and parsers (<a href="#sec-parameterization">[sec-parameterization]</a>).</p>
 </li>
 <li>
-<p>Added parser <code>value_set</code> to list of control-plane visible names (<a href="#sec-cp-names">[sec-cp-names]</a>).</p>
+<p>Added parser <code>value_set</code> to list of control-plane visible names (<a href="#sec-cp-names">Section 7.3.1.1.5</a>).</p>
 </li>
 <li>
 <p>Added <code>match_kind</code> as a base type (<a href="#sec-match-kind-type">[sec-match-kind-type]</a>).</p>
