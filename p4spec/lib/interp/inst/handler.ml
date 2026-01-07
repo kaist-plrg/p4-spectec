@@ -1,16 +1,18 @@
 open Domain.Lib
 open Lang
 module Value = Runtime.Dynamic_Il.Value
+module Dep = Runtime.Testgen_neg.Dep
+module Sim = Runtime.Sim.Simulator
 module ICov = Coverage.Instr.Single
 
-type spec = IL of Il.spec | SL of Sl.spec
+type spec = Sim.spec
 
 (* Handler signature *)
 
 module type HANDLER = sig
   (* Initialization and finalization *)
 
-  val init : spec -> unit
+  val init_spec : spec -> unit
   val finish : unit -> unit
 
   (* Backup and restore *)
@@ -20,7 +22,9 @@ module type HANDLER = sig
 
   (* Common events *)
 
-  val on_value : Value.t -> (Value.t -> unit) -> unit
+  val on_program : Value.t -> unit
+  val on_value : Value.t -> unit
+  val on_value_dependency : Value.t -> Value.t -> Dep.Edges.label -> unit
   val on_rel_enter : RId.t -> Value.t list -> unit
   val on_rel_exit : RId.t -> unit
   val on_func_enter : FId.t -> Value.t list -> unit
@@ -41,7 +45,7 @@ end
 module Default : HANDLER = struct
   (* Initialization and finalization *)
 
-  let init _ = ()
+  let init_spec _ = ()
   let finish () = ()
 
   (* Backup and restore *)
@@ -51,7 +55,9 @@ module Default : HANDLER = struct
 
   (* Common events *)
 
-  let on_value _ _ = ()
+  let on_program _ = ()
+  let on_value _ = ()
+  let on_value_dependency _ _ _ = ()
   let on_rel_enter _ _ = ()
   let on_rel_exit _ = ()
   let on_func_enter _ _ = ()

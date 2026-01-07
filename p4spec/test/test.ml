@@ -112,9 +112,7 @@ let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
     filename_p4 =
   let time_start = start () in
   try
-    (match
-       Runner.run_program ~derive:false spec_sim relname includes_p4 filename_p4
-     with
+    (match Runner.run_program spec_sim relname includes_p4 filename_p4 with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
     | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start))
     | IllFormed (at, msg) -> raise (TestRunErr (msg, at, time_start)));

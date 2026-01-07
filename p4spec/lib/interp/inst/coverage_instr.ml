@@ -11,10 +11,8 @@ let make () =
   let module H : Handler.HANDLER = struct
     include Handler.Default
 
-    let init (spec : Handler.spec) : unit =
-      match spec with
-      | Handler.SL spec_sl -> coverage := ICov.init spec_sl
-      | _ -> ()
+    let init_spec (spec : Handler.spec) : unit =
+      match spec with SL spec_sl -> coverage := ICov.init spec_sl | _ -> ()
 
     let on_instr (instr : instr) : unit =
       coverage := ICov.hit !coverage instr.note.iid

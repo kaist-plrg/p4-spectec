@@ -1570,7 +1570,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     invoke_func'' ctx (funcname $ no_region) targs values_input
 
   let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Sim.program_result_il =
+      (filename_p4 : string) : Sim.program_result =
     do_init spec;
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
@@ -1579,23 +1579,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_rel ctx spec relname [ value_program ]
       in
       Ctx.profile ctx;
-      (Sim.Pass values_output : Sim.program_result_il)
+      (Sim.Pass values_output : Sim.program_result)
     with
     | Util.Error.ParseError (at, msg) -> Sim.IllFormed (at, msg)
     | Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 
   let eval_rel (spec : spec) (relname : string) (values_input : value list) :
-      Sim.rel_result_il =
+      Sim.rel_result =
     do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
       let+ ctx, values_output = do_eval_rel ctx spec relname values_input in
       Ctx.profile ctx;
-      (Sim.Pass values_output : Sim.rel_result_il)
+      (Sim.Pass values_output : Sim.rel_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 
   let eval_func (spec : spec) (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result_il =
+      (values_input : value list) : Sim.func_result =
     do_init spec;
     try
       let ctx = Ctx.empty ~debug:false ~profile:false in
@@ -1603,6 +1603,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         do_eval_func ctx spec funcname targs values_input
       in
       Ctx.profile ctx;
-      (Sim.Pass value_output : Sim.func_result_il)
+      (Sim.Pass value_output : Sim.func_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
 end

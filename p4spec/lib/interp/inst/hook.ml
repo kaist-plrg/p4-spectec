@@ -1,17 +1,26 @@
 open Domain.Lib
 open Lang
 module Value = Runtime.Dynamic_Il.Value
+module Dep = Runtime.Testgen_neg.Dep
 open Handler
+
+(* Cache flag *)
+
+let cache = ref true
+let cache_off () = cache := true
+let is_cache_on () = !cache
+
+(* Registered handlers *)
 
 let handlers : (module HANDLER) list ref = ref []
 let register (handlers_ : (module HANDLER) list) = handlers := handlers_
 
 (* Initialization and finalization *)
 
-let init spec : unit =
+let init_spec (spec : spec) : unit =
   match !handlers with
   | [] -> ()
-  | _ -> List.iter (fun (module H : HANDLER) -> H.init spec) !handlers
+  | _ -> List.iter (fun (module H : HANDLER) -> H.init_spec spec) !handlers
 
 let finish () : unit =
   match !handlers with
@@ -32,12 +41,27 @@ let restore () : unit =
 
 (* Common events *)
 
-let on_value (value : Value.t) (value_handler : Value.t -> unit) : unit =
+let on_program (value_program : Value.t) : unit =
   match !handlers with
   | [] -> ()
   | _ ->
       List.iter
-        (fun (module H : HANDLER) -> H.on_value value value_handler)
+        (fun (module H : HANDLER) -> H.on_program value_program)
+        !handlers
+
+let on_value (value : Value.t) : unit =
+  match !handlers with
+  | [] -> ()
+  | _ -> List.iter (fun (module H : HANDLER) -> H.on_value value) !handlers
+
+let on_value_dependency (value : Value.t) (value_dep : Value.t)
+    (label : Dep.Edges.label) : unit =
+  match !handlers with
+  | [] -> ()
+  | _ ->
+      List.iter
+        (fun (module H : HANDLER) ->
+          H.on_value_dependency value value_dep label)
         !handlers
 
 let on_rel_enter (rid : RId.t) (values_input : Value.t list) : unit =

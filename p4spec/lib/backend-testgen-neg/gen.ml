@@ -78,21 +78,12 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Re-run the SL interpreter to make sure of the new hits *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let spec = config.specenv.spec in
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-    Inst.Coverage_dangling.make ()
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
   in
-  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-  Inst.Hook.init (Inst.Handler.SL spec);
-  let program_result_sl =
-    Runner.run_program_sl ~derive:false spec config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  in
-  Inst.Hook.finish ();
-  let cover = read_coverage_dangling () in
-  match program_result_sl with
-  | Pass (_, _) when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
+  match program_result with
+  | Pass _ when PIdSet.for_all (DCov_single.is_hit cover) pids_hit_new ->
       let filename_hit_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
       in
@@ -134,22 +125,12 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
      and update the running coverage *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
-  let spec = config.specenv.spec in
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-    Inst.Coverage_dangling.make ()
+  let program_result, cover =
+    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
   in
-  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-  Inst.Hook.init (Inst.Handler.SL spec);
-  let program_result_sl =
-    Runner.run_program_sl ~derive:false spec config.specenv.relname
-      config.specenv.includes_p4 filename_gen_p4
-  in
-  Inst.Hook.finish ();
-  let cover = read_coverage_dangling () in
-  match program_result_sl with
-  | Pass (_, _)
+  match program_result with
+  | Pass _
     when PIdSet.for_all (DCov_single.is_close_miss cover) pids_close_miss_new ->
       let filename_close_miss_p4 =
         Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
@@ -170,20 +151,11 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
     filename_gen_p4
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
-    let spec = config.specenv.spec in
-    let (module Runner : Sim.DRIVER) = config.specenv.runner in
-    let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-      Inst.Coverage_dangling.make ()
+    let rel_result, cover =
+      Runner.run_program_internal_with_dangling config.specenv.runner
+        config.specenv.spec config.specenv.relname value_program
     in
-    Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-    Inst.Hook.init (Inst.Handler.SL spec);
-    let rel_result_sl =
-      Runner.run_program_internal ~derive:false spec config.specenv.relname
-        value_program
-    in
-    Inst.Hook.finish ();
-    let cover = read_coverage_dangling () in
-    match rel_result_sl with Pass _ -> (true, cover) | Fail _ -> (false, cover)
+    match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
   in
   let time_end = Unix.gettimeofday () in
   F.asprintf
@@ -464,21 +436,13 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   in
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
-  let spec = config.specenv.spec in
-  let (module Runner : Sim.DRIVER) = config.specenv.runner in
-  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-    Inst.Coverage_dangling.make ()
+  let program_result, cover, vdg =
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.runner
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      filename_p4
   in
-  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-  Inst.Hook.init (Inst.Handler.SL spec);
-  let program_result_sl =
-    Runner.run_program_sl ~derive spec config.specenv.relname
-      config.specenv.includes_p4 filename_p4
-  in
-  Inst.Hook.finish ();
-  let cover = read_coverage_dangling () in
-  (match program_result_sl with
-  | Pass (_, vdg) ->
+  (match program_result with
+  | Pass _ ->
       let time_end = Unix.gettimeofday () in
       F.asprintf
         "[F %d] [P %d] [S %d] SL interpreter succeeded on %s (took %.2f)" fuel

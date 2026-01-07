@@ -60,21 +60,17 @@ let derive_phantom (pid : pid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
 
 let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
-  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-    Inst.Coverage_dangling.make ()
+  let program_result, cover, vdg =
+    let spec = Sim.SL spec in
+    let (module Sim) = Backend_sim.Gen.gen_placeholder () in
+    Runner.run_program_with_dangling_and_vdg ~derive:true
+      (module Sim)
+      spec relname includes_p4 filename_p4
   in
-  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-  Inst.Hook.init (Inst.Handler.SL spec);
-  let program_result_sl =
-    Runner.run_program_sl ~derive:true spec relname includes_p4 filename_p4
-  in
-  Inst.Hook.finish ();
-  let cover = read_coverage_dangling () in
-  match program_result_sl with
+  match program_result with
   | Fail _ -> print_endline "failed"
   | IllFormed _ -> print_endline "ill-formed"
-  | Pass (_, vdg) ->
+  | Pass _ ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
         let branch = DCov_single.Cover.find pid cover in

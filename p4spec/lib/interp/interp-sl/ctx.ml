@@ -21,16 +21,6 @@ type cursor = Global | Local
 
 (* Context *)
 
-(* Testing and coverage layer
-
-   The interpreter relies on the fact that both graph and cover
-   are mutable, so that they can be updated in place.
-   Their references are copied when constructing sub-contexts,
-   thus sharing the same graph and cover across contexts. *)
-
-type vdg = Dep.Graph.t
-type testing = EndToEnd of [ `On of vdg | `Off of vdg ] | Partial
-
 (* Global layer *)
 
 type global = {
@@ -67,30 +57,8 @@ type local =
       venv : VEnv.t;
     }
 
-type t = {
-  (* Testing and coverage layers *)
-  testing : testing;
-  (* Global layer *)
-  global : global;
-  (* Local layer *)
-  local : local;
-}
-
-(* Value dependencies *)
-
-let deriving (ctx : t) : bool =
-  match ctx.testing with EndToEnd (`On _) -> true | _ -> false
-
-let add_node ?(taint = false) (ctx : t) (value : value) : unit =
-  match ctx.testing with
-  | EndToEnd (`On vdg) -> Dep.Graph.add_node ~taint vdg value
-  | _ -> ()
-
-let add_edge (ctx : t) (value_from : value) (value_to : value)
-    (label : Dep.Edges.label) : unit =
-  match ctx.testing with
-  | EndToEnd (`On vdg) -> Dep.Graph.add_edge vdg value_from value_to label
-  | _ -> ()
+type t = { (* Global layer *)
+           global : global; (* Local layer *) local : local }
 
 (* Finders *)
 
@@ -275,17 +243,10 @@ let empty_global () : global =
 
 let empty_local () : local = Empty
 
-let empty_end_to_end ~(derive : bool) (vdg : vdg) : t =
-  let testing = if derive then EndToEnd (`On vdg) else EndToEnd (`Off vdg) in
+let empty () : t =
   let global = empty_global () in
   let local = empty_local () in
-  { testing; global; local }
-
-let empty_partial () : t =
-  let testing = Partial in
-  let global = empty_global () in
-  let local = empty_local () in
-  { testing; global; local }
+  { global; local }
 
 (* Constructing a local context *)
 

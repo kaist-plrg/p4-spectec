@@ -37,6 +37,19 @@ let runner ?(arch : string option) mode filenames_spec =
   in
   (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
 
+let run_with_dangling ?(arch : string option) mode filenames_spec relname
+    includes_p4 filename_p4 =
+  let spec_sim, (module Runner) = runner ?arch mode filenames_spec in
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Runner.run_program spec_sim relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
 (* Commands *)
 
 let elab_command =
@@ -112,10 +125,7 @@ let run_command =
      fun () ->
        try
          let spec_sim, (module Runner) = runner mode filenames_spec in
-         match
-           Runner.run_program ~derive:false spec_sim relname includes_p4
-             filename_p4
-         with
+         match Runner.run_program spec_sim relname includes_p4 filename_p4 with
          | Pass _ -> Format.printf "passed\n"
          | Fail (_, msg) -> Format.printf "failed: %s\n" msg
          | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
@@ -419,23 +429,11 @@ let interesting_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner `SL filenames_spec in
-         let spec_sl =
-           match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
+         let result, cover =
+           run_with_dangling `SL filenames_spec relname includes_p4 filename_p4
          in
-         let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
-           Inst.Coverage_dangling.make ()
-         in
-         Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-         Inst.Hook.init (Inst.Handler.SL spec_sl);
-         let result =
-           Runner.run_program_sl ~derive:false spec_sl relname includes_p4
-             filename_p4
-         in
-         Inst.Hook.finish ();
-         let cover = read_coverage_dangling () in
          match result with
-         | Pass (_, _) ->
+         | Pass _ ->
              if check_well_typed then (
                let branch = Coverage.Dangling.Single.Cover.find pid cover in
                match branch.status with

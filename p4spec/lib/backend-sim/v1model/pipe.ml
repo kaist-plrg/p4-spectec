@@ -282,29 +282,18 @@ struct
   let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
       (filename_p4 : string) : Value.t * Value.t =
     init spec_;
-    let values_output =
+    let program_result =
       match !spec with
-      | IL spec_il -> (
-          let program_result_il =
-            Interp_IL.eval_program spec_il "V1Model_init" includes_p4
-              filename_p4
-          in
-          match program_result_il with
-          | Pass values_output -> values_output
-          | Fail (at, msg) | IllFormed (at, msg) -> error at msg)
-      | SL spec_sl -> (
-          let program_result_sl =
-            Interp_SL.eval_program ~derive:false spec_sl "V1Model_init"
-              includes_p4 filename_p4
-          in
-          match program_result_sl with
-          | Pass (values_output, _) -> values_output
-          | Fail (at, msg) | IllFormed (at, msg) -> error at msg)
+      | IL spec_il ->
+          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
+      | SL spec_sl ->
+          Interp_SL.eval_program spec_sl "V1Model_init" includes_p4 filename_p4
       | Empty -> assert false
     in
-    match values_output with
-    | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
-    | _ -> error_no_region "unexpected return from V1Model_init"
+    match program_result with
+    | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+    | Pass _ -> error_no_region "unexpected return from V1Model_init"
+    | Fail (at, msg) | IllFormed (at, msg) -> error at msg
 
   (* Pipeline driver *)
 
