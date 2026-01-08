@@ -18,7 +18,7 @@ let boot_cold (module Runner : Sim.DRIVER) (spec : spec) (relname : string)
         not (List.exists (String.equal filename_p4) excludes_p4))
       filenames_p4
   in
-  Runner.cover_dangling_programs spec relname includes_p4 filenames_p4
+  Runner.cover_dangling_programs (Sim.SL spec) relname includes_p4 filenames_p4
 
 (* On warm boot, load the coverage from a file *)
 

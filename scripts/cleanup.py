@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--exclude",
         type=Directory,
-        default="excludes",
+        default="excludes/static",
         help="Exclude directory for P4 tests",
     )
     parser.add_argument(

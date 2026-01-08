@@ -53,7 +53,7 @@ let run_with_dangling ?(arch : string option) mode filenames_spec relname
 (* Commands *)
 
 let elab_command =
-  Core.Command.basic ~summary:"parse and elaborate a p4_16 spec"
+  Core.Command.basic ~summary:"parse and elaborate a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -70,7 +70,7 @@ let elab_command =
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let struct_command =
-  Core.Command.basic ~summary:"insert structured control flow to a p4_16 spec"
+  Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -86,7 +86,7 @@ let struct_command =
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let prose_command =
-  Core.Command.basic ~summary:"generate asciidoc prose from a p4_16 spec"
+  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -102,14 +102,14 @@ let prose_command =
          Format.printf "%s\n" (string_of_error at msg))
 
 let run_command =
-  Core.Command.basic ~summary:"run semantics of a p4_16 spec"
+  Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
        Command.Param.choose_one
@@ -147,21 +147,21 @@ let run_command =
 
 let sim_command =
   Core.Command.basic
-    ~summary:"simulate a target architecture with a p4_16 program and spec"
+    ~summary:"simulate a target architecture with a P4 program and P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file of interest"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"Run IL interpreter"
+           flag "il" no_arg ~doc:"run IL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
-           flag "sl" no_arg ~doc:"Run SL interpreter"
+           flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
@@ -181,17 +181,16 @@ let sim_command =
            Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
-let cover_command =
+let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and dirnames_p4 =
-       flag "-d" (listed string) ~doc:"p4 directories of interest"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and testdirs_p4 = flag "-d" (listed string) ~doc:"P4 test directories"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and mode =
@@ -208,24 +207,28 @@ let cover_command =
        try
          let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
          let filenames_p4 =
-           dirnames_p4
+           testdirs_p4
            |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
            |> List.filter (fun filename_p4 ->
                   not (List.exists (String.equal filename_p4) excludes_p4))
          in
-         let spec_sl = structure filenames_spec in
-         let (module Runner) = Backend_sim.Gen.gen_placeholder () in
+         let spec_sim, (module Runner) = runner `SL filenames_spec in
          match mode with
          | `Instr ->
              let cover_instr =
-               Runner.cover_instr_programs spec_sl relname includes_p4
+               Runner.cover_instr_programs spec_sim relname includes_p4
                  filenames_p4
+             in
+             let spec_sl =
+               match spec_sim with
+               | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+               | _ -> assert false
              in
              Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
                cover_instr spec_sl
          | `Dangling ->
              let cover_dangling =
-               Runner.cover_dangling_programs spec_sl relname includes_p4
+               Runner.cover_dangling_programs spec_sim relname includes_p4
                  filenames_p4
              in
              Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
@@ -236,17 +239,19 @@ let cover_command =
            Format.printf "%s\n" (string_of_error at msg))
 
 let cover_sim_command =
-  Core.Command.basic ~summary:"measure coverage of the spec when simulated"
+  Core.Command.basic
+    ~summary:"measure coverage of the spec when simulated on STF"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and dirname_test =
-       flag "-d" (required string) ~doc:"test directory of interest"
-     and dirname_patch =
-       flag "-p" (required string) ~doc:"directory for p4/stf patches"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"P4 test directories"
+     and testdirs_stf =
+       flag "-stf-dir" (listed string) ~doc:"STF test directories"
+     and patchdir =
+       flag "-p" (required string) ~doc:"directory for P4/STF patches"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
@@ -264,8 +269,8 @@ let cover_sim_command =
        try
          let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
          let filenames_p4 =
-           dirname_test
-           |> Util.Filesys.collect_files ~suffix:".p4"
+           testdirs_p4
+           |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
            |> List.filter (fun filename_p4 ->
                   not (List.exists (String.equal filename_p4) excludes_p4))
            |> List.filter (fun filename_p4 ->
@@ -279,16 +284,17 @@ let cover_sim_command =
                   | _ -> false)
          in
          let filenames_p4_patch =
-           Util.Filesys.collect_files ~suffix:".p4" dirname_patch
+           Util.Filesys.collect_files ~suffix:".p4" patchdir
          in
          let filenames_p4 =
            Util.Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
          in
          let filenames_stf =
-           Util.Filesys.collect_files ~suffix:".stf" dirname_test
+           testdirs_stf
+           |> List.concat_map (Util.Filesys.collect_files ~suffix:".stf")
          in
          let filenames_stf_patch =
-           Util.Filesys.collect_files ~suffix:".stf" dirname_patch
+           Util.Filesys.collect_files ~suffix:".stf" patchdir
          in
          let filenames_stf =
            Util.Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
@@ -313,17 +319,28 @@ let cover_sim_command =
                   | None -> None)
            |> List.split
          in
-         let spec_sl = structure filenames_spec in
          let (module Runner) = Backend_sim.Gen.gen arch in
+         let spec_sim, (module Runner) = runner ~arch `SL filenames_spec in
          match mode with
          | `Instr ->
              let cover_instr =
-               Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4
+               Runner.cover_instr_stfs spec_sim includes_p4 filenames_p4
                  filenames_stf
+             in
+             let spec_sl =
+               match spec_sim with
+               | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+               | _ -> assert false
              in
              Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
                cover_instr spec_sl
-         | `Dangling -> assert false
+         | `Dangling ->
+             let cover_dangling =
+               Runner.cover_dangling_stfs spec_sim includes_p4 filenames_p4
+                 filenames_stf
+             in
+             Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
+               cover_dangling
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -338,9 +355,9 @@ let run_testgen_command =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and fuel = flag "-fuel" (required int) ~doc:"fuel for test generation"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and dirname_gen =
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and gendir =
        flag "-gen" (required string) ~doc:"directory for generated p4 programs"
      and name_campaign =
        flag "-name" (optional string)
@@ -348,7 +365,7 @@ let run_testgen_command =
      and silent = flag "-silent" no_arg ~doc:"do not print logs to stdout"
      and randseed =
        flag "-seed" (optional int) ~doc:"seed for random number generator"
-     and dirname_cold_boot =
+     and bootdir =
        flag "-cold" (optional string) ~doc:"seed p4 directory for cold boot"
      and filename_boot =
        flag "-warm" (optional string) ~doc:"coverage file for warm boot"
@@ -368,18 +385,18 @@ let run_testgen_command =
            else Backend_testgen_neg.Modes.Verbose
          in
          let bootmode =
-           match (dirname_cold_boot, filename_boot) with
-           | Some dirname_cold_boot, None ->
-               Backend_testgen_neg.Modes.Cold (excludes_p4, dirname_cold_boot)
+           match (bootdir, filename_boot) with
+           | Some bootdir, None ->
+               Backend_testgen_neg.Modes.Cold (excludes_p4, bootdir)
            | None, Some filename_boot ->
                Backend_testgen_neg.Modes.Warm filename_boot
            | Some _, Some _ ->
-               Format.asprintf
-                 "Error: should specify only one of -cold or -warm\n"
-               |> failwith
+               raise
+                 (CommandError
+                    "Error: should specify only one of -cold or -warm")
            | None, None ->
-               Format.asprintf "Error: should specify either -cold or -warm\n"
-               |> failwith
+               raise
+                 (CommandError "Error: should specify either -cold or -warm")
          in
          let mutationmode =
            if random then Backend_testgen_neg.Modes.Random
@@ -390,9 +407,8 @@ let run_testgen_command =
            if strict then Backend_testgen_neg.Modes.Strict
            else Backend_testgen_neg.Modes.Relaxed
          in
-         Backend_testgen_neg.Gen.fuzzer fuel spec_sl relname includes_p4
-           dirname_gen name_campaign randseed logmode bootmode mutationmode
-           covermode
+         Backend_testgen_neg.Gen.fuzzer fuel spec_sl relname includes_p4 gendir
+           name_campaign randseed logmode bootmode mutationmode covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -405,39 +421,37 @@ let run_testgen_debug_command =
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
-     and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and dirname_debug =
+     and relname = flag "-rel" (required string) ~doc:"spec relation to run"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
+     and debugdir =
        flag "-debug" (required string) ~doc:"directory for debug files"
      and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
      fun () ->
        try
          let spec_sl = structure filenames_spec in
          Backend_testgen_neg.Derive.debug_phantom spec_sl relname includes_p4
-           filename_p4 dirname_debug pid
+           filename_p4 debugdir pid
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let interesting_command =
-  Core.Command.basic ~summary:"interestingness test for reducing p4_16 programs"
+  Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and check_well_typed =
        flag "-well" no_arg
          ~doc:"'interesting' if well-typed (default: ill-typed)"
      and check_close_miss =
        flag "-close" no_arg ~doc:"'interesting' if close-miss (default: hit)"
      and pid = flag "-pid" (required int) ~doc:"phantom id to test"
-     and filename_p4 =
-       flag "-p" (required string) ~doc:"p4 file to typecheck"
-     in
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
          let result, cover =
@@ -518,8 +532,8 @@ let parse_command =
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and roundtrip =
        flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
      in
@@ -598,8 +612,8 @@ let p4_program_value_json_command =
     ~summary:"convert a P4 program to a value and output as JSON"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to convert" in
+     let%map includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
          let value_program =
@@ -651,7 +665,7 @@ let command =
       ("run", run_command);
       ("sim", sim_command);
       (* Coverage *)
-      ("cover", cover_command);
+      ("cover-run", cover_run_command);
       ("cover-sim", cover_sim_command);
       (* Negative type checker test generation and coverage *)
       ("testgen", run_testgen_command);
