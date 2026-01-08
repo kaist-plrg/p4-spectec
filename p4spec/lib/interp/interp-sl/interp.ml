@@ -146,29 +146,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
          (List.length exps) (List.length values));
     List.fold_left2 assign_exp ctx exps values
 
-  (* Assigning a value to an argument *)
+  (* Assigning a value to a parameter *)
 
-  and assign_arg (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (arg : arg)
+  and assign_param (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (param : param)
       (value : value) : Ctx.t =
-    match arg.it with
-    | ExpA exp -> assign_arg_exp ctx_callee exp value
-    | DefA id -> assign_arg_def ctx_caller ctx_callee id value
+    match param.it with
+    | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
+    | DefP id -> assign_param_def ctx_caller ctx_callee id value
 
-  and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
-      (values : value list) : Ctx.t =
+  and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
+      (params : param list) (values : value list) : Ctx.t =
     check_back
-      (List.length args = List.length values)
-      (over_region (List.map at args))
+      (List.length params = List.length values)
+      (over_region (List.map at params))
       (F.asprintf
-         "mismatch in number of arguments and values while assigning, expected \
-          %d value(s) but got %d"
-         (List.length args) (List.length values));
-    List.fold_left2 (assign_arg ctx_caller) ctx_callee args values
+         "mismatch in number of parameters and values while assigning, \
+          expected %d value(s) but got %d"
+         (List.length params) (List.length values));
+    List.fold_left2 (assign_param ctx_caller) ctx_callee params values
 
-  and assign_arg_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
+  and assign_param_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
     assign_exp ctx exp value
 
-  and assign_arg_def (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
+  and assign_param_def (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
       (value : value) : Ctx.t =
     match value.it with
     | FuncV id_f ->
@@ -1768,11 +1768,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match func with
         | Func.Extern -> invoke_extern_func id targs values_input
         | Func.Builtin -> invoke_builtin_func id targs values_input
-        | Func.Table (args, tablerows) ->
-            invoke_table_func ctx id args tablerows values_input
-        | Func.Defined (tparams, args_input, instrs) ->
-            invoke_defined_func ctx id tparams args_input instrs targs
-              values_input
+        | Func.Table (params, tablerows) ->
+            invoke_table_func ctx id params tablerows values_input
+        | Func.Defined (tparams, params, instrs) ->
+            invoke_defined_func ctx id tparams params instrs targs values_input
       in
       Hook.on_func_exit id;
       value_output
@@ -1810,10 +1809,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_input;
     value_output
 
-  and invoke_table_func (ctx : Ctx.t) (id : id) (args : arg list)
+  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
       (tablerows : tablerow list) (values_input : value list) : value =
     let ctx_local = Ctx.localize_func ctx id values_input ctx.global.tdenv in
-    let ctx_local = assign_args ctx ctx_local args values_input in
+    let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
     let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
     match sign with
@@ -1827,7 +1826,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> back id.at "table did not return a value"
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
-      (args_input : arg list) (instrs : instr list) (targs : targ list)
+      (params : param list) (instrs : instr list) (targs : targ list)
       (values_input : value list) : value =
     let tdenv_local =
       check
@@ -1841,7 +1840,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let invoke_defined_func' () =
-      let ctx_local = assign_args ctx ctx_local args_input values_input in
+      let ctx_local = assign_params ctx ctx_local params values_input in
       let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
       match sign with
       | Ret value_output ->
@@ -1885,11 +1884,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | BuiltinDecD (id, _, _, _, _) ->
         let func = Func.Builtin in
         Ctx.add_func Global ctx id func
-    | TableDecD (id, args_input, _typ, tablerows, _) ->
-        let func = Func.Table (args_input, tablerows) in
+    | TableDecD (id, params, _typ, tablerows, _) ->
+        let func = Func.Table (params, tablerows) in
         Ctx.add_func Global ctx id func
-    | FuncDecD (id, tparams, args_input, _typ, instrs, _) ->
-        let func = Func.Defined (tparams, args_input, instrs) in
+    | FuncDecD (id, tparams, params, _typ, instrs, _) ->
+        let func = Func.Defined (tparams, params, instrs) in
         Ctx.add_func Global ctx id func
 
   let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =

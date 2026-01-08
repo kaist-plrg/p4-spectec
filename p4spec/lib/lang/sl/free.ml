@@ -57,6 +57,14 @@ and free_path (path : path) : t =
       free_path path + free_exp exp_l + free_exp exp_h
   | DotP (path, _) -> free_path path
 
+(* Parameters *)
+
+and free_param (param : param) : t =
+  match param.it with ExpP (_, exp) -> free_exp exp | DefP _ -> empty
+
+and free_params (params : param list) : t =
+  params |> List.map free_param |> List.fold_left ( + ) empty
+
 (* Arguments *)
 
 and free_arg (arg : arg) : t =

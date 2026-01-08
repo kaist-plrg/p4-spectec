@@ -20,9 +20,9 @@ type rulegroup = El.rule list
 
 (* Relation prose *)
 
-module RelationId = String
+module RelId = String
 
-type relationprose = Pl.rel_title
+type relprose = Pl.rel_title
 
 (* Rule prose *)
 

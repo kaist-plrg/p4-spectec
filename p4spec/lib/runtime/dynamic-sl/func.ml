@@ -6,8 +6,8 @@ open Sl
 type t =
   | Extern
   | Builtin
-  | Table of arg list * tablerow list
-  | Defined of tparam list * arg list * instr list
+  | Table of param list * tablerow list
+  | Defined of tparam list * param list * instr list
 
 let to_string = function
   | Extern -> "extern function"

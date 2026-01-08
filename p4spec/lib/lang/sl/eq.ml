@@ -171,6 +171,6 @@ and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
 
 and eq_rel_signature (rel_signature_a : rel_signature)
     (rel_signature_b : rel_signature) : bool =
-  let mixop_a, inputs_a = rel_signature_a in
-  let mixop_b, inputs_b = rel_signature_b in
-  eq_mixop mixop_a mixop_b && Hints.Input.eq inputs_a inputs_b
+  let nottyp_a, inputs_a = rel_signature_a in
+  let nottyp_b, inputs_b = rel_signature_b in
+  Il.Eq.eq_nottyp nottyp_a nottyp_b && Hints.Input.eq inputs_a inputs_b

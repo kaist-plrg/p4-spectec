@@ -103,13 +103,13 @@ let log_tablerows (cover : Multi.t) (tablerows : tablerow list) : string =
   tablerows |> List.map (log_tablerow cover) |> String.concat "\n"
 
 let log_table_func (cover : Multi.t) (tablefunc : tablefunc) : string =
-  let defid, args, _typ_ret, tablerows, _hints = tablefunc in
-  string_of_defid defid ^ string_of_args args ^ "\n=\n"
+  let defid, params, _typ_ret, tablerows, _hints = tablefunc in
+  string_of_defid defid ^ string_of_params params ^ "\n=\n"
   ^ log_tablerows cover tablerows
 
 let log_defined_func (cover : Multi.t) (func : definedfunc) : string =
-  let defid, tparams, args_input, _typ_ret, instrs, _hints = func in
-  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+  let defid, tparams, params, _typ_ret, instrs, _hints = func in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
   ^ "\n\n" ^ log_instrs cover instrs
 
 (* Definitions *)

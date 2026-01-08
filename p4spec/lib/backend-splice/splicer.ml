@@ -67,19 +67,17 @@ end
 
 (* Relation prose splicer *)
 
-module RelationProse : Splice = struct
-  type key = Kinds.RelationId.t
-  type value = Kinds.relationprose
+module RelProse : Splice = struct
+  type key = Kinds.RelId.t
+  type value = Kinds.relprose
 
   let name = "relation"
-  let prefix = None
-  let suffix = None
-
-  let parse_keys (source : Source.t) : key list =
-    Parser.parse_relation_ids source
+  let prefix = Some "****\n"
+  let suffix = Some "\n****"
+  let parse_keys (source : Source.t) : key list = Parser.parse_rel_ids source
 
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_relationprose ctx) keys
+    List.map (Ctx.find_relprose ctx) keys
 
   let render (keys : key list) (value : value list) : string =
     List.map2
@@ -96,8 +94,8 @@ module RuleProse : Splice = struct
   type value = Kinds.ruleprose
 
   let name = "ruleprose"
-  let prefix = None
-  let suffix = None
+  let prefix = Some "****\n"
+  let suffix = Some "\n****"
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_ruleprose_id source ]
@@ -120,8 +118,8 @@ module FuncProse : Splice = struct
   type value = Kinds.funcprose
 
   let name = "funcprose"
-  let prefix = None
-  let suffix = Some "\n"
+  let prefix = Some "****\n"
+  let suffix = Some "\n****"
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_funcprose_id source ]

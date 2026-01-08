@@ -61,12 +61,12 @@ let rec parse_syntax_ids (source : Source.t) : Kinds.SyntaxId.t list =
     let id = parse_id source in
     id :: parse_syntax_ids source
 
-let rec parse_relation_ids (source : Source.t) : Kinds.RelationId.t list =
+let rec parse_rel_ids (source : Source.t) : Kinds.RelId.t list =
   parse_space source;
   if parse_string source "}" then []
   else
     let id = parse_id source in
-    id :: parse_relation_ids source
+    id :: parse_rel_ids source
 
 let parse_rulegroup_id (source : Source.t) : Kinds.RuleGroupId.t =
   parse_space source;

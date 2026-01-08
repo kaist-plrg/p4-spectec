@@ -1,3 +1,4 @@
+module Fresh_ = Fresh
 open Lang
 open Il
 open Error
@@ -6,7 +7,7 @@ open Util.Source
 (* Initializer *)
 
 let init (printer : value -> string) : unit =
-  Fresh.ctr := 0;
+  Fresh_.ctr := 0;
   Printer.printer := printer
 
 (* Builtin calls *)
@@ -52,7 +53,7 @@ let funcs =
   |> Funcs.add "adds_map" Maps.adds_map
   |> Funcs.add "update_map" Maps.update_map
   (* Fresh type id *)
-  |> Funcs.add "fresh_typeId" Fresh.fresh_typeId
+  |> Funcs.add "fresh_typeId" Fresh_.fresh_typeId
   (* Numerics *)
   |> Funcs.add "shl" Numerics.shl
   |> Funcs.add "shr" Numerics.shr
