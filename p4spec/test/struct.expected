@@ -31906,13 +31906,13 @@ relation Argument_inst: p IC STO_0 |- argumentIR : % %
 2. Else Phantom#2105
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:25.1-32.55
-relation Stmt_inst: p IC STO |- statementIR : % % %
+relation Stmt_inst: p IC STO |- statementIR' : % % %
 
-1. Case analysis on statementIR
+1. Case analysis on statementIR'
 
   1. Case (% has type emptyStatementIR)
 
-    1. (Let emptyStatementIR be (statementIR as emptyStatementIR))
+    1. (Let emptyStatementIR be (statementIR' as emptyStatementIR))
 
     2. Group emptyStatementIR: p IC STO |- (emptyStatementIR as statementIR) : % % %
 
@@ -31920,7 +31920,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
   2. Case (% has type assignmentStatementIR)
 
-    1. (Let assignmentStatementIR be (statementIR as assignmentStatementIR))
+    1. (Let assignmentStatementIR be (statementIR' as assignmentStatementIR))
 
     2. Group assignmentStatementIR: p IC STO |- (assignmentStatementIR as statementIR) : % % %
 
@@ -31928,7 +31928,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
   3. Case (% has type callStatementIR)
 
-    1. (Let callStatementIR be (statementIR as callStatementIR))
+    1. (Let callStatementIR be (statementIR' as callStatementIR))
 
     2. Group callStatementIR: p IC STO |- (callStatementIR as statementIR) : % % %
 
@@ -31936,7 +31936,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
   4. Case (% has type directApplicationStatementIR)
 
-    1. (Let (prefixedNameIR .apply( argumentListIR );) be (statementIR as directApplicationStatementIR))
+    1. (Let (prefixedNameIR .apply( argumentListIR );) be (statementIR' as directApplicationStatementIR))
 
     2. Group directApplicationStatementIR: p IC STO |- ((prefixedNameIR .apply( argumentListIR );) as statementIR) : % % %
 
@@ -31976,7 +31976,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
   5. Case (% has type exitStatementIR)
 
-    1. (Let exitStatementIR be (statementIR as exitStatementIR))
+    1. (Let exitStatementIR be (statementIR' as exitStatementIR))
 
     2. Group exitStatementIR: p IC STO |- (exitStatementIR as statementIR) : % % %
 
@@ -31984,7 +31984,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
   6. Case (% has type conditionalStatementIR)
 
-    1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
+    1. (Let conditionalStatementIR be (statementIR' as conditionalStatementIR))
 
     2. Group conditionalStatementIR: p IC STO |- (conditionalStatementIR as statementIR) : % % %
 
@@ -32008,9 +32008,73 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
           4. Result in: % % % |- % : IC STO_2 ((if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst) as statementIR)
 
-  7. Case (% has type switchStatementIR)
+  7. Case (% has type forStatementIR)
 
-    1. (Let (switch( typedExpressionIR ){ switchCaseListIR }) be (statementIR as switchStatementIR))
+    1. (Let forStatementIR' be (statementIR' as forStatementIR))
+
+    2. If ((forStatementIR' matches pattern `%FOR(%;%;%)%`)), then
+
+      1. (Let (annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR) be forStatementIR')
+
+      2. Group forStatementIR-three-clause: p IC STO |- ((annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR) as statementIR) : % % %
+
+        1. (Stmt_inst: p IC STO |- statementIR : IC_body STO_1 statementIR_body)
+
+        2. (Let forStatementIR be (annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR_body))
+
+        3. Result in: % % % |- % : IC STO_1 (forStatementIR as statementIR)
+
+    2. Else Phantom#2108
+
+    3. Group forStatementIR-in: p IC STO |- (forStatementIR' as statementIR) : % % %
+
+      1. Case analysis on forStatementIR'
+
+        1. Case (% matches pattern `%FOR(%%IN%)%`)
+
+          1. (Let (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR) be forStatementIR')
+
+          2. (Stmt_inst: p IC STO |- statementIR : IC_body STO_1 statementIR_body)
+
+          3. (Let forStatementIR be (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR_body))
+
+          4. Result in: % % % |- % : IC STO_1 (forStatementIR as statementIR)
+
+        2. Case (% matches pattern `%FOR(%%%IN%)%`)
+
+          1. (Let (annotationList for( annotationList' typeIR nameIR in forCollectionExpressionIR ) statementIR) be forStatementIR')
+
+          2. If ((annotationList = annotationList')), then
+
+            1. (Stmt_inst: p IC STO |- statementIR : IC_body STO_1 statementIR_body)
+
+            2. (Let forStatementIR be (annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR_body))
+
+            3. Result in: % % % |- % : IC STO_1 (forStatementIR as statementIR)
+
+          2. Else Phantom#2109
+
+      1. Else Phantom#2110
+
+  8. Case (% has type breakStatementIR)
+
+    1. (Let breakStatementIR be (statementIR' as breakStatementIR))
+
+    2. Group breakStatementIR: p IC STO |- (breakStatementIR as statementIR) : % % %
+
+      1. Result in: % % % |- % : IC STO (breakStatementIR as statementIR)
+
+  9. Case (% has type continueStatementIR)
+
+    1. (Let continueStatementIR be (statementIR' as continueStatementIR))
+
+    2. Group continueStatementIR: p IC STO |- (continueStatementIR as statementIR) : % % %
+
+      1. Result in: % % % |- % : IC STO (continueStatementIR as statementIR)
+
+  10. Case (% has type switchStatementIR)
+
+    1. (Let (switch( typedExpressionIR ){ switchCaseListIR }) be (statementIR' as switchStatementIR))
 
     2. Group switchStatementIR: p IC STO |- ((switch( typedExpressionIR ){ switchCaseListIR }) as statementIR) : % % %
 
@@ -32018,15 +32082,15 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
       2. Result in: % % % |- % : IC STO_1 ((switch( typedExpressionIR ){ switchCaseListIR_inst }) as statementIR)
 
-1. Else Phantom#2108
+1. Else Phantom#2111
 
 2. If ((p matches pattern `LOCAL`)), then
 
-  1. Case analysis on statementIR
+  1. Case analysis on statementIR'
 
     1. Case (% has type returnStatementIR)
 
-      1. (Let returnStatementIR be (statementIR as returnStatementIR))
+      1. (Let returnStatementIR be (statementIR' as returnStatementIR))
 
       2. Group returnStatementIR: (local) IC STO |- (returnStatementIR as statementIR) : % % %
 
@@ -32034,7 +32098,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
     2. Case (% has type blockStatementIR)
 
-      1. (Let (annotationList { blockElementStatementListIR }) be (statementIR as blockStatementIR))
+      1. (Let (annotationList { blockElementStatementListIR }) be (statementIR' as blockStatementIR))
 
       2. Group blockStatementIR: (local) IC STO |- ((annotationList { blockElementStatementListIR }) as statementIR) : % % %
 
@@ -32046,9 +32110,9 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
         4. Result in: % % % |- % : IC_3 STO_1 ((annotationList { blockElementStatementListIR_inst }) as statementIR)
 
-  1. Else Phantom#2109
+  1. Else Phantom#2112
 
-2. Else Phantom#2110
+2. Else Phantom#2113
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:34.1-37.23
 relation BlockElementStmt_inst: IC_0 STO_0 |- blockElementStatementIR : % % %
@@ -32073,9 +32137,9 @@ relation BlockElementStmt_inst: IC_0 STO_0 |- blockElementStatementIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR_inst as blockElementStatementIR))
 
-        2. Else Phantom#2111
+        2. Else Phantom#2114
 
-      2. Else Phantom#2112
+      2. Else Phantom#2115
 
   2. Case (% has type variableDeclarationIR)
 
@@ -32122,7 +32186,7 @@ relation BlockElementStmts_inst: IC STO |- (blockElementStatementIR)* : % % %
 
         3. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
-      2. Else Phantom#2113
+      2. Else Phantom#2116
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:44.1-47.23
 relation Block_inst: IC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
@@ -32212,9 +32276,9 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 (constantDeclarationIR_inst as parserStatementIR)
 
-        2. Else Phantom#2114
+        2. Else Phantom#2117
 
-      2. Else Phantom#2115
+      2. Else Phantom#2118
 
   2. Case (% has type variableDeclarationIR)
 
@@ -32234,9 +32298,9 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 (variableDeclarationIR_inst as parserStatementIR)
 
-        2. Else Phantom#2116
+        2. Else Phantom#2119
 
-      2. Else Phantom#2117
+      2. Else Phantom#2120
 
   3. Case (% has type emptyStatementIR)
 
@@ -32252,7 +32316,7 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : IC_1 STO_1 (emptyStatementIR_inst as parserStatementIR)
 
-      2. Else Phantom#2118
+      2. Else Phantom#2121
 
   4. Case (% has type assignmentStatementIR)
 
@@ -32268,7 +32332,7 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : IC_1 STO_1 (assignmentStatementIR_inst as parserStatementIR)
 
-      2. Else Phantom#2119
+      2. Else Phantom#2122
 
   5. Case (% has type callStatementIR)
 
@@ -32284,7 +32348,7 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : IC_1 STO_1 (callStatementIR_inst as parserStatementIR)
 
-      2. Else Phantom#2120
+      2. Else Phantom#2123
 
   6. Case (% has type directApplicationStatementIR)
 
@@ -32322,9 +32386,9 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
           12. Result in: % % |- % : IC_0 STO_2 (parserBlockStatementIR as parserStatementIR)
 
-        1. Else Phantom#2121
+        1. Else Phantom#2124
 
-      2. Else Phantom#2122
+      2. Else Phantom#2125
 
   7. Case (% has type parserBlockStatementIR)
 
@@ -32446,9 +32510,9 @@ relation ParserLocalDecl_inst: IC_0 STO_0 |- parserLocalDeclarationIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 (constantDeclarationIR_inst as parserLocalDeclarationIR)
 
-        2. Else Phantom#2123
+        2. Else Phantom#2126
 
-      2. Else Phantom#2124
+      2. Else Phantom#2127
 
   2. Case (% has type instantiationIR)
 
@@ -32468,9 +32532,9 @@ relation ParserLocalDecl_inst: IC_0 STO_0 |- parserLocalDeclarationIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 (constantDeclarationIR_inst as parserLocalDeclarationIR)
 
-        2. Else Phantom#2125
+        2. Else Phantom#2128
 
-      2. Else Phantom#2126
+      2. Else Phantom#2129
 
   3. Case (% has type variableDeclarationIR)
 
@@ -32620,9 +32684,9 @@ relation ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR_inst as controlLocalDeclarationIR))
 
-        2. Else Phantom#2127
+        2. Else Phantom#2130
 
-      2. Else Phantom#2128
+      2. Else Phantom#2131
 
   2. Case (% has type instantiationIR)
 
@@ -32642,9 +32706,9 @@ relation ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
           2. Result in: % % |- % : IC_1 STO_1 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-        2. Else Phantom#2129
+        2. Else Phantom#2132
 
-      2. Else Phantom#2130
+      2. Else Phantom#2133
 
   3. Case (% has type variableDeclarationIR)
 
@@ -32666,7 +32730,7 @@ relation ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
         1. Result in: % % |- % : IC_1 STO_1 ?()
 
-      2. Else Phantom#2131
+      2. Else Phantom#2134
 
   5. Case (% has type tableDeclarationIR)
 
@@ -32713,7 +32777,7 @@ relation ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)* : % % %
 
         2. Result in: % % |- % : IC_2 STO_2 (controlLocalDeclarationIR_t_inst)*
 
-      2. Else Phantom#2132
+      2. Else Phantom#2135
 
     3. Group cons-some: IC STO |- controlLocalDeclarationIR_h :: (controlLocalDeclarationIR_t)* : % % %
 
@@ -32727,7 +32791,7 @@ relation ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)* : % % %
 
         3. Result in: % % |- % : IC_2 STO_2 controlLocalDeclarationIR_h_inst :: (controlLocalDeclarationIR_t_inst)*
 
-      2. Else Phantom#2133
+      2. Else Phantom#2136
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-126.26
 relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
@@ -32796,7 +32860,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
             11. Result in: % % % |- % : IC_1 STO_3 ?()
 
-          4. Else Phantom#2134
+          4. Else Phantom#2137
 
           5. If (~$is_externObject(object)), then
 
@@ -32808,7 +32872,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
             4. Result in: % % % |- % : IC_1 STO_2 ?()
 
-          5. Else Phantom#2135
+          5. Else Phantom#2138
 
         2. Case false
 
@@ -32844,7 +32908,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
             12. Result in: % % % |- % : IC_1 STO_3 ?((constantDeclarationIR as declarationIR))
 
-          4. Else Phantom#2136
+          4. Else Phantom#2139
 
           5. If (~$is_externObject(object)), then
 
@@ -32858,7 +32922,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
             5. Result in: % % % |- % : IC_1 STO_2 ?((constantDeclarationIR as declarationIR))
 
-          5. Else Phantom#2137
+          5. Else Phantom#2140
 
   3. Case (% has type functionDeclarationIR)
 
@@ -32888,7 +32952,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
       4. Result in: % % % |- % : IC_1 STO ?()
 
-1. Else Phantom#2138
+1. Else Phantom#2141
 
 2. If ((cursor matches pattern `GLOBAL`)), then
 
@@ -32960,7 +33024,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
           9. Result in: % % % |- % : IC_2 STO ?()
 
-        1. Else Phantom#2139
+        1. Else Phantom#2142
 
         2. (Let (externConstructorPrototypeIR)* be (externConstructorPrototypeIR')*)
 
@@ -32998,7 +33062,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
           4. Result in: % % % |- % : IC_1 STO ?()
 
-      2. Else Phantom#2140
+      2. Else Phantom#2143
 
     6. Case (% has type controlDeclarationIR)
 
@@ -33016,7 +33080,7 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
           4. Result in: % % % |- % : IC_1 STO ?()
 
-      2. Else Phantom#2141
+      2. Else Phantom#2144
 
     7. Case (% has type enumTypeDeclarationIR)
 
@@ -33170,11 +33234,11 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
                           4. Result in: % % % |- % : IC_1 STO ?()
 
-                        1. Else Phantom#2142
+                        1. Else Phantom#2145
 
-                  3. Else Phantom#2143
+                  3. Else Phantom#2146
 
-                4. Else Phantom#2144
+                4. Else Phantom#2147
 
         2. Case (% matches pattern `%TYPE%%;`)
 
@@ -33232,9 +33296,9 @@ relation Decl_inst: cursor IC_0 STO |- declarationIR : % % %
 
         7. Result in: % % % |- % : IC_2 STO ?()
 
-  1. Else Phantom#2145
+  1. Else Phantom#2148
 
-2. Else Phantom#2146
+2. Else Phantom#2149
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:128.1-136.59
 relation Decls_inst: p IC STO |- (declarationIR)* : % % %
@@ -33261,7 +33325,7 @@ relation Decls_inst: p IC STO |- (declarationIR)* : % % %
 
         2. Result in: % % % |- % : IC_2 STO_2 (declarationIR_t_inst)*
 
-      2. Else Phantom#2147
+      2. Else Phantom#2150
 
     3. Group cons-some: p IC STO |- declarationIR_h :: (declarationIR_t)* : % % %
 
@@ -33275,7 +33339,7 @@ relation Decls_inst: p IC STO |- (declarationIR)* : % % %
 
         3. Result in: % % % |- % : IC_2 STO_2 declarationIR_h_inst :: (declarationIR_t_inst)*
 
-      2. Else Phantom#2148
+      2. Else Phantom#2151
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:138.1-143.37
 relation Program_inst: |- p4program : % %
@@ -33294,7 +33358,7 @@ relation Program_inst: |- p4program : % %
 
     1. Result in: |- % : IC_1.global STO_1
 
-  5. Else Phantom#2149
+  5. Else Phantom#2152
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:151.1-155.35
 relation Bind_arg: p_caller IC_caller | p_callee IC_callee_0 STO_0 |- id argumentIR : % %
@@ -33322,7 +33386,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee STO |- (id)* (argume
 
         1. Result in: % % | % % % |- % % : IC_callee STO
 
-    1. Else Phantom#2150
+    1. Else Phantom#2153
 
   2. Case (% matches pattern _ :: _)
 
@@ -33340,7 +33404,7 @@ relation Bind_args: p_caller IC_caller | p_callee IC_callee STO |- (id)* (argume
 
         3. Result in: % % | % % % |- % % : IC_callee_2 STO_2
 
-    2. Else Phantom#2151
+    2. Else Phantom#2154
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:168.1-173.29
 relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % < % >(# % )
@@ -33357,9 +33421,9 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR')* >( (argum
 
       2. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR')* >(# (id_default)* )
 
-    2. Else Phantom#2152
+    2. Else Phantom#2155
 
-  1. Else Phantom#2153
+  1. Else Phantom#2156
 
 2. Group non-aliased-some-type: p IC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % < % >(# % )
 
@@ -33379,11 +33443,11 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR')* >( (argum
 
         2. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR')* >(# (id_default)* )
 
-      2. Else Phantom#2154
+      2. Else Phantom#2157
 
-    2. Else Phantom#2155
+    2. Else Phantom#2158
 
-  2. Else Phantom#2156
+  2. Else Phantom#2159
 
 3. If (((typeArgumentIR')* matches pattern [])), then
 
@@ -33409,13 +33473,13 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR')* >( (argum
 
           2. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR)* >(# (id_default)* )
 
-        4. Else Phantom#2157
+        4. Else Phantom#2160
 
-      2. Else Phantom#2158
+      2. Else Phantom#2161
 
-    2. Else Phantom#2159
+    2. Else Phantom#2162
 
-3. Else Phantom#2160
+3. Else Phantom#2163
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:175.1-180.35
 relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (argumentIR)* # (id_default)* ): % %
@@ -33466,9 +33530,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
           4. Result in: % % % |- % < % >( % # % ): STO_1 object_extern
 
-        4. Else Phantom#2161
+        4. Else Phantom#2164
 
-      11. Else Phantom#2162
+      11. Else Phantom#2165
 
   2. Case (% has type parserObjectConstructorDef)
 
@@ -33500,7 +33564,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
         11. Result in: % % % |- % < % >( % # % ): STO_3 object_parser
 
-    2. Else Phantom#2163
+    2. Else Phantom#2166
 
   3. Case (% has type controlObjectConstructorDef)
 
@@ -33538,9 +33602,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
           3. Result in: % % % |- % < % >( % # % ): STO_3 object_control
 
-        11. Else Phantom#2164
+        11. Else Phantom#2167
 
-    2. Else Phantom#2165
+    2. Else Phantom#2168
 
   4. Case (% has type packageObjectConstructorDef)
 
@@ -33600,15 +33664,15 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
               3. Result in: % % % |- % < % >( % # % ): STO_1 object_table
 
-            7. Else Phantom#2166
+            7. Else Phantom#2169
 
-        1. Else Phantom#2167
+        1. Else Phantom#2170
 
-      1. Else Phantom#2168
+      1. Else Phantom#2171
 
-    2. Else Phantom#2169
+    2. Else Phantom#2172
 
-;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:116.1-119.26
+;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:169.1-172.26
 relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
 1. Group : p IC store |- switchCaseIR : % %
@@ -33627,7 +33691,7 @@ relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
         2. Result in: % % % |- % : STO_1 (switchLabelIR : blockStatementIR_inst)
 
-      3. Else Phantom#2170
+      3. Else Phantom#2173
 
     2. Case (% matches pattern `%:`)
 
@@ -33635,7 +33699,7 @@ relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
       2. Result in: % % % |- % : store (switchLabelIR :)
 
-;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:140.1-143.26
+;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:193.1-196.26
 relation SwitchCases_inst: p IC STO |- (switchCaseIR)* : % %
 
 1. Case analysis on (switchCaseIR)*
@@ -33670,7 +33734,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 
   1. Return externMethodDefEnv
 
-1. Else Phantom#2171
+1. Else Phantom#2174
 
 2. (Let ({ (pair<callableId, callableDef>)* }) be set<pair<callableId, callableDef>>)
 
@@ -33688,9 +33752,9 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 
     4. Return $merge_externMethodDefEnvs(externMethodDefEnv_post, ({ ((callableId_t : callableDef_t))* }))
 
-  2. Else Phantom#2172
+  2. Else Phantom#2175
 
-3. Else Phantom#2173
+3. Else Phantom#2176
 
 ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:262.1-263.42
 def $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR)
@@ -33846,15 +33910,15 @@ def $init_table((tablePropertyIR)*)
 
           3. Return TBL
 
-        4. Else Phantom#2174
+        4. Else Phantom#2177
 
-      2. Else Phantom#2175
+      2. Else Phantom#2178
 
-    3. Else Phantom#2176
+    3. Else Phantom#2179
 
-  2. Else Phantom#2177
+  2. Else Phantom#2180
 
-3. Else Phantom#2178
+3. Else Phantom#2181
 
 ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:93.1-93.63
 def $init_tableKeys((tablePropertyIR)*)
@@ -33871,15 +33935,15 @@ def $init_tableKeys((tablePropertyIR)*)
 
     2. Return tableKeysPropertyIR
 
-  2. Else Phantom#2179
+  2. Else Phantom#2182
 
-2. Else Phantom#2180
+2. Else Phantom#2183
 
 3. If (([] = $filter_<tablePropertyIR>((tablePropertyIR)*, $is_tableKeysPropertyIR))), then
 
   1. Return (key={ [] })
 
-3. Else Phantom#2181
+3. Else Phantom#2184
 
 ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:94.1-94.69
 def $init_tableEntries((tablePropertyIR)*)
@@ -33896,9 +33960,9 @@ def $init_tableEntries((tablePropertyIR)*)
 
     2. Return tableEntriesPropertyIR
 
-  2. Else Phantom#2182
+  2. Else Phantom#2185
 
-2. Else Phantom#2183
+2. Else Phantom#2186
 
 3. Return (() ?() entries={ [] })
 
@@ -33930,7 +33994,7 @@ def $exit_e(EC)
 
   2. Return EC[local.frames = (frame_t)*]
 
-2. Else Phantom#2184
+2. Else Phantom#2187
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:45.1-46.16
 def $inherit_e(cursor, EC)
@@ -33990,7 +34054,7 @@ def $add_var_e(cursor, EC, prefixedNameIR, value)
 
       3. Return EC[block.frame = frame]
 
-    1. Else Phantom#2185
+    1. Else Phantom#2188
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -34008,9 +34072,9 @@ def $add_var_e(cursor, EC, prefixedNameIR, value)
 
         3. Return EC[local.frames = frame_h' :: (frame_t)*]
 
-      3. Else Phantom#2186
+      3. Else Phantom#2189
 
-    1. Else Phantom#2187
+    1. Else Phantom#2190
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:69.1-69.75
 def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
@@ -34023,7 +34087,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
 
       1. Return EC
 
-    1. Else Phantom#2188
+    1. Else Phantom#2191
 
   2. Case (% matches pattern _ :: _)
 
@@ -34039,7 +34103,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
 
       4. Return EC''
 
-    2. Else Phantom#2189
+    2. Else Phantom#2192
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:94.1-94.76
 def $update_var_e(p, EC, prefixedNameIR, value)
@@ -34052,7 +34116,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
   3. Return EC[global.frame = frame]
 
-1. Else Phantom#2190
+1. Else Phantom#2193
 
 2. Case analysis on p
 
@@ -34070,9 +34134,9 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
         2. Return EC[global.frame = frame']
 
-      3. Else Phantom#2191
+      3. Else Phantom#2194
 
-    1. Else Phantom#2192
+    1. Else Phantom#2195
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -34094,7 +34158,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
           1. Return $update_var_e((global), EC, (` id), value)
 
-    1. Else Phantom#2193
+    1. Else Phantom#2196
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -34106,7 +34170,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
         1. Return $update_var_e((block), EC, (` id), value)
 
-      2. Else Phantom#2194
+      2. Else Phantom#2197
 
       3. (Let (frame)* be EC.local.frames)
 
@@ -34130,9 +34194,9 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
             3. Return EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
 
-      4. Else Phantom#2195
+      4. Else Phantom#2198
 
-    1. Else Phantom#2196
+    1. Else Phantom#2199
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:131.1-132.51
 def $find_var_e(p, EC, prefixedNameIR)
@@ -34149,9 +34213,9 @@ def $find_var_e(p, EC, prefixedNameIR)
 
     2. Return value
 
-  3. Else Phantom#2197
+  3. Else Phantom#2200
 
-1. Else Phantom#2198
+1. Else Phantom#2201
 
 2. Case analysis on p
 
@@ -34169,9 +34233,9 @@ def $find_var_e(p, EC, prefixedNameIR)
 
         2. Return value
 
-      3. Else Phantom#2199
+      3. Else Phantom#2202
 
-    1. Else Phantom#2200
+    1. Else Phantom#2203
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -34187,15 +34251,15 @@ def $find_var_e(p, EC, prefixedNameIR)
 
         2. Return value
 
-      3. Else Phantom#2201
+      3. Else Phantom#2204
 
       4. If ((?() = $find_map<id, value>(EC.block.frame, id))), then
 
         1. Return $find_var_e((global), EC, (` id))
 
-      4. Else Phantom#2202
+      4. Else Phantom#2205
 
-    1. Else Phantom#2203
+    1. Else Phantom#2206
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -34211,15 +34275,15 @@ def $find_var_e(p, EC, prefixedNameIR)
 
         2. Return value
 
-      3. Else Phantom#2204
+      3. Else Phantom#2207
 
       4. If ((?() = $find_maps<id, value>(EC.local.frames, id))), then
 
         1. Return $find_var_e((block), EC, (` id))
 
-      4. Else Phantom#2205
+      4. Else Phantom#2208
 
-    1. Else Phantom#2206
+    1. Else Phantom#2209
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:149.1-149.69
 def $find_var_cursor_e(p, EC, prefixedNameIR)
@@ -34236,9 +34300,9 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
     2. Return (global)
 
-  3. Else Phantom#2207
+  3. Else Phantom#2210
 
-1. Else Phantom#2208
+1. Else Phantom#2211
 
 2. Case analysis on p
 
@@ -34256,9 +34320,9 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
         2. Return (global)
 
-      3. Else Phantom#2209
+      3. Else Phantom#2212
 
-    1. Else Phantom#2210
+    1. Else Phantom#2213
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -34274,15 +34338,15 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
         2. Return (block)
 
-      3. Else Phantom#2211
+      3. Else Phantom#2214
 
       4. If ((?() = $find_map<id, value>(EC.block.frame, id))), then
 
         1. Return $find_var_cursor_e((global), EC, (` id))
 
-      4. Else Phantom#2212
+      4. Else Phantom#2215
 
-    1. Else Phantom#2213
+    1. Else Phantom#2216
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -34298,15 +34362,15 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
         2. Return (local)
 
-      3. Else Phantom#2214
+      3. Else Phantom#2217
 
       4. If ((?() = $find_maps<id, value>(EC.local.frames, id))), then
 
         1. Return $find_var_cursor_e((block), EC, (` id))
 
-      4. Else Phantom#2215
+      4. Else Phantom#2218
 
-    1. Else Phantom#2216
+    1. Else Phantom#2219
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:168.1-168.70
 def $find_typeDef_e(_cursor, EC, prefixedNameIR)
@@ -34344,15 +34408,15 @@ def $find_type_e(cursor, EC, nameIR)
 
       2. Return ?(typeIR)
 
-    2. Else Phantom#2217
+    2. Else Phantom#2220
 
     3. If ((?() = $find_map<typeId, typeIR>(EC.local.type, nameIR))), then
 
       1. Return $find_type_e((block), EC, nameIR)
 
-    3. Else Phantom#2218
+    3. Else Phantom#2221
 
-1. Else Phantom#2219
+1. Else Phantom#2222
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:189.1-190.44
 def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
@@ -34377,13 +34441,13 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
           2. Return ?(((global), callableId, callableDef, (id_default)*))
 
-        4. Else Phantom#2220
+        4. Else Phantom#2223
 
         5. If ((?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
           1. Return ?()
 
-        5. Else Phantom#2221
+        5. Else Phantom#2224
 
       2. Case (% matches pattern `.%`)
 
@@ -34399,13 +34463,13 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
           2. Return ?(((global), callableId, callableDef, (id_default)*))
 
-        4. Else Phantom#2222
+        4. Else Phantom#2225
 
         5. If ((?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
           1. Return ?()
 
-        5. Else Phantom#2223
+        5. Else Phantom#2226
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -34423,15 +34487,15 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
         2. Return ?(((block), callableId, callableDef, (id_default)*))
 
-      4. Else Phantom#2224
+      4. Else Phantom#2227
 
       5. If ((?() = $find_overloaded<callableDef>(EC.block.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
         1. Return $find_callableDef_overloaded_e((global), EC, (` nameIR), (argumentIR)*)
 
-      5. Else Phantom#2225
+      5. Else Phantom#2228
 
-    1. Else Phantom#2226
+    1. Else Phantom#2229
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -34441,7 +34505,7 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
       2. Return $find_callableDef_overloaded_e((block), EC, (` nameIR), (argumentIR)*)
 
-    1. Else Phantom#2227
+    1. Else Phantom#2230
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:245.1-246.39
 def $find_constructorDef_e(EC, prefixedNameIR, (argumentIR)*)
@@ -34686,9 +34750,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
               3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-            2. Else Phantom#2228
+            2. Else Phantom#2231
 
-      1. Else Phantom#2229
+      1. Else Phantom#2232
 
       2. Case analysis on binop'
 
@@ -34702,7 +34766,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
 
-          2. Else Phantom#2230
+          2. Else Phantom#2233
 
           3. If ((expressionResult' = ((` ((false) as value)) as expressionResult))), then
 
@@ -34710,7 +34774,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
             2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-          3. Else Phantom#2231
+          3. Else Phantom#2234
 
           4. If ((expressionResult' = ((` ((true) as value)) as expressionResult))), then
 
@@ -34722,13 +34786,13 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
               2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
 
-            2. Else Phantom#2232
+            2. Else Phantom#2235
 
             3. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r)
 
             4. Result in: % % % |- % : EC_2 STO_2 expressionResult_r
 
-          4. Else Phantom#2233
+          4. Else Phantom#2236
 
         2. Case (% matches pattern `||`)
 
@@ -34740,7 +34804,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
 
-          2. Else Phantom#2234
+          2. Else Phantom#2237
 
           3. If ((expressionResult' = ((` ((true) as value)) as expressionResult))), then
 
@@ -34748,7 +34812,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
             2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-          3. Else Phantom#2235
+          3. Else Phantom#2238
 
           4. If ((expressionResult' = ((` ((false) as value)) as expressionResult))), then
 
@@ -34760,15 +34824,15 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
               2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
 
-            2. Else Phantom#2236
+            2. Else Phantom#2239
 
             3. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r)
 
             4. Result in: % % % |- % : EC_2 STO_2 expressionResult_r
 
-          4. Else Phantom#2237
+          4. Else Phantom#2240
 
-      2. Else Phantom#2238
+      2. Else Phantom#2241
 
   8. Case (% has type ternaryExpressionIR)
 
@@ -34784,7 +34848,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
         2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
 
-      2. Else Phantom#2239
+      2. Else Phantom#2242
 
       3. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
 
@@ -34792,7 +34856,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
         2. Result in: % % % |- % : EC_2 STO_2 expressionResult_true
 
-      3. Else Phantom#2240
+      3. Else Phantom#2243
 
       4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
 
@@ -34800,7 +34864,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
         2. Result in: % % % |- % : EC_2 STO_2 expressionResult_false
 
-      4. Else Phantom#2241
+      4. Else Phantom#2244
 
   9. Case (% has type castExpressionIR)
 
@@ -34838,7 +34902,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
         2. Result in: % % % |- % : EC STO expressionResult
 
-    2. Else Phantom#2242
+    2. Else Phantom#2245
 
     3. Group dataExpressionIR-sequence: p EC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % % %
 
@@ -34888,7 +34952,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
               3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-      1. Else Phantom#2243
+      1. Else Phantom#2246
 
     4. Group dataExpressionIR-record: p EC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % % %
 
@@ -34938,7 +35002,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
               3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-      1. Else Phantom#2244
+      1. Else Phantom#2247
 
   11. Case (% has type errorAccessExpressionIR)
 
@@ -34998,13 +35062,13 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC STO expressionResult
 
-                3. Else Phantom#2245
+                3. Else Phantom#2248
 
-          2. Else Phantom#2246
+          2. Else Phantom#2249
 
-        2. Else Phantom#2247
+        2. Else Phantom#2250
 
-    2. Else Phantom#2248
+    2. Else Phantom#2251
 
     3. If ((memberAccessBaseIR has type typedExpressionIR)), then
 
@@ -35044,7 +35108,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-                3. Else Phantom#2249
+                3. Else Phantom#2252
 
               2. Case (% has type headerValue)
 
@@ -35060,7 +35124,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-                3. Else Phantom#2250
+                3. Else Phantom#2253
 
               3. Case (% has type headerUnionValue)
 
@@ -35076,9 +35140,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-                3. Else Phantom#2251
+                3. Else Phantom#2254
 
-            2. Else Phantom#2252
+            2. Else Phantom#2255
 
         4. Case analysis on nameIR
 
@@ -35096,9 +35160,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              2. Else Phantom#2253
+              2. Else Phantom#2256
 
-            1. Else Phantom#2254
+            1. Else Phantom#2257
 
           2. Case (% = "last")
 
@@ -35122,11 +35186,11 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   4. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-                3. Else Phantom#2255
+                3. Else Phantom#2258
 
-              2. Else Phantom#2256
+              2. Else Phantom#2259
 
-            1. Else Phantom#2257
+            1. Else Phantom#2260
 
           3. Case (% = "hit")
 
@@ -35142,9 +35206,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              2. Else Phantom#2258
+              2. Else Phantom#2261
 
-            1. Else Phantom#2259
+            1. Else Phantom#2262
 
           4. Case (% = "miss")
 
@@ -35160,9 +35224,9 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              2. Else Phantom#2260
+              2. Else Phantom#2263
 
-            1. Else Phantom#2261
+            1. Else Phantom#2264
 
           5. Case (% = "action_run")
 
@@ -35178,13 +35242,13 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              2. Else Phantom#2262
+              2. Else Phantom#2265
 
-            1. Else Phantom#2263
+            1. Else Phantom#2266
 
-        4. Else Phantom#2264
+        4. Else Phantom#2267
 
-    3. Else Phantom#2265
+    3. Else Phantom#2268
 
   13. Case (% has type indexAccessExpressionIR)
 
@@ -35228,13 +35292,13 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-                3. Else Phantom#2266
+                3. Else Phantom#2269
 
-              2. Else Phantom#2267
+              2. Else Phantom#2270
 
-            2. Else Phantom#2268
+            2. Else Phantom#2271
 
-          2. Else Phantom#2269
+          2. Else Phantom#2272
 
       3. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
 
@@ -35264,15 +35328,15 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              3. Else Phantom#2270
+              3. Else Phantom#2273
 
-            2. Else Phantom#2271
+            2. Else Phantom#2274
 
-          2. Else Phantom#2272
+          2. Else Phantom#2275
 
-        2. Else Phantom#2273
+        2. Else Phantom#2276
 
-      4. Else Phantom#2274
+      4. Else Phantom#2277
 
   14. Case (% has type sliceAccessExpressionIR)
 
@@ -35302,7 +35366,7 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
             3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-          2. Else Phantom#2275
+          2. Else Phantom#2278
 
   15. Case (% has type callExpressionIR)
 
@@ -35348,11 +35412,11 @@ relation Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
                   2. Result in: % % % |- % : EC_2 STO_2 ((` value) as expressionResult)
 
-                2. Else Phantom#2276
+                2. Else Phantom#2279
 
-            3. Else Phantom#2277
+            3. Else Phantom#2280
 
-    2. Else Phantom#2278
+    2. Else Phantom#2281
 
   16. Case (% has type parenthesizedExpressionIR)
 
@@ -35378,7 +35442,7 @@ relation Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
     1. Result in: % % % |- % : evalContext store ((` []) as expressionListResult)
 
-  1. Else Phantom#2279
+  1. Else Phantom#2282
 
   2. (Let (typedExpressionIR''')* be (typedExpressionIR)*)
 
@@ -35416,7 +35480,7 @@ relation Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
             2. Result in: % % % |- % : EC_2 STO_2 ((` value_h :: (value_t)*) as expressionListResult)
 
-  3. Else Phantom#2280
+  3. Else Phantom#2283
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:51.1-52.15
 syntax keysetExpressionResult = 
@@ -35447,7 +35511,7 @@ relation Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
     2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-1. Else Phantom#2281
+1. Else Phantom#2284
 
 2. If ((argumentIR matches pattern `%=%`)), then
 
@@ -35459,7 +35523,7 @@ relation Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
     2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-2. Else Phantom#2282
+2. Else Phantom#2285
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:69.1-70.15
 syntax storageReferenceResult = 
@@ -35485,9 +35549,9 @@ relation Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
       3. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-    2. Else Phantom#2283
+    2. Else Phantom#2286
 
-1. Else Phantom#2284
+1. Else Phantom#2287
 
 2. Case analysis on argumentIR
 
@@ -35507,7 +35571,7 @@ relation Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
         3. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-      2. Else Phantom#2285
+      2. Else Phantom#2288
 
   2. Case (% matches pattern `%=_`)
 
@@ -35523,7 +35587,7 @@ relation Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
       1. Result in: % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 
-2. Else Phantom#2286
+2. Else Phantom#2289
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:81.1-84.26
 relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
@@ -35536,7 +35600,7 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
     1. Result in: % % % |- % : EC STO ((` ?((referenceExpressionIR as storageReference))) as storageReferenceResult)
 
-1. Else Phantom#2287
+1. Else Phantom#2290
 
 2. Case analysis on lvalueIR
 
@@ -35568,7 +35632,7 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
             3. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-          2. Else Phantom#2288
+          2. Else Phantom#2291
 
   2. Case (% matches pattern `%[%]`)
 
@@ -35612,7 +35676,7 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
                 3. Result in: % % % |- % : EC_2 STO_2 storageReferenceResult
 
-          2. Else Phantom#2289
+          2. Else Phantom#2292
 
   3. Case (% matches pattern `%[%:%]`)
 
@@ -35660,9 +35724,9 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
                   3. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-                2. Else Phantom#2290
+                2. Else Phantom#2293
 
-          2. Else Phantom#2291
+          2. Else Phantom#2294
 
   4. Case (% matches pattern `(%)`)
 
@@ -35674,7 +35738,7 @@ relation Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
       2. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-2. Else Phantom#2292
+2. Else Phantom#2295
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
 relation Lvalue_read: p EC STO |- storageReference' : %
@@ -35689,7 +35753,7 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
     2. Result in: % % % |- % : value
 
-1. Else Phantom#2293
+1. Else Phantom#2296
 
 2. Case analysis on storageReference'
 
@@ -35725,11 +35789,11 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
                 2. Result in: % % % |- % : value
 
-              3. Else Phantom#2294
+              3. Else Phantom#2297
 
-            2. Else Phantom#2295
+            2. Else Phantom#2298
 
-          3. Else Phantom#2296
+          3. Else Phantom#2299
 
         2. Case (% has type structValue)
 
@@ -35743,7 +35807,7 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
             2. Result in: % % % |- % : value
 
-          3. Else Phantom#2297
+          3. Else Phantom#2300
 
         3. Case (% has type headerValue)
 
@@ -35757,7 +35821,7 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
             2. Result in: % % % |- % : value
 
-          3. Else Phantom#2298
+          3. Else Phantom#2301
 
         4. Case (% has type headerUnionValue)
 
@@ -35771,9 +35835,9 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
             2. Result in: % % % |- % : value
 
-          3. Else Phantom#2299
+          3. Else Phantom#2302
 
-      2. Else Phantom#2300
+      2. Else Phantom#2303
 
       3. If ((nameIR' = "next")), then
 
@@ -35787,11 +35851,11 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
             2. Result in: % % % |- % : value
 
-          2. Else Phantom#2301
+          2. Else Phantom#2304
 
-        1. Else Phantom#2302
+        1. Else Phantom#2305
 
-      3. Else Phantom#2303
+      3. Else Phantom#2306
 
   2. Case (% matches pattern `%[%]`)
 
@@ -35821,7 +35885,7 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
               2. Result in: % % % |- % : value
 
-            2. Else Phantom#2304
+            2. Else Phantom#2307
 
             3. If ((n_idx >= n_size)), then
 
@@ -35835,15 +35899,15 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
                 3. Result in: % % % |- % : value
 
-              2. Else Phantom#2305
+              2. Else Phantom#2308
 
-            3. Else Phantom#2306
+            3. Else Phantom#2309
 
-          3. Else Phantom#2307
+          3. Else Phantom#2310
 
-        2. Else Phantom#2308
+        2. Else Phantom#2311
 
-    2. Else Phantom#2309
+    2. Else Phantom#2312
 
   3. Case (% matches pattern `%[%:%]`)
 
@@ -35857,7 +35921,7 @@ relation Lvalue_read: p EC STO |- storageReference' : %
 
       3. Result in: % % % |- % : value
 
-2. Else Phantom#2310
+2. Else Phantom#2313
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:90.1-93.29
 relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
@@ -35872,7 +35936,7 @@ relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
     2. Result in: % % % |- % -> % : EC_1
 
-1. Else Phantom#2311
+1. Else Phantom#2314
 
 2. Case analysis on storageReference'
 
@@ -35898,9 +35962,9 @@ relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
           5. Result in: % % % |- % -> % : EC_1
 
-        2. Else Phantom#2312
+        2. Else Phantom#2315
 
-      1. Else Phantom#2313
+      1. Else Phantom#2316
 
       2. (Lvalue_read: p EC_0 STO |- storageReference : value_base)
 
@@ -35974,13 +36038,13 @@ relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
                     4. Result in: % % % |- % -> % : EC_1
 
-              3. Else Phantom#2314
+              3. Else Phantom#2317
 
-            2. Else Phantom#2315
+            2. Else Phantom#2318
 
-          4. Else Phantom#2316
+          4. Else Phantom#2319
 
-      3. Else Phantom#2317
+      3. Else Phantom#2320
 
   2. Case (% matches pattern `%[%]`)
 
@@ -36014,19 +36078,19 @@ relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
               4. Result in: % % % |- % -> % : EC_1
 
-            2. Else Phantom#2318
+            2. Else Phantom#2321
 
             3. If ((n_idx >= n_size)), then
 
               1. Result in: % % % |- % -> % : EC_0
 
-            3. Else Phantom#2319
+            3. Else Phantom#2322
 
-          3. Else Phantom#2320
+          3. Else Phantom#2323
 
-        2. Else Phantom#2321
+        2. Else Phantom#2324
 
-    2. Else Phantom#2322
+    2. Else Phantom#2325
 
   3. Case (% matches pattern `%[%:%]`)
 
@@ -36042,7 +36106,7 @@ relation Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
       4. Result in: % % % |- % -> % : EC_1
 
-2. Else Phantom#2323
+2. Else Phantom#2326
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:100.1-102.17
 syntax callResult = 
@@ -36050,21 +36114,31 @@ syntax callResult =
    | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:105.1-106.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:104.25-104.30
+syntax forBreakResult = 
+   | break
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:106.28-106.36
+syntax forContinueResult = 
+   | continue
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
 syntax statementResult = 
    | `
    | exit
    | reject errorValue
    | return value?
+   | break
+   | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:108.1-115.55
-relation Stmt_eval: p EC STO |- statementIR : % % %
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-121.55
+relation Stmt_eval: p EC STO |- statementIR' : % % %
 
-1. Case analysis on statementIR
+1. Case analysis on statementIR'
 
   1. Case (% has type emptyStatement)
 
-    1. (Let emptyStatement be (statementIR as emptyStatement))
+    1. (Let emptyStatement be (statementIR' as emptyStatement))
 
     2. Group emptyStatementIR: p EC STO |- ((;) as statementIR) : % % %
 
@@ -36072,7 +36146,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
   2. Case (% has type assignmentStatementIR)
 
-    1. (Let (typedLvalueIR assignop' typedExpressionIR ;) be (statementIR as assignmentStatementIR))
+    1. (Let (typedLvalueIR assignop' typedExpressionIR ;) be (statementIR' as assignmentStatementIR))
 
     2. Group assignmentStatementIR: p EC STO |- ((typedLvalueIR assignop' typedExpressionIR ;) as statementIR) : % % %
 
@@ -36124,11 +36198,11 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                     4. Result in: % % % |- % : EC_3 STO_2 ((`) as statementResult)
 
-                  3. Else Phantom#2324
+                  3. Else Phantom#2327
 
-            2. Else Phantom#2325
+            2. Else Phantom#2328
 
-          2. Else Phantom#2326
+          2. Else Phantom#2329
 
       3. If ((assignop' matches pattern `=`)), then
 
@@ -36158,15 +36232,15 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                 3. Result in: % % % |- % : EC_3 STO_2 ((`) as statementResult)
 
-          2. Else Phantom#2327
+          2. Else Phantom#2330
 
-        1. Else Phantom#2328
+        1. Else Phantom#2331
 
-      3. Else Phantom#2329
+      3. Else Phantom#2332
 
   3. Case (% has type callStatementIR)
 
-    1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* );) be (statementIR as callStatementIR))
+    1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* );) be (statementIR' as callStatementIR))
 
     2. Group callStatementIR: p EC STO |- ((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* );) as statementIR) : % % %
 
@@ -36210,7 +36284,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
   4. Case (% has type exitStatement)
 
-    1. (Let exitStatement be (statementIR as exitStatement))
+    1. (Let exitStatement be (statementIR' as exitStatement))
 
     2. Group exitStatement: p EC STO |- ((exit;) as statementIR) : % % %
 
@@ -36218,7 +36292,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
   5. Case (% has type blockStatementIR)
 
-    1. (Let blockStatementIR be (statementIR as blockStatementIR))
+    1. (Let blockStatementIR be (statementIR' as blockStatementIR))
 
     2. Group blockStatement: p EC STO |- (blockStatementIR as statementIR) : % % %
 
@@ -36232,7 +36306,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
   6. Case (% has type conditionalStatementIR)
 
-    1. (Let conditionalStatementIR be (statementIR as conditionalStatementIR))
+    1. (Let conditionalStatementIR be (statementIR' as conditionalStatementIR))
 
     2. Group conditionalStatementIR: p EC STO |- (conditionalStatementIR as statementIR) : % % %
 
@@ -36241,34 +36315,6 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
         1. Case (% matches pattern `IF(%)%`)
 
           1. (Let (if( typedExpressionIR_cond ) statementIR_then) be conditionalStatementIR)
-
-          2. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
-
-          3. If ((expressionResult has type exitResult)), then
-
-            1. (Let exitResult be (expressionResult as exitResult))
-
-            2. Result in: % % % |- % : EC_cond STO_cond ((exit) as statementResult)
-
-          3. Else Phantom#2330
-
-          4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
-
-            1. (Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult)
-
-            2. Result in: % % % |- % : EC_then STO_then statementResult
-
-          4. Else Phantom#2331
-
-          5. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
-
-            1. Result in: % % % |- % : EC_cond STO_cond ((`) as statementResult)
-
-          5. Else Phantom#2332
-
-        2. Case (% matches pattern `IF(%)%ELSE%`)
-
-          1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
 
           2. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
@@ -36290,21 +36336,49 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
           5. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
 
+            1. Result in: % % % |- % : EC_cond STO_cond ((`) as statementResult)
+
+          5. Else Phantom#2335
+
+        2. Case (% matches pattern `IF(%)%ELSE%`)
+
+          1. (Let (if( typedExpressionIR_cond ) statementIR_then else statementIR_else) be conditionalStatementIR)
+
+          2. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
+
+          3. If ((expressionResult has type exitResult)), then
+
+            1. (Let exitResult be (expressionResult as exitResult))
+
+            2. Result in: % % % |- % : EC_cond STO_cond ((exit) as statementResult)
+
+          3. Else Phantom#2336
+
+          4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+
+            1. (Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult)
+
+            2. Result in: % % % |- % : EC_then STO_then statementResult
+
+          4. Else Phantom#2337
+
+          5. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+
             1. (Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult)
 
             2. Result in: % % % |- % : EC_else STO_else statementResult
 
-          5. Else Phantom#2335
+          5. Else Phantom#2338
 
-1. Else Phantom#2336
+1. Else Phantom#2339
 
 2. If ((p matches pattern `LOCAL`)), then
 
-  1. Case analysis on statementIR
+  1. Case analysis on statementIR'
 
     1. Case (% has type returnStatementIR)
 
-      1. (Let returnStatementIR be (statementIR as returnStatementIR))
+      1. (Let returnStatementIR be (statementIR' as returnStatementIR))
 
       2. Group returnStatementIR: (local) EC STO |- (returnStatementIR as statementIR) : % % %
 
@@ -36334,9 +36408,113 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                 2. Result in: % % % |- % : EC_1 STO_1 ((return ?(value)) as statementResult)
 
-    2. Case (% has type switchStatementIR)
+    2. Case (% has type forStatementIR)
 
-      1. (Let (switch( typedExpressionIR ){ (switchCaseIR)* }) be (statementIR as switchStatementIR))
+      1. (Let forStatementIR be (statementIR' as forStatementIR))
+
+      2. If ((forStatementIR matches pattern `%FOR(%;%;%)%`)), then
+
+        1. (Let (annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR) be forStatementIR)
+
+        2. Group forStatementIR-three-clause: (local) EC STO |- ((annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR) as statementIR) : % % %
+
+          1. (Let EC_1 be $enter_e(EC))
+
+          2. (ForInitStmts_eval: EC_1 STO |- forInitStatementListIR : EC_2 STO_1 statementResult')
+
+          3. Case analysis on statementResult'
+
+            1. Case (% has type exitResult)
+
+              1. (Let exitResult be (statementResult' as exitResult))
+
+              2. (Let EC_3 be $exit_e(EC_2))
+
+              3. Result in: % % % |- % : EC_3 STO_1 ((exit) as statementResult)
+
+            2. Case (% has type continueEmptyResult)
+
+              1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
+
+              2. (ForThreeClauseLoop_eval: EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_3 STO_2 statementResult)
+
+              3. (Let EC_4 be $exit_e(EC_3))
+
+              4. Result in: % % % |- % : EC_4 STO_2 statementResult
+
+          3. Else Phantom#2340
+
+      2. Else Phantom#2341
+
+      3. Group forStatementIR-in: (local) EC STO |- (forStatementIR as statementIR) : % % %
+
+        1. Case analysis on forStatementIR
+
+          1. Case (% matches pattern `%FOR(%%IN%)%`)
+
+            1. (Let (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR) be forStatementIR)
+
+            2. (Let EC_1 be $enter_e(EC))
+
+            3. (ForCollectionExpr_eval: EC_1 STO |- forCollectionExpressionIR : EC_2 STO_1 expressionResult)
+
+            4. Case analysis on expressionResult
+
+              1. Case (% has type exitResult)
+
+                1. (Let exitResult be (expressionResult as exitResult))
+
+                2. (Let EC_3 be $exit_e(EC_2))
+
+                3. Result in: % % % |- % : EC_3 STO_1 ((exit) as statementResult)
+
+              2. Case (% has type continueResult<value>)
+
+                1. (Let (` value_collection) be (expressionResult as continueResult<value>))
+
+                2. (Let (value)* be $get_values_from_collection(value_collection))
+
+                3. (Let typeIR_subst be $subst_type_e((local), EC, typeIR))
+
+                4. (Let value_init be $default(typeIR_subst))
+
+                5. (Let EC_3 be $add_var_e((local), EC_2, (` nameIR), value_init))
+
+                6. (ForInLoop_eval: EC_3 STO_1 |- nameIR (value)* statementIR : EC_4 STO_2 statementResult)
+
+                7. (Let EC_5 be $exit_e(EC_4))
+
+                8. Result in: % % % |- % : EC_5 STO_2 statementResult
+
+          2. Case (% matches pattern `%FOR(%%%IN%)%`)
+
+            1. (Let (annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR) be forStatementIR)
+
+            2. (Stmt_eval: (local) EC STO |- ((annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR) as statementIR) : EC_1 STO_1 statementResult)
+
+            3. Result in: % % % |- % : EC_1 STO_1 statementResult
+
+        1. Else Phantom#2342
+
+    3. Case (% has type breakStatement)
+
+      1. (Let breakStatement be (statementIR' as breakStatement))
+
+      2. Group breakStatement: (local) EC STO |- ((break;) as statementIR) : % % %
+
+        1. Result in: % % % |- % : EC STO ((break) as statementResult)
+
+    4. Case (% has type continueStatement)
+
+      1. (Let continueStatement be (statementIR' as continueStatement))
+
+      2. Group continueStatement: (local) EC STO |- ((continue;) as statementIR) : % % %
+
+        1. Result in: % % % |- % : EC STO ((continue) as statementResult)
+
+    5. Case (% has type switchStatementIR)
+
+      1. (Let (switch( typedExpressionIR ){ (switchCaseIR)* }) be (statementIR' as switchStatementIR))
 
       2. Group switchStatementIR-table: (local) EC STO |- ((switch( typedExpressionIR ){ (switchCaseIR)* }) as statementIR) : % % %
 
@@ -36374,7 +36552,7 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                   1. Result in: % % % |- % : EC_1 STO_1 ((`) as statementResult)
 
-            2. Else Phantom#2337
+            2. Else Phantom#2343
 
       3. Group switchStatementIR-general: (local) EC STO |- ((switch( typedExpressionIR ){ (switchCaseIR)* }) as statementIR) : % % %
 
@@ -36404,17 +36582,17 @@ relation Stmt_eval: p EC STO |- statementIR : % % %
 
                   1. Result in: % % % |- % : EC_1 STO_1 ((`) as statementResult)
 
-            1. Else Phantom#2338
+            1. Else Phantom#2344
 
-          3. Else Phantom#2339
+          3. Else Phantom#2345
 
-        2. Else Phantom#2340
+        2. Else Phantom#2346
 
-  1. Else Phantom#2341
+  1. Else Phantom#2347
 
-2. Else Phantom#2342
+2. Else Phantom#2348
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:117.1-120.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
 relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
 1. Case analysis on blockElementStatementIR
@@ -36457,7 +36635,7 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
         4. Result in: % % |- % : EC_1 STO_0 ((`) as statementResult)
 
-      1. Else Phantom#2343
+      1. Else Phantom#2349
 
       2. (Let initializerOptIR be (initializerIR')?)
 
@@ -36483,7 +36661,7 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
             3. Result in: % % |- % : EC_2 STO_1 ((`) as statementResult)
 
-      3. Else Phantom#2344
+      3. Else Phantom#2350
 
   3. Case (% has type statementIR)
 
@@ -36495,7 +36673,7 @@ relation BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:122.1-125.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:128.1-131.23
 relation BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % % %
 
 1. Group : evalContext store |- (blockElementStatementIR)* : % % %
@@ -36504,13 +36682,13 @@ relation BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)*
 
     1. Result in: % % |- % : evalContext store ((`) as statementResult)
 
-  1. Else Phantom#2345
+  1. Else Phantom#2351
 
-  2. (Let (blockElementStatementIR''')* be (blockElementStatementIR)*)
+  2. (Let (blockElementStatementIR''''')* be (blockElementStatementIR)*)
 
-  3. If (((blockElementStatementIR''')* matches pattern _ :: _)), then
+  3. If (((blockElementStatementIR''''')* matches pattern _ :: _)), then
 
-    1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR''')*)
+    1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR''''')*)
 
     2. (BlockElementStmt_eval: evalContext store |- blockElementStatementIR_h : EC_1 STO_1 statementResult')
 
@@ -36528,7 +36706,19 @@ relation BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)*
 
         2. Result in: % % |- % : EC_1 STO_1 (returnResult as statementResult)
 
-      3. Case (% has type continueEmptyResult)
+      3. Case (% has type forBreakResult)
+
+        1. (Let forBreakResult be (statementResult' as forBreakResult))
+
+        2. Result in: % % |- % : EC_1 STO_1 ((break) as statementResult)
+
+      4. Case (% has type forContinueResult)
+
+        1. (Let forContinueResult be (statementResult' as forContinueResult))
+
+        2. Result in: % % |- % : EC_1 STO_1 ((continue) as statementResult)
+
+      5. Case (% has type continueEmptyResult)
 
         1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
 
@@ -36536,11 +36726,11 @@ relation BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)*
 
         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-    3. Else Phantom#2346
+    3. Else Phantom#2352
 
-  3. Else Phantom#2347
+  3. Else Phantom#2353
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:127.1-130.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:133.1-136.23
 relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
 1. Group : EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
@@ -36549,12 +36739,12 @@ relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
   2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:137.1-138.27
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
 syntax parserStatementResult = 
    | `
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:140.1-143.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
 relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
 1. Case analysis on parserStatementIR
@@ -36573,7 +36763,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
 
-      2. Else Phantom#2348
+      2. Else Phantom#2354
 
   2. Case (% has type variableDeclarationIR)
 
@@ -36591,7 +36781,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
         4. Result in: % % |- % : EC_1 STO_0 ((`) as parserStatementResult)
 
-      1. Else Phantom#2349
+      1. Else Phantom#2355
 
       2. (Let initializerOptIR be (initializerIR)?)
 
@@ -36609,9 +36799,9 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
           3. Result in: % % |- % : EC_2 STO_1 ((`) as parserStatementResult)
 
-        3. Else Phantom#2350
+        3. Else Phantom#2356
 
-      3. Else Phantom#2351
+      3. Else Phantom#2357
 
   3. Case (% has type emptyStatementIR)
 
@@ -36627,7 +36817,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
 
-      2. Else Phantom#2352
+      2. Else Phantom#2358
 
   4. Case (% has type assignmentStatementIR)
 
@@ -36643,7 +36833,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
         2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
 
-      2. Else Phantom#2353
+      2. Else Phantom#2359
 
   5. Case (% has type callStatementIR)
 
@@ -36667,7 +36857,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
           2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
 
-      2. Else Phantom#2354
+      2. Else Phantom#2360
 
   6. Case (% has type parserConditionalStatementIR)
 
@@ -36689,13 +36879,13 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
             2. Result in: % % |- % : EC_then STO_then parserStatementResult
 
-          3. Else Phantom#2355
+          3. Else Phantom#2361
 
           4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
 
             1. Result in: % % |- % : EC_cond STO_cond ((`) as parserStatementResult)
 
-          4. Else Phantom#2356
+          4. Else Phantom#2362
 
         2. Case (% matches pattern `IF(%)%ELSE%`)
 
@@ -36709,7 +36899,7 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
             2. Result in: % % |- % : EC_then STO_then parserStatementResult
 
-          3. Else Phantom#2357
+          3. Else Phantom#2363
 
           4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
 
@@ -36717,11 +36907,11 @@ relation ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
             2. Result in: % % |- % : EC_else STO_else parserStatementResult
 
-          4. Else Phantom#2358
+          4. Else Phantom#2364
 
-1. Else Phantom#2359
+1. Else Phantom#2365
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:145.1-148.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-154.23
 relation ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 1. Group : evalContext store |- (parserStatementIR)* : % % %
@@ -36730,7 +36920,7 @@ relation ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
     1. Result in: % % |- % : evalContext store ((`) as parserStatementResult)
 
-  1. Else Phantom#2360
+  1. Else Phantom#2366
 
   2. (Let (parserStatementIR'')* be (parserStatementIR)*)
 
@@ -36756,15 +36946,15 @@ relation ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
         3. Result in: % % |- % : EC_2 STO_2 parserStatementResult
 
-  3. Else Phantom#2361
+  3. Else Phantom#2367
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-153.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:157.1-159.26
 syntax transitionResult = 
    | accept
    | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:155.1-158.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:161.1-164.23
 relation ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
 1. If ((stateExpressionIR matches pattern `%;`)), then
@@ -36785,15 +36975,15 @@ relation ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
         2. Result in: % % |- % : EC STO ((reject errorValue) as transitionResult)
 
-    1. Else Phantom#2362
+    1. Else Phantom#2368
 
     2. If (((text =/= "accept") /\ (text =/= "reject"))), then
 
       1. Result in: % % |- % : EC STO ((state text) as transitionResult)
 
-    2. Else Phantom#2363
+    2. Else Phantom#2369
 
-1. Else Phantom#2364
+1. Else Phantom#2370
 
 2. If ((stateExpressionIR has type selectExpressionIR)), then
 
@@ -36819,13 +37009,13 @@ relation ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
         3. Result in: % % |- % : EC_3 STO_3 transitionResult
 
-      3. Else Phantom#2365
+      3. Else Phantom#2371
 
-    3. Else Phantom#2366
+    3. Else Phantom#2372
 
-2. Else Phantom#2367
+2. Else Phantom#2373
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:160.1-163.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:166.1-169.23
 relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
 
 1. Group : EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
@@ -36848,7 +37038,7 @@ relation ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementL
 
       3. Result in: % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:165.1-168.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:171.1-174.23
 relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 1. Group accept: EC_0 STO_0 |-transition nameIR : % % %
@@ -36867,9 +37057,9 @@ relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
       2. Result in: % % |-transition % : EC_1 STO_1 ((accept) as transitionResult)
 
-    3. Else Phantom#2368
+    3. Else Phantom#2374
 
-  2. Else Phantom#2369
+  2. Else Phantom#2375
 
 2. Group reject: EC_0 STO_0 |-transition nameIR : % % %
 
@@ -36887,9 +37077,9 @@ relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
       2. Result in: % % |-transition % : EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
-    3. Else Phantom#2370
+    3. Else Phantom#2376
 
-  2. Else Phantom#2371
+  2. Else Phantom#2377
 
 3. Group state: EC_0 STO_0 |-transition nameIR : % % %
 
@@ -36909,11 +37099,11 @@ relation ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
       3. Result in: % % |-transition % : EC_2 STO_2 transitionResult
 
-    3. Else Phantom#2372
+    3. Else Phantom#2378
 
-  2. Else Phantom#2373
+  2. Else Phantom#2379
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:170.1-173.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:176.1-179.23
 relation ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
 1. Case analysis on parserLocalDeclarationIR
@@ -36932,7 +37122,7 @@ relation ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
         2. Result in: % % |- % : EC_1 STO_1
 
-      2. Else Phantom#2374
+      2. Else Phantom#2380
 
   2. Case (% has type variableDeclarationIR)
 
@@ -36950,7 +37140,7 @@ relation ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
         4. Result in: % % |- % : EC_1 STO_0
 
-      1. Else Phantom#2375
+      1. Else Phantom#2381
 
       2. (Let initializerOptIR be (initializerIR)?)
 
@@ -36968,13 +37158,13 @@ relation ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
           3. Result in: % % |- % : EC_2 STO_1
 
-        3. Else Phantom#2376
+        3. Else Phantom#2382
 
-      3. Else Phantom#2377
+      3. Else Phantom#2383
 
-1. Else Phantom#2378
+1. Else Phantom#2384
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:175.1-178.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:181.1-184.23
 relation ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % %
 
 1. Group : evalContext store |- (parserLocalDeclarationIR)* : % %
@@ -36983,7 +37173,7 @@ relation ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)*
 
     1. Result in: % % |- % : evalContext store
 
-  1. Else Phantom#2379
+  1. Else Phantom#2385
 
   2. (Let (parserLocalDeclarationIR')* be (parserLocalDeclarationIR)*)
 
@@ -36997,14 +37187,14 @@ relation ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)*
 
     4. Result in: % % |- % : EC_2 STO_2
 
-  3. Else Phantom#2380
+  3. Else Phantom#2386
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:185.1-186.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:191.1-192.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:188.1-191.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-197.26
 relation Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
 1. Group : EC_0 STO_0 |- typeId TBL : % % %
@@ -37067,14 +37257,14 @@ relation Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
               6. Result in: % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
-          4. Else Phantom#2381
+          4. Else Phantom#2387
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-195.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:200.1-201.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:197.1-200.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-206.23
 relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 1. Group cont: EC_0 STO_0 |- controlBodyIR : % % %
@@ -37087,7 +37277,7 @@ relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
     2. Result in: % % |- % : EC_1 STO_1 ((return ?()) as controlBodyResult)
 
-  2. Else Phantom#2382
+  2. Else Phantom#2388
 
 2. Group exit: EC_0 STO_0 |- controlBodyIR : % % %
 
@@ -37099,7 +37289,7 @@ relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
     2. Result in: % % |- % : EC_1 STO_1 ((exit) as controlBodyResult)
 
-  2. Else Phantom#2383
+  2. Else Phantom#2389
 
 3. Group return: EC_0 STO_0 |- controlBodyIR : % % %
 
@@ -37109,14 +37299,14 @@ relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
     1. Result in: % % |- % : EC_1 STO_1 ((return ?()) as controlBodyResult)
 
-  2. Else Phantom#2384
+  2. Else Phantom#2390
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-204.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
 syntax declarationResult = 
    | `
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:206.1-209.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
 relation ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
 1. Case analysis on controlLocalDeclarationIR
@@ -37147,7 +37337,7 @@ relation ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
         4. Result in: % % |- % : EC_1 STO_0 ((`) as declarationResult)
 
-      1. Else Phantom#2385
+      1. Else Phantom#2391
 
       2. (Let initializerOptIR be (initializerIR')?)
 
@@ -37173,11 +37363,11 @@ relation ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
             3. Result in: % % |- % : EC_2 STO_1 ((`) as declarationResult)
 
-      3. Else Phantom#2386
+      3. Else Phantom#2392
 
-1. Else Phantom#2387
+1. Else Phantom#2393
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:211.1-214.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.1-220.23
 relation ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR)* : % % %
 
 1. Group : evalContext store |- (controlLocalDeclarationIR)* : % % %
@@ -37186,7 +37376,7 @@ relation ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR
 
     1. Result in: % % |- % : evalContext store ((`) as declarationResult)
 
-  1. Else Phantom#2388
+  1. Else Phantom#2394
 
   2. (Let (controlLocalDeclarationIR'')* be (controlLocalDeclarationIR)*)
 
@@ -37212,9 +37402,9 @@ relation ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR
 
         3. Result in: % % |- % : EC_2 STO_2 declarationResult
 
-  3. Else Phantom#2389
+  3. Else Phantom#2395
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:220.1-223.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:226.1-229.26
 relation Decl_eval: p EC_0 STO |- declarationIR : % % %
 
 1. If ((declarationIR has type constantDeclarationIR)), then
@@ -37227,14 +37417,14 @@ relation Decl_eval: p EC_0 STO |- declarationIR : % % %
 
     2. Result in: % % % |- % : EC_1 STO ((`) as declarationResult)
 
-1. Else Phantom#2390
+1. Else Phantom#2396
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:230.1-231.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:236.1-237.15
 syntax calleeResult = 
    | ` callee
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:233.1-236.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:239.1-242.29
 relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 1. If ((callableTargetIR has type referenceExpressionIR)), then
@@ -37259,9 +37449,9 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
         4. Result in: % % % |- % <_>( % ): EC STO ((` (actionCallee as callee)) as calleeResult)
 
-      2. Else Phantom#2391
+      2. Else Phantom#2397
 
-    2. Else Phantom#2392
+    2. Else Phantom#2398
 
   3. Group referenceExpressionIR-externFunctionCallee: p EC STO |- (referenceExpressionIR as callableTargetIR) <_>( argumentListIR ): % % %
 
@@ -37281,9 +37471,9 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
         4. Result in: % % % |- % <_>( % ): EC STO ((` (externFunctionCallee as callee)) as calleeResult)
 
-      2. Else Phantom#2393
+      2. Else Phantom#2399
 
-    2. Else Phantom#2394
+    2. Else Phantom#2400
 
   4. Group referenceExpressionIR-definedFunctionCallee: p EC STO |- (referenceExpressionIR as callableTargetIR) <_>( argumentListIR ): % % %
 
@@ -37303,11 +37493,11 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
         4. Result in: % % % |- % <_>( % ): EC STO ((` (definedFunctionCallee as callee)) as calleeResult)
 
-      2. Else Phantom#2395
+      2. Else Phantom#2401
 
-    2. Else Phantom#2396
+    2. Else Phantom#2402
 
-1. Else Phantom#2397
+1. Else Phantom#2403
 
 2. If ((callableTargetIR matches pattern `%.%`)), then
 
@@ -37329,9 +37519,9 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
         2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
 
-      3. Else Phantom#2398
+      3. Else Phantom#2404
 
-    2. Else Phantom#2399
+    2. Else Phantom#2405
 
     3. Case analysis on nameIR'
 
@@ -37361,13 +37551,13 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 4. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-              2. Else Phantom#2400
+              2. Else Phantom#2406
 
-            3. Else Phantom#2401
+            3. Else Phantom#2407
 
-          2. Else Phantom#2402
+          2. Else Phantom#2408
 
-        1. Else Phantom#2403
+        1. Else Phantom#2409
 
       2. Case (% = "pop_front")
 
@@ -37395,13 +37585,13 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 4. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-              2. Else Phantom#2404
+              2. Else Phantom#2410
 
-            3. Else Phantom#2405
+            3. Else Phantom#2411
 
-          2. Else Phantom#2406
+          2. Else Phantom#2412
 
-        1. Else Phantom#2407
+        1. Else Phantom#2413
 
       3. Case (% = "isValid")
 
@@ -37425,13 +37615,13 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-              2. Else Phantom#2408
+              2. Else Phantom#2414
 
-            3. Else Phantom#2409
+            3. Else Phantom#2415
 
-          1. Else Phantom#2410
+          1. Else Phantom#2416
 
-        1. Else Phantom#2411
+        1. Else Phantom#2417
 
       4. Case (% = "setValid")
 
@@ -37455,13 +37645,13 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-              2. Else Phantom#2412
+              2. Else Phantom#2418
 
-            3. Else Phantom#2413
+            3. Else Phantom#2419
 
-          1. Else Phantom#2414
+          1. Else Phantom#2420
 
-        1. Else Phantom#2415
+        1. Else Phantom#2421
 
       5. Case (% = "setInvalid")
 
@@ -37485,15 +37675,15 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-              2. Else Phantom#2416
+              2. Else Phantom#2422
 
-            3. Else Phantom#2417
+            3. Else Phantom#2423
 
-          1. Else Phantom#2418
+          1. Else Phantom#2424
 
-        1. Else Phantom#2419
+        1. Else Phantom#2425
 
-    3. Else Phantom#2420
+    3. Else Phantom#2426
 
   3. Group typedExpressionIR-nameIR-extern-method: p EC STO |- (typedExpressionIR . nameIR') <_>( argumentListIR ): % % %
 
@@ -37555,21 +37745,21 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                         2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (externMethodCallee as callee)) as calleeResult)
 
-                      2. Else Phantom#2421
+                      2. Else Phantom#2427
 
-                    2. Else Phantom#2422
+                    2. Else Phantom#2428
 
-                  4. Else Phantom#2423
+                  4. Else Phantom#2429
 
-                2. Else Phantom#2424
+                2. Else Phantom#2430
 
-              3. Else Phantom#2425
+              3. Else Phantom#2431
 
-            3. Else Phantom#2426
+            3. Else Phantom#2432
 
-          2. Else Phantom#2427
+          2. Else Phantom#2433
 
-    2. Else Phantom#2428
+    2. Else Phantom#2434
 
   4. If ((nameIR' = "apply")), then
 
@@ -37631,17 +37821,17 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                       3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (parserApplyMethodCallee as callee)) as calleeResult)
 
-                    6. Else Phantom#2429
+                    6. Else Phantom#2435
 
-                  2. Else Phantom#2430
+                  2. Else Phantom#2436
 
-                3. Else Phantom#2431
+                3. Else Phantom#2437
 
-              3. Else Phantom#2432
+              3. Else Phantom#2438
 
-            2. Else Phantom#2433
+            2. Else Phantom#2439
 
-      2. Else Phantom#2434
+      2. Else Phantom#2440
 
     2. Group typedExpressionIR-nameIR-control-apply-method: p EC STO |- (typedExpressionIR . "apply") <_>( argumentListIR ): % % %
 
@@ -37701,17 +37891,17 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                       3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (controlApplyMethodCallee as callee)) as calleeResult)
 
-                    6. Else Phantom#2435
+                    6. Else Phantom#2441
 
-                  2. Else Phantom#2436
+                  2. Else Phantom#2442
 
-                3. Else Phantom#2437
+                3. Else Phantom#2443
 
-              3. Else Phantom#2438
+              3. Else Phantom#2444
 
-            2. Else Phantom#2439
+            2. Else Phantom#2445
 
-      2. Else Phantom#2440
+      2. Else Phantom#2446
 
     3. Group typedExpressionIR-nameIR-table-apply-method: p EC STO |- (typedExpressionIR . "apply") <_>( argumentListIR ): % % %
 
@@ -37729,9 +37919,9 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
           2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
 
-        3. Else Phantom#2441
+        3. Else Phantom#2447
 
-      2. Else Phantom#2442
+      2. Else Phantom#2448
 
       3. If ((argumentListIR = [])), then
 
@@ -37769,30 +37959,30 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                     3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (tableApplyMethodCallee as callee)) as calleeResult)
 
-                  2. Else Phantom#2443
+                  2. Else Phantom#2449
 
-                3. Else Phantom#2444
+                3. Else Phantom#2450
 
-              3. Else Phantom#2445
+              3. Else Phantom#2451
 
-            2. Else Phantom#2446
+            2. Else Phantom#2452
 
-          3. Else Phantom#2447
+          3. Else Phantom#2453
 
-        1. Else Phantom#2448
+        1. Else Phantom#2454
 
-      3. Else Phantom#2449
+      3. Else Phantom#2455
 
-  4. Else Phantom#2450
+  4. Else Phantom#2456
 
-2. Else Phantom#2451
+2. Else Phantom#2457
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:239.1-240.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:245.1-246.15
 syntax copyInResult = 
    | ` storageReference?
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:242.1-246.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:248.1-252.35
 relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 1. Group directionless-in: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
@@ -37839,7 +38029,7 @@ relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction
 
           3. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` ?()) as copyInResult)
 
-  1. Else Phantom#2452
+  1. Else Phantom#2458
 
 2. Case analysis on direction
 
@@ -37871,7 +38061,7 @@ relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction
 
             4. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` ?(storageReference)) as copyInResult)
 
-          2. Else Phantom#2453
+          2. Else Phantom#2459
 
   2. Case (% matches pattern `OUT`)
 
@@ -37899,14 +38089,14 @@ relation Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction
 
           5. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` (storageReference)?) as copyInResult)
 
-2. Else Phantom#2454
+2. Else Phantom#2460
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:249.1-250.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:255.1-256.15
 syntax copyInListResult = 
    | ` storageReference?*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:252.1-256.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-262.35
 relation Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
 
 1. Group : store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
@@ -37917,9 +38107,9 @@ relation Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalConte
 
       1. Result in: % % % % @ % % % ~> store evalContext @ evalContext' # ((` []) as copyInListResult)
 
-    1. Else Phantom#2455
+    1. Else Phantom#2461
 
-  1. Else Phantom#2456
+  1. Else Phantom#2462
 
   2. (Let (parameterIR''')* be (parameterIR)*)
 
@@ -37969,13 +38159,13 @@ relation Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalConte
 
                 3. Result in: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ((` ((storageReference)?)*) as copyInListResult)
 
-              2. Else Phantom#2457
+              2. Else Phantom#2463
 
-    3. Else Phantom#2458
+    3. Else Phantom#2464
 
-  3. Else Phantom#2459
+  3. Else Phantom#2465
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-261.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:264.1-267.26
 relation Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 1. Group : (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
@@ -37986,7 +38176,7 @@ relation Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
   3. Result in: % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:263.1-267.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
 relation Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
 1. If (((storageReference')? matches pattern ())), then
@@ -38003,9 +38193,9 @@ relation Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction 
 
         1. Result in: % % % % @ % % % ~> EC_caller_0
 
-    1. Else Phantom#2460
+    1. Else Phantom#2466
 
-1. Else Phantom#2461
+1. Else Phantom#2467
 
 2. Group out-inout: STO p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
@@ -38021,9 +38211,9 @@ relation Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction 
 
         1. Result in: % % % % @ % % % ~> EC_caller_0
 
-    1. Else Phantom#2462
+    1. Else Phantom#2468
 
-  1. Else Phantom#2463
+  1. Else Phantom#2469
 
   2. (Let (storageReference'')? be (storageReference')?)
 
@@ -38049,11 +38239,11 @@ relation Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction 
 
         3. Result in: % % % % @ % % % ~> EC_caller_1
 
-    2. Else Phantom#2464
+    2. Else Phantom#2470
 
-  3. Else Phantom#2465
+  3. Else Phantom#2471
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-279.35
 relation Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
 
 1. Group : STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
@@ -38064,9 +38254,9 @@ relation Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee 
 
       1. Result in: % % % % @ % % % ~> evalContext
 
-    1. Else Phantom#2466
+    1. Else Phantom#2472
 
-  1. Else Phantom#2467
+  1. Else Phantom#2473
 
   2. (Let (parameterIR')* be (parameterIR)*)
 
@@ -38086,11 +38276,11 @@ relation Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee 
 
       4. Result in: % % % % @ % % % ~> EC_caller_2
 
-    3. Else Phantom#2468
+    3. Else Phantom#2474
 
-  3. Else Phantom#2469
+  3. Else Phantom#2475
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-281.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:281.1-287.90
 relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ): % % %
 
 1. (Let (typeArgumentIR)* be typeArgumentListIR)
@@ -38143,7 +38333,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                   4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
 
-                4. Else Phantom#2470
+                4. Else Phantom#2476
 
                 5. If ((actionResult = ((return ?()) as actionResult))), then
 
@@ -38153,7 +38343,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                   3. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
-                5. Else Phantom#2471
+                5. Else Phantom#2477
 
           2. Case (% matches pattern `BLOCK`)
 
@@ -38187,9 +38377,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                   3. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_3)
 
-                  4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
+                  4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
 
-                4. Else Phantom#2472
+                4. Else Phantom#2478
 
                 5. If ((actionResult = ((return ?()) as actionResult))), then
 
@@ -38199,11 +38389,11 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                   3. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((return ?()) as callResult)
 
-                5. Else Phantom#2473
+                5. Else Phantom#2479
 
-        2. Else Phantom#2474
+        2. Else Phantom#2480
 
-    2. Else Phantom#2475
+    2. Else Phantom#2481
 
   2. Case (% has type definedFunctionCallee)
 
@@ -38227,7 +38417,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-      6. Else Phantom#2476
+      6. Else Phantom#2482
 
       7. (Let EC_callee_1 be EC_callee_0[local.type = ({ ((typeParameterIR : typeArgumentIR))* })])
 
@@ -38245,9 +38435,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         6. Result in: % % % |- % @< % >( % ): EC_3 STO_2 (definedFunctionResult as callResult)
 
-      8. Else Phantom#2477
+      8. Else Phantom#2483
 
-2. Else Phantom#2478
+2. Else Phantom#2484
 
 3. (Let (argumentIR)* be argumentListIR)
 
@@ -38275,7 +38465,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-      6. Else Phantom#2479
+      6. Else Phantom#2485
 
       7. (Let EC_callee_1 be EC_callee_0[local.type = ({ ((typeParameterIR : typeArgumentIR))* })])
 
@@ -38295,7 +38485,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-      8. Else Phantom#2480
+      8. Else Phantom#2486
 
   2. Case (% has type builtinMethodCallee)
 
@@ -38375,17 +38565,17 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                               7. Result in: % % % |- % @< % >( % ): EC_2 STO_1 ((return ?()) as callResult)
 
-                            5. Else Phantom#2481
+                            5. Else Phantom#2487
 
-                          3. Else Phantom#2482
+                          3. Else Phantom#2488
 
-                        2. Else Phantom#2483
+                        2. Else Phantom#2489
 
-                  3. Else Phantom#2484
+                  3. Else Phantom#2490
 
-                1. Else Phantom#2485
+                1. Else Phantom#2491
 
-              1. Else Phantom#2486
+              1. Else Phantom#2492
 
             2. Case (% = "pop_front")
 
@@ -38447,21 +38637,21 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                               8. Result in: % % % |- % @< % >( % ): EC_2 STO_1 ((return ?()) as callResult)
 
-                            3. Else Phantom#2487
+                            3. Else Phantom#2493
 
-                          3. Else Phantom#2488
+                          3. Else Phantom#2494
 
-                        2. Else Phantom#2489
+                        2. Else Phantom#2495
 
-                  3. Else Phantom#2490
+                  3. Else Phantom#2496
 
-                1. Else Phantom#2491
+                1. Else Phantom#2497
 
-              1. Else Phantom#2492
+              1. Else Phantom#2498
 
-          3. Else Phantom#2493
+          3. Else Phantom#2499
 
-        1. Else Phantom#2494
+        1. Else Phantom#2500
 
         2. If ((argumentListIR = [])), then
 
@@ -38503,11 +38693,11 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                       6. Result in: % % % |- % @< % >( % ): EC_0 STO_0 (returnResult as callResult)
 
-                  2. Else Phantom#2495
+                  2. Else Phantom#2501
 
-                1. Else Phantom#2496
+                1. Else Phantom#2502
 
-              1. Else Phantom#2497
+              1. Else Phantom#2503
 
             2. Case (% = "setValid")
 
@@ -38531,11 +38721,11 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                     6. Result in: % % % |- % @< % >( % ): EC_1 STO_0 (returnResult as callResult)
 
-                  2. Else Phantom#2498
+                  2. Else Phantom#2504
 
-                1. Else Phantom#2499
+                1. Else Phantom#2505
 
-              1. Else Phantom#2500
+              1. Else Phantom#2506
 
             3. Case (% = "setInvalid")
 
@@ -38559,17 +38749,17 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                     6. Result in: % % % |- % @< % >( % ): EC_1 STO_0 (returnResult as callResult)
 
-                  2. Else Phantom#2501
+                  2. Else Phantom#2507
 
-                1. Else Phantom#2502
+                1. Else Phantom#2508
 
-              1. Else Phantom#2503
+              1. Else Phantom#2509
 
-          2. Else Phantom#2504
+          2. Else Phantom#2510
 
-        2. Else Phantom#2505
+        2. Else Phantom#2511
 
-    2. Else Phantom#2506
+    2. Else Phantom#2512
 
   3. Case (% has type externMethodCallee)
 
@@ -38599,7 +38789,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-        7. Else Phantom#2507
+        7. Else Phantom#2513
 
         8. (Let EC_callee_1 be EC_callee_0[block.type = theta])
 
@@ -38623,9 +38813,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
-        11. Else Phantom#2508
+        11. Else Phantom#2514
 
-      2. Else Phantom#2509
+      2. Else Phantom#2515
 
   4. Case (% has type parserApplyMethodCallee)
 
@@ -38663,9 +38853,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
-        5. Else Phantom#2510
+        5. Else Phantom#2516
 
-      6. Else Phantom#2511
+      6. Else Phantom#2517
 
       7. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.state = stateEnv])
 
@@ -38689,9 +38879,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 (rejectTransitionResult as callResult)
 
-        5. Else Phantom#2512
+        5. Else Phantom#2518
 
-      8. Else Phantom#2513
+      8. Else Phantom#2519
 
   5. Case (% has type controlApplyMethodCallee)
 
@@ -38717,7 +38907,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-      7. Else Phantom#2514
+      7. Else Phantom#2520
 
       8. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
 
@@ -38739,9 +38929,9 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
 
-        4. Else Phantom#2515
+        4. Else Phantom#2521
 
-      9. Else Phantom#2516
+      9. Else Phantom#2522
 
       10. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
 
@@ -38769,11 +38959,11 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
 
-          3. Else Phantom#2517
+          3. Else Phantom#2523
 
-        4. Else Phantom#2518
+        4. Else Phantom#2524
 
-      11. Else Phantom#2519
+      11. Else Phantom#2525
 
       12. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
 
@@ -38799,11 +38989,11 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
             3. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
-          3. Else Phantom#2520
+          3. Else Phantom#2526
 
-        4. Else Phantom#2521
+        4. Else Phantom#2527
 
-      13. Else Phantom#2522
+      13. Else Phantom#2528
 
   6. Case (% has type tableApplyMethodCallee)
 
@@ -38833,16 +39023,36 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (returnResult as callResult)
 
-        3. Else Phantom#2523
+        3. Else Phantom#2529
 
-      5. Else Phantom#2524
+      5. Else Phantom#2530
 
-4. Else Phantom#2525
+      6. (Let EC_callee_1 be EC_callee_0[local.frames = [frame]])
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-288.90
+      7. If (((typeId')* matches pattern _ :: _)), then
+
+        1. (Let typeId :: (_typeId)* be (typeId')*)
+
+        2. (Table_eval: EC_callee_1 STO_0 |- typeId TBL : EC_callee_2 STO_1 tableResult)
+
+        3. If ((tableResult has type exitResult)), then
+
+          1. (Let exitResult be (tableResult as exitResult))
+
+          2. (Let EC_1 be EC_0[block.frame = EC_callee_2.block.frame])
+
+          3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+
+        3. Else Phantom#2531
+
+      7. Else Phantom#2532
+
+4. Else Phantom#2533
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:289.1-294.90
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( (nameIR')* ): % % %
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:290.1-296.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:296.1-302.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( (nameIR')* ): % % %
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
@@ -38856,7 +39066,7 @@ def $match_keysets((setValue')*, (value)*)
 
       1. Return true
 
-    1. Else Phantom#2526
+    1. Else Phantom#2534
 
   2. Case (% matches pattern [ _/1 ])
 
@@ -38870,9 +39080,9 @@ def $match_keysets((setValue')*, (value)*)
 
         1. Return $match_keyset(setValue, value_key)
 
-      2. Else Phantom#2527
+      2. Else Phantom#2535
 
-    2. Else Phantom#2528
+    2. Else Phantom#2536
 
   3. Case (% matches pattern _ :: _)
 
@@ -38892,15 +39102,15 @@ def $match_keysets((setValue')*, (value)*)
 
           1. Return false
 
-    2. Else Phantom#2529
+    2. Else Phantom#2537
 
-1. Else Phantom#2530
+1. Else Phantom#2538
 
 2. If (((setValue')* = [(set{...})])), then
 
   1. Return true
 
-2. Else Phantom#2531
+2. Else Phantom#2539
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:6.1-6.42
 def $match_keyset(setValue, value_key)
@@ -38963,9 +39173,9 @@ relation Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
           2. Result in: % % |- % : EC_1 STO_1 ((` setValue) as simpleKeysetExpressionResult)
 
-        2. Else Phantom#2532
+        2. Else Phantom#2540
 
-1. Else Phantom#2533
+1. Else Phantom#2541
 
 2. Case analysis on simpleKeysetExpressionIR
 
@@ -39045,7 +39255,7 @@ relation Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
               3. Result in: % % |- % : EC_2 STO_2 ((` setValue) as simpleKeysetExpressionResult)
 
-2. Else Phantom#2534
+2. Else Phantom#2542
 
 3. Group default-any: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
@@ -39063,7 +39273,7 @@ relation Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
       2. Result in: % % |- % : EC_0 STO_0 ((` setValue) as simpleKeysetExpressionResult)
 
-  1. Else Phantom#2535
+  1. Else Phantom#2543
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:134.1-137.23
 relation Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* : % % %
@@ -39074,7 +39284,7 @@ relation Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionI
 
     1. Result in: % % |- % : evalContext store ((` []) as keysetExpressionResult)
 
-  1. Else Phantom#2536
+  1. Else Phantom#2544
 
   2. (Let (simpleKeysetExpressionIR''')* be (simpleKeysetExpressionIR)*)
 
@@ -39114,9 +39324,447 @@ relation Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionI
 
             3. Result in: % % |- % : EC_2 STO_2 keysetExpressionResult
 
-  3. Else Phantom#2537
+  3. Else Phantom#2545
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:268.1-268.57
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:261.1-264.23
+relation ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : % % %
+
+1. Case analysis on forUpdateStatementIR
+
+  1. Case (% matches pattern `%<%>(%)`)
+
+    1. (Let (callableTargetIR < typeArgumentListIR >( argumentListIR )) be forUpdateStatementIR)
+
+    2. Group call: EC_0 STO_0 |- (callableTargetIR < typeArgumentListIR >( argumentListIR )) : % % %
+
+      1. (Stmt_eval: (local) EC_0 STO_0 |- ((callableTargetIR < typeArgumentListIR >( argumentListIR );) as statementIR) : EC_1 STO_1 statementResult)
+
+      2. Result in: % % |- % : EC_1 STO_1 statementResult
+
+  2. Case (% matches pattern `%%%`)
+
+    1. (Let (typedLvalueIR assignop typedExpressionIR) be forUpdateStatementIR)
+
+    2. Group assign: EC_0 STO_0 |- (typedLvalueIR assignop typedExpressionIR) : % % %
+
+      1. (Stmt_eval: (local) EC_0 STO_0 |- ((typedLvalueIR assignop typedExpressionIR ;) as statementIR) : EC_1 STO_1 statementResult)
+
+      2. Result in: % % |- % : EC_1 STO_1 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:285.1-288.23
+relation ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
+
+1. Group : evalContext store |- (forUpdateStatementIR)* : % % %
+
+  1. If (((forUpdateStatementIR)* = [])), then
+
+    1. Result in: % % |- % : evalContext store ((`) as statementResult)
+
+  1. Else Phantom#2546
+
+  2. (Let (forUpdateStatementIR'')* be (forUpdateStatementIR)*)
+
+  3. If (((forUpdateStatementIR'')* matches pattern _ :: _)), then
+
+    1. (Let forUpdateStatementIR_h :: (forUpdateStatementIR_t)* be (forUpdateStatementIR'')*)
+
+    2. (ForUpdateStmt_eval: evalContext store |- forUpdateStatementIR_h : EC_1 STO_1 statementResult')
+
+    3. Case analysis on statementResult'
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (statementResult' as exitResult))
+
+        2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+
+      2. Case (% has type continueEmptyResult)
+
+        1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
+
+        2. (ForUpdateStmts_eval: EC_1 STO_1 |- (forUpdateStatementIR_t)* : EC_2 STO_2 statementResult)
+
+        3. Result in: % % |- % : EC_2 STO_2 statementResult
+
+    3. Else Phantom#2547
+
+  3. Else Phantom#2548
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:313.1-316.23
+relation ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
+
+1. If ((forInitStatementIR matches pattern `%%%%`)), then
+
+  1. (Let (annotationList typeIR nameIR (initializerIR')?) be forInitStatementIR)
+
+  2. Group variableDeclarationIR: EC_0 store |- (annotationList typeIR nameIR (initializerIR')?) : % % %
+
+    1. If (((initializerIR')? = ?())), then
+
+      1. (Let typeIR_subst be $subst_type_e((local), EC_0, typeIR))
+
+      2. (Let value_init be $default(typeIR_subst))
+
+      3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
+
+      4. Result in: % % |- % : EC_1 store ((`) as statementResult)
+
+    1. Else Phantom#2549
+
+    2. (Let initializerOptIR be (initializerIR')?)
+
+    3. If ((initializerOptIR matches pattern (_))), then
+
+      1. (Let ?((= typedExpressionIR_init)) be initializerOptIR)
+
+      2. (Expr_eval: (local) EC_0 store |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
+
+      3. Case analysis on expressionResult
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (expressionResult as exitResult))
+
+          2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+
+        2. Case (% has type continueResult<value>)
+
+          1. (Let (` value_init) be (expressionResult as continueResult<value>))
+
+          2. (Let EC_2 be $add_var_e((local), EC_1, (` nameIR), value_init))
+
+          3. Result in: % % |- % : EC_2 STO_1 ((`) as statementResult)
+
+    3. Else Phantom#2550
+
+1. Else Phantom#2551
+
+2. If ((forInitStatementIR has type forUpdateStatementIR)), then
+
+  1. (Let forUpdateStatementIR be (forInitStatementIR as forUpdateStatementIR))
+
+  2. Group forUpdateStatementIR: EC_0 store |- (forUpdateStatementIR as forInitStatementIR) : % % %
+
+    1. (ForUpdateStmt_eval: EC_0 store |- forUpdateStatementIR : EC_1 STO_1 statementResult)
+
+    2. Result in: % % |- % : EC_1 STO_1 statementResult
+
+2. Else Phantom#2552
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:361.1-364.23
+relation ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
+
+1. Group : evalContext store |- (forInitStatementIR)* : % % %
+
+  1. If (((forInitStatementIR)* = [])), then
+
+    1. Result in: % % |- % : evalContext store ((`) as statementResult)
+
+  1. Else Phantom#2553
+
+  2. (Let (forInitStatementIR'')* be (forInitStatementIR)*)
+
+  3. If (((forInitStatementIR'')* matches pattern _ :: _)), then
+
+    1. (Let forInitStatementIR_h :: (forInitStatementIR_t)* be (forInitStatementIR'')*)
+
+    2. (ForInitStmt_eval: evalContext store |- forInitStatementIR_h : EC_1 STO_1 statementResult')
+
+    3. Case analysis on statementResult'
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (statementResult' as exitResult))
+
+        2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+
+      2. Case (% has type continueEmptyResult)
+
+        1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
+
+        2. (ForInitStmts_eval: EC_1 STO_1 |- (forInitStatementIR_t)* : EC_2 STO_2 statementResult)
+
+        3. Result in: % % |- % : EC_2 STO_2 statementResult
+
+    3. Else Phantom#2554
+
+  3. Else Phantom#2555
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:391.1-394.29
+relation ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
+
+1. Group : EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
+
+  1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+  2. If ((expressionResult has type exitResult)), then
+
+    1. (Let exitResult be (expressionResult as exitResult))
+
+    2. Result in: % % |- % % % : EC_1 STO_1 ((exit) as statementResult)
+
+  2. Else Phantom#2556
+
+  3. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+
+    1. Result in: % % |- % % % : EC_1 STO_1 ((`) as statementResult)
+
+  3. Else Phantom#2557
+
+  4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+
+    1. (Stmt_eval: (local) EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult')
+
+    2. Case analysis on statementResult'
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (statementResult' as exitResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_2 ((exit) as statementResult)
+
+      2. Case (% has type returnResult)
+
+        1. (Let returnResult be (statementResult' as returnResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_2 (returnResult as statementResult)
+
+      3. Case (% has type forBreakResult)
+
+        1. (Let forBreakResult be (statementResult' as forBreakResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_2 ((`) as statementResult)
+
+    2. Else Phantom#2558
+
+    3. (Stmt_eval: (local) EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop)
+
+    4. If (statementResult_loop is in [((`) as statementResult), ((continue) as statementResult)]), then
+
+      1. (ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult')
+
+      2. Case analysis on statementResult'
+
+        1. Case (% has type exitResult)
+
+          1. (Let exitResult be (statementResult' as exitResult))
+
+          2. Result in: % % |- % % % : EC_3 STO_3 ((exit) as statementResult)
+
+        2. Case (% has type continueEmptyResult)
+
+          1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
+
+          2. (ForThreeClauseLoop_eval: EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_4 STO_4 statementResult)
+
+          3. Result in: % % |- % % % : EC_4 STO_4 statementResult
+
+      2. Else Phantom#2559
+
+    4. Else Phantom#2560
+
+  4. Else Phantom#2561
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:499.1-502.23
+relation ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
+
+1. If ((forCollectionExpressionIR has type typedExpressionIR)), then
+
+  1. (Let typedExpressionIR be (forCollectionExpressionIR as typedExpressionIR))
+
+  2. Group expr: EC_0 STO_0 |- (typedExpressionIR as forCollectionExpressionIR) : % % %
+
+    1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
+
+    2. Result in: % % |- % : EC_1 STO_1 expressionResult
+
+1. Else Phantom#2562
+
+2. If ((forCollectionExpressionIR matches pattern `%..%`)), then
+
+  1. (Let (typedExpressionIR_l .. typedExpressionIR_r) be forCollectionExpressionIR)
+
+  2. Group range: EC_0 STO_0 |- (typedExpressionIR_l .. typedExpressionIR_r) : % % %
+
+    1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult)
+
+    2. Case analysis on expressionResult
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (expressionResult as exitResult))
+
+        2. Result in: % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+
+      2. Case (% has type continueResult<value>)
+
+        1. (Let (` value_l) be (expressionResult as continueResult<value>))
+
+        2. (Expr_eval: (local) EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult')
+
+        3. Case analysis on expressionResult'
+
+          1. Case (% has type exitResult)
+
+            1. (Let exitResult be (expressionResult' as exitResult))
+
+            2. Result in: % % |- % : EC_2 STO_2 ((exit) as expressionResult)
+
+          2. Case (% has type continueResult<value>)
+
+            1. (Let (` value_r) be (expressionResult' as continueResult<value>))
+
+            2. (Let setValue be (set{ value_l .. value_r }))
+
+            3. Result in: % % |- % : EC_2 STO_2 ((` (setValue as value)) as expressionResult)
+
+2. Else Phantom#2563
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:540.1-543.29
+relation ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
+
+1. Group : evalContext store |- nameIR (value)* statementIR : % % %
+
+  1. If (((value)* = [])), then
+
+    1. Result in: % % |- % % % : evalContext store ((`) as statementResult)
+
+  1. Else Phantom#2564
+
+  2. (Let (value'''')* be (value)*)
+
+  3. If (((value'''')* matches pattern _ :: _)), then
+
+    1. (Let value_h :: (value_t)* be (value'''')*)
+
+    2. (Let EC_1 be $update_var_e((local), evalContext, (` nameIR), value_h))
+
+    3. (Stmt_eval: (local) EC_1 store |- statementIR : EC_2 STO_1 statementResult')
+
+    4. Case analysis on statementResult'
+
+      1. Case (% has type exitResult)
+
+        1. (Let exitResult be (statementResult' as exitResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_1 ((exit) as statementResult)
+
+      2. Case (% has type returnResult)
+
+        1. (Let returnResult be (statementResult' as returnResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_1 (returnResult as statementResult)
+
+      3. Case (% has type forBreakResult)
+
+        1. (Let forBreakResult be (statementResult' as forBreakResult))
+
+        2. Result in: % % |- % % % : EC_2 STO_1 ((`) as statementResult)
+
+    4. Else Phantom#2565
+
+    5. (Stmt_eval: (local) EC_1 store |- statementIR : EC_2 STO_1 statementResult_loop)
+
+    6. If (statementResult_loop is in [((`) as statementResult), ((continue) as statementResult)]), then
+
+      1. (ForInLoop_eval: EC_2 STO_1 |- nameIR (value_t)* statementIR : EC_3 STO_2 statementResult)
+
+      2. Result in: % % |- % % % : EC_3 STO_2 statementResult
+
+    6. Else Phantom#2566
+
+  3. Else Phantom#2567
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:579.1-579.30
+def $increment(value)
+
+1. If ((value has type integerLiteral)), then
+
+  1. (Let integerLiteral be (value as integerLiteral))
+
+  2. Case analysis on integerLiteral
+
+    1. Case (% matches pattern `D%`)
+
+      1. (Let (d i) be integerLiteral)
+
+      2. Return ((d (i + (1 as int))) as value)
+
+    2. Case (% matches pattern `%W%`)
+
+      1. (Let (w w i) be integerLiteral)
+
+      2. Return $bin_plus(((w w i) as value), ((w w (1 as int)) as value))
+
+    3. Case (% matches pattern `%S%`)
+
+      1. (Let (w s i) be integerLiteral)
+
+      2. Return $bin_plus(((w s i) as value), ((w s (1 as int)) as value))
+
+1. Else Phantom#2568
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:585.1-585.50
+def $get_values_from_range(value_l, value_r)
+
+1. If ($bin_lt(value_l, value_r)), then
+
+  1. (Let value_l_inc be $increment(value_l))
+
+  2. (Let (value)* be value_l :: $get_values_from_range(value_l_inc, value_r))
+
+  3. Return (value)*
+
+1. Else Phantom#2569
+
+2. If ($bin_eq(value_l, value_r)), then
+
+  1. Return [value_l]
+
+2. Else Phantom#2570
+
+3. If ($bin_gt(value_l, value_r)), then
+
+  1. Return []
+
+3. Else Phantom#2571
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:596.1-596.48
+def $get_values_from_collection(value')
+
+1. Case analysis on value'
+
+  1. Case (% has type listValue)
+
+    1. (Let listValue be (value' as listValue))
+
+    2. (Let (list[ (value)* ]) be listValue)
+
+    3. Return (value)*
+
+  2. Case (% has type headerStackValue)
+
+    1. (Let headerStackValue be (value' as headerStackValue))
+
+    2. (Let (header_stack[ (value)* ( _nat ; _nat' )]) be headerStackValue)
+
+    3. Return (value)*
+
+  3. Case (% has type setValue)
+
+    1. (Let setValue be (value' as setValue))
+
+    2. If ((setValue matches pattern `SET{%..%}`)), then
+
+      1. (Let (set{ value_l .. value_r }) be setValue)
+
+      2. Return $get_values_from_range(value_l, value_r)
+
+    2. Else Phantom#2572
+
+1. Else Phantom#2573
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:670.1-670.57
 def $match_switchLabelIR_table(id, switchLabelIR)
 
 1. If ((switchLabelIR matches pattern `DEFAULT`)), then
@@ -39143,7 +39791,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:278.1-280.20
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:680.1-682.20
 relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 1. Group : id |- (switchCaseIR)* : %
@@ -39152,7 +39800,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
     1. Result in: % |- % : ?()
 
-  1. Else Phantom#2538
+  1. Else Phantom#2574
 
   2. (Let (switchCaseIR'''')* be (switchCaseIR)*)
 
@@ -39198,9 +39846,9 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
                 2. Result in: % |- % : ?(blockStatementIR)
 
-              2. Else Phantom#2539
+              2. Else Phantom#2575
 
-            2. Else Phantom#2540
+            2. Else Phantom#2576
 
           2. Case false
 
@@ -39208,9 +39856,9 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
             2. Result in: % |- % : (blockStatementIR)?
 
-  3. Else Phantom#2541
+  3. Else Phantom#2577
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:282.1-282.58
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:684.1-684.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 1. Case analysis on switchCaseIR
@@ -39227,7 +39875,7 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
     2. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:328.1-330.26
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:730.1-732.26
 relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -39238,7 +39886,7 @@ relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
       1. Result in: % % % |- % : EC_0 STO_0 ((` ((default) as value)) as expressionResult)
 
-    1. Else Phantom#2542
+    1. Else Phantom#2578
 
     2. If ((switchLabelIR has type typedExpressionIR)), then
 
@@ -39260,11 +39908,11 @@ relation SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
           2. Result in: % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
 
-    2. Else Phantom#2543
+    2. Else Phantom#2579
 
-1. Else Phantom#2544
+1. Else Phantom#2580
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:349.1-349.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:751.1-751.54
 def $match_switchLabelIR_general(value, value')
 
 1. If ((value' has type defaultValue)), then
@@ -39333,7 +39981,7 @@ def $match_switchLabelIR_general(value, value')
 
   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:358.1-360.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:760.1-762.29
 relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 1. If ((cursor matches pattern `LOCAL`)), then
@@ -39344,7 +39992,7 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : 
 
       1. Result in: % % % % |- % : EC_0 STO_0 ?()
 
-    1. Else Phantom#2545
+    1. Else Phantom#2581
 
     2. (Let (switchCaseIR'''')* be (switchCaseIR)*)
 
@@ -39376,7 +40024,7 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : 
 
                 2. Result in: % % % % |- % : EC_2 STO_2 ?(blockStatementIR_h)
 
-          3. Else Phantom#2546
+          3. Else Phantom#2582
 
         2. Case (% matches pattern `%:`)
 
@@ -39404,9 +40052,9 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : 
 
                     2. Result in: % % % % |- % : EC_1 STO_1 ?(blockStatementIR)
 
-                  2. Else Phantom#2547
+                  2. Else Phantom#2583
 
-                2. Else Phantom#2548
+                2. Else Phantom#2584
 
               2. Case false
 
@@ -39414,11 +40062,11 @@ relation SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : 
 
                 2. Result in: % % % % |- % : EC_2 STO_2 (blockStatementIR)?
 
-          3. Else Phantom#2549
+          3. Else Phantom#2585
 
-    3. Else Phantom#2550
+    3. Else Phantom#2586
 
-1. Else Phantom#2551
+1. Else Phantom#2587
 
 ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:31.1-34.26
 relation SelectCase_match: EC_0 STO_0 (value_key)* |- (keysetExpressionIR : nameIR ;) : % % %
@@ -39441,7 +40089,7 @@ relation SelectCase_match: EC_0 STO_0 (value_key)* |- (keysetExpressionIR : name
 
         1. Result in: % % % |- % : EC_1 STO_1 ?(nameIR)
 
-  2. Else Phantom#2552
+  2. Else Phantom#2588
 
 ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:60.1-63.26
 relation SelectCases_match: evalContext store (value_key)* |- (selectCaseIR)* : % % %
@@ -39452,7 +40100,7 @@ relation SelectCases_match: evalContext store (value_key)* |- (selectCaseIR)* : 
 
     1. Result in: % % % |- % : evalContext store ?()
 
-  1. Else Phantom#2553
+  1. Else Phantom#2589
 
   2. (Let (selectCaseIR'')* be (selectCaseIR)*)
 
@@ -39476,7 +40124,7 @@ relation SelectCases_match: evalContext store (value_key)* |- (selectCaseIR)* : 
 
         2. Result in: % % % |- % : EC_2 STO_2 (nameIR_state)?
 
-  3. Else Phantom#2554
+  3. Else Phantom#2590
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:5.24-5.39
 syntax tableKeyValue = 
@@ -39500,7 +40148,7 @@ relation TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationLis
 
     2. Result in: % % |- % : EC_1 STO_1 ((exit) as tableKeyResult)
 
-  2. Else Phantom#2555
+  2. Else Phantom#2591
 
 2. Group cont: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
 
@@ -39514,7 +40162,7 @@ relation TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationLis
 
     3. Result in: % % |- % : EC_1 STO_1 ((` tableKeyValue) as tableKeyResult)
 
-  2. Else Phantom#2556
+  2. Else Phantom#2592
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:32.1-33.15
 syntax tableKeysResult = 
@@ -39530,7 +40178,7 @@ relation TableKeys_eval: evalContext store |- (tableKeyIR)* : % % %
 
     1. Result in: % % |- % : evalContext store ((` []) as tableKeysResult)
 
-  1. Else Phantom#2557
+  1. Else Phantom#2593
 
   2. (Let (tableKeyIR''')* be (tableKeyIR)*)
 
@@ -39570,7 +40218,7 @@ relation TableKeys_eval: evalContext store |- (tableKeyIR)* : % % %
 
             3. Result in: % % |- % : EC_2 STO_2 ((` (tableKeyValue)*) as tableKeysResult)
 
-  3. Else Phantom#2558
+  3. Else Phantom#2594
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:74.1-76.23
 relation TableEntryPriority_eval: EC STO |- (tableEntryPriorityIR')? : %
@@ -39601,9 +40249,9 @@ relation TableEntryPriority_eval: EC STO |- (tableEntryPriorityIR')? : %
 
           2. Result in: % % |- % : ?(n)
 
-        2. Else Phantom#2559
+        2. Else Phantom#2595
 
-    2. Else Phantom#2560
+    2. Else Phantom#2596
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:91.21-91.51
 syntax tableMatch = 
@@ -39665,7 +40313,7 @@ relation TableMatches_eval: evalContext store |- (tableKeyValue)* @ (tableEntryI
 
     1. Result in: % % |- % @ % : evalContext store ((` []) as tableMatchesResult)
 
-  1. Else Phantom#2561
+  1. Else Phantom#2597
 
   2. (Let (tableEntryIR''')* be (tableEntryIR)*)
 
@@ -39705,7 +40353,7 @@ relation TableMatches_eval: evalContext store |- (tableKeyValue)* @ (tableEntryI
 
             3. Result in: % % |- % @ % : EC_2 STO_2 ((` (tableMatch)*) as tableMatchesResult)
 
-  3. Else Phantom#2562
+  3. Else Phantom#2598
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:208.1-208.60
 def $is_largest_priority_wins(tableCustomPropertyIR)
@@ -39743,17 +40391,17 @@ def $largest_priority_wins(TBL)
 
       2. Return b
 
-    2. Else Phantom#2563
+    2. Else Phantom#2599
 
-  2. Else Phantom#2564
+  2. Else Phantom#2600
 
-3. Else Phantom#2565
+3. Else Phantom#2601
 
 4. If (([] = $filter_<tableCustomPropertyIR>((tableCustomPropertyIR)*, $is_largest_priority_wins))), then
 
   1. Return true
 
-4. Else Phantom#2566
+4. Else Phantom#2602
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:229.1-230.27
 def $select_action(TBL, (tableMatch')*)
@@ -39774,7 +40422,7 @@ def $select_action(TBL, (tableMatch')*)
 
     3. Return tableActionReferenceIR
 
-1. Else Phantom#2567
+1. Else Phantom#2603
 
 2. If ((|(tableMatch')*| > 1)), then
 
@@ -39798,7 +40446,7 @@ def $select_action(TBL, (tableMatch')*)
 
           2. Return tableActionReferenceIR_h
 
-        2. Else Phantom#2568
+        2. Else Phantom#2604
 
       2. Case false
 
@@ -39810,11 +40458,11 @@ def $select_action(TBL, (tableMatch')*)
 
           2. Return tableActionReferenceIR_h
 
-        2. Else Phantom#2569
+        2. Else Phantom#2605
 
-  2. Else Phantom#2570
+  2. Else Phantom#2606
 
-2. Else Phantom#2571
+2. Else Phantom#2607
 
 ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:12.1-13.17
 syntax actionResult = 
@@ -39842,13 +40490,13 @@ relation ActionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
       2. Result in: % % |- % : EC_1 STO_1 ((exit) as actionResult)
 
-  2. Else Phantom#2572
+  2. Else Phantom#2608
 
   3. If ((statementResult = ((return ?()) as statementResult))), then
 
     1. Result in: % % |- % : EC_1 STO_1 ((return ?()) as actionResult)
 
-  3. Else Phantom#2573
+  3. Else Phantom#2609
 
 ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:236.1-237.17
 syntax definedFunctionResult = 
@@ -39882,7 +40530,7 @@ relation DefinedFunctionBody_eval: EC_0 STO_0 |- blockStatementIR : % % %
 
       2. Result in: % % |- % : EC_1 STO_1 (returnResult as definedFunctionResult)
 
-  2. Else Phantom#2574
+  2. Else Phantom#2610
 
 ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:414.1-414.43
 def $isValid_fieldValue((value id ;))
@@ -39921,9 +40569,9 @@ relation Extern_init: EC STO_0 |- nameIR : %
 
       4. Result in: % % |- % : STO_2
 
-    1. Else Phantom#2575
+    1. Else Phantom#2611
 
-  3. Else Phantom#2576
+  3. Else Phantom#2612
 
 ;; ../../../../spec-concrete/9-arch/9.0-eval-arch.watsup:56.1-60.72
 relation Program_init: |- p4program : % %
@@ -39976,9 +40624,9 @@ relation V1Model_init_packet_in: EC_0 STO_0 |- externState_packet_in : % %
 
       5. Result in: % % |- % : EC_1 STO_2
 
-    2. Else Phantom#2577
+    2. Else Phantom#2613
 
-  4. Else Phantom#2578
+  4. Else Phantom#2614
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:40.1-42.23
 relation V1Model_init_packet_out: EC_0 STO_0 |- externState_packet_out : % %
@@ -40007,9 +40655,9 @@ relation V1Model_init_packet_out: EC_0 STO_0 |- externState_packet_out : % %
 
       5. Result in: % % |- % : EC_1 STO_2
 
-    2. Else Phantom#2579
+    2. Else Phantom#2615
 
-  4. Else Phantom#2580
+  4. Else Phantom#2616
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:58.1-60.23
 relation V1Model_init_globals: EC_0 STO |- i_port : %
@@ -40060,15 +40708,15 @@ relation V1Model_init_globals: EC_0 STO |- i_port : %
 
             7. Result in: % % |- % : EC_4
 
-          5. Else Phantom#2581
+          5. Else Phantom#2617
 
-        3. Else Phantom#2582
+        3. Else Phantom#2618
 
-      3. Else Phantom#2583
+      3. Else Phantom#2619
 
-    2. Else Phantom#2584
+    2. Else Phantom#2620
 
-  2. Else Phantom#2585
+  2. Else Phantom#2621
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:87.1-87.64
 def $V1Model_setup_packet_in_argument(EC)
@@ -40085,7 +40733,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
   4. Return argumentIR_packet_in
 
-2. Else Phantom#2586
+2. Else Phantom#2622
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:96.1-96.65
 def $V1Model_setup_packet_out_argument(EC)
@@ -40102,7 +40750,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
   4. Return argumentIR_packet_out
 
-2. Else Phantom#2587
+2. Else Phantom#2623
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:105.1-105.52
 def $V1Model_setup_hdr_argument(STO)
@@ -40127,11 +40775,11 @@ def $V1Model_setup_hdr_argument(STO)
 
       3. Return argumentIR_hdr
 
-    3. Else Phantom#2588
+    3. Else Phantom#2624
 
-  2. Else Phantom#2589
+  2. Else Phantom#2625
 
-2. Else Phantom#2590
+2. Else Phantom#2626
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:113.1-113.53
 def $V1Model_setup_meta_argument(STO)
@@ -40156,11 +40804,11 @@ def $V1Model_setup_meta_argument(STO)
 
       3. Return argumentIR_meta
 
-    3. Else Phantom#2591
+    3. Else Phantom#2627
 
-  2. Else Phantom#2592
+  2. Else Phantom#2628
 
-2. Else Phantom#2593
+2. Else Phantom#2629
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:121.1-121.72
 def $V1Model_setup_standard_metadata_argument(EC)
@@ -40177,7 +40825,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
   4. Return argumentIR_standard_metadata
 
-2. Else Phantom#2594
+2. Else Phantom#2630
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:130.1-130.71
 def $V1Model_setup_main_callee(EC, STO)
@@ -40216,15 +40864,15 @@ def $V1Model_setup_main_callee(EC, STO)
 
           4. Return typedExpressionIR_main
 
-        3. Else Phantom#2595
+        3. Else Phantom#2631
 
-      3. Else Phantom#2596
+      3. Else Phantom#2632
 
-    2. Else Phantom#2597
+    2. Else Phantom#2633
 
-  3. Else Phantom#2598
+  3. Else Phantom#2634
 
-2. Else Phantom#2599
+2. Else Phantom#2635
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:146.1-149.22
 def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
@@ -40263,15 +40911,15 @@ def $V1Model_setup_parser_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_parser
 
-        3. Else Phantom#2600
+        3. Else Phantom#2636
 
-      3. Else Phantom#2601
+      3. Else Phantom#2637
 
-    2. Else Phantom#2602
+    2. Else Phantom#2638
 
-  3. Else Phantom#2603
+  3. Else Phantom#2639
 
-2. Else Phantom#2604
+2. Else Phantom#2640
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:167.1-170.22
 def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
@@ -40310,15 +40958,15 @@ def $V1Model_setup_verify_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_verify
 
-        3. Else Phantom#2605
+        3. Else Phantom#2641
 
-      3. Else Phantom#2606
+      3. Else Phantom#2642
 
-    2. Else Phantom#2607
+    2. Else Phantom#2643
 
-  3. Else Phantom#2608
+  3. Else Phantom#2644
 
-2. Else Phantom#2609
+2. Else Phantom#2645
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:189.1-192.22
 def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
@@ -40357,15 +41005,15 @@ def $V1Model_setup_ingress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_ingress
 
-        3. Else Phantom#2610
+        3. Else Phantom#2646
 
-      3. Else Phantom#2611
+      3. Else Phantom#2647
 
-    2. Else Phantom#2612
+    2. Else Phantom#2648
 
-  3. Else Phantom#2613
+  3. Else Phantom#2649
 
-2. Else Phantom#2614
+2. Else Phantom#2650
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:211.1-214.22
 def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
@@ -40404,15 +41052,15 @@ def $V1Model_setup_egress_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_egress
 
-        3. Else Phantom#2615
+        3. Else Phantom#2651
 
-      3. Else Phantom#2616
+      3. Else Phantom#2652
 
-    2. Else Phantom#2617
+    2. Else Phantom#2653
 
-  3. Else Phantom#2618
+  3. Else Phantom#2654
 
-2. Else Phantom#2619
+2. Else Phantom#2655
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:233.1-236.22
 def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
@@ -40451,15 +41099,15 @@ def $V1Model_setup_check_callee(EC, STO, typedExpressionIR_main)
 
           4. Return typedExpressionIR_check
 
-        3. Else Phantom#2620
+        3. Else Phantom#2656
 
-      3. Else Phantom#2621
+      3. Else Phantom#2657
 
-    2. Else Phantom#2622
+    2. Else Phantom#2658
 
-  3. Else Phantom#2623
+  3. Else Phantom#2659
 
-2. Else Phantom#2624
+2. Else Phantom#2660
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:255.1-258.22
 def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
@@ -40492,13 +41140,13 @@ def $V1Model_setup_deparse_callee(EC, STO, typedExpressionIR_main)
 
         4. Return typedExpressionIR_deparse
 
-      3. Else Phantom#2625
+      3. Else Phantom#2661
 
-    2. Else Phantom#2626
+    2. Else Phantom#2662
 
-  3. Else Phantom#2627
+  3. Else Phantom#2663
 
-2. Else Phantom#2628
+2. Else Phantom#2664
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:280.1-282.20
 relation V1Model_parser: EC_0 STO_0 |- % % %
@@ -40537,7 +41185,7 @@ relation V1Model_parser: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
-  10. Else Phantom#2629
+  10. Else Phantom#2665
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:340.1-342.20
 relation V1Model_verify: EC_0 STO_0 |- % % %
@@ -40572,7 +41220,7 @@ relation V1Model_verify: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 ((exit) as callResult)
 
-  8. Else Phantom#2630
+  8. Else Phantom#2666
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:388.1-390.20
 relation V1Model_ingress: EC_0 STO_0 |- % % %
@@ -40609,7 +41257,7 @@ relation V1Model_ingress: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 ((return ?()) as callResult)
 
-  9. Else Phantom#2631
+  9. Else Phantom#2667
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:441.1-443.20
 relation V1Model_egress: EC_0 STO_0 |- % % %
@@ -40646,7 +41294,7 @@ relation V1Model_egress: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 ((exit) as callResult)
 
-  9. Else Phantom#2632
+  9. Else Phantom#2668
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:495.1-497.20
 relation V1Model_check: EC_0 STO_0 |- % % %
@@ -40681,7 +41329,7 @@ relation V1Model_check: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 ((exit) as callResult)
 
-  8. Else Phantom#2633
+  8. Else Phantom#2669
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:543.1-545.20
 relation V1Model_deparse: EC_0 STO_0 |- % % %
@@ -40716,4 +41364,4 @@ relation V1Model_deparse: EC_0 STO_0 |- % % %
 
       2. Result in: % % |- EC_1 STO_1 ((exit) as callResult)
 
-  8. Else Phantom#2634
+  8. Else Phantom#2670
