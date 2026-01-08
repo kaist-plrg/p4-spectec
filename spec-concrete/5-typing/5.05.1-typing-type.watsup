@@ -117,52 +117,31 @@ rulegroup Type_ok/prefixedTypeName {
 ;;;;; specializedType
 ;;;;; syntax specializedType = prefixedTypeName `< typeArgumentList >
 
-rulegroup Type_ok/specializedType {
-
-  rule Type_ok/poly:
-    p TC |- prefixedTypeName `< typeArgumentList >
-          : typeIR `# typeId_fresh*
-    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
-    -- if $is_polymorphic_typeDefIR(typeDefIR)
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC |- typeArgument* : typeIR_arg* `# typeId_fresh*
-    -- if typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*)
-
-}
+rule Type_ok/specializedType:
+  p TC |- prefixedTypeName `< typeArgumentList >
+        : typeIR `# typeId_fresh*
+  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+  -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
+  -- if $is_polymorphic_typeDefIR(typeDefIR)
+  -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+  -- TypeArguments_ok: p TC |- typeArgument* : typeIR_arg* `# typeId_fresh*
+  -- if typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*)
 
 ;;;; headerStackType
 ;;;; syntax headerStackType = namedType `[ expression ]
 
-rulegroup Type_ok/headerStackType {
-
-  rule Type_ok/prefixedTypeName:
-    p TC |- prefixedTypeName `[ expression_size ]
-          : (typeIR_base `[ n_size ]) `# eps
-    ---- ;; check base type
-    -- Type_ok: p TC |- prefixedTypeName : typeIR_base `# eps
-    ---- ;; check size
-    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
-    -- Expr_eval_lctk:
-        p TC |- typedExpressionIR_size ~> integerValue_size
-    -- if n_size = $int_of_integerValue(integerValue_size)
-    -- if $(n_size > 0)
-
-  rule Type_ok/specializedType:
-    p TC |- specializedType `[ expression_size ]
-          : (typeIR_base `[ n_size ]) `# typeId_fresh*
-    ---- ;; check base type
-    -- Type_ok: p TC |- specializedType : typeIR_base `# typeId_fresh*
-    ---- ;; check size
-    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
-    -- Expr_eval_lctk:
-        p TC |- typedExpressionIR_size ~> integerValue_size
-    -- if n_size = $int_of_integerValue(integerValue_size)
-    -- if $(n_size > 0)
-
-}
+rule Type_ok/headerStackType:
+  p TC |- namedType `[ expression_size ]
+        : (typeIR_base `[ n_size ]) `# typeId_fresh*
+  ---- ;; check base type
+  -- Type_ok: p TC |- namedType : typeIR_base `# typeId_fresh*
+  ---- ;; check size
+  -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
+  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
+  -- Expr_eval_lctk:
+      p TC |- typedExpressionIR_size ~> integerValue_size
+  -- if n_size = $int_of_integerValue(integerValue_size)
+  -- if $(n_size > 0)
 
 ;;;; listType
 ;;;; syntax listType = LIST `< typeArgument >

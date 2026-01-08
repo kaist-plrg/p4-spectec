@@ -420,7 +420,8 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
   in
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let cover =
-    Runner.cover_dangling_programs (Sim.SL spec_sl) relname includes_p4 filenames_p4
+    Runner.cover_dangling_programs (Sim.SL spec_sl) relname includes_p4
+      filenames_p4
   in
   Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
 
@@ -496,7 +497,8 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
   let cover_instr =
-    Runner.cover_instr_stfs (Sim.SL spec_sl) includes_p4 filenames_p4 filenames_stf
+    Runner.cover_instr_stfs (Sim.SL spec_sl) includes_p4 filenames_p4
+      filenames_stf
   in
   Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_instr spec_sl
 

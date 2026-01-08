@@ -1,4 +1,4 @@
-;; Instruction coverage: 8898/12674 (70.21%)
+;; Instruction coverage: 8895/12659 (70.27%)
 ;; ../../../../spec-concrete/0-aux/0-aux.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -14076,10 +14076,10 @@ tbl def $definable_constructor(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:6.1-11.43
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:6.1-11.33
 extern relation ExternFunctionCall_eval_lctk: typingContext |- nameIR ( (nameIR')* )~> %
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:13.1-18.43
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:13.1-18.33
 rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 + 1. Case analysis on expressionIR
@@ -14654,7 +14654,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -       2. Result in: % % |- % ~> value
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:20.1-25.43
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:20.1-25.33
 rel Argument_eval_lctk: p TC |- argumentIR ~> %
 
 + 1. If ((argumentIR has type typedExpressionIR)), then
@@ -14894,61 +14894,27 @@ rel Type_ok: p TC |- typeOrVoid : % # %
 
 +     2. Group headerStackType: p TC |- ((namedType [ expression_size ]) as typeOrVoid) : % # %
 
-+       1. Case analysis on namedType
++       1. (Type_ok: p TC |- (namedType as typeOrVoid) : typeIR_base # (typeId_fresh)*)
 
-          1. Case (% has type prefixedTypeName)
++       2. (Expr_ok: p TC |- expression_size : typedExpressionIR_size)
 
-+           1. (Let prefixedTypeName be (namedType as prefixedTypeName))
++       3. If (($ctk_of_typedExpressionIR(typedExpressionIR_size) matches pattern `LCTK`)), then
 
-+           2. (Type_ok: p TC |- (prefixedTypeName as typeOrVoid) : typeIR_base # (typeId)*)
++         1. (Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value)
 
-+           3. If (((typeId)* matches pattern [])), then
++         2. If ((value has type integerValue)), then
 
-+             1. (Expr_ok: p TC |- expression_size : typedExpressionIR_size)
++           1. (Let integerValue_size be (value as integerValue))
 
-+             2. If (($ctk_of_typedExpressionIR(typedExpressionIR_size) matches pattern `LCTK`)), then
++           2. (Let int be $int_of_integerValue(integerValue_size))
 
-+               1. (Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value)
++           3. If ((int has type nat)), then
 
-+               2. If ((value has type integerValue)), then
++             1. (Let n_size be (int as nat))
 
-+                 1. (Let integerValue_size be (value as integerValue))
++             2. If ((n_size > 0)), then
 
-+                 2. (Let int be $int_of_integerValue(integerValue_size))
-
-+                 3. If ((int has type nat)), then
-
-+                   1. (Let n_size be (int as nat))
-
-+                   2. If ((n_size > 0)), then
-
-+                     1. Result in: % % |- % : ((typeIR_base [ n_size ]) as typeIR) # []
-
-          2. Case (% has type specializedType)
-
--           1. (Let specializedType be (namedType as specializedType))
-
--           2. (Type_ok: p TC |- (specializedType as typeOrVoid) : typeIR_base # (typeId_fresh)*)
-
--           3. (Expr_ok: p TC |- expression_size : typedExpressionIR_size)
-
--           4. If (($ctk_of_typedExpressionIR(typedExpressionIR_size) matches pattern `LCTK`)), then
-
--             1. (Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value)
-
--             2. If ((value has type integerValue)), then
-
--               1. (Let integerValue_size be (value as integerValue))
-
--               2. (Let int be $int_of_integerValue(integerValue_size))
-
--               3. If ((int has type nat)), then
-
--                 1. (Let n_size be (int as nat))
-
--                 2. If ((n_size > 0)), then
-
--                   1. Result in: % % |- % : ((typeIR_base [ n_size ]) as typeIR) # (typeId_fresh)*
++               1. Result in: % % |- % : ((typeIR_base [ n_size ]) as typeIR) # (typeId_fresh)*
 
     5. Case (% has type listType)
 
@@ -20167,7 +20133,7 @@ rel ControlLocalDecls_ok: TC |- (controlLocalDeclaration)* : % %
 
 +       3. Result in: % |- % : TC_2 controlLocalDeclarationIR_h :: (controlLocalDeclarationIR_t)*
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:395.1-399.82
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:395.1-399.81
 rel Decl_ok: p TC_0 |- declaration : % %
 
 + 1. Case analysis on declaration
@@ -21088,7 +21054,7 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
 +             3. Result in: % % |- % : TC_4 (packageTypeDeclarationIR as declarationIR)
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:401.1-406.83
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:401.1-405.82
 rel Decls_ok: p TC |- (declaration)* : % %
 
 + 1. Case analysis on (declaration)*
@@ -21111,7 +21077,7 @@ rel Decls_ok: p TC |- (declaration)* : % %
 
 +       3. Result in: % % |- % : TC_2 declarationIR_h :: (declarationIR_t)*
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:408.1-412.44
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:407.1-411.44
 rel Program_ok: |- p4program : %
 
 + 1. Group : |- p4program : %
@@ -21124,12 +21090,12 @@ rel Program_ok: |- p4program : %
 
 +   4. Result in: |- % : ((declarationIR)* ;)
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:422.18-422.35
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:421.18-421.35
 syntax actctxt = 
    | action
    | noaction
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:424.1-429.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:423.1-428.84
 rel Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
 
 + 1. If ((direction matches pattern `IN`)), then
@@ -21196,7 +21162,7 @@ rel Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typeIR_p
 
 +             1. Result in: % % % |- % @ % : typedExpressionIR_arg_cast
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:431.1-436.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:430.1-435.84
 rel Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
 
 + 1. If ((argumentIR has type typedExpressionIR)), then
@@ -21243,7 +21209,7 @@ rel Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
 
 +         1. Result in: % % % |- % @ % : (_)
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:438.1-443.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:437.1-442.84
 rel Call_convention_ok: p TC actctxt |- (parameterIR)* @ (argumentIR)* : %
 
 + 1. Case analysis on (parameterIR)*
@@ -21272,7 +21238,7 @@ rel Call_convention_ok: p TC actctxt |- (parameterIR)* @ (argumentIR)* : %
 
 +         3. Result in: % % % |- % @ % : argumentIR_h_cast :: (argumentIR_t_cast)*
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:453.1-453.54
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:452.1-452.54
 def $is_static_callableTarget(callableTargetIR)
 
 + 1. If ((callableTargetIR = ((. "static_assert") as callableTargetIR))), then
@@ -21305,7 +21271,7 @@ def $is_static_callableTarget(callableTargetIR)
 
 +   1. Return (dyn)
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:466.1-470.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:465.1-469.49
 rel CallableTarget_ok: p TC |- callableTarget : %
 
 + 1. Group referenceExpression: p TC |- callableTarget : %
@@ -21364,7 +21330,7 @@ rel CallableTarget_ok: p TC |- callableTarget : %
 
 -       2. Result in: % % |- % : (( callableTargetIR ))
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:472.1-476.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:471.1-475.49
 rel CallableTarget_lvalue_ok: p TC |- lvalue : %
 
 + 1. Group : p TC |- lvalue : %
@@ -21375,7 +21341,7 @@ rel CallableTarget_lvalue_ok: p TC |- lvalue : %
 
 +   3. Result in: % % |- % : callableTargetIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:478.1-484.44
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:477.1-483.44
 rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
 
 + 1. If ((callableTargetIR' has type prefixedNameIR)), then
@@ -21630,7 +21596,7 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 -       2. Result in: % % |- % < % >( % ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:491.1-500.48
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:490.1-499.48
 rel Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (argumentIR)* # (id_default)* ): % < % >( % )
 
 + 1. Case analysis on callableTypeIR
@@ -21857,7 +21823,7 @@ rel Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (argument
 
 +                 1. Result in: % % |- % < % # % >( % # % ): (tableMetadataStructTypeIR as typeIR) < [] >( [] )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:510.1-517.45
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:509.1-516.45
 rel ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
 
 + 1. Group non-aliased-none-type: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
@@ -21932,12 +21898,12 @@ rel ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argument
 
 +             1. Result in: % % |- % < % >( % ): constructorTypeIR <# (typeId_impl)* >(# (id_default)* )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:524.19-524.31
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:523.19-523.31
 syntax instctxt = 
    | named
    | anon
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:526.1-537.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:525.1-536.49
 rel Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # (typeId_infer)* >( (argumentIR)* # (id_default)* ): % < % >( % )
 
 + 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -30088,7 +30054,7 @@ syntax expressionResult =
    | ` value
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:32.1-37.97
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:32.1-37.95
 rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 + 1. Case analysis on expressionIR
@@ -30812,7 +30778,7 @@ syntax expressionListResult =
    | ` value*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.102
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.100
 rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 + 1. Group : p evalContext store |- (typedExpressionIR)* : % % %
@@ -33151,7 +33117,7 @@ rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((sto
 
 +       4. Result in: % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-281.92
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-281.90
 rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ): % % %
 
 + 1. (Let (typeArgumentIR)* be typeArgumentListIR)
@@ -33788,10 +33754,10 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (returnResult as callResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-289.92
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-288.90
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( (nameIR')* ): % % %
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:291.1-297.92
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:290.1-296.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( (nameIR')* ): % % %
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45

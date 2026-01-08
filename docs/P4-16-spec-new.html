@@ -6313,7 +6313,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Type_ok/specializedType/poly:
+<pre>rule Type_ok/specializedType:
    p TC |- prefixedTypeName `&lt;typeArgumentList&gt; : typeIR # typeId_fresh*
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
@@ -6666,18 +6666,9 @@ which may be valid.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Type_ok/headerStackType/prefixedTypeName:
-   p TC |- prefixedTypeName `[expression_size] : (typeIR_base `[n_size]) # eps
-    -- Type_ok: p TC |- prefixedTypeName : typeIR_base # eps
-    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; integerValue_size
-    -- if n_size = $int_of_integerValue(integerValue_size)
-    -- if n_size &gt; 0
-
-rule Type_ok/headerStackType/specializedType:
-   p TC |- specializedType `[expression_size] : (typeIR_base `[n_size]) # typeId_fresh*
-    -- Type_ok: p TC |- specializedType : typeIR_base # typeId_fresh*
+<pre>rule Type_ok/headerStackType:
+   p TC |- namedType `[expression_size] : (typeIR_base `[n_size]) # typeId_fresh*
+    -- Type_ok: p TC |- namedType : typeIR_base # typeId_fresh*
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; integerValue_size
@@ -6700,54 +6691,7 @@ rule Type_ok/headerStackType/specializedType:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>prefixedTypeName</code> be <code>namedType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>prefixedTypeName</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>size</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>size</sub></code></a> matches pattern <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>size</sub></code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>size</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Check that <code>n<sub>size</sub></code> is greater than <code>0</code>.</p>
-</li>
-<li>
-<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>·</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>specializedType</code> be <code>namedType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>specializedType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>namedType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>size</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
@@ -6778,9 +6722,6 @@ rule Type_ok/headerStackType/specializedType:
 </li>
 <li>
 <p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>

@@ -13011,7 +13011,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let typeIR = $specialize_typeDefIR(typeDefIR, [])
     -- output: % % |- % : typeIR # []
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:120.1-132.2
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:120.1-128.63
   rulegroup specializedType
 
    match
@@ -13023,7 +13023,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
 
    paths
 
-    rulepath poly
+    rulepath specializedType
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
@@ -13034,7 +13034,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
     -- output: % % |- % : typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:137.1-165.2
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:133.1-144.22
   rulegroup headerStackType
 
    match
@@ -13046,28 +13046,8 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
 
    paths
 
-    rulepath prefixedTypeName
-    -- let namedType' = namedType
-    -- if namedType' <: prefixedTypeName
-    -- let prefixedTypeName = namedType' as prefixedTypeName
-    -- Type_ok: p TC |- prefixedTypeName as typeOrVoid : typeIR_base # typeId*{typeId <- typeId*}
-    -- if typeId*{typeId <- typeId*} matches []
-    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
-    -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR_size))
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value
-    -- if value <: integerValue
-    -- let integerValue_size = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_size)
-    -- if int <: nat
-    -- let n_size = int as nat
-    -- if (n_size > 0)
-    -- output: % % |- % : typeIR_base [ n_size ] as typeIR # []
-
-    rulepath specializedType
-    -- let namedType' = namedType
-    -- if namedType' <: specializedType
-    -- let specializedType = namedType' as specializedType
-    -- Type_ok: p TC |- specializedType as typeOrVoid : typeIR_base # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    rulepath headerStackType
+    -- Type_ok: p TC |- namedType as typeOrVoid : typeIR_base # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR_size))
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value
@@ -13079,7 +13059,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- if (n_size > 0)
     -- output: % % |- % : typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:170.1-174.73
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:149.1-153.73
   rulegroup listType
 
    match
@@ -13095,7 +13075,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- TypeArgument_ok: p TC |- typeArgument : typeIR_arg # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : list< typeIR_arg > as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:179.1-184.76
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:158.1-163.76
   rulegroup tupleType
 
    match
