@@ -4,44 +4,44 @@ open Util.Source
 
 (* Numbers *)
 
-type num = Il.num
+type num = Sl.num
 
 (* Texts *)
 
-type text = Il.text
+type text = Sl.text
 
 (* Identifiers *)
 
-type id = Il.id
+type id = Sl.id
 
 (* Atoms *)
 
-type atom = Il.atom
+type atom = Sl.atom
 
 (* Mixfix operatros *)
 
-type mixop = Il.mixop
+type mixop = Sl.mixop
 
 (* Iterators *)
 
-type iter = Il.iter
+type iter = Sl.iter
 
 (* Variables *)
 
-type var = Il.var
+type var = Sl.var
 
 (* Types *)
 
-type typ = Il.typ
-type typ' = Il.typ'
+type typ = Sl.typ
+type typ' = Sl.typ'
 
 (* Operators *)
 
-type unop = Il.unop
-type binop = Il.binop
-type cmpop = Il.cmpop
+type unop = Sl.unop
+type binop = Sl.binop
+type cmpop = Sl.cmpop
 
-type optyp = Il.optyp
+type optyp = Sl.optyp
 
 (* Call prose using hints *)
 
@@ -93,7 +93,7 @@ and iterexp = iter * var list
 
 (* Patterns *)
 
-and pattern = Il.pattern
+and pattern = Sl.pattern
 
 (* Paths *)
 
@@ -104,9 +104,16 @@ and path' =
   | SliceP of path * exp * exp  (* path `[` exp `:` exp `]` *)
   | DotP of path * atom         (* path `.` atom *)
 
+(* Parameters *)
+
+and param = param' phrase
+and param' =
+  | ExpP of typ * exp     (* typ exp *)
+  | DefP of id            (* `$`id *)
+
 (* Type parameters *)
 
-and tparam = Il.tparam
+and tparam = Sl.tparam
 
 (* Arguments *)
 
@@ -117,7 +124,7 @@ and arg' =
 
 (* Type arguments *)
 
-and targ = Il.targ
+and targ = Sl.targ
 
 (* Instructions *)
 
@@ -163,7 +170,9 @@ type rel_title =
 type externrel = rel_title
 
 type rulegroup_title =
-  | ProseRuleTitle of id * Hints.Alter.t * exp list
+  | ProseRuleTitle of
+    [ `Hold of id * Hints.Alter.t * exp list
+    | `Yield of id * Hints.Alter.t * exp list ]
   | MathRuleTitle of id * mixop * exp list
 
 type rulegroup = rulegroup_title * instr list
@@ -174,9 +183,9 @@ type rel = rel_title * rulegroup list
 
 type func_title =
   | ProseFuncTitle of
-    [ `Check of id * Hints.Alter.t * arg list
-    | `Yield of id * Hints.Alter.t * arg list ]
-  | MathFuncTitle of id * tparam list * arg list
+    [ `Check of id * Hints.Alter.t * param list
+    | `Yield of id * Hints.Alter.t * param list ]
+  | MathFuncTitle of id * tparam list * param list
 
 type externfunc = func_title
 

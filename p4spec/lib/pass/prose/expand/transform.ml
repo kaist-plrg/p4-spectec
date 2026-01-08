@@ -414,9 +414,7 @@ let transform_first_with_iters
   transform_exp acc e
 
 let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var * IdSet.t =
-  let id_base, typ_base, iters =
-    Elaborate.Fresh.fresh_var_from_typ ids typ.at typ
-  in
+  let id_base, typ_base, iters = Fresh.fresh_var_from_typ ids typ.at typ in
   let var_new = (id_base, typ_base, iters) in
   let ids = IdSet.add id_base ids in
   let exp_base = VarE id_base $$ (typ_base.at, typ_base.it) in

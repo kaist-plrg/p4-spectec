@@ -159,8 +159,15 @@ and string_of_path path =
 
 (* Parameters *)
 
-and string_of_param param = Il.Print.string_of_param param
-and string_of_params params = Il.Print.string_of_params params
+and string_of_param param =
+  match param.it with
+  | ExpP (_typ, exp) -> string_of_exp exp
+  | DefP id -> string_of_defid id
+
+and string_of_params params =
+  match params with
+  | [] -> ""
+  | params -> "(" ^ String.concat ", " (List.map string_of_param params) ^ ")"
 
 (* Type parameters *)
 
@@ -295,7 +302,8 @@ and string_of_instrs ?(level = 0) instrs =
 (* Relations *)
 
 and string_of_relinput rel_signature exps_input =
-  let mixop, inputs = rel_signature in
+  let nottyp, inputs = rel_signature in
+  let mixop, _ = nottyp.it in
   let exps_input = List.combine inputs exps_input in
   let exps =
     List.init
@@ -309,7 +317,8 @@ and string_of_relinput rel_signature exps_input =
   string_of_notexp notexp
 
 and string_of_reloutput rel_signature exps_output =
-  let mixop, inputs = rel_signature in
+  let nottyp, inputs = rel_signature in
+  let mixop, _ = nottyp.it in
   let outputs =
     List.init
       (List.length mixop - 1)
@@ -341,12 +350,12 @@ and string_of_defined_rel rel =
 (* Functions *)
 
 let string_of_extern_func externfunc =
-  let defid, tparams, args_input, _typ, _hints = externfunc in
-  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+  let defid, tparams, params, _typ, _hints = externfunc in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
 
 let string_of_builtin_func builtinfunc =
-  let defid, tparams, args_input, _typ, _hints = builtinfunc in
-  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+  let defid, tparams, params, _typ, _hints = builtinfunc in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
 
 let string_of_tablerow (tablerow : tablerow) =
   let exps_match, exp_result, instrs = tablerow in
@@ -359,13 +368,13 @@ let string_of_tablerows (tablerows : tablerow list) =
   String.concat "\n" (List.map string_of_tablerow tablerows)
 
 let string_of_table_func (tablefunc : tablefunc) =
-  let defid, args, _typ_ret, tablerows, _hints = tablefunc in
-  string_of_defid defid ^ string_of_args args ^ "\n=\n"
+  let defid, params, _typ_ret, tablerows, _hints = tablefunc in
+  string_of_defid defid ^ string_of_params params ^ "\n=\n"
   ^ string_of_tablerows tablerows
 
 let string_of_defined_func (func : definedfunc) =
-  let defid, tparams, args_input, _typ, instrs, _hints = func in
-  string_of_defid defid ^ string_of_tparams tparams ^ string_of_args args_input
+  let defid, tparams, params, _typ, instrs, _hints = func in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
   ^ "\n\n" ^ string_of_instrs instrs
 
 (* Definitions *)

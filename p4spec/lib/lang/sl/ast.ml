@@ -85,8 +85,11 @@ type path' = Il.path'
 
 (* Parameters *)
 
-type param = Il.param [@@deriving yojson]
-type param' = Il.param'
+type param = param' phrase [@@deriving yojson]
+and param' =
+  | ExpP of typ * exp
+  | DefP of id
+  [@@deriving yojson]
 
 (* Type parameters *)
 
@@ -160,8 +163,8 @@ and hint = El.hint
 
 (* Relations *)
 
-(* mixop `hint(input` `%`int* `)` *)
-and rel_signature = mixop * Hints.Input.t
+(* nottyp `hint(input` `%`int* `)` *)
+and rel_signature = nottyp * Hints.Input.t
 [@@deriving yojson]
 
 (* id `:` rel_signature exp* hint* *)
@@ -175,23 +178,23 @@ type rel = id * rel_signature * exp list * instr list * hint list
 (* Functions *)
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
-type externfunc = id * tparam list * arg list * typ * hint list
+type externfunc = id * tparam list * param list * typ * hint list
 [@@deriving yojson]
 
 (* id `<` list(tparam, `,`) `>` list(param, `,`) `:` hint* *)
-type builtinfunc = id * tparam list * arg list * typ * hint list
+type builtinfunc = id * tparam list * param list * typ * hint list
 [@@deriving yojson]
 
 (* `(` list(exp, `,`)* `)` `->` exp instr* *)
 type tablerow = exp list * exp * instr list
 [@@deriving yojson]
 
-(* id `(` list(arg, `,`) `)` `:` typ tablerow* hint* *)
-type tablefunc = id * arg list * typ * tablerow list * hint list
+(* id `(` list(param, `,`) `)` `:` typ tablerow* hint* *)
+type tablefunc = id * param list * typ * tablerow list * hint list
 [@@deriving yojson]
 
 (* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ instr* hint* *)
-type definedfunc = id * tparam list * arg list * typ * instr list * hint list
+type definedfunc = id * tparam list * param list * typ * instr list * hint list
 [@@deriving yojson]
 
 (* Definitions *)

@@ -5,8 +5,8 @@ open Util.Source
 (* Context *)
 
 module SyntaxMap = Map.Make (Kinds.SyntaxId)
-module RelationMap = Map.Make (Kinds.RelationId)
 module RuleGroupMap = Map.Make (Kinds.RuleGroupId)
+module RelProseMap = Map.Make (Kinds.RelId)
 module RuleProseMap = Map.Make (Kinds.RuleProseId)
 module FuncProseMap = Map.Make (Kinds.FuncProseId)
 module TableMap = Map.Make (Kinds.TableId)
@@ -14,8 +14,8 @@ module TableMap = Map.Make (Kinds.TableId)
 type t = {
   filename : string;
   mutable syntax : Kinds.syntax SyntaxMap.t;
-  mutable relation : Kinds.relation RelationMap.t;
   mutable rulegroup : Kinds.rulegroup RuleGroupMap.t;
+  mutable relprose : Kinds.relprose RelProseMap.t;
   mutable ruleprose : Kinds.ruleprose RuleProseMap.t;
   mutable funcprose : Kinds.funcprose FuncProseMap.t;
   mutable tables : Kinds.table TableMap.t;
@@ -28,9 +28,6 @@ let init_el_def (ctx : t) (def_el : El.def) : unit =
   | TypD (id_syntax, tparams, deftyp, hints) ->
       let syntax = (tparams, deftyp, hints) in
       ctx.syntax <- SyntaxMap.add id_syntax.it syntax ctx.syntax
-  | RelD (id_rel, nottyp, hints) ->
-      let relation = (nottyp, hints) in
-      ctx.relation <- RelationMap.add id_rel.it relation ctx.relation
   | RuleGroupD (id_rel, id_rulegroup, rules) ->
       let rulegroup = rules in
       ctx.rulegroup <-
@@ -41,24 +38,35 @@ let init_el (ctx : t) (spec_el : El.spec) : unit =
   List.iter (init_el_def ctx) spec_el
 
 let init_pl_def (ctx : t) (def_sl : Pl.def) : unit =
+  let id_of_rel_title = function
+    | Pl.ProseRelTitle (`Hold (id_rel, _, _))
+    | Pl.ProseRelTitle (`Yield (id_rel, _, _, _, _))
+    | Pl.MathRelTitle (id_rel, _, _) ->
+        id_rel
+  in
+  let id_of_rulegroup_title = function
+    | Pl.ProseRuleTitle (`Hold (id_rulegroup, _, _))
+    | Pl.ProseRuleTitle (`Yield (id_rulegroup, _, _))
+    | Pl.MathRuleTitle (id_rulegroup, _, _) ->
+        id_rulegroup
+  in
+  let id_of_func_title = function
+    | Pl.ProseFuncTitle (`Check (id_def, _, _))
+    | Pl.ProseFuncTitle (`Yield (id_def, _, _))
+    | Pl.MathFuncTitle (id_def, _, _) ->
+        id_def
+  in
   match def_sl.it with
+  | ExternRelD rel_title ->
+      let id_rel = id_of_rel_title rel_title in
+      ctx.relprose <- RelProseMap.add id_rel.it rel_title ctx.relprose
   | RelD (rel_title, rulegroups) ->
-      let id_rel =
-        match rel_title with
-        | Pl.ProseRelTitle (`Hold (id_rel, _, _))
-        | Pl.ProseRelTitle (`Yield (id_rel, _, _, _, _))
-        | Pl.MathRelTitle (id_rel, _, _) ->
-            id_rel
-      in
+      let id_rel = id_of_rel_title rel_title in
+      ctx.relprose <- RelProseMap.add id_rel.it rel_title ctx.relprose;
       List.iter
         (fun rulegroup ->
           let rulegroup_title, _ = rulegroup in
-          let id_rulegroup =
-            match rulegroup_title with
-            | Pl.ProseRuleTitle (id_rulegroup, _, _)
-            | Pl.MathRuleTitle (id_rulegroup, _, _) ->
-                id_rulegroup
-          in
+          let id_rulegroup = id_of_rulegroup_title rulegroup_title in
           ctx.ruleprose <-
             RuleProseMap.add
               (id_rel.it, id_rulegroup.it)
@@ -66,23 +74,11 @@ let init_pl_def (ctx : t) (def_sl : Pl.def) : unit =
         rulegroups
   | TableDecD tablefunc ->
       let func_title, _ = tablefunc in
-      let id_def =
-        match func_title with
-        | Pl.ProseFuncTitle (`Check (id_def, _, _))
-        | Pl.ProseFuncTitle (`Yield (id_def, _, _))
-        | Pl.MathFuncTitle (id_def, _, _) ->
-            id_def
-      in
+      let id_def = id_of_func_title func_title in
       ctx.tables <- TableMap.add id_def.it tablefunc ctx.tables
   | FuncDecD func ->
       let func_title, _ = func in
-      let id_def =
-        match func_title with
-        | Pl.ProseFuncTitle (`Check (id_def, _, _))
-        | Pl.ProseFuncTitle (`Yield (id_def, _, _))
-        | Pl.MathFuncTitle (id_def, _, _) ->
-            id_def
-      in
+      let id_def = id_of_func_title func_title in
       ctx.funcprose <- FuncProseMap.add id_def.it func ctx.funcprose
   | _ -> ()
 
@@ -94,8 +90,8 @@ let init (spec_el : El.spec) (spec_pl : Pl.spec) (filename : string) : t =
     {
       filename;
       syntax = SyntaxMap.empty;
-      relation = RelationMap.empty;
       rulegroup = RuleGroupMap.empty;
+      relprose = RelProseMap.empty;
       ruleprose = RuleProseMap.empty;
       funcprose = FuncProseMap.empty;
       tables = TableMap.empty;
@@ -113,12 +109,6 @@ let find_syntax (ctx : t) (id : Kinds.SyntaxId.t) : Kinds.syntax =
   | None ->
       error no_region ("syntax " ^ id ^ " was not found in " ^ ctx.filename)
 
-let find_relation (ctx : t) (id : Kinds.RelationId.t) : Kinds.relation =
-  match RelationMap.find_opt id ctx.relation with
-  | Some relation -> relation
-  | None ->
-      error no_region ("relation " ^ id ^ " was not found in " ^ ctx.filename)
-
 let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
   match RuleGroupMap.find_opt id ctx.rulegroup with
   | Some rulegroup -> rulegroup
@@ -127,6 +117,12 @@ let find_rulegroup (ctx : t) (id : Kinds.RuleGroupId.t) : Kinds.rulegroup =
       error no_region
         ("rulegroup " ^ id_rel ^ "/" ^ id_rulegroup ^ " was not found in "
        ^ ctx.filename)
+
+let find_relprose (ctx : t) (id : Kinds.RelId.t) : Kinds.relprose =
+  match RelProseMap.find_opt id ctx.relprose with
+  | Some relprose -> relprose
+  | None ->
+      error no_region ("relprose " ^ id ^ " was not found in " ^ ctx.filename)
 
 let find_ruleprose (ctx : t) (id : Kinds.RuleProseId.t) : Kinds.ruleprose =
   match RuleProseMap.find_opt id ctx.ruleprose with

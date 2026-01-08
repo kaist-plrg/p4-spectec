@@ -6,12 +6,6 @@ module SyntaxId = String
 
 type syntax = El.tparam list * El.deftyp * El.hint list
 
-(* Relations *)
-
-module RelationId = String
-
-type relation = El.nottyp * El.hint list
-
 (* Rule groups *)
 
 module RuleGroupId = struct
@@ -23,6 +17,12 @@ module RuleGroupId = struct
 end
 
 type rulegroup = El.rule list
+
+(* Relation prose *)
+
+module RelId = String
+
+type relprose = Pl.rel_title
 
 (* Rule prose *)
 

@@ -16,7 +16,7 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
-let adoc_mono s = "`" ^ s ^ "`"
+let adoc_mono s = "``" ^ s ^ "``"
 let adoc_subscript s = "~" ^ s ^ "~"
 let adoc_superscript s = "^" ^ s ^ "^"
 let adoc_bold s = "*" ^ s ^ "*"
@@ -185,10 +185,6 @@ let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
        hint
        (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
-
-let render_fields_hint (_ctx : context) (_hint : Hints.Fields.t)
-    (_render : context -> 'a -> string) (_items : 'a list) : string =
-  "TODO"
 
 (* Call prose *)
 
@@ -376,6 +372,19 @@ and render_path ctx path =
   | DotP ({ it = RootP; _ }, atom) -> code_of_atom atom
   | DotP (path, atom) -> render_path ctx path ^ "." ^ code_of_atom atom
 
+(* Parameters *)
+
+and render_param ctx param =
+  match param.it with
+  | ExpP (_typ, exp) -> render_exp ctx exp
+  | DefP defid -> string_of_defid defid
+
+and render_params ctx params =
+  match params with
+  | [] -> ""
+  | params ->
+      "(" ^ String.concat ", " (List.map (render_param ctx) params) ^ ")"
+
 (* Arguments *)
 
 and render_arg ctx arg =
@@ -511,17 +520,25 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
   | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input
+      F.asprintf "%s: %s"
+        (Sl.Print.string_of_relid id_rel)
+        (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
-      F.asprintf "%s be the result of %s"
-        (render_alter_hint ~caps:true in_prose hint_output render_exp
-           exps_output)
-        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input
+      F.asprintf "%s:\n\n%s%s\n%s%s"
+        (Sl.Print.string_of_relid id_rel
         |> as_link in_prose ~link:(string_of_relid id_rel))
+        (adoc_unordered_bullet 0)
+        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input)
+        (adoc_unordered_bullet 0)
+        ("results in "
+        ^ render_alter_hint ~caps:false in_prose hint_output render_exp
+            exps_output)
   | MathRelTitle (id_rel, mixop, exps) ->
-      code_of_notexp in_prose (mixop, exps)
+      F.asprintf "%s: %s"
+        (Sl.Print.string_of_relid id_rel)
+        (code_of_notexp in_prose (mixop, exps))
       |> as_link in_prose ~link:(string_of_relid id_rel)
 
 (* Extern relation definitions *)
@@ -534,7 +551,11 @@ and render_extern_rel_def (externrel : externrel) : string =
 and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
-  | ProseRuleTitle (_id_rulegroup, hintexp, exps_input) ->
+  | ProseRuleTitle (`Hold (_id_rulegroup, hintexp, exps_input)) ->
+      render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
+      ^ " when"
+      |> as_link in_prose ~link:(string_of_relid id_rel)
+  | ProseRuleTitle (`Yield (_id_rulegroup, hintexp, exps_input)) ->
       render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
       |> as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
@@ -563,16 +584,16 @@ and render_defined_rel_def (rel : rel) : string =
 
 and render_func_title (func_title : func_title) : string =
   match func_title with
-  | ProseFuncTitle (`Check (id_func, hint_true, args_input)) ->
-      render_alter_hint ~caps:true in_prose hint_true render_arg args_input
+  | ProseFuncTitle (`Check (id_func, hint_true, params)) ->
+      render_alter_hint ~caps:true in_prose hint_true render_param params
       |> as_link in_prose ~link:(string_of_defid id_func)
-  | ProseFuncTitle (`Yield (id_func, hint_input, args_input)) ->
-      render_alter_hint ~caps:true in_prose hint_input render_arg args_input
+  | ProseFuncTitle (`Yield (id_func, hint_input, params)) ->
+      render_alter_hint ~caps:true in_prose hint_input render_param params
       |> as_link in_prose ~link:(string_of_defid id_func)
-  | MathFuncTitle (id_func, tparams, args_input) ->
+  | MathFuncTitle (id_func, tparams, params) ->
       string_of_defid id_func
       ^ Sl.Print.string_of_tparams tparams
-      ^ render_args (in_link |> code) args_input
+      ^ render_params (in_link |> code) params
       |> as_link in_prose ~link:(string_of_defid id_func)
 
 (* Extern function definitions *)
@@ -589,20 +610,20 @@ and render_builtin_func_def (builtinfunc : builtinfunc) : string =
 
 and render_table_func_def (tablefunc : tablefunc) : string =
   let func_title, tablerows = tablefunc in
-  let args =
+  let params =
     match func_title with
-    | ProseFuncTitle (`Check (_, _, args))
-    | ProseFuncTitle (`Yield (_, _, args))
-    | MathFuncTitle (_, _, args) ->
-        args
+    | ProseFuncTitle (`Check (_, _, params))
+    | ProseFuncTitle (`Yield (_, _, params))
+    | MathFuncTitle (_, _, params) ->
+        params
   in
   let table_meta =
     "[cols=\""
-    ^ string_of_int (List.length args + 1)
+    ^ string_of_int (List.length params + 1)
     ^ "\", options=\"header\"]\n"
   in
   let table_header =
-    "|===" ^ "\n" ^ "| " ^ render_args in_prose args ^ " | " ^ "Result \n\n"
+    "|===" ^ "\n" ^ "| " ^ render_params in_prose params ^ " | " ^ "Result \n\n"
   in
   let table_rows =
     tablerows
