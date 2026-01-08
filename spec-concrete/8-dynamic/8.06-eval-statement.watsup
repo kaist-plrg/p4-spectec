@@ -498,17 +498,50 @@ rulegroup Stmt_eval/forStatementIR-three-clause {
 
 relation ForCollectionExpr_eval:
   evalContext store |- forCollectionExpressionIR
-                     : evalContext store expressionResult
+                     : evalContext store expressionListResult
   hint(input %0 %1 %2)
 
 ;;;;;; typedExpressionIR
 
-rule ForCollectionExpr_eval/expr:
-  EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-  -- Expr_eval: 
-      LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+rulegroup ForCollectionExpr_eval/expr {
+
+  rule ForCollectionExpr_eval/exit:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule ForCollectionExpr_eval/list:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value*)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` listValue)
+    -- if LIST `[ value* ] = listValue
+
+  rule ForCollectionExpr_eval/header-stack:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value*)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` headerStackValue)
+  -- if HEADER_STACK `[ value* `( _; _ ) ] = headerStackValue
+
+}
 
 ;;;;;; typedExpressionIR `.. typedExpressionIR
+
+dec $increment(value) : value
+
+def $increment(D i) = D $(i + 1)
+def $increment(w W i) = $bin_plus(w W i, w W 1)
+def $increment(w S i) = $bin_plus(w S i, w S 1)
+
+dec $get_values_from_range(value, value) : value*
+
+def $get_values_from_range(value_l, value_r) = value*
+  -- if $bin_lt(value_l, value_r)
+  -- if value_l_inc = $increment(value_l)
+  -- if value* = value_l :: $get_values_from_range(value_l_inc, value_r)
+def $get_values_from_range(value_l, value_r) = value_l
+  -- if $bin_eq(value_l, value_r)
+def $get_values_from_range(value_l, value_r) = eps
+  -- if $bin_gt(value_l, value_r)
 
 rulegroup ForCollectionExpr_eval/range {
 
@@ -528,12 +561,12 @@ rulegroup ForCollectionExpr_eval/range {
 
   rule ForCollectionExpr_eval/left-cont-right-cont:
     EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r 
-                : EC_2 STO_2 (`` setValue)
+                : EC_2 STO_2 (`` value*)
     -- Expr_eval: 
         LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
     -- Expr_eval:
         LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 (`` value_r)
-    -- if setValue = SET `{ value_l `.. value_r }
+    -- if value* = $get_values_from_range(value_l, value_r)
 
 }
 
@@ -576,32 +609,6 @@ rulegroup ForInLoop_eval {
 
 }
 
-dec $increment(value) : value
-
-def $increment(D i) = D $(i + 1)
-def $increment(w W i) = $bin_plus(w W i, w W 1)
-def $increment(w S i) = $bin_plus(w S i, w S 1)
-
-dec $get_values_from_range(value, value) : value*
-
-def $get_values_from_range(value_l, value_r) = value*
-  -- if $bin_lt(value_l, value_r)
-  -- if value_l_inc = $increment(value_l)
-  -- if value* = value_l :: $get_values_from_range(value_l_inc, value_r)
-def $get_values_from_range(value_l, value_r) = value_l
-  -- if $bin_eq(value_l, value_r)
-def $get_values_from_range(value_l, value_r) = eps
-  -- if $bin_gt(value_l, value_r)
-
-dec $get_values_from_collection(value) : value*
-
-def $get_values_from_collection(listValue) = value*
-  -- if listValue = LIST `[ value* ]
-def $get_values_from_collection(headerStackValue) = value*
-  -- if headerStackValue = HEADER_STACK `[ value* `( _; _ ) ]
-def $get_values_from_collection(SET `{ value_l `.. value_r })
-  = $get_values_from_range(value_l, value_r)
-
 rulegroup Stmt_eval/forStatementIR-in {
 
   rule Stmt_eval/no-annotations-collection-exit:
@@ -622,8 +629,7 @@ rulegroup Stmt_eval/forStatementIR-in {
     -- if EC_1 = $enter_e(EC_0)
     ---- ;; evaluate collection
     -- ForCollectionExpr_eval:
-        EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 (`` value_collection)
-    -- if value* = $get_values_from_collection(value_collection)
+        EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 (`` value*)
     ---- ;; update evaluation context
     -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
     -- if value_init = $default(typeIR_subst)
