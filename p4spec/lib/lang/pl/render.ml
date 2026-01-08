@@ -520,10 +520,11 @@ and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 and render_rel_title (rel_title : rel_title) : string =
   match rel_title with
   | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
-      F.asprintf "%s: %s"
-        (Sl.Print.string_of_relid id_rel)
-        (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      F.asprintf "%s:\n\n%s%s"
+        (Sl.Print.string_of_relid id_rel
+        |> as_link in_prose ~link:(string_of_relid id_rel))
+        (adoc_unordered_bullet 0)
+        (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input) 
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       F.asprintf "%s:\n\n%s%s\n%s%s"
