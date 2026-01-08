@@ -47,7 +47,7 @@ def parse_args() -> FuzzConfig:
     parser.add_argument("--spec", type=str, default="spec")
     parser.add_argument("--relname", type=str, default="Program_ok")
     parser.add_argument("--include", type=str, default="p4c/p4include")
-    parser.add_argument("--exclude", type=str, default="excludes")
+    parser.add_argument("--exclude", type=str, default="excludes/static")
     parser.add_argument("--coverage", type=str, default="coverage/p4c-pos.coverage")
     parser.add_argument("--reduce", action="store_true")
     parser.add_argument("--timeout", type=int, default=12*60*60, help="Fuzzer timeout in seconds.")

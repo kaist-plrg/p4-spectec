@@ -95,11 +95,14 @@ module type DRIVER = sig
   (* Coverage *)
 
   val cover_instr_programs :
-    Sl.spec -> string -> string list -> string list -> ICov_multi.t
-
-  val cover_instr_stfs :
-    Sl.spec -> string list -> string list -> string list -> ICov_multi.t
+    spec -> string -> string list -> string list -> ICov_multi.t
 
   val cover_dangling_programs :
-    Sl.spec -> string -> string list -> string list -> DCov_multi.t
+    spec -> string -> string list -> string list -> DCov_multi.t
+
+  val cover_instr_stfs :
+    spec -> string list -> string list -> string list -> ICov_multi.t
+
+  val cover_dangling_stfs :
+    spec -> string list -> string list -> string list -> DCov_multi.t
 end

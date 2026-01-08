@@ -302,8 +302,8 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
           fail_run = stat.fail_run + 1;
         }
 
-let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs
-    patchdir =
+let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
+    testdirs_stf patchdir =
   let spec_sim =
     match mode with
     | `IL ->
@@ -317,7 +317,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs
     excludes_p4 |> Filesys.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 = List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs in
+  let filenames_p4 =
+    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
+  in
   let filenames_p4 =
     List.filter
       (fun filename_p4 ->
@@ -333,7 +335,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs
   let filenames_p4 =
     Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
   in
-  let filenames_stf = List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs in
+  let filenames_stf =
+    List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf
+  in
   let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
   let filenames_stf =
     Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
@@ -379,7 +383,9 @@ let sim_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdirs = flag "-d" (listed string) ~doc:"p4 and stf test directory"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
+     and testdirs_stf =
+       flag "-stf-dir" (listed string) ~doc:"stf test directories"
      and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name"
      and mode =
@@ -393,8 +399,8 @@ let sim_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs
-         patchdir)
+       run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
+         testdirs_stf patchdir)
 
 (* Dangling coverage test *)
 
@@ -414,7 +420,7 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
   in
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
   let cover =
-    Runner.cover_dangling_programs spec_sl relname includes_p4 filenames_p4
+    Runner.cover_dangling_programs (Sim.SL spec_sl) relname includes_p4 filenames_p4
   in
   Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
 
@@ -439,7 +445,9 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
     excludes_p4 |> Filesys.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 = List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4 in
+  let filenames_p4 =
+    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
+  in
   let filenames_p4 =
     List.filter
       (fun filename_p4 ->
@@ -461,7 +469,9 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
   let filenames_p4 =
     Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
   in
-  let filenames_stf = List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf in
+  let filenames_stf =
+    List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf
+  in
   let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
   let filenames_stf =
     Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
@@ -486,7 +496,7 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
   let cover_instr =
-    Runner.cover_instr_stfs spec_sl includes_p4 filenames_p4 filenames_stf
+    Runner.cover_instr_stfs (Sim.SL spec_sl) includes_p4 filenames_p4 filenames_stf
   in
   Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_instr spec_sl
 
@@ -499,7 +509,8 @@ let cover_sim_instr_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
-     and testdirs_stf = flag "-stf-dir" (listed string) ~doc:"stf test directories"
+     and testdirs_stf =
+       flag "-stf-dir" (listed string) ~doc:"stf test directories"
      and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name" in
      fun () ->
