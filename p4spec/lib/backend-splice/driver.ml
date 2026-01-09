@@ -2,36 +2,39 @@ open Lang
 
 (* Splicing an anchor *)
 
-let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
+let do_splice_anchor (module S : Splice.SPLICE) (ctx : Ctx.t)
     (source : Source.t) : string =
-  let keys = Splice.parse_keys source in
-  let values = Splice.find_values ctx keys in
-  let content = Splice.render keys values in
-  Option.value Splice.prefix ~default:""
-  ^ content
-  ^ Option.value Splice.suffix ~default:""
+  let keys = S.parse_keys source in
+  let values = S.find_values ctx keys in
+  let content = S.render keys values in
+  S.prefix ^ content ^ S.suffix
 
-let rec try_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
+let rec try_splice_anchor (module S : Splice.SPLICE) (ctx : Ctx.t)
     (source : Source.t) (result : string ref) : bool =
-  let parsed_start = Parser.parse_splice_start source Splice.name in
+  let parsed_start = Parser.parse_splice_start source S.name in
   if parsed_start then
-    try_splice_anchor' (module Splice : Splicer.Splice) ctx source result;
+    try_splice_anchor' (module S : Splice.SPLICE) ctx source result;
   parsed_start
 
-and try_splice_anchor' (module Splice : Splicer.Splice) (ctx : Ctx.t)
+and try_splice_anchor' (module S : Splice.SPLICE) (ctx : Ctx.t)
     (source : Source.t) (result : string ref) : unit =
   Parser.parse_space source;
-  result := do_splice_anchor (module Splice : Splicer.Splice) ctx source
+  result := do_splice_anchor (module S : Splice.SPLICE) ctx source
 
 and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
   let result = ref "" in
   ignore
     (try_splice_anchor (module Splicer.Syntax) ctx source result
-    || try_splice_anchor (module Splicer.RuleGroup) ctx source result
-    || try_splice_anchor (module Splicer.RelProse) ctx source result
-    || try_splice_anchor (module Splicer.RuleProse) ctx source result
+    || try_splice_anchor (module Splicer.RelTitleSource) ctx source result
+    || try_splice_anchor (module Splicer.RelTitleProse) ctx source result
+    || try_splice_anchor (module Splicer.RuleGroupSource) ctx source result
+    || try_splice_anchor (module Splicer.RuleGroupProse) ctx source result
+    || try_splice_anchor (module Splicer.FuncTitleSource) ctx source result
+    || try_splice_anchor (module Splicer.FuncTitleProse) ctx source result
+    || try_splice_anchor (module Splicer.FuncSource) ctx source result
     || try_splice_anchor (module Splicer.FuncProse) ctx source result
-    || try_splice_anchor (module Splicer.Table) ctx source result);
+    || try_splice_anchor (module Splicer.TableSource) ctx source result
+    || try_splice_anchor (module Splicer.TableProse) ctx source result);
   if !result <> "" then (
     Buffer.add_string buffer !result;
     true)
