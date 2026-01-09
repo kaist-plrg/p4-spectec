@@ -47,7 +47,7 @@ rulegroup Call_eval/actionCallee {
   rule Call_eval/global-copyin-exit:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     ---- ;; if the action is in the top-level scope
     -- if ACTION GLOBAL `. nameIR
             `( parameterIR* `# id_default* ) blockStatementIR
@@ -63,11 +63,12 @@ rulegroup Call_eval/actionCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_1 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_1)
 
   rule Call_eval/global-copyin-cont-ActionBody-exit:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_3 STO_2 EXIT
+                  : EC_4 STO_2 EXIT
     ---- ;; if the action is in the top-level scope
     -- if ACTION GLOBAL `. nameIR
             `( parameterIR* `# id_default* ) blockStatementIR
@@ -93,16 +94,17 @@ rulegroup Call_eval/actionCallee {
     ---- ;; propagate shared layer
     -- if EC_2
         = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_3)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/global-return:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_3 STO_2 (RETURN eps)
+                  : EC_4 STO_2 (RETURN eps)
     ---- ;; unpack the action callee
     ---- ;; if the action is in the top-level scope
     -- if ACTION GLOBAL `. nameIR
@@ -129,16 +131,17 @@ rulegroup Call_eval/actionCallee {
     ---- ;; propagate shared layer
     -- if EC_2
         = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_3)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/block-copyin-exit:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     ---- ;; unpack the action callee
     ---- ;; if the action is in a block
     -- if ACTION BLOCK `. nameIR
@@ -155,11 +158,12 @@ rulegroup Call_eval/actionCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_1 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_1)
 
   rule Call_eval/block-copyin-cont-ActionBody-exit:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_3 STO_2 EXIT
+                  : EC_4 STO_2 EXIT
     ---- ;; unpack the action callee
     ---- ;; if the action is in a block
     -- if ACTION BLOCK `. nameIR
@@ -187,16 +191,17 @@ rulegroup Call_eval/actionCallee {
     -- if EC_2
         = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
               [ .BLOCK.FRAME = EC_callee_3.BLOCK.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_3)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/block-return:
     p EC_0 STO_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
-                  : EC_3 STO_2 (RETURN eps)
+                  : EC_4 STO_2 (RETURN eps)
     ---- ;; unpack the action callee
     ---- ;; if the action is in a block
     -- if ACTION BLOCK `. nameIR
@@ -224,11 +229,12 @@ rulegroup Call_eval/actionCallee {
     -- if EC_2
         = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
               [ .BLOCK.FRAME = EC_callee_3.BLOCK.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_3)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -275,7 +281,7 @@ rulegroup Call_eval/definedFunctionCallee {
   rule Call_eval/definedFunctionCallee-copyin-exit:
     p EC_0 STO_0 |- definedFunctionCallee
                     `@ `< typeArgumentIR* > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     -- if FUNCTION nameIR `< typeParameterIR* >
             `( parameterIR* `# id_default* ) blockStatementIR
         = definedFunctionCallee
@@ -293,11 +299,12 @@ rulegroup Call_eval/definedFunctionCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ LOCAL EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_2 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_2)
 
   rule Call_eval/definedFunctionCallee-cont:
     p EC_0 STO_0 |- definedFunctionCallee
                     `@ `< typeArgumentIR* > `( argumentListIR )
-                  : EC_3 STO_2 definedFunctionResult
+                  : EC_4 STO_2 definedFunctionResult
     -- if FUNCTION nameIR `< typeParameterIR* >
             `( parameterIR* `# id_default* ) blockStatementIR
         = definedFunctionCallee
@@ -324,12 +331,13 @@ rulegroup Call_eval/definedFunctionCallee {
                            : EC_callee_4 STO_2 definedFunctionResult
     ---- ;; propagate shared layer
     -- if EC_2
-        = EC_1[ .GLOBAL.FRAME = EC_callee_3.GLOBAL.FRAME ]
+        = EC_1[ .GLOBAL.FRAME = EC_callee_4.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_4)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_4 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -343,7 +351,7 @@ rulegroup Call_eval/externFunctionCallee {
   rule Call_eval/externFunctionCallee-copyin-exit:
     p EC_0 STO_0 |- externFunctionCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     ---- ;; unpack the extern function callee
     -- if EXTERN_FUNCTION nameIR
             `< typeParameterIR* > `( parameterIR* `# id_default* )
@@ -362,11 +370,12 @@ rulegroup Call_eval/externFunctionCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ LOCAL EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_2 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_2)
 
   rule Call_eval/externFunctionCallee-cont:
     p EC_0 STO_0 |- externFunctionCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_3 STO_2 callResult
+                  : EC_4 STO_2 callResult
     ---- ;; unpack the extern function callee
     -- if EXTERN_FUNCTION nameIR
             `< typeParameterIR* > `( parameterIR* `# id_default* )
@@ -395,11 +404,12 @@ rulegroup Call_eval/externFunctionCallee {
                            : EC_callee_4 STO_2 callResult
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_4.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_4)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_4 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -584,7 +594,7 @@ rulegroup Call_eval/externMethodCallee {
   rule Call_eval/copyin-exit:
     p EC_0 STO_0 |- externMethodCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     ---- ;; unpack the extern method callee
     ---- ;; if the extern method is non-abstract
     -- if EXTERN_METHOD objectId `. nameIR `< typeParameterIR* >
@@ -607,11 +617,12 @@ rulegroup Call_eval/externMethodCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ LOCAL EC_callee_3 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_4 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_4)
 
   rule Call_eval/non-abstract-return:
     p EC_0 STO_0 |- externMethodCallee
                     `@ `< typeArgumentIR* > `( argumentIR* )
-                  : EC_3 STO_2 callResult
+                  : EC_4 STO_2 callResult
     ---- ;; unpack the extern method callee
     ---- ;; if the extern method is non-abstract
     -- if EXTERN_METHOD objectId `. nameIR `< typeParameterIR* >
@@ -643,12 +654,13 @@ rulegroup Call_eval/externMethodCallee {
         EC_callee_5 STO_1 |- objectId `. nameIR `( nameIR_param* )
                            : EC_callee_6 STO_2 callResult
     ---- ;; propagate shared layer
-    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_6.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_6)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ LOCAL EC_callee_6 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -659,7 +671,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
   rule Call_eval/accept:
     p EC_0 STO_0 |- parserApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_3 STO_3 (RETURN eps)
+                  : EC_4 STO_3 (RETURN eps)
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; parserLocalDeclarationListIR `; stateEnv }
@@ -690,16 +702,17 @@ rulegroup Call_eval/parserApplyMethodCallee {
                            : EC_callee_5 STO_3 ACCEPT
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_5)
     ---- ;; copy-out
     -- Copy_out:
-        STO_3 p EC_2 parameterIR_aligned*
+        STO_3 p EC_3 parameterIR_aligned*
            `@ BLOCK EC_callee_5 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/reject:
     p EC_0 STO_0 |- parserApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_3 STO_3 rejectTransitionResult
+                  : EC_4 STO_3 rejectTransitionResult
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; parserLocalDeclarationListIR `; stateEnv }
@@ -730,11 +743,12 @@ rulegroup Call_eval/parserApplyMethodCallee {
                            : EC_callee_5 STO_3 rejectTransitionResult
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_5)
     ---- ;; copy-out
     -- Copy_out:
-        STO_3 p EC_2 parameterIR_aligned*
+        STO_3 p EC_3 parameterIR_aligned*
            `@ BLOCK EC_callee_5 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -745,7 +759,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
   rule Call_eval/controlApplyMethodCallee-copyin-exit:
     p EC_0 STO_0 |- controlApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_2 STO_1 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; controlLocalDeclarationListIR `;
@@ -766,11 +780,12 @@ rulegroup Call_eval/controlApplyMethodCallee {
         STO_0 p EC_0 parameterIR_aligned*
            `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 `@ EC_callee_2 `# EXIT
+    -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_2)
 
   rule Call_eval/controlApplyMethodCallee-localDecl-exit:
     p EC_0 STO_0 |- controlApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_3 STO_2 EXIT
+                  : EC_4 STO_2 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; controlLocalDeclarationListIR `;
@@ -800,16 +815,17 @@ rulegroup Call_eval/controlApplyMethodCallee {
                             : EC_callee_4 STO_2 EXIT
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_4.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_4)
     ---- ;; copy-out
     -- Copy_out:
-        STO_2 p EC_2 parameterIR_aligned*
+        STO_2 p EC_3 parameterIR_aligned*
            `@ BLOCK EC_callee_4 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/controlApplyMethodCallee-controlBodyIR-exit:
     p EC_0 STO_0 |- controlApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_3 STO_3 EXIT
+                  : EC_4 STO_3 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; controlLocalDeclarationListIR `;
@@ -843,16 +859,17 @@ rulegroup Call_eval/controlApplyMethodCallee {
                            : EC_callee_5 STO_3 EXIT
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_5)
     ---- ;; copy-out
     -- Copy_out:
-        STO_3 p EC_2 parameterIR_aligned*
+        STO_3 p EC_3 parameterIR_aligned*
            `@ BLOCK EC_callee_5 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
   rule Call_eval/controlApplyMethodCallee-cont:
     p EC_0 STO_0 |- controlApplyMethodCallee
                     `@ `< typeArgumentListIR > `( argumentListIR )
-                  : EC_3 STO_3 (RETURN eps)
+                  : EC_4 STO_3 (RETURN eps)
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
             `{ frame `; controlLocalDeclarationListIR `;
@@ -886,11 +903,12 @@ rulegroup Call_eval/controlApplyMethodCallee {
                            : EC_callee_5 STO_3 (RETURN eps)
     ---- ;; propagate shared layer
     -- if EC_2 = EC_1[ .GLOBAL.FRAME = EC_callee_5.GLOBAL.FRAME ]
+    -- if EC_3 = $merge_loop_count_e(EC_2, EC_callee_5)
     ---- ;; copy-out
     -- Copy_out:
-        STO_3 p EC_2 parameterIR_aligned*
+        STO_3 p EC_3 parameterIR_aligned*
            `@ BLOCK EC_callee_5 storageReference?*
-        ~> EC_3
+        ~> EC_4
 
 }
 
@@ -901,7 +919,7 @@ rulegroup Call_eval/tableApplyMethodCallee {
     rule Call_eval/tableApplyMethodCallee-return:
       p EC_0 STO_0 |- tableApplyMethodCallee
                       `@ `< typeArgumentListIR > `( argumentListIR )
-                    : EC_1 STO_1 returnResult
+                    : EC_2 STO_1 returnResult
       ---- ;; unpack the table apply method callee
       -- if TABLE objectId `. APPLY `{ frame `; TBL }
           = tableApplyMethodCallee
@@ -915,11 +933,12 @@ rulegroup Call_eval/tableApplyMethodCallee {
                              : EC_callee_2 STO_1 returnResult
       ---- ;; propagate shared layers
       -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
+      -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_2)
 
     rule Call_eval/tableApplyMethodCallee-exit:
       p EC_0 STO_0 |- tableApplyMethodCallee
                       `@ `< typeArgumentListIR > `( argumentListIR )
-                    : EC_1 STO_1 EXIT
+                    : EC_2 STO_1 EXIT
       ---- ;; unpack the table apply method callee
       -- if TABLE objectId `. APPLY `{ frame `; TBL }
           = tableApplyMethodCallee
@@ -933,6 +952,7 @@ rulegroup Call_eval/tableApplyMethodCallee {
                              : EC_callee_2 STO_1 EXIT
       ---- ;; propagate shared layers
       -- if EC_1 = EC_0[ .BLOCK.FRAME = EC_callee_2.BLOCK.FRAME ]
+      -- if EC_2 = $merge_loop_count_e(EC_1, EC_callee_2)
 
 }
 

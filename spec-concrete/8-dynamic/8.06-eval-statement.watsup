@@ -444,7 +444,7 @@ rulegroup ForThreeClauseLoop_eval {
 
   rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-cont:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_4 STO_4 statementResult
+                : EC_5 STO_4 statementResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
@@ -452,9 +452,11 @@ rulegroup ForThreeClauseLoop_eval {
     -- if statementResult_loop <- [ ``, CONTINUE ]
     -- ForUpdateStmts_eval:
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 ``
-    -- ForThreeClauseLoop_eval: 
-        EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
-                    : EC_4 STO_4 statementResult
+    -- if EC_4 = $update_loop_count_e(EC_3)
+    -- debug EC_4.COUNT
+    -- ForThreeClauseLoop_eval:
+        EC_4 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
+                    : EC_5 STO_4 statementResult
 
 }
 
