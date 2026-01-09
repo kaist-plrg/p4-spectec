@@ -1,4 +1,4 @@
-;; Instruction coverage: 9141/12849 (71.14%)
+;; Instruction coverage: 9139/12849 (71.13%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -31779,29 +31779,33 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +         1. (Expr_eval: (local) EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
-+         2. If ((expressionResult has type continueResult<value>)), then
++         2. Case analysis on expressionResult
 
-+           1. (Let (` value) be (expressionResult as continueResult<value>))
+            1. Case (% has type exitResult)
 
-+           2. (SwitchCases_general_eval: (local) EC STO value |- (switchCaseIR)* : EC STO (blockStatementIR')?)
+-             1. (Let exitResult be (expressionResult as exitResult))
 
-+           3. If ((EC = EC_1)), then
+-             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
 
-+             1. If ((STO = STO_1)), then
+            2. Case (% has type continueResult<value>)
 
-+               1. Case analysis on (blockStatementIR')?
++             1. (Let (` value) be (expressionResult as continueResult<value>))
 
-                  1. Case (% matches pattern (_))
++             2. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- (switchCaseIR)* : EC_2 STO_2 (blockStatementIR')?)
 
-+                   1. (Let ?(blockStatementIR) be (blockStatementIR')?)
++             3. Case analysis on (blockStatementIR')?
 
-+                   2. (Stmt_eval: (local) EC_1 STO_1 |- (blockStatementIR as statementIR) : EC_2 STO_2 statementResult)
+                1. Case (% matches pattern (_))
 
-+                   3. Result in: % % % |- % : EC_2 STO_2 statementResult
++                 1. (Let ?(blockStatementIR) be (blockStatementIR')?)
 
-                  2. Case (% matches pattern ())
++                 2. (Stmt_eval: (local) EC_2 STO_2 |- (blockStatementIR as statementIR) : EC_3 STO_3 statementResult)
 
--                   1. Result in: % % % |- % : EC_1 STO_1 ((`) as statementResult)
++                 3. Result in: % % % |- % : EC_3 STO_3 statementResult
+
+                2. Case (% matches pattern ())
+
+-                 1. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
 rel BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %

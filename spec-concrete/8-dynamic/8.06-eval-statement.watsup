@@ -854,30 +854,35 @@ rulegroup Stmt_eval/switchStatementIR-table {
 
 rulegroup Stmt_eval/switchStatementIR-general {
 
-  ;; target-exit is covered in Stmt_eval/switchStatementIR-table
+  rule Stmt_eval/target-exit:
+    LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
+                      : EC_1 STO_1 EXIT
+    ---- ;; evaluate switch target
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
 
   rule Stmt_eval/target-cont-match:
     LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                      : EC_2 STO_2 statementResult
+                      : EC_3 STO_3 statementResult
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
     ---- ;; find matching case
     -- SwitchCases_general_eval:
-        LOCAL EC_0 STO_0 value |- switchCaseIR* : EC_1 STO_1 blockStatementIR
+        LOCAL EC_1 STO_1 value |- switchCaseIR* : EC_2 STO_2 blockStatementIR
     ---- ;; evaluate matching case
     -- Stmt_eval:
-        LOCAL EC_1 STO_1 |- blockStatementIR : EC_2 STO_2 statementResult
+        LOCAL EC_2 STO_2 |- blockStatementIR : EC_3 STO_3 statementResult
 
   rule Stmt_eval/target-cont-no-match:
     LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                      : EC_1 STO_1 ``
+                      : EC_2 STO_2 ``
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
     ---- ;; find matching case
     -- SwitchCases_general_eval:
-        LOCAL EC_0 STO_0 value |- switchCaseIR* : EC_1 STO_1 eps
+        LOCAL EC_1 STO_1 value |- switchCaseIR* : EC_2 STO_2 eps
 
 }
 

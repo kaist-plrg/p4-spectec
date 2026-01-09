@@ -14623,21 +14623,23 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Stmt_eval, The compile-time evaluation of ``SWITCH ( typedExpressionIR ) { switchCaseIR^{asterisk}^ }``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
-. Check that ``expressionResult`` has type ``continueResult<value>``.
-. Let ``value`` be ``expressionResult``.
-. Let <<SwitchCases_general_eval, ``LOCAL EC STO value |- switchCaseIR^{asterisk}^ : EC STO blockStatementIR'^?^``>>.
-. Check that ``EC`` is equal to ``EC~1~``.
-. Check that ``STO`` is equal to ``STO~1~``.
-. If let ``blockStatementIR`` be ``blockStatementIR'^?^``:
- .. Let ``EC~2~``, ``STO~2~``, and ``statementResult`` be the result of <<Stmt_eval, the compile-time evaluation of ``blockStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. Result in 
-* the evaluation context ``EC~2~``,
-* the updated store ``STO~2~``,
-* and the instantiated statement ``statementResult``.
-. Else if ``blockStatementIR'^?^`` is None:
+. If let ``exitResult`` be ``expressionResult``:
  .. Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
+* and the instantiated statement ``EXIT``.
+. Else if let ``value`` be ``expressionResult``:
+ .. Let <<SwitchCases_general_eval, ``LOCAL EC~1~ STO~1~ value |- switchCaseIR^{asterisk}^ : EC~2~ STO~2~ blockStatementIR'^?^``>>.
+ .. If let ``blockStatementIR`` be ``blockStatementIR'^?^``:
+  ... Let ``EC~3~``, ``STO~3~``, and ``statementResult`` be the result of <<Stmt_eval, the compile-time evaluation of ``blockStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~2~``, and store ``STO~2~``>>.
+  ... Result in 
+* the evaluation context ``EC~3~``,
+* the updated store ``STO~3~``,
+* and the instantiated statement ``statementResult``.
+ .. Else if ``blockStatementIR'^?^`` is None:
+  ... Result in 
+* the evaluation context ``EC~2~``,
+* the updated store ``STO~2~``,
 * and the instantiated statement ````.
 
 <<BlockElementStmt_eval, BlockElementStmt_eval: ``EC~0~ STO~0~ |- blockElementStatementIR : % % %``>>
