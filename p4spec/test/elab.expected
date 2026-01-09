@@ -11015,20 +11015,20 @@ relation CallableTypeDef_wf: bound |- callableTypeDefIR
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:41.1-45.101
 relation ConstructorParameterType_wf: bound |- parameterIR
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:639.1-642.55
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:639.1-642.51
   rulegroup 
 
    match
 
-    (signature) B |- _annotationList typeIR _id _constantInitializerOptIR
-    B |- _annotationList direction typeIR _id _constantInitializerOptIR
-    -- if direction matches ``EMPTY`
+    (signature) B |- constructorParameterIR
+    B |- constructorParameterIR
 
    paths
 
     rulepath 
-    -- if Type_wf: B |- typeIR holds
-    -- if ~$is_synthesizedTypeIR($unroll_typeIR(typeIR))
+    -- let _annotationList direction _typeIR _id _constantInitializerOptIR = constructorParameterIR
+    -- if direction matches ``EMPTY`
+    -- if ParameterType_wf: B |- constructorParameterIR holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:47.1-51.91

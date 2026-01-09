@@ -1,4 +1,4 @@
-;; Instruction coverage: 8895/12659 (70.27%)
+;; Instruction coverage: 8885/12649 (70.24%)
 ;; ../../../../spec-concrete/0-aux/0-aux.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -11876,7 +11876,7 @@ def $tableEntry_lpm_prefix'(value, n_prefix)
 
 +               2. Return $tableEntry_lpm_prefix'(value', 0)
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:5.1-8.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:5.1-9.79
 rel Type_wf: B |- typeIR''
 
 + 1. Case analysis on typeIR''
@@ -12045,7 +12045,7 @@ rel Type_wf: B |- typeIR''
 
 +     2. Group parserObjectTypeIR: B |- ((parser _typeId < (_typeArgumentIR)* >( (parameterIR)* )) as typeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. The relation holds
 
@@ -12055,7 +12055,7 @@ rel Type_wf: B |- typeIR''
 
 +     2. Group controlObjectTypeIR: B |- ((control _typeId < (_typeArgumentIR)* >( (parameterIR)* )) as typeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. The relation holds
 
@@ -12183,7 +12183,7 @@ rel Type_wf: B |- typeIR''
 
 -         1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:10.1-13.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:11.1-15.90
 rel TypeDef_wf: B |- typeDefIR
 
 + 1. Group : B |- typeDefIR
@@ -12202,7 +12202,7 @@ rel TypeDef_wf: B |- typeDefIR
 
 +       1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:15.1-18.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:17.1-21.89
 rel ParameterType_wf: B |- (_annotationList direction typeIR _id (constantInitializerIR)?)
 
 + 1. Group : B |- (_annotationList direction typeIR _id (constantInitializerIR)?)
@@ -12245,20 +12245,7 @@ rel ParameterType_wf: B |- (_annotationList direction typeIR _id (constantInitia
 
 +               1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:20.1-23.74
-rel ParameterTypes_wf: B |- (parameterIR)*
-
-+ 1. Group : B |- (parameterIR)*
-
-+   1. (Let (_annotationList _direction _typeIR nameIR _constantInitializerOptIR) be parameterIR)*
-
-+   2. If ($distinct_<nameIR>((nameIR)*)), then
-
-+     1. If (ParameterType_wf: B |- parameterIR)* holds, then
-
-+       1. The relation holds
-
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:25.1-28.81
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:23.1-27.86
 rel ReturnType_wf: B |- typeIR_ret
 
 + 1. Group : B |- typeIR_ret
@@ -12271,7 +12258,7 @@ rel ReturnType_wf: B |- typeIR_ret
 
 +       1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:30.1-33.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:29.1-33.88
 rel CallableType_wf: B |- callableTypeIR
 
 + 1. Case analysis on callableTypeIR
@@ -12282,7 +12269,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +     2. Group actionTypeIR: B |- ((action( (parameterIR)* )) as callableTypeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. (Let (_annotationList direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12298,7 +12285,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +     2. Group definedFunctionTypeIR: B |- ((function( (parameterIR)* ): typeIR_ret) as callableTypeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12314,7 +12301,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +     2. Group externFunctionTypeIR: B |- ((extern_function( (parameterIR)* ): typeIR_ret) as callableTypeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12330,7 +12317,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 -     2. Group builtinMethodTypeIR: B |- ((builtin_method( (parameterIR)* ): typeIR_ret) as callableTypeIR)
 
--       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
+-       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 -         1. If (ReturnType_wf: B |- typeIR_ret) holds, then
 
@@ -12348,7 +12335,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +           1. (Let (extern_method( (parameterIR)* ): typeIR_ret) be externMethodTypeIR)
 
-+           2. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++           2. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +             1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12362,7 +12349,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 -           1. (Let (extern_methodabstract( (parameterIR)* ): typeIR_ret) be externMethodTypeIR)
 
--           2. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
+-           2. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 -             1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12378,7 +12365,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +     2. Group parserApplyMethodTypeIR: B |- ((parser_apply( (parameterIR)* )) as callableTypeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12392,7 +12379,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 +     2. Group controlApplyMethodTypeIR: B |- ((control_apply( (parameterIR)* )) as callableTypeIR)
 
-+       1. If (ParameterTypes_wf: B |- (parameterIR)*) holds, then
++       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
 +         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
@@ -12408,7 +12395,7 @@ rel CallableType_wf: B |- callableTypeIR
 
 -       1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:35.1-38.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:35.1-39.99
 rel CallableTypeDef_wf: B |- callableTypeDefIR
 
 + 1. Group : B |- callableTypeDefIR
@@ -12427,38 +12414,25 @@ rel CallableTypeDef_wf: B |- callableTypeDefIR
 
 +       1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:40.1-43.74
-rel ConstructorParameterType_wf: B |- (_annotationList direction typeIR _id _constantInitializerOptIR)
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:41.1-45.101
+rel ConstructorParameterType_wf: B |- constructorParameterIR
 
-+ 1. If ((direction matches pattern ``EMPTY`)), then
++ 1. Group : B |- constructorParameterIR
 
-+   1. Group : B |- (_annotationList () typeIR _id _constantInitializerOptIR)
++   1. (Let (_annotationList direction _typeIR _id _constantInitializerOptIR) be constructorParameterIR)
 
-+     1. If (Type_wf: B |- typeIR) holds, then
++   2. If ((direction matches pattern ``EMPTY`)), then
 
-+       1. If (~$is_synthesizedTypeIR($unroll_typeIR(typeIR))), then
-
-+         1. The relation holds
-
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:45.1-48.74
-rel ConstructorParameterTypes_wf: B |- (parameterIR)*
-
-+ 1. Group : B |- (parameterIR)*
-
-+   1. (Let (_annotationList _direction _typeIR nameIR _constantInitializerOptIR) be parameterIR)*
-
-+   2. If ($distinct_<nameIR>((nameIR)*)), then
-
-+     1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
++     1. If (ParameterType_wf: B |- constructorParameterIR) holds, then
 
 +       1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:50.1-53.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:47.1-51.91
 rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 + 1. Group externObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
-+   1. If (ConstructorParameterTypes_wf: B |- (parameterIR)*) holds, then
++   1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
 
 +     1. If (Type_wf: B |- typeIR_object) holds, then
 
@@ -12476,7 +12450,7 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 + 2. Group parserObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
-+   1. If (ConstructorParameterTypes_wf: B |- (parameterIR)*) holds, then
++   1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
 
 +     1. If (Type_wf: B |- typeIR_object) holds, then
 
@@ -12494,7 +12468,7 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 + 3. Group controlObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
-+   1. If (ConstructorParameterTypes_wf: B |- (parameterIR)*) holds, then
++   1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
 
 +     1. If (Type_wf: B |- typeIR_object) holds, then
 
@@ -12512,7 +12486,7 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 + 4. Group packageObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
-+   1. If (ConstructorParameterTypes_wf: B |- (parameterIR)*) holds, then
++   1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
 
 +     1. If (Type_wf: B |- typeIR_object) holds, then
 
@@ -12528,7 +12502,7 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +           1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:55.1-58.74
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:53.1-57.102
 rel ConstructorTypeDef_wf: B |- (constructor< (typeParameterIR_expl)* , (typeParameterIR_impl)* >( (parameterIR)* ): typeIR_object)
 
 + 1. Group : B |- (constructor< (typeParameterIR_expl)* , (typeParameterIR_impl)* >( (parameterIR)* ): typeIR_object)
@@ -12545,7 +12519,7 @@ rel ConstructorTypeDef_wf: B |- (constructor< (typeParameterIR_expl)* , (typePar
 
 +         1. The relation holds
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:77.1-79.53
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:76.1-78.53
 tbl def $nestable_typedef(typeIR'')
 =
 
@@ -12649,7 +12623,7 @@ tbl def $nestable_typedef(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:101.1-103.54
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:100.1-102.54
 tbl def $nestable_new(typeIR'')
 =
 
@@ -12713,7 +12687,7 @@ tbl def $nestable_new(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:121.1-123.57
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:120.1-122.57
 tbl def $nestable_list(typeIR'')
 =
 
@@ -12793,7 +12767,7 @@ tbl def $nestable_list(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:142.1-144.58
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:141.1-143.58
 tbl def $nestable_tuple(typeIR'')
 =
 
@@ -12925,7 +12899,7 @@ tbl def $nestable_tuple(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:168.1-170.65
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:167.1-169.65
 tbl def $nestable_headerStack(typeIR'')
 =
 
@@ -12965,12 +12939,12 @@ tbl def $nestable_headerStack(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:184.1-186.59
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:183.1-185.59
 def $nestable_struct(typeIR)
 
 + 1. Return $nestable_tuple(typeIR)
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:196.1-198.57
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:195.1-197.57
 tbl def $nestable_header(typeIR'')
 =
 
@@ -13066,7 +13040,7 @@ tbl def $nestable_header(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:199.1-201.76
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:198.1-200.76
 tbl def $nestable_struct_in_header(typeIR'')
 =
 
@@ -13150,7 +13124,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:234.1-236.63
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:233.1-235.63
 tbl def $nestable_headerUnion(typeIR'')
 =
 
@@ -13190,7 +13164,7 @@ tbl def $nestable_headerUnion(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:251.1-253.68
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:250.1-252.68
 tbl def $nestable_enum_serializable(typeIR'')
 =
 
@@ -13246,7 +13220,7 @@ tbl def $nestable_enum_serializable(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:254.1-256.89
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:253.1-255.89
 tbl def $nestable_new_in_enum_serializable(typeIR'')
 =
 
@@ -13302,7 +13276,7 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:344.1-346.54
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:343.1-345.54
 tbl def $nestable_set(typeIR'')
 =
 
@@ -13402,7 +13376,7 @@ tbl def $nestable_set(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:347.1-349.72
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:346.1-348.72
 tbl def $nestable_tuple_in_set(typeIR'')
 =
 
@@ -13482,7 +13456,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:350.1-352.75
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:349.1-351.75
 tbl def $nestable_sequence_in_set(typeIR'')
 =
 
@@ -13574,12 +13548,12 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
 -     1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:478.1-480.85
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:471.1-473.85
 def $directionless_trailing((direction)*)
 
 + 1. Return $directionless_trailing'(true, $rev_<direction>((direction)*))
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:481.1-481.54
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:474.1-474.54
 def $directionless_trailing'(_bool, (direction')*)
 
 + 1. Case analysis on (direction')*
@@ -13618,7 +13592,7 @@ def $directionless_trailing'(_bool, (direction')*)
 
 -         1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:494.1-496.58
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:487.1-489.58
 tbl def $nestable_action(typeIR'')
 =
 
@@ -13660,7 +13634,7 @@ tbl def $nestable_action(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:514.1-516.67
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:507.1-509.67
 tbl def $nestable_definedFunction(typeIR'')
 =
 
@@ -13692,7 +13666,7 @@ tbl def $nestable_definedFunction(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:531.1-533.67
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:524.1-526.67
 tbl def $nestable_externFunction(typeIR'')
 =
 
@@ -13740,7 +13714,7 @@ tbl def $nestable_externFunction(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:557.1-559.65
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:550.1-552.65
 tbl def $nestable_externMethod(typeIR'')
 =
 
@@ -13788,7 +13762,7 @@ tbl def $nestable_externMethod(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:587.1-589.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:580.1-582.70
 tbl def $nestable_parserApplyMethod(typeIR'')
 =
 
@@ -13836,7 +13810,7 @@ tbl def $nestable_parserApplyMethod(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:605.1-607.71
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:598.1-600.71
 tbl def $nestable_controlApplyMethod(typeIR'')
 =
 
@@ -13876,7 +13850,7 @@ tbl def $nestable_controlApplyMethod(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:661.1-663.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:648.1-650.70
 tbl def $nestable_constructor_extern(typeIR'')
 =
 
@@ -13924,7 +13898,7 @@ tbl def $nestable_constructor_extern(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:681.1-683.69
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:668.1-670.69
 tbl def $nestable_constructor_parser(typeIR'')
 =
 
@@ -13964,7 +13938,7 @@ tbl def $nestable_constructor_parser(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:700.1-702.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:687.1-689.70
 tbl def $nestable_constructor_control(typeIR'')
 =
 
@@ -14004,7 +13978,7 @@ tbl def $nestable_constructor_control(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:718.1-720.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:705.1-707.70
 tbl def $nestable_constructor_package(typeIR'')
 =
 
@@ -14028,7 +14002,7 @@ tbl def $nestable_constructor_package(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:738.1-738.46
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:725.1-725.46
 tbl def $definable_constructor(typeIR'')
 =
 
