@@ -1,4 +1,4 @@
-;; Instruction coverage: 9151/12873 (71.09%)
+;; Instruction coverage: 9151/12869 (71.11%)
 ;; ../../../../spec-concrete/0-aux/0-aux.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -34455,57 +34455,40 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 +             1. (Let (` value_r) be (expressionResult' as continueResult<value>))
 
-+             2. (Let (value)* be $get_values_from_range(value_l, value_r))
++             2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR_l))
 
-+             3. Result in: % % |- % : EC_2 STO_2 ((` (value)*) as expressionListResult)
++             3. (Let (value)* be $values_of_setValue((set< [typeIR] >), (set{ value_l .. value_r })))
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.30
-def $increment(value)
++             4. Result in: % % |- % : EC_2 STO_2 ((` (value)*) as expressionListResult)
 
-+ 1. If ((value has type integerLiteral)), then
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.54
+def $values_of_setValue((set< (typeIR')* >), setValue)
 
-+   1. (Let integerLiteral be (value as integerLiteral))
++ 1. If (((typeIR')* matches pattern [ _/1 ])), then
 
-+   2. Case analysis on integerLiteral
++   1. (Let [typeIR] be (typeIR')*)
 
-      1. Case (% matches pattern `D%`)
++   2. If ((setValue matches pattern `SET{%..%}`)), then
 
--       1. (Let (d i) be integerLiteral)
++     1. (Let (set{ value_l .. value_r }) be setValue)
 
--       2. Return ((d (i + (1 as int))) as value)
++     2. If ($bin_lt(value_l, value_r)), then
 
-      2. Case (% matches pattern `%W%`)
++       1. (Let value_one be $cast_op(typeIR, ((d (1 as int)) as value)))
 
-+       1. (Let (w w i) be integerLiteral)
++       2. (Let value_l_inc be $bin_plus(value_l, value_one))
 
-+       2. Return $bin_plus(((w w i) as value), ((w w (1 as int)) as value))
++       3. Return value_l :: $values_of_setValue((set< [typeIR] >), (set{ value_l_inc .. value_r }))
 
-      3. Case (% matches pattern `%S%`)
++     3. If ($bin_eq(value_l, value_r)), then
 
--       1. (Let (w s i) be integerLiteral)
++       1. Return [value_l]
 
--       2. Return $bin_plus(((w s i) as value), ((w s (1 as int)) as value))
+-     4. If ($bin_gt(value_l, value_r)), then
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:535.1-535.50
-def $get_values_from_range(value_l, value_r)
+-       1. Return []
 
-+ 1. If ($bin_lt(value_l, value_r)), then
-
-+   1. (Let value_l_inc be $increment(value_l))
-
-+   2. (Let (value)* be value_l :: $get_values_from_range(value_l_inc, value_r))
-
-+   3. Return (value)*
-
-+ 2. If ($bin_eq(value_l, value_r)), then
-
-+   1. Return [value_l]
-
-- 3. If ($bin_gt(value_l, value_r)), then
-
--   1. Return []
-
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:573.1-576.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:570.1-573.29
 rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 + 1. Group : evalContext store |- nameIR (value)* statementIR : % % %
@@ -34552,7 +34535,7 @@ rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 +       2. Result in: % % |- % % % : EC_3 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:676.1-676.57
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:673.1-673.57
 def $match_switchLabelIR_table(id, switchLabelIR)
 
 + 1. If ((switchLabelIR matches pattern `DEFAULT`)), then
@@ -34579,7 +34562,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
 +   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:686.1-688.20
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:683.1-685.20
 rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 + 1. Group : id |- (switchCaseIR)* : %
@@ -34638,7 +34621,7 @@ rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 +             2. Result in: % |- % : (blockStatementIR)?
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:690.1-690.58
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:687.1-687.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 - 1. Case analysis on switchCaseIR
@@ -34655,7 +34638,7 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 -     2. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:736.1-738.26
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:733.1-735.26
 rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then
@@ -34686,7 +34669,7 @@ rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 +           2. Result in: % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:757.1-757.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:754.1-754.54
 def $match_switchLabelIR_general(value, value')
 
 + 1. If ((value' has type defaultValue)), then
@@ -34755,7 +34738,7 @@ def $match_switchLabelIR_general(value, value')
 
 -   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:766.1-768.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:763.1-765.29
 rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then

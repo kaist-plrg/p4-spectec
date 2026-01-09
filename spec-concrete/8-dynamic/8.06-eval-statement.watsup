@@ -526,21 +526,16 @@ rulegroup ForCollectionExpr_eval/expr {
 
 ;;;;;; typedExpressionIR `.. typedExpressionIR
 
-dec $increment(value) : value
+dec $values_of_setValue(setTypeIR, setValue) : value*
 
-def $increment(D i) = D $(i + 1)
-def $increment(w W i) = $bin_plus(w W i, w W 1)
-def $increment(w S i) = $bin_plus(w S i, w S 1)
-
-dec $get_values_from_range(value, value) : value*
-
-def $get_values_from_range(value_l, value_r) = value*
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r })
+  = value_l :: $values_of_setValue(SET `< typeIR >, SET `{ value_l_inc `.. value_r })
   -- if $bin_lt(value_l, value_r)
-  -- if value_l_inc = $increment(value_l)
-  -- if value* = value_l :: $get_values_from_range(value_l_inc, value_r)
-def $get_values_from_range(value_l, value_r) = value_l
+  -- if value_one = $cast_op(typeIR, D 1)
+  -- if value_l_inc = $bin_plus(value_l, value_one)
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r }) = value_l
   -- if $bin_eq(value_l, value_r)
-def $get_values_from_range(value_l, value_r) = eps
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r }) = eps
   -- if $bin_gt(value_l, value_r)
 
 rulegroup ForCollectionExpr_eval/range {
@@ -566,7 +561,9 @@ rulegroup ForCollectionExpr_eval/range {
         LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
     -- Expr_eval:
         LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 (`` value_r)
-    -- if value* = $get_values_from_range(value_l, value_r)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR_l)
+    -- if value*
+        = $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r })
 
 }
 

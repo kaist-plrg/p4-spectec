@@ -15827,29 +15827,21 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. If let ``exitResult`` be ``expressionResult'``:
   ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
  .. Else if let ``value~r~`` be ``expressionResult'``:
-  ... Let ``value^{asterisk}^`` be ``<<get_values_from_range, get_values_from_range(value~l~, value~r~)>>``.
+  ... Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l~``>>.
+  ... Let ``value^{asterisk}^`` be ``<<values_of_setValue, values_of_setValue(SET < [typeIR] >, SET { value~l~ .. value~r~ })>>``.
   ... Result in ``EC~2~``, ``STO~2~``, and ``value^{asterisk}^``.
 
-<<increment, increment(value)>>
+<<values_of_setValue, values_of_setValue(SET < typeIR'^{asterisk}^ >, setValue)>>
 
 
-. Check that ``value`` has type ``integerLiteral``.
-. Let ``integerLiteral`` be ``value``.
-. If let ``D i`` be ``integerLiteral``:
- .. Return ``D i + 1``.
-. Else if let ``w W i`` be ``integerLiteral``:
- .. Return ``<<bin_plus, bin_plus(w W i, w W 1)>>``.
-. Else if let ``w S i`` be ``integerLiteral``:
- .. Return ``<<bin_plus, bin_plus(w S i, w S 1)>>``.
-
-<<get_values_from_range, get_values_from_range(value~l~, value~r~)>>
-
-
+. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
+. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Check that ``setValue`` matches pattern ``SET { % .. % }``.
+. Let ``SET { value~l~ .. value~r~ }`` be ``setValue``.
 . If ``<<bin_lt, bin_lt(value~l~, value~r~)>>``:
- .. Let ``value~l_inc~`` be ``<<increment, increment(value~l~)>>``.
- .. Let ``value'^{asterisk}^`` be ``<<get_values_from_range, get_values_from_range(value~l_inc~, value~r~)>>``.
- .. Let ``value^{asterisk}^`` be ``value~l~ {two-colons} value'^{asterisk}^``.
- .. Return ``value^{asterisk}^``.
+ .. Let ``value~one~`` be <<cast_op, cast ``D 1`` to type ``typeIR``>>.
+ .. Let ``value~l_inc~`` be ``<<bin_plus, bin_plus(value~l~, value~one~)>>``.
+ .. Return ``value~l~ {two-colons} <<values_of_setValue, values_of_setValue(SET < [typeIR] >, SET { value~l_inc~ .. value~r~ })>>``.
 . Else if ``<<bin_eq, bin_eq(value~l~, value~r~)>>``:
  .. Return ``[value~l~]``.
 . Else if ``<<bin_gt, bin_gt(value~l~, value~r~)>>``:
