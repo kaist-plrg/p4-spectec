@@ -88,7 +88,7 @@ module Make
       =
     match stmt_stf with
     (* Packet I/O *)
-    | Stf.Ast.Packet (port_in, packet_in) ->
+    | Stf.Ast.Packet (port_in, packet_in, _exact) ->
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
         let rx = (port_in, packet_in) in
@@ -99,7 +99,7 @@ module Make
           on_tx_output tx_output_opt tx_output_queue tx_expect_queue
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
-    | Stf.Ast.Expect (port_expect, Some packet_expect) ->
+    | Stf.Ast.Expect (port_expect, Some packet_expect, _exact) ->
         let port_expect = int_of_string port_expect in
         let packet_expect = String.uppercase_ascii packet_expect in
         let tx_expect = (port_expect, packet_expect) in

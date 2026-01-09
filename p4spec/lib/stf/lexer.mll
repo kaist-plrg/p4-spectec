@@ -137,10 +137,12 @@ and packet_data = parse
     { PACKET_WILDCARD }
   | '\n'+
     { lexer:= Keyword; keyword lexbuf }
-  | whitespace | '$'
+  | whitespace
     { packet_data lexbuf }
+  | '$'
+    { lexer := Keyword; EXACT }
   | eof
-    { lexer:= Keyword; END }
+    { lexer := Keyword; END }
   | _
     { print_endline (lexeme lexbuf); failwith "empty token thing alt" }
 
