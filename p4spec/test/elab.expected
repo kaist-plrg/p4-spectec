@@ -24477,7 +24477,85 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     -- Stmt_inst: p IC STO_1 |- statementIR_else : IC_else STO_2 statementIR_else_inst
     -- output: % % % |- % : IC STO_2 if( typedExpressionIR_cond ) statementIR_then_inst else statementIR_else_inst as statementIR
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:156.1-161.65
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:112.1-121.54
+  rulegroup forStatementIR-three-clause
+
+   match
+
+    (signature) p IC STO_0 |- annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR as statementIR : % % %
+    p IC STO_0 |- statementIR' : % % %
+    -- if statementIR' <: forStatementIR
+    -- let forStatementIR' = statementIR' as forStatementIR
+    -- if forStatementIR' matches `%FOR(%;%;%)%`
+    -- let annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR = forStatementIR'
+
+   paths
+
+    rulepath forStatementIR-three-clause
+    -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+    -- let forStatementIR = annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR_body
+    -- output: % % % |- % : IC STO_1 forStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:130.1-152.2
+  rulegroup forStatementIR-in
+
+   match
+
+    (signature) p IC STO_0 |- forStatementIR' as statementIR : % % %
+    p IC STO_0 |- statementIR' : % % %
+    -- if statementIR' <: forStatementIR
+    -- let forStatementIR' = statementIR' as forStatementIR
+
+   paths
+
+    rulepath no-annotations
+    -- let forStatementIR'' = forStatementIR'
+    -- if forStatementIR'' matches `%FOR(%%IN%)%`
+    -- let annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
+    -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+    -- let forStatementIR = annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR_body
+    -- output: % % % |- % : IC STO_1 forStatementIR as statementIR
+
+    rulepath annotations
+    -- let forStatementIR'' = forStatementIR'
+    -- if forStatementIR'' matches `%FOR(%%%IN%)%`
+    -- let annotationList for( annotationList' typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
+    -- if (annotationList = annotationList')
+    -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
+    -- let forStatementIR = annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR_body
+    -- output: % % % |- % : IC STO_1 forStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:156.1-157.57
+  rulegroup breakStatementIR
+
+   match
+
+    (signature) p IC STO |- breakStatementIR as statementIR : % % %
+    p IC STO |- statementIR : % % %
+    -- if statementIR <: breakStatementIR
+    -- let breakStatementIR = statementIR as breakStatementIR
+
+   paths
+
+    rulepath breakStatementIR
+    -- output: % % % |- % : IC STO breakStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:161.1-162.63
+  rulegroup continueStatementIR
+
+   match
+
+    (signature) p IC STO |- continueStatementIR as statementIR : % % %
+    p IC STO |- statementIR : % % %
+    -- if statementIR <: continueStatementIR
+    -- let continueStatementIR = statementIR as continueStatementIR
+
+   paths
+
+    rulepath continueStatementIR
+    -- output: % % % |- % : IC STO continueStatementIR as statementIR
+
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:209.1-214.65
   rulegroup switchStatementIR
 
    match
@@ -24496,7 +24574,7 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:34.1-37.23
 relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : instContext store blockElementStatementIR?
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:173.1-177.74
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:226.1-230.74
   rulegroup constantDeclarationIR
 
    match
@@ -24516,7 +24594,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
     -- let constantDeclarationIR_inst = declarationIR as constantDeclarationIR
     -- output: % % |- % : IC_1 STO_1 ?(constantDeclarationIR_inst as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:181.1-183.41
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:234.1-236.41
   rulegroup variableDeclarationIR
 
    match
@@ -24531,7 +24609,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
     rulepath variableDeclarationIR
     -- output: % % |- % : IC STO ?(variableDeclarationIR as blockElementStatementIR)
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:187.1-191.64
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:240.1-244.64
   rulegroup statementIR
 
    match
@@ -24550,7 +24628,7 @@ relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : i
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:39.1-42.23
 relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* : instContext store blockElementStatementIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:197.1-198.29
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:250.1-251.29
   rulegroup nil
 
    match
@@ -24564,7 +24642,7 @@ relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* :
     rulepath nil
     -- output: % % |- % : IC STO []
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:200.1-209.63
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:253.1-262.63
   rulegroup cons
 
    match
@@ -24586,7 +24664,7 @@ relation BlockElementStmts_inst: instContext store |- blockElementStatementIR* :
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:44.1-47.23
 relation Block_inst: instContext store |- blockStatementIR : instContext store blockStatementIR
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:217.1-222.64
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:270.1-275.64
   rulegroup 
 
    match
@@ -26168,10 +26246,10 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- let object_table = table nameIR { frame TBL } as object
     -- output: % % % |- % < % >( % # % ): STO_1 object_table
 
-;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:116.1-119.26
+;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:169.1-172.26
 relation SwitchCase_inst: cursor instContext store |- switchCaseIR : store switchCaseIR
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:124.1-136.2
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:177.1-189.2
   rulegroup 
 
    match
@@ -26198,10 +26276,10 @@ relation SwitchCase_inst: cursor instContext store |- switchCaseIR : store switc
     -- let switchLabelIR : = switchCaseIR'
     -- output: % % % |- % : STO switchLabelIR :
 
-;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:140.1-143.26
+;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:193.1-196.26
 relation SwitchCases_inst: cursor instContext store |- switchCaseIR* : store switchCaseIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:145.1-146.28
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:198.1-199.28
   rulegroup nil
 
    match
@@ -26215,7 +26293,7 @@ relation SwitchCases_inst: cursor instContext store |- switchCaseIR* : store swi
     rulepath nil
     -- output: % % % |- % : STO []
 
-  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:148.1-154.60
+  ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:201.1-207.60
   rulegroup cons
 
    match
@@ -28258,14 +28336,24 @@ syntax callResult =
    | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:105.1-106.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:104.25-104.30
+syntax forBreakResult = 
+   | break
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:106.28-106.36
+syntax forContinueResult = 
+   | continue
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
 syntax statementResult = 
    | `
    | exit
    | reject errorValue
    | return value?
+   | break
+   | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:108.1-115.55
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-121.55
 relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:9.1-10.29
@@ -28555,7 +28643,122 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:412.1-448.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:461.1-488.2
+  rulegroup forStatementIR-three-clause
+
+   match
+
+    (signature) local EC_0 STO_0 |- annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR as statementIR : % % %
+    cursor EC_0 STO_0 |- statementIR' : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR' <: forStatementIR
+    -- let forStatementIR = statementIR' as forStatementIR
+    -- if forStatementIR matches `%FOR(%;%;%)%`
+    -- let annotationList for( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR = forStatementIR
+
+   paths
+
+    rulepath init-exit
+    -- let EC_1 = $enter_e(EC_0)
+    -- ForInitStmts_eval: EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- let EC_3 = $exit_e(EC_2)
+    -- output: % % % |- % : EC_3 STO_1 exit as statementResult
+
+    rulepath init-cont
+    -- let EC_1 = $enter_e(EC_0)
+    -- ForInitStmts_eval: EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 statementResult'
+    -- if statementResult' <: continueEmptyResult
+    -- let continueEmptyResult = statementResult' as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ForThreeClauseLoop_eval: EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_3 STO_2 statementResult
+    -- let EC_4 = $exit_e(EC_3)
+    -- output: % % % |- % : EC_4 STO_2 statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:609.1-651.2
+  rulegroup forStatementIR-in
+
+   match
+
+    (signature) local EC_0 STO_0 |- forStatementIR as statementIR : % % %
+    cursor EC_0 STO_0 |- statementIR' : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR' <: forStatementIR
+    -- let forStatementIR = statementIR' as forStatementIR
+
+   paths
+
+    rulepath no-annotations-collection-exit
+    -- let forStatementIR' = forStatementIR
+    -- if forStatementIR' matches `%FOR(%%IN%)%`
+    -- let annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR'
+    -- let EC_1 = $enter_e(EC_0)
+    -- ForCollectionExpr_eval: EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 expressionListResult
+    -- if expressionListResult <: exitResult
+    -- let exitResult = expressionListResult as exitResult
+    -- if (exitResult = exit)
+    -- let EC_3 = $exit_e(EC_2)
+    -- output: % % % |- % : EC_3 STO_1 exit as statementResult
+
+    rulepath no-annotations-collection-loop
+    -- let forStatementIR' = forStatementIR
+    -- if forStatementIR' matches `%FOR(%%IN%)%`
+    -- let annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR'
+    -- let EC_1 = $enter_e(EC_0)
+    -- ForCollectionExpr_eval: EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 expressionListResult
+    -- if expressionListResult <: continueResult<value*>
+    -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
+    -- let typeIR_subst = $subst_type_e(local, EC_0, typeIR)
+    -- let value_init = $default(typeIR_subst)
+    -- let EC_3 = $add_var_e(local, EC_2, ` nameIR, value_init)
+    -- ForInLoop_eval: EC_3 STO_1 |- nameIR value*{value <- value*} statementIR : EC_4 STO_2 statementResult
+    -- let EC_5 = $exit_e(EC_4)
+    -- output: % % % |- % : EC_5 STO_2 statementResult
+
+    rulepath annotations
+    -- let forStatementIR' = forStatementIR
+    -- if forStatementIR' matches `%FOR(%%%IN%)%`
+    -- let annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR'
+    -- Stmt_eval: local EC_0 STO_0 |- annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR as statementIR : EC_1 STO_1 statementResult
+    -- output: % % % |- % : EC_1 STO_1 statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:655.1-656.42
+  rulegroup breakStatement
+
+   match
+
+    (signature) local EC STO |- break; as statementIR : % % %
+    cursor EC STO |- statementIR : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR <: breakStatement
+    -- let breakStatement = statementIR as breakStatement
+    -- if (breakStatement = break;)
+
+   paths
+
+    rulepath breakStatement
+    -- output: % % % |- % : EC STO break as statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:660.1-661.48
+  rulegroup continueStatement
+
+   match
+
+    (signature) local EC STO |- continue; as statementIR : % % %
+    cursor EC STO |- statementIR : % % %
+    -- if cursor matches `LOCAL`
+    -- if statementIR <: continueStatement
+    -- let continueStatement = statementIR as continueStatement
+    -- if (continueStatement = continue;)
+
+   paths
+
+    rulepath continueStatement
+    -- output: % % % |- % : EC STO continue as statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:817.1-853.2
   rulegroup switchStatementIR-table
 
    match
@@ -28599,7 +28802,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
     -- output: % % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:450.1-477.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:855.1-882.2
   rulegroup switchStatementIR-general
 
    match
@@ -28634,10 +28837,10 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
     -- output: % % % |- % : EC_1 STO_1 ` as statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:117.1-120.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
 relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:488.1-504.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:893.1-909.2
   rulegroup constantDeclarationIR
 
    match
@@ -28663,7 +28866,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- if (continueEmptyResult = `)
     -- output: % % |- % : EC_1 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:508.1-537.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:913.1-942.2
   rulegroup variableDeclarationIR
 
    match
@@ -28705,7 +28908,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 ` as statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:541.1-546.53
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:946.1-951.53
   rulegroup statementIR
 
    match
@@ -28721,31 +28924,31 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- Stmt_eval: local EC_0 STO_0 |- statementIR : EC_1 STO_1 statementResult
     -- output: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:122.1-125.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:128.1-131.23
 relation BlockElementStmts_eval: evalContext store |- blockElementStatementListIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:552.1-581.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:957.1-1000.2
   rulegroup 
 
    match
 
-    (signature) evalContext store |- blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*} : % % %
-    evalContext store |- blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*} : % % %
+    (signature) evalContext store |- blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*} : % % %
+    evalContext store |- blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*} : % % %
 
    paths
 
     rulepath nil
     -- let EC = evalContext
     -- let STO = store
-    -- if (blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*} = [])
+    -- if (blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*} = [])
     -- output: % % |- % : EC STO ` as statementResult
 
     rulepath cons-head-exit
     -- let EC_0 = evalContext
     -- let STO_0 = store
-    -- let blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} = blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*}
-    -- if blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} matches _ :: _
-    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*}
+    -- let blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} = blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*}
+    -- if blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} matches _ :: _
+    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*}
     -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: exitResult
     -- let exitResult = statementResult' as exitResult
@@ -28755,20 +28958,44 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
     rulepath cons-head-return
     -- let EC_0 = evalContext
     -- let STO_0 = store
-    -- let blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} = blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*}
-    -- if blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} matches _ :: _
-    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*}
+    -- let blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} = blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*}
+    -- if blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} matches _ :: _
+    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*}
     -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: returnResult
     -- let returnResult = statementResult' as returnResult
     -- output: % % |- % : EC_1 STO_1 returnResult as statementResult
 
+    rulepath cons-head-break
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} = blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*}
+    -- if blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} matches _ :: _
+    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*}
+    -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: forBreakResult
+    -- let forBreakResult = statementResult' as forBreakResult
+    -- if (forBreakResult = break)
+    -- output: % % |- % : EC_1 STO_1 break as statementResult
+
+    rulepath cons-head-continue
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} = blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*}
+    -- if blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} matches _ :: _
+    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*}
+    -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: forContinueResult
+    -- let forContinueResult = statementResult' as forContinueResult
+    -- if (forContinueResult = continue)
+    -- output: % % |- % : EC_1 STO_1 continue as statementResult
+
     rulepath cons-head-cont
     -- let EC_0 = evalContext
     -- let STO_0 = store
-    -- let blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} = blockElementStatementIR''*{blockElementStatementIR'' <- blockElementStatementIR''*}
-    -- if blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*} matches _ :: _
-    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''*{blockElementStatementIR''' <- blockElementStatementIR'''*}
+    -- let blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} = blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*}
+    -- if blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*} matches _ :: _
+    -- let blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} = blockElementStatementIR'''''*{blockElementStatementIR''''' <- blockElementStatementIR'''''*}
     -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
@@ -28776,10 +29003,10 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
     -- BlockElementStmts_eval: EC_1 STO_1 |- blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 STO_2 statementResult
     -- output: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:127.1-130.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:133.1-136.23
 relation Block_eval: evalContext store |- blockStatementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:587.1-592.47
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:1006.1-1011.47
   rulegroup 
 
    match
@@ -28793,12 +29020,12 @@ relation Block_eval: evalContext store |- blockStatementIR : evalContext store s
     -- BlockElementStmts_eval: EC_0 STO_0 |- blockElementStatementListIR : EC_1 STO_1 statementResult
     -- output: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:137.1-138.27
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
 syntax parserStatementResult = 
    | `
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:140.1-143.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
 relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext store parserStatementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:120.1-125.40
@@ -28961,7 +29188,7 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_else : EC_else STO_else parserStatementResult
     -- output: % % |- % : EC_else STO_else parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:145.1-148.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-154.23
 relation ParserStmts_eval: evalContext store |- parserStatementListIR : evalContext store parserStatementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:252.1-271.2
@@ -29004,13 +29231,13 @@ relation ParserStmts_eval: evalContext store |- parserStatementListIR : evalCont
     -- ParserStmts_eval: EC_1 STO_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 STO_2 parserStatementResult
     -- output: % % |- % : EC_2 STO_2 parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-153.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:157.1-159.26
 syntax transitionResult = 
    | accept
    | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:155.1-158.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:161.1-164.23
 relation ParserTransition_eval: evalContext store |- transitionStatementIR : evalContext store transitionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:11.1-27.2
@@ -29062,7 +29289,7 @@ relation ParserTransition_eval: evalContext store |- transitionStatementIR : eva
     -- ParserTransition_eval: EC_2 STO_2 |- transition nameIR_state ; : EC_3 STO_3 transitionResult
     -- output: % % |- % : EC_3 STO_3 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:160.1-163.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:166.1-169.23
 relation ParserState_eval: evalContext store |- state : evalContext store transitionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.3-eval-parser-state.watsup:5.1-26.2
@@ -29089,7 +29316,7 @@ relation ParserState_eval: evalContext store |- state : evalContext store transi
     -- ParserTransition_eval: EC_1 STO_1 |- transitionStatementIR : EC_2 STO_2 transitionResult
     -- output: % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:165.1-168.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:171.1-174.23
 relation ParserState_trans: evalContext store |-transition nameIR : evalContext store transitionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.3-eval-parser-state.watsup:32.1-38.38
@@ -29151,7 +29378,7 @@ relation ParserState_trans: evalContext store |-transition nameIR : evalContext 
     -- ParserState_trans: EC_1 STO_1 |-transition nameIR_next : EC_2 STO_2 transitionResult
     -- output: % % |-transition % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:170.1-173.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:176.1-179.23
 relation ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR : evalContext store
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:9.1-14.40
@@ -29204,7 +29431,7 @@ relation ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR : e
     -- let EC_2 = $add_var_e(block, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:175.1-178.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:181.1-184.23
 relation ParserLocalDecls_eval: evalContext store |- parserLocalDeclarationIR* : evalContext store
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:52.1-65.2
@@ -29233,12 +29460,12 @@ relation ParserLocalDecls_eval: evalContext store |- parserLocalDeclarationIR* :
     -- ParserLocalDecls_eval: EC_1 STO_1 |- parserLocalDeclarationListIR_t : EC_2 STO_2
     -- output: % % |- % : EC_2 STO_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:185.1-186.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:191.1-192.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:188.1-191.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-197.26
 relation Table_eval: evalContext store |- typeId tableObjectProperty : evalContext store tableResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:259.1-329.2
@@ -29307,12 +29534,12 @@ relation Table_eval: evalContext store |- typeId tableObjectProperty : evalConte
     -- let tableMetadataStructValue = table_struct "apply_result(" ++ typeId ++ ")" {hit b_hit ;miss b_miss ;action_run tableMetadataEnumValue ;}
     -- output: % % |- % % : EC_3 STO_3 return ?(tableMetadataStructValue as value) as tableResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-195.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:200.1-201.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:197.1-200.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-206.23
 relation ControlBody_eval: evalContext store |- controlBodyIR : evalContext store controlBodyResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.2-eval-control-statement.watsup:7.1-12.34
@@ -29364,12 +29591,12 @@ relation ControlBody_eval: evalContext store |- controlBodyIR : evalContext stor
     -- if (statementResult = return ?() as statementResult)
     -- output: % % |- % : EC_1 STO_1 return ?() as controlBodyResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-204.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
 syntax declarationResult = 
    | `
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:206.1-209.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
 relation ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR : evalContext store declarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.3-eval-control-declaration.watsup:9.1-14.55
@@ -29430,7 +29657,7 @@ relation ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR :
     -- let EC_2 = $add_var_e(block, EC_1, ` nameIR, value_init)
     -- output: % % |- % : EC_2 STO_1 ` as declarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:211.1-214.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.1-220.23
 relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR* : evalContext store declarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.3-eval-control-declaration.watsup:64.1-86.2
@@ -29474,7 +29701,7 @@ relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR*
     -- ControlLocalDecls_eval: EC_1 STO_1 |- controlLocalDeclarationListIR_t : EC_2 STO_2 declarationResult
     -- output: % % |- % : EC_2 STO_2 declarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:220.1-223.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:226.1-229.26
 relation Decl_eval: cursor evalContext store |- declarationIR : evalContext store declarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.07-eval-declaration.watsup:11.1-14.53
@@ -29493,12 +29720,12 @@ relation Decl_eval: cursor evalContext store |- declarationIR : evalContext stor
     -- let EC_1 = $add_var_e(p, EC_0, ` nameIR, value)
     -- output: % % % |- % : EC_1 STO ` as declarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:230.1-231.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:236.1-237.15
 syntax calleeResult = 
    | ` callee
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:233.1-236.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:239.1-242.29
 relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argumentListIR ): evalContext store calleeResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:11.1-21.84
@@ -29860,12 +30087,12 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let tableApplyMethodCallee = table objectId .apply{ frame ; TBL }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` tableApplyMethodCallee as callee as calleeResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:239.1-240.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:245.1-246.15
 syntax copyInResult = 
    | ` storageReference?
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:242.1-246.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:248.1-252.35
 relation Copy_in_argument: store cursor evalContext parameterIR @ cursor evalContext argumentIR ~> store evalContext @ evalContext # copyInResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:7.1-34.2
@@ -29949,12 +30176,12 @@ relation Copy_in_argument: store cursor evalContext parameterIR @ cursor evalCon
     -- let EC_callee_1 = $add_var_e(p_callee, EC_callee_0, ` nameIR, value_init)
     -- output: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ` storageReference?{storageReference <- storageReference?} as copyInResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:249.1-250.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:255.1-256.15
 syntax copyInListResult = 
    | ` storageReference?*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:252.1-256.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-262.35
 relation Copy_in: store cursor evalContext parameterListIR @ cursor evalContext argumentListIR ~> store evalContext @ evalContext # copyInListResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:100.1-149.2
@@ -30031,7 +30258,7 @@ relation Copy_in: store cursor evalContext parameterListIR @ cursor evalContext 
     -- let storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = storageReference_h?{storageReference_h <- storageReference_h?} :: storageReference_t*{storageReference_t <- storageReference_t*} as storageReference?*
     -- output: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInListResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-261.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:264.1-267.26
 relation Copy_in_default: parameterListIR @ cursor evalContext value* ~>@ evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:155.1-161.65
@@ -30049,7 +30276,7 @@ relation Copy_in_default: parameterListIR @ cursor evalContext value* ~>@ evalCo
     -- let EC_callee_1 = $add_vars_e(p_callee, EC_callee_0, ` nameIR*{nameIR <- nameIR*}, value*{value <- value*})
     -- output: % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:263.1-267.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
 relation Copy_out_argument: store cursor evalContext parameterIR @ cursor evalContext storageReference? ~> evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:7.1-12.45
@@ -30093,7 +30320,7 @@ relation Copy_out_argument: store cursor evalContext parameterIR @ cursor evalCo
     -- Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1
     -- output: % % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-279.35
 relation Copy_out: store cursor evalContext parameterListIR @ cursor evalContext storageReference?* ~> evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:44.1-65.2
@@ -30124,7 +30351,7 @@ relation Copy_out: store cursor evalContext parameterListIR @ cursor evalContext
     -- Copy_out: STO p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} @ p_callee EC_callee storageReference_t?{storageReference_t <- storageReference_t?}*{storageReference_t? <- storageReference_t?*} ~> EC_caller_2
     -- output: % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-281.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:281.1-287.90
 relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( argumentListIR ): evalContext store callResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:45.1-233.2
@@ -30209,7 +30436,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- if (exitResult = exit)
     -- let EC_2 = EC_1[global.frame = EC_callee_3.global.frame][block.frame = EC_callee_3.block.frame]
     -- Copy_out: STO_2 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
-    -- output: % % % |- % @< % >( % ): EC_3 STO_2 return ?() as callResult
+    -- output: % % % |- % @< % >( % ): EC_3 STO_2 exit as callResult
 
     rulepath block-return
     -- let action cursor . nameIR ( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} ) blockStatementIR = actionCallee
@@ -30667,7 +30894,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- Copy_out: STO_3 p EC_2 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ block EC_callee_5 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_3
     -- output: % % % |- % @< % >( % ): EC_3 STO_3 return ?() as callResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:899.1-915.62
+  ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:899.1-937.2
   rulegroup tableApplyMethodCallee
 
    match
@@ -30679,7 +30906,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
 
    paths
 
-    rulepath tableApplyMethodCallee
+    rulepath tableApplyMethodCallee-return
     -- let table objectId .apply{ frame ; TBL } = tableApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(block, EC_0)
     -- let EC_callee_1 = EC_callee_0[local.frames = [frame]]
@@ -30692,10 +30919,24 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let EC_1 = EC_0[block.frame = EC_callee_2.block.frame]
     -- output: % % % |- % @< % >( % ): EC_1 STO_1 returnResult as callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-288.90
+    rulepath tableApplyMethodCallee-exit
+    -- let table objectId .apply{ frame ; TBL } = tableApplyMethodCallee
+    -- let EC_callee_0 = $inherit_e(block, EC_0)
+    -- let EC_callee_1 = EC_callee_0[local.frames = [frame]]
+    -- let typeId'*{typeId' <- typeId'*} = $rev_<id>(objectId)
+    -- if typeId'*{typeId' <- typeId'*} matches _ :: _
+    -- let typeId :: _typeId*{_typeId <- _typeId*} = typeId'*{typeId' <- typeId'*}
+    -- Table_eval: EC_callee_1 STO_0 |- typeId TBL : EC_callee_2 STO_1 tableResult
+    -- if tableResult <: exitResult
+    -- let exitResult = tableResult as exitResult
+    -- if (exitResult = exit)
+    -- let EC_1 = EC_0[block.frame = EC_callee_2.block.frame]
+    -- output: % % % |- % @< % >( % ): EC_1 STO_1 exit as callResult
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:289.1-294.90
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( nameIR* ): evalContext store callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:290.1-296.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:296.1-302.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( nameIR* ): evalContext store callResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
@@ -30945,14 +31186,450 @@ relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionLi
     -- let keysetExpressionResult = ` setValue_h :: setValue_t*{setValue_t <- setValue_t*} as keysetExpressionResult
     -- output: % % |- % : EC_2 STO_2 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:268.1-268.57
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:261.1-264.23
+relation ForUpdateStmt_eval: evalContext store |- forUpdateStatementIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:268.1-273.53
+  rulegroup call
+
+   match
+
+    (signature) EC_0 STO_0 |- callableTargetIR < typeArgumentListIR >( argumentListIR ) : % % %
+    EC_0 STO_0 |- forUpdateStatementIR : % % %
+    -- if forUpdateStatementIR matches `%<%>(%)`
+    -- let callableTargetIR < typeArgumentListIR >( argumentListIR ) = forUpdateStatementIR
+
+   paths
+
+    rulepath call
+    -- Stmt_eval: local EC_0 STO_0 |- callableTargetIR < typeArgumentListIR >( argumentListIR ); as statementIR : EC_1 STO_1 statementResult
+    -- output: % % |- % : EC_1 STO_1 statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:277.1-281.63
+  rulegroup assign
+
+   match
+
+    (signature) EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR : % % %
+    EC_0 STO_0 |- forUpdateStatementIR : % % %
+    -- if forUpdateStatementIR matches `%%%`
+    -- let typedLvalueIR assignop typedExpressionIR = forUpdateStatementIR
+
+   paths
+
+    rulepath assign
+    -- Stmt_eval: local EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR ; as statementIR : EC_1 STO_1 statementResult
+    -- output: % % |- % : EC_1 STO_1 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:285.1-288.23
+relation ForUpdateStmts_eval: evalContext store |- forUpdateStatementListIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:290.1-309.2
+  rulegroup 
+
+   match
+
+    (signature) evalContext store |- forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*} : % % %
+    evalContext store |- forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*} : % % %
+
+   paths
+
+    rulepath nil
+    -- let EC = evalContext
+    -- let STO = store
+    -- if (forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*} = [])
+    -- output: % % |- % : EC STO ` as statementResult
+
+    rulepath cons-head-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*} = forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*}
+    -- if forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*} matches _ :: _
+    -- let forUpdateStatementIR_h :: forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*} = forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*}
+    -- ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as statementResult
+
+    rulepath cons-head-cont
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*} = forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*}
+    -- if forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*} matches _ :: _
+    -- let forUpdateStatementIR_h :: forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*} = forUpdateStatementIR''*{forUpdateStatementIR'' <- forUpdateStatementIR''*}
+    -- ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: continueEmptyResult
+    -- let continueEmptyResult = statementResult' as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ForUpdateStmts_eval: EC_1 STO_1 |- forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*} : EC_2 STO_2 statementResult
+    -- output: % % |- % : EC_2 STO_2 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:313.1-316.23
+relation ForInitStmt_eval: evalContext store |- forInitStatementIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:320.1-349.2
+  rulegroup variableDeclarationIR
+
+   match
+
+    (signature) EC_0 store |- annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} : % % %
+    EC_0 store |- forInitStatementIR : % % %
+    -- if forInitStatementIR matches `%%%%`
+    -- let annotationList typeIR nameIR initializerIR'?{initializerIR' <- initializerIR'?} = forInitStatementIR
+
+   paths
+
+    rulepath non-initializer
+    -- let STO = store
+    -- if (initializerIR'?{initializerIR' <- initializerIR'?} = ?())
+    -- let typeIR_subst = $subst_type_e(local, EC_0, typeIR)
+    -- let value_init = $default(typeIR_subst)
+    -- let EC_1 = $add_var_e(local, EC_0, ` nameIR, value_init)
+    -- output: % % |- % : EC_1 STO ` as statementResult
+
+    rulepath initializer-exit
+    -- let STO_0 = store
+    -- let initializerOptIR = initializerIR'?{initializerIR' <- initializerIR'?}
+    -- if initializerOptIR matches (_)
+    -- let ?(= typedExpressionIR_init) = initializerOptIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as statementResult
+
+    rulepath initializer-cont
+    -- let STO_0 = store
+    -- let initializerOptIR = initializerIR'?{initializerIR' <- initializerIR'?}
+    -- if initializerOptIR matches (_)
+    -- let ?(= typedExpressionIR_init) = initializerOptIR
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_init = expressionResult as continueResult<value>
+    -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
+    -- output: % % |- % : EC_2 STO_1 ` as statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:353.1-357.70
+  rulegroup forUpdateStatementIR
+
+   match
+
+    (signature) EC_0 STO_0 |- forUpdateStatementIR as forInitStatementIR : % % %
+    EC_0 STO_0 |- forInitStatementIR : % % %
+    -- if forInitStatementIR <: forUpdateStatementIR
+    -- let forUpdateStatementIR = forInitStatementIR as forUpdateStatementIR
+
+   paths
+
+    rulepath forUpdateStatementIR
+    -- ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : EC_1 STO_1 statementResult
+    -- output: % % |- % : EC_1 STO_1 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:361.1-364.23
+relation ForInitStmts_eval: evalContext store |- forInitStatementListIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:366.1-385.2
+  rulegroup 
+
+   match
+
+    (signature) evalContext store |- forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*} : % % %
+    evalContext store |- forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*} : % % %
+
+   paths
+
+    rulepath nil
+    -- let EC = evalContext
+    -- let STO = store
+    -- if (forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*} = [])
+    -- output: % % |- % : EC STO ` as statementResult
+
+    rulepath cons-head-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*} = forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*}
+    -- if forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*} matches _ :: _
+    -- let forInitStatementIR_h :: forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*} = forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*}
+    -- ForInitStmt_eval: EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as statementResult
+
+    rulepath cons-head-cont
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*} = forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*}
+    -- if forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*} matches _ :: _
+    -- let forInitStatementIR_h :: forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*} = forInitStatementIR''*{forInitStatementIR'' <- forInitStatementIR''*}
+    -- ForInitStmt_eval: EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 statementResult'
+    -- if statementResult' <: continueEmptyResult
+    -- let continueEmptyResult = statementResult' as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ForInitStmts_eval: EC_1 STO_1 |- forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*} : EC_2 STO_2 statementResult
+    -- output: % % |- % : EC_2 STO_2 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:391.1-394.29
+relation ForThreeClauseLoop_eval: evalContext store |- typedExpressionIR statementIR forUpdateStatementListIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:396.1-459.2
+  rulegroup 
+
+   match
+
+    (signature) EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
+
+   paths
+
+    rulepath cond-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % % : EC_1 STO_1 exit as statementResult
+
+    rulepath cond-false
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` false as value as expressionResult)
+    -- output: % % |- % % % : EC_1 STO_1 ` as statementResult
+
+    rulepath cond-true-loop-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` true as value as expressionResult)
+    -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % % : EC_2 STO_2 exit as statementResult
+
+    rulepath cond-true-loop-return
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` true as value as expressionResult)
+    -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
+    -- if statementResult' <: returnResult
+    -- let returnResult = statementResult' as returnResult
+    -- output: % % |- % % % : EC_2 STO_2 returnResult as statementResult
+
+    rulepath cond-true-loop-break
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` true as value as expressionResult)
+    -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
+    -- if statementResult' <: forBreakResult
+    -- let forBreakResult = statementResult' as forBreakResult
+    -- if (forBreakResult = break)
+    -- output: % % |- % % % : EC_2 STO_2 ` as statementResult
+
+    rulepath cond-true-loop-cont-update-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` true as value as expressionResult)
+    -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % % : EC_3 STO_3 exit as statementResult
+
+    rulepath cond-true-loop-cont-update-cont
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if (expressionResult = ` true as value as expressionResult)
+    -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult'
+    -- if statementResult' <: continueEmptyResult
+    -- let continueEmptyResult = statementResult' as continueEmptyResult
+    -- if (continueEmptyResult = `)
+    -- ForThreeClauseLoop_eval: EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_4 STO_4 statementResult
+    -- output: % % |- % % % : EC_4 STO_4 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:499.1-502.23
+relation ForCollectionExpr_eval: evalContext store |- forCollectionExpressionIR : evalContext store expressionListResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:506.1-525.2
+  rulegroup expr
+
+   match
+
+    (signature) EC_0 STO_0 |- typedExpressionIR as forCollectionExpressionIR : % % %
+    EC_0 STO_0 |- forCollectionExpressionIR : % % %
+    -- if forCollectionExpressionIR <: typedExpressionIR
+    -- let typedExpressionIR = forCollectionExpressionIR as typedExpressionIR
+
+   paths
+
+    rulepath exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as expressionListResult
+
+    rulepath list
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: listValue
+    -- let listValue = value' as listValue
+    -- let list[ value*{value <- value*} ] = listValue
+    -- output: % % |- % : EC_1 STO_1 ` value*{value <- value*} as expressionListResult
+
+    rulepath header-stack
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: headerStackValue
+    -- let headerStackValue = value' as headerStackValue
+    -- let header_stack[ value*{value <- value*} ( _nat ; _nat' )] = headerStackValue
+    -- output: % % |- % : EC_1 STO_1 ` value*{value <- value*} as expressionListResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:541.1-568.2
+  rulegroup range
+
+   match
+
+    (signature) EC_0 STO_0 |- typedExpressionIR_l .. typedExpressionIR_r : % % %
+    EC_0 STO_0 |- forCollectionExpressionIR : % % %
+    -- if forCollectionExpressionIR matches `%..%`
+    -- let typedExpressionIR_l .. typedExpressionIR_r = forCollectionExpressionIR
+
+   paths
+
+    rulepath left-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult
+    -- if expressionResult <: exitResult
+    -- let exitResult = expressionResult as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_1 STO_1 exit as expressionListResult
+
+    rulepath left-cont-right-exit
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_l = expressionResult as continueResult<value>
+    -- Expr_eval: local EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'
+    -- if expressionResult' <: exitResult
+    -- let exitResult = expressionResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % : EC_2 STO_2 exit as expressionListResult
+
+    rulepath left-cont-right-cont
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value_l = expressionResult as continueResult<value>
+    -- Expr_eval: local EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'
+    -- if expressionResult' <: continueResult<value>
+    -- let ` value_r = expressionResult' as continueResult<value>
+    -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR_l)
+    -- let value*{value <- value*} = $values_of_setValue(set< [typeIR] >, set{ value_l .. value_r })
+    -- output: % % |- % : EC_2 STO_2 ` value*{value <- value*} as expressionListResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.54
+def $values_of_setValue(setTypeIR, setValue) : value* =
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:531.1-535.52
+  clause 0 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = value_l :: $values_of_setValue(set< [typeIR] >, set{ value_l_inc .. value_r })
+  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
+  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  -- if setValue matches `SET{%..%}`
+  -- let set{ value_l .. value_r } = setValue
+  -- if $bin_lt(value_l, value_r)
+  -- let value_one = $cast_op(typeIR, d 1 as int as value)
+  -- let value_l_inc = $bin_plus(value_l, value_one)
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:536.1-537.34
+  clause 1 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = [value_l]
+  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
+  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  -- if setValue matches `SET{%..%}`
+  -- let set{ value_l .. value_r } = setValue
+  -- if $bin_eq(value_l, value_r)
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:538.1-539.34
+  clause 2 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = []
+  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
+  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  -- if setValue matches `SET{%..%}`
+  -- let set{ value_l .. value_r } = setValue
+  -- if $bin_gt(value_l, value_r)
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:570.1-573.29
+relation ForInLoop_eval: evalContext store |- nameIR value* statementIR : evalContext store statementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:575.1-607.2
+  rulegroup 
+
+   match
+
+    (signature) evalContext store |- nameIR value'''*{value''' <- value'''*} statementIR : % % %
+    evalContext store |- nameIR value'''*{value''' <- value'''*} statementIR : % % %
+
+   paths
+
+    rulepath nil
+    -- let EC = evalContext
+    -- let STO = store
+    -- if (value'''*{value''' <- value'''*} = [])
+    -- output: % % |- % % % : EC STO ` as statementResult
+
+    rulepath cons-loop-exit
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let value''''*{value'''' <- value''''*} = value'''*{value''' <- value'''*}
+    -- if value''''*{value'''' <- value''''*} matches _ :: _
+    -- let value_h :: value_t*{value_t <- value_t*} = value''''*{value'''' <- value''''*}
+    -- let EC_1 = $update_var_e(local, EC_0, ` nameIR, value_h)
+    -- Stmt_eval: local EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult'
+    -- if statementResult' <: exitResult
+    -- let exitResult = statementResult' as exitResult
+    -- if (exitResult = exit)
+    -- output: % % |- % % % : EC_2 STO_1 exit as statementResult
+
+    rulepath cons-loop-return
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let value''''*{value'''' <- value''''*} = value'''*{value''' <- value'''*}
+    -- if value''''*{value'''' <- value''''*} matches _ :: _
+    -- let value_h :: value_t*{value_t <- value_t*} = value''''*{value'''' <- value''''*}
+    -- let EC_1 = $update_var_e(local, EC_0, ` nameIR, value_h)
+    -- Stmt_eval: local EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult'
+    -- if statementResult' <: returnResult
+    -- let returnResult = statementResult' as returnResult
+    -- output: % % |- % % % : EC_2 STO_1 returnResult as statementResult
+
+    rulepath cons-loop-break
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let value''''*{value'''' <- value''''*} = value'''*{value''' <- value'''*}
+    -- if value''''*{value'''' <- value''''*} matches _ :: _
+    -- let value_h :: value_t*{value_t <- value_t*} = value''''*{value'''' <- value''''*}
+    -- let EC_1 = $update_var_e(local, EC_0, ` nameIR, value_h)
+    -- Stmt_eval: local EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult'
+    -- if statementResult' <: forBreakResult
+    -- let forBreakResult = statementResult' as forBreakResult
+    -- if (forBreakResult = break)
+    -- output: % % |- % % % : EC_2 STO_1 ` as statementResult
+
+    rulepath cons-loop-cont
+    -- let EC_0 = evalContext
+    -- let STO_0 = store
+    -- let value''''*{value'''' <- value''''*} = value'''*{value''' <- value'''*}
+    -- if value''''*{value'''' <- value''''*} matches _ :: _
+    -- let value_h :: value_t*{value_t <- value_t*} = value''''*{value'''' <- value''''*}
+    -- let EC_1 = $update_var_e(local, EC_0, ` nameIR, value_h)
+    -- Stmt_eval: local EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
+    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- ForInLoop_eval: EC_2 STO_1 |- nameIR value_t*{value_t <- value_t*} statementIR : EC_3 STO_2 statementResult
+    -- output: % % |- % % % : EC_3 STO_2 statementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:673.1-673.57
 def $match_switchLabelIR_table(id, switchLabelIR) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:269.1-269.51
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:674.1-674.51
   clause 0 : (id, switchLabelIR) = true
   -- if switchLabelIR matches `DEFAULT`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:270.1-270.56
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:675.1-675.56
   clause 1 : (id, switchLabelIR) = true
   -- if switchLabelIR <: typedExpressionIR
   -- let expressionIR # _expressionNoteIR = switchLabelIR as typedExpressionIR
@@ -30962,14 +31639,14 @@ def $match_switchLabelIR_table(id, switchLabelIR) : bool =
   -- let ` id' = prefixedNameIR
   -- if (id = id')
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:271.1-272.15
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:676.1-677.15
   clause 2 : (id, _switchLabelIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:278.1-280.20
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:683.1-685.20
 relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:286.1-326.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:691.1-731.2
   rulegroup 
 
    match
@@ -31030,23 +31707,23 @@ relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
     -- SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- output: % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:282.1-282.58
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:687.1-687.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:283.1-283.79
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:688.1-688.79
   clause 0 : (switchCaseIR) = true
   -- if switchCaseIR matches `%:%`
   -- let switchLabelIR : blockStatementIR = switchCaseIR
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:284.1-284.64
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:689.1-689.64
   clause 1 : (switchCaseIR) = false
   -- if switchCaseIR matches `%:`
   -- let switchLabelIR : = switchCaseIR
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:328.1-330.26
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:733.1-735.26
 relation SwitchLabelIR_general_eval: cursor evalContext store |- switchLabelIR : evalContext store expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:332.1-347.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:737.1-752.2
   rulegroup 
 
    match
@@ -31080,16 +31757,16 @@ relation SwitchLabelIR_general_eval: cursor evalContext store |- switchLabelIR :
     -- let ` value = expressionResult as continueResult<value>
     -- output: % % % |- % : EC_1 STO_1 ` value as expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:349.1-349.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:754.1-754.54
 def $match_switchLabelIR_general(value, value) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:350.1-350.56
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:755.1-755.56
   clause 0 : (value, value') = true
   -- if value' <: defaultValue
   -- let defaultValue = value' as defaultValue
   -- if (defaultValue = default)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:351.1-351.84
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:756.1-756.84
   clause 1 : (value, value') = ((w_a = w_b) /\ (i_a = i_b))
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -31100,7 +31777,7 @@ def $match_switchLabelIR_general(value, value) : bool =
   -- if integerLiteral' matches `%W%`
   -- let w_b w i_b = integerLiteral'
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:352.1-352.84
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:757.1-757.84
   clause 2 : (value, value') = ((w_a = w_b) /\ (i_a = i_b))
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -31111,28 +31788,28 @@ def $match_switchLabelIR_general(value, value) : bool =
   -- if integerLiteral' matches `%W%`
   -- let w_b w i_b = integerLiteral'
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:353.1-353.95
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:758.1-758.95
   clause 3 : (value, value') = $bin_eq(enumValue_a as value, enumValue_b as value)
   -- if value <: enumValue
   -- let enumValue_a = value as enumValue
   -- if value' <: enumValue
   -- let enumValue_b = value' as enumValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:354.1-354.99
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:759.1-759.99
   clause 4 : (value, value') = $bin_eq(errorValue_a as value, errorValue_b as value)
   -- if value <: errorValue
   -- let errorValue_a = value as errorValue
   -- if value' <: errorValue
   -- let errorValue_b = value' as errorValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:355.1-356.15
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:760.1-761.15
   clause 5 : (value, _value) = false
   -- otherwise
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:358.1-360.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:763.1-765.29
 relation SwitchCases_general_eval: cursor evalContext store value |- switchCaseListIR : evalContext store blockStatementIR?
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:362.1-410.2
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:767.1-815.2
   rulegroup 
 
    match

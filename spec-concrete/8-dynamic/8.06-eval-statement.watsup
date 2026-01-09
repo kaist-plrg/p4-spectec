@@ -249,11 +249,416 @@ rulegroup Stmt_eval/conditionalStatementIR {
 
 }
 
-;;; (TODO) forStatement
+;;; forStatementIR
+;;; syntax forStatementIR
 
-;;; (TODO) breakStatement
+;;;; annotationList FOR
+;;;;   `( forInitStatementListIR `; typedExpressionIR `; forUpdateStatementListIR )
+;;;;   statementIR
 
-;;; (TODO) continueStatement
+;;;;; syntax forUpdateStatementIR
+
+relation ForUpdateStmt_eval:
+  evalContext store |- forUpdateStatementIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+;;;;;; callableTargetIR `< typeArgumentListIR > `( argumentListIR )
+
+rule ForUpdateStmt_eval/call:
+  EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR )
+              : EC_1 STO_1 statementResult
+  -- Stmt_eval: 
+      LOCAL EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
+                        : EC_1 STO_1 statementResult
+
+;;;;;; typedLvalueIR assignop typedExpressionIR
+
+rule ForUpdateStmt_eval/assign:
+  EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR
+              : EC_1 STO_1 statementResult
+  -- Stmt_eval: LOCAL EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
+                                  : EC_1 STO_1 statementResult
+
+;;;;; syntax forUpdateStatementListIR = forUpdateStatementIR*
+
+relation ForUpdateStmts_eval:
+  evalContext store |- forUpdateStatementListIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+rulegroup ForUpdateStmts_eval {
+
+  rule ForUpdateStmts_eval/nil:
+    EC STO |- eps : EC STO ``
+
+  rule ForUpdateStmts_eval/cons-head-exit:
+    EC_0 STO_0 |- forUpdateStatementIR_h :: forUpdateStatementIR_t*
+                : EC_1 STO_1 EXIT
+    -- ForUpdateStmt_eval: 
+        EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 EXIT
+
+  rule ForUpdateStmts_eval/cons-head-cont:
+    EC_0 STO_0 |- forUpdateStatementIR_h :: forUpdateStatementIR_t*
+                : EC_2 STO_2 statementResult
+    -- ForUpdateStmt_eval:
+        EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 ``
+    -- ForUpdateStmts_eval:
+        EC_1 STO_1 |- forUpdateStatementIR_t* : EC_2 STO_2 statementResult
+
+}
+
+;;;;; syntax forInitStatementIR
+
+relation ForInitStmt_eval:
+  evalContext store |- forInitStatementIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+;;;;;; annotationList typeIR nameIR initializerOptIR
+
+rulegroup ForInitStmt_eval/variableDeclarationIR {
+
+  rule ForInitStmt_eval/non-initializer:
+    EC_0 STO |- annotationList typeIR nameIR eps
+              : EC_1 STO ``
+    ---- ;; get initial value
+    -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
+    -- if value_init = $default(typeIR_subst)
+    ---- ;; update evaluation context
+    -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
+
+  rule ForInitStmt_eval/initializer-exit:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init)
+                : EC_1 STO_1 EXIT
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init 
+                          : EC_1 STO_1 EXIT
+
+  rule ForInitStmt_eval/initializer-cont:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init)
+                : EC_2 STO_1 ``
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 (`` value_init)
+    ---- ;; update evaluation context
+    -- if EC_2 = $add_var_e(LOCAL, EC_1, `` nameIR, value_init)
+
+}
+
+;;;;;; forUpdateStatementIR
+
+rule ForInitStmt_eval/forUpdateStatementIR:
+  EC_0 STO_0 |- forUpdateStatementIR
+              : EC_1 STO_1 statementResult
+  -- ForUpdateStmt_eval: 
+      EC_0 STO_0 |- forUpdateStatementIR : EC_1 STO_1 statementResult
+
+;;;;; syntax forInitStatementListIR = forInitStatementIR*
+
+relation ForInitStmts_eval:
+  evalContext store |- forInitStatementListIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2)
+
+rulegroup ForInitStmts_eval {
+
+  rule ForInitStmts_eval/nil:
+    EC STO |- eps : EC STO ``
+
+  rule ForInitStmts_eval/cons-head-exit:
+    EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
+                : EC_1 STO_1 EXIT
+    -- ForInitStmt_eval: 
+        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 EXIT
+
+  rule ForInitStmts_eval/cons-head-cont:
+    EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
+                : EC_2 STO_2 statementResult
+    -- ForInitStmt_eval:
+        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 ``
+    -- ForInitStmts_eval:
+        EC_1 STO_1 |- forInitStatementIR_t* : EC_2 STO_2 statementResult
+
+}
+
+;;;; annotationList FOR
+;;;;   `( forInitStatementListIR `; typedExpressionIR `; forUpdateStatementListIR )
+;;;;   statementIR
+
+relation ForThreeClauseLoop_eval:
+  evalContext store |- typedExpressionIR statementIR forUpdateStatementListIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2 %3 %4)
+
+rulegroup ForThreeClauseLoop_eval {
+
+  rule ForThreeClauseLoop_eval/cond-exit:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_1 STO_1 EXIT
+    -- Expr_eval: 
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule ForThreeClauseLoop_eval/cond-false:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_1 STO_1 ``
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B false))
+
+  rule ForThreeClauseLoop_eval/cond-true-loop-exit:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_2 STO_2 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 EXIT
+
+  rule ForThreeClauseLoop_eval/cond-true-loop-return:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_2 STO_2 returnResult
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 returnResult
+
+  rule ForThreeClauseLoop_eval/cond-true-loop-break:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_2 STO_2 ``
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 BREAK
+
+  rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-exit:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_3 STO_3 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- ForUpdateStmts_eval: 
+        EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 EXIT
+
+  rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-cont:
+    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                : EC_4 STO_4 statementResult
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
+    -- Stmt_eval:
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- ForUpdateStmts_eval:
+        EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 ``
+    -- ForThreeClauseLoop_eval: 
+        EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
+                    : EC_4 STO_4 statementResult
+
+}
+
+rulegroup Stmt_eval/forStatementIR-three-clause {
+
+  rule Stmt_eval/init-exit:
+    LOCAL EC_0 STO_0 |- annotationList FOR
+                          `( forInitStatementListIR `;
+                             typedExpressionIR `;
+                             forUpdateStatementListIR ) statementIR
+                      : EC_3 STO_1 EXIT
+    -- if EC_1 = $enter_e(EC_0)
+    -- ForInitStmts_eval:
+        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 EXIT
+    -- if EC_3 = $exit_e(EC_2)
+
+  rule Stmt_eval/init-cont:
+    LOCAL EC_0 STO_0 |- annotationList FOR
+                          `( forInitStatementListIR `;
+                             typedExpressionIR `;
+                             forUpdateStatementListIR ) statementIR
+                      : EC_4 STO_2 statementResult
+    -- if EC_1 = $enter_e(EC_0)
+    -- ForInitStmts_eval:
+        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 ``
+    -- ForThreeClauseLoop_eval:
+        EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR
+                    : EC_3 STO_2 statementResult
+    -- if EC_4 = $exit_e(EC_3)
+
+}
+
+;;;; annotationList FOR
+;;;;   `( typeIR nameIR IN forCollectionExpressionIR )
+;;;;   statementIR
+;;;; annotationList FOR
+;;;;   `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+;;;;   statementIR
+
+;;;;; syntax forCollectionExpressionIR
+
+relation ForCollectionExpr_eval:
+  evalContext store |- forCollectionExpressionIR
+                     : evalContext store expressionListResult
+  hint(input %0 %1 %2)
+
+;;;;;; typedExpressionIR
+
+rulegroup ForCollectionExpr_eval/expr {
+
+  rule ForCollectionExpr_eval/exit:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+
+  rule ForCollectionExpr_eval/list:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value*)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` listValue)
+    -- if LIST `[ value* ] = listValue
+
+  rule ForCollectionExpr_eval/header-stack:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value*)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` headerStackValue)
+  -- if HEADER_STACK `[ value* `( _; _ ) ] = headerStackValue
+
+}
+
+;;;;;; typedExpressionIR `.. typedExpressionIR
+
+dec $values_of_setValue(setTypeIR, setValue) : value*
+
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r })
+  = value_l :: $values_of_setValue(SET `< typeIR >, SET `{ value_l_inc `.. value_r })
+  -- if $bin_lt(value_l, value_r)
+  -- if value_one = $cast_op(typeIR, D 1)
+  -- if value_l_inc = $bin_plus(value_l, value_one)
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r }) = value_l
+  -- if $bin_eq(value_l, value_r)
+def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r }) = eps
+  -- if $bin_gt(value_l, value_r)
+
+rulegroup ForCollectionExpr_eval/range {
+
+  rule ForCollectionExpr_eval/left-exit:
+    EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r 
+                : EC_1 STO_1 EXIT
+    -- Expr_eval: 
+        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
+
+  rule ForCollectionExpr_eval/left-cont-right-exit:
+    EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r 
+                : EC_2 STO_2 EXIT
+    -- Expr_eval: 
+        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
+    -- Expr_eval:
+        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 EXIT
+
+  rule ForCollectionExpr_eval/left-cont-right-cont:
+    EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r 
+                : EC_2 STO_2 (`` value*)
+    -- Expr_eval: 
+        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
+    -- Expr_eval:
+        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 (`` value_r)
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR_l)
+    -- if value*
+        = $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r })
+
+}
+
+relation ForInLoop_eval:
+  evalContext store |- nameIR value* statementIR
+                     : evalContext store statementResult
+  hint(input %0 %1 %2 %3 %4)
+
+rulegroup ForInLoop_eval {
+
+  rule ForInLoop_eval/nil:
+    EC STO |- nameIR eps statementIR : EC STO ``
+
+  rule ForInLoop_eval/cons-loop-exit:
+    EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
+                : EC_2 STO_1 EXIT
+    -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 EXIT
+
+  rule ForInLoop_eval/cons-loop-return:
+    EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
+                : EC_2 STO_1 returnResult
+    -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 returnResult
+
+  rule ForInLoop_eval/cons-loop-break:
+    EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
+                : EC_2 STO_1 ``
+    -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 BREAK
+
+  rule ForInLoop_eval/cons-loop-cont:
+    EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
+                : EC_3 STO_2 statementResult
+    -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
+    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- ForInLoop_eval:
+        EC_2 STO_1 |- nameIR value_t* statementIR : EC_3 STO_2 statementResult
+
+}
+
+rulegroup Stmt_eval/forStatementIR-in {
+
+  rule Stmt_eval/no-annotations-collection-exit:
+    LOCAL EC_0 STO_0 |- annotationList FOR
+                          `( typeIR nameIR IN forCollectionExpressionIR ) 
+                          statementIR
+                      : EC_3 STO_1 EXIT
+    -- if EC_1 = $enter_e(EC_0)
+    -- ForCollectionExpr_eval:
+        EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 EXIT
+    -- if EC_3 = $exit_e(EC_2)
+
+  rule Stmt_eval/no-annotations-collection-loop:
+    LOCAL EC_0 STO_0 |- annotationList FOR
+                          `( typeIR nameIR IN forCollectionExpressionIR ) 
+                          statementIR
+                      : EC_5 STO_2 statementResult
+    -- if EC_1 = $enter_e(EC_0)
+    ---- ;; evaluate collection
+    -- ForCollectionExpr_eval:
+        EC_1 STO_0 |- forCollectionExpressionIR : EC_2 STO_1 (`` value*)
+    ---- ;; update evaluation context
+    -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
+    -- if value_init = $default(typeIR_subst)
+    -- if EC_3 = $add_var_e(LOCAL, EC_2, `` nameIR, value_init)
+    ---- ;; evaluate loop
+    -- ForInLoop_eval:
+        EC_3 STO_1 |- nameIR value* statementIR : EC_4 STO_2 statementResult
+    -- if EC_5 = $exit_e(EC_4)
+
+  rule Stmt_eval/annotations:
+    LOCAL EC_0 STO_0 |- annotationList FOR
+                          `( annotationList_in
+                             typeIR nameIR IN forCollectionExpressionIR )
+                          statementIR
+                      : EC_1 STO_1 statementResult
+    -- Stmt_eval:
+        LOCAL EC_0 STO_0 |- annotationList FOR
+                              `( typeIR nameIR IN forCollectionExpressionIR )
+                              statementIR
+                          : EC_1 STO_1 statementResult
+
+}
+
+;;; breakStatementIR
+
+rule Stmt_eval/breakStatement:
+  LOCAL EC STO |- BREAK `; : EC STO BREAK
+
+;;; continueStatementIR
+
+rule Stmt_eval/continueStatement:
+  LOCAL EC STO |- CONTINUE `; : EC STO CONTINUE
 
 ;;; switchStatementIR
 ;;; syntax switchStatementIR =
@@ -567,6 +972,20 @@ rulegroup BlockElementStmts_eval {
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
                     : EC_1 STO_1 returnResult
+
+  rule BlockElementStmts_eval/cons-head-break:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 BREAK
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 BREAK
+
+  rule BlockElementStmts_eval/cons-head-continue:
+    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+                : EC_1 STO_1 CONTINUE
+    -- BlockElementStmt_eval:
+        EC_0 STO_0 |- blockElementStatementIR_h
+                    : EC_1 STO_1 CONTINUE
 
   rule BlockElementStmts_eval/cons-head-cont:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*

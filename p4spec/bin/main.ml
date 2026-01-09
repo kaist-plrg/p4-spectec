@@ -190,7 +190,7 @@ let cover_run_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
-     and testdirs_p4 = flag "-d" (listed string) ~doc:"P4 test directories"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"P4 test directories"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and mode =
@@ -251,7 +251,7 @@ let cover_sim_command =
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"STF test directories"
      and patchdir =
-       flag "-p" (required string) ~doc:"directory for P4/STF patches"
+       flag "-patch-dir" (required string) ~doc:"directory for P4/STF patches"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
@@ -358,7 +358,8 @@ let run_testgen_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
      and gendir =
-       flag "-gen" (required string) ~doc:"directory for generated p4 programs"
+       flag "-gen-dir" (required string)
+         ~doc:"directory for generated p4 programs"
      and name_campaign =
        flag "-name" (optional string)
          ~doc:"name of the test generation campaign"
@@ -366,9 +367,9 @@ let run_testgen_command =
      and randseed =
        flag "-seed" (optional int) ~doc:"seed for random number generator"
      and bootdir =
-       flag "-cold" (optional string) ~doc:"seed p4 directory for cold boot"
+       flag "-boot-dir" (optional string) ~doc:"seed p4 directory for cold boot"
      and filename_boot =
-       flag "-warm" (optional string) ~doc:"coverage file for warm boot"
+       flag "-boot-file" (optional string) ~doc:"coverage file for warm boot"
      and random = flag "-random" no_arg ~doc:"randomize AST selection"
      and hybrid =
        flag "-hybrid" no_arg
