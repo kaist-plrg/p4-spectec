@@ -85,6 +85,8 @@ and keyword = parse
       { GE }
   | '/'
       { SLASH }
+  | binary_constant as n
+    { INT_CONST_BIN n }
   | hex_constant as n
     { INT_CONST_HEX n }
   | "add"
