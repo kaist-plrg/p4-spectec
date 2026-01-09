@@ -46,46 +46,6 @@ let rmdir (dirname : string) : unit =
 
 let mkdir (dirname : string) : unit = Unix.mkdir dirname 0o755
 
-(* Collectors *)
-
-let collect_exclude filename_exclude =
-  let ic = open_in filename_exclude in
-  let rec parse_lines excludes =
-    try
-      let exclude = input_line ic in
-      if String.starts_with ~prefix:"#" exclude then parse_lines excludes
-      else parse_lines (exclude :: excludes)
-    with End_of_file -> excludes
-  in
-  let excludes = parse_lines [] in
-  close_in ic;
-  excludes
-
-let collect_excludes (paths_exclude : string list) =
-  let filenames_exclude =
-    List.concat_map (collect_files ~suffix:".exclude") paths_exclude
-  in
-  List.concat_map collect_exclude filenames_exclude
-
-(* Patchers *)
-
-let patch ~(suffix : string) (filenames : string list)
-    (filenames_patch : string list) : string list =
-  List.map
-    (fun filename ->
-      let filename_base = base ~suffix filename in
-      let filename_patch_opt =
-        List.find_opt
-          (fun filename_patch ->
-            let filename_patch_base = base ~suffix filename_patch in
-            String.equal filename_base filename_patch_base)
-          filenames_patch
-      in
-      match filename_patch_opt with
-      | Some filename_patch -> filename_patch
-      | None -> filename)
-    filenames
-
 (* Readers *)
 
 let read_file (filename : string) : string =

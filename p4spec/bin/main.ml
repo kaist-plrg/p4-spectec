@@ -205,7 +205,7 @@ let cover_run_command =
      in
      fun () ->
        try
-         let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
+         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
          let filenames_p4 =
            testdirs_p4
            |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
@@ -267,7 +267,7 @@ let cover_sim_command =
      in
      fun () ->
        try
-         let excludes_p4 = Util.Filesys.collect_excludes excludes_p4 in
+         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
          let filenames_p4 =
            testdirs_p4
            |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
@@ -287,7 +287,7 @@ let cover_sim_command =
            Util.Filesys.collect_files ~suffix:".p4" patchdir
          in
          let filenames_p4 =
-           Util.Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
+           Util.Test.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
          in
          let filenames_stf =
            testdirs_stf
@@ -297,26 +297,26 @@ let cover_sim_command =
            Util.Filesys.collect_files ~suffix:".stf" patchdir
          in
          let filenames_stf =
-           Util.Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
+           Util.Test.patch ~suffix:".stf" filenames_stf filenames_stf_patch
          in
          let filenames_p4, filenames_stf =
            filenames_p4
            |> List.filter_map (fun filename_p4 ->
-                  let filename_base =
+                  let filename_p4_base =
                     Util.Filesys.base ~suffix:".p4" filename_p4
                   in
-                  let filename_stf_opt =
-                    List.find_opt
+                  let filenames_stf = 
+                    List.filter
                       (fun filename_stf ->
                         let filename_stf_base =
                           Util.Filesys.base ~suffix:".stf" filename_stf
                         in
-                        String.equal filename_base filename_stf_base)
+                        Util.Test.p4_matches_stf filename_p4_base filename_stf_base)
                       filenames_stf
                   in
-                  match filename_stf_opt with
-                  | Some filename_stf -> Some (filename_p4, filename_stf)
-                  | None -> None)
+                  match filenames_stf with
+                  | [] -> None
+                  | _ -> Some (filename_p4, filenames_stf))
            |> List.split
          in
          let (module Runner) = Backend_sim.Gen.gen arch in
