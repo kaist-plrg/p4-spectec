@@ -3727,7 +3727,7 @@ and whether it is associated with a compile-time known value (<code>value?</code
 <p>The compile-time known-ness is discussed in <a href="#sec-compile-time-known">[sec-compile-time-known]</a>.</p>
 </div>
 <div class="paragraph">
-<p>Notice that <code>localTypingLayer</code> contains multiple `typeFrame`s. This is because a
+<p>Notice that <code>localTypingLayer</code> contains multiple <code>typeFrame</code>s. This is because a
 local scope can be nested with block statements.</p>
 </div>
 <div class="listingblock">
@@ -4871,7 +4871,14 @@ nesting.</p>
 <div id="Type_wf" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Type_wf">Type_wf: <code>B |- typeIR''</code></a></p>
+<p><a href="#Type_wf">Type_wf</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR''</code> is a well-formed type, assuming bound type ids <code>B</code></p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -6313,7 +6320,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Type_ok/specializedType/poly:
+<pre>rule Type_ok/specializedType:
    p TC |- prefixedTypeName `&lt;typeArgumentList&gt; : typeIR # typeId_fresh*
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
@@ -6666,18 +6673,9 @@ which may be valid.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rule Type_ok/headerStackType/prefixedTypeName:
-   p TC |- prefixedTypeName `[expression_size] : (typeIR_base `[n_size]) # eps
-    -- Type_ok: p TC |- prefixedTypeName : typeIR_base # eps
-    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
-    -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; integerValue_size
-    -- if n_size = $int_of_integerValue(integerValue_size)
-    -- if n_size &gt; 0
-
-rule Type_ok/headerStackType/specializedType:
-   p TC |- specializedType `[expression_size] : (typeIR_base `[n_size]) # typeId_fresh*
-    -- Type_ok: p TC |- specializedType : typeIR_base # typeId_fresh*
+<pre>rule Type_ok/headerStackType:
+   p TC |- namedType `[expression_size] : (typeIR_base `[n_size]) # typeId_fresh*
+    -- Type_ok: p TC |- namedType : typeIR_base # typeId_fresh*
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; integerValue_size
@@ -6700,54 +6698,7 @@ rule Type_ok/headerStackType/specializedType:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>prefixedTypeName</code> be <code>namedType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>prefixedTypeName</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>size</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>size</sub></code></a> matches pattern <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>size</sub></code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>size</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Check that <code>n<sub>size</sub></code> is greater than <code>0</code>.</p>
-</li>
-<li>
-<p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>·</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>specializedType</code> be <code>namedType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>specializedType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> and <code>typeId<sub>fresh</sub><sup>*</sup></code> be the result of <a href="#Type_ok">typing <code>namedType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>size</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>size</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
@@ -6778,9 +6729,6 @@ rule Type_ok/headerStackType/specializedType:
 </li>
 <li>
 <p>Result in the type <code>typeIR<sub>base</sub> [ n<sub>size</sub> ]</code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -7641,7 +7589,7 @@ object types can be obtained from named types, as illustrated in
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed type, assuming bound type ids <code>B</code></a>, for all <code>externMethodTypeDefIR</code> in <code>externMethodTypeDefIR<sup>*</sup></code>:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>B</code></a>, for all <code>externMethodTypeDefIR</code> in <code>externMethodTypeDefIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -7731,7 +7679,7 @@ object types can be obtained from named types, as illustrated in
 <div class="content">
 <pre>rule Type_wf/parserObjectTypeIR:
    B |- PARSER _ `&lt;_&gt; `(parameterIR*)
-    -- ParameterTypes_wf: B |- parameterIR*</pre>
+    -- (ParameterType_wf: B |- parameterIR)*</pre>
 </div>
 </div>
 </div>
@@ -7749,7 +7697,7 @@ object types can be obtained from named types, as illustrated in
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -7817,7 +7765,7 @@ object types can be obtained from named types, as illustrated in
 <div class="content">
 <pre>rule Type_wf/controlObjectTypeIR:
    B |- CONTROL _ `&lt;_&gt; `(parameterIR*)
-    -- ParameterTypes_wf: B |- parameterIR*</pre>
+    -- (ParameterType_wf: B |- parameterIR)*</pre>
 </div>
 </div>
 </div>
@@ -7835,7 +7783,7 @@ object types can be obtained from named types, as illustrated in
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -9237,7 +9185,14 @@ specialization:</p>
 <div id="CallableType_wf" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf">CallableType_wf: <code>B |- callableTypeIR</code></a></p>
+<p><a href="#CallableType_wf">CallableType_wf</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>callableTypeIR</code> is a well-formed callable type, assuming bound type ids <code>B</code></p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -9432,7 +9387,14 @@ rule Parameter_ok/initializer:
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ParameterType_wf">ParameterType_wf: <code>B |- _ direction typeIR _ constantInitializerIR<sup>?</sup></code></a></p>
+<p><a href="#ParameterType_wf">ParameterType_wf</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>_ direction typeIR _ constantInitializerIR<sup>?</sup></code> is a well-formed parameter type, assuming bound type ids <code>B</code></p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -9473,7 +9435,7 @@ rule ParameterType_wf/default:
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ParameterType_wf"><code>_ direction typeIR _ constantInitializerIR<sup>?</sup></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ParameterType_wf"><code>_ direction typeIR _ constantInitializerIR<sup>?</sup></code> is a well-formed parameter type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -9732,7 +9694,7 @@ type definition:</p>
 <div class="content">
 <pre>rule CallableType_wf/actionTypeIR:
    B |- ACTION `(parameterIR*)
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ direction typeIR _ _ = parameterIR))*
     -- if $directionless_trailing(direction*)
     -- (if $nestable_action(typeIR))*</pre>
@@ -9748,12 +9710,12 @@ type definition:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>ACTION ( parameterIR<sup>*</sup> )</code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>ACTION ( parameterIR<sup>*</sup> )</code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -9887,7 +9849,7 @@ definedFunctionTypeIR
 <div class="content">
 <pre>rule CallableType_wf/definedFunctionTypeIR:
    B |- FUNCTION `(parameterIR*) : typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_definedFunction(typeIR))*
     -- ReturnType_wf: B |- typeIR_ret</pre>
@@ -9903,12 +9865,12 @@ definedFunctionTypeIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>FUNCTION ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>FUNCTION ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -9996,7 +9958,7 @@ externFunctionTypeIR
 <div class="content">
 <pre>rule CallableType_wf/externFunctionTypeIR:
    B |- EXTERN_FUNCTION `(parameterIR*) : typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_externFunction(typeIR))*
     -- ReturnType_wf: B |- typeIR_ret</pre>
@@ -10012,12 +9974,12 @@ externFunctionTypeIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>EXTERN_FUNCTION ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>EXTERN_FUNCTION ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -10177,14 +10139,14 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantiating-abstra
 <div class="content">
 <pre>rule CallableType_wf/externMethodTypeIR/non-abstract:
    B |- EXTERN_METHOD `(parameterIR*) : typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_externMethod(typeIR))*
     -- ReturnType_wf: B |- typeIR_ret
 
 rule CallableType_wf/externMethodTypeIR/abstract:
    B |- EXTERN_METHOD ABSTRACT `(parameterIR*) : typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_externMethod(typeIR))*
     -- ReturnType_wf: B |- typeIR_ret</pre>
@@ -10200,7 +10162,7 @@ rule CallableType_wf/externMethodTypeIR/abstract:
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>externMethodTypeIR</code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>externMethodTypeIR</code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10209,7 +10171,7 @@ rule CallableType_wf/externMethodTypeIR/abstract:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -10253,7 +10215,7 @@ rule CallableType_wf/externMethodTypeIR/abstract:
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -10349,7 +10311,7 @@ parserApplyMethodDef
 <div class="content">
 <pre>rule CallableType_wf/parserApplyMethodTypeIR:
    B |- PARSER_APPLY `(parameterIR*)
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_parserApplyMethod(typeIR))*</pre>
 </div>
@@ -10364,12 +10326,12 @@ parserApplyMethodDef
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>PARSER_APPLY ( parameterIR<sup>*</sup> )</code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>PARSER_APPLY ( parameterIR<sup>*</sup> )</code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -10454,7 +10416,7 @@ controlApplyMethodDef
 <div class="content">
 <pre>rule CallableType_wf/controlApplyMethodTypeIR:
    B |- CONTROL_APPLY `(parameterIR*)
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- (if (_ _ typeIR _ _ = parameterIR))*
     -- (if $nestable_controlApplyMethod(typeIR))*</pre>
 </div>
@@ -10469,12 +10431,12 @@ controlApplyMethodDef
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>CONTROL_APPLY ( parameterIR<sup>*</sup> )</code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>CONTROL_APPLY ( parameterIR<sup>*</sup> )</code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -10556,7 +10518,7 @@ tableApplyMethodDef
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_wf"><code>TABLE_APPLY : tableMetadataStructTypeIR</code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#CallableType_wf"><code>TABLE_APPLY : tableMetadataStructTypeIR</code> is a well-formed callable type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10931,7 +10893,7 @@ constructorTypeDefIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstructorTypeDef_wf"><code>CONSTRUCTOR &lt; typeParameterIR<sub>expl</sub><sup>*</sup> , typeParameterIR<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ConstructorTypeDef_wf"><code>CONSTRUCTOR &lt; typeParameterIR<sub>expl</sub><sup>*</sup> , typeParameterIR<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type definition, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10948,7 +10910,7 @@ constructorTypeDefIR
 <p>Let <code>B<sub>inner</sub></code> be <a href="#union_set">the union of the sets <code>B</code> and <code>{ typeParameterIR<sup>*</sup> }</code></a>.</p>
 </li>
 <li>
-<p>If <a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B<sub>inner</sub></code></a>:</p>
+<p>If <a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type, assuming bound type ids <code>B<sub>inner</sub></code></a>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11064,7 +11026,7 @@ constructors.</p>
 <div class="content">
 <pre>rule ConstructorType_wf/externObjectTypeIR:
    B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
-    -- ConstructorParameterTypes_wf: B |- parameterIR*
+    -- (ConstructorParameterType_wf: B |- parameterIR)*
     -- Type_wf: B |- typeIR_object
     -- if externObjectTypeIR = $unroll_typeIR(typeIR_object)
     -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -11081,12 +11043,12 @@ constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ConstructorParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11278,7 +11240,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Type checking<
 <div class="content">
 <pre>rule ConstructorType_wf/parserObjectTypeIR:
    B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
-    -- ConstructorParameterTypes_wf: B |- parameterIR*
+    -- (ConstructorParameterType_wf: B |- parameterIR)*
     -- Type_wf: B |- typeIR_object
     -- if parserObjectTypeIR = $unroll_typeIR(typeIR_object)
     -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -11295,12 +11257,12 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Type checking<
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ConstructorParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11486,7 +11448,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Type checking
 <div class="content">
 <pre>rule ConstructorType_wf/controlObjectTypeIR:
    B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
-    -- ConstructorParameterTypes_wf: B |- parameterIR*
+    -- (ConstructorParameterType_wf: B |- parameterIR)*
     -- Type_wf: B |- typeIR_object
     -- if controlObjectTypeIR = $unroll_typeIR(typeIR_object)
     -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -11503,12 +11465,12 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Type checking
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ConstructorParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11781,7 +11743,7 @@ with them.</p>
 <div class="content">
 <pre>rule ConstructorType_wf/packageObjectTypeIR:
    B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
-    -- ConstructorParameterTypes_wf: B |- parameterIR*
+    -- (ConstructorParameterType_wf: B |- parameterIR)*
     -- Type_wf: B |- typeIR_object
     -- if packageObjectTypeIR = $unroll_typeIR(typeIR_object)
     -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -11798,12 +11760,12 @@ with them.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed type, assuming bound type ids <code>B</code> when</a>:</p>
+<p><a href="#ConstructorType_wf"><code>CONSTRUCTOR ( parameterIR<sup>*</sup> ) : typeIR<sub>object</sub></code> is a well-formed constructor type, assuming bound type ids <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <a href="#ConstructorParameterTypes_wf"><code>parameterIR<sup>*</sup></code> is a well-formed type, assuming bound type ids <code>B</code></a>:</p>
+<p>If <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, assuming bound type ids <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -12446,7 +12408,7 @@ methods.</p>
 <p>Let <code>externMethodTypeDefIR</code> be <code>EXTERN_METHOD &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -12478,7 +12440,7 @@ methods.</p>
 <p>Let <code>externMethodTypeDefIR</code> be <code>EXTERN_METHOD &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>externMethodTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -13127,7 +13089,7 @@ functionDeclarationIR
 <p>Let <code>definedFunctionTypeDefIR</code> be <code>FUNCTION &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -13159,7 +13121,7 @@ functionDeclarationIR
 <p>Let <code>definedFunctionTypeDefIR</code> be <code>FUNCTION &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -13301,7 +13263,7 @@ actionDeclarationIR
 <p>Let <code>actionTypeDefIR</code> be <code>ACTION ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>actionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>actionTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(p, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -13898,7 +13860,7 @@ externFunctionDeclarationIR
 <p>Let <code>externFunctionTypeDefIR</code> be <code>EXTERN_FUNCTION &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> ) : typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>externFunctionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>externFunctionTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -14408,7 +14370,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>callableTypeDefIR</code> be <code>PARSER_APPLY ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -14424,7 +14386,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR &lt; · , · &gt; ( constructorParameterIR<sup>*</sup> ) : typeIR<sub>parser</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -14579,7 +14541,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>callableTypeDefIR</code> be <code>CONTROL_APPLY ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>If <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -14595,7 +14557,7 @@ rule Decl_inst/externObjectDeclarationIR/constructor:
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR &lt; · , · &gt; ( constructorParameterIR<sup>*</sup> ) : typeIR<sub>control</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -14788,7 +14750,7 @@ enumTypeDeclarationIR
 <p>Let <code>enumTypeDefIR</code> be <code>ENUM nameIR { nameIR<sub>field</sub><sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -15123,7 +15085,7 @@ enumTypeDeclarationIR
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> with mappings from each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -15338,7 +15300,7 @@ enumTypeDeclarationIR
 <p>Let <code>structTypeDefIR</code> be <code>STRUCT nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>field</sub> nameIR<sub>field</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>structTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>structTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -15523,7 +15485,7 @@ enumTypeDeclarationIR
 <p>Let <code>headerTypeDefIR</code> be <code>HEADER nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>headerTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>headerTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -15708,7 +15670,7 @@ enumTypeDeclarationIR
 <p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { (typeIR<sub>f</sub> nameIR<sub>f</sub> ;)<sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>headerUnionTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>headerUnionTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -15891,7 +15853,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typeDefIR<sub>typedef</sub></code> be <code>TYPEDEF nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>typeDefIR<sub>typedef</sub></code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>typeDefIR<sub>typedef</sub></code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -15957,7 +15919,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefTypeIR</code> be <code>TYPEDEF nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -15992,7 +15954,7 @@ rule Decl_ok/typedefDeclaration-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>typedefTypeIR</code> be <code>TYPEDEF nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
@@ -16204,7 +16166,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>newTypeIR</code> be <code>TYPE nameIR typeIR</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>newTypeIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>newTypeIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -16343,7 +16305,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>parserObjectTypeDefIR</code> be <code>PARSER nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>parserObjectTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>parserObjectTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -16481,7 +16443,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>controlObjectTypeDefIR</code> be <code>CONTROL nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( parameterIR<sup>*</sup> )</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>controlObjectTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>controlObjectTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -16639,7 +16601,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>packageObjectTypeDefIR</code> be <code>PACKAGE nameIR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; { typeIR<sub>package_inner</sub><sup>*</sup> }</code>.</p>
 </li>
 <li>
-<p>If <a href="#TypeDef_wf"><code>packageObjectTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#TypeDef_wf"><code>packageObjectTypeDefIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -16655,7 +16617,7 @@ rule Decl_inst/typedefDeclarationIR-typedef/derivedTypeDeclaration-poly:
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR &lt; typeId<sub>expl</sub><sup>*</sup> , typeId<sub>impl</sub><sup>*</sup> &gt; ( constructorParameterIR<sup>*</sup> ) : typeIR<sub>package</sub></code>.</p>
 </li>
 <li>
-<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed type, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
+<p>If <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -28421,7 +28383,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-08 13:26:08 +0900
+Last updated 2026-01-08 14:36:04 +0900
 </div>
 </div>
 </body>

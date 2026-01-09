@@ -2020,7 +2020,9 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``constructorTypeIR~spec~`` be <<subst_constructorTypeIR, ``theta`` substituted by ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR``>>.
  .. Return ``(constructorTypeIR~spec~, typeId~fresh~^{asterisk}^)``.
 
-<<Type_alpha, Type_alpha: ``typeIR'`` and ``typeIR'''`` are the same type>>
+<<Type_alpha, Type_alpha>>:
+
+* ``typeIR'`` and ``typeIR'''`` are the same type
 
 <<Type_alpha, ``baseTypeIR`` and ``baseTypeIR`` are the same type when>>:
 
@@ -2156,14 +2158,18 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . The relation holds.
 
-<<ParameterType_alpha, ParameterType_alpha: ``++_++ direction typeIR~a~ ++_++ ++_++`` and ``++_++ direction' typeIR~b~ ++_++ ++_++`` are the same type>>
+<<ParameterType_alpha, ParameterType_alpha>>:
+
+* ``++_++ direction typeIR~a~ ++_++ ++_++`` and ``++_++ direction' typeIR~b~ ++_++ ++_++`` are the same type
 
 <<ParameterType_alpha, ``++_++ direction typeIR~a~ ++_++ ++_++`` and ``++_++ direction typeIR~b~ ++_++ ++_++`` are the same type when>>:
 
 . If <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>:
  .. The relation holds.
 
-<<CallableType_alpha, CallableType_alpha: ``callableTypeIR`` and ``callableTypeIR'`` are the same type>>
+<<CallableType_alpha, CallableType_alpha>>:
+
+* ``callableTypeIR`` and ``callableTypeIR'`` are the same type
 
 <<CallableType_alpha, ``ACTION ( parameterIR~a~^{asterisk}^ )`` and ``ACTION ( parameterIR~b~^{asterisk}^ )`` are the same type when>>:
 
@@ -2217,7 +2223,9 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . The relation holds.
 
-<<CallableTypeDef_alpha, CallableTypeDef_alpha: ``callableTypeDefIR~a~`` and ``callableTypeDefIR~b~`` are the same type>>
+<<CallableTypeDef_alpha, CallableTypeDef_alpha>>:
+
+* ``callableTypeDefIR~a~`` and ``callableTypeDefIR~b~`` are the same type
 
 <<CallableTypeDef_alpha, ``callableTypeDefIR~a~`` and ``callableTypeDefIR~b~`` are the same type when>>:
 
@@ -4457,7 +4465,9 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
   ... Let ``value'`` be ``w' W n / 2``.
   ... Return ``<<tableEntry_lpm_prefix', tableEntry_lpm_prefix'(value', 0)>>``.
 
-<<Type_wf, Type_wf: ``B |- typeIR''``>>
+<<Type_wf, Type_wf>>:
+
+* ``typeIR''`` is a well-formed type, assuming bound type ids ``B``
 
 <<Type_wf, ``baseTypeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
@@ -4532,17 +4542,17 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 
 <<Type_wf, ``EXTERN ++_++ < ++_++^{asterisk}^ > { (++_++ : externMethodTypeDefIR)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
-. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed type, assuming bound type ids ``B``>>, for all ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``:
+. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``B``>>, for all ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``:
  .. The relation holds.
 
 <<Type_wf, ``PARSER ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. The relation holds.
 
 <<Type_wf, ``CONTROL ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. The relation holds.
 
 <<Type_wf, ``PACKAGE ++_++ < ++_++^{asterisk}^ > { typeIR^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
@@ -4598,9 +4608,11 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. If <<Type_wf, ``tableMetadataEnumTypeIR`` is a well-formed type, assuming bound type ids ``B``>>:
   ... The relation holds.
 
-<<TypeDef_wf, TypeDef_wf: ``B |- typeDefIR``>>
+<<TypeDef_wf, TypeDef_wf>>:
 
-<<TypeDef_wf, ``typeDefIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``typeDefIR`` is a well-formed type definition, assuming bound type ids ``B``
+
+<<TypeDef_wf, ``typeDefIR`` is a well-formed type definition, assuming bound type ids ``B`` when>>:
 
 . Let ``(typeParameterIR~expl~^{asterisk}^, typeParameterIR~impl~^{asterisk}^)`` be <<typeParameterListIR_of_typeDefIR, the type parameters of ``typeDefIR``>>.
 . Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^``.
@@ -4610,9 +4622,11 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 . If <<Type_wf, ``typeIR~base~`` is a well-formed type, assuming bound type ids ``B~inner~``>>:
  .. The relation holds.
 
-<<ParameterType_wf, ParameterType_wf: ``B |- ++_++ direction typeIR ++_++ constantInitializerIR^?^``>>
+<<ParameterType_wf, ParameterType_wf>>:
 
-<<ParameterType_wf, ``++_++ direction typeIR ++_++ constantInitializerIR^?^`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``++_++ direction typeIR ++_++ constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B``
+
+<<ParameterType_wf, ``++_++ direction typeIR ++_++ constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B`` when>>:
 
 . If ``constantInitializerIR^?^`` is equal to ``None``:
  .. If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>:
@@ -4632,22 +4646,9 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
    .... Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
    .... The relation holds.
 
-<<ParameterTypes_wf, ParameterTypes_wf: ``B |- parameterIR^{asterisk}^``>>
+<<ReturnType_wf, ReturnType_wf>>:
 
-<<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B`` when>>:
-
-. Let ``nameIR^{asterisk}^`` be the list of ``nameIR``, obtained by repeating:
-+
---
-  * Let ``nameIR`` be the name of ``parameterIR``.
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Check that <<distinct_, the elements of ``nameIR^{asterisk}^`` are distinct>>.
-. If <<ParameterType_wf, ``parameterIR`` is a well-formed type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
- .. The relation holds.
-
-<<ReturnType_wf, ReturnType_wf: ``B |- typeIR~ret~``>>
+* ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``
 
 <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B`` when>>:
 
@@ -4656,11 +4657,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Check that ``~<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> /\ ~<<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>>`` *and* ``~<<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>``.
  .. The relation holds.
 
-<<CallableType_wf, CallableType_wf: ``B |- callableTypeIR``>>
+<<CallableType_wf, CallableType_wf>>:
 
-<<CallableType_wf, ``ACTION ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``callableTypeIR`` is a well-formed callable type, assuming bound type ids ``B``
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+<<CallableType_wf, ``ACTION ( parameterIR^{asterisk}^ )`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
+
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. Let ``direction^{asterisk}^`` be the list of ``direction`` and ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4672,9 +4675,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Check that <<nestable_action, ``typeIR`` can be used in an action type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
  .. The relation holds.
 
-<<CallableType_wf, ``FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4686,9 +4689,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. If <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``>>:
   ... The relation holds.
 
-<<CallableType_wf, ``EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4700,16 +4703,16 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. If <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``>>:
   ... The relation holds.
 
-<<CallableType_wf, ``BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. If <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``>>:
   ... The relation holds.
 
-<<CallableType_wf, ``externMethodTypeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``externMethodTypeIR`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
 . If let ``EXTERN_METHOD ( parameterIR^{asterisk}^ ) : typeIR~ret~`` be ``externMethodTypeIR``:
- .. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+ .. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
   ... Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4721,7 +4724,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... If <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``>>:
    .... The relation holds.
 . Else if let ``EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR~ret~`` be ``externMethodTypeIR``:
- .. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+ .. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
   ... Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4733,9 +4736,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... If <<ReturnType_wf, ``typeIR~ret~`` is a well-formed return type, assuming bound type ids ``B``>>:
    .... The relation holds.
 
-<<CallableType_wf, ``PARSER_APPLY ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``PARSER_APPLY ( parameterIR^{asterisk}^ )`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4746,9 +4749,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Check that <<nestable_parserApplyMethod, ``typeIR`` can be used in a parser apply method type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
  .. The relation holds.
 
-<<CallableType_wf, ``CONTROL_APPLY ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``CONTROL_APPLY ( parameterIR^{asterisk}^ )`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
-. If <<ParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -4759,50 +4762,41 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Check that <<nestable_controlApplyMethod, ``typeIR`` can be used in a control apply method type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
  .. The relation holds.
 
-<<CallableType_wf, ``TABLE_APPLY : tableMetadataStructTypeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<CallableType_wf, ``TABLE_APPLY : tableMetadataStructTypeIR`` is a well-formed callable type, assuming bound type ids ``B`` when>>:
 
 . The relation holds.
 
-<<CallableTypeDef_wf, CallableTypeDef_wf: ``B |- callableTypeDefIR``>>
+<<CallableTypeDef_wf, CallableTypeDef_wf>>:
 
-<<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``callableTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``B``
+
+<<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``B`` when>>:
 
 . Let ``(typeParameterIR~expl~^{asterisk}^, typeParameterIR~impl~^{asterisk}^)`` be <<typeParameterListIR_of_callableTypeDefIR, the type parameters of ``callableTypeDefIR``>>.
 . Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^``.
 . Check that <<distinct_, the elements of ``typeParameterIR^{asterisk}^`` are distinct>>.
 . Let ``callableTypeIR~base~`` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of ``callableTypeDefIR``>>.
 . Let ``B~inner~`` be <<union_set, the union of the sets ``B`` and ``{ typeParameterIR^{asterisk}^ }``>>.
-. If <<CallableType_wf, ``callableTypeIR~base~`` is a well-formed type, assuming bound type ids ``B~inner~``>>:
+. If <<CallableType_wf, ``callableTypeIR~base~`` is a well-formed callable type, assuming bound type ids ``B~inner~``>>:
  .. The relation holds.
 
-<<ConstructorParameterType_wf, ConstructorParameterType_wf: ``B |- ++_++ direction typeIR ++_++ ++_++``>>
+<<ConstructorParameterType_wf, ConstructorParameterType_wf>>:
 
-<<ConstructorParameterType_wf, ``++_++ typeIR ++_++ ++_++`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``++_++ direction typeIR ++_++ ++_++`` is a well-formed constructor parameter type, assuming bound type ids ``B``
+
+<<ConstructorParameterType_wf, ``++_++ typeIR ++_++ ++_++`` is a well-formed constructor parameter type, assuming bound type ids ``B`` when>>:
 
 . If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>:
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(unroll_typeIR(typeIR))>>``.
  .. The relation holds.
 
-<<ConstructorParameterTypes_wf, ConstructorParameterTypes_wf: ``B |- parameterIR^{asterisk}^``>>
+<<ConstructorType_wf, ConstructorType_wf>>:
 
-<<ConstructorParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B``
 
-. Let ``nameIR^{asterisk}^`` be the list of ``nameIR``, obtained by repeating:
-+
---
-  * Let ``nameIR`` be the name of ``parameterIR``.
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Check that <<distinct_, the elements of ``nameIR^{asterisk}^`` are distinct>>.
-. If <<ConstructorParameterType_wf, ``parameterIR`` is a well-formed type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
- .. The relation holds.
+<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B`` when>>:
 
-<<ConstructorType_wf, ConstructorType_wf: ``B |- CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~``>>
-
-<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B`` when>>:
-
-. If <<ConstructorParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorParameterType_wf, ``parameterIR`` is a well-formed constructor parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. If <<Type_wf, ``typeIR~object~`` is a well-formed type, assuming bound type ids ``B``>>:
   ... Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
   ... Check that ``typeIR'`` has type ``externObjectTypeIR``.
@@ -4817,9 +4811,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Check that <<nestable_constructor_extern, ``typeIR`` can be used in an extern constructor type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
   ... The relation holds.
 
-<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B`` when>>:
 
-. If <<ConstructorParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorParameterType_wf, ``parameterIR`` is a well-formed constructor parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. If <<Type_wf, ``typeIR~object~`` is a well-formed type, assuming bound type ids ``B``>>:
   ... Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
   ... Check that ``typeIR'`` has type ``parserObjectTypeIR``.
@@ -4834,9 +4828,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Check that <<nestable_constructor_parser, ``typeIR`` can be used in a parser constructor type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
   ... The relation holds.
 
-<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B`` when>>:
 
-. If <<ConstructorParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorParameterType_wf, ``parameterIR`` is a well-formed constructor parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. If <<Type_wf, ``typeIR~object~`` is a well-formed type, assuming bound type ids ``B``>>:
   ... Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
   ... Check that ``typeIR'`` has type ``controlObjectTypeIR``.
@@ -4851,9 +4845,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Check that <<nestable_constructor_control, ``typeIR`` can be used in a control constructor type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
   ... The relation holds.
 
-<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B`` when>>:
 
-. If <<ConstructorParameterTypes_wf, ``parameterIR^{asterisk}^`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorParameterType_wf, ``parameterIR`` is a well-formed constructor parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
  .. If <<Type_wf, ``typeIR~object~`` is a well-formed type, assuming bound type ids ``B``>>:
   ... Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
   ... Check that ``typeIR'`` has type ``packageObjectTypeIR``.
@@ -4868,15 +4862,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Check that <<nestable_constructor_package, ``typeIR`` can be used in a package constructor type>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
   ... The relation holds.
 
-<<ConstructorTypeDef_wf, ConstructorTypeDef_wf: ``B |- CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~``>>
+<<ConstructorTypeDef_wf, ConstructorTypeDef_wf>>:
 
-<<ConstructorTypeDef_wf, ``CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B`` when>>:
+* ``CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type definition, assuming bound type ids ``B``
+
+<<ConstructorTypeDef_wf, ``CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type definition, assuming bound type ids ``B`` when>>:
 
 . Check that ``<<definable_constructor, definable_constructor(typeIR~object~)>>``.
 . Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^``.
 . Check that <<distinct_, the elements of ``typeParameterIR^{asterisk}^`` are distinct>>.
 . Let ``B~inner~`` be <<union_set, the union of the sets ``B`` and ``{ typeParameterIR^{asterisk}^ }``>>.
-. If <<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed type, assuming bound type ids ``B~inner~``>>:
+. If <<ConstructorType_wf, ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` is a well-formed constructor type, assuming bound type ids ``B~inner~``>>:
  .. The relation holds.
 
 <<nestable_typedef, ``typeIR''`` can be used in a typedef>>:
@@ -5715,31 +5711,17 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<Type_ok, Typing ``namedType [ expression~size~ ]``, under cursor ``p`` and typing context ``TC``>>:
 
-. If let ``prefixedTypeName`` be ``namedType``:
- .. Let ``typeIR~base~`` and ``typeId^{asterisk}^`` be the result of <<Type_ok, typing ``prefixedTypeName``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Let ``typedExpressionIR~size~`` be the result of <<Expr_ok, typing ``expression~size~``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~size~``>> matches pattern ``LCTK``.
- .. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~size~``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that ``value`` has type ``integerValue``.
- .. Let ``integerValue~size~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~size~`` be ``int``.
- .. Check that ``n~size~`` is greater than ``0``.
- .. Result in the type ``typeIR~base~ [ n~size~ ]`` and a set of fresh type variables ``·``.
-. Else if let ``specializedType`` be ``namedType``:
- .. Let ``typeIR~base~`` and ``typeId~fresh~^{asterisk}^`` be the result of <<Type_ok, typing ``specializedType``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~size~`` be the result of <<Expr_ok, typing ``expression~size~``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~size~``>> matches pattern ``LCTK``.
- .. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~size~``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that ``value`` has type ``integerValue``.
- .. Let ``integerValue~size~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~size~`` be ``int``.
- .. Check that ``n~size~`` is greater than ``0``.
- .. Result in the type ``typeIR~base~ [ n~size~ ]`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Let ``typeIR~base~`` and ``typeId~fresh~^{asterisk}^`` be the result of <<Type_ok, typing ``namedType``, under cursor ``p`` and typing context ``TC``>>.
+. Let ``typedExpressionIR~size~`` be the result of <<Expr_ok, typing ``expression~size~``, under cursor ``p`` and typing context ``TC``>>.
+. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~size~``>> matches pattern ``LCTK``.
+. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~size~``, under cursor ``p`` and typing context ``TC``>>.
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~size~`` be ``value``.
+. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
+. Check that ``int`` has type ``nat``.
+. Let ``n~size~`` be ``int``.
+. Check that ``n~size~`` is greater than ``0``.
+. Result in the type ``typeIR~base~ [ n~size~ ]`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<Type_ok, Typing ``LIST < typeArgument >``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -5792,7 +5774,9 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 . Let ``typeId~impl~^{asterisk}^`` be ``typeId~impl_h~^{asterisk}^ {pp} typeId~impl_t~^{asterisk}^``.
 . Result in the type argument list ``typeArgumentIR~h~ {two-colons} typeArgumentIR~t~^{asterisk}^`` and set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
-<<Sub_expl, Sub_expl: ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>
+<<Sub_expl, Sub_expl>>:
+
+* ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``
 
 <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when>>:
 
@@ -5801,7 +5785,9 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 . If <<Sub_expl_unroll, ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling>>:
  .. The relation holds.
 
-<<Sub_expl_unroll, Sub_expl_unroll: ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling>>
+<<Sub_expl_unroll, Sub_expl_unroll>>:
+
+* ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling
 
 <<Sub_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
 
@@ -5814,7 +5800,9 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
  .. If <<Sub_expl_unroll_neq, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, Sub_expl_unroll_neq: ``typeIR`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling>>
+<<Sub_expl_unroll_neq, Sub_expl_unroll_neq>>:
+
+* ``typeIR`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling
 
 <<Sub_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT < 1 >`` when they are not the same type after unrolling when>>:
 
@@ -6118,7 +6106,9 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
  .. If <<Sub_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>:
   ... The relation holds.
 
-<<Sub_impl, Sub_impl: ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>
+<<Sub_impl, Sub_impl>>:
+
+* ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``
 
 <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when>>:
 
@@ -6127,7 +6117,9 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 . If <<Sub_impl_unroll, ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling>>:
  .. The relation holds.
 
-<<Sub_impl_unroll, Sub_impl_unroll: ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling>>
+<<Sub_impl_unroll, Sub_impl_unroll>>:
+
+* ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling
 
 <<Sub_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
 
@@ -6140,7 +6132,9 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
  .. If <<Sub_impl_unroll_neq, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>:
   ... The relation holds.
 
-<<Sub_impl_unroll_neq, Sub_impl_unroll_neq: ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling>>
+<<Sub_impl_unroll_neq, Sub_impl_unroll_neq>>:
+
+* ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
 <<Sub_impl_unroll_neq, ``INT`` can be implicitly cast to ``integerTypeIR`` when they are not the same type after unrolling when>>:
 
@@ -7686,7 +7680,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``TC~3~`` be ``<<add_parameters_t, add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>``.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
 . Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
-. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
  .. Let ``TC~4~`` be ``<<add_callableDef_overload_t, add_callableDef_overload_t(BLOCK, TC~0~, callableId, externMethodTypeDefIR)>>``.
  .. Let ``externMethodPrototypeIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
  .. Result in the updated typing context ``TC~4~`` and the typed method prototype ``externMethodPrototypeIR``.
@@ -7712,7 +7706,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``TC~3~`` be ``<<add_parameters_t, add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>``.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
 . Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD ABSTRACT < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
-. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
  .. Let ``TC~4~`` be ``<<add_callableDef_non_overload_t, add_callableDef_non_overload_t(BLOCK, TC~0~, callableId, externMethodTypeDefIR)>>``.
  .. Let ``externMethodPrototypeIR`` be ``annotationList ABSTRACT typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
  .. Result in the updated typing context ``TC~4~`` and the typed method prototype ``externMethodPrototypeIR``.
@@ -7751,7 +7745,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``constructorId`` be <<constructorId, the constructor identifier for ``typeIdentifier``(``( parameterList )``)>>.
 . Let ``typeIR~extern~`` be <<typeIR_of_typeDefIR, the underlying type of ``externObjectTypeDefIR``>>.
 . Let ``constructorTypeDefIR`` be ``CONSTRUCTOR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~extern~``.
-. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
+. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
  .. Let ``TC~1~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>``.
  .. Let ``externConstructorPrototypeIR`` be ``annotationList nameIR < , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;``.
  .. Result in the updated typing context ``TC~1~`` and the typed constructor prototype ``externConstructorPrototypeIR``.
@@ -8933,7 +8927,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . If ``f`` matches pattern ``RET``:
  .. Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
  .. Let ``definedFunctionTypeDefIR`` be ``FUNCTION < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
- .. If <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
+ .. If <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
   ... Let ``TC~4~`` be ``<<add_callableDef_overload_t, add_callableDef_overload_t(p, TC~0~, callableId, definedFunctionTypeDefIR)>>``.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) blockStatementIR``.
@@ -8941,7 +8935,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Else if ``typeIR~ret~`` is equal to ``VOID``:
  .. Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
  .. Let ``definedFunctionTypeDefIR`` be ``FUNCTION < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
- .. If <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
+ .. If <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
   ... Let ``TC~4~`` be ``<<add_callableDef_overload_t, add_callableDef_overload_t(p, TC~0~, callableId, definedFunctionTypeDefIR)>>``.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) blockStatementIR``.
@@ -8957,7 +8951,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``++_++``, ``++_++``, and ``blockStatementIR`` be the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~2~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
 . Let ``actionTypeDefIR`` be ``ACTION ( parameterIR^{asterisk}^ )``.
-. If <<CallableTypeDef_wf, ``actionTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``actionTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
  .. Let ``TC~3~`` be ``<<add_callableDef_non_overload_t, add_callableDef_non_overload_t(p, TC~0~, callableId, actionTypeDefIR)>>``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``actionDeclarationIR`` be ``annotationList ACTION nameIR ( parameterIR^{asterisk}^ ) blockStatementIR``.
@@ -9045,7 +9039,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``TC~3~`` be ``<<add_parameters_t, add_parameters_t(LOCAL, TC~2~, parameterIR^{asterisk}^)>>``.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
 . Let ``externFunctionTypeDefIR`` be ``EXTERN_FUNCTION < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
-. If <<CallableTypeDef_wf, ``externFunctionTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``externFunctionTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~4~`` be ``<<add_callableDef_overload_t, add_callableDef_overload_t(GLOBAL, TC~0~, callableId, externFunctionTypeDefIR)>>``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``externFunctionDeclarationIR`` be ``annotationList EXTERN typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
@@ -9107,12 +9101,12 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 . Let ``parserState^{asterisk}^`` be <<flatten_parserStateList, the list of parser states in ``parserStateList``>>.
 . Let ``parserStateIR^{asterisk}^`` be the result of <<ParserStates_ok, typing ``parserState^{asterisk}^``, under typing context ``TC~5~``>>.
 . Let ``callableTypeDefIR`` be ``PARSER_APPLY ( parameterIR^{asterisk}^ )``.
-. If <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``constructorId`` be <<constructorId, the constructor identifier for ``name``(``constructorParameterListOpt``)>>.
  .. Let ``typeIR~parser~`` be ``PARSER nameIR < · > ( parameterIR^{asterisk}^ )``.
  .. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR < · , · > ( constructorParameterIR^{asterisk}^ ) : typeIR~parser~``.
- .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+ .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``TC~6~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>``.
   ... Let ``parserDeclarationIR`` be ``annotationList PARSER nameIR < · > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }``.
   ... Result in the updated typing context ``TC~6~`` and the typed declaration ``parserDeclarationIR``.
@@ -9133,12 +9127,12 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 . Let ``TC~5~`` be ``TC~4~[LOCAL.KIND = CONTROL_APPLY_METHOD]``.
 . Let ``++_++``, ``++_++``, and ``controlBodyIR`` be the result of <<Block_ok, typing ``controlBody``, under typing context ``TC~5~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
 . Let ``callableTypeDefIR`` be ``CONTROL_APPLY ( parameterIR^{asterisk}^ )``.
-. If <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``constructorId`` be <<constructorId, the constructor identifier for ``name``(``constructorParameterListOpt``)>>.
  .. Let ``typeIR~control~`` be ``CONTROL nameIR < · > ( parameterIR^{asterisk}^ )``.
  .. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR < · , · > ( constructorParameterIR^{asterisk}^ ) : typeIR~control~``.
- .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+ .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``TC~6~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>``.
   ... Let ``controlDeclarationIR`` be ``annotationList CONTROL nameIR < · > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }``.
   ... Result in the updated typing context ``TC~6~`` and the typed declaration ``controlDeclarationIR``.
@@ -9155,7 +9149,7 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 +
 for each ``name~field~`` in ``name~field~^{asterisk}^``
 . Let ``enumTypeDefIR`` be ``ENUM nameIR { nameIR~field~^{asterisk}^ }``.
-. If <<TypeDef_wf, ``enumTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``enumTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~1~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, enumTypeDefIR)>>``.
  .. Let ``id~field~^{asterisk}^`` be the list of ``id~field~``, obtained by repeating:
 +
@@ -9213,7 +9207,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 +
 for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Let ``TC~2~`` be <<add_vars_t, ``TC~0~`` with mappings from each of ``id~field~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` added to the ``GLOBAL`` layer>>.
- .. If <<TypeDef_wf, ``enumTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+ .. If <<TypeDef_wf, ``enumTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~2~, nameIR, enumTypeDefIR)>>``.
   ... Let ``enumTypeDeclarationIR`` be ``annotationList ENUM typeIR nameIR { namedExpressionIR~field~^{asterisk}^ }``.
   ... Result in the updated typing context ``TC~3~`` and the typed declaration ``enumTypeDeclarationIR``.
@@ -9247,7 +9241,7 @@ for each ``type~field~`` in ``type~field~^{asterisk}^``
 +
 for each ``name~field~`` in ``name~field~^{asterisk}^``
 . Let ``structTypeDefIR`` be ``STRUCT nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
-. If <<TypeDef_wf, ``structTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``structTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, structTypeDefIR)>>``.
  .. Let ``structTypeDeclarationIR`` be ``annotationList STRUCT nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~field~ typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
  .. Result in the updated typing context ``TC~2~`` and the typed declaration ``structTypeDeclarationIR``.
@@ -9281,7 +9275,7 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Let ``headerTypeDefIR`` be ``HEADER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
-. If <<TypeDef_wf, ``headerTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``headerTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, headerTypeDefIR)>>``.
  .. Let ``headerTypeDeclarationIR`` be ``annotationList HEADER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~f~ typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
  .. Result in the updated typing context ``TC~2~`` and the typed declaration ``headerTypeDeclarationIR``.
@@ -9315,7 +9309,7 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Let ``headerUnionTypeDefIR`` be ``HEADER_UNION nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
-. If <<TypeDef_wf, ``headerUnionTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``headerUnionTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, headerUnionTypeDefIR)>>``.
  .. Let ``headerUnionTypeDeclarationIR`` be ``annotationList HEADER_UNION nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~f~ typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
  .. Result in the updated typing context ``TC~2~`` and the typed declaration ``headerUnionTypeDeclarationIR``.
@@ -9328,7 +9322,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
  .. If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``typeDefIR~typedef~`` be ``TYPEDEF nameIR typeIR``.
-  ... If <<TypeDef_wf, ``typeDefIR~typedef~`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+  ... If <<TypeDef_wf, ``typeDefIR~typedef~`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
    .... Let ``TC~1~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, typeDefIR~typedef~)>>``.
    .... Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF typeIR nameIR ;``.
    .... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
@@ -9346,7 +9340,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``typeIR`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR``>>.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``typedefTypeIR`` be ``TYPEDEF nameIR typeIR``.
-  ... If <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+  ... If <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
    .... Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, typedefTypeIR)>>``.
    .... Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;``.
    .... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
@@ -9355,7 +9349,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``typeIR`` be <<specialize_typeDefIR, ``typeDefIR`` specialized by ``·``>>.
   ... Let ``typedefTypeIR`` be ``TYPEDEF nameIR typeIR``.
-  ... If <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+  ... If <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
    .... Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, typedefTypeIR)>>``.
    .... Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;``.
    .... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
@@ -9367,7 +9361,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``newTypeIR`` be ``TYPE nameIR typeIR``.
- .. If <<TypeDef_wf, ``newTypeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+ .. If <<TypeDef_wf, ``newTypeIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``TC~1~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, newTypeIR)>>``.
   ... Let ``typedefDeclarationIR`` be ``annotationList TYPE typeIR nameIR ;``.
   ... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
@@ -9388,7 +9382,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``parameterIR^{asterisk}^`` and ``typeId~impl~^{asterisk}^`` be the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``parserObjectTypeDefIR`` be ``PARSER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )``.
-. If <<TypeDef_wf, ``parserObjectTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``parserObjectTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, parserObjectTypeDefIR)>>``.
  .. Let ``parserTypeDeclarationIR`` be ``annotationList PARSER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
  .. Result in the updated typing context ``TC~3~`` and the typed declaration ``parserTypeDeclarationIR``.
@@ -9409,7 +9403,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``parameterIR^{asterisk}^`` and ``typeId~impl~^{asterisk}^`` be the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``controlObjectTypeDefIR`` be ``CONTROL nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ )``.
-. If <<TypeDef_wf, ``controlObjectTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``controlObjectTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, controlObjectTypeDefIR)>>``.
  .. Let ``controlTypeDeclarationIR`` be ``annotationList CONTROL nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
  .. Result in the updated typing context ``TC~3~`` and the typed declaration ``controlTypeDeclarationIR``.
@@ -9437,12 +9431,12 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 +
 for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``packageObjectTypeDefIR`` be ``PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { typeIR~package_inner~^{asterisk}^ }``.
-. If <<TypeDef_wf, ``packageObjectTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+. If <<TypeDef_wf, ``packageObjectTypeDefIR`` is a well-formed type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
  .. Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, packageObjectTypeDefIR)>>``.
  .. Let ``constructorId`` be <<constructorId, the constructor identifier for ``name``(``( parameterList )``)>>.
  .. Let ``typeIR~package~`` be <<typeIR_of_typeDefIR, the underlying type of ``packageObjectTypeDefIR``>>.
  .. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR~package~``.
- .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
+ .. If <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``<<bound, bound(GLOBAL, TC~0~)>>``>>:
   ... Let ``TC~4~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~3~, constructorId, constructorTypeDefIR)>>``.
   ... Let ``packageTypeDeclarationIR`` be ``annotationList PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;``.
   ... Result in the updated typing context ``TC~4~`` and the typed declaration ``packageTypeDeclarationIR``.
@@ -9608,7 +9602,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Let ``(callableId, callableTypeDefIR, id*)`` be <<option_get, *!*>> <<find_callableDef_overloaded_t, the overloaded callable definition of ``prefixedNameIR``( ``argumentIR'^{asterisk}^`` ) in the ``p`` layer of ``TC``>>.
  .. Check that ``(callableId, callableTypeDefIR, id*)`` has type ``(callableId, actionTypeIR, id*)``.
  .. Let ``(callableId, actionTypeIR, id~default~^{asterisk}^)`` be ``(callableId, callableTypeDefIR, id*)``.
- .. If <<CallableType_wf, ``actionTypeIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
+ .. If <<CallableType_wf, ``actionTypeIR`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
   ... Result in the callable type ``actionTypeIR`` with fresh type variables ``·`` and default parameter ids ``id~default~^{asterisk}^``.
 . Let ``typeArgumentIR^{asterisk}^`` be ``typeArgumentIR'^{asterisk}^``.
 . Let ``(callableId, callableTypeDefIR, id*)'^?^`` be <<find_callableDef_overloaded_t, the overloaded callable definition of ``prefixedNameIR``( ``argumentIR'^{asterisk}^`` ) in the ``p`` layer of ``TC``>>.
@@ -9620,7 +9614,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Let ``(functionTypeIR, typeId~impl~^{asterisk}^)`` be ``(callableTypeIR, typeId*)``.
  .. Let ``bound'`` be ``<<bound, bound(p, TC)>>``.
  .. Let ``bound`` be <<union_set, the union of the sets ``bound'`` and ``{ typeId~impl~^{asterisk}^ }``>>.
- .. If <<CallableType_wf, ``functionTypeIR`` is a well-formed type, assuming bound type ids ``bound``>>:
+ .. If <<CallableType_wf, ``functionTypeIR`` is a well-formed callable type, assuming bound type ids ``bound``>>:
   ... Result in the callable type ``functionTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<CallableType_ok, Finding the type of ``typedExpressionIR~base~ . nameIR``<``·``>(``·``), under cursor ``p`` and typing context ``TC``>>:
@@ -9683,7 +9677,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``(externMethodTypeIR, typeId~impl~^{asterisk}^)`` be ``(callableTypeIR, typeId*)``.
 . Let ``bound'`` be ``<<bound, bound(p, TC)>>``.
 . Let ``bound`` be <<union_set, the union of the sets ``bound'`` and ``{ typeId~impl~^{asterisk}^ }``>>.
-. If <<CallableType_wf, ``externMethodTypeIR`` is a well-formed type, assuming bound type ids ``bound``>>:
+. If <<CallableType_wf, ``externMethodTypeIR`` is a well-formed callable type, assuming bound type ids ``bound``>>:
  .. Result in the callable type ``externMethodTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<CallableType_ok, Finding the type of ``typedExpressionIR~base~ . "apply"``<``·``>(``argumentIR'^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
@@ -9781,7 +9775,7 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
 . Let ``functionTypeIR~inferred~`` be ``FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
-. If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
+. If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_definedFunction, callable_definedFunction(p, TC)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -9815,7 +9809,7 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
 . Let ``functionTypeIR~inferred~`` be ``EXTERN_FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
-. If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
+. If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externFunction, callable_externFunction(p, TC)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -9856,7 +9850,7 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
 . Let ``externMethodTypeIR~inferred~`` be ``EXTERN_METHOD ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
-. If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
+. If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externMethod, callable_externMethod(p, TC)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -9890,7 +9884,7 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
 . Let ``externMethodTypeIR~inferred~`` be ``EXTERN_METHOD ABSTRACT ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
-. If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
+. If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externAbstractMethod, callable_externAbstractMethod(p, TC)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -9926,7 +9920,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``(constructorTypeIR, typeId~impl~^{asterisk}^)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``>>.
 . Let ``bound`` be ``<<bound, bound(p, TC)>>``.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
-. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>:
  .. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
@@ -9937,7 +9931,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``(constructorTypeIR, typeId~impl~^{asterisk}^)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``>>.
 . Let ``bound`` be ``<<bound, bound(p, TC)>>``.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
-. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>:
  .. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
@@ -9950,7 +9944,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``(constructorTypeIR, typeId~impl~^{asterisk}^)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``>>.
 . Let ``bound`` be ``<<bound, bound(p, TC)>>``.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
-. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed type, assuming bound type ids ``B``>>:
+. If <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>:
  .. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<Inst_ok, Inst_ok>>:
@@ -9991,7 +9985,7 @@ for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~object~``>>.
 . Let ``constructorTypeIR~inferred~`` be ``CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~``.
-. If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(GLOBAL, TC)>>``>>:
+. If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``<<bound, bound(GLOBAL, TC)>>``>>:
  .. Check that ``<<instantiable, instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``BLOCK``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the constructed type ``typeIR~object_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -10027,7 +10021,7 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~object~``>>.
 . Let ``constructorTypeIR~inferred~`` be ``CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~``.
-. If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed type, assuming bound type ids ``<<bound, bound(cursor, TC)>>``>>:
+. If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``<<bound, bound(cursor, TC)>>``>>:
  .. Check that ``<<instantiable, instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>``.
  .. Let ``argumentIR~cast~^{asterisk}^`` be the result of <<Call_convention_ok, checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``cursor``, typing context ``TC``, and action context ``NOACTION``>>.
  .. Result in the constructed type ``typeIR~object_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
@@ -10639,7 +10633,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . If ``f`` matches pattern ``RET``:
  .. Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
  .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
- .. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
+ .. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
   ... Let ``externMethodTypeDefEnv~init~`` be <<update_map, the map ``externMethodTypeDefEnv`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR``>>.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) blockStatementIR``.
@@ -10647,7 +10641,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Else if ``typeIR~ret~`` is equal to ``VOID``:
  .. Let ``callableId`` be <<callableId, the callable identifier for ``name``(``parameterList``)>>.
  .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR~ret~``.
- .. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed type, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
+ .. If <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``<<bound, bound(p, TC~0~)>>``>>:
   ... Let ``externMethodTypeDefEnv~init~`` be <<update_map, the map ``externMethodTypeDefEnv`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR``>>.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) blockStatementIR``.
@@ -14574,15 +14568,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . If let ``annotationList FOR ( typeIR nameIR IN forCollectionExpressionIR ) statementIR`` be ``forStatementIR``:
  .. Let ``EC~1~`` be ``<<enter_e, enter_e(EC)>>``.
- .. Let <<ForCollectionExpr_eval, ``EC~1~ STO |- forCollectionExpressionIR : EC~2~ STO~1~ expressionResult``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. Let <<ForCollectionExpr_eval, ``EC~1~ STO |- forCollectionExpressionIR : EC~2~ STO~1~ expressionListResult``>>.
+ .. If let ``exitResult`` be ``expressionListResult``:
   ... Let ``EC~3~`` be ``<<exit_e, exit_e(EC~2~)>>``.
   ... Result in 
 * the evaluation context ``EC~3~``,
 * the updated store ``STO~1~``,
 * and the instantiated statement ``EXIT``.
- .. Else if let ``value~collection~`` be ``expressionResult``:
-  ... Let ``value^{asterisk}^`` be ``<<get_values_from_collection, get_values_from_collection(value~collection~)>>``.
+ .. Else if let ``value^{asterisk}^`` be ``expressionListResult``:
   ... Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(LOCAL, EC, typeIR)>>``.
   ... Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
   ... Let ``EC~3~`` be <<add_var_e, ``EC~2~`` with ``nameIR`` : ``value~init~`` added to ``LOCAL``>>.
@@ -15814,7 +15807,15 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<ForCollectionExpr_eval, ``EC~0~ STO~0~ |- typedExpressionIR : % % %``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. Result in ``EC~1~``, ``STO~1~``, and ``expressionResult``.
+. If let ``exitResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. Else if let ``value'`` be ``expressionResult``:
+ .. If let ``listValue`` be ``value'``:
+  ... Let ``LIST [ value^{asterisk}^ ]`` be ``listValue``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``value^{asterisk}^``.
+ .. Else let ``headerStackValue`` be ``value'``:
+  ... Let ``HEADER_STACK [ value^{asterisk}^ ( ++_++ ; ++_++ ) ]`` be ``headerStackValue``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``value^{asterisk}^``.
 
 <<ForCollectionExpr_eval, ``EC~0~ STO~0~ |- typedExpressionIR~l~ .. typedExpressionIR~r~ : % % %``>>:
 
@@ -15826,29 +15827,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. If let ``exitResult`` be ``expressionResult'``:
   ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
  .. Else if let ``value~r~`` be ``expressionResult'``:
-  ... Let ``setValue`` be ``SET { value~l~ .. value~r~ }``.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``setValue``.
-
-<<ForInLoop_eval, ForInLoop_eval: ``evalContext store |- nameIR value^{asterisk}^ statementIR : % % %``>>
-
-<<ForInLoop_eval, ``evalContext store |- nameIR value^{asterisk}^ statementIR : % % %``>>:
-
-. If ``value^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
-. Let ``value''''^{asterisk}^`` be ``value^{asterisk}^``.
-. Else if let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value''''^{asterisk}^``:
- .. Let ``EC~1~`` be ``<<update_var_e, update_var_e(LOCAL, evalContext, nameIR, value~h~)>>``.
- .. Let ``EC~2~``, ``STO~1~``, and ``statementResult'`` be the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. If let ``exitResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ``EXIT``.
- .. Else if let ``returnResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
- .. Else let ``forBreakResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ````.
- .. Let ``EC~2~``, ``STO~1~``, and ``statementResult~loop~`` be the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. Else if ``statementResult~loop~`` is in ``[, CONTINUE]``:
-  ... Let <<ForInLoop_eval, ``EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult``>>.
-  ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult``.
+  ... Let ``value^{asterisk}^`` be ``<<get_values_from_range, get_values_from_range(value~l~, value~r~)>>``.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``value^{asterisk}^``.
 
 <<increment, increment(value)>>
 
@@ -15875,19 +15855,26 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Else if ``<<bin_gt, bin_gt(value~l~, value~r~)>>``:
  .. Return ``·``.
 
-<<get_values_from_collection, get_values_from_collection(value')>>
+<<ForInLoop_eval, ForInLoop_eval: ``evalContext store |- nameIR value^{asterisk}^ statementIR : % % %``>>
 
+<<ForInLoop_eval, ``evalContext store |- nameIR value^{asterisk}^ statementIR : % % %``>>:
 
-. If let ``listValue`` be ``value'``:
- .. Let ``LIST [ value^{asterisk}^ ]`` be ``listValue``.
- .. Return ``value^{asterisk}^``.
-. Else if let ``headerStackValue`` be ``value'``:
- .. Let ``HEADER_STACK [ value^{asterisk}^ ( ++_++ ; ++_++ ) ]`` be ``headerStackValue``.
- .. Return ``value^{asterisk}^``.
-. Else let ``setValue`` be ``value'``:
- .. Check that ``setValue`` matches pattern ``SET { % .. % }``.
- .. Let ``SET { value~l~ .. value~r~ }`` be ``setValue``.
- .. Return ``<<get_values_from_range, get_values_from_range(value~l~, value~r~)>>``.
+. If ``value^{asterisk}^`` is equal to ``·``:
+ .. Result in ``evalContext``, ``store``, and ````.
+. Let ``value''''^{asterisk}^`` be ``value^{asterisk}^``.
+. Else if let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value''''^{asterisk}^``:
+ .. Let ``EC~1~`` be ``<<update_var_e, update_var_e(LOCAL, evalContext, nameIR, value~h~)>>``.
+ .. Let ``EC~2~``, ``STO~1~``, and ``statementResult'`` be the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
+ .. If let ``exitResult`` be ``statementResult'``:
+  ... Result in ``EC~2~``, ``STO~1~``, and ``EXIT``.
+ .. Else if let ``returnResult`` be ``statementResult'``:
+  ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
+ .. Else let ``forBreakResult`` be ``statementResult'``:
+  ... Result in ``EC~2~``, ``STO~1~``, and ````.
+ .. Let ``EC~2~``, ``STO~1~``, and ``statementResult~loop~`` be the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
+ .. Else if ``statementResult~loop~`` is in ``[, CONTINUE]``:
+  ... Let <<ForInLoop_eval, ``EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult``>>.
+  ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult``.
 
 <<match_switchLabelIR_table, match_switchLabelIR_table(id, switchLabelIR)>>
 
