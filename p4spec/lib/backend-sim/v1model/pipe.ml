@@ -240,7 +240,10 @@ struct
     | [ table_name_unqualified ] ->
         let value_tableName_unqualified = wrap_text_v table_name_unqualified in
         Spec.Func.find_store_unqualified value_sto value_tableName_unqualified
-    | _ -> Spec.Func.find_store_qualified value_sto value_tableName
+    | names ->
+        let values_name = List.map wrap_text_v names in
+        let value_objectId = wrap_list_v "nameIR" values_name in
+        Spec.Func.find_store_qualified value_sto value_objectId
 
   let update_table (value_sto : Value.t) (value_tableName : Value.t)
       (value_tableObject : Value.t) : Value.t =
@@ -251,8 +254,10 @@ struct
         let value_tableName_unqualified = wrap_text_v table_name_unqualified in
         Spec.Func.update_store_unqualified value_sto value_tableName_unqualified
           value_tableObject
-    | _ ->
-        Spec.Func.update_store_qualified value_sto value_tableName
+    | names ->
+        let values_name = List.map wrap_text_v names in
+        let value_objectId = wrap_list_v "nameIR" values_name in
+        Spec.Func.update_store_qualified value_sto value_objectId
           value_tableObject
 
   let table_add_entry (value_sto : Value.t) (value_tableName : Value.t)

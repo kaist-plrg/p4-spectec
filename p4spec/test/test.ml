@@ -179,7 +179,7 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
         }
 
 let run_test_driver mode negative specdir relname includes_p4 excludes_p4
-    testdir_p4 =
+    testdirs_p4 =
   let spec_sim =
     match mode with
     | `IL ->
@@ -193,7 +193,9 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
     excludes_p4 |> Filesys.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 = Filesys.collect_files ~suffix:".p4" testdir_p4 in
+  let filenames_p4 =
+    testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+  in
   let total = List.length filenames_p4 in
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
@@ -220,7 +222,7 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation name"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdir_p4 = flag "-d" (required string) ~doc:"p4 test directory"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and negative = flag "-neg" no_arg ~doc:"use negative typing rules"
      and mode =
        Command.Param.choose_one
@@ -234,7 +236,7 @@ let run_command =
      in
      fun () ->
        run_test_driver mode negative specdir relname includes_p4 excludes_p4
-         testdir_p4)
+         testdirs_p4)
 
 (* Simulator test *)
 
@@ -433,7 +435,9 @@ let cover_dangling_command =
      and relname = flag "-rel" (required string) ~doc:"relation name"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdirs_p4 = flag "-d" (listed string) ~doc:"p4 test directory" in
+     and testdirs_p4 =
+       flag "-p4-dir" (listed string) ~doc:"p4 test directories"
+     in
      fun () ->
        cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4)
 
@@ -620,12 +624,14 @@ let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
           fail_run = stat.fail_run + 1;
         }
 
-let run_parser_test_driver includes_p4 excludes_p4 testdir_p4 specdir =
+let run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
   let excludes_p4 =
     excludes_p4 |> Filesys.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 = Filesys.collect_files ~suffix:".p4" testdir_p4 in
+  let filenames_p4 =
+    testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+  in
   let spec = elab specdir in
   let total = List.length filenames_p4 in
   let stat = empty_stat in
@@ -646,9 +652,10 @@ let run_parser_command =
      let open Core.Command.Param in
      let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdir_p4 = flag "-d" (required string) ~doc:"p4 test directory"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
-     fun () -> run_parser_test_driver includes_p4 excludes_p4 testdir_p4 specdir)
+     fun () ->
+       run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir)
 
 let command =
   Core.Command.group ~summary:"p4spec-test"
