@@ -1,285 +1,305 @@
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:18.1-19.30
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X) : text
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:25.1-26.43
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:25.1-26.43
 def $ite<X>(bool, X, X) : X =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:27.1-27.34
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:27.1-27.34
   clause 0 : (bool, X_t, X_f) = X_t
   -- if (bool = true)
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:28.1-28.35
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:28.1-28.35
   clause 1 : (bool, X_t, X_f) = X_f
   -- if (bool = false)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:34.1-34.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:34.1-34.33
 builtin def $sum_nat(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:36.1-36.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:36.1-36.33
 builtin def $max_nat(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:38.1-38.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:38.1-38.33
 builtin def $min_nat(nat*) : nat
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:44.1-44.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:44.1-44.33
 builtin def $sum_int(int*) : int
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:46.1-46.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:46.1-46.33
 builtin def $max_int(int*) : int
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:48.1-48.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:48.1-48.33
 builtin def $min_int(int*) : int
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:54.1-54.37
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:54.1-54.37
 builtin def $text_to_int(text) : int
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:55.1-55.37
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:55.1-55.37
 builtin def $int_to_text(int) : text
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:57.1-58.43
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:57.1-58.43
 def $concat_text(text*) : text =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:59.1-59.27
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:59.1-59.27
   clause 0 : (text*{text <- text*}) = ""
   -- if text*{text <- text*} matches []
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:60.1-60.58
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:60.1-60.58
   clause 1 : (text*{text <- text*}) = t_h ++ $concat_text(t_t*{t_t <- t_t*})
   -- if text*{text <- text*} matches _ :: _
   -- let t_h :: t_t*{t_t <- t_t*} = text*{text <- text*}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:62.1-63.77
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:62.1-63.77
 def $replace_text(text, text, text) : text =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:65.1-66.44
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:65.1-66.44
   clause 0 : (t, t_old, t_new) = $replace_text'(0, |t|, t, t_old, t_new)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:64.1-64.54
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:64.1-64.54
 def $replace_text'(nat, nat, text, text, text) : text =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:67.1-67.54
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:67.1-67.54
   clause 0 : (n_len, n_len', t, t_old, t_new) = t
   -- if (n_len = n_len')
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:68.1-71.67
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:68.1-71.67
   clause 1 : (n, n_len, t, t_old, t_new) = $replace_text'((n + 1), n_len, t_replaced, t_old, t_new)
   -- if (n < n_len)
   -- let t_replaced = $ite<text>((t[n] = t_old), t[[n] = t_new], t)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:73.1-74.81
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:73.1-74.81
 def $replace_text_except(text, text, text) : text =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:76.1-77.51
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:76.1-77.51
   clause 0 : (t, t_old, t_new) = $replace_text_except'(0, |t|, t, t_old, t_new)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:75.1-75.61
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:75.1-75.61
 def $replace_text_except'(nat, nat, text, text, text) : text =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:78.1-78.61
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:78.1-78.61
   clause 0 : (n_len, n_len', t, t_old, t_new) = t
   -- if (n_len = n_len')
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:79.1-82.67
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:79.1-82.67
   clause 1 : (n, n_len, t, t_old, t_new) = $replace_text_except'((n + 1), n_len, t_replaced, t_old, t_new)
   -- if (n < n_len)
   -- let t_replaced = $ite<text>((t[n] = t_old), t, t[[n] = t_new])
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:84.1-85.62
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:84.1-85.62
 builtin def $strip_prefix(text, text) : text
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:86.1-87.62
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:86.1-87.62
 builtin def $strip_suffix(text, text) : text
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:88.1-89.61
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:88.1-89.61
 builtin def $strip_all_whitespace(text) : text
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:95.1-95.28
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:95.1-95.28
 def $is_some_<X>(X?) : bool =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:96.1-96.30
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:96.1-96.30
   clause 0 : (X?{X <- X?}) = false
   -- if X?{X <- X?} matches ()
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:97.1-97.27
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:97.1-97.27
   clause 1 : (X'?{X' <- X'?}) = true
   -- if X'?{X' <- X'?} matches (_)
   -- let ?(X) = X'?{X' <- X'?}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:99.1-99.29
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:99.1-99.29
 def $opt_as_seq_<X>(X?) : X* =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:100.1-100.31
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:100.1-100.31
   clause 0 : (X?{X <- X?}) = []
   -- if X?{X <- X?} matches ()
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:101.1-101.31
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:101.1-101.31
   clause 1 : (X'?{X' <- X'?}) = [X]
   -- if X'?{X' <- X'?} matches (_)
   -- let ?(X) = X'?{X' <- X'?}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:107.1-108.66
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:107.1-108.66
 def $exists_(bool*) : bool =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:109.1-109.26
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:109.1-109.26
   clause 0 : (bool*{bool <- bool*}) = false
   -- if bool*{bool <- bool*} matches []
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:110.1-110.50
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:110.1-110.50
   clause 1 : (bool*{bool <- bool*}) = (b_h \/ $exists_(b_t*{b_t <- b_t*}))
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:112.1-113.40
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:112.1-113.40
 def $forall_(bool*) : bool =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:114.1-114.25
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:114.1-114.25
   clause 0 : (bool*{bool <- bool*}) = true
   -- if bool*{bool <- bool*} matches []
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:115.1-115.50
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:115.1-115.50
   clause 1 : (bool*{bool <- bool*}) = (b_h /\ $forall_(b_t*{b_t <- b_t*}))
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:117.1-118.62
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:117.1-118.62
 def $init_(nat) : nat* =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:119.1-119.20
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:119.1-119.20
   clause 0 : (nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:120.1-122.22
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:120.1-122.22
   clause 1 : (n) = n' :: $init_(n')
   -- if (n =/= 0)
   -- let int = (n - 1)
   -- if int <: nat
   -- let n' = int as nat
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:124.1-125.47
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:124.1-125.47
 def $repeat_<X>(X, nat) : X* =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:126.1-126.28
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:126.1-126.28
   clause 0 : (X, nat) = []
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:127.1-129.22
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:127.1-129.22
   clause 1 : (X, n) = [X] ++ $repeat_<X>(X, n')
   -- if (n =/= 0)
   -- let int = (n - 1)
   -- if int <: nat
   -- let n' = int as nat
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:131.1-131.30
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:131.1-131.30
 builtin def $rev_<X>(X*) : X*
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:133.1-133.36
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:133.1-133.36
 builtin def $concat_<X>(X**) : X*
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:135.1-135.47
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:135.1-135.47
 builtin def $partition_<X>(X*, nat) : (X*, X*)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:137.1-137.46
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:137.1-137.46
 def $filter_<X>(X*, $cond(X) : bool) : X* =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:138.1-138.38
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:138.1-138.38
   clause 0 : (X*{X <- X*}, $cond) = []
   -- if X*{X <- X*} matches []
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:139.1-141.21
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:139.1-141.21
   clause 1 : (X*{X <- X*}, $cond) = X_h :: $filter_<X>(X_t*{X_t <- X_t*}, $cond)
   -- if X*{X <- X*} matches _ :: _
   -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
   -- if $cond(X_h)
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:142.1-144.22
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:142.1-144.22
   clause 2 : (X*{X <- X*}, $cond) = $filter_<X>(X_t*{X_t <- X_t*}, $cond)
   -- if X*{X <- X*} matches _ :: _
   -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
   -- if ~$cond(X_h)
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:146.1-146.43
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:146.1-146.43
 builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:148.1-148.45
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:148.1-148.45
 builtin def $sort_<X>((nat, X)*) : (nat, X)*
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:150.1-152.60
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:150.1-152.60
 builtin def $distinct_<K>(K*) : bool
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:158.17-158.24
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:158.17-158.24
 syntax set<K> = 
    | { K* }
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:160.1-160.27
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:160.1-160.27
 def $empty_set<K> : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:161.1-161.29
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:161.1-161.29
   clause 0 :  = { [] }
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:163.1-164.52
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:163.1-164.52
 def $in_set<K>(K, set<K>) : bool =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:165.1-165.41
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:165.1-165.41
   clause 0 : (K, { K_e*{K_e <- K_e*} }) = K <- K_e*{K_e <- K_e*}
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:167.1-168.60
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:167.1-168.60
 builtin def $intersect_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:170.1-171.53
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:170.1-171.53
 builtin def $union_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:173.1-174.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:173.1-174.44
 builtin def $unions_set<K>(set<K>*) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:176.1-177.58
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:176.1-177.58
 builtin def $diff_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:179.1-181.47
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:179.1-181.47
 builtin def $sub_set<K>(set<K>, set<K>) : bool
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:183.1-185.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:183.1-185.44
 builtin def $eq_set<K>(set<K>, set<K>) : bool
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:191.21-191.27
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:191.21-191.27
 syntax pair<K, V> = 
    | K : V
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:193.20-193.35
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:193.20-193.35
 syntax map<K, V> = set<pair<K, V>>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:195.1-195.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:195.1-195.33
 def $empty_map<K, V> : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:196.1-196.32
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:196.1-196.32
   clause 0 :  = { [] }
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:198.1-199.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:198.1-199.44
 def $dom_map<K, V>(map<K, V>) : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:200.1-200.45
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:200.1-200.45
   clause 0 : ({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:202.1-203.31
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:202.1-203.31
 builtin def $find_map<K, V>(map<K, V>, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:205.1-206.31
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:205.1-206.31
 builtin def $find_maps<K, V>(map<K, V>*, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:208.1-209.39
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:208.1-209.39
 builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:211.1-211.59
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:211.1-211.59
 builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:213.1-214.74
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:213.1-214.74
 builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0-aux.watsup:216.1-216.56
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:216.1-216.56
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux/0-aux.watsup:217.1-220.56
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:217.1-220.56
   clause 0 : ({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, { K_b : V_b*{K_b <- K_b*, V_b <- V_b*} }) = { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} }
   -- let { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} } = $adds_map<K, V>({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*})
+
+;; ../../../../spec-concrete/0-aux/0.1-example.watsup:1.1-2.29
+def $modulo(nat, nat) : nat? =
+
+  ;; ../../../../spec-concrete/0-aux/0.1-example.watsup:4.1-5.18
+  clause 0 : (n_a, n_b) = ?((n_a \ n_b))
+  -- if (n_b =/= 0)
+
+  ;; ../../../../spec-concrete/0-aux/0.1-example.watsup:6.1-7.16
+  clause 1 : (n_a, n_b) = ?()
+  -- if (n_b = 0)
+
+;; ../../../../spec-concrete/0-aux/0.1-example.watsup:9.1-10.29
+def $modulo_42(nat) : nat =
+
+  ;; ../../../../spec-concrete/0-aux/0.1-example.watsup:12.1-13.34
+  clause 0 : (n) = n_result
+  -- let nat?{nat <- nat?} = $modulo(n, 42)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n_result) = nat?{nat <- nat?}
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:6.1-7.7
 syntax trailingCommaOpt = 
@@ -3484,9 +3504,9 @@ syntax recordTypeIR =
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:143.20-143.36
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:143.20-143.35
 syntax setTypeIR = 
-   | set< typeIR* >
+   | set< typeIR >
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:146.3-147.17
 syntax tableMetadataEnumTypeIR = 
@@ -3509,7 +3529,7 @@ syntax synthesizedTypeIR =
    | seq< typeIR* ,...>
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
-   | set< typeIR* >
+   | set< typeIR >
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
@@ -3546,7 +3566,7 @@ syntax typeIR =
    | seq< typeIR* ,...>
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
-   | set< typeIR* >
+   | set< typeIR >
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
@@ -4817,10 +4837,10 @@ def $free_typeIR(typeIR) : bound =
   -- if recordTypeIR matches `RECORD{%,...}`
   -- let record{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} ,...} = recordTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:109.1-110.47
-  clause 23 : (typeIR') = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:109.1-110.25
+  clause 23 : (typeIR') = $free_typeIR(typeIR)
   -- if typeIR' <: setTypeIR
-  -- let set< typeIR*{typeIR <- typeIR*} > = typeIR' as setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:112.1-112.49
   clause 24 : (typeIR) = { [] }
@@ -4930,7 +4950,7 @@ def $empty_theta : theta =
 ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:10.1-11.30
 def $capture_avoiding_(theta, typeParameterIR*, bound) : (theta, typeParameterIR*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:39.1-54.64
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:44.1-59.64
   clause 0 : (theta, typeParameterIR*{typeParameterIR <- typeParameterIR*}, B) = (theta_fresh, typeParameterIR_fresh*{typeParameterIR_fresh <- typeParameterIR_fresh*})
   -- let { typeId_free*{typeId_free <- typeId_free*} } = $diff_set<typeId>(B, { typeParameterIR*{typeParameterIR <- typeParameterIR*} })
   -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(theta, typeId_free))*{typeIR? <- typeIR?*, typeId_free <- typeId_free*}
@@ -4944,7 +4964,7 @@ def $capture_avoiding_(theta, typeParameterIR*, bound) : (theta, typeParameterIR
 ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:12.1-13.30
 def $capture_avoiding(theta, typeId*, typeId*, bound) : (theta, typeId*, typeId*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:56.1-75.80
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:61.1-80.80
   clause 0 : (theta, typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}, B) = (theta_fresh, typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*}, typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*})
   -- let { typeId_free*{typeId_free <- typeId_free*} } = $diff_set<typeId>(B, { typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} })
   -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(theta, typeId_free))*{typeIR? <- typeIR?*, typeId_free <- typeId_free*}
@@ -4960,23 +4980,23 @@ def $capture_avoiding(theta, typeId*, typeId*, bound) : (theta, typeId*, typeId*
 ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:15.1-16.40
 def $subst_typeIR(theta, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:81.1-81.45
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:86.1-86.45
   clause 0 : (set<pair<typeId, typeIR>>, typeIR) = typeIR
   -- if (set<pair<typeId, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:82.1-83.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:87.1-88.15
   clause 1 : (theta, typeIR) = $subst_typeIR'(theta, typeIR)
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:17.1-17.43
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:17.1-18.52
 def $subst_typeIR'(theta, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:87.1-87.51
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:92.1-92.51
   clause 0 : (theta, typeIR) = baseTypeIR as typeIR
   -- if typeIR <: baseTypeIR
   -- let baseTypeIR = typeIR as baseTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:91.1-92.58
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:96.1-97.58
   clause 1 : (theta, typeIR') = typeIR
   -- if typeIR' <: nameTypeIR
   -- let ` typeId = typeIR' as nameTypeIR
@@ -4984,37 +5004,37 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
   -- let ?(typeIR) = typeIR''?{typeIR'' <- typeIR''?}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:96.1-98.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:101.1-103.53
   clause 2 : (theta, typeIR') = typedef typeId typeIR_subst as typeIR
   -- if typeIR' <: typedefTypeIR
   -- let typedef typeId typeIR = typeIR' as typedefTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:100.1-102.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:105.1-107.53
   clause 3 : (theta, typeIR') = type typeId typeIR_subst as typeIR
   -- if typeIR' <: newTypeIR
   -- let type typeId typeIR = typeIR' as newTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:106.1-108.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:111.1-113.53
   clause 4 : (theta, typeIR') = list< typeIR_subst > as typeIR
   -- if typeIR' <: listTypeIR
   -- let list< typeIR > = typeIR' as listTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:110.1-112.56
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:115.1-117.56
   clause 5 : (theta, typeIR') = tuple< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:114.1-116.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:119.1-121.53
   clause 6 : (theta, typeIR') = typeIR_subst [ n_size ] as typeIR
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:118.1-127.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:123.1-132.53
   clause 7 : (theta, typeIR) = structTypeIR_subst as typeIR
   -- if typeIR <: structTypeIR
   -- let structTypeIR = typeIR as structTypeIR
@@ -5023,7 +5043,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- let structTypeIR_subst = struct typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:129.1-138.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:134.1-143.53
   clause 8 : (theta, typeIR) = headerTypeIR_subst as typeIR
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
@@ -5032,7 +5052,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- let headerTypeIR_subst = header typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:140.1-149.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:145.1-154.53
   clause 9 : (theta, typeIR) = headerUnionTypeIR_subst as typeIR
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
@@ -5041,14 +5061,14 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- let headerUnionTypeIR_subst = header_union typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:151.1-152.31
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:156.1-157.31
   clause 10 : (theta, typeIR) = enum typeId { id_field*{id_field <- id_field*} } as typeIR
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
   -- if enumTypeIR matches `ENUM%{%}`
   -- let enum typeId { id_field*{id_field <- id_field*} } = enumTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:154.1-156.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:159.1-161.53
   clause 11 : (theta, typeIR') = enum typeId < typeIR_subst >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
@@ -5056,7 +5076,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let enum typeId < typeIR >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:160.1-170.60
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:165.1-175.60
   clause 12 : (theta, typeIR) = externObjectTypeIR_subst as typeIR
   -- if typeIR <: externObjectTypeIR
   -- let externObjectTypeIR = typeIR as externObjectTypeIR
@@ -5067,7 +5087,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let externMethodTypeDefIR_subst = callableTypeDefIR as externMethodTypeDefIR)*{callableTypeDefIR <- callableTypeDefIR*, externMethodTypeDefIR_subst <- externMethodTypeDefIR_subst*}
   -- let externObjectTypeIR_subst = extern typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { callableId : externMethodTypeDefIR_subst*{callableId <- callableId*, externMethodTypeDefIR_subst <- externMethodTypeDefIR_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:172.1-180.73
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:177.1-185.73
   clause 13 : (theta, typeIR) = parserObjectTypeIR_subst as typeIR
   -- if typeIR <: parserObjectTypeIR
   -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
@@ -5076,7 +5096,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let parserObjectTypeIR_subst = parser typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} )
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:182.1-190.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:187.1-195.74
   clause 14 : (theta, typeIR) = controlObjectTypeIR_subst as typeIR
   -- if typeIR <: controlObjectTypeIR
   -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
@@ -5085,7 +5105,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let controlObjectTypeIR_subst = control typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} )
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:192.1-199.69
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:197.1-204.69
   clause 15 : (theta, typeIR') = packageObjectTypeIR_subst as typeIR
   -- if typeIR' <: packageObjectTypeIR
   -- let packageObjectTypeIR = typeIR' as packageObjectTypeIR
@@ -5094,24 +5114,24 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
   -- let packageObjectTypeIR_subst = package typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_subst*{typeIR_subst <- typeIR_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:201.1-201.65
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:206.1-206.65
   clause 16 : (theta, typeIR) = tableObjectTypeIR as typeIR
   -- if typeIR <: tableObjectTypeIR
   -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:205.1-205.45
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:210.1-210.45
   clause 17 : (theta, typeIR) = default as typeIR
   -- if typeIR <: defaultTypeIR
   -- let defaultTypeIR = typeIR as defaultTypeIR
   -- if (defaultTypeIR = default)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:207.1-207.59
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:212.1-212.59
   clause 18 : (theta, typeIR) = header_invalid as typeIR
   -- if typeIR <: invalidHeaderTypeIR
   -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
   -- if (invalidHeaderTypeIR = header_invalid)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:209.1-211.56
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:214.1-216.56
   clause 19 : (theta, typeIR') = seq< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -5119,7 +5139,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let seq< typeIR*{typeIR <- typeIR*} > = sequenceTypeIR
   -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:213.1-215.56
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:218.1-220.56
   clause 20 : (theta, typeIR') = seq< typeIR_subst*{typeIR_subst <- typeIR_subst*} ,...> as typeIR
   -- if typeIR' <: sequenceTypeIR
   -- let sequenceTypeIR = typeIR' as sequenceTypeIR
@@ -5127,7 +5147,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let seq< typeIR*{typeIR <- typeIR*} ,...> = sequenceTypeIR
   -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:217.1-220.68
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:222.1-225.68
   clause 21 : (theta, typeIR) = record{ typeIR_field_subst id_field ;*{id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} } as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
@@ -5135,7 +5155,7 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let record{ typeIR_field id_field ;*{id_field <- id_field*, typeIR_field <- typeIR_field*} } = recordTypeIR
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:222.1-225.68
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:227.1-230.68
   clause 22 : (theta, typeIR) = record{ typeIR_field_subst id_field ;*{id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} ,...} as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
@@ -5143,77 +5163,77 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let record{ typeIR_field id_field ;*{id_field <- id_field*, typeIR_field <- typeIR_field*} ,...} = recordTypeIR
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:227.1-229.56
-  clause 23 : (theta, typeIR') = set< typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:232.1-234.53
+  clause 23 : (theta, typeIR') = set< typeIR_subst > as typeIR
   -- if typeIR' <: setTypeIR
-  -- let set< typeIR*{typeIR <- typeIR*} > = typeIR' as setTypeIR
-  -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
+  -- let set< typeIR > = typeIR' as setTypeIR
+  -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:231.1-231.69
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:236.1-236.69
   clause 24 : (theta, typeIR) = tableMetadataTypeIR as typeIR
   -- if typeIR <: tableMetadataTypeIR
   -- let tableMetadataTypeIR = typeIR as tableMetadataTypeIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:19.1-20.40
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:20.1-21.40
 def $subst_parameterIR(theta, parameterIR) : parameterIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:237.1-237.60
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:242.1-242.60
   clause 0 : (set<pair<typeId, typeIR>>, parameterIR) = parameterIR
   -- if (set<pair<typeId, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:238.1-240.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:243.1-245.15
   clause 1 : (theta, parameterIR) = $subst_parameterIR'(theta, parameterIR)
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:21.1-21.58
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:22.1-23.52
 def $subst_parameterIR'(theta, parameterIR) : parameterIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:242.1-245.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:247.1-250.53
   clause 0 : (theta, annotationList direction typeIR id constantInitializerOptIR) = annotationList direction typeIR_subst id constantInitializerOptIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:23.1-24.40
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:25.1-26.40
 def $subst_callableTypeIR(theta, callableTypeIR) : callableTypeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:251.1-251.69
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:256.1-256.69
   clause 0 : (set<pair<typeId, typeIR>>, callableTypeIR) = callableTypeIR
   -- if (set<pair<typeId, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:252.1-254.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:257.1-259.15
   clause 1 : (theta, callableTypeIR) = $subst_callableTypeIR'(theta, callableTypeIR)
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:25.1-25.67
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:27.1-28.52
 def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:258.1-261.50
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:263.1-266.50
   clause 0 : (theta, callableTypeIR) = action( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ) as callableTypeIR
   -- if callableTypeIR <: actionTypeIR
   -- let action( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeIR as actionTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:265.1-269.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:270.1-274.53
   clause 1 : (theta, callableTypeIR) = function( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeIR
   -- if callableTypeIR <: definedFunctionTypeIR
   -- let function( parameterIR*{parameterIR <- parameterIR*} ): typeIR = callableTypeIR as definedFunctionTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:271.1-275.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:276.1-280.53
   clause 2 : (theta, callableTypeIR) = extern_function( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeIR
   -- if callableTypeIR <: externFunctionTypeIR
   -- let extern_function( parameterIR*{parameterIR <- parameterIR*} ): typeIR = callableTypeIR as externFunctionTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:279.1-283.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:284.1-288.53
   clause 3 : (theta, callableTypeIR) = extern_method( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeIR
   -- if callableTypeIR <: builtinMethodTypeIR
   -- let builtin_method( parameterIR*{parameterIR <- parameterIR*} ): typeIR = callableTypeIR as builtinMethodTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:285.1-289.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:290.1-294.53
   clause 4 : (theta, callableTypeIR) = extern_method( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeIR
   -- if callableTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = callableTypeIR as externMethodTypeIR
@@ -5222,7 +5242,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:291.1-295.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:296.1-300.53
   clause 5 : (theta, callableTypeIR) = extern_methodabstract( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeIR
   -- if callableTypeIR <: externMethodTypeIR
   -- let externMethodTypeIR = callableTypeIR as externMethodTypeIR
@@ -5231,42 +5251,42 @@ def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:297.1-300.50
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:302.1-305.50
   clause 6 : (theta, callableTypeIR) = parser_apply( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ) as callableTypeIR
   -- if callableTypeIR <: parserApplyMethodTypeIR
   -- let parser_apply( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeIR as parserApplyMethodTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:302.1-305.50
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:307.1-310.50
   clause 7 : (theta, callableTypeIR) = control_apply( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ) as callableTypeIR
   -- if callableTypeIR <: controlApplyMethodTypeIR
   -- let control_apply( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeIR as controlApplyMethodTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:307.1-308.27
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:312.1-313.27
   clause 8 : (theta, callableTypeIR) = tableApplyMethodTypeIR as callableTypeIR
   -- if callableTypeIR <: tableApplyMethodTypeIR
   -- let tableApplyMethodTypeIR = callableTypeIR as tableApplyMethodTypeIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:27.1-28.40
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:30.1-31.40
 def $subst_callableTypeDefIR(theta, callableTypeDefIR) : callableTypeDefIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:314.1-315.26
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:319.1-320.26
   clause 0 : (set<pair<typeId, typeIR>>, callableTypeDefIR) = externMethodTypeDefIR as callableTypeDefIR
   -- if (set<pair<typeId, typeIR>> = { [] })
   -- if callableTypeDefIR <: externMethodTypeDefIR
   -- let externMethodTypeDefIR = callableTypeDefIR as externMethodTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:316.1-318.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:321.1-323.15
   clause 1 : (theta, callableTypeDefIR) = $subst_callableTypeDefIR'(theta, externMethodTypeDefIR as callableTypeDefIR)
   -- if callableTypeDefIR <: externMethodTypeDefIR
   -- let externMethodTypeDefIR = callableTypeDefIR as externMethodTypeDefIR
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:29.1-29.76
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:32.1-33.52
 def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:322.1-325.55
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:327.1-330.55
   clause 0 : (theta, callableTypeDefIR) = actionTypeDefIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: actionTypeDefIR
   -- let actionTypeDefIR = callableTypeDefIR as actionTypeDefIR
@@ -5274,7 +5294,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- if callableTypeIR <: actionTypeDefIR
   -- let actionTypeDefIR_subst = callableTypeIR as actionTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:329.1-343.58
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:334.1-348.58
   clause 1 : (theta, callableTypeDefIR) = function< typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} , typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: definedFunctionTypeDefIR
   -- let function< typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR = callableTypeDefIR as definedFunctionTypeDefIR
@@ -5283,7 +5303,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- (let parameterIR_subst = $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:345.1-358.58
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:350.1-363.58
   clause 2 : (theta, callableTypeDefIR) = extern_function< typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} , typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: externFunctionTypeDefIR
   -- let extern_function< typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR = callableTypeDefIR as externFunctionTypeDefIR
@@ -5292,7 +5312,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- (let parameterIR_subst = $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:362.1-375.58
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:367.1-380.58
   clause 3 : (theta, callableTypeDefIR) = extern_method< typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} , typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: externMethodTypeDefIR
   -- let externMethodTypeDefIR = callableTypeDefIR as externMethodTypeDefIR
@@ -5303,7 +5323,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- (let parameterIR_subst = $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:377.1-390.58
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:382.1-395.58
   clause 4 : (theta, callableTypeDefIR) = extern_methodabstract< typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} , typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*} >( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ): typeIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: externMethodTypeDefIR
   -- let externMethodTypeDefIR = callableTypeDefIR as externMethodTypeDefIR
@@ -5314,7 +5334,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- (let parameterIR_subst = $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR(theta_fresh, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:392.1-395.66
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:397.1-400.66
   clause 5 : (theta, callableTypeDefIR) = parserApplyMethodTypeDefIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: parserApplyMethodTypeDefIR
   -- let parserApplyMethodTypeDefIR = callableTypeDefIR as parserApplyMethodTypeDefIR
@@ -5322,7 +5342,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- if callableTypeIR <: parserApplyMethodTypeDefIR
   -- let parserApplyMethodTypeDefIR_subst = callableTypeIR as parserApplyMethodTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:397.1-400.67
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:402.1-405.67
   clause 6 : (theta, callableTypeDefIR) = controlApplyMethodTypeDefIR_subst as callableTypeDefIR
   -- if callableTypeDefIR <: controlApplyMethodTypeDefIR
   -- let controlApplyMethodTypeDefIR = callableTypeDefIR as controlApplyMethodTypeDefIR
@@ -5330,21 +5350,21 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR) : callableTypeDefIR =
   -- if callableTypeIR <: controlApplyMethodTypeDefIR
   -- let controlApplyMethodTypeDefIR_subst = callableTypeIR as controlApplyMethodTypeDefIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:31.1-32.40
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:35.1-36.40
 def $subst_constructorTypeIR(theta, constructorTypeIR) : constructorTypeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:406.1-406.78
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:411.1-411.78
   clause 0 : (set<pair<typeId, typeIR>>, constructorTypeIR) = constructorTypeIR
   -- if (set<pair<typeId, typeIR>> = { [] })
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:407.1-409.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:412.1-414.15
   clause 1 : (theta, constructorTypeIR) = $subst_constructorTypeIR'(theta, constructorTypeIR)
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:33.1-33.76
+;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:37.1-38.52
 def $subst_constructorTypeIR'(theta, constructorTypeIR) : constructorTypeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:411.1-417.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:416.1-422.53
   clause 0 : (theta, constructor( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR) = constructor( constructorParameterIR_subst*{constructorParameterIR_subst <- constructorParameterIR_subst*} ): typeIR_subst
   -- (let constructorParameterIR_subst = $subst_parameterIR'(theta, constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterIR_subst <- constructorParameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
@@ -5840,16 +5860,12 @@ relation Type_alpha: typeIR ~~ typeIR
 
    match
 
-    (signature) set< [typeIR_a] > as typeIR ~~ set< [typeIR_b] > as typeIR
-    typeIR' ~~ typeIR'''
+    (signature) set< typeIR_a > as typeIR ~~ set< typeIR_b > as typeIR
+    typeIR ~~ typeIR'
+    -- if typeIR <: setTypeIR
+    -- let set< typeIR_a > = typeIR as setTypeIR
     -- if typeIR' <: setTypeIR
-    -- let set< typeIR*{typeIR <- typeIR*} > = typeIR' as setTypeIR
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_a] = typeIR*{typeIR <- typeIR*}
-    -- if typeIR''' <: setTypeIR
-    -- let set< typeIR''*{typeIR'' <- typeIR''*} > = typeIR''' as setTypeIR
-    -- if typeIR''*{typeIR'' <- typeIR''*} matches [ _/1 ]
-    -- let [typeIR_b] = typeIR''*{typeIR'' <- typeIR''*}
+    -- let set< typeIR_b > = typeIR' as setTypeIR
 
    paths
 
@@ -7750,11 +7766,9 @@ def $cast_arbint(typeIR, int) : value =
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:554.1-554.72
-  clause 6 : (typeIR'', i) = set{ $cast_arbint(typeIR, i) } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 6 : (typeIR', i) = set{ $cast_arbint(typeIR, i) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:560.1-561.23
 def $cast_fixbit(typeIR, nat, int) : value =
@@ -7798,11 +7812,9 @@ def $cast_fixbit(typeIR, nat, int) : value =
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:571.1-571.78
-  clause 6 : (typeIR'', w, i) = set{ $cast_fixbit(typeIR, w, i) } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 6 : (typeIR', w, i) = set{ $cast_fixbit(typeIR, w, i) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:577.1-578.23
 def $cast_fixint(typeIR, nat, int) : value =
@@ -7840,11 +7852,9 @@ def $cast_fixint(typeIR, nat, int) : value =
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:587.1-587.78
-  clause 5 : (typeIR'', w, i) = set{ $cast_fixint(typeIR, w, i) } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 5 : (typeIR', w, i) = set{ $cast_fixint(typeIR, w, i) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:593.1-594.23
 def $cast_varbit(typeIR, nat, nat, int) : value =
@@ -7975,21 +7985,17 @@ def $cast_invalid(typeIR) : value =
 def $cast_set_singleton(typeIR, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:711.1-712.37
-  clause 0 : (typeIR'', value) = set{ $cast_op(typeIR, value) } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 0 : (typeIR', value) = set{ $cast_op(typeIR, value) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:714.1-715.23
 def $cast_set_mask(typeIR, value, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:717.1-720.49
-  clause 0 : (typeIR'', value_b, value_m) = set{ value_b_cast &&& value_m_cast } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 0 : (typeIR', value_b, value_m) = set{ value_b_cast &&& value_m_cast } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
   -- let value_b_cast = $cast_op(typeIR, value_b)
   -- let value_m_cast = $cast_op(typeIR, value_m)
 
@@ -7997,11 +8003,9 @@ def $cast_set_mask(typeIR, value, value) : value =
 def $cast_set_range(typeIR, value, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:725.1-728.49
-  clause 0 : (typeIR'', value_l, value_u) = set{ value_l_cast .. value_u_cast } as value
-  -- if typeIR'' <: setTypeIR
-  -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 0 : (typeIR', value_l, value_u) = set{ value_l_cast .. value_u_cast } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
   -- let value_l_cast = $cast_op(typeIR, value_l)
   -- let value_u_cast = $cast_op(typeIR, value_u)
 
@@ -8840,7 +8844,7 @@ syntax typedefIR =
    | seq< typeIR* ,...>
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
-   | set< typeIR* >
+   | set< typeIR >
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
    | annotationList enum nameIR { nameListIR }
@@ -10719,12 +10723,10 @@ relation Type_wf: bound |- typeIR
 
    match
 
-    (signature) B |- set< [typeIR] > as typeIR
-    B |- typeIR''
-    -- if typeIR'' <: setTypeIR
-    -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+    (signature) B |- set< typeIR > as typeIR
+    B |- typeIR'
+    -- if typeIR' <: setTypeIR
+    -- let set< typeIR > = typeIR' as setTypeIR
 
    paths
 
@@ -13054,7 +13056,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- TypeArguments_ok: p TC |- typeArgument*{typeArgument <- typeArgument*} : typeIR_arg*{typeIR_arg <- typeIR_arg*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} > as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:38.1-42.78
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:38.1-42.80
 relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.07.1-typing-type-argument.watsup:12.1-14.52
@@ -13122,7 +13124,7 @@ relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR 
     -- let typeId = $name(nonTypeName as name)
     -- output: % % |- % : ` typeId as typeArgumentIR # []
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:44.1-48.83
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:44.1-48.85
 relation TypeArguments_ok: cursor typingContext |- typeArgument* : typeArgumentListIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.07.1-typing-type-argument.watsup:39.1-40.27
@@ -13632,21 +13634,17 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) typeIR <: set< [typeIR_b] > as typeIR
-    typeIR <: typeIR''
-    -- if typeIR'' <: setTypeIR
-    -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_b] = typeIR'*{typeIR' <- typeIR'*}
+    (signature) typeIR <: set< typeIR_b > as typeIR
+    typeIR <: typeIR'
+    -- if typeIR' <: setTypeIR
+    -- let set< typeIR_b > = typeIR' as setTypeIR
 
    paths
 
     rulepath set
-    -- let typeIR'''' = typeIR
-    -- if typeIR'''' <: setTypeIR
-    -- let set< typeIR'''*{typeIR''' <- typeIR'''*} > = typeIR'''' as setTypeIR
-    -- if typeIR'''*{typeIR''' <- typeIR'''*} matches [ _/1 ]
-    -- let [typeIR_a] = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- let typeIR'' = typeIR
+    -- if typeIR'' <: setTypeIR
+    -- let set< typeIR_a > = typeIR'' as setTypeIR
     -- if Sub_expl: typeIR_a <: typeIR_b holds
     -- the relation holds
 
@@ -15915,7 +15913,7 @@ relation Block_ok: typingContext flow loopctxt |- blockStatement : typingContext
     -- let blockStatementIR = annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }
     -- output: % % % |- % : TC_1 f_post blockStatementIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:167.1-171.74
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:167.1-171.76
 relation Parameter_ok: cursor typingContext |- parameter : parameterIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.09-typing-parameter.watsup:13.1-44.2
@@ -15953,7 +15951,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR # typeId*
     -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
     -- output: % % |- % : annotationList direction typeIR nameIR ?(= value_init) # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:173.1-177.79
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:173.1-177.81
 relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.09-typing-parameter.watsup:52.1-53.27
@@ -15987,7 +15985,7 @@ relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR # t
     -- Parameters_ok: p TC |- parameter_t*{parameter_t <- parameter_t*} : parameterIR_t*{parameterIR_t <- parameterIR_t*} # typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- output: % % |- % : parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} # typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:179.1-184.86
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:179.1-184.88
 relation ConstructorParameter_ok: cursor typingContext |- constructorParameter : constructorParameterIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.09-typing-parameter.watsup:67.1-70.67
@@ -16004,7 +16002,7 @@ relation ConstructorParameter_ok: cursor typingContext |- constructorParameter :
     -- Parameter_ok: p TC |- constructorParameter : constructorParameterIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : constructorParameterIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:186.1-191.91
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:186.1-191.93
 relation ConstructorParameters_ok: cursor typingContext |- constructorParameter* : constructorParameterListIR # typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.09-typing-parameter.watsup:78.1-81.69
@@ -16243,7 +16241,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
     -- (Expr_ok: local TC_0 |- expression_key : typedExpressionIR_key)*{expression_key <- expression_key*, typedExpressionIR_key <- typedExpressionIR_key*}
     -- (let typedExpressionIR_key_reduced = $reduce_serenum(typedExpressionIR_key))*{typedExpressionIR_key <- typedExpressionIR_key*, typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*}
     -- (let typeIR_key_reduced = $type_of_typedExpressionIR(typedExpressionIR_key_reduced))*{typeIR_key_reduced <- typeIR_key_reduced*, typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*}
-    -- (if Type_wf: $bound(local, TC_0) |- set< [typeIR_key_reduced] > as typeIR holds)*{typeIR_key_reduced <- typeIR_key_reduced*}
+    -- (if Type_wf: $bound(local, TC_0) |- set< typeIR_key_reduced > as typeIR holds)*{typeIR_key_reduced <- typeIR_key_reduced*}
     -- let selectCase*{selectCase <- selectCase*} = $flatten_selectCaseList(selectCaseList)
     -- (SelectCase_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key_reduced*{typeIR_key_reduced <- typeIR_key_reduced*} |- selectCase : selectCaseIR)*{selectCase <- selectCase*, selectCaseIR <- selectCaseIR*}
     -- let transitionStatementIR = transition select( typedExpressionIR_key_reduced*{typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*} ){ selectCaseIR*{selectCaseIR <- selectCaseIR*} } as stateExpressionIR
@@ -16616,11 +16614,11 @@ relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingCon
     rulepath valueSetDeclaration
     -- Type_ok: block TC_0 |- valueSetType as typeOrVoid : typeIR # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
-    -- if Type_wf: $bound(block, TC_0) |- set< [typeIR] > as typeIR holds
+    -- if Type_wf: $bound(block, TC_0) |- set< typeIR > as typeIR holds
     -- Expr_ok: block TC_0 |- expression : typedExpressionIR
     -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR))
     -- let nameIR = $name(name)
-    -- let varTypeIR = set< [typeIR] > as typeIR ctk ?()
+    -- let varTypeIR = set< typeIR > as typeIR ctk ?()
     -- let TC_1 = $add_var_t(block, TC_0, nameIR, varTypeIR)
     -- let valueSetDeclarationIR = annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
     -- output: % |- % : TC_1 valueSetDeclarationIR as parserLocalDeclarationIR
@@ -16676,7 +16674,7 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typedExpressionIR_reduced = $reduce_serenum(typedExpressionIR)
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
-    -- if Type_wf: $bound(local, TC) |- set< [typeIR_reduced] > as typeIR holds
+    -- if Type_wf: $bound(local, TC) |- set< typeIR_reduced > as typeIR holds
     -- let nameIR_matchkind = $name(name_matchkind)
     -- if (match_kind. nameIR_matchkind as value = $find_var_value_t(local, TC, ` nameIR_matchkind))
     -- if $compat_table_key(nameIR_matchkind, typeIR_reduced)
@@ -19500,15 +19498,15 @@ def $reduce_serenum(typedExpressionIR) : typedExpressionIR =
   clause 1 : (typedExpressionIR) = typedExpressionIR
   -- otherwise
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:431.1-434.23
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:431.1-435.95
 def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool) : typedExpressionIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:436.1-439.23
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:437.1-440.23
   clause 0 : (typedExpressionIR, $check) = ?(typedExpressionIR)
   -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR
   -- if $check(typeIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:441.1-447.79
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:442.1-448.79
   clause 1 : (typedExpressionIR, $check) = $reduce_serenum_unary(typedExpressionIR_cast, $check)
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
   -- if ~$check(typeIR)
@@ -19519,20 +19517,20 @@ def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool) : typedExpre
   -- let enum _typeId < typeIR_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
   -- let typedExpressionIR_cast = ( typeIR_underlying ) typedExpressionIR as expressionIR # ( typeIR_underlying ctk )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:449.1-450.15
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:450.1-451.15
   clause 2 : (typedExpressionIR, $check) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:454.1-458.44
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:455.1-459.44
 def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, typeIR) : bool) : (typedExpressionIR, typedExpressionIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:460.1-464.35
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:461.1-465.35
   clause 0 : (typedExpressionIR_l, typedExpressionIR_r, $check) = ?((typedExpressionIR_l, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r
   -- if $check(typeIR_l, typeIR_r)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:466.1-474.87
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:467.1-475.87
   clause 1 : (typedExpressionIR_l, typedExpressionIR_r, $check) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r, $check)
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
@@ -19544,7 +19542,7 @@ def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, 
   -- let enum _typeId < typeIR_l_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
   -- let typedExpressionIR_l_cast = ( typeIR_l_underlying ) typedExpressionIR_l as expressionIR # ( typeIR_l_underlying ctk_l )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:476.1-484.87
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:477.1-485.87
   clause 2 : (typedExpressionIR_l, typedExpressionIR_r, $check) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r_cast, $check)
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
@@ -19556,35 +19554,35 @@ def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, 
   -- let enum _typeId < typeIR_r_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
   -- let typedExpressionIR_r_cast = ( typeIR_r_underlying ) typedExpressionIR_r as expressionIR # ( typeIR_r_underlying ctk_r )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:486.1-487.15
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:487.1-488.15
   clause 3 : (typedExpressionIR_l, typedExpressionIR_r, $check) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:498.1-499.44
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:499.1-500.44
 def $coerce_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:501.1-503.37
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:502.1-504.37
   clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR)
   -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR
   -- if Type_alpha: typeIR ~~ typeIR_to holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:505.1-510.63
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:506.1-511.63
   clause 1 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
   -- if Type_alpha: typeIR ~~ typeIR_to does not hold
   -- if Sub_impl: typeIR <: typeIR_to holds
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:514.1-516.62
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:515.1-517.62
 def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:518.1-522.38
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:519.1-523.38
   clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:524.1-531.65
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:525.1-532.65
   clause 1 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
@@ -19592,7 +19590,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- if Sub_impl: typeIR_l <: typeIR_r holds
   -- let typedExpressionIR_l_cast = ( typeIR_r ) typedExpressionIR_l as expressionIR # ( typeIR_r ctk_l )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:533.1-541.65
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:534.1-542.65
   clause 2 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
@@ -19601,7 +19599,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- if Sub_impl: typeIR_r <: typeIR_l holds
   -- let typedExpressionIR_r_cast = ( typeIR_l ) typedExpressionIR_r as expressionIR # ( typeIR_l ctk_r )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:543.1-551.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:544.1-552.57
   clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $coerce_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
@@ -19611,7 +19609,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
   -- if (typedExpressionIR_l =/= typedExpressionIR_l_cast)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:553.1-562.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:554.1-563.57
   clause 4 : (typedExpressionIR_l, typedExpressionIR_r) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
@@ -19622,7 +19620,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- let typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
   -- if (typedExpressionIR_r =/= typedExpressionIR_r_cast)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:564.1-565.15
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:565.1-566.15
   clause 5 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
   -- otherwise
 
@@ -21087,11 +21085,9 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath expression-set-alpha
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typeIR'' = $unroll_typeIR(typeIR)
-    -- if typeIR'' <: setTypeIR
-    -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_base] = typeIR'*{typeIR' <- typeIR'*}
+    -- let typeIR' = $unroll_typeIR(typeIR)
+    -- if typeIR' <: setTypeIR
+    -- let set< typeIR_base > = typeIR' as setTypeIR
     -- if Type_alpha: typeIR_base ~~ typeIR_key holds
     -- output: % % |- % : typedExpressionIR as simpleKeysetExpressionIR
 
@@ -21110,14 +21106,12 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath expression-set-subtype
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typeIR'' = $unroll_typeIR(typeIR)
-    -- if typeIR'' <: setTypeIR
-    -- let set< typeIR'*{typeIR' <- typeIR'*} > = typeIR'' as setTypeIR
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_base] = typeIR'*{typeIR' <- typeIR'*}
+    -- let typeIR' = $unroll_typeIR(typeIR)
+    -- if typeIR' <: setTypeIR
+    -- let set< typeIR_base > = typeIR' as setTypeIR
     -- if Type_alpha: typeIR_base ~~ typeIR_key does not hold
     -- if Sub_impl: typeIR_base <: typeIR_key holds
-    -- let typeIR_cast = set< [typeIR_key] > as typeIR
+    -- let typeIR_cast = set< typeIR_key > as typeIR
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
 
@@ -21138,7 +21132,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ~$is_setTypeIR($unroll_typeIR(typeIR))
     -- if Sub_impl: typeIR <: typeIR_key holds
-    -- let typeIR_cast = set< [typeIR_key] > as typeIR
+    -- let typeIR_cast = set< typeIR_key > as typeIR
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
 
@@ -21863,7 +21857,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- if Sub_impl: typeIR <: typeIR_key holds
-    -- let typeIR_set = set< [typeIR_key] > as typeIR
+    -- let typeIR_set = set< typeIR_key > as typeIR
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : lpm n typedExpressionIR_set as simpleKeysetExpressionIR
 
@@ -21874,7 +21868,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- if Sub_impl: typeIR <: typeIR_key holds
-    -- let typeIR_set = set< [typeIR_key] > as typeIR
+    -- let typeIR_set = set< typeIR_key > as typeIR
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : nolpm typedExpressionIR_set as simpleKeysetExpressionIR
 
@@ -23189,7 +23183,7 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(text_key_value) = text'?{text' <- text'?}
   -- let i_key_value = $text_to_int(text_key_value)
   -- let typedExpressionIR = d i_key_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_set = set< [typeIR] > as typeIR
+  -- let typeIR_set = set< typeIR > as typeIR
   -- let simpleKeysetExpressionIR = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set dyn ) as simpleKeysetExpressionIR
 
   ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:86.1-110.69
@@ -31521,16 +31515,14 @@ relation ForCollectionExpr_eval: evalContext store |- forCollectionExpressionIR 
     -- if expressionResult' <: continueResult<value>
     -- let ` value_r = expressionResult' as continueResult<value>
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR_l)
-    -- let value*{value <- value*} = $values_of_setValue(set< [typeIR] >, set{ value_l .. value_r })
+    -- let value*{value <- value*} = $values_of_setValue(set< typeIR >, set{ value_l .. value_r })
     -- output: % % |- % : EC_2 STO_2 ` value*{value <- value*} as expressionListResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.54
 def $values_of_setValue(setTypeIR, setValue) : value* =
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:531.1-535.52
-  clause 0 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = value_l :: $values_of_setValue(set< [typeIR] >, set{ value_l_inc .. value_r })
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 0 : (set< typeIR >, setValue) = value_l :: $values_of_setValue(set< typeIR >, set{ value_l_inc .. value_r })
   -- if setValue matches `SET{%..%}`
   -- let set{ value_l .. value_r } = setValue
   -- if $bin_lt(value_l, value_r)
@@ -31538,17 +31530,13 @@ def $values_of_setValue(setTypeIR, setValue) : value* =
   -- let value_l_inc = $bin_plus(value_l, value_one)
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:536.1-537.34
-  clause 1 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = [value_l]
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 1 : (set< typeIR >, setValue) = [value_l]
   -- if setValue matches `SET{%..%}`
   -- let set{ value_l .. value_r } = setValue
   -- if $bin_eq(value_l, value_r)
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:538.1-539.34
-  clause 2 : (set< typeIR'*{typeIR' <- typeIR'*} >, setValue) = []
-  -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-  -- let [typeIR] = typeIR'*{typeIR' <- typeIR'*}
+  clause 2 : (set< typeIR >, setValue) = []
   -- if setValue matches `SET{%..%}`
   -- let set{ value_l .. value_r } = setValue
   -- if $bin_gt(value_l, value_r)

@@ -187,6 +187,20 @@
 . Let ``{ (K~c~ : V~c~)^{asterisk}^ }`` be ``<<adds_map, adds_map<K, V>({ (K~a~ : V~a~)^{asterisk}^ }, K~b~^{asterisk}^, V~b~^{asterisk}^)>>``.
 . Return ``{ (K~c~ : V~c~)^{asterisk}^ }``.
 
+<<modulo, ``n~a~`` mod ``n~b~``>>
+
+
+. If ``n~b~`` is not equal to ``0``:
+ .. Return ``n~a~ \ n~b~``.
+. Else if ``n~b~`` is equal to ``0``:
+ .. Return ``None``.
+
+<<modulo_42, ``n`` mod 42>>
+
+
+. Let ``n~result~`` be <<option_get, *!*>> <<modulo, ``n`` mod ``42``>>.
+. Return ``n~result~``.
+
 <<flatten_nameList, The list of names in ``nameList'``>>
 
 
@@ -1318,8 +1332,8 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
   ... Return ``<<unions_set, unions_set<typeId>((free_typeIR(typeIR))^{asterisk}^)>>``.
  .. Else if let ``RECORD { (typeIR ++_++ ;)^{asterisk}^ , ... }`` be ``recordTypeIR``:
   ... Return ``<<unions_set, unions_set<typeId>((free_typeIR(typeIR))^{asterisk}^)>>``.
-. Else if let ``SET < typeIR^{asterisk}^ >`` be ``typeIR'``:
- .. Return ``<<unions_set, unions_set<typeId>((free_typeIR(typeIR))^{asterisk}^)>>``.
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
+ .. Return ``<<free_typeIR, free_typeIR(typeIR)>>``.
 . Else if let ``tableMetadataTypeIR`` be ``typeIR'``:
  .. Return ``{ · }``.
 
@@ -1509,7 +1523,7 @@ for each ``typeIR~free~`` in ``typeIR~free~^{asterisk}^``
 . Let ``theta~fresh~`` be ``<<adds_map, adds_map<typeId, typeIR>(theta, typeParameterIR~expl~^{asterisk}^ {pp} typeParameterIR~impl~^{asterisk}^, (typeParameterIR~expl_fresh~)^{asterisk}^ {pp} (typeParameterIR~impl_fresh~)^{asterisk}^)>>``.
 . Return ``(theta~fresh~, typeParameterIR~expl_fresh~^{asterisk}^, typeParameterIR~impl_fresh~^{asterisk}^)``.
 
-<<subst_typeIR, ``set<pair<typeId, typeIR>>`` substituted by ``typeIR``>>
+<<subst_typeIR, ``typeIR`` substituted by ``set<pair<typeId, typeIR>>``>>
 
 
 . If ``set<pair<typeId, typeIR>>`` is equal to ``{ · }``:
@@ -1517,7 +1531,7 @@ for each ``typeIR~free~`` in ``typeIR~free~^{asterisk}^``
 . Otherwise:
  .. Return ``<<subst_typeIR', subst_typeIR'(set<pair<typeId, typeIR>>, typeIR)>>``.
 
-<<subst_typeIR', subst_typeIR'(theta, typeIR')>>
+<<subst_typeIR', ``typeIR'`` substituted by a non-empty ``theta``>>
 
 
 . If let ``baseTypeIR`` be ``typeIR'``:
@@ -1526,39 +1540,39 @@ for each ``typeIR~free~`` in ``typeIR~free~^{asterisk}^``
  .. Let ``typeIR`` be <<option_get, *!*>> <<find_map, ``theta``[``typeId``]>>.
  .. Return ``typeIR``.
 . Else if let ``TYPEDEF typeId typeIR`` be ``typeIR'``:
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``TYPEDEF typeId typeIR~subst~``.
 . Else if let ``TYPE typeId typeIR`` be ``typeIR'``:
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``TYPE typeId typeIR~subst~``.
 . Else if let ``LIST < typeIR >`` be ``typeIR'``:
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``LIST < typeIR~subst~ >``.
 . Else if let ``TUPLE < typeIR^{asterisk}^ >`` be ``typeIR'``:
  .. Let ``typeIR~subst~^{asterisk}^`` be the list of ``typeIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+    * Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR`` in ``typeIR^{asterisk}^``
  .. Return ``TUPLE < typeIR~subst~^{asterisk}^ >``.
 . Else if let ``typeIR [ n~size~ ]`` be ``typeIR'``:
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``typeIR~subst~ [ n~size~ ]``.
 . Else if let ``structTypeIR`` be ``typeIR'``:
  .. Let ``STRUCT typeId < typeArgumentIR^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` be ``structTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
-    * Let ``typeIR~field_subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR~field~)>>``.
+    * Let ``typeIR~field_subst~`` be <<subst_typeIR', ``typeIR~field~`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
@@ -1569,14 +1583,14 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
-    * Let ``typeIR~field_subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR~field~)>>``.
+    * Let ``typeIR~field_subst~`` be <<subst_typeIR', ``typeIR~field~`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
@@ -1587,14 +1601,14 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
-    * Let ``typeIR~field_subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR~field~)>>``.
+    * Let ``typeIR~field_subst~`` be <<subst_typeIR', ``typeIR~field~`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
@@ -1604,21 +1618,21 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
  .. If let ``ENUM typeId { id~field~^{asterisk}^ }`` be ``enumTypeIR``:
   ... Return ``ENUM typeId { id~field~^{asterisk}^ }``.
  .. Else if let ``ENUM typeId < typeIR > { valueFieldIR^{asterisk}^ }`` be ``enumTypeIR``:
-  ... Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+  ... Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
   ... Return ``ENUM typeId < typeIR~subst~ > { valueFieldIR^{asterisk}^ }``.
 . Else if let ``externObjectTypeIR`` be ``typeIR'``:
  .. Let ``EXTERN typeId < typeArgumentIR^{asterisk}^ > { (callableId : externMethodTypeDefIR)^{asterisk}^ }`` be ``externObjectTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``callableTypeDefIR^{asterisk}^`` be the list of ``callableTypeDefIR``, obtained by repeating:
 +
 --
-    * Let ``callableTypeDefIR`` be <<subst_callableTypeDefIR, ``theta`` substituted by ``externMethodTypeDefIR``>>.
+    * Let ``callableTypeDefIR`` be <<subst_callableTypeDefIR, ``externMethodTypeDefIR`` substituted by ``theta``>>.
 --
 +
 for each ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``
@@ -1637,14 +1651,14 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -1655,14 +1669,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -1673,14 +1687,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeArgumentIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeArgumentIR)>>``.
+    * Let ``typeArgumentIR~subst~`` be <<subst_typeIR', ``typeArgumentIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``typeIR~subst~^{asterisk}^`` be the list of ``typeIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+    * Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR`` in ``typeIR^{asterisk}^``
@@ -1697,7 +1711,7 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``
   ... Let ``typeIR~subst~^{asterisk}^`` be the list of ``typeIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+      * Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR`` in ``typeIR^{asterisk}^``
@@ -1706,7 +1720,7 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``
   ... Let ``typeIR~subst~^{asterisk}^`` be the list of ``typeIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+      * Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR`` in ``typeIR^{asterisk}^``
@@ -1716,7 +1730,7 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``
   ... Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
-      * Let ``typeIR~field_subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR~field~)>>``.
+      * Let ``typeIR~field_subst~`` be <<subst_typeIR', ``typeIR~field~`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
@@ -1725,24 +1739,18 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
   ... Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
-      * Let ``typeIR~field_subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR~field~)>>``.
+      * Let ``typeIR~field_subst~`` be <<subst_typeIR', ``typeIR~field~`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
   ... Return ``RECORD { (typeIR~field_subst~ id~field~ ;)^{asterisk}^ , ... }``.
-. Else if let ``SET < typeIR^{asterisk}^ >`` be ``typeIR'``:
- .. Let ``typeIR~subst~^{asterisk}^`` be the list of ``typeIR~subst~``, obtained by repeating:
-+
---
-    * Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
---
-+
-for each ``typeIR`` in ``typeIR^{asterisk}^``
- .. Return ``SET < typeIR~subst~^{asterisk}^ >``.
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
+ .. Return ``SET < typeIR~subst~ >``.
 . Else if let ``tableMetadataTypeIR`` be ``typeIR'``:
  .. Return ``tableMetadataTypeIR``.
 
-<<subst_parameterIR, ``set<pair<typeId, typeIR>>`` substituted by ``parameterIR``>>
+<<subst_parameterIR, ``parameterIR`` substituted by ``set<pair<typeId, typeIR>>``>>
 
 
 . If ``set<pair<typeId, typeIR>>`` is equal to ``{ · }``:
@@ -1750,13 +1758,13 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``
 . Otherwise:
  .. Return ``<<subst_parameterIR', subst_parameterIR'(set<pair<typeId, typeIR>>, parameterIR)>>``.
 
-<<subst_parameterIR', subst_parameterIR'(theta, annotationList direction typeIR id constantInitializerOptIR)>>
+<<subst_parameterIR', ``annotationList direction typeIR id constantInitializerOptIR`` substituted by a non-empty ``theta``>>
 
 
-. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 . Return ``annotationList direction typeIR~subst~ id constantInitializerOptIR``.
 
-<<subst_callableTypeIR, ``set<pair<typeId, typeIR>>`` substituted by ``callableTypeIR``>>
+<<subst_callableTypeIR, ``callableTypeIR`` substituted by ``set<pair<typeId, typeIR>>``>>
 
 
 . If ``set<pair<typeId, typeIR>>`` is equal to ``{ · }``:
@@ -1764,14 +1772,14 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``
 . Otherwise:
  .. Return ``<<subst_callableTypeIR', subst_callableTypeIR'(set<pair<typeId, typeIR>>, callableTypeIR)>>``.
 
-<<subst_callableTypeIR', subst_callableTypeIR'(theta, callableTypeIR)>>
+<<subst_callableTypeIR', ``callableTypeIR`` substituted by a non-empty ``theta``>>
 
 
 . If let ``ACTION ( parameterIR^{asterisk}^ )`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -1780,58 +1788,58 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``FUNCTION ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``EXTERN_FUNCTION ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``BUILTIN_METHOD ( parameterIR^{asterisk}^ ) : typeIR`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
  .. Return ``EXTERN_METHOD ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``externMethodTypeIR`` be ``callableTypeIR``:
  .. If let ``EXTERN_METHOD ( parameterIR^{asterisk}^ ) : typeIR`` be ``externMethodTypeIR``:
   ... Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+      * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-  ... Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+  ... Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
   ... Return ``EXTERN_METHOD ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
  .. Else if let ``EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR`` be ``externMethodTypeIR``:
   ... Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+      * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-  ... Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+  ... Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
   ... Return ``EXTERN_METHOD ABSTRACT ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``PARSER_APPLY ( parameterIR^{asterisk}^ )`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -1840,7 +1848,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, parameterIR)>>``.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR', ``parameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -1848,7 +1856,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Else if let ``tableApplyMethodTypeIR`` be ``callableTypeIR``:
  .. Return ``tableApplyMethodTypeIR``.
 
-<<subst_callableTypeDefIR, ``set<pair<typeId, typeIR>>`` substituted by ``callableTypeDefIR``>>
+<<subst_callableTypeDefIR, ``callableTypeDefIR`` substituted by ``set<pair<typeId, typeIR>>``>>
 
 
 . If ``set<pair<typeId, typeIR>>`` is equal to ``{ · }``:
@@ -1859,11 +1867,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Otherwise:
   ... Return ``<<subst_callableTypeDefIR', subst_callableTypeDefIR'(set<pair<typeId, typeIR>>, externMethodTypeDefIR)>>``.
 
-<<subst_callableTypeDefIR', subst_callableTypeDefIR'(theta, callableTypeDefIR)>>
+<<subst_callableTypeDefIR', ``callableTypeDefIR`` substituted by a non-empty ``theta``>>
 
 
 . If let ``actionTypeDefIR`` be ``callableTypeDefIR``:
- .. Let ``callableTypeIR`` be ``<<subst_callableTypeIR', subst_callableTypeIR'(theta, actionTypeDefIR)>>``.
+ .. Let ``callableTypeIR`` be <<subst_callableTypeIR', ``actionTypeDefIR`` substituted by a non-empty ``theta``>>.
  .. Check that ``callableTypeIR`` has type ``actionTypeDefIR``.
  .. Let ``actionTypeDefIR~subst~`` be ``callableTypeIR``.
  .. Return ``actionTypeDefIR~subst~``.
@@ -1873,11 +1881,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``theta~fresh~`` substituted by ``parameterIR``>>.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``parameterIR`` substituted by ``theta~fresh~``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``typeIR~subst~`` be <<subst_typeIR, ``theta~fresh~`` substituted by ``typeIR``>>.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta~fresh~``>>.
  .. Return ``FUNCTION < typeParameterIR~expl_fresh~^{asterisk}^ , typeParameterIR~impl_fresh~^{asterisk}^ > ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``EXTERN_FUNCTION < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR`` be ``callableTypeDefIR``:
  .. Let ``B`` be <<free_callableTypeIR, free type identifiers in ``EXTERN_FUNCTION ( parameterIR^{asterisk}^ ) : typeIR``>>.
@@ -1885,11 +1893,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-    * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``theta~fresh~`` substituted by ``parameterIR``>>.
+    * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``parameterIR`` substituted by ``theta~fresh~``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``typeIR~subst~`` be <<subst_typeIR, ``theta~fresh~`` substituted by ``typeIR``>>.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta~fresh~``>>.
  .. Return ``EXTERN_FUNCTION < typeParameterIR~expl_fresh~^{asterisk}^ , typeParameterIR~impl_fresh~^{asterisk}^ > ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``externMethodTypeDefIR`` be ``callableTypeDefIR``:
  .. If let ``EXTERN_METHOD < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR`` be ``externMethodTypeDefIR``:
@@ -1898,11 +1906,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``theta~fresh~`` substituted by ``parameterIR``>>.
+      * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``parameterIR`` substituted by ``theta~fresh~``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-  ... Let ``typeIR~subst~`` be <<subst_typeIR, ``theta~fresh~`` substituted by ``typeIR``>>.
+  ... Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta~fresh~``>>.
   ... Return ``EXTERN_METHOD < typeParameterIR~expl_fresh~^{asterisk}^ , typeParameterIR~impl_fresh~^{asterisk}^ > ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
  .. Else if let ``EXTERN_METHOD ABSTRACT < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) : typeIR`` be ``externMethodTypeDefIR``:
   ... Let ``B`` be <<free_callableTypeIR, free type identifiers in ``EXTERN_METHOD ABSTRACT ( parameterIR^{asterisk}^ ) : typeIR``>>.
@@ -1910,24 +1918,24 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
-      * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``theta~fresh~`` substituted by ``parameterIR``>>.
+      * Let ``parameterIR~subst~`` be <<subst_parameterIR, ``parameterIR`` substituted by ``theta~fresh~``>>.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-  ... Let ``typeIR~subst~`` be <<subst_typeIR, ``theta~fresh~`` substituted by ``typeIR``>>.
+  ... Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta~fresh~``>>.
   ... Return ``EXTERN_METHOD ABSTRACT < typeParameterIR~expl_fresh~^{asterisk}^ , typeParameterIR~impl_fresh~^{asterisk}^ > ( parameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 . Else if let ``parserApplyMethodTypeDefIR`` be ``callableTypeDefIR``:
- .. Let ``callableTypeIR`` be ``<<subst_callableTypeIR', subst_callableTypeIR'(theta, parserApplyMethodTypeDefIR)>>``.
+ .. Let ``callableTypeIR`` be <<subst_callableTypeIR', ``parserApplyMethodTypeDefIR`` substituted by a non-empty ``theta``>>.
  .. Check that ``callableTypeIR`` has type ``parserApplyMethodTypeDefIR``.
  .. Let ``parserApplyMethodTypeDefIR~subst~`` be ``callableTypeIR``.
  .. Return ``parserApplyMethodTypeDefIR~subst~``.
 . Else let ``controlApplyMethodTypeDefIR`` be ``callableTypeDefIR``:
- .. Let ``callableTypeIR`` be ``<<subst_callableTypeIR', subst_callableTypeIR'(theta, controlApplyMethodTypeDefIR)>>``.
+ .. Let ``callableTypeIR`` be <<subst_callableTypeIR', ``controlApplyMethodTypeDefIR`` substituted by a non-empty ``theta``>>.
  .. Check that ``callableTypeIR`` has type ``controlApplyMethodTypeDefIR``.
  .. Let ``controlApplyMethodTypeDefIR~subst~`` be ``callableTypeIR``.
  .. Return ``controlApplyMethodTypeDefIR~subst~``.
 
-<<subst_constructorTypeIR, ``set<pair<typeId, typeIR>>`` substituted by ``constructorTypeIR``>>
+<<subst_constructorTypeIR, ``constructorTypeIR`` substituted by ``set<pair<typeId, typeIR>>``>>
 
 
 . If ``set<pair<typeId, typeIR>>`` is equal to ``{ · }``:
@@ -1935,17 +1943,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Otherwise:
  .. Return ``<<subst_constructorTypeIR', subst_constructorTypeIR'(set<pair<typeId, typeIR>>, constructorTypeIR)>>``.
 
-<<subst_constructorTypeIR', subst_constructorTypeIR'(theta, CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR)>>
+<<subst_constructorTypeIR', ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR`` substituted by a non-empty ``theta``>>
 
 
 . Let ``constructorParameterIR~subst~^{asterisk}^`` be the list of ``constructorParameterIR~subst~``, obtained by repeating:
 +
 --
-  * Let ``constructorParameterIR~subst~`` be ``<<subst_parameterIR', subst_parameterIR'(theta, constructorParameterIR)>>``.
+  * Let ``constructorParameterIR~subst~`` be <<subst_parameterIR', ``constructorParameterIR`` substituted by a non-empty ``theta``>>.
 --
 +
 for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
-. Let ``typeIR~subst~`` be ``<<subst_typeIR', subst_typeIR'(theta, typeIR)>>``.
+. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
 . Return ``CONSTRUCTOR ( constructorParameterIR~subst~^{asterisk}^ ) : typeIR~subst~``.
 
 <<specialize_typeDefIR, ``typeDefIR~base~`` specialized by ``typeArgumentIR^{asterisk}^``>>
@@ -1956,7 +1964,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Check that the length of ``typeParameterIR^{asterisk}^`` is equal to the length of ``typeArgumentIR^{asterisk}^``.
 . Let ``theta`` be ``{ (typeParameterIR : typeArgumentIR)^{asterisk}^ }``.
 . Let ``typeIR~base~`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR~base~``>>.
-. Let ``typeIR~spec~`` be <<subst_typeIR, ``theta`` substituted by ``typeIR~base~``>>.
+. Let ``typeIR~spec~`` be <<subst_typeIR, ``typeIR~base~`` substituted by ``theta``>>.
 . Return ``typeIR~spec~``.
 
 <<specialize_callableTypeDefIR, ``callableTypeDefIR~base~`` specialized by ``typeArgumentIR^{asterisk}^``>>
@@ -1975,7 +1983,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``theta`` be ``{ (typeParameterIR~expl~ : typeArgumentIR)^{asterisk}^ {pp} (typeParameterIR~impl~ : typeArgumentIR~impl~)^{asterisk}^ }``.
  .. Let ``callableTypeIR~base~`` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of ``callableTypeDefIR~base~``>>.
- .. Let ``callableTypeIR~spec~`` be <<subst_callableTypeIR, ``theta`` substituted by ``callableTypeIR~base~``>>.
+ .. Let ``callableTypeIR~spec~`` be <<subst_callableTypeIR, ``callableTypeIR~base~`` substituted by ``theta``>>.
  .. Return ``(callableTypeIR~spec~, typeId~fresh~^{asterisk}^)``.
 . Else if ``the length of typeParameterIR~expl~^{asterisk}^ > 0`` *and* ``the length of typeArgumentIR^{asterisk}^ = 0``:
  .. Let ``typeId~fresh~^{asterisk}^`` be <<fresh_typeIds, the length of ``typeParameterIR^{asterisk}^`` fresh type variables>>.
@@ -1988,7 +1996,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``theta`` be ``{ (typeParameterIR : typeArgumentIR~fresh~)^{asterisk}^ }``.
  .. Let ``callableTypeIR~base~`` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of ``callableTypeDefIR~base~``>>.
- .. Let ``callableTypeIR~spec~`` be <<subst_callableTypeIR, ``theta`` substituted by ``callableTypeIR~base~``>>.
+ .. Let ``callableTypeIR~spec~`` be <<subst_callableTypeIR, ``callableTypeIR~base~`` substituted by ``theta``>>.
  .. Return ``(callableTypeIR~spec~, typeId~fresh~^{asterisk}^)``.
 
 <<specialize_constructorTypeDefIR, ``CONSTRUCTOR < typeParameterIR~expl~^{asterisk}^ , typeParameterIR~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) : typeIR`` specialized by ``typeArgumentIR^{asterisk}^``>>
@@ -2005,7 +2013,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``theta`` be ``{ (typeParameterIR~expl~ : typeArgumentIR)^{asterisk}^ {pp} (typeParameterIR~impl~ : typeArgumentIR~impl~)^{asterisk}^ }``.
- .. Let ``constructorTypeIR~spec~`` be <<subst_constructorTypeIR, ``theta`` substituted by ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR``>>.
+ .. Let ``constructorTypeIR~spec~`` be <<subst_constructorTypeIR, ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR`` substituted by ``theta``>>.
  .. Return ``(constructorTypeIR~spec~, typeId~fresh~^{asterisk}^)``.
 . Else if ``the length of typeParameterIR~expl~^{asterisk}^ > 0`` *and* ``the length of typeArgumentIR^{asterisk}^ = 0``:
  .. Let ``typeId~fresh~^{asterisk}^`` be <<fresh_typeIds, the length of ``typeParameterIR^{asterisk}^`` fresh type variables>>.
@@ -2017,12 +2025,12 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``theta`` be ``{ (typeParameterIR : typeArgumentIR~fresh~)^{asterisk}^ }``.
- .. Let ``constructorTypeIR~spec~`` be <<subst_constructorTypeIR, ``theta`` substituted by ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR``>>.
+ .. Let ``constructorTypeIR~spec~`` be <<subst_constructorTypeIR, ``CONSTRUCTOR ( constructorParameterIR^{asterisk}^ ) : typeIR`` substituted by ``theta``>>.
  .. Return ``(constructorTypeIR~spec~, typeId~fresh~^{asterisk}^)``.
 
 <<Type_alpha, Type_alpha>>:
 
-* ``typeIR'`` and ``typeIR'''`` are the same type
+* ``typeIR`` and ``typeIR'`` are the same type
 
 <<Type_alpha, ``baseTypeIR`` and ``baseTypeIR`` are the same type when>>:
 
@@ -2032,13 +2040,13 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . The relation holds.
 
-<<Type_alpha, ``typeIR'`` and ``typeIR'''`` are the same type when>>:
+<<Type_alpha, ``typeIR`` and ``typeIR'`` are the same type when>>:
 
-. If let ``TYPEDEF ++_++ typeIR~a~`` be ``typeIR'``:
- .. If <<Type_alpha, ``typeIR~a~`` and ``typeIR'''`` are the same type>>:
+. If let ``TYPEDEF ++_++ typeIR~a~`` be ``typeIR``:
+ .. If <<Type_alpha, ``typeIR~a~`` and ``typeIR'`` are the same type>>:
   ... The relation holds.
-. Else if let ``TYPEDEF ++_++ typeIR~b~`` be ``typeIR'''``:
- .. If <<Type_alpha, ``typeIR'`` and ``typeIR~b~`` are the same type>>:
+. Else if let ``TYPEDEF ++_++ typeIR~b~`` be ``typeIR'``:
+ .. If <<Type_alpha, ``typeIR`` and ``typeIR~b~`` are the same type>>:
   ... The relation holds.
 
 <<Type_alpha, ``TYPE typeId typeIR~a~`` and ``TYPE typeId typeIR~b~`` are the same type when>>:
@@ -2149,7 +2157,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. If <<Type_alpha, ``typeIR~field_a~`` and ``typeIR~field_b~`` are the same type>>, for all ``typeIR~field_a~`` in ``typeIR~field_a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
   ... The relation holds.
 
-<<Type_alpha, ``SET < [typeIR~a~] >`` and ``SET < [typeIR~b~] >`` are the same type when>>:
+<<Type_alpha, ``SET < typeIR~a~ >`` and ``SET < typeIR~b~ >`` are the same type when>>:
 
 . If <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>:
  .. The relation holds.
@@ -2237,11 +2245,11 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Let ``typeParameterIR~a~^{asterisk}^`` be ``typeParameterIR~expl_a~^{asterisk}^ {pp} typeParameterIR~impl_a~^{asterisk}^``.
 . Let ``theta~a~`` be ``{ (typeParameterIR~a~ : typeParameterIR~fresh~)^{asterisk}^ }``.
 . Let ``callableTypeIR~a~`` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of ``callableTypeDefIR~a~``>>.
-. Let ``callableTypeIR~a_subst~`` be <<subst_callableTypeIR, ``theta~a~`` substituted by ``callableTypeIR~a~``>>.
+. Let ``callableTypeIR~a_subst~`` be <<subst_callableTypeIR, ``callableTypeIR~a~`` substituted by ``theta~a~``>>.
 . Let ``typeParameterIR~b~^{asterisk}^`` be ``typeParameterIR~expl_b~^{asterisk}^ {pp} typeParameterIR~impl_b~^{asterisk}^``.
 . Let ``theta~b~`` be ``{ (typeParameterIR~b~ : typeParameterIR~fresh~)^{asterisk}^ }``.
 . Let ``callableTypeIR~b~`` be <<callableTypeIR_of_callableTypeDefIR, the underlying type of ``callableTypeDefIR~b~``>>.
-. Let ``callableTypeIR~b_subst~`` be <<subst_callableTypeIR, ``theta~b~`` substituted by ``callableTypeIR~b~``>>.
+. Let ``callableTypeIR~b_subst~`` be <<subst_callableTypeIR, ``callableTypeIR~b~`` substituted by ``theta~b~``>>.
 . If <<CallableType_alpha, ``callableTypeIR~a_subst~`` and ``callableTypeIR~b_subst~`` are the same type>>:
  .. The relation holds.
 
@@ -3187,33 +3195,31 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_bool, cast_bool(typeIR, b)>>``.
 
-<<cast_arbint, cast_arbint(typeIR'', i)>>
+<<cast_arbint, cast_arbint(typeIR', i)>>
 
 
-. If let ``boolTypeIR`` be ``typeIR''``:
+. If let ``boolTypeIR`` be ``typeIR'``:
  .. Return ``i =/= 0``.
-. Else if let ``integerTypeIR`` be ``typeIR''``:
+. Else if let ``integerTypeIR`` be ``typeIR'``:
  .. If ``integerTypeIR`` matches pattern ``INT``:
   ... Return ``D i``.
  .. Else if let ``BIT < w >`` be ``integerTypeIR``:
   ... Return ``w W <<int_to_bitstr, int_to_bitstr(w, i)>>``.
  .. Else let ``INT < w >`` be ``integerTypeIR``:
   ... Return ``w S <<int_to_bitstr, int_to_bitstr(w, i)>>``.
-. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_arbint, cast_arbint(typeIR, i)>>``.
-. Else if let ``TYPE ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_arbint, cast_arbint(typeIR, i)>>``.
-. Else let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``:
- .. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
- .. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Else let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_arbint, cast_arbint(typeIR, i)>> }``.
 
-<<cast_fixbit, cast_fixbit(typeIR'', w, i)>>
+<<cast_fixbit, cast_fixbit(typeIR', w, i)>>
 
 
-. If let ``boolTypeIR`` be ``typeIR''``:
+. If let ``boolTypeIR`` be ``typeIR'``:
  .. Return ``i =/= 0``.
-. Else if let ``integerTypeIR`` be ``typeIR''``:
+. Else if let ``integerTypeIR`` be ``typeIR'``:
  .. If ``integerTypeIR`` matches pattern ``INT``:
   ... Return ``D i``.
  .. Else if let ``BIT < w~to~ >`` be ``integerTypeIR``:
@@ -3222,19 +3228,17 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Else let ``INT < w~to~ >`` be ``integerTypeIR``:
   ... Let ``i'`` be ``<<int_to_bitstr, int_to_bitstr(w~to~, i)>>``.
   ... Return ``w~to~ S i'``.
-. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
-. Else if let ``TYPE ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
-. Else let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``:
- .. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
- .. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Else let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixbit, cast_fixbit(typeIR, w, i)>> }``.
 
-<<cast_fixint, cast_fixint(typeIR'', w, i)>>
+<<cast_fixint, cast_fixint(typeIR', w, i)>>
 
 
-. If let ``integerTypeIR`` be ``typeIR''``:
+. If let ``integerTypeIR`` be ``typeIR'``:
  .. If ``integerTypeIR`` matches pattern ``INT``:
   ... Return ``D <<bitstr_to_int, bitstr_to_int(w, i)>>``.
  .. Else if let ``BIT < w~to~ >`` be ``integerTypeIR``:
@@ -3245,13 +3249,11 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
   ... Let ``int`` be ``<<bitstr_to_int, bitstr_to_int(w, i)>>``.
   ... Let ``i'`` be ``<<int_to_bitstr, int_to_bitstr(w~to~, int)>>``.
   ... Return ``w~to~ S i'``.
-. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
-. Else if let ``TYPE ++_++ typeIR`` be ``typeIR''``:
+. Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
-. Else let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``:
- .. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
- .. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Else let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixint, cast_fixint(typeIR, w, i)>> }``.
 
 <<cast_varbit, cast_varbit(typeIR', w~max'~, w, i)>>
@@ -3406,33 +3408,27 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 . Else let ``headerUnionTypeIR`` be ``typeIR'``:
  .. Return ``<<default, default(headerUnionTypeIR)>>``.
 
-<<cast_set_singleton, cast_set_singleton(typeIR'', value)>>
+<<cast_set_singleton, cast_set_singleton(typeIR', value)>>
 
 
-. Check that ``typeIR''`` has type ``setTypeIR``.
-. Let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``.
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Check that ``typeIR'`` has type ``setTypeIR``.
+. Let ``SET < typeIR >`` be ``typeIR'``.
 . Return ``SET { <<cast_op, cast_op(typeIR, value)>> }``.
 
-<<cast_set_mask, cast_set_mask(typeIR'', value~b~, value~m~)>>
+<<cast_set_mask, cast_set_mask(typeIR', value~b~, value~m~)>>
 
 
-. Check that ``typeIR''`` has type ``setTypeIR``.
-. Let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``.
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Check that ``typeIR'`` has type ``setTypeIR``.
+. Let ``SET < typeIR >`` be ``typeIR'``.
 . Let ``value~b_cast~`` be <<cast_op, cast ``value~b~`` to type ``typeIR``>>.
 . Let ``value~m_cast~`` be <<cast_op, cast ``value~m~`` to type ``typeIR``>>.
 . Return ``SET { value~b_cast~ &&& value~m_cast~ }``.
 
-<<cast_set_range, cast_set_range(typeIR'', value~l~, value~u~)>>
+<<cast_set_range, cast_set_range(typeIR', value~l~, value~u~)>>
 
 
-. Check that ``typeIR''`` has type ``setTypeIR``.
-. Let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``.
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
+. Check that ``typeIR'`` has type ``setTypeIR``.
+. Let ``SET < typeIR >`` be ``typeIR'``.
 . Let ``value~l_cast~`` be <<cast_op, cast ``value~l~`` to type ``typeIR``>>.
 . Let ``value~u_cast~`` be <<cast_op, cast ``value~u~`` to type ``typeIR``>>.
 . Return ``SET { value~l_cast~ .. value~u_cast~ }``.
@@ -4467,7 +4463,7 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 
 <<Type_wf, Type_wf>>:
 
-* ``typeIR''`` is a well-formed type, assuming bound type ids ``B``
+* ``typeIR'`` is a well-formed type, assuming bound type ids ``B``
 
 <<Type_wf, ``baseTypeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
@@ -4593,18 +4589,18 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. If <<Type_wf, ``typeIR~field~`` is a well-formed type, assuming bound type ids ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``:
   ... The relation holds.
 
-<<Type_wf, ``SET < [typeIR] >`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``SET < typeIR >`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<nestable_set, ``typeIR`` can be used in a set type>>.
 . If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>:
  .. The relation holds.
 
-<<Type_wf, ``typeIR''`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``typeIR'`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
-. If let ``TABLE_ENUM ++_++ { nameIR^{asterisk}^ }`` be ``typeIR''``:
+. If let ``TABLE_ENUM ++_++ { nameIR^{asterisk}^ }`` be ``typeIR'``:
  .. Check that <<distinct_, the elements of ``nameIR^{asterisk}^`` are distinct>>.
  .. The relation holds.
-. Else let ``TABLE_STRUCT ++_++ { HIT ++_++ ; MISS ++_++ ; ACTION_RUN tableMetadataEnumTypeIR ; }`` be ``typeIR''``:
+. Else let ``TABLE_STRUCT ++_++ { HIT ++_++ ; MISS ++_++ ; ACTION_RUN tableMetadataEnumTypeIR ; }`` be ``typeIR'``:
  .. If <<Type_wf, ``tableMetadataEnumTypeIR`` is a well-formed type, assuming bound type ids ``B``>>:
   ... The relation holds.
 
@@ -5275,7 +5271,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Expr_eval_lctk, Expr_eval_lctk>>:
 
-* The local compile-time evaluation of <<typedExpressionIR, ``expressionIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``
+* The local compile-time evaluation of ``typedExpressionIR``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the value ``value``
 
 <<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``booleanLiteral`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
@@ -5593,7 +5589,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<Argument_eval_lctk, Argument_eval_lctk>>:
 
-* The local compile-time evaluation of ``argumentIR``, under cursor ``p`` and typing context ``TC``
+* The local compile-time evaluation of ``argumentIR``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the value ``value``
 
 <<Argument_eval_lctk, The local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>:
@@ -5608,7 +5604,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<Type_ok, Type_ok>>:
 
-* Typing ``typeOrVoid``, under cursor ``p`` and typing context ``TC``
+* Typing ``typeOrVoid``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the type ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<Type_ok, Typing ``VOID``, under cursor ``p`` and typing context ``TC``>>:
@@ -5736,43 +5732,43 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<TypeArgument_ok, TypeArgument_ok>>:
 
-* Typing ``typeArgument``, under cursor ``p`` and typing context ``TC``
-* results in the type argument ``typeArgumentIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``typeArgument``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the type argument ``typeArgumentIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<TypeArgument_ok, Typing ``type``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeIR`` and ``typeId~impl~^{asterisk}^`` be the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the type argument ``typeIR`` and set of fresh type variables ``typeId~impl~^{asterisk}^``.
+. Result in the type argument ``typeIR`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
 <<TypeArgument_ok, Typing ``nonTypeName``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeId`` be <<name, the name of ``nonTypeName``>>.
-. Result in the type argument ``typeId`` and set of fresh type variables ``·``.
+. Result in the type argument ``typeId`` and a set of fresh type variables ``·``.
 
 <<TypeArgument_ok, Typing ``VOID``, under cursor ``p`` and typing context ``TC``>>:
 
-. Result in the type argument ``VOID`` and set of fresh type variables ``·``.
+. Result in the type argument ``VOID`` and a set of fresh type variables ``·``.
 
 <<TypeArgument_ok, Typing ``_``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeId~impl~`` be <<fresh_typeId, a fresh type variable>>.
-. Result in the type argument ``typeId~impl~`` and set of fresh type variables ``[typeId~impl~]``.
+. Result in the type argument ``typeId~impl~`` and a set of fresh type variables ``[typeId~impl~]``.
 
 <<TypeArguments_ok, TypeArguments_ok>>:
 
-* Typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``
-* results in the type argument list ``typeArgumentListIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``typeArgument^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the type argument list ``typeArgumentListIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<TypeArguments_ok, Typing ``·``, under cursor ``p`` and typing context ``TC``>>:
 
-. Result in the type argument list ``·`` and set of fresh type variables ``·``.
+. Result in the type argument list ``·`` and a set of fresh type variables ``·``.
 
 <<TypeArguments_ok, Typing ``typeArgument~h~ {two-colons} typeArgument~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeArgumentIR~h~`` and ``typeId~impl_h~^{asterisk}^`` be the result of <<TypeArgument_ok, typing ``typeArgument~h~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeArgumentIR~t~^{asterisk}^`` and ``typeId~impl_t~^{asterisk}^`` be the result of <<TypeArguments_ok, typing ``typeArgument~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeId~impl~^{asterisk}^`` be ``typeId~impl_h~^{asterisk}^ {pp} typeId~impl_t~^{asterisk}^``.
-. Result in the type argument list ``typeArgumentIR~h~ {two-colons} typeArgumentIR~t~^{asterisk}^`` and set of fresh type variables ``typeId~impl~^{asterisk}^``.
+. Result in the type argument list ``typeArgumentIR~h~ {two-colons} typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
 <<Sub_expl, Sub_expl>>:
 
@@ -5802,17 +5798,17 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<Sub_expl_unroll_neq, Sub_expl_unroll_neq>>:
 
-* ``typeIR`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling
+* ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
 <<Sub_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT < 1 >`` when they are not the same type after unrolling when>>:
 
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If ``typeIR''`` is equal to ``BOOL``:
+. If ``typeIR'`` is equal to ``BOOL``:
  .. The relation holds.
-. Else if let ``integerTypeIR'`` be ``typeIR''``:
+. Else if let ``integerTypeIR'`` be ``typeIR'``:
  .. If let ``INT < ++_++ >`` be ``integerTypeIR'``:
   ... The relation holds.
  .. Else let ``BIT < ++_++ >`` be ``integerTypeIR'``:
@@ -5827,101 +5823,101 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 . Else if ``integerTypeIR`` is equal to ``BIT < nat >``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``BIT < nat >`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``BIT < nat >`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``nat`` is equal to ``1``:
- .. Check that ``typeIR''`` is equal to ``BOOL``.
+ .. Check that ``typeIR'`` is equal to ``BOOL``.
  .. The relation holds.
-. Else if ``typeIR''`` is equal to ``INT``:
+. Else if ``typeIR'`` is equal to ``INT``:
  .. The relation holds.
-. Else if ``typeIR''`` is equal to ``INT < nat >``:
+. Else if ``typeIR'`` is equal to ``INT < nat >``:
  .. The relation holds.
-. Else if let ``integerTypeIR`` be ``typeIR''``:
+. Else if let ``integerTypeIR`` be ``typeIR'``:
  .. Check that ``integerTypeIR`` matches pattern ``BIT < % >``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TYPE ++_++ typeIR~a~`` be ``typeIR``:
- .. If <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR''``>>:
+ .. If <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>:
   ... The relation holds.
-. Else if let ``TYPE ++_++ typeIR~b~`` be ``typeIR''``:
+. Else if let ``TYPE ++_++ typeIR~b~`` be ``typeIR'``:
  .. If <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``enumTypeIR`` be ``typeIR``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
  .. Let ``ENUM ++_++ < typeIR~a~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
- .. If <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR''``>>:
+ .. If <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>:
   ... The relation holds.
-. Else if let ``enumTypeIR`` be ``typeIR''``:
+. Else if let ``enumTypeIR`` be ``typeIR'``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
  .. Let ``ENUM ++_++ < typeIR~b~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
  .. If <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. Check that <<is_defaultable_typeIR, ``typeIR''`` can be default-initialized>>.
+. Check that <<is_defaultable_typeIR, ``typeIR'`` can be default-initialized>>.
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``headerTypeIR`` be ``typeIR''``:
+. If let ``headerTypeIR`` be ``typeIR'``:
  .. The relation holds.
-. Else let ``headerUnionTypeIR`` be ``typeIR''``:
+. Else let ``headerUnionTypeIR`` be ``typeIR'``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ < typeIR~a~^{asterisk}^ >`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``SEQ < typeIR~a~^{asterisk}^ >`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``LIST < typeIR~b~ >`` be ``typeIR''``:
+. If let ``LIST < typeIR~b~ >`` be ``typeIR'``:
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... The relation holds.
-. Else if let ``TUPLE < typeIR~b~^{asterisk}^ >`` be ``typeIR''``:
+. Else if let ``TUPLE < typeIR~b~^{asterisk}^ >`` be ``typeIR'``:
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
   ... The relation holds.
-. Else if let ``typeIR~b~ [ n~size~ ]`` be ``typeIR''``:
+. Else if let ``typeIR~b~ [ n~size~ ]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... The relation holds.
-. Else if let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else if let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
   ... The relation holds.
-. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ < typeIR~a~^{asterisk}^ , ... >`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``SEQ < typeIR~a~^{asterisk}^ , ... >`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``TUPLE < typeIR~b~^{asterisk}^ >`` be ``typeIR''``:
+. If let ``TUPLE < typeIR~b~^{asterisk}^ >`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(typeIR~b_non_default~^{asterisk}^, typeIR~b_default~^{asterisk}^)`` be ``<<partition_, partition_<typeIR>(typeIR~b~^{asterisk}^, the length of typeIR~a~^{asterisk}^)>>``.
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``:
   ... Check that <<is_defaultable_typeIR, ``typeIR~b_default~`` can be default-initialized>>, for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
   ... The relation holds.
-. Else if let ``typeIR~b~ [ n~size~ ]`` be ``typeIR''``:
+. Else if let ``typeIR~b~ [ n~size~ ]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
   ... The relation holds.
-. Else if let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else if let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^, typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_, partition_<typeIR>(typeIR~field_b~^{asterisk}^, the length of typeIR~a~^{asterisk}^)>>``.
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
   ... Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
   ... The relation holds.
-. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ ++_++ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^, typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_, partition_<typeIR>(typeIR~field_b~^{asterisk}^, the length of typeIR~a~^{asterisk}^)>>``.
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
   ... Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD { (typeIR~field_a~ id~field_a~ ;)^{asterisk}^ }`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``RECORD { (typeIR~field_a~ id~field_a~ ;)^{asterisk}^ }`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR''``:
+. If let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that <<eq_set, ``{ id~field_a~^{asterisk}^ }`` is equal to ``{ id~field_b~^{asterisk}^ }``>>.
  .. Let ``typeIR'''^?^^{asterisk}^`` be the list of ``typeIR'''^?^``, obtained by repeating:
 +
@@ -5955,7 +5951,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. If <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
   ... The relation holds.
-. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that <<eq_set, ``{ id~field_a~^{asterisk}^ }`` is equal to ``{ id~field_b~^{asterisk}^ }``>>.
  .. Let ``typeIR'''^?^^{asterisk}^`` be the list of ``typeIR'''^?^``, obtained by repeating:
 +
@@ -5990,9 +5986,9 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. If <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD { (typeIR~field_a~ id~field_a~ ;)^{asterisk}^ , ... }`` can be explicitly cast to ``typeIR''`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``RECORD { (typeIR~field_a~ id~field_a~ ;)^{asterisk}^ , ... }`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR''``:
+. If let ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that <<sub_set, ``{ id~field_a~^{asterisk}^ }`` is a subset of ``{ id~field_b~^{asterisk}^ }``>>.
  .. Let ``typeIR'''^?^^{asterisk}^`` be the list of ``typeIR'''^?^``, obtained by repeating:
 +
@@ -6043,7 +6039,7 @@ for each ``id~default~`` in ``id~default~^{asterisk}^``
 for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
   ... Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
   ... The relation holds.
-. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR''``:
+. Else let ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field_b~ id~field_b~ ;)^{asterisk}^ }`` be ``typeIR'``:
  .. Check that <<sub_set, ``{ id~field_a~^{asterisk}^ }`` is a subset of ``{ id~field_b~^{asterisk}^ }``>>.
  .. Let ``typeIR'''^?^^{asterisk}^`` be the list of ``typeIR'''^?^``, obtained by repeating:
 +
@@ -6095,11 +6091,9 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
   ... Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET < [typeIR~b~] >`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET < typeIR~b~ >`` when they are not the same type after unrolling when>>:
 
-. If let ``SET < typeIR'''^{asterisk}^ >`` be ``typeIR``:
- .. Check that ``typeIR'''^{asterisk}^`` is a list of length 1.
- .. Let ``[typeIR~a~]`` be ``typeIR'''^{asterisk}^``.
+. If let ``SET < typeIR~a~ >`` be ``typeIR``:
  .. If <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>:
   ... The relation holds.
 . Else if ``~<<is_setTypeIR, is_setTypeIR(typeIR)>>``:
@@ -6388,7 +6382,7 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 
 <<Expr_ok, Expr_ok>>:
 
-* Typing ``expression'''``, under cursor ``p`` and typing context ``TC``
+* Typing ``expression``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the typed expression ``typedExpressionIR``
 
 <<Expr_ok, Typing ``booleanLiteral``, under cursor ``p`` and typing context ``TC``>>:
@@ -6438,7 +6432,7 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 <<Expr_ok, Typing ``! expression``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR, compat_lnot)>>``.
+. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_lnot is satisfied>>.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
 . Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
@@ -6447,7 +6441,7 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 <<Expr_ok, Typing ``~ expression``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR, compat_bnot)>>``.
+. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_bnot is satisfied>>.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
 . Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
@@ -6457,14 +6451,14 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 
 . If ``unop`` matches pattern ``+``:
  .. Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR, compat_uplusminus)>>``.
+ .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_uplusminus is satisfied>>.
  .. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
  .. Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in the typed expression <<typedExpressionIR, ``unop typedExpressionIR~reduced~`` annotated with ``expressionNoteIR``>>.
 . Else ``unop`` matches pattern ``-``:
  .. Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR, compat_uplusminus)>>``.
+ .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_uplusminus is satisfied>>.
  .. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
  .. Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
@@ -6937,7 +6931,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 . Let ``ctk~base~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~base~``>>.
 . Let ``typeIR~index~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~index~``>>.
 . Let ``ctk~index~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~index~``>>.
-. Let ``typedExpressionIR~index_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~index~, compat_array_index)>>``.
+. Let ``typedExpressionIR~index_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~index~`` until $compat_array_index is satisfied>>.
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . If let ``TUPLE < typeIR~e~^{asterisk}^ >`` be ``typeIR'``:
  .. Check that ``ctk~index~`` matches pattern ``LCTK``.
@@ -6971,11 +6965,11 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 . Let ``typedExpressionIR~base~`` be the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~hi~`` be the result of <<Expr_ok, typing ``expression~hi~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~lo~`` be the result of <<Expr_ok, typing ``expression~lo~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~base_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~base~, compat_bitslice_base)>>``.
+. Let ``typedExpressionIR~base_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~base~`` until $compat_bitslice_base is satisfied>>.
 . Let ``typeIR~base_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base_reduced~``>>.
 . Let ``ctk~base_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~base_reduced~``>>.
-. Let ``typedExpressionIR~hi_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~hi~, compat_bitslice_index)>>``.
-. Let ``typedExpressionIR~lo_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~lo~, compat_bitslice_index)>>``.
+. Let ``typedExpressionIR~hi_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~hi~`` until $compat_bitslice_index is satisfied>>.
+. Let ``typedExpressionIR~lo_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~lo~`` until $compat_bitslice_index is satisfied>>.
 . Let ``typeIR~hi_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~hi_reduced~``>>.
 . Let ``ctk~hi_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~hi_reduced~``>>.
 . Let ``typeIR~lo_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~lo_reduced~``>>.
@@ -7092,7 +7086,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<Argument_ok, Argument_ok>>:
 
-* Typing ``argument``, under cursor ``p`` and typing context ``TC``
+* Typing ``argument``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the typed argument ``argumentIR``
 
 <<Argument_ok, Typing ``expression``, under cursor ``p`` and typing context ``TC``>>:
@@ -7117,7 +7111,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<Lvalue_ok, Lvalue_ok>>:
 
-* Typing ``lvalue``, under cursor ``p`` and typing context ``TC``
+* Typing ``lvalue``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the typed lvalue ``typedLvalueIR``
 
 <<Lvalue_ok, Typing ``prefixedNonTypeName``, under cursor ``p`` and typing context ``TC``>>:
@@ -7177,7 +7171,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let ``typeIR [ n~size~ ]`` be ``typeIR'``.
 . Let ``typedExpressionIR~index~`` be the result of <<Expr_ok, typing ``expression~index~``, under cursor ``p`` and typing context ``TC``>>.
 . Let <<expressionNoteIR, type ``typeIR~index~`` and compile-time known-ness ``ctk~index~``>> be the note of ``typedExpressionIR~index~``.
-. Let ``typedExpressionIR~index_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~index~, compat_array_index)>>``.
+. Let ``typedExpressionIR~index_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~index~`` until $compat_array_index is satisfied>>.
 . If ``ctk~index~`` matches pattern ``LCTK``:
  .. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
@@ -7199,8 +7193,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Check that ``<<compat_bitslice_base, compat_bitslice_base(typeIR~base~)>>``.
 . Let ``typedExpressionIR~hi~`` be the result of <<Expr_ok, typing ``expression~hi~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~lo~`` be the result of <<Expr_ok, typing ``expression~lo~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~hi_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~hi~, compat_bitslice_index)>>``.
-. Let ``typedExpressionIR~lo_reduced~`` be <<option_get, *!*>> ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~lo~, compat_bitslice_index)>>``.
+. Let ``typedExpressionIR~hi_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~hi~`` until $compat_bitslice_index is satisfied>>.
+. Let ``typedExpressionIR~lo_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~lo~`` until $compat_bitslice_index is satisfied>>.
 . Let <<expressionNoteIR, type ``typeIR~hi_reduced~`` and compile-time known-ness ``ctk~hi_reduced~``>> be the note of ``typedExpressionIR~hi_reduced~``.
 . Let <<expressionNoteIR, type ``typeIR~lo_reduced~`` and compile-time known-ness ``ctk~lo_reduced~``>> be the note of ``typedExpressionIR~lo_reduced~``.
 . Check that ``ctk~hi_reduced~`` matches pattern ``LCTK``.
@@ -7234,10 +7228,10 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<Stmt_ok, Stmt_ok>>:
 
-* Typing ``statement'``, under cursor ``p``, typing context ``TC``, abstract control flow ``f``, and loop context ``l``
+* Typing ``statement``, under cursor ``cursor``, typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``
 * results in 
-* the typing context ``typingContext``,
-* the abstract control flow ``flow``,
+* the typing context ``typingContext'``,
+* the abstract control flow ``flow'``,
 * and the typed statement ``statementIR``
 
 <<Stmt_ok, Typing ``;``, under cursor ``p``, typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>:
@@ -7497,10 +7491,10 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 <<BlockElementStmt_ok, BlockElementStmt_ok>>:
 
-* Typing ``blockElementStatement``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``
+* Typing ``blockElementStatement``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``
 * results in 
-* the typing context ``typingContext``,
-* the abstract control flow ``flow``,
+* the typing context ``typingContext'``,
+* the abstract control flow ``flow'``,
 * and the typed block element statement ``blockElementStatementIR``
 
 <<BlockElementStmt_ok, Typing ``constantDeclaration``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>:
@@ -7552,10 +7546,10 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 <<BlockElementStmts_ok, BlockElementStmts_ok>>:
 
-* Typing ``blockElementStatement^{asterisk}^``, under typing context ``TC``, abstract control flow ``f``, and loop context ``l``
+* Typing ``blockElementStatement^{asterisk}^``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``
 * results in 
-* the typing context ``typingContext``,
-* the abstract control flow ``flow``,
+* the typing context ``typingContext'``,
+* the abstract control flow ``flow'``,
 * and the typed block element statements ``blockElementStatementIR^{asterisk}^``
 
 <<BlockElementStmts_ok, Typing ``·``, under typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>:
@@ -7576,10 +7570,10 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 <<Block_ok, Block_ok>>:
 
-* Typing ``annotationList { blockElementStatementList }``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``
+* Typing ``blockStatement``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``
 * results in 
-* the typing context ``typingContext``,
-* the abstract control flow ``flow``,
+* the typing context ``typingContext'``,
+* the abstract control flow ``flow'``,
 * and the typed block statement ``blockStatementIR``
 
 <<Block_ok, Typing ``annotationList { blockElementStatementList }``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>:
@@ -7594,8 +7588,8 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 <<Parameter_ok, Parameter_ok>>:
 
-* Typing ``annotationList direction type name initializerOpt``, under cursor ``p`` and typing context ``TC``
-* results in the parameter ``parameterIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``parameter``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the parameter ``parameterIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<Parameter_ok, Typing ``annotationList direction type name initializerOpt``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -7605,7 +7599,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~fresh~^{asterisk}^ }``>>.
  .. If <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>:
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
-  ... Result in the parameter ``annotationList direction typeIR nameIR None`` and set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+  ... Result in the parameter ``annotationList direction typeIR nameIR None`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 . Else if let ``= expression~init~`` be ``initializerOpt``:
  .. Let ``typeIR`` and ``typeId~fresh~^{asterisk}^`` be the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``bound`` be ``<<bound, bound(p, TC)>>``.
@@ -7617,47 +7611,47 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
   ... Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
   ... Let ``value~init~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Result in the parameter ``annotationList direction typeIR nameIR = value~init~`` and set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+  ... Result in the parameter ``annotationList direction typeIR nameIR = value~init~`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<Parameters_ok, Parameters_ok>>:
 
-* Typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``
-* results in the parameter list ``parameterListIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``parameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<Parameters_ok, Typing ``·``, under cursor ``p`` and typing context ``TC``>>:
 
-. Result in the parameter list ``·`` and set of fresh type variables ``·``.
+. Result in the parameter list ``·`` and a set of fresh type variables ``·``.
 
 <<Parameters_ok, Typing ``parameter~h~ {two-colons} parameter~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``parameterIR~h~`` and ``typeId~fresh_h~^{asterisk}^`` be the result of <<Parameter_ok, typing ``parameter~h~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``parameterIR~t~^{asterisk}^`` and ``typeId~fresh_t~^{asterisk}^`` be the result of <<Parameters_ok, typing ``parameter~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the parameter list ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` and set of fresh type variables ``typeId~fresh_h~^{asterisk}^ {pp} typeId~fresh_t~^{asterisk}^``.
+. Result in the parameter list ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^ {pp} typeId~fresh_t~^{asterisk}^``.
 
 <<ConstructorParameter_ok, ConstructorParameter_ok>>:
 
-* Typing ``constructorParameter``, under cursor ``p`` and typing context ``TC``
-* results in the constructor parameter ``constructorParameterIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``constructorParameter``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the constructor parameter ``constructorParameterIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<ConstructorParameter_ok, Typing ``constructorParameter``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``constructorParameterIR`` and ``typeId~fresh~^{asterisk}^`` be the result of <<Parameter_ok, typing ``constructorParameter``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the constructor parameter ``constructorParameterIR`` and set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Result in the constructor parameter ``constructorParameterIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ConstructorParameters_ok, ConstructorParameters_ok>>:
 
-* Typing ``constructorParameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``
-* results in the constructor parameter list ``constructorParameterListIR`` and set of fresh type variables ``typeId^{asterisk}^``
+* Typing ``constructorParameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the constructor parameter list ``constructorParameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``
 
 <<ConstructorParameters_ok, Typing ``constructorParameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``constructorParameterIR^{asterisk}^`` and ``typeId~fresh~^{asterisk}^`` be the result of <<Parameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the constructor parameter list ``constructorParameterIR^{asterisk}^`` and set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Result in the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ExternMethod_ok, ExternMethod_ok>>:
 
-* Typing ``externMethodPrototype``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``
-* results in the updated typing context ``typingContext`` and the typed method prototype ``externMethodPrototypeIR``
+* Typing ``externMethodPrototype``, under typing context ``typingContext`` for an extern object ``typeId``
+* results in the updated typing context ``typingContext'`` and the typed method prototype ``externMethodPrototypeIR``
 
 <<ExternMethod_ok, Typing ``annotationList typeOrVoid name typeParameterListOpt ( parameterList ) ;``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``>>:
 
@@ -7713,8 +7707,8 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 <<ExternMethods_ok, ExternMethods_ok>>:
 
-* Typing ``externMethodPrototype^{asterisk}^``, under typing context ``TC`` for an extern object ``typeId~extern~``
-* results in the updated typing context ``typingContext`` and the typed method prototypes ``externMethodPrototypeIR^{asterisk}^``
+* Typing ``externMethodPrototype^{asterisk}^``, under typing context ``typingContext`` for an extern object ``typeId``
+* results in the updated typing context ``typingContext'`` and the typed method prototypes ``externMethodPrototypeIR^{asterisk}^``
 
 <<ExternMethods_ok, Typing ``·``, under typing context ``TC`` for an extern object ``typeId~extern~``>>:
 
@@ -7728,8 +7722,8 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 <<ExternConstructor_ok, ExternConstructor_ok>>:
 
-* Typing ``annotationList typeIdentifier ( parameterList ) ;``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``
-* results in the updated typing context ``typingContext`` and the typed constructor prototype ``externConstructorPrototypeIR``
+* Typing ``externConstructorPrototype``, under typing context ``typingContext`` for an extern object ``typeId``
+* results in the updated typing context ``typingContext'`` and the typed constructor prototype ``externConstructorPrototypeIR``
 
 <<ExternConstructor_ok, Typing ``annotationList typeIdentifier ( parameterList ) ;``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``>>:
 
@@ -7752,8 +7746,8 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 <<ExternConstructors_ok, ExternConstructors_ok>>:
 
-* Typing ``externConstructorPrototype^{asterisk}^``, under typing context ``TC`` for an extern object ``typeId~extern~``
-* results in the updated typing context ``typingContext`` and the typed constructor prototypes ``externConstructorPrototypeIR^{asterisk}^``
+* Typing ``externConstructorPrototype^{asterisk}^``, under typing context ``typingContext`` for an extern object ``typeId``
+* results in the updated typing context ``typingContext'`` and the typed constructor prototypes ``externConstructorPrototypeIR^{asterisk}^``
 
 <<ExternConstructors_ok, Typing ``·``, under typing context ``TC`` for an extern object ``typeId~extern~``>>:
 
@@ -7767,7 +7761,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 <<ParserTransition_ok, ParserTransition_ok>>:
 
-* Typing ``transitionStatement``, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``
+* Typing ``transitionStatement``, under typing context ``typingContext`` and parser state names ``nameIR^{asterisk}^``
 * results in the typed transition statement ``transitionStatementIR``
 
 <<ParserTransition_ok, Typing ````, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``>>:
@@ -7805,7 +7799,7 @@ for each ``typedExpressionIR~key~`` in ``typedExpressionIR~key~^{asterisk}^``
 --
 +
 for each ``typedExpressionIR~key_reduced~`` in ``typedExpressionIR~key_reduced~^{asterisk}^``
-. If <<Type_wf, ``SET < [typeIR~key_reduced~] >`` is a well-formed type, assuming bound type ids ``<<bound, bound(LOCAL, TC~0~)>>``>>, for all ``typeIR~key_reduced~`` in ``typeIR~key_reduced~^{asterisk}^``:
+. If <<Type_wf, ``SET < typeIR~key_reduced~ >`` is a well-formed type, assuming bound type ids ``<<bound, bound(LOCAL, TC~0~)>>``>>, for all ``typeIR~key_reduced~`` in ``typeIR~key_reduced~^{asterisk}^``:
  .. Let ``selectCase^{asterisk}^`` be <<flatten_selectCaseList, the list of select cases in ``selectCaseList``>>.
  .. Let ``selectCaseIR^{asterisk}^`` be the list of ``selectCaseIR``, obtained by repeating:
 +
@@ -7819,8 +7813,8 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 
 <<ParserStmt_ok, ParserStmt_ok>>:
 
-* Typing ``parserStatement'``, under typing context ``TC~0~``
-* results in the updated typing context ``typingContext`` and the typed parser statement ``parserStatementIR``
+* Typing ``parserStatement``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed parser statement ``parserStatementIR``
 
 <<ParserStmt_ok, Typing ``constantDeclaration``, under typing context ``TC~0~``>>:
 
@@ -7912,8 +7906,8 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 
 <<ParserStmts_ok, ParserStmts_ok>>:
 
-* Typing ``parserStatement^{asterisk}^``, under typing context ``TC``
-* results in the updated typing context ``typingContext`` and the typed parser statements ``parserStatementIR^{asterisk}^``
+* Typing ``parserStatement^{asterisk}^``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed parser statements ``parserStatementIR^{asterisk}^``
 
 <<ParserStmts_ok, Typing ``·``, under typing context ``TC``>>:
 
@@ -7927,7 +7921,7 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 
 <<ParserState_ok, ParserState_ok>>:
 
-* Typing ``annotationList STATE name { parserStatementList transitionStatement }``, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``
+* Typing ``parserState``, under typing context ``typingContext`` and parser state names ``nameIR^{asterisk}^``
 * results in the typed parser state ``parserStateIR``
 
 <<ParserState_ok, Typing ``annotationList STATE name { parserStatementList transitionStatement }``, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``>>:
@@ -7943,7 +7937,7 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 
 <<ParserStates_ok, ParserStates_ok>>:
 
-* Typing ``parserState^{asterisk}^``, under typing context ``TC``
+* Typing ``parserState^{asterisk}^``, under typing context ``typingContext``
 * results in the typed parser states ``parserStateIR^{asterisk}^``
 
 <<ParserStates_ok, Typing ``parserState^{asterisk}^``, under typing context ``TC``>>:
@@ -7977,8 +7971,8 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 <<ParserLocalDecl_ok, ParserLocalDecl_ok>>:
 
-* Typing ``parserLocalDeclaration``, under typing context ``TC~0~``
-* results in the updated typing context ``typingContext`` and the typed parser local declaration ``parserLocalDeclarationIR``
+* Typing ``parserLocalDeclaration``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed parser local declaration ``parserLocalDeclarationIR``
 
 <<ParserLocalDecl_ok, Typing ``constantDeclaration``, under typing context ``TC~0~``>>:
 
@@ -8023,19 +8017,19 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 . Let ``typeIR`` and ``typeId^{asterisk}^`` be the result of <<Type_ok, typing ``valueSetType``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. If <<Type_wf, ``SET < [typeIR] >`` is a well-formed type, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
+. If <<Type_wf, ``SET < typeIR >`` is a well-formed type, assuming bound type ids ``<<bound, bound(BLOCK, TC~0~)>>``>>:
  .. Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> does not match pattern ``DYN``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``varTypeIR`` be ``SET < [typeIR] > CTK None``.
+ .. Let ``varTypeIR`` be ``SET < typeIR > CTK None``.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` with a mapping from ``nameIR`` to ``varTypeIR`` added to the ``BLOCK`` layer>>.
  .. Let ``valueSetDeclarationIR`` be ``annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;``.
  .. Result in the updated typing context ``TC~1~`` and the typed parser local declaration ``valueSetDeclarationIR``.
 
 <<ParserLocalDecls_ok, ParserLocalDecls_ok>>:
 
-* Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``TC``
-* results in the updated typing context ``typingContext`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^``
+* Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^``
 
 <<ParserLocalDecls_ok, Typing ``·``, under typing context ``TC``>>:
 
@@ -8049,15 +8043,15 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 <<TableKey_ok, TableKey_ok>>:
 
-* Typing ``expression : name~matchkind~ annotationList ;``, under typing context ``TC`` and table context ``TBLC~0~``
-* results in the updated table context ``tableContext`` and the typed table key ``tableKeyIR``
+* Typing ``tableKey``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table key ``tableKeyIR``
 
 <<TableKey_ok, Typing ``expression : name~matchkind~ annotationList ;``, under typing context ``TC`` and table context ``TBLC~0~``>>:
 
 . Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~reduced~`` be ``<<reduce_serenum, reduce_serenum(typedExpressionIR)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
-. If <<Type_wf, ``SET < [typeIR~reduced~] >`` is a well-formed type, assuming bound type ids ``<<bound, bound(LOCAL, TC)>>``>>:
+. If <<Type_wf, ``SET < typeIR~reduced~ >`` is a well-formed type, assuming bound type ids ``<<bound, bound(LOCAL, TC)>>``>>:
  .. Let ``nameIR~matchkind~`` be <<name, the name of ``name~matchkind~``>>.
  .. Check that ``MATCH_KIND . nameIR~matchkind~`` is equal to <<find_var_value_t, the value of variable ``nameIR~matchkind~`` in the ``LOCAL`` layer of ``TC``>>.
  .. Check that ``<<compat_table_key, compat_table_key(nameIR~matchkind~, typeIR~reduced~)>>``.
@@ -8068,8 +8062,8 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 <<TableKeys_ok, TableKeys_ok>>:
 
-* Typing ``tableKey^{asterisk}^``, under typing context ``TC`` and table context ``TBLC``
-* results in the updated table context ``tableContext`` and the typed table keys ``tableKeyListIR``
+* Typing ``tableKey^{asterisk}^``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table keys ``tableKeyListIR``
 
 <<TableKeys_ok, Typing ``·``, under typing context ``TC`` and table context ``TBLC``>>:
 
@@ -8083,7 +8077,7 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 <<Call_action_partial_ok, Call_action_partial_ok>>:
 
-* Typing ``argumentIR^{asterisk}^``, under typing context ``TC``
+* Typing ``argumentListIR``, under typing context ``typingContext``
 * results in the typed argument list ``parameterIR'^{asterisk}^``
 
 <<Call_action_partial_ok, Typing ``argumentIR^{asterisk}^``, under typing context ``TC``>>:
@@ -8096,8 +8090,8 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 
 <<TableAction_ok, TableAction_ok>>:
 
-* Typing ``annotationList tableActionReference ;``, under typing context ``TC`` and table context ``TBLC~0~``
-* results in the updated table context ``tableContext`` and the typed table action ``tableActionIR``
+* Typing ``tableAction``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table action ``tableActionIR``
 
 <<TableAction_ok, Typing ``annotationList prefixedNonTypeName ;``, under typing context ``TC`` and table context ``TBLC~0~``>>:
 
@@ -8132,8 +8126,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableActions_ok, TableActions_ok>>:
 
-* Typing ``tableAction^{asterisk}^``, under typing context ``TC`` and table context ``TBLC``
-* results in the updated table context ``tableContext`` and the typed table actions ``tableActionListIR``
+* Typing ``tableAction^{asterisk}^``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table actions ``tableActionListIR``
 
 <<TableActions_ok, Typing ``·``, under typing context ``TC`` and table context ``TBLC``>>:
 
@@ -8147,7 +8141,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<Call_action_default_ok, Call_action_default_ok>>:
 
-* Typing ``argumentIR^{asterisk}^``, under typing context ``TC``
+* Typing ``argumentListIR``, under typing context ``typingContext``
 * results in the typed argument list ``parameterIR'^{asterisk}^``
 
 <<Call_action_default_ok, Typing ``argumentIR^{asterisk}^``, under typing context ``TC``>>:
@@ -8159,7 +8153,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableDefaultAction_ok, TableDefaultAction_ok>>:
 
-* Typing ``= expression``, under typing context ``TC`` and table context ``TBLC``
+* Typing ``initializer``, under typing context ``typingContext`` and table context ``tableContext``
 * results in the typed default action ``tableActionReferenceIR``
 
 <<TableDefaultAction_ok, Typing ``= prefixedNonTypeName``, under typing context ``TC`` and table context ``TBLC``>>:
@@ -8188,7 +8182,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntry_keyset_ok, TableEntry_keyset_ok>>:
 
-* Typing ``keysetExpression``, under typing context ``TC`` and table context ``TBLC``
+* Typing ``keysetExpression``, under typing context ``typingContext`` and table context ``tableContext``
 * results in the updated table context ``tableEntryState`` and the typed keyset expression ``keysetExpressionIR``
 
 <<TableEntry_keyset_ok, Typing ``expression``, under typing context ``TC`` and table context ``TBLC``>>:
@@ -8305,7 +8299,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntry_action_ok, TableEntry_action_ok>>:
 
-* Typing ``tableActionReference``, under typing context ``TC`` and table context ``TBLC``
+* Typing ``tableActionReference``, under typing context ``typingContext`` and table context ``tableContext``
 * results in the typed table action reference ``tableActionReferenceIR``
 
 <<TableEntry_action_ok, Typing ``prefixedNonTypeName``, under typing context ``TC`` and table context ``TBLC``>>:
@@ -8334,7 +8328,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntry_priority_ok, TableEntry_priority_ok>>:
 
-* Typing ``tableEntryPriority'^?^``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``
+* Typing ``tableEntryPriority^?^``, under typing context ``typingContext`` and table context ``tableContext``, and table entry state ``tableEntryState``
 * results in the updated table context ``tableContext'`` and the typed table entry priority ``tableEntryPriorityOptIR``
 
 <<TableEntry_priority_ok, Typing ``None``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``>>:
@@ -8495,8 +8489,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntry_ok, TableEntry_ok>>:
 
-* Typing ``tableEntry``, under typing context ``TC`` and table context ``TBLC~0~``
-* results in the updated table context ``tableContext`` and the typed table entry ``tableEntryIR``
+* Typing ``tableEntry``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table entry ``tableEntryIR``
 
 <<TableEntry_ok, Typing ``constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;``, under typing context ``TC`` and table context ``TBLC~0~``>>:
 
@@ -8518,8 +8512,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntries_ok, TableEntries_ok>>:
 
-* Typing ``tableEntry^{asterisk}^``, under typing context ``TC`` and table context ``TBLC``
-* results in the updated table context ``tableContext`` and the typed table entries ``tableEntryListIR``
+* Typing ``tableEntry^{asterisk}^``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table entries ``tableEntryListIR``
 
 <<TableEntries_ok, Typing ``·``, under typing context ``TC`` and table context ``TBLC``>>:
 
@@ -8533,8 +8527,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableProperty_ok, TableProperty_ok>>:
 
-* Typing ``tableProperty``, under typing context ``TC`` and table context ``TBLC~0~``
-* results in the updated table context ``tableContext`` and the typed table property ``tablePropertyIR``
+* Typing ``tableProperty``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table property ``tablePropertyIR``
 
 <<TableProperty_ok, Typing ``KEY = { tableKeyList }``, under typing context ``TC`` and table context ``TBLC~0~``>>:
 
@@ -8644,8 +8638,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableProperties_ok, TableProperties_ok>>:
 
-* Typing ``tableProperty^{asterisk}^``, under typing context ``TC`` and table context ``TBLC``
-* results in the updated table context ``tableContext`` and the typed table properties ``tablePropertyListIR``
+* Typing ``tableProperty^{asterisk}^``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated table context ``tableContext'`` and the typed table properties ``tablePropertyListIR``
 
 <<TableProperties_ok, Typing ``·``, under typing context ``TC`` and table context ``TBLC``>>:
 
@@ -8659,7 +8653,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<Table_ok, Table_ok>>:
 
-* Typing ``tableProperty^{asterisk}^``, under typing context ``TC``
+* Typing ``tableProperty^{asterisk}^``, under typing context ``typingContext``
 * results in the updated typing context ``tableContext`` and the typed table ``tablePropertyListIR``
 
 <<Table_ok, Typing ``tableProperty^{asterisk}^``, under typing context ``TC``>>:
@@ -8679,8 +8673,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableType_ok, TableType_ok>>:
 
-* Typing ``name``, under typing context ``TC~0~`` and table context ``TBLC``
-* results in the updated typing context ``typingContext`` and the table type ``typeIR``
+* Typing ``name``, under typing context ``typingContext`` and table context ``tableContext``
+* results in the updated typing context ``typingContext'`` and the table type ``typeIR``
 
 <<TableType_ok, Typing ``name``, under typing context ``TC~0~`` and table context ``TBLC``>>:
 
@@ -8717,8 +8711,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 
 <<ControlLocalDecl_ok, ControlLocalDecl_ok>>:
 
-* Typing ``controlLocalDeclaration``, under typing context ``TC~0~``
-* results in the updated typing context ``typingContext`` and the typed control local declaration ``controlLocalDeclarationIR``
+* Typing ``controlLocalDeclaration``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed control local declaration ``controlLocalDeclarationIR``
 
 <<ControlLocalDecl_ok, Typing ``constantDeclaration``, under typing context ``TC~0~``>>:
 
@@ -8780,8 +8774,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 
 <<ControlLocalDecls_ok, ControlLocalDecls_ok>>:
 
-* Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``TC``
-* results in the updated typing context ``typingContext`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^``
+* Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^``
 
 <<ControlLocalDecls_ok, Typing ``·``, under typing context ``TC``>>:
 
@@ -8795,8 +8789,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 
 <<Decl_ok, Decl_ok>>:
 
-* Typing ``declaration``, under cursor ``p`` and typing context ``TC~0~``
-* results in the updated typing context ``typingContext`` and the typed declaration ``declarationIR``
+* Typing ``declaration``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed declaration ``declarationIR``
 
 <<Decl_ok, Typing ``annotationList CONST type name = expression~value~ ;``, under cursor ``p`` and typing context ``TC~0~``>>:
 
@@ -9443,8 +9437,8 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<Decls_ok, Decls_ok>>:
 
-* Typing ``declaration^{asterisk}^``, under cursor ``p`` and typing context ``TC``
-* results in the updated typing context ``typingContext`` and the typed declarations ``declarationIR^{asterisk}^``
+* Typing ``declaration^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``
+* results in the updated typing context ``typingContext'`` and the typed declarations ``declarationIR^{asterisk}^``
 
 <<Decls_ok, Typing ``·``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -9552,7 +9546,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<CallableTarget_ok, CallableTarget_ok>>:
 
-* Typing ``callableTarget``, under cursor ``p`` and typing context ``TC``
+* Typing ``callableTarget``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the typed callable target ``callableTargetIR``
 
 <<CallableTarget_ok, Typing ``callableTarget``, under cursor ``p`` and typing context ``TC``>>:
@@ -9582,7 +9576,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<CallableTarget_lvalue_ok, CallableTarget_lvalue_ok>>:
 
-* Typing ``lvalue``, under cursor ``p`` and typing context ``TC``
+* Typing ``lvalue``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the typed callable target ``callableTargetIR``
 
 <<CallableTarget_lvalue_ok, Typing ``lvalue``, under cursor ``p`` and typing context ``TC``>>:
@@ -9593,7 +9587,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<CallableType_ok, CallableType_ok>>:
 
-* Finding the type of ``callableTargetIR'``<``typeArgumentIR'^{asterisk}^``>(``argumentIR'^{asterisk}^``), under cursor ``p`` and typing context ``TC``
+* Finding the type of ``callableTargetIR``<``typeArgumentListIR``>(``argumentIR^{asterisk}^``), under cursor ``cursor`` and typing context ``typingContext``
 * results in the callable type ``callableTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^``
 
 <<CallableType_ok, Finding the type of ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR'^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
@@ -9736,8 +9730,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Call_ok, Call_ok>>:
 
-* Typing the invocation ``callableTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``
-* results in the return type ``typeIR`` with inferred type arguments ``typeArgumentListIR`` and the casted argument list ``argumentListIR``
+* Typing the invocation ``callableTypeIR``<``typeArgumentListIR``>(``argumentListIR``) with omitted type arguments ``typeId^{asterisk}^`` and omitted arguments ``id^{asterisk}^`` , under cursor ``cursor`` and typing context ``typingContext``
+* results in the return type ``typeIR`` with inferred type arguments ``typeArgumentListIR'`` and the casted argument list ``argumentListIR'``
 
 <<Call_ok, Typing the invocation ``ACTION ( parameterIR^{asterisk}^ )``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``·`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``>>:
 
@@ -9769,11 +9763,11 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
+. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``typeIR~ret~`` substituted by ``inference``>>.
 . Let ``functionTypeIR~inferred~`` be ``FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
 . If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_definedFunction, callable_definedFunction(p, TC)>>``.
@@ -9803,11 +9797,11 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
+. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``typeIR~ret~`` substituted by ``inference``>>.
 . Let ``functionTypeIR~inferred~`` be ``EXTERN_FUNCTION ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
 . If <<CallableType_wf, ``functionTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externFunction, callable_externFunction(p, TC)>>``.
@@ -9844,11 +9838,11 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
+. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``typeIR~ret~`` substituted by ``inference``>>.
 . Let ``externMethodTypeIR~inferred~`` be ``EXTERN_METHOD ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
 . If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externMethod, callable_externMethod(p, TC)>>``.
@@ -9878,11 +9872,11 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~ret~``>>.
+. Let ``typeIR~ret_inferred~`` be <<subst_typeIR, ``typeIR~ret~`` substituted by ``inference``>>.
 . Let ``externMethodTypeIR~inferred~`` be ``EXTERN_METHOD ABSTRACT ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~ret_inferred~``.
 . If <<CallableType_wf, ``externMethodTypeIR~inferred~`` is a well-formed callable type, assuming bound type ids ``<<bound, bound(p, TC)>>``>>:
  .. Check that ``<<callable_externAbstractMethod, callable_externAbstractMethod(p, TC)>>``.
@@ -9910,7 +9904,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 <<ConstructorType_ok, ConstructorType_ok>>:
 
-* Finding the type of constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``
+* Finding the type of constructor ``prefixedNameIR``<``typeArgumentListIR``>(``argumentIR^{asterisk}^``), under cursor ``cursor`` and typing context ``typingContext``
 * results in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^``
 
 <<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
@@ -9949,8 +9943,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 <<Inst_ok, Inst_ok>>:
 
-* Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``cursor`` and typing context ``TC``, and instantiation site context ``instctxt``
-* results in the constructed type ``typeIR`` with inferred type arguments ``typeArgumentListIR`` and the casted argument list ``argumentListIR``
+* Typing the instantiation ``constructorTypeIR``<``typeArgumentListIR``>(``argumentListIR``) with omitted type arguments ``typeId^{asterisk}^`` and omitted arguments ``id^{asterisk}^`` , under cursor ``cursor`` and typing context ``typingContext``, and instantiation site context ``instctxt``
+* results in the constructed type ``typeIR`` with inferred type arguments ``typeArgumentListIR'`` and the casted argument list ``argumentListIR'``
 
 <<Inst_ok, Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``GLOBAL`` and typing context ``TC``, and instantiation site context ``instctxt``>>:
 
@@ -9979,11 +9973,11 @@ for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~object~``>>.
+. Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``typeIR~object~`` substituted by ``inference``>>.
 . Let ``constructorTypeIR~inferred~`` be ``CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~``.
 . If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``<<bound, bound(GLOBAL, TC)>>``>>:
  .. Check that ``<<instantiable, instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>``.
@@ -10015,11 +10009,11 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list of ``parameterIR~aligned_inferred~``, obtained by repeating:
 +
 --
-  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``inference`` substituted by ``parameterIR~aligned~``>>.
+  * Let ``parameterIR~aligned_inferred~`` be <<subst_parameterIR, ``parameterIR~aligned~`` substituted by ``inference``>>.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``inference`` substituted by ``typeIR~object~``>>.
+. Let ``typeIR~object_inferred~`` be <<subst_typeIR, ``typeIR~object~`` substituted by ``inference``>>.
 . Let ``constructorTypeIR~inferred~`` be ``CONSTRUCTOR ( parameterIR~aligned_inferred~^{asterisk}^ ) : typeIR~object_inferred~``.
 . If <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``<<bound, bound(cursor, TC)>>``>>:
  .. Check that ``<<instantiable, instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>``.
@@ -10040,7 +10034,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Otherwise:
  .. Return ``typedExpressionIR``.
 
-<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR, check)>>
+<<reduce_serenum_unary, The result of reducing serializable enums in ``typedExpressionIR`` until $check is satisfied>>
 
 
 . Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
@@ -10732,11 +10726,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 . Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
-. Let ``typeIR''`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
-. Check that ``typeIR''`` has type ``setTypeIR``.
-. Let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``.
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR~base~]`` be ``typeIR'^{asterisk}^``.
+. Let ``typeIR'`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. Check that ``typeIR'`` has type ``setTypeIR``.
+. Let ``SET < typeIR~base~ >`` be ``typeIR'``.
 . If <<Type_alpha, ``typeIR~base~`` and ``typeIR~key~`` are the same type>>:
  .. Result in ``typedExpressionIR``.
 
@@ -10744,14 +10736,12 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 . Let ``typedExpressionIR`` be the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
-. Let ``typeIR''`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
-. Check that ``typeIR''`` has type ``setTypeIR``.
-. Let ``SET < typeIR'^{asterisk}^ >`` be ``typeIR''``.
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR~base~]`` be ``typeIR'^{asterisk}^``.
+. Let ``typeIR'`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. Check that ``typeIR'`` has type ``setTypeIR``.
+. Let ``SET < typeIR~base~ >`` be ``typeIR'``.
 . If <<Type_alpha, ``typeIR~base~`` and ``typeIR~key~`` are not the same type>>:
  .. If <<Sub_impl, ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``>>:
-  ... Let ``typeIR~cast~`` be ``SET < [typeIR~key~] >``.
+  ... Let ``typeIR~cast~`` be ``SET < typeIR~key~ >``.
   ... Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~cast~ ) typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
   ... Result in ``typedExpressionIR~cast~``.
 
@@ -10761,7 +10751,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
 . Check that ``~<<is_setTypeIR, is_setTypeIR(unroll_typeIR(typeIR))>>``.
 . If <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>:
- .. Let ``typeIR~cast~`` be ``SET < [typeIR~key~] >``.
+ .. Let ``typeIR~cast~`` be ``SET < typeIR~key~ >``.
  .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~cast~ ) typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
  .. Result in ``typedExpressionIR~cast~``.
 
@@ -11045,7 +11035,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
  .. If <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>:
-  ... Let ``typeIR~set~`` be ``SET < [typeIR~key~] >``.
+  ... Let ``typeIR~set~`` be ``SET < typeIR~key~ >``.
   ... Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``( typeIR~set~ ) typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
   ... Result in ``LPM n`` and ``typedExpressionIR~set~``.
 . Else if ``text`` is not equal to ``"lpm"``:
@@ -11053,7 +11043,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
  .. If <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>:
-  ... Let ``typeIR~set~`` be ``SET < [typeIR~key~] >``.
+  ... Let ``typeIR~set~`` be ``SET < typeIR~key~ >``.
   ... Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``( typeIR~set~ ) typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
   ... Result in ``NOLPM`` and ``typedExpressionIR~set~``.
 
@@ -11748,7 +11738,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Let ``text~key_value~`` be <<option_get, *!*>> ``<<assoc_, assoc_<nameIR, text>(nameIR~key~, tableKeyInterface^{asterisk}^)>>``.
  .. Let ``i~key_value~`` be ``<<text_to_int, text_to_int(text~key_value~)>>``.
  .. Let ``typedExpressionIR`` be <<typedExpressionIR, ``D i~key_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
- .. Let ``typeIR~set~`` be ``SET < [typeIR] >``.
+ .. Let ``typeIR~set~`` be ``SET < typeIR >``.
  .. Let ``simpleKeysetExpressionIR`` be ``( typeIR~set~ ) typedExpressionIR # ( typeIR~set~ DYN )``.
  .. Return ``simpleKeysetExpressionIR``.
 . Else ``text`` is equal to ``"ternary"``:
@@ -12424,11 +12414,11 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<Stmt_inst, Stmt_inst>>:
 
-* The compile-time evaluation of ``statementIR'``, under cursor ``p``, instantiation context ``IC``, and store ``STO``
+* The compile-time evaluation of ``statementIR``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``
 * results in 
-* the instantiation context ``instContext``,
-* the updated store ``store``,
-* and the instantiated statement ``statementIR``
+* the instantiation context ``instContext'``,
+* the updated store ``store'``,
+* and the instantiated statement ``statementIR'``
 
 <<Stmt_inst, The compile-time evaluation of ``emptyStatementIR``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
@@ -13205,10 +13195,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Decls_inst, Decls_inst>>:
 
-* Instantiating ``declarationIR^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO``
+* Instantiating ``declarationIR^{asterisk}^``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``
 * results in 
-* the modified instantiation context ``instContext``,
-* the updated store ``store``, and the instantiated declarations ``declarationIR'^{asterisk}^``
+* the modified instantiation context ``instContext'``,
+* the updated store ``store'``, and the instantiated declarations ``declarationIR'^{asterisk}^``
 
 <<Decls_inst, Instantiating ``·``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
@@ -13835,19 +13825,19 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Return ``typeIR``.
 . Else if ``cursor`` matches pattern ``BLOCK``:
  .. Let ``theta`` be ``EC.BLOCK.TYPE``.
- .. Let ``typeIR~subst~`` be <<subst_typeIR, ``theta`` substituted by ``typeIR``>>.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta``>>.
  .. Return ``typeIR~subst~``.
 . Else if ``cursor`` matches pattern ``LOCAL``:
  .. Let ``theta~block~`` be ``EC.BLOCK.TYPE``.
  .. Let ``theta~local~`` be ``EC.LOCAL.TYPE``.
  .. Let ``theta`` be ``<<extend_map, extend_map<typeId, typeIR>(theta~block~, theta~local~)>>``.
- .. Let ``typeIR~subst~`` be <<subst_typeIR, ``theta`` substituted by ``typeIR``>>.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta``>>.
  .. Return ``typeIR~subst~``.
 
 <<Expr_eval, Expr_eval>>:
 
-* Evaluating <<typedExpressionIR, ``expressionIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``
-* results in the updated evaluation context ``evalContext``, store ``store`` and expression result ``expressionResult``
+* Evaluating ``typedExpressionIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``
+* results in the updated evaluation context ``evalContext'``, store ``store'`` and expression result ``expressionResult``
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``booleanLiteral`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -14141,7 +14131,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 <<Exprs_eval, Exprs_eval>>:
 
-* Evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``p``, evaluation context ``evalContext``, and store ``store``
+* Evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``
 * results in the updated evaluation context ``evalContext'``, store ``store'`` and expression list result ``expressionListResult``
 
 <<Exprs_eval, Evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``p``, evaluation context ``evalContext``, and store ``store``>>:
@@ -14384,10 +14374,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 <<Stmt_eval, Stmt_eval>>:
 
-* The compile-time evaluation of ``statementIR'``, under cursor ``p``, evaluation context ``EC``, and store ``STO``
+* The compile-time evaluation of ``statementIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``
 * results in 
-* the evaluation context ``evalContext``,
-* the updated store ``store``,
+* the evaluation context ``evalContext'``,
+* the updated store ``store'``,
 * and the instantiated statement ``statementResult``
 
 <<Stmt_eval, The compile-time evaluation of ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
@@ -15294,8 +15284,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Call_eval, Call_eval>>:
 
-* Calling ``callee``<``typeArgumentListIR``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``
-* results in the updated evaluation context ``evalContext``, store ``store``, and call result ``callResult``
+* Calling ``callee``<``typeArgumentListIR``>(``argumentListIR``), under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``
+* results in the updated evaluation context ``evalContext'``, store ``store'``, and call result ``callResult``
 
 <<Call_eval, Calling ``actionCallee``<``·``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
@@ -15828,20 +15818,18 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
  .. Else if let ``value~r~`` be ``expressionResult'``:
   ... Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l~``>>.
-  ... Let ``value^{asterisk}^`` be ``<<values_of_setValue, values_of_setValue(SET < [typeIR] >, SET { value~l~ .. value~r~ })>>``.
+  ... Let ``value^{asterisk}^`` be ``<<values_of_setValue, values_of_setValue(SET < typeIR >, SET { value~l~ .. value~r~ })>>``.
   ... Result in ``EC~2~``, ``STO~2~``, and ``value^{asterisk}^``.
 
-<<values_of_setValue, values_of_setValue(SET < typeIR'^{asterisk}^ >, setValue)>>
+<<values_of_setValue, values_of_setValue(SET < typeIR >, setValue)>>
 
 
-. Check that ``typeIR'^{asterisk}^`` is a list of length 1.
-. Let ``[typeIR]`` be ``typeIR'^{asterisk}^``.
 . Check that ``setValue`` matches pattern ``SET { % .. % }``.
 . Let ``SET { value~l~ .. value~r~ }`` be ``setValue``.
 . If ``<<bin_lt, bin_lt(value~l~, value~r~)>>``:
  .. Let ``value~one~`` be <<cast_op, cast ``D 1`` to type ``typeIR``>>.
  .. Let ``value~l_inc~`` be ``<<bin_plus, bin_plus(value~l~, value~one~)>>``.
- .. Return ``value~l~ {two-colons} <<values_of_setValue, values_of_setValue(SET < [typeIR] >, SET { value~l_inc~ .. value~r~ })>>``.
+ .. Return ``value~l~ {two-colons} <<values_of_setValue, values_of_setValue(SET < typeIR >, SET { value~l_inc~ .. value~r~ })>>``.
 . Else if ``<<bin_eq, bin_eq(value~l~, value~r~)>>``:
  .. Return ``[value~l~]``.
 . Else if ``<<bin_gt, bin_gt(value~l~, value~r~)>>``:
@@ -16194,8 +16182,8 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 
 <<Var_init, Var_init>>:
 
-* Instantiating global variable ``nameIR`` of type ``typeIR`` in the evaluation context ``EC~0~``
-* results in the resulting evaluation context ``evalContext``
+* Instantiating global variable ``nameIR`` of type ``typeIR`` in the evaluation context ``evalContext``
+* results in the resulting evaluation context ``evalContext'``
 
 <<Var_init, Instantiating global variable ``nameIR`` of type ``typeIR`` in the evaluation context ``EC~0~``>>:
 
@@ -16205,8 +16193,8 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 
 <<Extern_init, Extern_init>>:
 
-* Instantiating extern ``EC`` in the evaluation context ``STO~0~`` and store ``nameIR``
-* results in the resulting store ``store``
+* Instantiating extern ``evalContext`` in the evaluation context ``store`` and store ``nameIR``
+* results in the resulting store ``store'``
 
 <<Extern_init, Instantiating extern ``EC`` in the evaluation context ``STO~0~`` and store ``nameIR``>>:
 
