@@ -730,8 +730,7 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
         |> List.mapi (fun idx exp_pl -> (idx, exp_pl))
         |> List.partition (fun (idx, _) -> List.mem idx inputs)
         |> fun (exps_input_pl_indexed, exps_output_pl_indexed) ->
-             ( List.map snd exps_input_pl_indexed,
-               List.map snd exps_output_pl_indexed )
+        (List.map snd exps_input_pl_indexed, List.map snd exps_output_pl_indexed)
       in
       Ctx.validate_hint_alter id_rel.at prose_out_aligned exps_output_pl;
       Pl.ProseRelTitle
