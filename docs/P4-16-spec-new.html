@@ -660,7 +660,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-08</span>
+<span id="revdate">2026-01-09</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -699,7 +699,17 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-syntax-and-semantics">6.1. Syntax and semantics</a>
 <ul class="sectlevel3">
 <li><a href="#_grammar">6.1.1. Grammar</a></li>
-<li><a href="#_semantics_and_the_p4_abstract_machines">6.1.2. Semantics and the P4 abstract machines</a></li>
+<li><a href="#_semantics_and_the_p4_abstract_machines">6.1.2. Semantics and the P4 abstract machines</a>
+<ul class="sectlevel4">
+<li><a href="#_pseudo_code_snippets">6.1.2.1. Pseudo-code snippets</a></li>
+<li><a href="#_prose_algorithms">6.1.2.2. Prose algorithms</a>
+<ul class="sectlevel5">
+<li><a href="#option_get">6.1.2.2.1. Prose algorithm shorthands</a></li>
+</ul>
+</li>
+<li><a href="#_formal_inference_rules">6.1.2.3. Formal inference rules</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-lexical-constructs">6.2. Lexical constructs</a>
@@ -734,15 +744,15 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-p4-abstract-machine">7. The P4 Abstract Machine</a>
 <ul class="sectlevel2">
-<li><a href="#sec-abstract-machine-preprocessing">7.1. Preprocessing</a></li>
-<li><a href="#sec-abstract-machine-type-checking">7.2. Type Checking</a>
+<li><a href="#sec-preprocessing">7.1. Preprocessing</a></li>
+<li><a href="#sec-type-checking">7.2. Type Checking</a>
 <ul class="sectlevel3">
 <li><a href="#_p4_intermediate_representation">7.2.1. P4 Intermediate Representation</a></li>
 <li><a href="#_typing_a_p4_program">7.2.2. Typing a P4 program</a></li>
 <li><a href="#_typing_context">7.2.3. Typing context</a></li>
 </ul>
 </li>
-<li><a href="#sec-abstract-machine-instantiation">7.3. Instantiation</a>
+<li><a href="#sec-instantiation">7.3. Instantiation</a>
 <ul class="sectlevel3">
 <li><a href="#_control_plane_names">7.3.1. Control-plane names</a>
 <ul class="sectlevel4">
@@ -763,7 +773,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_instantiation_context">7.3.3. Instantiation context</a></li>
 </ul>
 </li>
-<li><a href="#sec-abstract-machine-dynamic-evaluation">7.4. Dynamic evaluation</a>
+<li><a href="#sec-dynamic-evaluation">7.4. Dynamic evaluation</a>
 <ul class="sectlevel3">
 <li><a href="#_evaluating_a_p4_program">7.4.1. Evaluating a P4 program</a></li>
 <li><a href="#_evaluation_context">7.4.2. Evaluation context</a></li>
@@ -772,6 +782,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_concurrency_model">7.4.5. Concurrency model</a></li>
 </ul>
 </li>
+<li><a href="#sec-compile-time-known">7.5. Compile-time known and local compile-time known values</a></li>
 </ul>
 </li>
 <li><a href="#sec-p4-types-and-values">8. P4 types and values</a>
@@ -2449,20 +2460,6 @@ the grammar:</p>
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Pseudo-code (mostly used for describing the semantics of various P4 constructs)
-are shown with fixed-size fonts as in the following example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">ParserModel.verify(bool condition, error err) {
-    if (condition == false) {
-        ParserModel.parserError = err;
-        goto reject;
-    }
-}</code></pre>
-</div>
-</div>
 </div>
 <div class="sect3">
 <h4 id="_semantics_and_the_p4_abstract_machines">6.1.2. Semantics and the P4 abstract machines</h4>
@@ -2486,6 +2483,272 @@ as:</p>
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>Throughout this specification, the P4 semantics is described using a combination of:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>P4 code snippets</p>
+</li>
+<li>
+<p>Pseudo-code snippets</p>
+</li>
+<li>
+<p>Prose algorithms and formal inference rules</p>
+</li>
+</ul>
+</div>
+<div class="sect4">
+<h5 id="_pseudo_code_snippets">6.1.2.1. Pseudo-code snippets</h5>
+<div class="paragraph">
+<p>Pseudo-code (mostly used for describing the semantics of various P4 constructs)
+are shown with fixed-size fonts as in the following example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">ParserModel.verify(bool condition, error err) {
+    if (condition == false) {
+        ParserModel.parserError = err;
+        goto reject;
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_prose_algorithms">6.1.2.2. Prose algorithms</h5>
+<div class="paragraph">
+<p>The semantics of P4 constructs are also described using prose algorithms.
+For example, below is the signature of an algorithm used to describe
+type checking of P4 expressions.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Expr_ok">Expr_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>expression</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
+</li>
+<li>
+<p>results in the typed expression <code>typedExpressionIR</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Detailed discussion of what <code>cursor</code>, <code>typingContext</code>, and <code>typedExpressionIR</code>
+means is given in <a href="#sec-type-checking">Section 7.2</a>. For now, it suffices to know that
+<code>Expr_ok</code> takes a <code>cursor</code>, a <code>typingContext</code>, and a <code>typedExpressionIR</code> as
+inputs and results in a <code>typedExpressionIR</code>.</p>
+</div>
+<div class="paragraph">
+<p>An algorithm is defined in terms of case-analysis, where each case corresponds
+to a variant of a P4 construct. For example, the following algorithm defines
+how to type check boolean literal expressions.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Expr_ok">Typing <code>booleanLiteral</code>, under cursor <code>p</code> and typing context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>booleanLiteral</code> matches pattern <code>TRUE</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>TRUE</code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>booleanLiteral</code> matches pattern <code>FALSE</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>FALSE</code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>And the following algorithm defines type checking of inetger literal expressions.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Expr_ok">Typing <code>integerLiteral</code>, under cursor <code>p</code> and typing context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>D i</code> be <code>integerLiteral</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>D i</code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>n S i</code> be <code>integerLiteral</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT &lt; n &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>n S i</code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>n W i</code> be <code>integerLiteral</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; n &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Result in the typed expression <a href="#typedExpressionIR"><code>n W i</code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>And so on for other variants of P4 expressions. These prose algorithms are
+presented throughout this specification.</p>
+</div>
+<div class="sect5">
+<h6 id="option_get">6.1.2.2.1. Prose algorithm shorthands</h6>
+<div class="paragraph">
+<p>To make the prose algorithms concise, we often use the shorthand <strong>!</strong>.
+Some algorithms result in an optional result to indicate possible failure. The
+following example algorithm computes modulo of two natural numbers
+(including zero).</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#modulo"><code>n<sub>a</sub></code> mod <code>n<sub>b</sub></code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>n<sub>b</sub></code> is not equal to <code>0</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>n<sub>a</sub> \ n<sub>b</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>n<sub>b</sub></code> is equal to <code>0</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>None</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Because the divisor may be zero, the result is optional. Now consider the case
+when the algorithm is called.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#modulo_42"><code>n</code> mod 42</a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>n<sub>result</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#modulo"><code>n</code> mod <code>42</code></a>.</p>
+</li>
+<li>
+<p>Return <code>n<sub>result</sub></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, <strong>!</strong> indicates unwrapping of the optional result. This shortened form is
+equivalent to first getting the optional result, checking that it is not
+<code>None</code>, and then unwrapping it.</p>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_formal_inference_rules">6.1.2.3. Formal inference rules</h5>
+<div class="paragraph">
+<p>Alongside prose algorithms, we also present formal inference rules. In fact,
+the prose algorithms are <em>automatically generated</em> from the formal inference
+rules. Although the prose algorithms are enough to understand the P4 semantics,
+the formal inference rules are included to aid comprehension.</p>
+</div>
+<div class="paragraph">
+<p>For example, the following formal inference rule defines type checking of
+boolean literal expressions.</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rule Expr_ok/literalExpression-boolean/true:
+   p TC |- TRUE : TRUE # expressionNoteIR
+    -- if expressionNoteIR = `(BOOL LCTK)
+
+rule Expr_ok/literalExpression-boolean/false:
+   p TC |- FALSE : FALSE # expressionNoteIR
+    -- if expressionNoteIR = `(BOOL LCTK)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="paragraph">
+<p>It is defined using mathematical notations such as turnstiles (<code>|-</code>). The lines
+leading with <code>--</code> are called premises.</p>
+</div>
 <div class="admonitionblock note">
 <table>
 <tr>
@@ -2493,10 +2756,11 @@ as:</p>
 <div class="title">Note</div>
 </td>
 <td class="content">
-Add explanation on the prose generated by P4-SpecTec.
+Add more explanation of the formal inference rules here.
 </td>
 </tr>
 </table>
+</div>
 </div>
 </div>
 </div>
@@ -3046,7 +3310,7 @@ parameter is for:</p>
 <li>
 <p>For anything other than an action, e.g. a control, parser, or function, a
 directionless parameter means that the value supplied as an argument in a call
-must be a compile-time known value (see <a href="#sec-compile-time-known">[sec-compile-time-known]</a>).</p>
+must be a compile-time known value (see <a href="#sec-compile-time-known">Section 7.5</a>).</p>
 </li>
 <li>
 <p>For an action, a directionless parameter indicates that it is "action data".
@@ -3415,10 +3679,10 @@ completion, in isolation, when it receives control from the architecture</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>The preprocessing stage is described in <a href="#sec-abstract-machine-preprocessing">Section 7.1</a>.</p>
+<p>The preprocessing stage is described in <a href="#sec-abstract-machine-preprocessing">[sec-abstract-machine-preprocessing]</a>.</p>
 </div>
 <div class="paragraph">
-<p>The type system is described in <a href="#sec-abstract-machine-type-checking">Section 7.2</a>. In
+<p>The type system is described in <a href="#sec-abstract-machine-type-checking">[sec-abstract-machine-type-checking]</a>. In
 addition to checking the types, the type system also converts an input P4
 program into an intermediate representation (P4<sub>IR</sub>). P4<sub>IR</sub> is an extension of the
 surface syntax of P4, e.g., the types of all expressions are made explicit,
@@ -3426,14 +3690,14 @@ implicit type casts are inserted, and omitted type arguments are inferred.
 P4<sub>IR</sub> is described in <a href="#sec-abstract-machine-p4-ir">[sec-abstract-machine-p4-ir]</a>.</p>
 </div>
 <div class="paragraph">
-<p>The instantiation stage is described in <a href="#sec-abstract-machine-instantiation">Section 7.3</a>.
+<p>The instantiation stage is described in <a href="#sec-abstract-machine-instantiation">[sec-abstract-machine-instantiation]</a>.
 It traverses the type checked P4<sub>IR</sub> program, and recursively instantiates all
 stateful blocks. The result of the instantiation stage is a global store that
 holds all instantiated stateful blocks.</p>
 </div>
 <div class="paragraph">
 <p>The dynamic evaluation stage is described in
-<a href="#sec-abstract-machine-dynamic-evaluation">Section 7.4</a>. It describes how each P4 block,
+<a href="#sec-abstract-machine-dynamic-evaluation">[sec-abstract-machine-dynamic-evaluation]</a>. It describes how each P4 block,
 represented as stateful objects within the global store, is executed to
 completion. These blocks are orchestrated by the architecture to compose the
 overall packet processing pipeline.</p>
@@ -3452,7 +3716,7 @@ added or gathered from various sections of the P4 Language Specification.
 </table>
 </div>
 <div class="sect2">
-<h3 id="sec-abstract-machine-preprocessing">7.1. Preprocessing</h3>
+<h3 id="sec-preprocessing">7.1. Preprocessing</h3>
 <div class="paragraph">
 <p>To aid the composition of programs from multiple source files, P4 compilers should
 support the following subset of the C preprocessor functionality:</p>
@@ -3518,7 +3782,7 @@ definitions), and</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-abstract-machine-type-checking">7.2. Type Checking</h3>
+<h3 id="sec-type-checking">7.2. Type Checking</h3>
 <div class="paragraph">
 <p>P4<sub>16</sub> is a statically-typed language. Programs that do not pass the type
 checker are considered invalid and rejected by the compiler. P4 provides a
@@ -3648,6 +3912,30 @@ program, <code>p4programIR</code>:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p><code>Program_ok</code> type checks a <code>p4program</code> and produces a <code>p4programIR</code>.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Program_ok">Program_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>p4program</code></p>
+</li>
+<li>
+<p>results in the typed P4 program <code>p4programIR</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Below is a prose algorithm that implements <code>Program_ok</code>. Details of what each
+meta-variable means are provided in the subsequent sections.</p>
+</div>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -3724,7 +4012,7 @@ of the variable (<code>direction</code>), whether it is a compile-time constant 
 and whether it is associated with a compile-time known value (<code>value?</code>).</p>
 </div>
 <div class="paragraph">
-<p>The compile-time known-ness is discussed in <a href="#sec-compile-time-known">[sec-compile-time-known]</a>.</p>
+<p>The compile-time known-ness is discussed in <a href="#sec-compile-time-known">Section 7.5</a>.</p>
 </div>
 <div class="paragraph">
 <p>Notice that <code>localTypingLayer</code> contains multiple <code>typeFrame</code>s. This is because a
@@ -3791,7 +4079,7 @@ Added explanation for the typing context. Is this the right place?
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-abstract-machine-instantiation">7.3. Instantiation</h3>
+<h3 id="sec-instantiation">7.3. Instantiation</h3>
 <div class="paragraph">
 <p>Instantiation of a program proceeds in order of declarations, starting in the
 top-level namespace:</p>
@@ -4347,6 +4635,26 @@ instantiated to create a <code>store</code>, which maps <code>objectId</code>s t
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
+<p><a href="#Program_inst">Program_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Instantiating <code>p4program</code></p>
+</li>
+<li>
+<p>results in</p>
+</li>
+<li>
+<p>the global instantiation layer <code>globalInstLayer</code>, and the store <code>store</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
 <p><a href="#Program_inst">Instantiating <code>p4program</code></a>:</p>
 </div>
 <div class="olist arabic">
@@ -4429,7 +4737,7 @@ frame = map&lt;id, value&gt;</code></pre>
 <div class="paragraph">
 <p><code>frame</code> is a map from variable names to their compile-time known values,
 <code>value</code>. The compile-time known-ness is discussed in
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>.</p>
+<a href="#sec-compile-time-known">Section 7.5</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -4494,7 +4802,7 @@ Added explanation for the typing context. Is this the right place?
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-abstract-machine-dynamic-evaluation">7.4. Dynamic evaluation</h3>
+<h3 id="sec-dynamic-evaluation">7.4. Dynamic evaluation</h3>
 <div class="paragraph">
 <p>The dynamic evaluation of a P4 program is orchestrated by the architecture
 model. Each architecture model needs to specify the order and the conditions
@@ -4536,10 +4844,10 @@ Edited contents from Section 18.4.
 <div class="ulist">
 <ul>
 <li>
-<p>Calling <code>callee</code>&lt;<code>typeArgumentListIR</code>&gt;(<code>argumentListIR</code>), under cursor <code>p</code>, evaluation context <code>EC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></p>
+<p>Calling <code>callee</code>&lt;<code>typeArgumentListIR</code>&gt;(<code>argumentListIR</code>), under cursor <code>cursor</code>, evaluation context <code>evalContext</code>, and store <code>store</code></p>
 </li>
 <li>
-<p>results in the updated evaluation context <code>evalContext</code>, store <code>store</code>, and call result <code>callResult</code></p>
+<p>results in the updated evaluation context <code>evalContext'</code>, store <code>store'</code>, and call result <code>callResult</code></p>
 </li>
 </ul>
 </div>
@@ -4797,6 +5105,185 @@ Added disclaimer about concurrency model.
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="sec-compile-time-known">7.5. Compile-time known and local compile-time known values</h3>
+<div class="paragraph">
+<p>Certain expressions in a P4 program have the property that their value can be
+determined at compile time. Moreover, for some of these expressions, their
+value can be determined only using information in the current scope. We call
+these <em>compile-time known values</em> and <em>local compile-time known values</em>
+respectively.</p>
+</div>
+<div class="paragraph">
+<p>The following are local compile-time known values:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Integer literals, Boolean literals, and string literals.</p>
+</li>
+<li>
+<p>Identifiers declared as constants using the <code>const</code> keyword.</p>
+</li>
+<li>
+<p>Identifiers declared in an <code>error</code>, <code>enum</code>, or <code>match_kind</code> declaration.</p>
+</li>
+<li>
+<p>The <code>default</code> identifier.</p>
+</li>
+<li>
+<p>The <code>size</code> field of a value with type header stack.</p>
+</li>
+<li>
+<p>The <code>_</code> identifier when used as a <code>select</code> expression label.</p>
+</li>
+<li>
+<p>The expression <code>{#}</code> representing an invalid header or header union value.</p>
+</li>
+<li>
+<p>Instances constructed by instance declarations and constructor invocations.</p>
+</li>
+<li>
+<p>Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.</p>
+</li>
+<li>
+<p>Sequence expression where all components are local compile-time known values.</p>
+</li>
+<li>
+<p>Structure-valued expressions, where all fields are local compile-time known values.</p>
+</li>
+<li>
+<p>Expressions evaluating to a list type, where all elements are local compile-time known values.</p>
+</li>
+<li>
+<p>Legal casts applied to local compile-time known values.</p>
+</li>
+<li>
+<p>Indexing a local compile-time known stack or tuple value with a local compile-time known index.</p>
+</li>
+<li>
+<p>Accessing a field of a local compile-time known struct, header, or header union value.</p>
+</li>
+<li>
+<p>The following expressions (<code>`, `-`, `||</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>,
+<code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt; `, `&gt;&gt;</code>, <code>~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>,
+<code>&#8656;</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>) when their operands are all local compile-time known
+values.</p>
+</li>
+<li>
+<p>Expressions of the form <code>e.minSizeInBits()</code>, <code>e.minSizeInBytes()</code>,
+<code>e.maxSizeInBits()</code> and <code>e.maxSizeInBytes()</code> where the type of <code>e</code> is not
+generic.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+It is questionable whether instances constructed by instance declarations
+and constructor invocations should be considered local compile-time known
+values. A related spec issue is made here: <a href="https://github.com/p4lang/p4-spec/issues/1309" class="bare">https://github.com/p4lang/p4-spec/issues/1309</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The following are compile-time known values:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>All local compile-time known values.</p>
+</li>
+<li>
+<p>Constructor parameters (i.e., the declared parameters for a <code>parser</code>, <code>control</code>, etc.)</p>
+</li>
+<li>
+<p>Tuple expression where all components are compile-time known values.</p>
+</li>
+<li>
+<p>Expressions evaluating to a list type, where all elements are compile-time known values.</p>
+</li>
+<li>
+<p>Structure-valued expressions, where all fields are compile-time known values.</p>
+</li>
+<li>
+<p>Expressions evaluating to a list type, where all elements are compile-time known values.</p>
+</li>
+<li>
+<p>Legal casts applied to compile-time known values.</p>
+</li>
+<li>
+<p>Indexing a compile-time known stack or tuple value with a compile-time known index.</p>
+</li>
+<li>
+<p>Accessing a field of a compile-time known struct, header, or header union value.</p>
+</li>
+<li>
+<p>The following expressions (<code>`, `-`, `||</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>,
+<code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt; `, `&gt;&gt; `, `~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>,
+<code>&#8656;</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>) when their operands are all compile-time known
+values.</p>
+</li>
+<li>
+<p>Expressions of the form <code>e.minSizeInBits()</code>, <code>e.minSizeInBytes()</code>,
+<code>e.maxSizeInBits()</code> and <code>e.maxSizeInBytes()</code> where the the type of <code>e</code> is
+generic.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Intuitively, the main difference between <em>compile-time known values</em> and <em>local
+compile-time known values</em> is that the former also contains constructor
+parameters. The distinction is important when it comes to defining the meaning
+of features like types. For example, in the type <code>bit&lt;e&gt;</code>, the expression <code>e</code>
+must be a local compile-time known value. Suppose instead that <code>e</code> were a
+constructor parameter&#8212;&#8203;i.e., merely a compile-time known value. In this
+situation, it would be impossible to resolve <code>bit&lt;e&gt;</code> to a concrete type using
+purely local information&#8212;&#8203;we would have to wait until the constructor was
+instantiated and the value of <code>e</code> known.</p>
+</div>
+<div class="paragraph">
+<p>Local compile-time known values can be identified in the type checking phase.
+Compile-time known values can be identified after type checking, during the
+instantiation phase. Once the constructor parameters are bound to actual
+arguments and type parameters are bound to actual types, compile-time known
+values can be evaluated to concrete values.</p>
+</div>
+<div class="paragraph">
+<p><code>ctk</code> is a marker used in P4<sub>IR</sub> to indicate whether an expression is local
+compile-time known, compile-time known, or neither.</p>
+</div>
+<div id="ctk" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">ctk
+   : LCTK
+   | CTK
+   | DYN
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>typedExpressionIR</code>s in P4<sub>IR</sub>, produced by typing <code>expression</code>s in P4<sub>16</sub>,
+annotated with their type <code>typeIR</code> and a <code>ctk</code> marker indicating the
+compile-time known status.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expressionNoteIR
+   : `( typeIR ctk )
+   ;
+
+typedExpressionIR
+   : expressionIR # expressionNoteIR
+   ;</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -4854,7 +5341,7 @@ typeOrVoid
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>typeOrVoid</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>typeOrVoid</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the type <code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code></p>
@@ -5488,7 +5975,7 @@ compile-time known value as an argument for such a parameter.  See
 <div class="paragraph">
 <p>Signed integers are represented using two&#8217;s complement. An integer with <code>W</code>
 bits is declared as: <code>int&lt;W&gt;</code>. <code>W</code> must be an expression that evaluates to a
-local compile-time known (see Section <a href="#sec-compile-time-known">[sec-compile-time-known]</a>) value that is
+local compile-time known (see Section <a href="#sec-compile-time-known">Section 7.5</a>) value that is
 a non-negative integer.  Note that <code>int&lt;W&gt;</code> type refers to both cases of
 <code>int&lt;W&gt;</code> and <code>int&lt;(expression)&gt;</code> where the width is a local compile-time known
 value.</p>
@@ -5602,7 +6089,7 @@ rule Type_ok/fixedInt/expression:
 <p>An unsigned integer (which we also call a "bit-string") has an arbitrary width,
 expressed in bits. A bit-string of width <code>W</code> is declared as: <code>bit&lt;W&gt;</code>. <code>W</code> must
 be an expression that evaluates to a local compile-time known value (see
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer. When using an
+<a href="#sec-compile-time-known">Section 7.5</a>) that is a non-negative integer. When using an
 expression for the size, the expression must be parenthesized. Bitstrings with
 width 0 are allowed; they have no actual bits, and can only have the value 0.
 See <a href="#sec-uninitialized-values-and-writing-invalid-headers">[sec-uninitialized-values-and-writing-invalid-headers]</a> for additional
@@ -5741,7 +6228,7 @@ a special bit-string type whose size is set at runtime, called a <code>varbit</c
 <div class="paragraph">
 <p>The type <code>varbit&lt;W&gt;</code> denotes a bit-string with a width of at most <code>W</code> bits,
 where <code>W</code> is a local compile-time known value (see Section
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>) that is a non-negative integer. For example, the
+<a href="#sec-compile-time-known">Section 7.5</a>) that is a non-negative integer. For example, the
 type <code>varbit&lt;120&gt;</code> denotes the type of bit-string values that may have between
 0 and 120 bits. Most operations that are applicable to fixed-size bit-strings
 (unsigned numbers) <strong>cannot</strong> be performed on dynamically sized bit-strings.
@@ -6305,7 +6792,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#subst_typeIR"><code>theta</code> substituted by <code>typeIR<sub>base</sub></code></a>.</p>
+<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>base</sub></code> substituted by <code>theta</code></a>.</p>
 </li>
 <li>
 <p>Return <code>typeIR<sub>spec</sub></code>.</p>
@@ -7258,7 +7745,16 @@ types can be obtained from named types, as illustrated in
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">enumTypeDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">namedExpression
+   : name = expression
+   ;
+
+namedExpressionList
+   : namedExpression
+   | namedExpressionList , namedExpression
+   ;
+
+enumTypeDeclaration
    : annotationList ENUM name `{ nameList trailingCommaOpt }
    | annotationList ENUM type name `{ namedExpressionList trailingCommaOpt }
    ;</code></pre>
@@ -7372,7 +7868,7 @@ representation range of the underlying type.</p>
 <code>FailingExample.unrepresentable</code> cannot be represented as a <code>bit&lt;8&gt;</code> value.</p>
 </div>
 <div class="paragraph">
-<p>The <code>initializer</code> expression must be a local compile-time known value.</p>
+<p>The initializer <code>expression</code> must be a local compile-time known value.</p>
 </div>
 <div class="paragraph">
 <p>Annotations, represented by the non-terminal <code>optAnnotations</code>, are described in
@@ -9253,10 +9749,10 @@ restrictions described there.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>annotationList direction type name initializerOpt</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>parameter</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
-<p>results in the parameter <code>parameterIR</code> and set of fresh type variables <code>typeId<sup>*</sup></code></p>
+<p>results in the parameter <code>parameterIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code></p>
 </li>
 </ul>
 </div>
@@ -9327,7 +9823,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList direction typeIR nameIR None</code> and set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the parameter <code>annotationList direction typeIR nameIR None</code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -9371,7 +9867,7 @@ rule Parameter_ok/initializer:
 <p>Let <code>value<sub>init</sub></code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR<sub>init_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList direction typeIR nameIR = value<sub>init</sub></code> and set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Result in the parameter <code>annotationList direction typeIR nameIR = value<sub>init</sub></code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -10480,7 +10976,7 @@ in <a href="#sec-def-tableMetadataTypeIR">[sec-def-tableMetadataTypeIR]</a>.</p>
 <div class="paragraph">
 <p>A table apply method definition is introduced by a <code>table</code> declaration. Its typing
 rule is explained in <a href="#sec-sem-ControlLocalDecl_ok-tableDeclaration">[sec-sem-ControlLocalDecl_ok-tableDeclaration]</a>.
-As with parser and controls, a table declaration may not be generic.
+As with parsers and controls, a table declaration may not be generic.
 Thus, the table apply method type definition does not have type parameters,
 and is same as the table apply method type. A table apply method is
 represented internally as follows:</p>
@@ -10964,7 +11460,7 @@ constructors.</p>
 </div>
 <div class="paragraph">
 <p>Extern objects are then instantiated by constructor invocations in
-<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 11.2</a> to yield:</p>
+<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 7.3</a> to yield:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -11182,7 +11678,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-parserDeclaration">Type checking<
 </div>
 <div class="paragraph">
 <p>Parser objects are then instantiated by constructor invocations in
-<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 11.2</a> to yield:</p>
+<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 7.3</a> to yield:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -11390,7 +11886,7 @@ rule is explained in <a href="#sec-sem-Decl_ok-controlDeclaration">Type checking
 </div>
 <div class="paragraph">
 <p>Control objects are then instantiated by constructor invocations in
-<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 11.2</a> to yield:</p>
+<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 7.3</a> to yield:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -11693,7 +12189,7 @@ with them.</p>
 </div>
 <div class="paragraph">
 <p>Package objects are then instantiated by constructor invocations in
-<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 11.2</a> to yield:</p>
+<a href="#sec-callExpression-constructor">Section 13.10.2</a> and <a href="#sec-instantiation">Section 7.3</a> to yield:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -12052,7 +12548,7 @@ instantiationIR
 <div class="paragraph">
 <p>An instantiation is written as a constructor invocation followed by a name.
 Instantiations are always executed at compilation time (Section
-<a href="#sec-compile-time-known">[sec-compile-time-known]</a>). The effect is to allocate an object with the
+<a href="#sec-compile-time-known">Section 7.5</a>). The effect is to allocate an object with the
 specified name, and to bind it to the result of the constructor invocation.
 Note that instantiation arguments can be specified by name.</p>
 </div>
@@ -16765,16 +17261,16 @@ statementIR
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>statement'</code>, under cursor <code>p</code>, typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></p>
+<p>Typing <code>statement</code>, under cursor <code>cursor</code>, typing context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code></p>
 </li>
 <li>
 <p>results in</p>
 </li>
 <li>
-<p>the typing context <code>typingContext</code>,</p>
+<p>the typing context <code>typingContext'</code>,</p>
 </li>
 <li>
-<p>the abstract control flow <code>flow</code>,</p>
+<p>the abstract control flow <code>flow'</code>,</p>
 </li>
 <li>
 <p>and the typed statement <code>statementIR</code></p>
@@ -16792,16 +17288,16 @@ statementIR
 <div class="ulist">
 <ul>
 <li>
-<p>The compile-time evaluation of <code>statementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></p>
+<p>The compile-time evaluation of <code>statementIR</code>, under cursor <code>cursor</code>, instantiation context <code>instContext</code>, and store <code>store</code></p>
 </li>
 <li>
 <p>results in</p>
 </li>
 <li>
-<p>the instantiation context <code>instContext</code>,</p>
+<p>the instantiation context <code>instContext'</code>,</p>
 </li>
 <li>
-<p>the updated store <code>store</code>,</p>
+<p>the updated store <code>store'</code>,</p>
 </li>
 <li>
 <p>and the instantiated statement <code>statementIR'</code></p>
@@ -17116,7 +17612,7 @@ rule Stmt_ok/assignmentStatement/compound:
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>lvalue</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>lvalue</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the typed lvalue <code>typedLvalueIR</code></p>
@@ -17457,7 +17953,7 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>index</sub></code> and compile-time known-ness <code>ctk<sub>index</sub></code></a> be the note of <code>typedExpressionIR<sub>index</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>index</sub>, compat_array_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>index</sub></code> until $compat_array_index is satisfied</a>.</p>
 </li>
 <li>
 <p>If <code>ctk<sub>index</sub></code> matches pattern <code>LCTK</code>:</p>
@@ -17568,10 +18064,10 @@ rule Lvalue_ok/indexAccess/non-lctk:
 <p>Let <code>typedExpressionIR<sub>lo</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
@@ -17934,7 +18430,7 @@ rule Stmt_ok/callStatement/callStatement-typeArgumentList:
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>callableTarget</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>callableTarget</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the typed callable target <code>callableTargetIR</code></p>
@@ -17951,7 +18447,7 @@ rule Stmt_ok/callStatement/callStatement-typeArgumentList:
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>lvalue</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>lvalue</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the typed callable target <code>callableTargetIR</code></p>
@@ -18961,16 +19457,16 @@ are only visible within the block.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>blockElementStatement</code>, under typing context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></p>
+<p>Typing <code>blockElementStatement</code>, under typing context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code></p>
 </li>
 <li>
 <p>results in</p>
 </li>
 <li>
-<p>the typing context <code>typingContext</code>,</p>
+<p>the typing context <code>typingContext'</code>,</p>
 </li>
 <li>
-<p>the abstract control flow <code>flow</code>,</p>
+<p>the abstract control flow <code>flow'</code>,</p>
 </li>
 <li>
 <p>and the typed block element statement <code>blockElementStatementIR</code></p>
@@ -20744,7 +21240,7 @@ typedExpressionIR
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>expression'''</code>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>Typing <code>expression</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the typed expression <code>typedExpressionIR</code></p>
@@ -20776,7 +21272,7 @@ typedExpressionIR
 <div class="ulist">
 <ul>
 <li>
-<p>The local compile-time evaluation of <a href="#typedExpressionIR"><code>expressionIR</code> annotated with <code>_</code></a>, under cursor <code>p</code> and typing context <code>TC</code></p>
+<p>The local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code></p>
 </li>
 <li>
 <p>results in the value <code>value</code></p>
@@ -21684,7 +22180,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR, compat_lnot)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until $compat_lnot is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21738,7 +22234,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR, compat_bnot)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until $compat_bnot is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21797,7 +22293,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR, compat_uplusminus)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until $compat_uplusminus is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -21822,7 +22318,7 @@ unaryExpressionIR
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR, compat_uplusminus)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until $compat_uplusminus is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
@@ -25608,7 +26104,7 @@ rule Expr_ok/indexAccessExpression/headerStack-non-lctk:
 <p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>index</sub>, compat_array_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>index</sub></code> until $compat_array_index is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR'</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
@@ -25781,7 +26277,7 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>lo</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>base</sub>, compat_bitslice_base)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>base</sub></code> until $compat_bitslice_base is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
@@ -25790,10 +26286,10 @@ sliceAccessExpressionIR
 <p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>hi</sub>, compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_unary">reduce_serenum_unary(typedExpressionIR<sub>lo</sub>, compat_bitslice_index)</a></code>.</p>
+<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
@@ -27663,7 +28159,7 @@ annotation
 <p>Clarified that directionless extern parameters are passed by reference.</p>
 </li>
 <li>
-<p>Introduced distinction between local compile-time known and compile-time known values (<a href="#sec-compile-time-known">[sec-compile-time-known]</a>).</p>
+<p>Introduced distinction between local compile-time known and compile-time known values (<a href="#sec-compile-time-known">Section 7.5</a>).</p>
 </li>
 </ul>
 </div>
@@ -27809,7 +28305,7 @@ of keys is empty (<a href="#sec-table-keys">[sec-table-keys]</a>).</p>
 <p>Specified operations on values typed as type variables (<a href="#sec-type-variable-operations">[sec-type-variable-operations]</a>).</p>
 </li>
 <li>
-<p>Clarified semantics of compile-time known values (<a href="#sec-compile-time-known">[sec-compile-time-known]</a>).</p>
+<p>Clarified semantics of compile-time known values (<a href="#sec-compile-time-known">Section 7.5</a>).</p>
 </li>
 <li>
 <p>Clarified semantics of directionless parameters (<a href="#sec-calling-convention">[sec-calling-convention]</a>).</p>
@@ -28383,7 +28879,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-08 14:36:04 +0900
+Last updated 2026-01-09 10:18:19 +0900
 </div>
 </div>
 </body>
