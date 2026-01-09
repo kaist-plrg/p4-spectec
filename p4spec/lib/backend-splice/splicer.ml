@@ -2,6 +2,21 @@ open Lang
 open Splice
 open Util.Source
 
+let prefix_syntax = "[source,bison]\n----\n"
+let suffix_syntax = "\n----"
+
+let prefix_source =
+  (* "ifeval::[\"{backend}\" == \"html5\"]\n" ^ *)
+  ".Click to view the specification source\n[%collapsible]\n====\n----\n"
+
+let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+(* ^ "endif::[]\n" *)
+
+let prefix_prose = "****\n"
+let suffix_prose = "\n****"
+let prefix_table_prose = ""
+let suffix_table_prose = "\n"
+
 (* Syntax splicer *)
 
 module Syntax : SPLICE = struct
@@ -9,8 +24,8 @@ module Syntax : SPLICE = struct
   type value = Kinds.Syntax.source
 
   let name = "syntax"
-  let prefix = "[source,bison]\n----\n"
-  let suffix = "\n----"
+  let prefix = prefix_syntax
+  let suffix = suffix_syntax
   let parse_keys (source : Source.t) : key list = Parser.parse_syntax_ids source
 
   let find_values (ctx : Ctx.t) (keys : key list) : value list =
@@ -38,11 +53,8 @@ module RelTitleSource : SPLICE = struct
   type value = Kinds.RelTitle.source
 
   let name = "relation-title-source"
-
-  let prefix =
-    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
-
-  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+  let prefix = prefix_source
+  let suffix = suffix_source
 
   let parse_keys (source : Source.t) : key list =
     Parser.parse_rel_title_ids source
@@ -70,8 +82,8 @@ module RelTitleProse : SPLICE = struct
   type value = Kinds.RelTitle.prose
 
   let name = "relation-title-prose"
-  let prefix = "****\n"
-  let suffix = "\n****"
+  let prefix = prefix_prose
+  let suffix = suffix_prose
 
   let parse_keys (source : Source.t) : key list =
     Parser.parse_rel_title_ids source
@@ -100,11 +112,8 @@ module RuleGroupSource : SPLICE = struct
   type value = Kinds.RuleGroup.source
 
   let name = "rulegroup-source"
-
-  let prefix =
-    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
-
-  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+  let prefix = prefix_source
+  let suffix = suffix_source
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_rulegroup_id source ]
@@ -129,8 +138,8 @@ module RuleGroupProse : SPLICE = struct
   type value = Kinds.RuleGroup.prose
 
   let name = "rulegroup-prose"
-  let prefix = "****\n"
-  let suffix = "\n****"
+  let prefix = prefix_prose
+  let suffix = suffix_prose
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_rulegroup_id source ]
@@ -153,11 +162,8 @@ module FuncTitleSource : SPLICE = struct
   type value = Kinds.FuncTitle.source
 
   let name = "func-title-source"
-
-  let prefix =
-    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
-
-  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+  let prefix = prefix_source
+  let suffix = suffix_source
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_title_id source ]
@@ -192,8 +198,8 @@ module FuncTitleProse : SPLICE = struct
   type value = Kinds.FuncTitle.prose
 
   let name = "func-title-prose"
-  let prefix = "****\n"
-  let suffix = "\n****"
+  let prefix = prefix_prose
+  let suffix = suffix_prose
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_title_id source ]
@@ -223,11 +229,8 @@ module FuncSource : SPLICE = struct
   type value = Kinds.Func.source
 
   let name = "func-source"
-
-  let prefix =
-    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
-
-  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+  let prefix = prefix_source
+  let suffix = suffix_source
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_id source ]
@@ -255,8 +258,8 @@ module FuncProse : SPLICE = struct
   type value = Kinds.Func.prose
 
   let name = "func-prose"
-  let prefix = "****\n"
-  let suffix = "\n****"
+  let prefix = prefix_prose
+  let suffix = suffix_prose
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_id source ]
@@ -279,11 +282,8 @@ module TableSource : SPLICE = struct
   type value = Kinds.Table.source
 
   let name = "table-source"
-
-  let prefix =
-    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
-
-  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
+  let prefix = prefix_source
+  let suffix = suffix_source
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_table_id source ]
@@ -305,8 +305,8 @@ module TableProse : SPLICE = struct
   type value = Kinds.Table.prose
 
   let name = "table-prose"
-  let prefix = ""
-  let suffix = "\n"
+  let prefix = prefix_table_prose
+  let suffix = suffix_table_prose
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_table_id source ]
