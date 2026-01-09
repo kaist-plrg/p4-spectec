@@ -32,12 +32,11 @@ let white = [' ' '\t' '\r']
 let whitespace = white+
 let opt_whitespace = white*
 
-
-let identifier = ['$' '_' 'A'-'Z' 'a'-'z']['$' '_' 'A'-'Z' '.' 'a'-'z' '0'-'9']*
-
 let q_chars = [^ '"' '\n']+
 let h_chars = [^ '>' '\n']+
 let digits = ['0'-'9']+
+
+let identifier = ['$' '_' 'A'-'Z' 'a'-'z']['$' '_' 'A'-'Z' '.' 'a'-'z' '0'-'9']*
 
 let binary_constant = '0'['b' 'B']['*' '0' '1']+
 
@@ -118,6 +117,8 @@ and keyword = parse
     { lexer := Keyword; keyword lexbuf }
   | identifier
     { ID(lexeme lexbuf) }
+  | '"' (q_chars as s) '"'
+    { ID(s) }
   | digits
     { INT_CONST_DEC(lexeme lexbuf) }
   | eof
