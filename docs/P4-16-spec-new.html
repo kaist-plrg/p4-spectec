@@ -6704,6 +6704,27 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 </div>
 <div class="sect4">
 <h5 id="sec-type-specialization">8.2.4.1. Type specialization</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>def $specialize_typeDefIR(typeDefIR_base, typeArgumentIR*) = typeIR_spec
+ -- if (typeParameterIR_expl*, typeParameterIR_impl*) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
+ -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
+ -- if |typeParameterIR*| = |typeArgumentIR*|
+ -- if theta = `{(typeParameterIR : typeArgumentIR)*}
+ -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+ -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -9374,7 +9395,25 @@ equivalence, and other type-based analyses.</p>
 <p>Unrolling is the process of recursively expanding all <code>typedef</code>s until a type
 is fully expanded to its underlying type.</p>
 </div>
-<div id="unroll_typeIR" class="sidebarblock">
+<details id="unroll_typeIR">
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>def $unroll_typeIR(TYPEDEF _ typeIR) = $unroll_typeIR(typeIR)
+
+def $unroll_typeIR(typeIR) = typeIR
+ -- otherwise</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
 <p><a href="#unroll_typeIR"><code>typeIR'</code> with typedefs unrolled</a></p>
@@ -9408,7 +9447,30 @@ is fully expanded to its underlying type.</p>
 </div>
 <div class="sect2">
 <h3 id="_subtyping">8.8. Subtyping</h3>
-<div id="coerce_unary" class="sidebarblock">
+<details id="coerce_unary">
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>def $coerce_unary(typedExpressionIR, typeIR_to) = typedExpressionIR
+ -- if _ # `(typeIR _) = typedExpressionIR
+ -- Type_alpha: typeIR ~~ typeIR_to
+
+def $coerce_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+ -- if _ # `(typeIR ctk) = typedExpressionIR
+ -- Type_alpha:/ typeIR ~~ typeIR_to
+ -- Sub_impl: typeIR &lt;: typeIR_to
+ -- if typedExpressionIR_cast = (`(typeIR_to) typedExpressionIR) # `(typeIR_to ctk)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
 <p><a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>to</sub></code></a></p>

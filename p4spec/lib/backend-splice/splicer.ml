@@ -223,8 +223,11 @@ module FuncSource : SPLICE = struct
   type value = Kinds.Func.source
 
   let name = "func-source"
-  let prefix = "****\n"
-  let suffix = "\n****"
+
+  let prefix =
+    ".Click to view the specification source\n[%collapsible]\n====\n----\n"
+
+  let suffix = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
 
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_id source ]
