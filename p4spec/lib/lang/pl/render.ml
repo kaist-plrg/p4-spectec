@@ -472,7 +472,8 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | ReturnI exp ->
       F.asprintf "%sReturn %s." bullet
         (render_exp in_code exp |> as_code in_prose)
-  | ResultI (ProseResult (hint, exps)) ->
+  | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
+  | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet
         (render_alter_hint in_prose hint render_exp exps)
   | ResultI (MathResult []) -> bullet ^ "The relation holds."
