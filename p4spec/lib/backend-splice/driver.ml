@@ -5,7 +5,7 @@ open Lang
 let do_splice_anchor (module S : Splice.SPLICE) (ctx : Ctx.t)
     (source : Source.t) : string =
   let keys = S.parse_keys source in
-  let values = S.find_values ctx keys in
+  let values = S.use_keys ctx keys in
   let content = S.render keys values in
   S.prefix ^ content ^ S.suffix
 
@@ -67,15 +67,14 @@ let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
   splice ctx source buffer;
   Buffer.contents buffer
 
-let splice_file (spec_el : El.spec) (spec_pl : Pl.spec)
-    (filename_input : string) (filename_output : string) : unit =
+let splice_file (ctx : Ctx.t) (filename_input : string)
+    (filename_output : string) : unit =
   let ic = open_in filename_input in
   let content =
     Fun.protect
       (fun () -> In_channel.input_all ic)
       ~finally:(fun () -> In_channel.close ic)
   in
-  let ctx = Ctx.init spec_el spec_pl filename_input in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
   let content_spliced = splice_string ctx source content in
   gen_directory filename_output;
@@ -86,7 +85,10 @@ let splice_file (spec_el : El.spec) (spec_pl : Pl.spec)
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
+  let ctx = Ctx.init spec_el spec_pl in
   List.iter
     (fun (filename_input, filename_output) ->
-      splice_file spec_el spec_pl filename_input filename_output)
-    filenames
+      Ctx.set_filename ctx filename_input;
+      splice_file ctx filename_input filename_output)
+    filenames;
+  Ctx.unused ctx

@@ -5,7 +5,7 @@ open Lang
 module SyntaxId = String
 
 module Syntax = struct
-  type source =
+  type t =
     | ExternS of El.hint list
     | DefinedS of El.tparam list * El.deftyp * El.hint list
 end
@@ -14,12 +14,14 @@ end
 
 module RelTitleId = String
 
-module RelTitle = struct
-  type source =
+module RelTitleSource = struct
+  type t =
     | ExternS of El.nottyp * El.hint list
     | DefinedS of El.nottyp * El.hint list
+end
 
-  type prose = ExternP of Pl.rel_title | DefinedP of Pl.rel_title
+module RelTitleProse = struct
+  type t = ExternP of Pl.rel_title | DefinedP of Pl.rel_title
 end
 
 (* Rule groups *)
@@ -32,22 +34,27 @@ module RuleGroupId = struct
     if c <> 0 then c else String.compare id_rulegroup_a id_rulegroup_b
 end
 
-module RuleGroup = struct
-  type source = El.rule list
-  type prose = Pl.rulegroup
+module RuleGroupSource = struct
+  type t = El.rule list
+end
+
+module RuleGroupProse = struct
+  type t = Pl.rulegroup
 end
 
 (* Function titles *)
 
 module FuncTitleId = String
 
-module FuncTitle = struct
-  type source =
+module FuncTitleSource = struct
+  type t =
     | ExternS of El.tparam list * El.param list * El.plaintyp * El.hint list
     | BuiltinS of El.tparam list * El.param list * El.plaintyp * El.hint list
     | DefinedS of El.tparam list * El.param list * El.plaintyp * El.hint list
+end
 
-  type prose =
+module FuncTitleProse = struct
+  type t =
     | ExternP of Pl.func_title
     | BuiltinP of Pl.func_title
     | DefinedP of Pl.func_title
@@ -57,16 +64,22 @@ end
 
 module FuncId = String
 
-module Func = struct
-  type source = (El.tparam list * El.arg list * El.exp * El.prem list) list
-  type prose = Pl.func
+module FuncSource = struct
+  type t = (El.tparam list * El.arg list * El.exp * El.prem list) list
+end
+
+module FuncProse = struct
+  type t = Pl.func
 end
 
 (* Tables *)
 
 module TableId = String
 
-module Table = struct
-  type source = El.tablerow list
-  type prose = Pl.tablefunc
+module TableSource = struct
+  type t = El.tablerow list
+end
+
+module TableProse = struct
+  type t = Pl.tablefunc
 end

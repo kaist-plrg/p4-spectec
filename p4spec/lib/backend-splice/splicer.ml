@@ -21,15 +21,15 @@ let suffix_table_prose = "\n"
 
 module Syntax : SPLICE = struct
   type key = Kinds.SyntaxId.t
-  type value = Kinds.Syntax.source
+  type value = Kinds.Syntax.t
 
   let name = "syntax"
   let prefix = prefix_syntax
   let suffix = suffix_syntax
   let parse_keys (source : Source.t) : key list = Parser.parse_syntax_ids source
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_syntax ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_syntax ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -50,7 +50,7 @@ end
 
 module RelTitleSource : SPLICE = struct
   type key = Kinds.RelTitleId.t
-  type value = Kinds.RelTitle.source
+  type value = Kinds.RelTitleSource.t
 
   let name = "relation-title-source"
   let prefix = prefix_source
@@ -59,17 +59,17 @@ module RelTitleSource : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     Parser.parse_rel_title_ids source
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_rel_title_source ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_rel_title_source ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
       (fun (id_rel : key) (rel_title : value) ->
         let def =
           match rel_title with
-          | Kinds.RelTitle.ExternS (nottyp, hints) ->
+          | Kinds.RelTitleSource.ExternS (nottyp, hints) ->
               El.ExternRelD (id_rel $ no_region, nottyp, hints) $ no_region
-          | Kinds.RelTitle.DefinedS (nottyp, hints) ->
+          | Kinds.RelTitleSource.DefinedS (nottyp, hints) ->
               El.RelD (id_rel $ no_region, nottyp, hints) $ no_region
         in
         El.Print.string_of_def def)
@@ -79,7 +79,7 @@ end
 
 module RelTitleProse : SPLICE = struct
   type key = Kinds.RelTitleId.t
-  type value = Kinds.RelTitle.prose
+  type value = Kinds.RelTitleProse.t
 
   let name = "relation-title-prose"
   let prefix = prefix_prose
@@ -88,16 +88,16 @@ module RelTitleProse : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     Parser.parse_rel_title_ids source
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_rel_title_prose ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_rel_title_prose ctx) keys
 
   let render (keys : key list) (value : value list) : string =
     List.map2
       (fun (_id_rel : key) (rel_title_prose : value) ->
         let rel_title =
           match rel_title_prose with
-          | Kinds.RelTitle.ExternP rel_title | Kinds.RelTitle.DefinedP rel_title
-            ->
+          | Kinds.RelTitleProse.ExternP rel_title
+          | Kinds.RelTitleProse.DefinedP rel_title ->
               rel_title
         in
         Pl.Render.render_rel_title rel_title)
@@ -109,7 +109,7 @@ end
 
 module RuleGroupSource : SPLICE = struct
   type key = Kinds.RuleGroupId.t
-  type value = Kinds.RuleGroup.source
+  type value = Kinds.RuleGroupSource.t
 
   let name = "rulegroup-source"
   let prefix = prefix_source
@@ -118,8 +118,8 @@ module RuleGroupSource : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_rulegroup_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_rulegroup_source ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_rulegroup_source ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -135,7 +135,7 @@ end
 
 module RuleGroupProse : SPLICE = struct
   type key = Kinds.RuleGroupId.t
-  type value = Kinds.RuleGroup.prose
+  type value = Kinds.RuleGroupProse.t
 
   let name = "rulegroup-prose"
   let prefix = prefix_prose
@@ -144,8 +144,8 @@ module RuleGroupProse : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_rulegroup_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_rulegroup_prose ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_rulegroup_prose ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -159,7 +159,7 @@ end
 
 module FuncTitleSource : SPLICE = struct
   type key = Kinds.FuncTitleId.t
-  type value = Kinds.FuncTitle.source
+  type value = Kinds.FuncTitleSource.t
 
   let name = "func-title-source"
   let prefix = prefix_source
@@ -168,23 +168,23 @@ module FuncTitleSource : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_title_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_func_title_source ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_func_title_source ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
       (fun (id_def : key) (func_title : value) ->
         let def =
           match func_title with
-          | Kinds.FuncTitle.ExternS (tparams, params, plaintyp, hints) ->
+          | Kinds.FuncTitleSource.ExternS (tparams, params, plaintyp, hints) ->
               El.ExternDecD
                 (id_def $ no_region, tparams, params, plaintyp, hints)
               $ no_region
-          | Kinds.FuncTitle.BuiltinS (tparams, params, plaintyp, hints) ->
+          | Kinds.FuncTitleSource.BuiltinS (tparams, params, plaintyp, hints) ->
               El.BuiltinDecD
                 (id_def $ no_region, tparams, params, plaintyp, hints)
               $ no_region
-          | Kinds.FuncTitle.DefinedS (tparams, params, plaintyp, hints) ->
+          | Kinds.FuncTitleSource.DefinedS (tparams, params, plaintyp, hints) ->
               El.FuncDecD (id_def $ no_region, tparams, params, plaintyp, hints)
               $ no_region
         in
@@ -195,7 +195,7 @@ end
 
 module FuncTitleProse : SPLICE = struct
   type key = Kinds.FuncTitleId.t
-  type value = Kinds.FuncTitle.prose
+  type value = Kinds.FuncTitleProse.t
 
   let name = "func-title-prose"
   let prefix = prefix_prose
@@ -204,17 +204,17 @@ module FuncTitleProse : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_title_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_func_title_prose ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_func_title_prose ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
       (fun (_id_def : key) (func_title : value) ->
         let func_title =
           match func_title with
-          | Kinds.FuncTitle.ExternP func_title
-          | Kinds.FuncTitle.BuiltinP func_title
-          | Kinds.FuncTitle.DefinedP func_title ->
+          | Kinds.FuncTitleProse.ExternP func_title
+          | Kinds.FuncTitleProse.BuiltinP func_title
+          | Kinds.FuncTitleProse.DefinedP func_title ->
               func_title
         in
         Pl.Render.render_func_title func_title)
@@ -226,7 +226,7 @@ end
 
 module FuncSource : SPLICE = struct
   type key = Kinds.FuncId.t
-  type value = Kinds.Func.source
+  type value = Kinds.FuncSource.t
 
   let name = "func-source"
   let prefix = prefix_source
@@ -235,8 +235,8 @@ module FuncSource : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_func_source ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_func_source ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -255,7 +255,7 @@ end
 
 module FuncProse : SPLICE = struct
   type key = Kinds.FuncId.t
-  type value = Kinds.Func.prose
+  type value = Kinds.FuncProse.t
 
   let name = "func-prose"
   let prefix = prefix_prose
@@ -264,8 +264,8 @@ module FuncProse : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_func_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_func_prose ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_func_prose ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -279,7 +279,7 @@ end
 
 module TableSource : SPLICE = struct
   type key = Kinds.TableId.t
-  type value = Kinds.Table.source
+  type value = Kinds.TableSource.t
 
   let name = "table-source"
   let prefix = prefix_source
@@ -288,8 +288,8 @@ module TableSource : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_table_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_table_source ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_table_source ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2
@@ -302,7 +302,7 @@ end
 
 module TableProse : SPLICE = struct
   type key = Kinds.TableId.t
-  type value = Kinds.Table.prose
+  type value = Kinds.TableProse.t
 
   let name = "table-prose"
   let prefix = prefix_table_prose
@@ -311,8 +311,8 @@ module TableProse : SPLICE = struct
   let parse_keys (source : Source.t) : key list =
     [ Parser.parse_table_id source ]
 
-  let find_values (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.find_table_prose ctx) keys
+  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
+    List.map (Ctx.use_table_prose ctx) keys
 
   let render (keys : key list) (values : value list) : string =
     List.map2

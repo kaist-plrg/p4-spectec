@@ -15,7 +15,7 @@ splice: spectec
 	rm -r sections || true
 	cp -r sections-skeleton sections
 	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
-	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES}
+	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
 
 ${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -q \
