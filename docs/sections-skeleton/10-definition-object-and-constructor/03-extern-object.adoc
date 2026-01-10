@@ -1,29 +1,39 @@
 [#sec-extern-object]
 === Extern objects
 
+// Added
+An `extern` object declaration introduces an extern object type and its
+associated constructors and methods.
+
 ${syntax: externConstructorPrototype
           externMethodPrototype
-          externConstructorOrMethodPrototype
           externObjectDeclaration}
 
-An ``extern`` declaration introduces an extern object type and its associated
-constructors.
+Internally, an extern object constructor is represented as:
 
-${syntax: externObjectConstructorDef}
+[[externObjectConstructorDef]]
+${syntax: externMethodPrototypeIR
+          externObjectConstructorDef}
 
-Its typing rule is explained in <<sec-sem-Decl_ok-externObjectDeclaration>>.
+Extern objects are then instantiated by constructor invocations to yield:
 
-Extern objects are then instantiated by constructor invocations in
-<<sec-callExpression-constructor>> and <<sec-instantiation>> to yield:
-
+[[externObject]]
 ${syntax: externObject}
 
-==== Type nesting
+// Modified section 8.24 of the P4-16 Language Specification
+The only operation on `extern` objects is invoking a method of an extern object
+instance using a method call expression.
 
-${table-prose: nestable_constructor_extern}
+Controls, parsers, packages, and extern constructors can have parameters of
+type `extern` only if they are directionless parameters. Extern object
+instances can thus be used as arguments in the construction of such objects.
 
-[#sec-sem-ConstructorType_wf-externObjectTypeIR]
-==== Well-formedness
+No other operations are available on extern objects, e.g., equality comparison
+is not defined.
 
+[discrete]
+==== Well-formedness of extern object constructor types
+
+// Added
 ${rulegroup-source: ConstructorType_wf/externObjectTypeIR}
 ${rulegroup-prose: ConstructorType_wf/externObjectTypeIR}

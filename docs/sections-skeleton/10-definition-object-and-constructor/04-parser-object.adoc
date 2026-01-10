@@ -1,15 +1,18 @@
 [#sec-parser-object]
 === Parser objects
 
+// Section 13.2 of the P4-16 Language Specification
 A parser declaration comprises a name, a list of parameters, an optional list
 of constructor parameters, local elements, and parser states (as well as
 optional annotations).
 
+// Added
 ${syntax: parserLocalDeclaration
           parserState
           parserDeclaration}
 
-Unlike parser type declarations, parser declarations may not be generic---e.g.,
+// Section 13.2 of the P4-16 Language Specification
+Unlike parser type declarations, parser declarations may not be generic--e.g.,
 the following declaration is illegal:
 
 [source,p4]
@@ -19,7 +22,7 @@ parser P<H>(inout H data) { /* body omitted */ }
 
 At least one state, named `start`, must be present in any `parser`. A parser
 may not define two states with the same name. It is also illegal for a parser
-to give explicit definitions for the `accept` and `reject` states---those
+to give explicit definitions for the `accept` and `reject` states--those
 states are logically distinct from the states defined by the programmer.
 
 Preceding the parser states, a `parser` may also contain a list of local
@@ -49,22 +52,21 @@ parser p() {
 For an example containing a complete declaration of a parser see
 <<sec-vss-all>>.
 
-A ``parser`` declaration introduces a parser object constructor. Its typing
-rule is explained in <<sec-sem-Decl_ok-parserDeclaration>>.
+// Added
+A `parser` declaration introduces a parser object constructor, represented
+as:
 
+[[parserObjectConstructorDef]]
 ${syntax: parserObjectConstructorDef}
 
-Parser objects are then instantiated by constructor invocations in
-<<sec-callExpression-constructor>> and <<sec-instantiation>> to yield:
+Parser objects are then instantiated by constructor invocations to yield:
 
+[[parserObject]]
 ${syntax: parserObject}
 
-===== Type nesting
+[discrete]
+==== Well-formedness of parser object constructor types
 
-${table-prose: nestable_constructor_parser}
-
-[#sec-sem-ConstructorType_wf-parserObjectTypeIR]
-==== Well-formedness
-
+// Added
 ${rulegroup-source: ConstructorType_wf/parserObjectTypeIR}
 ${rulegroup-prose: ConstructorType_wf/parserObjectTypeIR}

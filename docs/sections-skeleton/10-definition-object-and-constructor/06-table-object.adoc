@@ -1,6 +1,7 @@
 [#sec-table-object]
 === Table objects
 
+// Section 14.2 of the P4-16 Language Specification
 .Match-Action Unit Dataflow.
 [#fig-maudataflow]
 image::maudataflow.png[width=500,align="center"]
@@ -19,40 +20,40 @@ A `table` declaration introduces a table instance. To obtain multiple instances
 of a table, it must be declared within a control block that is itself
 instantiated multiple times.
 
-The look-up table is a finite map whose contents are manipulated
-asynchronously (read/write) by the target control plane, through a
-separate control-plane API (see <<fig-maudataflow>>). Note that
-the term "table" is overloaded: it can refer to the P4 `table`
-objects that appear in P4 programs, as well as the internal look-up
-tables used in targets. We will use the term "match-action unit" when
-necessary to disambiguate.
+The look-up table is a finite map whose contents are manipulated asynchronously
+(read/write) by the target control plane, through a separate control-plane API
+(see <<fig-maudataflow>>). Note that the term "table" is overloaded: it can
+refer to the P4 `table` objects that appear in P4 programs, as well as the
+internal look-up tables used in targets. We will use the term "match-action
+unit" when necessary to disambiguate.
 
-Syntactically a table is defined in terms of a set of key-value
-properties. Some of these properties are "standard" properties, but
-the set of properties can be extended by target-specific compilers as
-needed. Note duplicated properties are invalid and the compiler should
-reject them.
+Syntactically, a table is defined in terms of a set of key-value properties.
+Some of these properties are "standard" properties, but the set of properties
+can be extended by target-specific compilers as needed. Note that duplicated
+properties are invalid and the compiler should reject them.
 
+// Added
 ${syntax: tableProperty
           tableDeclaration}
 
+// Section 14.2 of the P4-16 Language Specification
 The standard table properties include:
 
-- `key`: An expression that describes how the key used for look-up
+* `key`: An expression that describes how the key used for look-up
   is computed.
-- `actions`: A list of all actions that may be found in the table.
+-0* `actions`: A list of all actions that may be found in the table.
 
 In addition, the tables may optionally define the following properties,
 
-- `default_action`: an action to execute when the lookup in the
+* `default_action`: an action to execute when the lookup in the
   lookup table fails to find a match for the key used.
-- `size`: an integer specifying the desired size of the table.
-- `entries`: entries that are initially added to a table when the P4
+* `size`: an integer specifying the desired size of the table.
+* `entries`: entries that are initially added to a table when the P4
   program is loaded, some or all of which may be unchangeable by the
   control plane software.
-- `largest_priority_wins` - Only useful for some tables with the
+* `largest_priority_wins` - Only useful for some tables with the
   `entries` property.  See <<sec-entries>> for details.
-- `priority_delta` - Only useful for some tables with the `entries`
+* `priority_delta` - Only useful for some tables with the `entries`
   property.  See <<sec-entries>> for details.
 
 The compiler must set the `default_action` to `NoAction` (and also insert it
@@ -67,11 +68,20 @@ A property marked as `const` cannot be changed dynamically by the control
 plane. The `key`, `actions`, and `size` properties cannot be modified so the
 `const` keyword is not needed for these.
 
-A ``table`` declaration is both a constructor and an instance declaration.
-Its typing rule is explained in <<sec-sem-Decl_ok-tableDeclaration>>.
+// Added
+A ``table`` declaration is both a constructor and an instance declaration,
+represented as:
 
-${syntax: tableObjectConstructorDef}
+[[tableObjectConstructorDef]]
+[[tableObject]]
+${syntax: tablePropertyIR
+          tableObjectConstructorDef
+          tableObjectProperty
+          tableObject}
 
-Table objects are represented as:
+[discrete]
+==== Well-formedness of table object constructor types
 
-${syntax: tableObject}
+// Added
+${rulegroup-source: ConstructorType_wf/tableObjectTypeIR}
+${rulegroup-prose: ConstructorType_wf/tableObjectTypeIR}

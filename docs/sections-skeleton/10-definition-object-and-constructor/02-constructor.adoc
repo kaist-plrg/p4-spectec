@@ -4,7 +4,7 @@
 // Modified Seection 8.23 of the P4-16 Language Specification
 Objects can be instantiated in three ways:
 
-* Using instantiations, described in <<sec-instantiation>>.
+* Using instantiations, described in <<sec-instantiation-declaration>>.
 * Using constructor call expressions, described in <<sec-constructor-call-expression>>.
 * Using direct application statements, described in <<sec-direct-application-statement>>.
 
@@ -13,13 +13,13 @@ creates an object as a result. Direct application statements are syntactic
 sugar for instantiations of ``parser`` and ``control`` objects.
 
 Constructor invocation is similar to callable invocation; constructors can
-also be called using named arguments.
+also be overloaded, and called using named arguments.
 
 [#sec-constructor-parameter]
 ==== Constructor parameters
 
 // Modified Section 15 of the P4-16 Language Specification
-In order to support libraries of useful P4 components, ``parser``s,
+In order to support libraries of useful P4 components, ``extern``s, ``parser``s,
 ``control``s, and ``package``s can additionally be parameterized through the
 use of constructor parameters.
 
@@ -81,15 +81,21 @@ the `udpSupport` parameter, as in the following example:
 GenericParser(false) topParser;
 ----
 
+Internally, constructor parameters are represented as:
+
+[[constructorParameterIR]]
+${syntax: parameterIR
+          constructorParameterIR}
+
 [discrete]
-===== Well-formedness
+===== Well-formedness of constructor parameters
 
 // Added
-${relation: ConstructorParameterType_wf}
+${relation-title-prose: ConstructorParameterType_wf}
 
 // Added
-${rulegroup: ConstructorTypeDef_wf}
-${ruleprose: ConstructorTypeDef_wf}
+${rulegroup-source: ConstructorTypeDef_wf}
+${rulegroup-prose: ConstructorTypeDef_wf}
 
 [#sec-constructor-definitions]
 ==== Constructor definitions
@@ -127,8 +133,8 @@ ${syntax: constructorTypeIR
 ===== Well-formedness of constructor definition types
 
 // Added
-${relation: ConstructorTypeDef_wf}
+${relation-title-prose: ConstructorTypeDef_wf}
 
 // Added
-${rulegroup: ConstructorTypeDef_wf}
-${ruleprose: ConstructorTypeDef_wf}
+${rulegroup-source: ConstructorTypeDef_wf}
+${rulegroup-prose: ConstructorTypeDef_wf}
