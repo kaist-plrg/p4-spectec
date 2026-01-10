@@ -5,6 +5,40 @@ open Runtime.Dynamic_Sl
 open Envs
 open Util.Source
 
+(* Structuring parameters *)
+
+let struct_param (frees : IdSet.t) (param : param) : IdSet.t * Sl.param =
+  let at = param.at in
+  match param.it with
+  | ExpP typ ->
+      let exp_input, frees = Fresh.fresh_exp_from_typ frees typ in
+      let param = Sl.ExpP (typ, exp_input) $ at in
+      (frees, param)
+  | DefP (id_def, _, _, _) ->
+      let param = Sl.DefP id_def $ at in
+      (frees, param)
+
+let struct_params (params : param list) : Sl.param list =
+  params
+  |> List.fold_left
+       (fun (frees, params) param ->
+         let frees, param = struct_param frees param in
+         (frees, params @ [ param ]))
+       (IdSet.empty, [])
+  |> snd
+
+let struct_params_from_args (params : param list) (args_input : arg list) :
+    Sl.param list =
+  List.map2
+    (fun param arg_input ->
+      let at = param.at in
+      match (param.it, arg_input.it) with
+      | ExpP typ, ExpA exp -> Sl.ExpP (typ, exp) $ at
+      | DefP (id_def, _, _, _), DefA id_def_arg when Id.eq id_def id_def_arg ->
+          Sl.DefP id_def $ at
+      | _ -> assert false)
+    params args_input
+
 (* Structuring premises *)
 
 let rec internalize_iter ?(iterexps : iterexp list = []) (prem : prem) :
@@ -126,33 +160,30 @@ let rec struct_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.def =
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
-  | TableDecD (id, _params, typ, tablerows, hints) ->
-      struct_table_dec_def ihenv tdenv at id tablerows typ hints
-  | FuncDecD (id, tparams, _params, typ, clauses, hints) ->
-      struct_func_dec_def ihenv tdenv at id tparams typ clauses hints
+  | TableDecD (id, params, typ, tablerows, hints) ->
+      struct_table_dec_def ihenv tdenv at id params tablerows typ hints
+  | FuncDecD (id, tparams, params, typ, clauses, hints) ->
+      struct_func_dec_def ihenv tdenv at id tparams params typ clauses hints
 
 (* Structuring relation definitions *)
 
 and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
     (inputs : int list) (hints : hint list) : Sl.def =
-  let mixop, typs = nottyp.it in
+  let _, typs = nottyp.it in
   let typs_match = List.map (fun i -> List.nth typs i) inputs in
   let exps_match, _ =
     List.fold_left
       (fun (exps_match, frees) typ_match ->
-        let exp_match, frees =
-          Elaborate.Fresh.fresh_exp_from_typ frees typ_match
-        in
+        let exp_match, frees = Fresh.fresh_exp_from_typ frees typ_match in
         (exps_match @ [ exp_match ], frees))
       ([], IdSet.empty) typs_match
   in
-  let externrel = (id_rel, (mixop, inputs), exps_match, hints) in
+  let externrel = (id_rel, (nottyp, inputs), exps_match, hints) in
   Sl.ExternRelD externrel $ at
 
 and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     (id_rel : id) (nottyp : nottyp) (inputs : int list)
     (rulegroups : rulegroup list) (hints : hint list) : Sl.def =
-  let mixop, _ = nottyp.it in
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_group, prems_match_group =
     List.fold_left
@@ -177,16 +208,14 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
         let exps_match, _ =
           List.fold_left
             (fun (exps_match, frees) typ_match ->
-              let exp_match, frees =
-                Elaborate.Fresh.fresh_exp_from_typ frees typ_match
-              in
+              let exp_match, frees = Fresh.fresh_exp_from_typ frees typ_match in
               (exps_match @ [ exp_match ], frees))
             ([], IdSet.empty) typs_match
         in
         (exps_match, [])
     | _ -> struct_rule_matches frees exps_match_group prems_match_group
   in
-  let rel_signature = (mixop, inputs) in
+  let rel_signature = (nottyp, inputs) in
   let instrs =
     List.map2
       (fun prems_match (id_rulegroup, exps_match_signature, rulepaths) ->
@@ -200,59 +229,25 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     Pretty.pretty_rel exps_match_unified instrs
   in
   let instrs = Instrument.instrument instrs in
-  Sl.RelD (id_rel, (mixop, inputs), exps_match_unified, instrs, hints) $ at
+  Sl.RelD (id_rel, rel_signature, exps_match_unified, instrs, hints) $ at
 
 (* Structuring declaration definitions *)
 
 and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
     (params : param list) (typ : typ) (hints : hint list) : Sl.def =
-  let args_input, _ =
-    List.fold_left
-      (fun (args_input, frees) param ->
-        let arg_input, frees =
-          match param.it with
-          | ExpP typ ->
-              let exp_input, frees =
-                Elaborate.Fresh.fresh_exp_from_typ frees typ
-              in
-              let arg_input = ExpA exp_input $ param.at in
-              (arg_input, frees)
-          | DefP (id_def, _, _, _) ->
-              let arg_input = DefA id_def $ param.at in
-              (arg_input, frees)
-        in
-        (args_input @ [ arg_input ], frees))
-      ([], IdSet.empty) params
-  in
-  let externfunc = (id_dec, tparams, args_input, typ, hints) in
+  let params = struct_params params in
+  let externfunc = (id_dec, tparams, params, typ, hints) in
   Sl.ExternDecD externfunc $ at
 
 and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
     (params : param list) (typ : typ) (hints : hint list) : Sl.def =
-  let args_input, _ =
-    List.fold_left
-      (fun (args_input, frees) param ->
-        let arg_input, frees =
-          match param.it with
-          | ExpP typ ->
-              let exp_input, frees =
-                Elaborate.Fresh.fresh_exp_from_typ frees typ
-              in
-              let arg_input = ExpA exp_input $ param.at in
-              (arg_input, frees)
-          | DefP (id_def, _, _, _) ->
-              let arg_input = DefA id_def $ param.at in
-              (arg_input, frees)
-        in
-        (args_input @ [ arg_input ], frees))
-      ([], IdSet.empty) params
-  in
-  let builtinfunc = (id_dec, tparams, args_input, typ, hints) in
+  let params = struct_params params in
+  let builtinfunc = (id_dec, tparams, params, typ, hints) in
   Sl.BuiltinDecD builtinfunc $ at
 
 and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
-    (id_dec : id) (tablerows : tablerow list) (typ : typ) (hints : hint list) :
-    Sl.def =
+    (id_dec : id) (params : param list) (tablerows : tablerow list) (typ : typ)
+    (hints : hint list) : Sl.def =
   let exps_signature_group, clauses =
     tablerows
     |> List.map (fun tablerow ->
@@ -262,6 +257,7 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     |> List.split
   in
   let args_input, paths = Antiunify.antiunify_clauses clauses in
+  let params = struct_params_from_args params args_input in
   let instrs_tablerows_group =
     paths
     |> List.map struct_tablerow_path
@@ -276,18 +272,19 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
            (exps_signature, exp_output, instrs_tablerows))
          instrs_tablerows_group
   in
-  let tablefunc = (id_dec, args_input, typ, tablerows, hints) in
+  let tablefunc = (id_dec, params, typ, tablerows, hints) in
   Sl.TableDecD tablefunc $ at
 
 and struct_func_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
-    (id_dec : id) (tparams : tparam list) (typ : typ) (clauses : clause list)
-    (hints : hint list) : Sl.def =
+    (id_dec : id) (tparams : tparam list) (params : param list) (typ : typ)
+    (clauses : clause list) (hints : hint list) : Sl.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
   let instrs = Optimize.optimize ihenv tdenv instrs in
   let args_input, instrs = Pretty.pretty_func args_input instrs in
+  let params = struct_params_from_args params args_input in
   let instrs = Instrument.instrument instrs in
-  let func = (id_dec, tparams, args_input, typ, instrs, hints) in
+  let func = (id_dec, tparams, params, typ, instrs, hints) in
   Sl.FuncDecD func $ at
 
 (* Load type definitions *)

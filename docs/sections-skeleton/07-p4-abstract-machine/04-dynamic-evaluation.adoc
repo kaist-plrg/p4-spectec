@@ -1,4 +1,4 @@
-[#sec-abstract-machine-dynamic-evaluation]
+[#sec-dynamic-evaluation]
 === Dynamic evaluation
 
 // Section 18.4 in the P4-16 Language Specification
@@ -6,7 +6,7 @@ The dynamic evaluation of a P4 program is orchestrated by the architecture
 model. Each architecture model needs to specify the order and the conditions
 under which the various P4 component programs are dynamically executed. For
 example, in the Simple Switch example from <<sec-vss-arch>> the execution flow
-goes `Parser->Pipe->Deparser`.
+goes `Parser -> Pipe -> Deparser`.
 
 Once a P4 execution block is invoked its execution proceeds until termination
 according to the semantics defined in this document. P4 execution blocks are
@@ -22,11 +22,15 @@ P4 program evaluation proceeds by invoking the objects in the global store.
 
 A call to a programmable block invokes the corresponding abstract machine:
 
-${relation: Call_eval}
+${relation-title-prose: Call_eval}
+
+A call to an extern function invokes the corresponding extern function:
+
+${relation-title-prose: ExternFunctionCall_eval}
 
 A call to an extern method invokes the corresponding extern method:
 
-NOTE: (TODO) Add splicer support for extern relations.
+${relation-title-prose: ExternMethodCall_eval}
 
 ==== Evaluation context
 
@@ -52,8 +56,8 @@ semantics of the programmable blocks in a P4 target.
 
 NOTE: Added explanation for the evaluation context. Is this the right place?
 
-[#sec-abstract-machine-dynamic-evaluation-parser]
-==== The Parser abstract machine
+[#sec-dynamic-evaluation-parser]
+==== The parser abstract machine
 
 // Section 13.3 in the P4-16 Language Specification
 The semantics of a P4 parser can be formulated in terms of an abstract machine
@@ -81,7 +85,7 @@ may specify that such packets are passed to the next block after the parser,
 with intrinsic metadata indicating that the parser reached the `reject` state,
 along with the error recorded.
 
-==== The Match-Action Pipeline Abstract Machine
+==== The match-action pipeline abstract machine
 
 // Section 14.3 in the P4-16 Language Specification
 We can describe the computational model of a match-action pipeline, embodied by
@@ -90,8 +94,8 @@ execution of a traditional imperative program:
 
 * At runtime, statements within a block are executed in the order they appear in
   the control block.
-* Execution of the `return` statement causes immediate termination of the
-  execution of the current `control` block, and a return to the caller.
+* Execution of the `return` statement causes the immediate termination of the
+  execution of the current `control` block and a return to the caller.
 * Execution of the `exit` statement causes the immediate termination of the
   execution of the current `control` block and of all the enclosing caller
   `control` blocks.

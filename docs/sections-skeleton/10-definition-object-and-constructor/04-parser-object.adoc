@@ -1,0 +1,72 @@
+[#sec-parser-object]
+=== Parser objects
+
+// Section 13.2 of the P4-16 Language Specification
+A parser declaration comprises a name, a list of parameters, an optional list
+of constructor parameters, local elements, and parser states (as well as
+optional annotations).
+
+// Added
+${syntax: parserLocalDeclaration
+          parserState
+          parserDeclaration}
+
+// Section 13.2 of the P4-16 Language Specification
+Unlike parser type declarations, parser declarations may not be generic--e.g.,
+the following declaration is illegal:
+
+[source,p4]
+----
+parser P<H>(inout H data) { /* body omitted */ }
+----
+
+At least one state, named `start`, must be present in any `parser`. A parser
+may not define two states with the same name. It is also illegal for a parser
+to give explicit definitions for the `accept` and `reject` states--those
+states are logically distinct from the states defined by the programmer.
+
+Preceding the parser states, a `parser` may also contain a list of local
+elements. These can be constants, variables, or instantiations of objects that
+may be used within the parser. Such objects may be instantiations of `extern`
+objects, or other ``parser``s that may be invoked as subroutines. However, it
+is illegal to instantiate a `control` block within a `parser`.
+
+The states and local elements are all in the same namespace, thus the following
+example will produce an error:
+
+[source,p4]
+----
+// erroneous example
+parser p() {
+    bit<4> t;
+    state start {
+       t = 1;
+       transition t;
+    }
+    state t {  // error: name t is duplicated
+       transition accept;
+    }
+}
+----
+
+For an example containing a complete declaration of a parser see
+<<sec-vss-all>>.
+
+// Added
+A `parser` declaration introduces a parser object constructor, represented
+as:
+
+[[parserObjectConstructorDef]]
+${syntax: parserObjectConstructorDef}
+
+Parser objects are then instantiated by constructor invocations to yield:
+
+[[parserObject]]
+${syntax: parserObject}
+
+[discrete]
+==== Well-formedness of parser object constructor types
+
+// Added
+${rulegroup-source: ConstructorType_wf/parserObjectTypeIR}
+${rulegroup-prose: ConstructorType_wf/parserObjectTypeIR}

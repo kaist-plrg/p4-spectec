@@ -788,7 +788,7 @@ and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
     (Ctx.t * Il.exp) attempt_unit =
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   let id_fresh, typ_fresh, iters_fresh =
-    Fresh.fresh_var_from_exp ~wildcard:true ctx.frees
+    Il.Fresh.fresh_var_from_exp ~wildcard:true ctx.frees
       (Il.VarE ("_" $ at) $$ (at, typ_il.it))
   in
   let ctx = Ctx.add_free ctx id_fresh in

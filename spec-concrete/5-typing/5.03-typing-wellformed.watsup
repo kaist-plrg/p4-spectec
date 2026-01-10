@@ -6,56 +6,55 @@ relation Type_wf:
   bound |- typeIR
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed type, assuming bound type ids" %0)
 
 relation TypeDef_wf:
   bound |- typeDefIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed type definition, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed type definition, assuming bound type ids" %0)
 
 relation ParameterType_wf:
   bound |- parameterIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
-
-relation ParameterTypes_wf:
-  bound |- parameterIR*
-  hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed parameter type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed parameter type, assuming bound type ids" %0)
 
 relation ReturnType_wf:
   bound |- typeIR
   hint(input %0 %1)
   hint(prose_true %1 "is a well-formed return type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed return type, assuming bound type ids" %0)
 
 relation CallableType_wf:
   bound |- callableTypeIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed callable type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed callable type, assuming bound type ids" %0)
 
 relation CallableTypeDef_wf:
   bound |- callableTypeDefIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed callable type definition, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed callable type definition, assuming bound type ids" %0)
 
 relation ConstructorParameterType_wf:
   bound |- parameterIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
-
-relation ConstructorParameterTypes_wf:
-  bound |- parameterIR*
-  hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed constructor parameter type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed constructor parameter type, assuming bound type ids" %0)
 
 relation ConstructorType_wf:
   bound |- constructorTypeIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed constructor type, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed constructor type, assuming bound type ids" %0)
 
 relation ConstructorTypeDef_wf:
   bound |- constructorTypeDefIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed type, assuming bound type ids" %0)
+  hint(prose_true %1 "is a well-formed constructor type definition, assuming bound type ids" %0)
+  hint(prose_false %1 "is not a well-formed constructor type definition, assuming bound type ids" %0)
 
 ;;
 ;;;; Well-formedness of types
@@ -293,11 +292,11 @@ rule Type_wf/externObjectTypeIR:
 
 rule Type_wf/parserObjectTypeIR:
   B |- PARSER _ `< _ > `( parameterIR* )
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
 
 rule Type_wf/controlObjectTypeIR:
   B |- CONTROL _ `< _ > `( parameterIR* )
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
 
 rule Type_wf/packageObjectTypeIR:
   B |- PACKAGE _ `< _ > `{ typeIR* }
@@ -451,12 +450,6 @@ rulegroup ParameterType_wf {
 
 }
 
-rule ParameterTypes_wf:
-  B |- parameterIR*
-  -- if (_ _ _ nameIR _ = parameterIR)*
-  -- if $distinct_<nameIR>(nameIR*)
-  -- (ParameterType_wf: B |- parameterIR)*
-
 ;;
 ;;;; Well-formedness of return types
 ;;
@@ -504,7 +497,7 @@ tbl def $nestable_action =
 
 rule CallableType_wf/actionTypeIR:
   B |- ACTION `( parameterIR* )
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ direction typeIR _ _ = parameterIR)*
   -- if $directionless_trailing(direction*)
   -- if $nestable_action(typeIR)*
@@ -523,7 +516,7 @@ tbl def $nestable_definedFunction =
 
 rule CallableType_wf/definedFunctionTypeIR:
   B |- FUNCTION `( parameterIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_definedFunction(typeIR)*
   -- ReturnType_wf: B |- typeIR_ret
@@ -542,7 +535,7 @@ tbl def $nestable_externFunction =
 
 rule CallableType_wf/externFunctionTypeIR:
   B |- EXTERN_FUNCTION `( parameterIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_externFunction(typeIR)*
   -- ReturnType_wf: B |- typeIR_ret
@@ -551,7 +544,7 @@ rule CallableType_wf/externFunctionTypeIR:
 
 rule CallableType_wf/builtinMethodTypeIR:
   B |- BUILTIN_METHOD `( parameterIR* ) `: typeIR_ret
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- ReturnType_wf: B |- typeIR_ret
 
 tbl dec $nestable_externMethod(typeIR) : bool
@@ -570,14 +563,14 @@ rulegroup CallableType_wf/externMethodTypeIR {
 
   rule CallableType_wf/non-abstract:
     B |- EXTERN_METHOD `( parameterIR* ) `: typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
     -- ReturnType_wf: B |- typeIR_ret
 
   rule CallableType_wf/abstract:
     B |- EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret
-    -- ParameterTypes_wf: B |- parameterIR*
+    -- (ParameterType_wf: B |- parameterIR)*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
     -- ReturnType_wf: B |- typeIR_ret
@@ -598,7 +591,7 @@ tbl def $nestable_parserApplyMethod =
 
 rule CallableType_wf/parserApplyMethodTypeIR:
   B |- PARSER_APPLY `( parameterIR* )
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_parserApplyMethod(typeIR)*
 
@@ -615,7 +608,7 @@ tbl def $nestable_controlApplyMethod =
 
 rule CallableType_wf/controlApplyMethodTypeIR:
   B |- CONTROL_APPLY `( parameterIR* )
-  -- ParameterTypes_wf: B |- parameterIR*
+  -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_controlApplyMethod(typeIR)*
 
@@ -644,15 +637,9 @@ rule CallableTypeDef_wf:
 ;;
 
 rule ConstructorParameterType_wf:
-  B |- _ `EMPTY typeIR _ _
-  -- Type_wf: B |- typeIR
-  -- if ~$is_synthesizedTypeIR($unroll_typeIR(typeIR))
-
-rule ConstructorParameterTypes_wf:
-  B |- parameterIR*
-  -- if (_ _ _ nameIR _ = parameterIR)*
-  -- if $distinct_<nameIR>(nameIR*)
-  -- (ConstructorParameterType_wf: B |- parameterIR)*
+  B |- constructorParameterIR
+  -- if _ `EMPTY _ _ _ = constructorParameterIR
+  -- ParameterType_wf: B |- constructorParameterIR
 
 ;;
 ;;;; Well-formedness of constructor types
@@ -672,7 +659,7 @@ tbl def $nestable_constructor_extern =
 
 rule ConstructorType_wf/externObjectTypeIR:
   B |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: B |- parameterIR*
+  -- (ConstructorParameterType_wf: B |- parameterIR)*
   -- Type_wf: B |- typeIR_object
   -- if externObjectTypeIR = $unroll_typeIR(typeIR_object)
   -- if (_ _ typeIR _ _ = parameterIR)*
@@ -691,7 +678,7 @@ tbl def $nestable_constructor_parser =
 
 rule ConstructorType_wf/parserObjectTypeIR:
   B |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: B |- parameterIR*
+  -- (ConstructorParameterType_wf: B |- parameterIR)*
   -- Type_wf: B |- typeIR_object
   -- if parserObjectTypeIR = $unroll_typeIR(typeIR_object)
   -- if (_ _ typeIR _ _ = parameterIR)*
@@ -709,11 +696,16 @@ tbl def $nestable_constructor_control =
 
 rule ConstructorType_wf/controlObjectTypeIR:
   B |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: B |- parameterIR*
+  -- (ConstructorParameterType_wf: B |- parameterIR)*
   -- Type_wf: B |- typeIR_object
   -- if controlObjectTypeIR = $unroll_typeIR(typeIR_object)
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_control(typeIR)*
+
+rule ConstructorType_wf/tableObjectTypeIR:
+  B |- CONSTRUCTOR `( eps ) `: typeIR_object
+  -- Type_wf: B |- typeIR_object
+  -- if tableObjectTypeIR = $unroll_typeIR(typeIR_object)
 
 tbl dec $nestable_constructor_package(typeIR) : bool
   hint(prose_true %0 "can be used in a package constructor type")
@@ -725,7 +717,7 @@ tbl def $nestable_constructor_package =
 
 rule ConstructorType_wf/packageObjectTypeIR:
   B |- CONSTRUCTOR `( parameterIR* ) `: typeIR_object
-  -- ConstructorParameterTypes_wf: B |- parameterIR*
+  -- (ConstructorParameterType_wf: B |- parameterIR)*
   -- Type_wf: B |- typeIR_object
   -- if packageObjectTypeIR = $unroll_typeIR(typeIR_object)
   -- if (_ _ typeIR _ _ = parameterIR)*
@@ -736,6 +728,8 @@ rule ConstructorType_wf/packageObjectTypeIR:
 ;;
 
 tbl dec $definable_constructor(typeIR) : bool
+  hint(prose_true %0 "can be constructed")
+  hint(prose_false %0 "cannot be constructed")
 
 tbl def $definable_constructor =
   | TYPEDEF _ typeIR => $definable_constructor(typeIR)

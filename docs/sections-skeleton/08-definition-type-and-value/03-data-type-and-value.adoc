@@ -26,18 +26,18 @@ list<T>
 ${syntax: listType listTypeIR listValue}
 
 [discrete]
-===== Type checking
+===== Type checking list types
 
 // Added
-${rulegroup: Type_ok/listType}
-${ruleprose: Type_ok/listType}
+${rulegroup-source: Type_ok/listType}
+${rulegroup-prose: Type_ok/listType}
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of list types
 
 // Added
-${rulegroup: Type_wf/listTypeIR}
-${ruleprose: Type_wf/listTypeIR}
+${rulegroup-source: Type_wf/listTypeIR}
+${rulegroup-prose: Type_wf/listTypeIR}
 
 ==== Tuple types and values
 
@@ -57,18 +57,18 @@ tuple<T1, /* more fields omitted */, Tn>
 ${syntax: tupleType tupleTypeIR tupleValue}
 
 [discrete]
-===== Type checking
+===== Type checking tuple types
 
 // Added
-${rulegroup: Type_ok/tupleType}
-${ruleprose: Type_ok/tupleType}
+${rulegroup-source: Type_ok/tupleType}
+${rulegroup-prose: Type_ok/tupleType}
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of tuple types
 
 // Added
-${rulegroup: Type_wf/tupleTypeIR}
-${ruleprose: Type_wf/tupleTypeIR}
+${rulegroup-source: Type_wf/tupleTypeIR}
+${rulegroup-prose: Type_wf/tupleTypeIR}
 
 ==== Header stack types and values
 
@@ -111,18 +111,18 @@ introduce a header stack called `mpls` containing ten entries, each of type
 `Mpls_h`.
 
 [discrete]
-===== Type checking
+===== Type checking header stack types
 
 // Added
-${rulegroup: Type_ok/headerStackType}
-${ruleprose: Type_ok/headerStackType}
+${rulegroup-source: Type_ok/headerStackType}
+${rulegroup-prose: Type_ok/headerStackType}
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of header stack types
 
 // Added
-${rulegroup: Type_wf/headerStackTypeIR}
-${ruleprose: Type_wf/headerStackTypeIR}
+${rulegroup-source: Type_wf/headerStackTypeIR}
+${rulegroup-prose: Type_wf/headerStackTypeIR}
 
 ==== Array types and values
 
@@ -169,21 +169,20 @@ struct types and values are represented as follows:
 ${syntax: fieldTypeIR structTypeIR fieldValue structValue}
 
 [discrete]
-===== Type checking
+===== Type checking struct types
 
 // Added
 Struct types are introduced by `struct` declarations. Its typing rule is
-explained in <<sec-sem-Decl_ok-structTypeDeclaration>>.
-
-Struct types are then used by referencing their names. Thus struct types can
-be obtained from named types, as illustrated in <<sec-named-types>>.
+explained in <<sec-struct-type-declaration>>. Struct types are then used by
+referencing their names. Thus struct types can be obtained from named types,
+as illustrated in <<sec-named-types>>.
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of struct types
 
 // Added
-${rulegroup: Type_wf/structTypeIR}
-${ruleprose: Type_wf/structTypeIR}
+${rulegroup-source: Type_wf/structTypeIR}
+${rulegroup-prose: Type_wf/structTypeIR}
 
 ==== Header types and values
 
@@ -316,21 +315,20 @@ Internally, header types and values are represented as follows:
 ${syntax: headerTypeIR headerValue}
 
 [discrete]
-===== Type checking
+===== Type checking header types
 
 // Added
 Header types are introduced by `header` declarations. Its typing rule is
-explained in <<sec-sem-Decl_ok-headerTypeDeclaration>>.
-
-Header types are then used by referencing their names. Thus header types can
-be obtained from named types, as illustrated in <<sec-named-types>>.
+explained in <<sec-header-type-declaration>>. Header types are then used by
+referencing their names. Thus header types can be obtained from named types,
+as illustrated in <<sec-named-types>>.
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of header types
 
 // Added
-${rulegroup: Type_wf/headerTypeIR}
-${ruleprose: Type_wf/headerTypeIR}
+${rulegroup-source: Type_wf/headerTypeIR}
+${rulegroup-prose: Type_wf/headerTypeIR}
 
 ==== Header union types and values
 
@@ -375,29 +373,29 @@ Internally, header union types and values are represented as follows:
 ${syntax: headerUnionTypeIR headerUnionValue}
 
 [discrete]
-===== Type checking
+===== Type checking header union types
 
 // Added
 Header union types are introduced by `header_union` declarations. Its typing
-rule is explained in <<sec-sem-Decl_ok-headerUnionTypeDeclaration>>.
-
-Header union types are then used by referencing their names. Thus header union
-types can be obtained from named types, as illustrated in
-<<sec-named-types>>.
+rule is explained in <<sec-header-union-type-declaration>>. Header union types
+are then used by referencing their names. Thus header union types can be
+obtained from named types, as illustrated in <<sec-named-types>>.
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of header union types
 
 // Added
-${rulegroup: Type_wf/headerUnionTypeIR}
-${ruleprose: Type_wf/headerUnionTypeIR}
+${rulegroup-source: Type_wf/headerUnionTypeIR}
+${rulegroup-prose: Type_wf/headerUnionTypeIR}
 
 ==== Enum types and values
 
 // Section 7.2.1 of the P4-16 Language Specification
 The declaration of an `enum` type is given by the following syntax:
 
-${syntax: enumTypeDeclaration}
+${syntax: namedExpression
+          namedExpressionList
+          enumTypeDeclaration}
 
 Enums can be declared in two different ways, depending on whether or not an
 underlying representation type is provided. The two forms are described below.
@@ -480,24 +478,23 @@ enum bit<8> FailingExample {
 would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
-The `initializer` expression must be a local compile-time known value.
+The initializer `expression` must be a local compile-time known value.
 
 Annotations, represented by the non-terminal `annotationList`, are described in
 <<sec-annotations>>.
 
 [discrete]
-===== Type checking
+===== Type checking enum types
 
 // Added
 Enum types are introduced by `enum` declarations. Its typing rule is explained
-in <<sec-sem-Decl_ok-enumTypeDeclaration>>.
-
-Enum types are then used by referencing their names. Thus enum types can be
-obtained from named types, as illustrated in <<sec-named-types>>.
+in <<sec-enum-type-declaration>>. Enum types are then used by referencing their
+names. Thus enum types can be obtained from named types, as illustrated in
+<<sec-named-types>>.
 
 [discrete]
-===== Well-formedness
+===== Well-formedness of enum types
 
 // Added
-${rulegroup: Type_wf/enumTypeIR}
-${ruleprose: Type_wf/enumTypeIR}
+${rulegroup-source: Type_wf/enumTypeIR}
+${rulegroup-prose: Type_wf/enumTypeIR}

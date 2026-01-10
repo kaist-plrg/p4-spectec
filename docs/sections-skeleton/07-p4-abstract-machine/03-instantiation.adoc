@@ -1,4 +1,4 @@
-[#sec-abstract-machine-instantiation]
+[#sec-instantiation]
 === Instantiation
 
 // Section 18.2 in the P4-16 Language Specification
@@ -81,6 +81,7 @@ may require distinct checksum units to be used in distinct blocks.
 [#fig-compileeval]
 image::compileeval.png[width=250,align="center"]
 
+[#sec-control-plane-names]
 ==== Control-plane names
 
 // Section 18.3 in the P4-16 Language Specification
@@ -225,6 +226,7 @@ control c(/* parameters omitted */)() {
 
 This action's local name is `a`.
 
+[#sec-cp-names]
 ====== Instances
 
 // Section 18.3.1.5 in the P4-16 Language Specification
@@ -254,7 +256,7 @@ example, if `extern` `E` and `control` `C` are declared as,
 [source,p4]
 ----
 extern E { /* body omitted */ }
-control C( /* parameters omitted */ )(E e_in) { /* body omitted */ }
+control C(/* parameters omitted */)(E e_in) { /* body omitted */ }
 ----
 
 and instantiated as,
@@ -346,8 +348,8 @@ Consider the following example.
 
 [source,p4]
 ----
-control c( /* parameters omitted */ )() {
-    action a ( /* parameters omitted */ ) { /* body omitted */ }
+control c(/* parameters omitted */)() {
+    action a (/* parameters omitted */) { /* body omitted */ }
     table t {
         keys = { /* body omitted */ }
         actions = { a; } }
@@ -360,7 +362,7 @@ rules into table `c_inst.t`, because it is clear from the definition of the
 table which action `a` refers to.
 
 Not all unambiguous postfix shortcuts are recommended. For instance, consider
-the first example in <<sec-cp-names>>. One might be tempted to refer to `s.c1`
+the last example in <<sec-cp-names>>. One might be tempted to refer to `s.c1`
 simply as `c1`, as no other instance named `c1` appears in the program.
 However, this leads to a brittle program since future modifications can never
 introduce an instance named `c1`, or include libraries of P4 code that contain
@@ -380,7 +382,8 @@ ${syntax: store}
 A P4~16~ program is first type checked to yield a P4~IR~ program, and is then
 instantiated to create a ``store``, which maps ``objectId``s to ``object``s.
 
-${ruleprose: Program_inst}
+${relation-title-prose: Program_inst}
+${rulegroup-prose: Program_inst}
 
 ==== Instantiation context
 
@@ -412,11 +415,11 @@ ${syntax: typeDefIR typeDefEnv}
 ${syntax: callableDef callableDefEnv}
 
 `callableDefEnv` is a map from callable names to their definitions,
-`callableDefIR`.
+`callableDef`.
 
 ${syntax: constructorDef constructorDefEnv}
 
 Stateful objects are instantiated using constructors. `constructorDefEnv` is a
-map from constructor names to their definitions, `constructorDefIR`.
+map from constructor names to their definitions, `constructorDef`.
 
 NOTE: Added explanation for the typing context. Is this the right place?

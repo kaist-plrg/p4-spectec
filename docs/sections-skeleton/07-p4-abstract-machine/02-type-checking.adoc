@@ -1,4 +1,4 @@
-[#sec-abstract-machine-type-checking]
+[#sec-type-checking]
 === Type Checking
 
 // Section 7 in the P4-16 Language Specification
@@ -47,7 +47,14 @@ program, `p4programIR`:
 
 ${syntax: p4programIR}
 
-${ruleprose: Program_ok}
+`Program_ok` type checks a `p4program` and produces a `p4programIR`.
+
+${relation-title-prose: Program_ok}
+
+Below is a prose algorithm that implements `Program_ok`. Details of what each
+meta-variable means are provided in the subsequent sections.
+
+${rulegroup-prose: Program_ok}
 
 ==== Typing context
 
@@ -76,7 +83,7 @@ and whether it is associated with a compile-time known value (`value?`).
 
 The compile-time known-ness is discussed in <<sec-compile-time-known>>.
 
-Notice that `localTypingLayer` contains multiple `frame`s. This is because a
+Notice that `localTypingLayer` contains multiple ``typeFrame``s. This is because a
 local scope can be nested with block statements.
 
 ${syntax: typeDefIR typeDefEnv}

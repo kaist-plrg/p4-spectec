@@ -4,13 +4,23 @@ open Lang
 
 module SyntaxId = String
 
-type syntax = El.tparam list * El.deftyp * El.hint list
+module Syntax = struct
+  type source =
+    | ExternS of El.hint list
+    | DefinedS of El.tparam list * El.deftyp * El.hint list
+end
 
-(* Relations *)
+(* Relation titles *)
 
-module RelationId = String
+module RelTitleId = String
 
-type relation = El.nottyp * El.hint list
+module RelTitle = struct
+  type source =
+    | ExternS of El.nottyp * El.hint list
+    | DefinedS of El.nottyp * El.hint list
+
+  type prose = ExternP of Pl.rel_title | DefinedP of Pl.rel_title
+end
 
 (* Rule groups *)
 
@@ -22,22 +32,41 @@ module RuleGroupId = struct
     if c <> 0 then c else String.compare id_rulegroup_a id_rulegroup_b
 end
 
-type rulegroup = El.rule list
+module RuleGroup = struct
+  type source = El.rule list
+  type prose = Pl.rulegroup
+end
 
-(* Rule prose *)
+(* Function titles *)
 
-module RuleProseId = RuleGroupId
+module FuncTitleId = String
 
-type ruleprose = Pl.rulegroup
+module FuncTitle = struct
+  type source =
+    | ExternS of El.tparam list * El.param list * El.plaintyp * El.hint list
+    | BuiltinS of El.tparam list * El.param list * El.plaintyp * El.hint list
+    | DefinedS of El.tparam list * El.param list * El.plaintyp * El.hint list
 
-(* Function prose *)
+  type prose =
+    | ExternP of Pl.func_title
+    | BuiltinP of Pl.func_title
+    | DefinedP of Pl.func_title
+end
 
-module FuncProseId = String
+(* Functions *)
 
-type funcprose = Pl.func
+module FuncId = String
 
-(* Table *)
+module Func = struct
+  type source = (El.tparam list * El.arg list * El.exp * El.prem list) list
+  type prose = Pl.func
+end
+
+(* Tables *)
 
 module TableId = String
 
-type table = Pl.tablefunc
+module Table = struct
+  type source = El.tablerow list
+  type prose = Pl.tablefunc
+end

@@ -54,6 +54,8 @@ let parse_id_with_sub (source : Source.t) : Kinds.RuleGroupId.t =
   let id_sub = if parse_string source "/" then parse_id source else "" in
   (id, id_sub)
 
+(* Syntax *)
+
 let rec parse_syntax_ids (source : Source.t) : Kinds.SyntaxId.t list =
   parse_space source;
   if parse_string source "}" then []
@@ -61,12 +63,16 @@ let rec parse_syntax_ids (source : Source.t) : Kinds.SyntaxId.t list =
     let id = parse_id source in
     id :: parse_syntax_ids source
 
-let rec parse_relation_ids (source : Source.t) : Kinds.RelationId.t list =
+(* Relation title *)
+
+let rec parse_rel_title_ids (source : Source.t) : Kinds.RelTitleId.t list =
   parse_space source;
   if parse_string source "}" then []
   else
     let id = parse_id source in
-    id :: parse_relation_ids source
+    id :: parse_rel_title_ids source
+
+(* Rule groups *)
 
 let parse_rulegroup_id (source : Source.t) : Kinds.RuleGroupId.t =
   parse_space source;
@@ -75,15 +81,25 @@ let parse_rulegroup_id (source : Source.t) : Kinds.RuleGroupId.t =
   let _ = parse_string source "}" in
   id_rulegroup
 
-let parse_ruleprose_id (source : Source.t) : Kinds.RuleProseId.t =
-  parse_rulegroup_id source
+(* Function title *)
 
-let parse_funcprose_id (source : Source.t) : Kinds.FuncProseId.t =
+let parse_func_title_id (source : Source.t) : Kinds.FuncTitleId.t =
   parse_space source;
-  let id_funcprose = parse_id source in
+  let id_func_title = parse_id source in
   parse_space source;
   let _ = parse_string source "}" in
-  id_funcprose
+  id_func_title
+
+(* Function *)
+
+let parse_func_id (source : Source.t) : Kinds.FuncId.t =
+  parse_space source;
+  let id_func = parse_id source in
+  parse_space source;
+  let _ = parse_string source "}" in
+  id_func
+
+(* Table *)
 
 let parse_table_id (source : Source.t) : Kinds.TableId.t =
   parse_space source;
