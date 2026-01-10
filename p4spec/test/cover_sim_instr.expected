@@ -1,4 +1,4 @@
-;; Instruction coverage: 9139/12849 (71.13%)
+;; Instruction coverage: 9140/12856 (71.10%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -12470,7 +12470,21 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +           1. The relation holds
 
-+ 4. Group packageObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
++ 4. If (((parameterIR)* matches pattern [])), then
+
+-   1. Group tableObjectTypeIR: B |- (constructor( [] ): typeIR_object)
+
+-     1. If (Type_wf: B |- typeIR_object) holds, then
+
+-       1. (Let typeIR be $unroll_typeIR(typeIR_object))
+
+-       2. If ((typeIR has type tableObjectTypeIR)), then
+
+-         1. (Let tableObjectTypeIR be (typeIR as tableObjectTypeIR))
+
+-         2. The relation holds
+
++ 5. Group packageObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +   1. If (ConstructorParameterType_wf: B |- parameterIR)* holds, then
 
@@ -13964,7 +13978,7 @@ tbl def $nestable_constructor_control(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:705.1-707.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:710.1-712.70
 tbl def $nestable_constructor_package(typeIR'')
 =
 
@@ -13988,7 +14002,7 @@ tbl def $nestable_constructor_package(typeIR'')
 
 +     1. Return true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:725.1-725.46
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:730.1-732.47
 tbl def $definable_constructor(typeIR'')
 =
 

@@ -660,7 +660,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-09</span>
+<span id="revdate">2026-01-10</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -798,8 +798,8 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel4">
 <li><a href="#_portability">8.1.6.1. Portability</a></li>
 <li><a href="#_arbitrary_precision_integers">8.1.6.2. Arbitrary-precision integers</a></li>
-<li><a href="#_fixed_width_signed_integers">8.1.6.3. Fixed-width signed integers</a></li>
-<li><a href="#_fixed_width_unsigned_integers_bit_strings">8.1.6.4. Fixed-width unsigned integers (bit-strings)</a></li>
+<li><a href="#_fixed_width_unsigned_integers_bit_strings">8.1.6.3. Fixed-width unsigned integers (bit-strings)</a></li>
+<li><a href="#_fixed_width_signed_integers">8.1.6.4. Fixed-width signed integers</a></li>
 <li><a href="#_dynamically_sized_bit_strings">8.1.6.5. Dynamically-sized bit-strings</a></li>
 </ul>
 </li>
@@ -5354,28 +5354,28 @@ runtime representation of P4 values is as follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>The <code>error</code> type, which is used to convey errors in a
-target-independent, compiler-managed way.</p>
+<p><code>bool</code>, which represents Boolean values</p>
 </li>
 <li>
-<p>The <code>string</code> type, which can be used with compile-time known
-values of type string.</p>
+<p>The <code>error</code> type, which is used to convey errors in a
+target-independent, compiler-managed way.</p>
 </li>
 <li>
 <p>The <code>match_kind</code> type, which is used for describing the implementation of
 table lookups,</p>
 </li>
 <li>
-<p><code>bool</code>, which represents Boolean values</p>
+<p>The <code>string</code> type, which can be used with compile-time known
+values of type string.</p>
 </li>
 <li>
 <p><code>int</code>, which represents arbitrary-sized integer values</p>
 </li>
 <li>
-<p>Bit-strings of fixed width, denoted by <code>bit&lt;&gt;</code></p>
+<p>Fixed-width signed integers represented using two&#8217;s complement <code>int&lt;&gt;</code></p>
 </li>
 <li>
-<p>Fixed-width signed integers represented using two&#8217;s complement <code>int&lt;&gt;</code></p>
+<p>Bit-strings of fixed width, denoted by <code>bit&lt;&gt;</code></p>
 </li>
 <li>
 <p>Bit-strings of dynamically-computed width with a fixed maximum width <code>varbit&lt;&gt;</code></p>
@@ -5542,7 +5542,7 @@ syntax errorValue =
 <div class="paragraph">
 <p>The error type contains opaque distinct values that can be used to signal
 errors. It is written as <code>error</code>. New elements of the error type
-are defined with the syntax:</p>
+are defined with the following syntax:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -5695,11 +5695,11 @@ syntax stringValue = stringLiteral</code></pre>
 </div>
 <div class="paragraph">
 <p>The type <code>string</code> represents strings. The values of type <code>string</code> are either
-string literals, or concatenations of multiple <code>string</code>-typed expression.</p>
+string literals, or concatenations of multiple <code>string</code>-typed expressions.</p>
 </div>
 <div class="paragraph">
 <p>One cannot declare variables with a <code>string</code> type. Parameters with type
-<code>string</code> can be only directionless (see Section <a href="#sec-calling-convention">[sec-calling-convention]</a>).
+<code>string</code> can be only directionless (see Section <a href="#sec-call-convention">Chapter 17</a>).
 P4 does not support string manipulation in the dataplane; the <code>string</code> type is
 only allowed for describing compile-time known values (i.e., string literals,
 as discussed in Section <a href="#sec-string-literals">[sec-string-literals]</a>). Even so, the string type is
@@ -5851,7 +5851,7 @@ precision. This type is written as <code>int</code>.</p>
 <div class="paragraph">
 <p>This type is reserved for integer literals and expressions that involve only
 literals. No P4 runtime value can have an <code>int</code> type; at compile time the
-compiler will convert all int values that have a runtime component to
+compiler will convert all <code>int</code> values that have a runtime component to
 fixed-width types, according to the rules described below.</p>
 </div>
 <div class="paragraph">
@@ -5870,7 +5870,7 @@ arbitrary-precision integers.</p>
 <code>int</code> for other callable entities of a program, e.g. controls, parsers, or
 functions, must be directionless, indicating that all calls must provide a
 compile-time known value as an argument for such a parameter.  See
-<a href="#sec-calling-convention">[sec-calling-convention]</a> for more details on directionless parameters.</p>
+<a href="#sec-call-convention">Chapter 17</a> for more details on directionless parameters.</p>
 </div>
 <h6 id="_type_checking_arbitrary_precision_integer_types" class="discrete">Type checking arbitrary-precision integer types</h6>
 <details>
@@ -5906,120 +5906,7 @@ compile-time known value as an argument for such a parameter.  See
 </div>
 </div>
 <div class="sect4">
-<h5 id="_fixed_width_signed_integers">8.1.6.3. Fixed-width signed integers</h5>
-<div class="paragraph">
-<p>Signed integers are represented using two&#8217;s complement. An integer with <code>W</code>
-bits is declared as: <code>int&lt;W&gt;</code>. <code>W</code> must be an expression that evaluates to a
-local compile-time known (see Section <a href="#sec-compile-time-known">Section 7.5</a>) value that is
-a non-negative integer.  Note that <code>int&lt;W&gt;</code> type refers to both cases of
-<code>int&lt;W&gt;</code> and <code>int&lt;(expression)&gt;</code> where the width is a local compile-time known
-value.</p>
-</div>
-<div class="paragraph">
-<p>Bits within an integer are numbered from <code>0</code> to <code>W-1</code>. Bit <code>0</code> is the least
-significant, and bit <code>W-1</code> is the sign bit.</p>
-</div>
-<div class="paragraph">
-<p>For example, the type <code>int&lt;64&gt;</code> describes the type of integers represented
-using exactly 64 bits with bits numbered from 0 to 63, where bit 63 is the most
-significant (sign) bit.</p>
-</div>
-<div class="paragraph">
-<p>P4 architectures may impose additional constraints on signed types: for
-example, they may limit the maximum size, or they may only support some
-arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
-</div>
-<div class="paragraph">
-<p>A signed integer with width 1 can only have two legal values: 0 and -1.</p>
-</div>
-<h6 id="_type_checking_fixed_width_signed_integer_types" class="discrete">Type checking fixed-width signed integer types</h6>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>rulegroup Type_ok/fixedInt:
-  rule Type_ok/integer:
-  p TC |- INT `&lt;n&gt; : (INT `&lt;n&gt;) # eps
-  rule Type_ok/expression:
-  p TC |- INT `&lt;`(expression)&gt; : (INT `&lt;n&gt;) # eps
- -- Expr_ok: p TC |- expression : typedExpressionIR
- -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
- -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
- -- if n = $int_of_integerValue(integerValue)</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Type_ok">Typing <code>baseType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If let <code>INT &lt; int &gt;</code> be <code>baseType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n</code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>·</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else let <code>INT &lt; ( expression ) &gt;</code> be <code>baseType</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR</code></a> matches pattern <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue</code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n</code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>·</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_fixed_width_unsigned_integers_bit_strings">8.1.6.4. Fixed-width unsigned integers (bit-strings)</h5>
+<h5 id="_fixed_width_unsigned_integers_bit_strings">8.1.6.3. Fixed-width unsigned integers (bit-strings)</h5>
 <div class="paragraph">
 <p>An unsigned integer (which we also call a "bit-string") has an arbitrary width,
 expressed in bits. A bit-string of width <code>W</code> is declared as: <code>bit&lt;W&gt;</code>. <code>W</code> must
@@ -6029,7 +5916,7 @@ expression for the size, the expression must be parenthesized. Bitstrings with
 width 0 are allowed; they have no actual bits, and can only have the value 0.
 See <a href="#sec-uninitialized-values-and-writing-invalid-headers">[sec-uninitialized-values-and-writing-invalid-headers]</a> for additional
 details. Note that <code>bit&lt;W&gt;</code> type refers to both cases of <code>bit&lt;W&gt;</code> and
-<code>bit&lt;(expression)&gt;</code> where the width is a compile-time known value.</p>
+<code>bit&lt;(expression)&gt;</code> where the width is a local compile-time known value.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6153,6 +6040,119 @@ operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 </div>
 </div>
 <div class="sect4">
+<h5 id="_fixed_width_signed_integers">8.1.6.4. Fixed-width signed integers</h5>
+<div class="paragraph">
+<p>Signed integers are represented using two&#8217;s complement. An integer with <code>W</code>
+bits is declared as: <code>int&lt;W&gt;</code>. <code>W</code> must be an expression that evaluates to a
+local compile-time known (see Section <a href="#sec-compile-time-known">Section 7.5</a>) value that is
+a non-negative integer.  Note that <code>int&lt;W&gt;</code> type refers to both cases of
+<code>int&lt;W&gt;</code> and <code>int&lt;(expression)&gt;</code> where the width is a local compile-time known
+value.</p>
+</div>
+<div class="paragraph">
+<p>Bits within an integer are numbered from <code>0</code> to <code>W-1</code>. Bit <code>0</code> is the least
+significant, and bit <code>W-1</code> is the sign bit.</p>
+</div>
+<div class="paragraph">
+<p>For example, the type <code>int&lt;64&gt;</code> describes the type of integers represented
+using exactly 64 bits with bits numbered from 0 to 63, where bit 63 is the most
+significant (sign) bit.</p>
+</div>
+<div class="paragraph">
+<p>P4 architectures may impose additional constraints on signed types: for
+example, they may limit the maximum size, or they may only support some
+arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
+</div>
+<div class="paragraph">
+<p>A signed integer with width 1 can only have two legal values: 0 and -1.</p>
+</div>
+<h6 id="_type_checking_fixed_width_signed_integer_types" class="discrete">Type checking fixed-width signed integer types</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_ok/fixedInt:
+  rule Type_ok/integer:
+  p TC |- INT `&lt;n&gt; : (INT `&lt;n&gt;) # eps
+  rule Type_ok/expression:
+  p TC |- INT `&lt;`(expression)&gt; : (INT `&lt;n&gt;) # eps
+ -- Expr_ok: p TC |- expression : typedExpressionIR
+ -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+ -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
+ -- if n = $int_of_integerValue(integerValue)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_ok">Typing <code>baseType</code>, under cursor <code>p</code> and typing context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>INT &lt; int &gt;</code> be <code>baseType</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else let <code>INT &lt; ( expression ) &gt;</code> be <code>baseType</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR</code></a> matches pattern <code>LCTK</code>.</p>
+</li>
+<li>
+<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">the local compile-time evaluation of <code>typedExpressionIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>integerValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n</code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Result in the type <code>INT &lt; n &gt;</code> and a set of fresh type variables <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
 <h5 id="_dynamically_sized_bit_strings">8.1.6.5. Dynamically-sized bit-strings</h5>
 <div class="paragraph">
 <p>Some network protocols use fields whose size is only known at runtime (e.g.,
@@ -6167,7 +6167,7 @@ type <code>varbit&lt;120&gt;</code> denotes the type of bit-string values that m
 0 and 120 bits. Most operations that are applicable to fixed-size bit-strings
 (unsigned numbers) <strong>cannot</strong> be performed on dynamically sized bit-strings.
 Note that <code>varbit&lt;W&gt;</code> type refers to both cases of <code>varbit&lt;W&gt;</code> and
-<code>varbit&lt;(expression)&gt;</code> where the width is a compile-time known value.</p>
+<code>varbit&lt;(expression)&gt;</code> where the width is a local compile-time known value.</p>
 </div>
 <div class="paragraph">
 <p>P4 architectures may impose additional constraints on varbit types: for
@@ -6316,11 +6316,11 @@ syntax namedType =
 <div class="paragraph">
 <p>Named types are types that reference another type by name. User-defined types
 can be introduced with their names. For example, the following declares a new
-struct type <code>S0</code>:</p>
+struct type <code>S</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S0 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> S <span style="color: #24292f;background-color: #f6f8fa">{</span>
     <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span>
     <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span>
 <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
@@ -7564,6 +7564,14 @@ header type. An empty list of fields is legal. Field names have to be distinct.<
 <p>As an example, the type <code>Ip_h</code> below represents the union of an IPv4 and IPv6
 headers:</p>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header_union</span> <span style="color: #953800">IP_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  <span style="color: #953800">IPv4_h</span> v4<span style="color: #24292f;background-color: #f6f8fa">;</span>
+  <span style="color: #953800">IPv6_h</span> v6<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>A header union is not considered a type with fixed length.</p>
 </div>
@@ -7758,7 +7766,7 @@ representation range of the underlying type.</p>
 <p>The initializer <code>expression</code> must be a local compile-time known value.</p>
 </div>
 <div class="paragraph">
-<p>Annotations, represented by the non-terminal <code>optAnnotations</code>, are described in
+<p>Annotations, represented by the non-terminal <code>annotationList</code>, are described in
 <a href="#sec-annotations">[sec-annotations]</a>.</p>
 </div>
 <h5 id="_type_checking_enum_types" class="discrete">Type checking enum types</h5>
@@ -8566,7 +8574,7 @@ S s0 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</spa
 </div>
 </div>
 <div class="paragraph">
-<p>Internally, the type and value of <code>...</code> itself is represented as:</p>
+<p>Internally, the type and value of <code>...</code> itself are represented as:</p>
 </div>
 <div id="defaultValue" class="listingblock">
 <div class="content">
@@ -8645,7 +8653,7 @@ header union type from the context.</p>
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> H <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
 H h<span style="color: #24292f;background-color: #f6f8fa">;</span>
-h <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span><span style="color: #0550ae">#</span><span style="color: #24292f;background-color: #f6f8fa">};</span>   <span style="color: #6e7781">// This make the header h become invalid</span></code></pre>
+h <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span><span style="color: #0550ae">#</span><span style="color: #24292f;background-color: #f6f8fa">};</span>   <span style="color: #6e7781">// This makes the header h become invalid</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8655,7 +8663,7 @@ occurs in the single lexical token <code>{#}</code>, which may not have
 whitespace or any other characters between those shown.</p>
 </div>
 <div class="paragraph">
-<p>Internally, the type and value of <code>{#}</code> itself is represented as:</p>
+<p>Internally, the type and value of <code>{#}</code> itself are represented as:</p>
 </div>
 <div id="invalidHeaderValue" class="listingblock">
 <div class="content">
@@ -8929,7 +8937,7 @@ mentioning each field name exactly once.</p>
 <p>Record expressions that have <code>...</code> as their last element are allowed to give
 values to only a subset of the fields of the struct or header type to which it
 evaluates. Any field names not given a value explicitly will be given their
-default value (see <a href="#sec-initializing-with-default-values">[sec-initializing-with-default-values]</a>).</p>
+default values (see <a href="#sec-initializing-with-default-values">[sec-initializing-with-default-values]</a>).</p>
 </div>
 <div class="paragraph">
 <p>The order of the fields of the <code>struct</code> or <code>header</code> type does not need to match
@@ -8940,7 +8948,7 @@ the order of the values of the structure-valued expression.</p>
 structure-valued expression.</p>
 </div>
 <div class="paragraph">
-<p>Internally, the type and value of a record expression is represented as:</p>
+<p>Internally, the type and value of a record expression are represented as:</p>
 </div>
 <div id="recordValue" class="listingblock">
 <div class="content">
@@ -8960,7 +8968,7 @@ syntax recordValue =
 <div class="title">Note</div>
 </td>
 <td class="content">
-The record type and value is new. Because every expressions must have
+The record type and value is new. Because every expression must have
 a type and value, we need to represent those of <code>{ recordElementExpression
 optTrailingComma }</code>.
 </td>
@@ -9159,7 +9167,7 @@ statement:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Internally, the type and value of table metadata is represented as:</p>
+<p>Internally, the type and value of table metadata are represented as:</p>
 </div>
 <div id="tableMetadataValue" class="listingblock">
 <div class="content">
@@ -28212,7 +28220,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-09 17:58:17 +0900
+Last updated 2026-01-10 16:01:31 +0900
 </div>
 </div>
 </body>
