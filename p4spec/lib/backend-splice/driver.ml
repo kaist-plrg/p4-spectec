@@ -1,41 +1,51 @@
 open Lang
+open Splicer
+open Splicers
 
-(* Splicing an anchor *)
+(* Splicers *)
 
-let do_splice_anchor (module S : Splice.SPLICE) (ctx : Ctx.t)
-    (source : Source.t) : string =
-  let keys = S.parse_keys source in
-  let values = S.use_keys ctx keys in
-  let content = S.render keys values in
-  S.prefix ^ content ^ S.suffix
+let splicers =
+  [
+    (module Syntax.Source.Splicer : SPLICER);
+    (module Rel_title.Source.Splicer : SPLICER);
+    (module Rel_title.Prose.Splicer : SPLICER);
+    (module Rulegroup.Source.Splicer : SPLICER);
+    (module Rulegroup.Prose.Splicer : SPLICER);
+    (module Func_title.Source.Splicer : SPLICER);
+    (module Func_title.Prose.Splicer : SPLICER);
+    (module Func.Source.Splicer : SPLICER);
+    (module Func.Prose.Splicer : SPLICER);
+    (module Table.Source.Splicer : SPLICER);
+    (module Table.Prose.Splicer : SPLICER);
+  ]
 
-let rec try_splice_anchor (module S : Splice.SPLICE) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : bool =
+let init (spec_el : El.spec) (spec_pl : Pl.spec) =
+  List.iter (fun (module S : SPLICER) -> S.init spec_el spec_pl) splicers
+
+(* Splicing *)
+
+let rec try_splice_anchor (module S : SPLICER) (source : Source.t)
+    (result : string ref) : bool =
   let parsed_start = Parser.parse_splice_start source S.name in
-  if parsed_start then
-    try_splice_anchor' (module S : Splice.SPLICE) ctx source result;
+  if parsed_start then try_splice_anchor' (module S : SPLICER) source result;
   parsed_start
 
-and try_splice_anchor' (module S : Splice.SPLICE) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : unit =
+and try_splice_anchor' (module S : SPLICER) (source : Source.t)
+    (result : string ref) : unit =
   Parser.parse_space source;
-  result := do_splice_anchor (module S : Splice.SPLICE) ctx source
+  result := S.splice source
 
-and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
+and try_splice_anchors (source : Source.t) (buffer : Buffer.t) : bool =
   let result = ref "" in
-  ignore
-    (try_splice_anchor (module Splicer.Syntax) ctx source result
-    || try_splice_anchor (module Splicer.RelTitleSource) ctx source result
-    || try_splice_anchor (module Splicer.RelTitleProse) ctx source result
-    || try_splice_anchor (module Splicer.RuleGroupSource) ctx source result
-    || try_splice_anchor (module Splicer.RuleGroupProse) ctx source result
-    || try_splice_anchor (module Splicer.FuncTitleSource) ctx source result
-    || try_splice_anchor (module Splicer.FuncTitleProse) ctx source result
-    || try_splice_anchor (module Splicer.FuncSource) ctx source result
-    || try_splice_anchor (module Splicer.FuncProse) ctx source result
-    || try_splice_anchor (module Splicer.TableSource) ctx source result
-    || try_splice_anchor (module Splicer.TableProse) ctx source result);
-  if !result <> "" then (
+  let spliced =
+    splicers
+    |> List.fold_left
+         (fun spliced (module S : SPLICER) ->
+           if spliced then true
+           else try_splice_anchor (module S : SPLICER) source result)
+         false
+  in
+  if spliced then (
     Buffer.add_string buffer !result;
     true)
   else false
@@ -54,21 +64,19 @@ let gen_directory (filename : string) : unit =
 
 (* Entry points *)
 
-let rec splice (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
+let rec splice (source : Source.t) (buffer : Buffer.t) : unit =
   if not (Source.eos source) then (
-    if not (try_splice_anchors ctx source buffer) then (
+    if not (try_splice_anchors source buffer) then (
       Buffer.add_char buffer (Source.get source);
       Source.adv source);
-    splice ctx source buffer)
+    splice source buffer)
 
-let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
-    =
+let splice_string (source : Source.t) (content : string) : string =
   let buffer = Buffer.create (String.length content) in
-  splice ctx source buffer;
+  splice source buffer;
   Buffer.contents buffer
 
-let splice_file (ctx : Ctx.t) (filename_input : string)
-    (filename_output : string) : unit =
+let splice_file (filename_input : string) (filename_output : string) : unit =
   let ic = open_in filename_input in
   let content =
     Fun.protect
@@ -76,7 +84,7 @@ let splice_file (ctx : Ctx.t) (filename_input : string)
       ~finally:(fun () -> In_channel.close ic)
   in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
-  let content_spliced = splice_string ctx source content in
+  let content_spliced = splice_string source content in
   gen_directory filename_output;
   let oc = open_out filename_output in
   Fun.protect
@@ -85,10 +93,11 @@ let splice_file (ctx : Ctx.t) (filename_input : string)
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
-  let ctx = Ctx.init spec_el spec_pl in
+  init spec_el spec_pl;
   List.iter
     (fun (filename_input, filename_output) ->
-      Ctx.set_filename ctx filename_input;
-      splice_file ctx filename_input filename_output)
+      splice_file filename_input filename_output)
     filenames;
-  Ctx.unused ctx
+  List.iter
+    (fun (module S : SPLICER) -> S.warn_unused ())
+    splicers

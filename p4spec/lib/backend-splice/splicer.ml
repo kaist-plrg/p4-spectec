@@ -1,9 +1,88 @@
 open Lang
-open Splice
+open Error
 open Util.Source
 
-let prefix_syntax = "[source,bison]\n----\n"
-let suffix_syntax = "\n----"
+(* Splice key and values *)
+
+module type KEY = sig
+  type t
+
+  val to_string : t -> string
+  val parse : Source.t -> t list
+  val compare : t -> t -> int
+end
+
+module type VALUE = sig
+  type t
+
+  val render : t list -> string
+end
+
+module type INIT = sig
+  type key
+  type value
+
+  val init : El.spec -> Pl.spec -> (key * value) list
+end
+
+(* Splice lookups *)
+
+module type STORE = sig
+  type key
+  type value
+  type t
+
+  val cardinal : t -> int
+  val add : key -> value -> t -> t
+  val find_opt : t -> key -> value option
+  val use_opt : t -> key -> value option
+  val unused : t -> key list
+  val empty : t
+  val init : El.spec -> Pl.spec -> t
+end
+
+module Make_store
+    (K : KEY)
+    (V : VALUE)
+    (I : INIT with type key = K.t and type value = V.t) :
+  STORE with type key = K.t and type value = V.t = struct
+  module M = Map.Make (K)
+
+  type key = K.t
+  type value = V.t
+  type entry = { mutable used : bool; data : V.t }
+  type t = entry M.t
+
+  let cardinal (sto : t) : int = M.cardinal sto
+
+  let add (key : K.t) (data : V.t) (sto : t) : t =
+    M.add key { used = false; data } sto
+
+  let find_opt (sto : t) (key : K.t) : V.t option =
+    match M.find_opt key sto with Some entry -> Some entry.data | None -> None
+
+  let use_opt (sto : t) (key : K.t) : V.t option =
+    match M.find_opt key sto with
+    | Some entry ->
+        entry.used <- true;
+        Some entry.data
+    | None -> None
+
+  let unused (sto : t) : K.t list =
+    M.fold
+      (fun key entry keys_unused ->
+        if entry.used then keys_unused else key :: keys_unused)
+      sto []
+    |> List.rev
+
+  let empty : t = M.empty
+
+  let init (spec_el : El.spec) (spec_pl : Pl.spec) : t =
+    I.init spec_el spec_pl
+    |> List.fold_left (fun sto (key, data) -> add key data sto) empty
+end
+
+(* Splice anchor *)
 
 let prefix_source =
   (* "ifeval::[\"{backend}\" == \"html5\"]\n" ^ *)
@@ -14,310 +93,74 @@ let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
 
 let prefix_prose = "****\n"
 let suffix_prose = "\n****"
-let prefix_table_prose = ""
-let suffix_table_prose = "\n"
 
-(* Syntax splicer *)
-
-module Syntax : SPLICE = struct
-  type key = Kinds.SyntaxId.t
-  type value = Kinds.Syntax.t
-
-  let name = "syntax"
-  let prefix = prefix_syntax
-  let suffix = suffix_syntax
-  let parse_keys (source : Source.t) : key list = Parser.parse_syntax_ids source
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_syntax ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (id_typ : key) (syntax : value) ->
-        let def =
-          match syntax with
-          | Kinds.Syntax.ExternS hints ->
-              El.ExternSynD (id_typ $ no_region, hints) $ no_region
-          | Kinds.Syntax.DefinedS (tparams, deftyp, hints) ->
-              El.TypD (id_typ $ no_region, tparams, deftyp, hints) $ no_region
-        in
-        El.Print.string_of_def def)
-      keys values
-    |> String.concat "\n\n"
+module type ANCHOR = sig
+  val name : string
+  val prefix : string
+  val suffix : string
 end
 
-(* Relation title splicer *)
+(* Splicer *)
 
-module RelTitleSource : SPLICE = struct
-  type key = Kinds.RelTitleId.t
-  type value = Kinds.RelTitleSource.t
+module type SPLICER = sig
+  include ANCHOR
 
-  let name = "relation-title-source"
-  let prefix = prefix_source
-  let suffix = suffix_source
+  type key
+  type value
 
-  let parse_keys (source : Source.t) : key list =
-    Parser.parse_rel_title_ids source
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_rel_title_source ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (id_rel : key) (rel_title : value) ->
-        let def =
-          match rel_title with
-          | Kinds.RelTitleSource.ExternS (nottyp, hints) ->
-              El.ExternRelD (id_rel $ no_region, nottyp, hints) $ no_region
-          | Kinds.RelTitleSource.DefinedS (nottyp, hints) ->
-              El.RelD (id_rel $ no_region, nottyp, hints) $ no_region
-        in
-        El.Print.string_of_def def)
-      keys values
-    |> String.concat "\n\n"
+  val init : El.spec -> Pl.spec -> unit
+  val splice : Source.t -> string
+  val warn_unused : unit -> unit
 end
 
-module RelTitleProse : SPLICE = struct
-  type key = Kinds.RelTitleId.t
-  type value = Kinds.RelTitleProse.t
+module Make
+    (K : KEY)
+    (V : VALUE)
+    (I : INIT with type key = K.t and type value = V.t)
+    (A : ANCHOR) : SPLICER with type key = K.t and type value = V.t = struct
+  include A
 
-  let name = "relation-title-prose"
-  let prefix = prefix_prose
-  let suffix = suffix_prose
+  type key = K.t
+  type value = V.t
 
-  let parse_keys (source : Source.t) : key list =
-    Parser.parse_rel_title_ids source
+  (* Store *)
 
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_rel_title_prose ctx) keys
+  module S = Make_store (K) (V) (I)
 
-  let render (keys : key list) (value : value list) : string =
-    List.map2
-      (fun (_id_rel : key) (rel_title_prose : value) ->
-        let rel_title =
-          match rel_title_prose with
-          | Kinds.RelTitleProse.ExternP rel_title
-          | Kinds.RelTitleProse.DefinedP rel_title ->
-              rel_title
-        in
-        Pl.Render.render_rel_title rel_title)
-      keys value
-    |> String.concat "\n\n"
-end
+  let sto = ref S.empty
 
-(* Rule group splicer *)
+  let init (spec_el : El.spec) (spec_pl : Pl.spec) : unit =
+    sto := S.init spec_el spec_pl
 
-module RuleGroupSource : SPLICE = struct
-  type key = Kinds.RuleGroupId.t
-  type value = Kinds.RuleGroupSource.t
+  (* Splicer functions *)
 
-  let name = "rulegroup-source"
-  let prefix = prefix_source
-  let suffix = suffix_source
+  let parse (source : Source.t) : K.t list = K.parse source
 
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_rulegroup_id source ]
+  let use (keys : K.t list) : unit =
+    List.iter (fun key -> ignore (S.use_opt !sto key)) keys
 
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_rulegroup_source ctx) keys
+  let render (keys : K.t list) : string =
+    let values = List.filter_map (S.find_opt !sto) keys in
+    V.render values
 
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun ((id_rel, id_rulegroup) : key) (rules : value) ->
-        let def =
-          El.RuleGroupD (id_rel $ no_region, id_rulegroup $ no_region, rules)
-          $ no_region
-        in
-        El.Print.string_of_def def)
-      keys values
-    |> String.concat "\n\n"
-end
+  let splice (source : Source.t) : string =
+    let keys = parse source in
+    use keys;
+    prefix ^ render keys ^ suffix
 
-module RuleGroupProse : SPLICE = struct
-  type key = Kinds.RuleGroupId.t
-  type value = Kinds.RuleGroupProse.t
-
-  let name = "rulegroup-prose"
-  let prefix = prefix_prose
-  let suffix = suffix_prose
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_rulegroup_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_rulegroup_prose ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun ((id_rel, _) : key) (rulegroup : value) ->
-        Pl.Render.render_rulegroup (id_rel $ no_region) rulegroup)
-      keys values
-    |> String.concat "\n\n"
-end
-
-(* Function title splicer *)
-
-module FuncTitleSource : SPLICE = struct
-  type key = Kinds.FuncTitleId.t
-  type value = Kinds.FuncTitleSource.t
-
-  let name = "func-title-source"
-  let prefix = prefix_source
-  let suffix = suffix_source
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_func_title_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_func_title_source ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (id_def : key) (func_title : value) ->
-        let def =
-          match func_title with
-          | Kinds.FuncTitleSource.ExternS (tparams, params, plaintyp, hints) ->
-              El.ExternDecD
-                (id_def $ no_region, tparams, params, plaintyp, hints)
-              $ no_region
-          | Kinds.FuncTitleSource.BuiltinS (tparams, params, plaintyp, hints) ->
-              El.BuiltinDecD
-                (id_def $ no_region, tparams, params, plaintyp, hints)
-              $ no_region
-          | Kinds.FuncTitleSource.DefinedS (tparams, params, plaintyp, hints) ->
-              El.FuncDecD (id_def $ no_region, tparams, params, plaintyp, hints)
-              $ no_region
-        in
-        El.Print.string_of_def def)
-      keys values
-    |> String.concat "\n\n"
-end
-
-module FuncTitleProse : SPLICE = struct
-  type key = Kinds.FuncTitleId.t
-  type value = Kinds.FuncTitleProse.t
-
-  let name = "func-title-prose"
-  let prefix = prefix_prose
-  let suffix = suffix_prose
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_func_title_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_func_title_prose ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (_id_def : key) (func_title : value) ->
-        let func_title =
-          match func_title with
-          | Kinds.FuncTitleProse.ExternP func_title
-          | Kinds.FuncTitleProse.BuiltinP func_title
-          | Kinds.FuncTitleProse.DefinedP func_title ->
-              func_title
-        in
-        Pl.Render.render_func_title func_title)
-      keys values
-    |> String.concat "\n\n"
-end
-
-(* Function splicer *)
-
-module FuncSource : SPLICE = struct
-  type key = Kinds.FuncId.t
-  type value = Kinds.FuncSource.t
-
-  let name = "func-source"
-  let prefix = prefix_source
-  let suffix = suffix_source
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_func_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_func_source ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (id_def : key) (funcs : value) ->
-        let defs =
-          List.map
-            (fun (tparams, args, exp, prems) ->
-              El.FuncDefD (id_def $ no_region, tparams, args, exp, prems)
-              $ no_region)
-            funcs
-        in
-        defs |> List.map El.Print.string_of_def |> String.concat "\n\n")
-      keys values
-    |> String.concat "\n\n"
-end
-
-module FuncProse : SPLICE = struct
-  type key = Kinds.FuncId.t
-  type value = Kinds.FuncProse.t
-
-  let name = "func-prose"
-  let prefix = prefix_prose
-  let suffix = suffix_prose
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_func_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_func_prose ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (_id_def : key) (func : value) ->
-        Pl.Render.render_defined_func_def func)
-      keys values
-    |> String.concat "\n\n"
-end
-
-(* Table splicer *)
-
-module TableSource : SPLICE = struct
-  type key = Kinds.TableId.t
-  type value = Kinds.TableSource.t
-
-  let name = "table-source"
-  let prefix = prefix_source
-  let suffix = suffix_source
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_table_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_table_source ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (id_def : key) (tablerows : value) ->
-        let def = El.TableDefD (id_def $ no_region, tablerows) $ no_region in
-        El.Print.string_of_def def)
-      keys values
-    |> String.concat "\n\n"
-end
-
-module TableProse : SPLICE = struct
-  type key = Kinds.TableId.t
-  type value = Kinds.TableProse.t
-
-  let name = "table-prose"
-  let prefix = prefix_table_prose
-  let suffix = suffix_table_prose
-
-  let parse_keys (source : Source.t) : key list =
-    [ Parser.parse_table_id source ]
-
-  let use_keys (ctx : Ctx.t) (keys : key list) : value list =
-    List.map (Ctx.use_table_prose ctx) keys
-
-  let render (keys : key list) (values : value list) : string =
-    List.map2
-      (fun (_id_def : key) (tablefunc : value) ->
-        Pl.Render.render_table_func_def tablefunc)
-      keys values
-    |> String.concat "\n\n"
+  let warn_unused () : unit =
+    let keys_unused = S.unused !sto in
+    let count_unused = List.length keys_unused in
+    let total = S.cardinal !sto in
+    let percentage =
+      if total = 0 then 0.0
+      else float_of_int count_unused /. float_of_int total *. 100.0
+    in
+    Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused name total
+      percentage
+    |> warn no_region;
+    keys_unused
+    |> List.iter (fun key ->
+           Format.asprintf "\t- unused splice key: %s" (K.to_string key)
+           |> warn no_region)
 end
