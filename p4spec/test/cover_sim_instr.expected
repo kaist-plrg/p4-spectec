@@ -1,4 +1,4 @@
-;; Instruction coverage: 9127/12849 (71.03%)
+;; Instruction coverage: 9263/12849 (72.09%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -132,17 +132,17 @@ def $opt_as_seq_<X>((X')?)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:107.1-108.66
 def $exists_((bool)*)
 
-- 1. Case analysis on (bool)*
++ 1. Case analysis on (bool)*
 
     1. Case (% matches pattern [])
 
--     1. Return false
++     1. Return false
 
     2. Case (% matches pattern _ :: _)
 
--     1. (Let b_h :: (b_t)* be (bool)*)
++     1. (Let b_h :: (b_t)* be (bool)*)
 
--     2. Return (b_h \/ $exists_((b_t)*))
++     2. Return (b_h \/ $exists_((b_t)*))
 
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:112.1-113.40
 def $forall_((bool)*)
@@ -5194,7 +5194,7 @@ syntax constructorTypeDefIR =
 ;; ../../../../spec-concrete/2-static-runtime/2.4.3-type-constructor-def-aux.watsup:5.1-7.40
 def $parameterListIR_of_constructorTypeDefIR((constructor< (_typeParameterIR)* , (_typeParameterIR)* >( (constructorParameterIR)* ): _typeIR))
 
-- 1. Return (constructorParameterIR)*
++ 1. Return (constructorParameterIR)*
 
 ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:5.16-5.27
 syntax bound = set<typeId>
@@ -6218,19 +6218,19 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     1. Case (% has type newTypeIR)
 
--     1. (Let (type typeId typeIR_a) be (typeIR as newTypeIR))
++     1. (Let (type typeId typeIR_a) be (typeIR as newTypeIR))
 
--     2. If ((typeIR' has type newTypeIR)), then
++     2. If ((typeIR' has type newTypeIR)), then
 
--       1. (Let (type typeId' typeIR_b) be (typeIR' as newTypeIR))
++       1. (Let (type typeId' typeIR_b) be (typeIR' as newTypeIR))
 
--       2. If ((typeId = typeId')), then
++       2. If ((typeId = typeId')), then
 
--         1. Group newTypeIR: ((type typeId typeIR_a) as typeIR) ~~ ((type typeId typeIR_b) as typeIR)
++         1. Group newTypeIR: ((type typeId typeIR_a) as typeIR) ~~ ((type typeId typeIR_b) as typeIR)
 
--           1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
++           1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
--             1. The relation holds
++             1. The relation holds
 
     2. Case (% has type listTypeIR)
 
@@ -10442,17 +10442,17 @@ def $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR')*, (argum
 
           2. Case (% matches pattern `%=%`)
 
--           1. (Let (nameIR = _typedExpressionIR) be argumentIR_h)
++           1. (Let (nameIR = _typedExpressionIR) be argumentIR_h)
 
--           2. (Let (parameterIR'')? be $find_map<id, parameterIR>(({ ((id : parameterIR))* }), nameIR))
++           2. (Let (parameterIR'')? be $find_map<id, parameterIR>(({ ((id : parameterIR))* }), nameIR))
 
--           3. If (((parameterIR'')? matches pattern (_))), then
++           3. If (((parameterIR'')? matches pattern (_))), then
 
--             1. (Let ?(parameterIR_match) be (parameterIR'')?)
++             1. (Let ?(parameterIR_match) be (parameterIR'')?)
 
--             2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
++             2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
 
--             3. Return (parameterIR_match :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
++             3. Return (parameterIR_match :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
 
           3. Case (% matches pattern `%=_`)
 
@@ -10505,9 +10505,9 @@ def $callTargetKey'(argumentIR)
 
     1. Case (% matches pattern `%=%`)
 
--     1. (Let (id_arg = _typedExpressionIR) be argumentIR)
++     1. (Let (id_arg = _typedExpressionIR) be argumentIR)
 
--     2. Return ?(id_arg)
++     2. Return ?(id_arg)
 
     2. Case (% matches pattern `%=_`)
 
@@ -10522,35 +10522,35 @@ def $callTargetKey'(argumentIR)
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:29.1-33.20
 def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
-- 1. (Let (nameIR ( (id_param)* )) be callTargetId)
++ 1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
-- 2. If ((nameIR = nameIR_f)), then
++ 2. If ((nameIR = nameIR_f)), then
 
--   1. If ((|(id_param)*| = |(id_arg)*|)), then
++   1. If ((|(id_param)*| = |(id_arg)*|)), then
 
--     1. (Let (parameterIR)* be $get_parameterListIR(V))
++     1. (Let (parameterIR)* be $get_parameterListIR(V))
 
--     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
++     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
 
--       1. Return $ite<callTargetMatch>($eq_set<id>(({ (id_param)* }), ({ (id_arg)* })), (match []), (nomatch))
++       1. Return $ite<callTargetMatch>($eq_set<id>(({ (id_param)* }), ({ (id_arg)* })), (match []), (nomatch))
 
--   2. If ((|(id_param)*| > |(id_arg)*|)), then
++   2. If ((|(id_param)*| > |(id_arg)*|)), then
 
--     1. (Let (parameterIR)* be $get_parameterListIR(V))
++     1. (Let (parameterIR)* be $get_parameterListIR(V))
 
--     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
++     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
 
--       1. (Let b_default_param be $default_of_parameterIR(parameterIR))*
++       1. (Let b_default_param be $default_of_parameterIR(parameterIR))*
 
--       2. (Let ({ (id_param_default)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
++       2. (Let ({ (id_param_default)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
 
--       3. If ((?(true) = $find_map<id, bool>(({ ((id_param : b_default_param))* }), id_param_default)))*, then
++       3. If ((?(true) = $find_map<id, bool>(({ ((id_param : b_default_param))* }), id_param_default)))*, then
 
 -         1. Return (match (id_param_default)*)
 
-- 3. Otherwise
++ 3. Otherwise
 
--   1. Return (nomatch)
++   1. Return (nomatch)
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:84.1-88.20
 def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR)
@@ -10582,27 +10582,27 @@ def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:130.1-134.30
 def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
-- 1. If ((set<pair<callableId, V>> = ({ [] }))), then
++ 1. If ((set<pair<callableId, V>> = ({ [] }))), then
 
--   1. Return []
++   1. Return []
 
-- 2. (Let ({ (pair<callableId, V>)* }) be set<pair<callableId, V>>)
++ 2. (Let ({ (pair<callableId, V>)* }) be set<pair<callableId, V>>)
 
-- 3. If (((pair<callableId, V>)* matches pattern _ :: _)), then
++ 3. If (((pair<callableId, V>)* matches pattern _ :: _)), then
 
--   1. (Let (callTargetId_h : V_h) :: ((callTargetId_t : V_t))* be (pair<callableId, V>)*)
++   1. (Let (callTargetId_h : V_h) :: ((callTargetId_t : V_t))* be (pair<callableId, V>)*)
 
--   2. If (($match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR) matches pattern `NOMATCH`)), then
++   2. If (($match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR) matches pattern `NOMATCH`)), then
 
--     1. Return $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
++     1. Return $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
--   3. (Let callTargetMatch be $match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR))
++   3. (Let callTargetMatch be $match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR))
 
--   4. If ((callTargetMatch matches pattern `MATCH%`)), then
++   4. If ((callTargetMatch matches pattern `MATCH%`)), then
 
--     1. (Let (match (id_default)*) be callTargetMatch)
++     1. (Let (match (id_default)*) be callTargetMatch)
 
--     2. Return (callTargetId_h, V_h, (id_default)*) :: $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
++     2. Return (callTargetId_h, V_h, (id_default)*) :: $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:173.1-177.30
 def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR)
@@ -10638,19 +10638,19 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 +   2. If (((id)? matches pattern (_)))*, then
 
--     1. (Let ?(id_arg_inner) be (id)?)*
++     1. (Let ?(id_arg_inner) be (id)?)*
 
--     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
++     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
 
--       1. Return ?()
++       1. Return ?()
 
--     3. (Let ((callableId, V, nameIR*))* be $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))
++     3. (Let ((callableId, V, nameIR*))* be $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))
 
--     4. If ((((callableId, V, nameIR*))* matches pattern [ _/1 ])), then
++     4. If ((((callableId, V, nameIR*))* matches pattern [ _/1 ])), then
 
--       1. (Let [(callableId_found, V_found, (id_default)*)] be ((callableId, V, nameIR*))*)
++       1. (Let [(callableId_found, V_found, (id_default)*)] be ((callableId, V, nameIR*))*)
 
--       2. Return ?((callableId_found, V_found, (id_default)*))
++       2. Return ?((callableId_found, V_found, (id_default)*))
 
 + 2. If (((id_arg)? = ?()))*, then
 
@@ -10722,7 +10722,7 @@ def $join_flow(flow, flow')
 
 +   1. If ((flow' matches pattern `RET`)), then
 
--     1. Return (ret)
++     1. Return (ret)
 
 + 2. Otherwise
 
@@ -11682,13 +11682,13 @@ def $update_mode(TBLC, text, typeIR')
 
         3. Case (% has type newTypeIR)
 
--         1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
++         1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
 
--         2. Return $update_mode(TBLC, "lpm", typeIR)
++         2. Return $update_mode(TBLC, "lpm", typeIR)
 
--     2. If ((TBLC.mode matches pattern `PRI`)), then
++     2. If ((TBLC.mode matches pattern `PRI`)), then
 
--       1. Return TBLC[mode = (prilpm)]
++       1. Return TBLC[mode = (prilpm)]
 
     2. Case (% = "range")
 
@@ -12553,17 +12553,17 @@ tbl def $nestable_typedef(typeIR'')
 
 +     1. If ((typeIR'' has type typedefTypeIR)), then
 
--       1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
++       1. (Let (typedef _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
--       2. Return $nestable_typedef(typeIR)
++       2. Return $nestable_typedef(typeIR)
 
  Row : (newTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
++       1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : (dataTypeIR as typeIR) -> true
 
@@ -12663,11 +12663,11 @@ tbl def $nestable_new(typeIR'')
 
  Row : (newTypeIR as typeIR) -> true
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
++       1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : _typeIR -> false
 
@@ -12998,9 +12998,9 @@ tbl def $nestable_header(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
++       1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : ((enum _typeId < _typeIR >{ (_valueFieldIR)* }) as typeIR) -> true
 
@@ -13034,9 +13034,9 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +     1. If ((typeIR'' has type boolTypeIR)), then
 
--       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
++       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : ((int< _nat >) as typeIR) -> true
 
@@ -13046,9 +13046,9 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
++         1. (Let (int< _nat >) be integerTypeIR)
 
--         2. Return true
++         2. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13090,13 +13090,13 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
++       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
--       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
++       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
--         1. (Let (enum _typeId < _typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
++         1. (Let (enum _typeId < _typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
 
--         2. Return true
++         2. Return true
 
  Row : ((struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field _nameIR ;))* }) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*)
 
@@ -13324,11 +13324,11 @@ tbl def $nestable_set(typeIR'')
 
  Row : (newTypeIR as typeIR) -> true
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
++       1. (Let newTypeIR be (typeIR'' as newTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : ((tuple< (typeIR)* >) as typeIR) -> $forall_(($nestable_tuple_in_set(typeIR))*)
 
@@ -15101,19 +15101,19 @@ rel Sub_expl_unroll_neq: typeIR <: typeIR'
 
 +   1. If ((typeIR has type newTypeIR)), then
 
--     1. (Let (type _typeId typeIR_a) be (typeIR as newTypeIR))
++     1. (Let (type _typeId typeIR_a) be (typeIR as newTypeIR))
 
--     2. If (Sub_impl: typeIR_a <: typeIR') holds, then
++     2. If (Sub_impl: typeIR_a <: typeIR') holds, then
 
 -       1. The relation holds
 
 +   2. If ((typeIR' has type newTypeIR)), then
 
--     1. (Let (type _typeId typeIR_b) be (typeIR' as newTypeIR))
++     1. (Let (type _typeId typeIR_b) be (typeIR' as newTypeIR))
 
--     2. If (Sub_impl: typeIR <: typeIR_b) holds, then
++     2. If (Sub_impl: typeIR <: typeIR_b) holds, then
 
--       1. The relation holds
++       1. The relation holds
 
 + 3. Group enumTypeIR-serializable: typeIR <: typeIR'
 
@@ -17178,15 +17178,15 @@ rel Argument_ok: p TC |- argument : %
 
     1. Case (% matches pattern `%=%`)
 
--     1. (Let (name = expression) be argument)
++     1. (Let (name = expression) be argument)
 
--     2. Group name-expression: p TC |- (name = expression) : %
++     2. Group name-expression: p TC |- (name = expression) : %
 
--       1. (Let nameIR be $name(name))
++       1. (Let nameIR be $name(name))
 
--       2. (Expr_ok: p TC |- expression : typedExpressionIR)
++       2. (Expr_ok: p TC |- expression : typedExpressionIR)
 
--       3. Result in: % % |- % : (nameIR = typedExpressionIR)
++       3. Result in: % % |- % : (nameIR = typedExpressionIR)
 
     2. Case (% matches pattern `%=_`)
 
@@ -19762,35 +19762,35 @@ rel TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
 +       3. If (("priority_delta" = $tableCustomName(tableCustomName))), then
 
--         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
++         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
--         2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
++         2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
 
--         3. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
++         3. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
 
--           1. If ($is_arbitraryIntTypeIR($unroll_typeIR(typeIR))), then
++           1. If ($is_arbitraryIntTypeIR($unroll_typeIR(typeIR))), then
 
--             1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
++             1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
 
--             2. If ((value has type integerValue)), then
++             2. If ((value has type integerValue)), then
 
--               1. (Let integerValue be (value as integerValue))
++               1. (Let integerValue be (value as integerValue))
 
--               2. (Let int be $int_of_integerValue(integerValue))
++               2. (Let int be $int_of_integerValue(integerValue))
 
--               3. If ((int has type nat)), then
++               3. If ((int has type nat)), then
 
--                 1. (Let n_delta be (int as nat))
++                 1. (Let n_delta be (int as nat))
 
--                 2. If ((n_delta > 0)), then
++                 2. If ((n_delta > 0)), then
 
--                   1. (Let TBLC_1 be TBLC_0[priorities.delta = n_delta])
++                   1. (Let TBLC_1 be TBLC_0[priorities.delta = n_delta])
 
--                   2. (Let constOptIR be $flatten_constOpt(constOpt))
++                   2. (Let constOptIR be $flatten_constOpt(constOpt))
 
--                   3. (Let tablePropertyIR be ((annotationList constOptIR custom_const "priority_delta" (= ((d (n_delta as int)) as value)) ;) as tablePropertyIR))
++                   3. (Let tablePropertyIR be ((annotationList constOptIR custom_const "priority_delta" (= ((d (n_delta as int)) as value)) ;) as tablePropertyIR))
 
--                   4. Result in: % % |- % : TBLC_1 tablePropertyIR
++                   4. Result in: % % |- % : TBLC_1 tablePropertyIR
 
 -           2. If ($is_fixedIntTypeIR($unroll_typeIR(typeIR))), then
 
@@ -21131,13 +21131,13 @@ rel Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
 
     1. Case (% matches pattern `%=%`)
 
--     1. (Let (nameIR = typedExpressionIR) be argumentIR)
++     1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--     2. Group nameIR-typedExpression: p TC actctxt |- parameterIR @ (nameIR = typedExpressionIR) : %
++     2. Group nameIR-typedExpression: p TC actctxt |- parameterIR @ (nameIR = typedExpressionIR) : %
 
--       1. (Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast)
++       1. (Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast)
 
--       2. Result in: % % % |- % @ % : (nameIR = typedExpressionIR_cast)
++       2. Result in: % % % |- % @ % : (nameIR = typedExpressionIR_cast)
 
     2. Case (% matches pattern `%=_`)
 
@@ -24477,11 +24477,11 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
  Row : ((type _typeId typeIR) as typeIR) -> $compat_table_exact_optional_key(typeIR)
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
++       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
 
--       2. Return $compat_table_exact_optional_key(typeIR)
++       2. Return $compat_table_exact_optional_key(typeIR)
 
  Row : ((enum _typeId { (_nameIR)* }) as typeIR) -> true
 
@@ -24559,11 +24559,11 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
  Row : ((type _typeId typeIR) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
++       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
 
--       2. Return $compat_table_lpm_ternary_range_key(typeIR)
++       2. Return $compat_table_lpm_ternary_range_key(typeIR)
 
  Row : ((enum _typeId < typeIR >{ (_valueFieldIR)* }) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
 
@@ -24806,9 +24806,9 @@ def $has_table_apply_expr'(expressionIR)
 
     13. Case (% has type callExpressionIR)
 
--     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
++     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
--     2. Case analysis on callExpressionIR
++     2. Case analysis on callExpressionIR
 
         1. Case (% matches pattern `%(%)`)
 
@@ -24818,13 +24818,13 @@ def $has_table_apply_expr'(expressionIR)
 
         2. Case (% matches pattern `%<%>(%)`)
 
--         1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) be callExpressionIR)
++         1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) be callExpressionIR)
 
--         2. If ((callableTargetIR has type referenceExpressionIR)), then
++         2. If ((callableTargetIR has type referenceExpressionIR)), then
 
--           1. (Let referenceExpressionIR be (callableTargetIR as referenceExpressionIR))
++           1. (Let referenceExpressionIR be (callableTargetIR as referenceExpressionIR))
 
--           2. Return $exists_(($has_table_apply_arg(argumentIR))*)
++           2. Return $exists_(($has_table_apply_arg(argumentIR))*)
 
 -         3. Case analysis on callableTargetIR
 
@@ -25315,13 +25315,13 @@ def $infer'(constraint, parameterIR, argumentIR)
 
     1. Case (% matches pattern `%=%`)
 
--     1. (Let (nameIR = typedExpressionIR) be argumentIR)
++     1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--     2. (Let (_annotationList _direction typeIR_param _id _constantInitializerOptIR) be parameterIR)
++     2. (Let (_annotationList _direction typeIR_param _id _constantInitializerOptIR) be parameterIR)
 
--     3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
++     3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
 
--     4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
++     4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
     2. Case (% matches pattern `%=_`)
 
@@ -26195,7 +26195,7 @@ syntax constructorDef =
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.3.2-constructor-def-aux.watsup:5.1-6.17
 def $parameterListIR_of_constructorDef(constructorDef)
 
-- 1. Case analysis on constructorDef
++ 1. Case analysis on constructorDef
 
     1. Case (% has type externObjectConstructorDef)
 
@@ -26217,9 +26217,9 @@ def $parameterListIR_of_constructorDef(constructorDef)
 
     4. Case (% has type packageObjectConstructorDef)
 
--     1. (Let (package< _typeParameterListIR >( constructorParameterListIR )) be (constructorDef as packageObjectConstructorDef))
++     1. (Let (package< _typeParameterListIR >( constructorParameterListIR )) be (constructorDef as packageObjectConstructorDef))
 
--     2. Return constructorParameterListIR
++     2. Return constructorParameterListIR
 
     5. Case (% has type tableObjectConstructorDef)
 
@@ -26363,9 +26363,9 @@ def $name_annotation_of_tableKeyIR'(annotation)
 
 +         2. Return ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
 
-- 2. Otherwise
++ 2. Otherwise
 
--   1. Return ?()
++   1. Return ?()
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:47.1-47.68
 def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationList ;))
@@ -26590,7 +26590,7 @@ def $empty_store
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:18.1-18.53
 def $find_store_qualified(store, objectId)
 
-- 1. Return $find_map<objectId, object>(store, objectId)
++ 1. Return $find_map<objectId, object>(store, objectId)
 
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:19.1-19.49
 def $find_store_unqualified(({ ((objectId : object))* }), id)
@@ -26642,11 +26642,11 @@ def $find_store_externState(STO, objectId)
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:48.1-48.61
 def $update_store_qualified(STO_0, objectId, object)
 
-- 1. If ((?() =/= $find_store_qualified(STO_0, objectId))), then
++ 1. If ((?() =/= $find_store_qualified(STO_0, objectId))), then
 
--   1. (Let STO_1 be $add_map<objectId, object>(STO_0, objectId, object))
++   1. (Let STO_1 be $add_map<objectId, object>(STO_0, objectId, object))
 
--   2. Return STO_1
++   2. Return STO_1
 
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:49.1-49.57
 def $update_store_unqualified(STO_0, id, object)
@@ -27594,15 +27594,15 @@ rel Argument_inst: p IC STO_0 |- argumentIR : % %
 
 +     2. Result in: % % % |- % : STO_1 value
 
-- 2. If ((argumentIR matches pattern `%=%`)), then
++ 2. If ((argumentIR matches pattern `%=%`)), then
 
--   1. (Let (nameIR = typedExpressionIR) be argumentIR)
++   1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--   2. Group nameIR-typedExpressionIR: p IC STO_0 |- (nameIR = typedExpressionIR) : % %
++   2. Group nameIR-typedExpressionIR: p IC STO_0 |- (nameIR = typedExpressionIR) : % %
 
--     1. (Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value)
++     1. (Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value)
 
--     2. Result in: % % % |- % : STO_1 value
++     2. Result in: % % % |- % : STO_1 value
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:25.1-32.55
 rel Stmt_inst: p IC STO |- statementIR' : % % %
