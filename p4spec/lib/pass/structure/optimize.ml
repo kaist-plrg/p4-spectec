@@ -17,8 +17,8 @@ open Util.Source
 
    Notice the stop condition when we meet a shadowing let binding *)
 
-let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
-    =
+let rec rename_let_alias (renamer : Renamer.t) (instrs : instr list) :
+    instr list =
   match instrs with
   | [] -> []
   | instr_h :: instrs_t -> (
@@ -26,51 +26,50 @@ let rec rename_let_alias (rename : Renamer.t) (instrs : instr list) : instr list
       | LetI (exp_l, _, _)
         when not
                (IdSet.is_empty
-                  (IdSet.inter
-                     (Renamer.Rename.dom rename)
-                     (Il.Free.free_exp exp_l))) ->
+                  (IdSet.inter (Renamer.dom renamer) (Il.Free.free_exp exp_l)))
+        ->
           instr_h :: instrs_t
       | IfI (exp_cond, iterexps, instrs_then) ->
-          let exp_cond = Renamer.rename_exp rename exp_cond in
-          let iterexps = Renamer.rename_iterexps rename iterexps in
-          let instrs_then = rename_let_alias rename instrs_then in
+          let exp_cond = Renamer.rename_exp renamer exp_cond in
+          let iterexps = Renamer.rename_iterexps renamer iterexps in
+          let instrs_then = rename_let_alias renamer instrs_then in
           let instr_h = IfI (exp_cond, iterexps, instrs_then) $ instr_h.at in
-          let instrs_t = rename_let_alias rename instrs_t in
+          let instrs_t = rename_let_alias renamer instrs_t in
           instr_h :: instrs_t
       | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
-          let exps = List.map (Renamer.rename_exp rename) exps in
-          let iterexps = Renamer.rename_iterexps rename iterexps in
-          let instrs_hold = rename_let_alias rename instrs_hold in
-          let instrs_nothold = rename_let_alias rename instrs_nothold in
+          let exps = Renamer.rename_exps renamer exps in
+          let iterexps = Renamer.rename_iterexps renamer iterexps in
+          let instrs_hold = rename_let_alias renamer instrs_hold in
+          let instrs_nothold = rename_let_alias renamer instrs_nothold in
           let instr_h =
             HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold)
             $ instr_h.at
           in
-          let instrs_t = rename_let_alias rename instrs_t in
+          let instrs_t = rename_let_alias renamer instrs_t in
           instr_h :: instrs_t
       | CaseI (exp, cases, total) ->
-          let exp = Renamer.rename_exp rename exp in
+          let exp = Renamer.rename_exp renamer exp in
           let cases =
             let guards, instrs = List.split cases in
-            let guards = List.map (Renamer.rename_guard rename) guards in
-            let instrs = List.map (rename_let_alias rename) instrs in
+            let guards = List.map (Renamer.rename_guard renamer) guards in
+            let instrs = List.map (rename_let_alias renamer) instrs in
             List.combine guards instrs
           in
           let instr_h = CaseI (exp, cases, total) $ instr_h.at in
-          let instrs_t = rename_let_alias rename instrs_t in
+          let instrs_t = rename_let_alias renamer instrs_t in
           instr_h :: instrs_t
       | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-          let instrs_group = rename_let_alias rename instrs_group in
-          let exps_group = List.map (Renamer.rename_exp rename) exps_group in
+          let instrs_group = rename_let_alias renamer instrs_group in
+          let exps_group = Renamer.rename_exps renamer exps_group in
           let instr_h =
             GroupI (id_group, rel_signature, exps_group, instrs_group)
             $ instr_h.at
           in
-          let instrs_t = rename_let_alias rename instrs_t in
+          let instrs_t = rename_let_alias renamer instrs_t in
           instr_h :: instrs_t
       | _ ->
-          let instr_h = Renamer.rename_instr rename instr_h in
-          let instrs_t = rename_let_alias rename instrs_t in
+          let instr_h = Renamer.rename_instr renamer instr_h in
+          let instrs_t = rename_let_alias renamer instrs_t in
           instr_h :: instrs_t)
 
 let rec remove_let_alias (instrs : instr list) : instr list =
@@ -79,8 +78,8 @@ let rec remove_let_alias (instrs : instr list) : instr list =
   | instr_h :: instrs_t -> (
       match instr_h.it with
       | LetI ({ it = VarE id_l; _ }, { it = VarE id_r; _ }, _) ->
-          let rename = Renamer.Rename.singleton id_l id_r in
-          instrs_t |> rename_let_alias rename |> remove_let_alias
+          let renamer = Renamer.singleton id_l id_r in
+          instrs_t |> rename_let_alias renamer |> remove_let_alias
       | IfI (exp_cond, iterexps, instrs_then) ->
           let instrs_then = remove_let_alias instrs_then in
           let instr_h = IfI (exp_cond, iterexps, instrs_then) $ instr_h.at in
@@ -259,11 +258,11 @@ module Bind = struct
     let expunit_r = init_expunit exp_r iterexps in
     LetBind (expunit_l, expunit_r)
 
-  let init_rule_bind (ienv : IHEnv.t) (id : id) (notexp : notexp)
+  let init_rule_bind (ihenv : IHEnv.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) : t =
     let exps_l, exps_r =
       let _, exps = notexp in
-      let inputs = IHEnv.find id ienv in
+      let inputs = IHEnv.find id ihenv in
       Hints.Input.split_without_idx inputs exps
     in
     let expunits_l =
@@ -279,67 +278,67 @@ module Bind = struct
      and the left-hand sides are equal up to renaming,
      then we can collapse them into a single binding *)
 
-  let rec collapse_exp (rename : Renamer.t) (exp : exp) (exp_target : exp) :
+  let rec collapse_exp (renamer : Renamer.t) (exp : exp) (exp_target : exp) :
       Renamer.t option =
     match (exp.it, exp_target.it) with
     | VarE id, VarE id_target ->
-        let rename =
-          if Sl.Eq.eq_id id id_target then rename
-          else Renamer.Rename.add id_target id rename
+        let renamer =
+          if Sl.Eq.eq_id id id_target then renamer
+          else Renamer.add id_target id renamer
         in
-        Some rename
-    | TupleE exps, TupleE exps_target -> collapse_exps rename exps exps_target
+        Some renamer
+    | TupleE exps, TupleE exps_target -> collapse_exps renamer exps exps_target
     | CaseE (mixop, exps), CaseE (mixop_target, exps_target)
       when Sl.Eq.eq_mixop mixop mixop_target ->
-        collapse_exps rename exps exps_target
+        collapse_exps renamer exps exps_target
     | StrE expfields, StrE expfields_target ->
         let atoms, exps = List.split expfields in
         let atoms_target, exps_target = List.split expfields_target in
         if Sl.Eq.eq_atoms atoms atoms_target then
-          collapse_exps rename exps exps_target
+          collapse_exps renamer exps exps_target
         else None
     | IterE (exp, iterexp), IterE (exp_target, iterexp_target) -> (
-        match collapse_exp rename exp exp_target with
-        | Some rename ->
+        match collapse_exp renamer exp exp_target with
+        | Some renamer ->
             let iterexp_target_renamed =
-              Renamer.rename_iterexp rename iterexp_target
+              Renamer.rename_iterexp renamer iterexp_target
             in
-            if Sl.Eq.eq_iterexp iterexp iterexp_target_renamed then Some rename
+            if Sl.Eq.eq_iterexp iterexp iterexp_target_renamed then Some renamer
             else None
         | None -> None)
     | _ -> None
 
-  and collapse_exps (rename : Renamer.t) (exps : exp list)
+  and collapse_exps (renamer : Renamer.t) (exps : exp list)
       (exps_target : exp list) : Renamer.t option =
     match (exps, exps_target) with
-    | [], [] -> Some rename
+    | [], [] -> Some renamer
     | exp_h :: exps_t, exp_target_h :: exps_target_t -> (
-        match collapse_exp rename exp_h exp_target_h with
-        | Some rename -> collapse_exps rename exps_t exps_target_t
+        match collapse_exp renamer exp_h exp_target_h with
+        | Some renamer -> collapse_exps renamer exps_t exps_target_t
         | None -> None)
     | _ -> None
 
-  let collapse_expunit (rename : Renamer.t) (expunit : expunit)
+  let collapse_expunit (renamer : Renamer.t) (expunit : expunit)
       (expunit_target : expunit) : Renamer.t option =
     let exp, iterexps = expunit in
     let exp_target, iterexps_target = expunit_target in
-    let rename_opt = collapse_exp rename exp exp_target in
-    match rename_opt with
-    | Some rename ->
+    let renamer_opt = collapse_exp renamer exp exp_target in
+    match renamer_opt with
+    | Some renamer ->
         let iterexps_target_renamed =
-          Renamer.rename_iterexps rename iterexps_target
+          Renamer.rename_iterexps renamer iterexps_target
         in
-        if Sl.Eq.eq_iterexps iterexps iterexps_target_renamed then Some rename
+        if Sl.Eq.eq_iterexps iterexps iterexps_target_renamed then Some renamer
         else None
     | None -> None
 
-  let rec collapse_expunits (rename : Renamer.t) (expunits : expunit list)
+  let rec collapse_expunits (renamer : Renamer.t) (expunits : expunit list)
       (expunits_target : expunit list) : Renamer.t option =
     match (expunits, expunits_target) with
-    | [], [] -> Some Renamer.Rename.empty
+    | [], [] -> Some Renamer.empty
     | expunit_h :: expunits_t, expunit_target_h :: expunits_target_t -> (
-        match collapse_expunit rename expunit_h expunit_target_h with
-        | Some rename -> collapse_expunits rename expunits_t expunits_target_t
+        match collapse_expunit renamer expunit_h expunit_target_h with
+        | Some renamer -> collapse_expunits renamer expunits_t expunits_target_t
         | None -> None)
     | _ -> None
 
@@ -348,12 +347,12 @@ module Bind = struct
     | ( LetBind (expunit_l, expunit_r),
         LetBind (expunit_target_l, expunit_target_r) )
       when eq_expunit expunit_r expunit_target_r ->
-        collapse_expunit Renamer.Rename.empty expunit_l expunit_target_l
+        collapse_expunit Renamer.empty expunit_l expunit_target_l
     | ( RuleBind (id, expunits_l, expunits_r),
         RuleBind (id_target, expunits_target_l, expunits_target_r) )
       when Sl.Eq.eq_id id id_target && eq_expunits expunits_r expunits_target_r
       ->
-        collapse_expunits Renamer.Rename.empty expunits_l expunits_target_l
+        collapse_expunits Renamer.empty expunits_l expunits_target_l
     | _ -> None
 end
 
@@ -388,22 +387,22 @@ let rec remove_redundant_bindings' (ienv : IHEnv.t) (bind : Bind.t)
       instr_h :: instrs_t
   | ({ it = LetI (exp_l, exp_r, iterexps); _ } as instr_h) :: instrs_t -> (
       let bind_target = Bind.init_let_bind exp_l exp_r iterexps in
-      let rename_opt = Bind.collapse_bind bind bind_target in
-      match rename_opt with
-      | Some rename ->
+      let renamer_opt = Bind.collapse_bind bind bind_target in
+      match renamer_opt with
+      | Some renamer ->
           instrs_t
-          |> Renamer.rename_instrs rename
+          |> Renamer.rename_instrs renamer
           |> remove_redundant_bindings' ienv bind
       | None ->
           let instrs_t = remove_redundant_bindings' ienv bind instrs_t in
           instr_h :: instrs_t)
   | ({ it = RuleI (id, notexp, iterexps); _ } as instr_h) :: instrs_t -> (
       let bind_target = Bind.init_rule_bind ienv id notexp iterexps in
-      let rename_opt = Bind.collapse_bind bind bind_target in
-      match rename_opt with
-      | Some rename ->
+      let renamer_opt = Bind.collapse_bind bind bind_target in
+      match renamer_opt with
+      | Some renamer ->
           instrs_t
-          |> Renamer.rename_instrs rename
+          |> Renamer.rename_instrs renamer
           |> remove_redundant_bindings' ienv bind
       | None ->
           let instrs_t = remove_redundant_bindings' ienv bind instrs_t in

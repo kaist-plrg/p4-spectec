@@ -38,9 +38,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -298,9 +298,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -330,9 +330,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -756,9 +756,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -1016,9 +1016,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -1048,9 +1048,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -6352,7 +6352,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -6386,7 +6386,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -7620,7 +7620,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -7628,7 +7628,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -7694,7 +7694,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -8094,7 +8094,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -8108,13 +8108,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -8500,7 +8500,7 @@ relation Program_ok failed
 
   2. Case (% matches pattern `{%%}`)
 
-    1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+    1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
     2. Case analysis on dataElementExpression
 
@@ -8508,7 +8508,7 @@ relation Program_ok failed
 
         1. (Let expressionList be (dataElementExpression as expressionList))
 
-        2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+        2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
           1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -8574,7 +8574,7 @@ relation Program_ok failed
 
         1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-        2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+        2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
           1. Case analysis on recordElementExpression
 
@@ -8672,7 +8672,7 @@ relation Program_ok failed
 
     1. (Let expressionList be (dataElementExpression as expressionList))
 
-    2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+    2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
       1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -8738,7 +8738,7 @@ relation Program_ok failed
 
     1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-    2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+    2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
       1. Case analysis on recordElementExpression
 
@@ -8830,7 +8830,7 @@ relation Program_ok failed
 
           12. Result in: % % |- % : (((record{ ((nameIR_f = typedExpressionIR_f))* ,...}) as expressionIR) # expressionNoteIR) failed
                 └── ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:671.18-671.40
-                    0. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+                    0. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
   1. Case analysis on recordElementExpression
 
@@ -15464,7 +15464,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -15472,7 +15472,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -15538,7 +15538,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -15938,7 +15938,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -15952,13 +15952,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -20391,7 +20391,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -20425,7 +20425,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -24601,7 +24601,7 @@ relation Program_ok failed
             └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.29-103.31
                 0. If ((direction matches pattern `IN`)), then
 
-  1. Group in: p TC actctxt |- (_annotationList (in) typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -24615,7 +24615,7 @@ relation Program_ok failed
 
 0. Else Phantom#1520 failed
                 └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:9.29-9.32
-                    0. Group in: p TC actctxt |- (_annotationList (in) typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                    0. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -24751,7 +24751,7 @@ relation Program_ok failed
             └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.29-103.31
                 0. If ((direction matches pattern `IN`)), then
 
-  1. Group in: p TC actctxt |- (_annotationList (in) typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -24765,7 +24765,7 @@ relation Program_ok failed
 
 0. Else Phantom#1520 failed
                 └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:9.29-9.32
-                    0. Group in: p TC actctxt |- (_annotationList (in) typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                    0. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -25391,7 +25391,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -25399,7 +25399,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -25465,7 +25465,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -25865,7 +25865,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -25879,13 +25879,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -26937,7 +26937,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -26945,7 +26945,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -27011,7 +27011,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -27411,7 +27411,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -27425,13 +27425,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -29227,7 +29227,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -29235,7 +29235,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -29301,7 +29301,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -29701,7 +29701,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -29715,13 +29715,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -31242,7 +31242,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -31250,7 +31250,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -31316,7 +31316,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -31716,7 +31716,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -31730,13 +31730,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -36189,7 +36189,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -36197,7 +36197,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -36263,7 +36263,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -36663,7 +36663,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -36677,13 +36677,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -37343,7 +37343,7 @@ relation Program_ok failed
 
         4. Case (% has type tableMetadataStructTypeIR)
 
-          1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+          1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
           2. (Let nameIR be $name(member))
 
@@ -37357,13 +37357,13 @@ relation Program_ok failed
 
             2. Case (% = "miss")
 
-              1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+              1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
               2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
             3. Case (% = "action_run")
 
-              1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+              1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
               2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -37591,7 +37591,7 @@ relation Program_ok failed
 
     4. Case (% has type tableMetadataStructTypeIR)
 
-      1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+      1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
       2. (Let nameIR be $name(member))
 
@@ -37605,13 +37605,13 @@ relation Program_ok failed
 
         2. Case (% = "miss")
 
-          1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+          1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
           2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
         3. Case (% = "action_run")
 
-          1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+          1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
           2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -40264,7 +40264,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -40272,7 +40272,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -40338,7 +40338,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -40738,7 +40738,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -40752,13 +40752,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -43716,9 +43716,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -43976,9 +43976,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -44008,9 +44008,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -44434,9 +44434,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -44694,9 +44694,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -44726,9 +44726,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -51178,7 +51178,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -51186,7 +51186,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -51252,7 +51252,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -51652,7 +51652,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -51666,13 +51666,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -56768,9 +56768,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -57028,9 +57028,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -57060,9 +57060,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -57486,9 +57486,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -57746,9 +57746,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -57778,9 +57778,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -58428,9 +58428,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -58688,9 +58688,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -58720,9 +58720,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -59146,9 +59146,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -59406,9 +59406,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -59438,9 +59438,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -60088,9 +60088,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -60348,9 +60348,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -60380,9 +60380,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -60806,9 +60806,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -61066,9 +61066,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -61098,9 +61098,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -65848,7 +65848,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -65882,7 +65882,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -67502,7 +67502,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -67510,7 +67510,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -67576,7 +67576,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -67976,7 +67976,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -67990,13 +67990,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -68864,7 +68864,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -68898,7 +68898,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -71435,9 +71435,9 @@ relation Decl_ok failed
 
     2. Case (% has type matchKindDeclaration)
 
-      1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+      1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+      2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -71695,9 +71695,9 @@ relation Decl_ok failed
 
         1. Case (% matches pattern `%ENUM%{%%}`)
 
-          1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
             1. (Let nameIR be $name(name))
 
@@ -71727,9 +71727,9 @@ relation Decl_ok failed
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
-          1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+          1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+          2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -72153,9 +72153,9 @@ relation Decl_ok failed
 
   2. Case (% has type matchKindDeclaration)
 
-    1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
+    1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
+    2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -72413,9 +72413,9 @@ relation Decl_ok failed
 
       1. Case (% matches pattern `%ENUM%{%%}`)
 
-        1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
           1. (Let nameIR be $name(name))
 
@@ -72445,9 +72445,9 @@ relation Decl_ok failed
 
       2. Case (% matches pattern `%ENUM%%{%%}`)
 
-        1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
+        1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
+        2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
           1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -74633,7 +74633,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -74667,7 +74667,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -75945,7 +75945,7 @@ relation Program_ok failed
         └── ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.26
             0. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -75979,7 +75979,7 @@ relation Program_ok failed
 
 0. Else Phantom#1529 failed
             └── ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:72.34-72.40
-                0. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+                0. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
   1. Case analysis on actctxt
 
@@ -76897,7 +76897,7 @@ relation Program_ok failed
 
       2. Case (% matches pattern `{%%}`)
 
-        1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
+        1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
         2. Case analysis on dataElementExpression
 
@@ -76905,7 +76905,7 @@ relation Program_ok failed
 
             1. (Let expressionList be (dataElementExpression as expressionList))
 
-            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -76971,7 +76971,7 @@ relation Program_ok failed
 
             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
+            2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
               1. Case analysis on recordElementExpression
 
@@ -77371,7 +77371,7 @@ relation Program_ok failed
 
             4. Case (% has type tableMetadataStructTypeIR)
 
-              1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
+              1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
               2. (Let nameIR be $name(member))
 
@@ -77385,13 +77385,13 @@ relation Program_ok failed
 
                 2. Case (% = "miss")
 
-                  1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                 3. Case (% = "action_run")
 
-                  1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
+                  1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -80564,7 +80564,7 @@ Error on run: ../../../../p4c/testdata/p4_16_errors/stack3.p4
 relation Program_ok failed
 │ ··· omitting 77 traces ···
 ../../../../spec-concrete/5-typing/5.06.2-typing-expression-eval.watsup:69.25-69.44
-0. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) ~> %
+0. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # expressionNoteIR) ~> %
 
   1. If (~binop' is in [(&&), (||)]), then
 
@@ -82583,7 +82583,7 @@ relation Program_ok failed
 ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:23.9-23.10
 0. If ((integerLiteral matches pattern `%W%`)), then
 
-  1. (Let (nat w _int) be integerLiteral)
+  1. (Let (nat w int) be integerLiteral)
 
   2. If ((nat = 0)), then
 
@@ -82591,9 +82591,9 @@ relation Program_ok failed
 
   2. Else Phantom#571
 
-  3. If ((_int has type nat)), then
+  3. If ((int has type nat)), then
 
-    1. (Let n be (_int as nat))
+    1. (Let n be (int as nat))
 
     2. If ((nat > 0)), then
 
@@ -82651,9 +82651,9 @@ relation Program_ok failed
 
 0. Else Phantom#581 failed
 └── ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:192.33-192.34
-    0. If ((_int has type nat)), then
+    0. If ((int has type nat)), then
 
-  1. (Let n be (_int as nat))
+  1. (Let n be (int as nat))
 
   2. If ((nat > 0)), then
 
@@ -82801,7 +82801,7 @@ relation Program_ok failed
 ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:23.9-23.10
 0. If ((integerLiteral matches pattern `%W%`)), then
 
-  1. (Let (nat w _int) be integerLiteral)
+  1. (Let (nat w int) be integerLiteral)
 
   2. If ((nat = 0)), then
 
@@ -82809,9 +82809,9 @@ relation Program_ok failed
 
   2. Else Phantom#571
 
-  3. If ((_int has type nat)), then
+  3. If ((int has type nat)), then
 
-    1. (Let n be (_int as nat))
+    1. (Let n be (int as nat))
 
     2. If ((nat > 0)), then
 
@@ -82869,9 +82869,9 @@ relation Program_ok failed
 
 0. Else Phantom#581 failed
 └── ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:192.33-192.34
-    0. If ((_int has type nat)), then
+    0. If ((int has type nat)), then
 
-  1. (Let n be (_int as nat))
+  1. (Let n be (int as nat))
 
   2. If ((nat > 0)), then
 

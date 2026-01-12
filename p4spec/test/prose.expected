@@ -710,18 +710,18 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 
 . Return ``<<update_headerStack', update_headerStack'(value^{asterisk}^, value~new~, 0, n~target_idx~, n~size~)>>``.
 
-<<update_headerStack', update_headerStack'(value^{asterisk}^, ++_++, ++_++, ++_++, ++_++)>>
+<<update_headerStack', update_headerStack'(value^{asterisk}^, value', nat, nat', nat'')>>
 
 
 . If ``value^{asterisk}^`` is an empty list:
  .. Return ``·``.
 . Else if let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value^{asterisk}^``:
- .. If ``++_++`` is equal to ``++_++``:
+ .. If ``nat`` is equal to ``nat''``:
   ... Return ``·``.
- .. If ``++_++`` is equal to ``++_++``:
-  ... Return ``++_++ {two-colons} value~t~^{asterisk}^``.
- .. Else if ``++_++`` is not equal to ``++_++``:
-  ... Return ``value~h~ {two-colons} <<update_headerStack', update_headerStack'(value~t~^{asterisk}^, ++_++, ++_++ + 1, ++_++, ++_++)>>``.
+ .. If ``nat'`` is equal to ``nat``:
+  ... Return ``value' {two-colons} value~t~^{asterisk}^``.
+ .. Else if ``nat'`` is not equal to ``nat``:
+  ... Return ``value~h~ {two-colons} <<update_headerStack', update_headerStack'(value~t~^{asterisk}^, value', nat + 1, nat', nat'')>>``.
 
 <<update_headerUnion, update_headerUnion(fieldValue'^{asterisk}^, nameIR)>>
 
@@ -1162,10 +1162,10 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 
 . Return ``id``.
 
-<<default_of_parameterIR, default_of_parameterIR(++_++ ++_++ ++_++ ++_++ ++_++)>>
+<<default_of_parameterIR, default_of_parameterIR(++_++ ++_++ ++_++ ++_++ constantInitializerOptIR)>>
 
 
-. Let ``constantInitializerIR^?^`` be ``++_++``.
+. Let ``constantInitializerIR^?^`` be ``constantInitializerOptIR``.
 . If ``constantInitializerIR^?^`` is None: return ``false``.
 . Otherwise: return ``true``.
 
@@ -2069,17 +2069,17 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
 
-<<Type_alpha, ``STRUCT typeId < typeArgumentIR~a~^{asterisk}^ > { ++_++^{asterisk}^ }`` and ``STRUCT typeId < typeArgumentIR~b~^{asterisk}^ > { ++_++^{asterisk}^ }`` are the same type when>>:
+<<Type_alpha, ``STRUCT typeId < typeArgumentIR~a~^{asterisk}^ > { fieldTypeIR^{asterisk}^ }`` and ``STRUCT typeId < typeArgumentIR~b~^{asterisk}^ > { fieldTypeIR'^{asterisk}^ }`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type>>, for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . The relation holds.
 
-<<Type_alpha, ``HEADER typeId < typeArgumentIR~a~^{asterisk}^ > { ++_++^{asterisk}^ }`` and ``HEADER typeId < typeArgumentIR~b~^{asterisk}^ > { ++_++^{asterisk}^ }`` are the same type when>>:
+<<Type_alpha, ``HEADER typeId < typeArgumentIR~a~^{asterisk}^ > { fieldTypeIR''^{asterisk}^ }`` and ``HEADER typeId < typeArgumentIR~b~^{asterisk}^ > { fieldTypeIR'''^{asterisk}^ }`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type>>, for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . The relation holds.
 
-<<Type_alpha, ``HEADER_UNION typeId < typeArgumentIR~a~^{asterisk}^ > { ++_++^{asterisk}^ }`` and ``HEADER_UNION typeId < typeArgumentIR~b~^{asterisk}^ > { ++_++^{asterisk}^ }`` are the same type when>>:
+<<Type_alpha, ``HEADER_UNION typeId < typeArgumentIR~a~^{asterisk}^ > { fieldTypeIR''''^{asterisk}^ }`` and ``HEADER_UNION typeId < typeArgumentIR~b~^{asterisk}^ > { fieldTypeIR'''''^{asterisk}^ }`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type>>, for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . The relation holds.
@@ -2097,22 +2097,22 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
  .. The relation holds.
 
-<<Type_alpha, ``EXTERN typeId < typeArgumentIR~a~^{asterisk}^ > ++_++`` and ``EXTERN typeId < typeArgumentIR~b~^{asterisk}^ > ++_++`` are the same type when>>:
+<<Type_alpha, ``EXTERN typeId < typeArgumentIR~a~^{asterisk}^ > externMethodTypeDefEnv`` and ``EXTERN typeId < typeArgumentIR~b~^{asterisk}^ > externMethodTypeDefEnv'`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type>>, for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . The relation holds.
 
-<<Type_alpha, ``PARSER ++_++ < ++_++^{asterisk}^ > ( parameterIR~a~^{asterisk}^ )`` and ``PARSER ++_++ < ++_++^{asterisk}^ > ( parameterIR~b~^{asterisk}^ )`` are the same type when>>:
+<<Type_alpha, ``PARSER typeId'''' < typeArgumentIR^{asterisk}^ > ( parameterIR~a~^{asterisk}^ )`` and ``PARSER typeId''''' < typeArgumentIR'^{asterisk}^ > ( parameterIR~b~^{asterisk}^ )`` are the same type when>>:
 
 . Check that <<ParameterType_alpha, ``parameterIR~a~`` and ``parameterIR~b~`` are the same type>>, for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
 . The relation holds.
 
-<<Type_alpha, ``CONTROL ++_++ < ++_++^{asterisk}^ > ( parameterIR~a~^{asterisk}^ )`` and ``CONTROL ++_++ < ++_++^{asterisk}^ > ( parameterIR~b~^{asterisk}^ )`` are the same type when>>:
+<<Type_alpha, ``CONTROL typeId'''''' < typeArgumentIR''^{asterisk}^ > ( parameterIR~a~^{asterisk}^ )`` and ``CONTROL typeId''''''' < typeArgumentIR'''^{asterisk}^ > ( parameterIR~b~^{asterisk}^ )`` are the same type when>>:
 
 . Check that <<ParameterType_alpha, ``parameterIR~a~`` and ``parameterIR~b~`` are the same type>>, for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
 . The relation holds.
 
-<<Type_alpha, ``PACKAGE ++_++ < ++_++^{asterisk}^ > { typeIR~a~^{asterisk}^ }`` and ``PACKAGE ++_++ < ++_++^{asterisk}^ > { typeIR~b~^{asterisk}^ }`` are the same type when>>:
+<<Type_alpha, ``PACKAGE typeId'''''''' < typeArgumentIR''''^{asterisk}^ > { typeIR~a~^{asterisk}^ }`` and ``PACKAGE typeId''''''''' < typeArgumentIR'''''^{asterisk}^ > { typeIR~b~^{asterisk}^ }`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
 . The relation holds.
@@ -2168,9 +2168,9 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 <<ParameterType_alpha, ParameterType_alpha>>:
 
-* ``++_++ direction typeIR~a~ ++_++ ++_++`` and ``++_++ direction' typeIR~b~ ++_++ ++_++`` are the same type
+* ``annotationList direction typeIR~a~ id constantInitializerOptIR`` and ``annotationList' direction' typeIR~b~ id' constantInitializerOptIR'`` are the same type
 
-<<ParameterType_alpha, ``++_++ direction typeIR~a~ ++_++ ++_++`` and ``++_++ direction typeIR~b~ ++_++ ++_++`` are the same type when>>:
+<<ParameterType_alpha, ``annotationList direction typeIR~a~ id constantInitializerOptIR`` and ``annotationList' direction typeIR~b~ id' constantInitializerOptIR'`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
@@ -4438,10 +4438,10 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 . Check that ``value`` has type ``integerLiteral``.
 . Let ``integerLiteral`` be ``value``.
 . Check that ``integerLiteral`` matches pattern ``% W %``.
-. Let ``nat W ++_++`` be ``integerLiteral``.
+. Let ``nat W int`` be ``integerLiteral``.
 . If ``nat`` is equal to ``0``:
  .. Return ``n~prefix~``.
-. Else if let ``n`` be ``++_++``:
+. Else if let ``n`` be ``int``:
  .. If ``nat`` is greater than ``0``:
   ... Let ``int'`` be ``nat - 1``.
   ... Check that ``int'`` has type ``nat``.
@@ -4474,13 +4474,13 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 . Check that ``<<in_set, in_set<typeId>(typeId, B)>>``.
 . The relation holds.
 
-<<Type_wf, ``TYPEDEF ++_++ typeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``TYPEDEF typeId' typeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<nestable_typedef, ``typeIR`` can be used in a typedef>>.
 . Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
 . The relation holds.
 
-<<Type_wf, ``TYPE ++_++ typeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``TYPE typeId'' typeIR`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<nestable_new, ``typeIR`` can be used in a new type>>.
 . Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
@@ -4498,27 +4498,27 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 . Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``typeIR [ ++_++ ]`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``typeIR [ nat ]`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<nestable_headerStack, ``typeIR`` can be nested in a header stack type>>.
 . Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
 . The relation holds.
 
-<<Type_wf, ``STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``STRUCT typeId''' < typeArgumentIR^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_struct, ``typeIR~field~`` can be nested in a struct type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, assuming bound type ids ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``HEADER typeId'''' < typeArgumentIR'^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_header, ``typeIR~field~`` can be used in a header type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, assuming bound type ids ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``HEADER_UNION ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``HEADER_UNION typeId''''' < typeArgumentIR''^{asterisk}^ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_headerUnion, ``typeIR~field~`` can be used in a header union type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
@@ -4536,27 +4536,27 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. The relation holds.
 
-<<Type_wf, ``EXTERN ++_++ < ++_++^{asterisk}^ > { (++_++ : externMethodTypeDefIR)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``EXTERN typeId'''''''' < typeArgumentIR'''^{asterisk}^ > { (callableId : externMethodTypeDefIR)^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, assuming bound type ids ``B``>>, for all ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``PARSER ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``PARSER typeId''''''''' < typeArgumentIR''''^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``CONTROL ++_++ < ++_++^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``CONTROL typeId'''''''''' < typeArgumentIR'''''^{asterisk}^ > ( parameterIR^{asterisk}^ )`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<ParameterType_wf, ``parameterIR`` is a well-formed parameter type, assuming bound type ids ``B``>>, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``PACKAGE ++_++ < ++_++^{asterisk}^ > { typeIR^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``PACKAGE typeId''''''''''' < typeArgumentIR''''''^{asterisk}^ > { typeIR^{asterisk}^ }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>, for all ``typeIR`` in ``typeIR^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``TABLE ++_++ { tableMetadataStructTypeIR }`` is a well-formed type, assuming bound type ids ``B`` when>>:
+<<Type_wf, ``TABLE typeId'''''''''''' { tableMetadataStructTypeIR }`` is a well-formed type, assuming bound type ids ``B`` when>>:
 
 . Check that <<Type_wf, ``tableMetadataStructTypeIR`` is a well-formed type, assuming bound type ids ``B``>>.
 . The relation holds.
@@ -4620,9 +4620,9 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 
 <<ParameterType_wf, ParameterType_wf>>:
 
-* ``++_++ direction typeIR ++_++ constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B``
+* ``annotationList direction typeIR id constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B``
 
-<<ParameterType_wf, ``++_++ direction typeIR ++_++ constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B`` when>>:
+<<ParameterType_wf, ``annotationList direction typeIR id constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B`` when>>:
 
 . If ``constantInitializerIR^?^`` is equal to ``None``:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
@@ -5110,19 +5110,19 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 . Return ``<<directionless_trailing', directionless_trailing'(true, rev_<direction>(direction^{asterisk}^))>>``.
 
-<<directionless_trailing', directionless_trailing'(++_++, direction'^{asterisk}^)>>
+<<directionless_trailing', directionless_trailing'(bool, direction'^{asterisk}^)>>
 
 
 . If ``direction'^{asterisk}^`` is an empty list: return ``true``.
 . Else if let ``direction~h~ {two-colons} direction~t~^{asterisk}^`` be ``direction'^{asterisk}^``:
  .. Check that ``direction~h~`` does not match pattern ```EMPTY``.
  .. Return ``<<directionless_trailing', directionless_trailing'(false, direction~t~^{asterisk}^)>>``.
-. If ``++_++`` is equal to ``true``:
+. If ``bool`` is equal to ``true``:
  .. Check that ``direction'^{asterisk}^`` is a non-empty list.
  .. Let ``direction {two-colons} direction~t~^{asterisk}^`` be ``direction'^{asterisk}^``.
  .. Check that ``direction`` matches pattern ```EMPTY``.
  .. Return ``<<directionless_trailing', directionless_trailing'(true, direction~t~^{asterisk}^)>>``.
-. Else if ``++_++`` is equal to ``false``:
+. Else if ``bool`` is equal to ``false``:
  .. Check that ``direction'^{asterisk}^`` is a non-empty list.
  .. Let ``direction {two-colons} direction~t~^{asterisk}^`` be ``direction'^{asterisk}^``.
  .. Check that ``direction`` matches pattern ```EMPTY``.
@@ -5283,14 +5283,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 * The local compile-time evaluation of ``typedExpressionIR``, under cursor ``cursor`` and typing context ``typingContext``
 * results in the value ``value``
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``booleanLiteral`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``booleanLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If ``booleanLiteral`` matches pattern ``TRUE``:
  .. Result in the value ``true``.
 . Else if ``booleanLiteral`` matches pattern ``FALSE``:
  .. Result in the value ``false``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``integerLiteral`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``integerLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``D i`` be ``integerLiteral``:
  .. Result in the value ``D i``.
@@ -5299,25 +5299,25 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Else if let ``n S i`` be ``integerLiteral``:
  .. Result in the value ``n S i``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``" text "`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``" text "`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Result in the value ``" text "``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``prefixedNameIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``prefixedNameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be <<find_var_value_t, the value of variable ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Result in the value ``value``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``...`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``...`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Result in the value ``DEFAULT``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``unop typedExpressionIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``unop typedExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
 . Result in the value <<un_op, ``unop`` ``value``>>.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~l~ binop' typedExpressionIR~r~`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~l~ binop' typedExpressionIR~r~`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If ``binop'`` is not in ``[&&, ||]``:
  .. Let ``value~l~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~l~``, under cursor ``p`` and typing context ``TC``>>.
@@ -5338,7 +5338,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``value~r~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~r~``, under cursor ``p`` and typing context ``TC``>>.
   ... Result in the value ``value~r~``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~cond~``, under cursor ``p`` and typing context ``TC``>>.
 . If ``value`` is equal to ``true``:
@@ -5348,17 +5348,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``value~false~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~false~``, under cursor ``p`` and typing context ``TC``>>.
  .. Result in the value ``value~false~``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( typeIR ) typedExpressionIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( typeIR ) typedExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``value~cast~`` be <<cast_op, cast ``value`` to type ``typeIR``>>.
 . Result in the value ``value~cast~``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``{#}`` annotated with type ``++_++`` and compile-time known-ness ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``{#}`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Result in the value ``{#}``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``dataExpressionIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``dataExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``SEQ { typedExpressionIR^{asterisk}^ }`` be ``dataExpressionIR``:
  .. Let ``value^{asterisk}^`` be the list of ``value``, obtained by repeating:
@@ -5379,7 +5379,7 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
  .. Result in the value ``SEQ ( value^{asterisk}^ , ... )``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``dataExpressionIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``dataExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``RECORD { (nameIR = typedExpressionIR)^{asterisk}^ }`` be ``dataExpressionIR``:
  .. Let ``value^{asterisk}^`` be the list of ``value``, obtained by repeating:
@@ -5400,13 +5400,13 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
  .. Result in the value ``RECORD { (value nameIR ;)^{asterisk}^ , ... }``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``ERROR . nameIR`` annotated with type ``++_++`` and compile-time known-ness ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``ERROR . nameIR`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``nameIR~error~`` be ``"error." {pp} nameIR``.
 . Let ``value~error~`` be <<find_var_value_t, the value of variable ``nameIR~error~`` in the ``p`` layer of ``TC``>>.
 . Result in the value ``value~error~``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``TYPE prefixedNameIR~base~ . nameIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``TYPE prefixedNameIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeDefIR~base~`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR~base~`` in the ``p`` layer of ``TC``>>.
 . Check that <<is_monomorphic_typeDefIR, ``typeDefIR~base~`` is monomorphic>>.
@@ -5421,7 +5421,7 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
  .. Let ``value`` be <<option_get, *!*>> ``<<assoc_, assoc_<nameIR, value>(nameIR, ((nameIR~field~, value~field~))^{asterisk}^)>>``.
  .. Result in the value ``typeId . nameIR . value``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If ``nameIR`` is equal to ``"size"``:
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -5443,7 +5443,7 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
  .. Let ``value`` be <<option_get, *!*>> ``<<assoc_, assoc_<nameIR, value>(nameIR, ((nameIR~field~, value~field~))^{asterisk}^)>>``.
  .. Result in the value ``value``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~index~ ]`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~index~ ]`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value~base~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~base~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``value'`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~index~``, under cursor ``p`` and typing context ``TC``>>.
@@ -5464,14 +5464,14 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in the value ``value``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value~base~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~base~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``value~hi~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~hi~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``value~lo~`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR~lo~``, under cursor ``p`` and typing context ``TC``>>.
 . Result in the value ``<<bitacc_op, bitacc_op(value~base~, value~hi~, value~lo~)>>``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``prefixedNameIR < · > ( argumentIR^{asterisk}^ )`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``prefixedNameIR < · > ( argumentIR^{asterisk}^ )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If ``prefixedNameIR`` is equal to ``. "static_assert"``:
  .. Let ``callableTypeIR``, ``typeId^{asterisk}^``, and ``id^{asterisk}^`` be the result of <<CallableType_ok, finding the type of ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>.
@@ -5488,7 +5488,7 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
     * Let ``nameIR~param~`` be the name of ``parameterIR``.
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+for each ``typeIR''`` in ``typeIR''^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
  .. Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR'^{asterisk}^, value^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentIR^{asterisk}^, ·)>>``.
  .. Check that ``parameterIR'^{asterisk}^`` is an empty list.
@@ -5535,7 +5535,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
     * Let ``nameIR~param~`` be the name of ``parameterIR``.
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+for each ``typeIR''`` in ``typeIR''^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
  .. Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR'^{asterisk}^, value^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentIR^{asterisk}^, ·)>>``.
  .. Check that ``parameterIR'^{asterisk}^`` is an empty list.
@@ -5568,7 +5568,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
  .. Check that ``true`` is equal to ``boolValue``.
  .. Result in the value ``boolValue``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < · > ( · )`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < · > ( · )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``typedExpressionIR~base~ . nameIR`` be ``callableTargetIR``:
  .. Let <<expressionNoteIR, type ``typeIR~base~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~base~``.
@@ -5586,12 +5586,12 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
   ... Check that ``nameIR`` is in ``["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]``.
   ... Result in the value ``<<sizeof, sizeof(typeIR~base~, nameIR)>>``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( callableTargetIR ) < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``++_++`` and compile-time known-ness ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( callableTargetIR ) < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
 
-. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``++_++`` and compile-time known-ness ``++_++``>>, under cursor ``p`` and typing context ``TC``>>.
+. Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>.
 . Result in the value ``value``.
 
-<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( typedExpressionIR )`` annotated with ``++_++``>>, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_eval_lctk, The local compile-time evaluation of <<typedExpressionIR, ``( typedExpressionIR )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be the result of <<Expr_eval_lctk, the local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
 . Result in the value ``value``.
@@ -6146,7 +6146,7 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 . Else let ``BIT < ++_++ >`` be ``integerTypeIR``:
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``ENUM ++_++ < typeIR~a~ > { ++_++^{asterisk}^ }`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Sub_impl_unroll_neq, ``ENUM typeId < typeIR~a~ > { valueFieldIR^{asterisk}^ }`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
 . The relation holds.
@@ -6657,7 +6657,7 @@ for each ``typeIR'''''^?^`` in ``typeIR'''''^?^^{asterisk}^``
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``HEADER_INVALID`` and compile-time known-ness ``LCTK``>>.
 . Result in the typed expression <<typedExpressionIR, ``{#}`` annotated with ``expressionNoteIR``>>.
 
-<<Expr_ok, Typing ``{ expressionList ++_++ }``, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_ok, Typing ``{ expressionList trailingCommaOpt }``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``expression~e~^{asterisk}^`` be <<flatten_expressionList, the list of expressions in ``expressionList``>>.
 . If ``...`` is not in ``expression~e~^{asterisk}^``:
@@ -6721,7 +6721,7 @@ for each ``typedExpressionIR~e_h~`` in ``typedExpressionIR~e_h~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>>.
  .. Result in the typed expression <<typedExpressionIR, ``SEQ { typedExpressionIR~e_h~^{asterisk}^ , ... }`` annotated with ``expressionNoteIR``>>.
 
-<<Expr_ok, Typing ``{ recordElementExpression ++_++ }``, under cursor ``p`` and typing context ``TC``>>:
+<<Expr_ok, Typing ``{ recordElementExpression trailingCommaOpt }``, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``name~f~ = expression~f~`` be ``recordElementExpression``:
  .. Let ``nameIR~f~`` be <<name, the name of ``name~f~``>>.
@@ -6920,16 +6920,16 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``typeIR`` be <<option_get, *!*>> ``<<assoc_, assoc_<nameIR, typeIR>(nameIR, ((nameIR~f~, typeIR~f~))^{asterisk}^)>>``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in the typed expression <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>.
-. Else let ``TABLE_STRUCT ++_++ { HIT boolTypeIR ; MISS ++_++ ; ACTION_RUN ++_++ ; }`` be ``typeIR'``:
+. Else let ``TABLE_STRUCT ++_++ { HIT boolTypeIR ; MISS boolTypeIR' ; ACTION_RUN tableMetadataEnumTypeIR ; }`` be ``typeIR'``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. If ``nameIR`` is equal to ``"hit"``:
   ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``boolTypeIR`` and compile-time known-ness ``DYN``>>.
   ... Result in the typed expression <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>.
  .. Else if ``nameIR`` is equal to ``"miss"``:
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``++_++`` and compile-time known-ness ``DYN``>>.
+  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``boolTypeIR'`` and compile-time known-ness ``DYN``>>.
   ... Result in the typed expression <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>.
  .. Else ``nameIR`` is equal to ``"action_run"``:
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``++_++`` and compile-time known-ness ``DYN``>>.
+  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``tableMetadataEnumTypeIR`` and compile-time known-ness ``DYN``>>.
   ... Result in the typed expression <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>.
 
 <<Expr_ok, Typing ``expression~base~ [ expression~index~ ]``, under cursor ``p`` and typing context ``TC``>>:
@@ -8995,7 +8995,7 @@ for each ``value~error~`` in ``value~error~^{asterisk}^``
 . Let ``TC~1~`` be <<add_vars_t, ``TC~0~`` with mappings from each of ``nameIR~error~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` added to the ``GLOBAL`` layer>>.
 . Result in the updated typing context ``TC~1~`` and the typed declaration ``ERROR { nameIR^{asterisk}^ }``.
 
-<<Decl_ok, Typing ``MATCH_KIND { nameList ++_++ }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``MATCH_KIND { nameList trailingCommaOpt }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
 
 . Let ``name^{asterisk}^`` be <<flatten_nameList, the list of names in ``nameList``>>.
 . Let ``nameIR^{asterisk}^`` be the list of ``nameIR``, obtained by repeating:
@@ -9140,7 +9140,7 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 . Let ``controlDeclarationIR`` be ``annotationList CONTROL nameIR < · > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }``.
 . Result in the updated typing context ``TC~6~`` and the typed declaration ``controlDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList ENUM name { nameList~field~ ++_++ }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList ENUM name { nameList~field~ trailingCommaOpt' }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
 
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``name~field~^{asterisk}^`` be <<flatten_nameList, the list of names in ``nameList~field~``>>.
@@ -9179,7 +9179,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 . Let ``enumTypeDeclarationIR`` be ``annotationList ENUM nameIR { nameIR~field~^{asterisk}^ }``.
 . Result in the updated typing context ``TC~2~`` and the typed declaration ``enumTypeDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList ENUM type name { namedExpressionList~field~ ++_++ }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList ENUM type name { namedExpressionList~field~ trailingCommaOpt'' }``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>:
 
 . Let ``typeIR`` and ``typeId^{asterisk}^`` be the result of <<Type_ok, typing ``type``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
@@ -9471,14 +9471,14 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``TC~1~`` and ``declarationIR^{asterisk}^`` be the result of <<Decls_ok, typing ``declaration^{asterisk}^``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
 . Result in the typed P4 program ``declarationIR^{asterisk}^ ;``.
 
-<<Call_convention_expr_ok, Call_convention_expr_ok: ``p TC actctxt |- ++_++ direction typeIR~param~ ++_++ ++_++ @ typedExpressionIR~arg~ : %``>>
+<<Call_convention_expr_ok, Call_convention_expr_ok: ``p TC actctxt |- annotationList direction typeIR~param~ id constantInitializerOptIR @ typedExpressionIR~arg~ : %``>>
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``++_++ IN typeIR~param~ ++_++ ++_++``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList IN typeIR~param~ id constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 . Result in ``typedExpressionIR~arg_cast~``.
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``++_++ direction typeIR~param~ ++_++ ++_++``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList direction typeIR~param~ id constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``direction`` matches pattern ``OUT``:
  .. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~arg~``>>.
@@ -9491,7 +9491,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Check that <<Expr_lvalue_ok, ``p TC |- typedExpressionIR~arg~``>>.
  .. Result in ``typedExpressionIR~arg~``.
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``++_++ typeIR~param~ ++_++ ++_++``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList typeIR~param~ id constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``actctxt`` matches pattern ``ACTION``:
  .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
@@ -10046,7 +10046,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<reduce_serenum_unary, The result of reducing serializable enums in ``typedExpressionIR`` until $check is satisfied>>
 
 
-. Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
+. Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR``.
 . If ``<<check, check(typeIR)>>``:
  .. Return ``typedExpressionIR``.
 . Else if ``~<<check, check(typeIR)>>``:
@@ -10055,7 +10055,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``enumTypeIR`` be ``typeIR'``.
  .. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
  .. Let ``ENUM ++_++ < typeIR~underlying~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
- .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~underlying~ ) typedExpressionIR`` annotated with type ``typeIR~underlying~`` and compile-time known-ness ``++_++``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~underlying~ ) typedExpressionIR`` annotated with type ``typeIR~underlying~`` and compile-time known-ness ``ctk``>>.
  .. Return ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~cast~, check)>>``.
 . Otherwise:
  .. Return ``None``.
@@ -10064,7 +10064,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 
 . Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l~``.
-. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r~``.
+. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``ctk'``>> be the note of ``typedExpressionIR~r~``.
 . If ``<<check, check(typeIR~l~, typeIR~r~)>>``:
  .. Return ``(typedExpressionIR~l~, typedExpressionIR~r~)``.
 . Else if ``~<<check, check(typeIR~l~, typeIR~r~)>>``:
@@ -10072,13 +10072,13 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. If let ``enumTypeIR`` be ``typeIR``:
   ... Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
   ... Let ``ENUM ++_++ < typeIR~l_underlying~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
-  ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``( typeIR~l_underlying~ ) typedExpressionIR~l~`` annotated with type ``typeIR~l_underlying~`` and compile-time known-ness ``++_++``>>.
+  ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``( typeIR~l_underlying~ ) typedExpressionIR~l~`` annotated with type ``typeIR~l_underlying~`` and compile-time known-ness ``ctk'``>>.
   ... Return ``<<reduce_serenum_binary, reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r~, check)>>``.
  .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~r~`` with typedefs unrolled>>.
  .. Else if let ``enumTypeIR`` be ``typeIR``:
   ... Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
   ... Let ``ENUM ++_++ < typeIR~r_underlying~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
-  ... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~r_underlying~ ) typedExpressionIR~r~`` annotated with type ``typeIR~r_underlying~`` and compile-time known-ness ``++_++``>>.
+  ... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~r_underlying~ ) typedExpressionIR~r~`` annotated with type ``typeIR~r_underlying~`` and compile-time known-ness ``ctk'``>>.
   ... Return ``<<reduce_serenum_binary, reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r_cast~, check)>>``.
 . Otherwise:
  .. Return ``None``.
@@ -10086,28 +10086,28 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
 
 
-. Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
+. Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR``.
 . If <<Type_alpha, ``typeIR`` and ``typeIR~to~`` are the same type>>:
  .. Return ``typedExpressionIR``.
 . Else <<Type_alpha, ``typeIR`` and ``typeIR~to~`` are not the same type>>:
  .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~to~``>>.
- .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~to~ ) typedExpressionIR`` annotated with type ``typeIR~to~`` and compile-time known-ness ``++_++``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~to~ ) typedExpressionIR`` annotated with type ``typeIR~to~`` and compile-time known-ness ``ctk``>>.
  .. Return ``typedExpressionIR~cast~``.
 
 <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>
 
 
 . Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l~``.
-. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r~``.
+. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``ctk'``>> be the note of ``typedExpressionIR~r~``.
 . If <<Type_alpha, ``typeIR~l~`` and ``typeIR~r~`` are the same type>>:
  .. Return ``(typedExpressionIR~l~, typedExpressionIR~r~)``.
 . Else <<Type_alpha, ``typeIR~l~`` and ``typeIR~r~`` are not the same type>>:
  .. If <<Sub_impl, ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``>>:
-  ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``( typeIR~r~ ) typedExpressionIR~l~`` annotated with type ``typeIR~r~`` and compile-time known-ness ``++_++``>>.
+  ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``( typeIR~r~ ) typedExpressionIR~l~`` annotated with type ``typeIR~r~`` and compile-time known-ness ``ctk'``>>.
   ... Return ``(typedExpressionIR~l_cast~, typedExpressionIR~r~)``.
  .. Else <<Sub_impl, ``typeIR~l~`` cannot be implicitly cast to ``typeIR~r~``>>:
   ... If <<Sub_impl, ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``>>:
-   .... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~l~ ) typedExpressionIR~r~`` annotated with type ``typeIR~l~`` and compile-time known-ness ``++_++``>>.
+   .... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~l~ ) typedExpressionIR~r~`` annotated with type ``typeIR~l~`` and compile-time known-ness ``ctk'``>>.
    .... Return ``(typedExpressionIR~l~, typedExpressionIR~r_cast~)``.
   ... Else <<Sub_impl, ``typeIR~r~`` cannot be implicitly cast to ``typeIR~l~``>>:
    .... Let ``typedExpressionIR~l_cast~`` be ``<<reduce_serenum, reduce_serenum(typedExpressionIR~l~)>>``.
@@ -10976,13 +10976,13 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 . Else if let ``nameIR = _`` be ``argumentIR``: return ``false``.
 . Else ``argumentIR`` matches pattern ``_``: return ``false``.
 
-<<has_table_apply_expr, has_table_apply_expr(++_++ # ++_++)>>
+<<has_table_apply_expr, has_table_apply_expr(expressionIR # expressionNoteIR)>>
 
 
-. Let ``typeIR`` be the type of ``++_++``.
+. Let ``typeIR`` be the type of ``expressionNoteIR``.
 . If <<is_tableMetadataStructTypeIR, ``typeIR`` with typedefs unrolled is table metadata struct type>>: return ``true``.
 . Otherwise:
- .. Return ``<<has_table_apply_expr', has_table_apply_expr'(++_++)>>``.
+ .. Return ``<<has_table_apply_expr', has_table_apply_expr'(expressionIR)>>``.
 
 <<has_table_apply_expr', has_table_apply_expr'(expressionIR)>>
 
@@ -11174,9 +11174,9 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
  .. Let ``(TBLC~1~, tablePropertyIR~t_updated~^{asterisk}^)`` be ``<<insert_NoAction_tablePropertyIR, insert_NoAction_tablePropertyIR(TBLC, tablePropertyIR~t~^{asterisk}^)>>``.
  .. Return ``(TBLC~1~, tablePropertyIR~h~ {two-colons} tablePropertyIR~t_updated~^{asterisk}^)``.
 
-<<Expr_lvalue_ok, Expr_lvalue_ok: ``p TC |- expressionIR # ( ++_++ ++_++ )``>>
+<<Expr_lvalue_ok, Expr_lvalue_ok: ``p TC |- expressionIR # ( typeIR'' ctk' )``>>
 
-<<Expr_lvalue_ok, ``p TC |- prefixedNameIR # ( ++_++ ++_++ )``>>:
+<<Expr_lvalue_ok, ``p TC |- prefixedNameIR # ( typeIR'' ctk' )``>>:
 
 . Let ``direction ++_++ ctk ++_++^?^`` be <<option_get, *!*>> <<find_var_t, the type of variable ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that ``ctk`` matches pattern ``DYN``.
@@ -11185,7 +11185,7 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 . Else ``direction`` matches pattern ``INOUT``:
  .. The relation holds.
 
-<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ . nameIR # ( ++_++ ++_++ )``>>:
+<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ . nameIR # ( typeIR'' ctk' )``>>:
 
 . Check that <<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~``>>.
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -11204,12 +11204,12 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 . Else if ``~<<is_headerStackTypeIR, is_headerStackTypeIR(unroll_typeIR(typeIR~base~))>>``:
  .. The relation holds.
 
-<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ [ typedExpressionIR~index~ ] # ( ++_++ ++_++ )``>>:
+<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ [ typedExpressionIR~index~ ] # ( typeIR'' ctk' )``>>:
 
 . Check that <<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~``>>.
 . The relation holds.
 
-<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # ( ++_++ ++_++ )``>>:
+<<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # ( typeIR'' ctk' )``>>:
 
 . Check that <<Expr_lvalue_ok, ``p TC |- typedExpressionIR~base~``>>.
 . The relation holds.
@@ -11766,12 +11766,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~ &&& typedExpressionIR~mask_cast~``.
  .. Return ``simpleKeysetExpressionIR``.
 
-<<tableObject_create_entry_keys, tableObject_create_entry_keys((nameIR, nameIR, typeIR)^{asterisk}^, ++_++)>>
+<<tableObject_create_entry_keys, tableObject_create_entry_keys((nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)>>
 
 
 . If ``(nameIR, nameIR, typeIR)^{asterisk}^`` is an empty list:
  .. Return ``·``.
-. Let ``tableKeyInterface^{asterisk}^`` be ``++_++``.
+. Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
 . Else if let ``(nameIR~key_h~, nameIR~matchKind_h~, typeIR~h~) {two-colons} ((nameIR~key_t~, nameIR~matchKind_t~, typeIR~t~))^{asterisk}^`` be ``(nameIR, nameIR, typeIR)^{asterisk}^``:
  .. Let ``simpleKeysetExpressionIR~h~`` be ``<<tableObject_create_entry_key, tableObject_create_entry_key((nameIR~key_h~, nameIR~matchKind_h~, typeIR~h~), tableKeyInterface^{asterisk}^)>>``.
  .. Return ``simpleKeysetExpressionIR~h~ {two-colons} <<tableObject_create_entry_keys, tableObject_create_entry_keys(((nameIR~key_t~, nameIR~matchKind_t~, typeIR~t~))^{asterisk}^, tableKeyInterface^{asterisk}^)>>``.
@@ -12199,16 +12199,16 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``callTargetKey`` be ``<<callTargetKey, callTargetKey(nameIR, argumentIR^{asterisk}^)>>``.
  .. Return ``<<find_overloaded, find_overloaded<constructorDef>(IC.GLOBAL.CONSTRUCTOR, callTargetKey, parameterListIR_of_constructorDef)>>``.
 
-<<Expr_inst, Expr_inst: ``p IC STO |- expressionIR # ++_++ : % %``>>
+<<Expr_inst, Expr_inst: ``p IC STO |- expressionIR # expressionNoteIR : % %``>>
 
-<<Expr_inst, ``p IC STO |- booleanLiteral # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- booleanLiteral # expressionNoteIR : % %``>>:
 
 . If ``booleanLiteral`` matches pattern ``TRUE``:
  .. Result in ``STO`` and ``true``.
 . Else if ``booleanLiteral`` matches pattern ``FALSE``:
  .. Result in ``STO`` and ``false``.
 
-<<Expr_inst, ``p IC STO |- integerLiteral # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- integerLiteral # expressionNoteIR : % %``>>:
 
 . If let ``D i`` be ``integerLiteral``:
  .. Result in ``STO`` and ``D i``.
@@ -12217,25 +12217,25 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Else if let ``n S i`` be ``integerLiteral``:
  .. Result in ``STO`` and ``n S i``.
 
-<<Expr_inst, ``p IC STO |- " text " # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- " text " # expressionNoteIR : % %``>>:
 
 . Result in ``STO`` and ``" text "``.
 
-<<Expr_inst, ``p IC STO |- prefixedNameIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- prefixedNameIR # expressionNoteIR : % %``>>:
 
 . Let ``value`` be ``<<find_var_i, find_var_i(p, IC, prefixedNameIR)>>``.
 . Result in ``STO`` and ``value``.
 
-<<Expr_inst, ``p IC STO |- ... # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- ... # expressionNoteIR : % %``>>:
 
 . Result in ``STO`` and ``DEFAULT``.
 
-<<Expr_inst, ``p IC STO |- unop typedExpressionIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- unop typedExpressionIR # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR : STO~1~ value``>>.
 . Result in ``STO~1~`` and <<un_op, ``unop`` ``value``>>.
 
-<<Expr_inst, ``p IC STO |- typedExpressionIR~l~ binop' typedExpressionIR~r~ # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- typedExpressionIR~l~ binop' typedExpressionIR~r~ # expressionNoteIR : % %``>>:
 
 . If ``binop'`` is not in ``[&&, ||]``:
  .. Let <<Expr_inst, ``p IC STO |- typedExpressionIR~l~ : STO~1~ value~l~``>>.
@@ -12256,7 +12256,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
   ... Let <<Expr_inst, ``p IC STO~1~ |- typedExpressionIR~r~ : STO~2~ value~r~``>>.
   ... Result in ``STO~2~`` and ``value~r~``.
 
-<<Expr_inst, ``p IC STO |- typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR~cond~ : STO~1~ value``>>.
 . If ``value`` is equal to ``true``:
@@ -12266,17 +12266,17 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let <<Expr_inst, ``p IC STO~1~ |- typedExpressionIR~false~ : STO~2~ value~false~``>>.
  .. Result in ``STO~2~`` and ``value~false~``.
 
-<<Expr_inst, ``p IC STO |- ( typeIR ) typedExpressionIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- ( typeIR ) typedExpressionIR # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR : STO~1~ value``>>.
 . Let ``value~cast~`` be <<cast_op, cast ``value`` to type ``typeIR``>>.
 . Result in ``STO~1~`` and ``value~cast~``.
 
-<<Expr_inst, ``p IC STO |- {#} # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- {#} # expressionNoteIR : % %``>>:
 
 . Result in ``STO`` and ``{#}``.
 
-<<Expr_inst, ``p IC STO |- dataExpressionIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- dataExpressionIR # expressionNoteIR : % %``>>:
 
 . If let ``SEQ { typedExpressionListIR }`` be ``dataExpressionIR``:
  .. Let <<Exprs_inst, ``p IC STO |- typedExpressionListIR : STO~1~ value^{asterisk}^``>>.
@@ -12285,7 +12285,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let <<Exprs_inst, ``p IC STO |- typedExpressionListIR : STO~1~ value^{asterisk}^``>>.
  .. Result in ``STO~1~`` and ``SEQ ( value^{asterisk}^ , ... )``.
 
-<<Expr_inst, ``p IC STO |- dataExpressionIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- dataExpressionIR # expressionNoteIR : % %``>>:
 
 . If let ``RECORD { (nameIR = typedExpressionIR)^{asterisk}^ }`` be ``dataExpressionIR``:
  .. Let <<Exprs_inst, ``p IC STO |- typedExpressionIR^{asterisk}^ : STO~1~ value^{asterisk}^``>>.
@@ -12294,13 +12294,13 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let <<Exprs_inst, ``p IC STO |- typedExpressionIR^{asterisk}^ : STO~1~ value^{asterisk}^``>>.
  .. Result in ``STO~1~`` and ``RECORD { (value nameIR ;)^{asterisk}^ , ... }``.
 
-<<Expr_inst, ``p IC STO |- ERROR . nameIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- ERROR . nameIR # expressionNoteIR : % %``>>:
 
 . Let ``nameIR~error~`` be ``"error." {pp} nameIR``.
 . Let ``value~error~`` be ``<<find_var_i, find_var_i(p, IC, nameIR~error~)>>``.
 . Result in ``STO`` and ``value~error~``.
 
-<<Expr_inst, ``p IC STO |- TYPE prefixedNameIR . nameIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- TYPE prefixedNameIR . nameIR # expressionNoteIR : % %``>>:
 
 . Let ``typeDefIR`` be <<option_get, *!*>> ``<<find_typeDef_i, find_typeDef_i(p, IC, prefixedNameIR)>>``.
 . Check that ``typeDefIR`` has type ``enumTypeIR``.
@@ -12311,7 +12311,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``value`` be <<option_get, *!*>> ``<<assoc_, assoc_<nameIR, value>(nameIR, ((id~member~, value~member~))^{asterisk}^)>>``.
  .. Result in ``STO`` and ``typeId . nameIR . value``.
 
-<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ . nameIR # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ . nameIR # expressionNoteIR : % %``>>:
 
 . If ``nameIR`` is equal to ``"size"``:
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -12333,7 +12333,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``value`` be <<option_get, *!*>> ``<<assoc_, assoc_<id, value>(nameIR, ((id~field~, value~field~))^{asterisk}^)>>``.
  .. Result in ``STO~1~`` and ``value``.
 
-<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ [ typedExpressionIR~index~ ] # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ [ typedExpressionIR~index~ ] # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR~base~ : STO~1~ value~base~``>>.
 . Let <<Expr_inst, ``p IC STO~1~ |- typedExpressionIR~index~ : STO~2~ value'``>>.
@@ -12354,14 +12354,14 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``STO~2~`` and ``value``.
 
-<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR~base~ : STO~1~ value~base~``>>.
 . Let <<Expr_inst, ``p IC STO~1~ |- typedExpressionIR~hi~ : STO~2~ value~hi~``>>.
 . Let <<Expr_inst, ``p IC STO~2~ |- typedExpressionIR~lo~ : STO~3~ value~lo~``>>.
 . Result in ``STO~3~`` and ``<<bitacc_op, bitacc_op(value~base~, value~hi~, value~lo~)>>``.
 
-<<Expr_inst, ``p IC STO |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) # expressionNoteIR : % %``>>:
 
 . Let <<Constructor_inst, ``p IC |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )``>>.
 . Let <<Constructor_call, ``p IC STO |- constructorDef < typeArgumentListIR~inst~ > ( argumentListIR # id~default~^{asterisk}^ ) : STO~1~ object``>>.
@@ -12369,7 +12369,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``value~ref~`` be ``! IC.PATH``.
 . Result in ``STO~2~`` and ``value~ref~``.
 
-<<Expr_inst, ``p IC STO |- callableTargetIR < · > ( · ) # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- callableTargetIR < · > ( · ) # expressionNoteIR : % %``>>:
 
 . If let ``typedExpressionIR~base~ . nameIR`` be ``callableTargetIR``:
  .. Let <<expressionNoteIR, type ``typeIR~base~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~base~``.
@@ -12387,12 +12387,12 @@ for each ``objectId`` in ``objectId^{asterisk}^``
   ... Check that ``nameIR`` is in ``["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]``.
   ... Result in ``STO`` and ``<<sizeof, sizeof(typeIR~base~, nameIR)>>``.
 
-<<Expr_inst, ``p IC STO |- ( callableTargetIR ) < typeArgumentListIR > ( argumentListIR ) # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- ( callableTargetIR ) < typeArgumentListIR > ( argumentListIR ) # expressionNoteIR : % %``>>:
 
-. Let <<Expr_inst, ``p IC STO |- callableTargetIR < typeArgumentListIR > ( argumentListIR ) # ++_++ : STO~1~ value``>>.
+. Let <<Expr_inst, ``p IC STO |- callableTargetIR < typeArgumentListIR > ( argumentListIR ) # expressionNoteIR : STO~1~ value``>>.
 . Result in ``STO~1~`` and ``value``.
 
-<<Expr_inst, ``p IC STO |- ( typedExpressionIR ) # ++_++ : % %``>>:
+<<Expr_inst, ``p IC STO |- ( typedExpressionIR ) # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, ``p IC STO |- typedExpressionIR : STO~1~ value``>>.
 . Result in ``STO~1~`` and ``value``.
@@ -13848,7 +13848,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * Evaluating ``typedExpressionIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``
 * results in the updated evaluation context ``evalContext'``, store ``store'`` and expression result ``expressionResult``
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``booleanLiteral`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``booleanLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If ``booleanLiteral`` matches pattern ``TRUE``:
  .. Let ``expressionResult`` be ``true``.
@@ -13857,7 +13857,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``false``.
  .. Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``integerLiteral`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``integerLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If let ``D i`` be ``integerLiteral``:
  .. Let ``expressionResult`` be ``D i``.
@@ -13869,23 +13869,23 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``n S i``.
  .. Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``" text "`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``" text "`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``expressionResult`` be ``" text "``.
 . Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``prefixedNameIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``prefixedNameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``value`` be <<find_var_e, the value of ``prefixedNameIR`` in ``EC`` at ``p``>>.
 . Let ``expressionResult`` be ``value``.
 . Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``...`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``...`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``expressionResult`` be ``DEFAULT``.
 . Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``unop typedExpressionIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``unop typedExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult'`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionResult'``:
@@ -13895,7 +13895,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``value'``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~l~ binop' typedExpressionIR~r~`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~l~ binop' typedExpressionIR~r~`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If ``binop'`` is not in ``[&&, ||]``:
  .. Let ``EC~1~``, ``STO~1~``, and ``expressionListResult`` be the result of <<Exprs_eval, evaluating ``[typedExpressionIR~l~, typedExpressionIR~r~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
@@ -13936,7 +13936,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``EC~2~``, ``STO~2~``, and ``expressionResult~r~`` be the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
   ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~r~``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionResult``:
@@ -13948,7 +13948,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``EC~2~``, ``STO~2~``, and ``expressionResult~false~`` be the result of <<Expr_eval, evaluating ``typedExpressionIR~false~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
  .. Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~false~``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``( typeIR ) typedExpressionIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``( typeIR ) typedExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult'`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionResult'``:
@@ -13958,12 +13958,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``value'``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``{#}`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``{#}`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``expressionResult`` be ``{#}``.
 . Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``dataExpressionIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``dataExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If let ``SEQ { typedExpressionListIR }`` be ``dataExpressionIR``:
  .. Let ``EC~1~``, ``STO~1~``, and ``expressionListResult`` be the result of <<Exprs_eval, evaluating ``typedExpressionListIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
@@ -13980,7 +13980,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``expressionResult`` be ``SEQ ( value^{asterisk}^ , ... )``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``dataExpressionIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``dataExpressionIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If let ``RECORD { (nameIR = typedExpressionIR)^{asterisk}^ }`` be ``dataExpressionIR``:
  .. Let ``EC~1~``, ``STO~1~``, and ``expressionListResult`` be the result of <<Exprs_eval, evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
@@ -13997,14 +13997,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``expressionResult`` be ``RECORD { (value nameIR ;)^{asterisk}^ , ... }``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``ERROR . nameIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``ERROR . nameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``nameIR~error~`` be ``"error." {pp} nameIR``.
 . Let ``value~error~`` be <<find_var_e, the value of ``nameIR~error~`` in ``EC`` at ``p``>>.
 . Let ``expressionResult`` be ``value~error~``.
 . Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``TYPE prefixedNameIR . nameIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``TYPE prefixedNameIR . nameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``typeDefIR`` be <<option_get, *!*>> ``<<find_typeDef_e, find_typeDef_e(p, EC, prefixedNameIR)>>``.
 . Check that ``typeDefIR`` has type ``enumTypeIR``.
@@ -14017,9 +14017,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``typeId . nameIR . value``.
  .. Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ . nameIR`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
-. Let ``typeIR~base~`` be the type of ``++_++``.
+. Let ``typeIR~base~`` be the type of ``expressionNoteIR``.
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult'`` be the result of <<Expr_eval, evaluating ``typedExpressionIR~base~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionResult'``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
@@ -14076,7 +14076,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``tableMetadataEnumValue``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~index~ ]`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~index~ ]`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionListResult`` be the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~, typedExpressionIR~index~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionListResult``:
@@ -14107,7 +14107,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionListResult`` be the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionListResult``:
@@ -14119,7 +14119,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``expressionResult`` be ``value'``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let <<Callee_eval, ``p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult``>>.
 . If let ``exitResult`` be ``calleeResult``:
@@ -14133,7 +14133,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``value`` be ``value'^?^``.
   ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``value``.
 
-<<Expr_eval, Evaluating <<typedExpressionIR, ``( typedExpressionIR )`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Expr_eval, Evaluating <<typedExpressionIR, ``( typedExpressionIR )`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
@@ -14201,13 +14201,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Result in ``EC~0~``, ``STO~0~``, and ``None``.
 
-<<Lvalue_eval, Lvalue_eval: ``p EC STO |- lvalueIR # ++_++ : % % %``>>
+<<Lvalue_eval, Lvalue_eval: ``p EC STO |- lvalueIR # lvalueNoteIR : % % %``>>
 
-<<Lvalue_eval, ``p EC STO |- referenceExpressionIR # ++_++ : % % %``>>:
+<<Lvalue_eval, ``p EC STO |- referenceExpressionIR # lvalueNoteIR : % % %``>>:
 
 . Result in ``EC``, ``STO``, and ``referenceExpressionIR``.
 
-<<Lvalue_eval, ``p EC STO |- typedLvalueIR . nameIR # ++_++ : % % %``>>:
+<<Lvalue_eval, ``p EC STO |- typedLvalueIR . nameIR # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, ``p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'``>>.
 . If let ``exitResult`` be ``storageReferenceResult'``:
@@ -14218,7 +14218,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReferenceResult`` be ``storageReference . nameIR``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult``.
 
-<<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR ] # ++_++ : % % %``>>:
+<<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR ] # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, ``p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'``>>.
 . If let ``exitResult`` be ``storageReferenceResult'``:
@@ -14233,7 +14233,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``storageReferenceResult`` be ``storageReference [ value ]``.
   ... Result in ``EC~2~``, ``STO~2~``, and ``storageReferenceResult``.
 
-<<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # ++_++ : % % %``>>:
+<<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, ``p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'``>>.
 . If let ``exitResult`` be ``storageReferenceResult'``:
@@ -14250,7 +14250,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``storageReferenceResult`` be ``storageReference [ value~hi~ : value~lo~ ]``.
   ... Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult``.
 
-<<Lvalue_eval, ``p EC STO |- ( typedLvalueIR ) # ++_++ : % % %``>>:
+<<Lvalue_eval, ``p EC STO |- ( typedLvalueIR ) # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, ``p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult``>>.
 . Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult``.
@@ -15169,9 +15169,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``tableApplyMethodCallee`` be ``TABLE objectId . APPLY { frame ; TBL }``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``tableApplyMethodCallee``.
 
-<<Copy_in_argument, Copy_in_argument: ``STO~0~ p~caller~ EC~caller_0~ ++_++ direction typeIR nameIR ++_++ @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>
+<<Copy_in_argument, Copy_in_argument: ``STO~0~ p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>
 
-<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ ++_++ direction typeIR nameIR ++_++ @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
+<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
 . If ``direction`` matches pattern ```EMPTY``:
  .. Let <<Argument_eval, ``p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult``>>.
@@ -15188,7 +15188,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` with ``nameIR`` : ``value`` added to ``p~callee~``>>.
   ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``None``.
 
-<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ ++_++ INOUT typeIR nameIR ++_++ @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
+<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList INOUT typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
 . Let <<Argument_eval_lvalue, ``p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult``>>.
 . If let ``exitResult`` be ``storageReferenceResult``:
@@ -15200,7 +15200,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` with ``nameIR`` : ``value`` added to ``p~callee~``>>.
  .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``storageReference``.
 
-<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ ++_++ OUT typeIR nameIR ++_++ @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
+<<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList OUT typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
 . Let <<Argument_eval_lvalue, ``p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult``>>.
 . If let ``exitResult`` be ``storageReferenceResult``:
@@ -15250,16 +15250,16 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``<<add_vars_e, add_vars_e(p~callee~, EC~callee_0~, (nameIR)^{asterisk}^, value^{asterisk}^)>>``.
 . Result in ``EC~callee_1~``.
 
-<<Copy_out_argument, Copy_out_argument: ``STO p~caller~ EC~caller_0~ ++_++ direction typeIR nameIR ++_++ @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>
+<<Copy_out_argument, Copy_out_argument: ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>
 
-<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ ++_++ direction typeIR nameIR ++_++ @ p~callee~ EC~callee~ None ~> %``>>:
+<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ None ~> %``>>:
 
 . If ``direction`` matches pattern ``IN``:
  .. Result in ``EC~caller_0~``.
 . Else ``direction`` matches pattern ```EMPTY``:
  .. Result in ``EC~caller_0~``.
 
-<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ ++_++ direction typeIR nameIR ++_++ @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>:
+<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>:
 
 . If ``storageReference'^?^`` is equal to ``None``:
  .. If ``direction`` matches pattern ``OUT``:
@@ -16012,16 +16012,16 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let <<SelectCases_match, ``EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ nameIR~state~^?^``>>.
   ... Result in ``EC~2~``, ``STO~2~``, and ``nameIR~state~^?^``.
 
-<<TableKey_eval, TableKey_eval: ``EC~0~ STO~0~ |- typedExpressionIR : nameIR ++_++ ; : % % %``>>
+<<TableKey_eval, TableKey_eval: ``EC~0~ STO~0~ |- typedExpressionIR : nameIR annotationList ; : % % %``>>
 
-<<TableKey_eval, ``EC~0~ STO~0~ |- typedExpressionIR : nameIR ++_++ ; : % % %``>>:
+<<TableKey_eval, ``EC~0~ STO~0~ |- typedExpressionIR : nameIR annotationList ; : % % %``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Check that ``expressionResult`` has type ``exitResult``.
 . Let ``exitResult`` be ``expressionResult``.
 . Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 
-<<TableKey_eval, ``EC~0~ STO~0~ |- typedExpressionIR : nameIR ++_++ ; : % % %``>>:
+<<TableKey_eval, ``EC~0~ STO~0~ |- typedExpressionIR : nameIR annotationList ; : % % %``>>:
 
 . Let ``EC~1~``, ``STO~1~``, and ``expressionResult`` be the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Check that ``expressionResult`` has type ``continueResult<value>``.
