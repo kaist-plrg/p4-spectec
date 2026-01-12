@@ -259,7 +259,7 @@ let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
 let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     filename_stf =
   if List.exists (String.equal filename_p4) excludes_p4 then (
-    let log = Format.asprintf "Excluding file: %s" filename_p4 in
+    let log = Format.asprintf "Excluding file: %s" filename_stf in
     log |> print_endline;
     {
       stat with
@@ -273,7 +273,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
         run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
-      let log = Format.asprintf "Run success: %s" filename_p4 in
+      let log = Format.asprintf "Run success: %s" filename_stf in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -282,7 +282,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
         let log =
-          Format.asprintf "Error on run: %s\n%s" filename_p4
+          Format.asprintf "Error on run: %s\n%s" filename_stf
             (string_of_error at msg)
         in
         log |> print_endline;
