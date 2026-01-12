@@ -1,5 +1,5 @@
-open Runtime.Dynamic_Sl.Envs
 open Ol.Ast
+open Runtime.Dynamic_Sl.Envs
 
 (* Prettify instructions *)
 

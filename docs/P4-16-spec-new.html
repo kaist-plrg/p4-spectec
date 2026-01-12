@@ -9651,9 +9651,6 @@ the same type as the parameter type.</p>
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>init</sub></code></a>.</p>
-</li>
-<li>
 <p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> matches pattern <code>LCTK</code>.</p>
 </li>
 <li>
@@ -9757,7 +9754,7 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Let <code>constantInitializerOptIR</code> be <code>constantInitializerIR<sup>?</sup></code>.</p>
 </li>
 <li>
-<p>Else if let <code>= value</code> be <code>constantInitializerOptIR</code>:</p>
+<p>Else if <code>constantInitializerOptIR</code> is Some value:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11244,9 +11241,6 @@ is not defined.</p>
 <p>Check that <code>typeIR'</code> has type <code>externObjectTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>externObjectTypeIR</code> be <code>typeIR'</code>.</p>
-</li>
-<li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
@@ -11403,9 +11397,6 @@ as:</p>
 <p>Check that <code>typeIR'</code> has type <code>parserObjectTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>parserObjectTypeIR</code> be <code>typeIR'</code>.</p>
-</li>
-<li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
@@ -11541,9 +11532,6 @@ as:</p>
 </li>
 <li>
 <p>Check that <code>typeIR'</code> has type <code>controlObjectTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>controlObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11745,9 +11733,6 @@ syntax tableObject =
 <p>Check that <code>typeIR</code> has type <code>tableObjectTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>tableObjectTypeIR</code> be <code>typeIR</code>.</p>
-</li>
-<li>
 <p>The relation holds.</p>
 </li>
 </ol>
@@ -11832,9 +11817,6 @@ with them.</p>
 </li>
 <li>
 <p>Check that <code>typeIR'</code> has type <code>packageObjectTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>packageObjectTypeIR</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -13861,9 +13843,6 @@ syntax externFunctionDeclarationIR =
 <p>Let <code>parameterIR<sup>*</sup></code> and <code>typeId<sub>impl</sub><sup>*</sup></code> be the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_parameters_t">add_parameters_t(LOCAL, TC<sub>2</sub>, parameterIR<sup>*</sup>)</a></code>.</p>
-</li>
-<li>
 <p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code>(<code>parameterList</code>)</a>.</p>
 </li>
 <li>
@@ -15882,9 +15861,6 @@ syntax typedefDeclarationIR =
 <p>Check that <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDef_t">add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, typedefTypeIR)</a></code>.</p>
-</li>
-<li>
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;</code>.</p>
 </li>
 <li>
@@ -15911,9 +15887,6 @@ syntax typedefDeclarationIR =
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, assuming bound type ids <code>&lt;&lt;bound, bound(GLOBAL, TC<sub>0</sub>)</a></code>&gt;&gt;.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDef_t">add_typeDef_t(GLOBAL, TC<sub>0</sub>, nameIR, typedefTypeIR)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;</code>.</p>
@@ -16969,9 +16942,6 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 </li>
 <li>
 <p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_typedLvalueIR">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
@@ -18546,9 +18516,6 @@ still performed after the execution of the <code>return</code> statement.  See
 <ol class="loweralpha" type="a">
 <li>
 <p>Let <code>typedExpressionIR</code> be the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>LOCAL</code> and typing context <code>TC</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>ret</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_local_return_type_t">the expected return type in <code>TC</code></a>.</p>
@@ -22452,9 +22419,6 @@ syntax binaryExpressionIR =
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>, typedExpressionIR<sub>r_reduced</sub>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary">reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>, typedExpressionIR<sub>r_cast</sub>, compat_compare)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
-</li>
-<li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
@@ -24866,9 +24830,6 @@ syntax memberAccessExpressionIR =
 <p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
-</li>
-<li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
@@ -24898,9 +24859,6 @@ syntax memberAccessExpressionIR =
 <p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
-</li>
-<li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
@@ -24924,9 +24882,6 @@ syntax memberAccessExpressionIR =
 </li>
 <li>
 <p>Check that <code>typeIR'</code> has type <code>headerStackTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR [ n<sub>size</sub> ]</code> be <code>typeIR'</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT &lt; 32 &gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
@@ -25518,9 +25473,6 @@ syntax indexAccessExpressionIR =
 <p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
-</li>
-<li>
 <p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
@@ -25711,13 +25663,7 @@ syntax sliceAccessExpressionIR =
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
-</li>
-<li>
 <p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>

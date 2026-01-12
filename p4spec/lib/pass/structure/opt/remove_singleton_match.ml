@@ -29,47 +29,46 @@ let is_singleton_match (tdenv : TDEnv.t) (exp : exp) : bool =
   | MatchE (exp, _) -> is_singleton_case tdenv (exp.note $ exp.at)
   | _ -> false
 
-let rec remove_singleton_match (tdenv : TDEnv.t) (instrs : instr list) :
-    instr list =
+let rec remove (tdenv : TDEnv.t) (instrs : instr list) : instr list =
   match instrs with
   | [] -> []
   | instr_h :: instrs_t -> (
       match instr_h.it with
       | IfI (exp_cond, _iterexps, instrs) when is_singleton_match tdenv exp_cond
         ->
-          instrs @ instrs_t |> remove_singleton_match tdenv
+          instrs @ instrs_t |> remove tdenv
       | IfI (exp_cond, iterexps, instrs) ->
-          let instrs = remove_singleton_match tdenv instrs in
+          let instrs = remove tdenv instrs in
           let instr_h = IfI (exp_cond, iterexps, instrs) $ instr_h.at in
-          let instrs_t = remove_singleton_match tdenv instrs_t in
+          let instrs_t = remove tdenv instrs_t in
           instr_h :: instrs_t
       | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
-          let instrs_hold = remove_singleton_match tdenv instrs_hold in
-          let instrs_nothold = remove_singleton_match tdenv instrs_nothold in
+          let instrs_hold = remove tdenv instrs_hold in
+          let instrs_nothold = remove tdenv instrs_nothold in
           let instr_h =
             HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold)
             $ instr_h.at
           in
-          let instrs_t = remove_singleton_match tdenv instrs_t in
+          let instrs_t = remove tdenv instrs_t in
           instr_h :: instrs_t
       | CaseI (exp, cases, total) ->
           let cases =
             let guards, instrss = List.split cases in
-            let instrss = List.map (remove_singleton_match tdenv) instrss in
+            let instrss = List.map (remove tdenv) instrss in
             List.combine guards instrss
           in
           let instr_h = CaseI (exp, cases, total) $ instr_h.at in
-          let instrs_t = remove_singleton_match tdenv instrs_t in
+          let instrs_t = remove tdenv instrs_t in
           instr_h :: instrs_t
       | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-          let instrs_group = remove_singleton_match tdenv instrs_group in
+          let instrs_group = remove tdenv instrs_group in
           let instr_h =
             GroupI (id_group, rel_signature, exps_group, instrs_group)
             $ instr_h.at
           in
-          let instrs_t = remove_singleton_match tdenv instrs_t in
+          let instrs_t = remove tdenv instrs_t in
           instr_h :: instrs_t
-      | _ -> instr_h :: remove_singleton_match tdenv instrs_t)
+      | _ -> instr_h :: remove tdenv instrs_t)
 
 let apply (tdenv : TDEnv.t) (instrs : instr list) : instr list =
-  remove_singleton_match tdenv instrs
+  remove tdenv instrs
