@@ -516,6 +516,21 @@ dec $bin_lor(value, value) : value
 
 def $bin_lor(`B b_l, `B b_r) = `B (b_l \/ b_r)
 
+;;; Cast underlying value to enum
+
+dec $cast_to_enum'(valueFieldIR*, value) : value
+def $cast_to_enum'(valueFieldIR_h :: valueFieldIR_t*, value_target) = value_target
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if $bin_eq(value, value_target)
+def $cast_to_enum'(valueFieldIR_h :: valueFieldIR_t*, value_target)
+  = $cast_to_enum'(valueFieldIR_t*, value_target)
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if ~$bin_eq(value, value_target)
+
+dec $cast_to_enum(enumTypeIR, value) : value
+def $cast_to_enum(ENUM typeId `< typeIR > `{ valueFieldIR* }, value)
+  = $cast_to_enum'(valueFieldIR*, value)
+
 ;;
 ;; Type cast operations
 ;;
@@ -569,6 +584,7 @@ def $cast_fixbit(INT `< w_to >, _, i) = w_to S i'
 def $cast_fixbit(TYPEDEF _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
 def $cast_fixbit(TYPE _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
 def $cast_fixbit(SET `< typeIR >, w, i) = SET `{ $cast_fixbit(typeIR, w, i) }
+def $cast_fixbit(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w W i)
 
 def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
 
@@ -585,6 +601,7 @@ def $cast_fixint(INT `< w_to >, w_from, i) = w_to S i'
 def $cast_fixint(TYPEDEF _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
 def $cast_fixint(TYPE _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
 def $cast_fixint(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
+def $cast_fixint(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w S i)
 
 def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 
