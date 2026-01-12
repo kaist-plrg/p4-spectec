@@ -51,7 +51,7 @@ module Source = struct
               (false, []) pairs
           in
           (if found then pairs else (id.it, [ func ]) :: pairs) |> List.rev
-      | _ -> []
+      | _ -> pairs
 
     let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
       List.fold_left init_def [] spec_el

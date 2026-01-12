@@ -156,8 +156,8 @@ module Make
       if total = 0 then 0.0
       else float_of_int count_unused /. float_of_int total *. 100.0
     in
-    Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused name total
-      percentage
+    Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused name
+      total percentage
     |> warn no_region;
     keys_unused
     |> List.iter (fun key ->

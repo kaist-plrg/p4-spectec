@@ -98,6 +98,4 @@ let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (fun (filename_input, filename_output) ->
       splice_file filename_input filename_output)
     filenames;
-  List.iter
-    (fun (module S : SPLICER) -> S.warn_unused ())
-    splicers
+  List.iter (fun (module S : SPLICER) -> S.warn_unused ()) splicers
