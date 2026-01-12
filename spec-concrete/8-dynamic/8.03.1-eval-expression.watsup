@@ -445,7 +445,7 @@ rulegroup Expr_eval/indexAccessExpressionIR {
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                       : EC_1 STO_1 EXIT
 
-  rule Expr_eval/tuple-exit:
+  rule Expr_eval/tuple:
     p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
                   : EC_1 STO_1 expressionResult
     -- Exprs_eval:
@@ -461,9 +461,10 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- Exprs_eval:
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                       : EC_1 STO_1 (`` ([ value_base, integerValue_index ]))
-    -- if HEADER_STACK `[ value_elem* `( _; _ ) ] = value_base
+    -- if HEADER_STACK `[ value_elem* `( _; n_size ) ] = value_base
     -- if n_index = $int_of_integerValue(integerValue_index)
-    -- if expressionResult = `` value_elem*[n_index]
+    -- if n_idx = $min_int([n_index, $(n_size - 1)])
+    -- if expressionResult = `` value_elem*[n_idx]
 
 }
 
