@@ -225,8 +225,9 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     |> Merge.merge_blocks
   in
   let instrs = Optimize.optimize ihenv tdenv instrs in
+  let instrs = Totalize.totalize tdenv instrs in
   let exps_match_unified, instrs =
-    Pretty.pretty_rel exps_match_unified instrs
+    Prettify.pretty_rel ihenv exps_match_unified instrs
   in
   let instrs = Instrument.instrument instrs in
   Sl.RelD (id_rel, rel_signature, exps_match_unified, instrs, hints) $ at
@@ -262,6 +263,7 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
     paths
     |> List.map struct_tablerow_path
     |> List.map (Optimize.optimize ihenv tdenv)
+    |> List.map (Totalize.totalize tdenv)
     |> List.map Instrument.instrument
   in
   let exp_output_group = paths |> List.split |> snd in
@@ -281,7 +283,8 @@ and struct_func_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
   let instrs = Optimize.optimize ihenv tdenv instrs in
-  let args_input, instrs = Pretty.pretty_func args_input instrs in
+  let instrs = Totalize.totalize tdenv instrs in
+  let args_input, instrs = Prettify.pretty_func ihenv args_input instrs in
   let params = struct_params_from_args params args_input in
   let instrs = Instrument.instrument instrs in
   let func = (id_dec, tparams, params, typ, instrs, hints) in

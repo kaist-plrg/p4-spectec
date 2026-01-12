@@ -579,9 +579,9 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
             List.map2
               (fun exp_l prose_field ->
                 match exp_l.it with
-                | Il.VarE id when String.starts_with ~prefix:"_" id.it -> None
-                | Il.IterE ({ it = Il.VarE id; _ }, _)
-                  when String.starts_with ~prefix:"_" id.it ->
+                | Il.VarE id when Id.is_underscored id -> None
+                | Il.IterE ({ it = Il.VarE id; _ }, _) when Id.is_underscored id
+                  ->
                     None
                 | _ ->
                     let exp_pl = prosify_exp ctx exp_l in

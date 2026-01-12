@@ -1,4 +1,5 @@
 open Domain
+open Lib
 open Xl
 open Ast
 open Util.Source
@@ -79,7 +80,7 @@ let string_of_relid relid = Il.Print.string_of_relid relid
 let string_of_defid defid = Il.Print.string_of_varid defid
 
 let render_varid (ctx : context) (id_var : Sl.id) =
-  if String.starts_with ~prefix:"_" id_var.it then "++_++" |> as_code ctx
+  if Id.is_underscored id_var then "++_++" |> as_code ctx
   else
     let var_slices = String.split_on_char '_' id_var.it in
     match var_slices with
@@ -121,7 +122,7 @@ let code_of_iterexp (iter, _) = code_of_iter iter
 (* Variables *)
 
 let render_var ctx (id, _typ, iters) =
-  if String.starts_with ~prefix:"_" id.it then "++_++" |> as_code ctx
+  if Id.is_underscored id then "++_++" |> as_code ctx
   else render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
 
 let render_in_itervars ctx vars : string =

@@ -69,6 +69,12 @@ module Id = struct
   let to_string t = t.it
   let compare t_a t_b = compare t_a.it t_b.it
   let eq t_a t_b = compare t_a t_b = 0
+  let is_underscored t = String.starts_with ~prefix:"_" t.it
+
+  let rec strip_underscore t =
+    if is_underscored t then
+      String.sub t.it 1 (String.length t.it - 1) $ t.at |> strip_underscore
+    else t
 end
 
 module IdSet = struct

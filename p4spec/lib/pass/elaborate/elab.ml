@@ -1782,7 +1782,7 @@ and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
             List.for_all
               (fun exp_il_signature ->
                 match exp_il_signature.it with
-                | Il.VarE vid when String.starts_with ~prefix:"_" vid.it -> true
+                | Il.VarE id when Id.is_underscored id -> true
                 | _ -> false)
               exps_il_signature
           then (Some tablerow_il, List.rev tablerows_il_rev)

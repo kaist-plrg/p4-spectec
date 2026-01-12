@@ -14,6 +14,11 @@ let ( + ) = IdSet.union
 
 (* Collect free identifiers *)
 
+let free_exp (exp : exp) : t = free_exp exp
+let free_exps (exps : exp list) : t = free_exps exps
+let free_arg (arg : arg) : t = free_arg arg
+let free_args (args : arg list) : t = free_args args
+
 let rec free_instr (instr : instr) : t =
   match instr.it with
   | IfI (exp, _, instrs) -> free_exp exp + free_instrs instrs

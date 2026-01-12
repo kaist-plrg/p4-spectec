@@ -9,6 +9,19 @@ module Rename = MakeIdEnv (Id)
 
 type t = Rename.t
 
+let empty : t = Rename.empty
+let dom (rename : t) : IdSet.t = Rename.dom rename
+
+let singleton (id : Id.t) (id_renamed : Id.t) : t =
+  Rename.singleton id id_renamed
+
+let add (id : Id.t) (id_renamed : Id.t) (rename : t) : t =
+  Rename.add id id_renamed rename
+
+let filter (p : Id.t -> 'a -> bool) (rename : t) : t = Rename.filter p rename
+
+(* Renaming *)
+
 let rename_iterexp (rename : t) (iterexp : iterexp) : iterexp =
   let iter, vars = iterexp in
   let vars =

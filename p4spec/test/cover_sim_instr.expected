@@ -1,4 +1,4 @@
-;; Instruction coverage: 9140/12856 (71.10%)
+;; Instruction coverage: 8979/12541 (71.60%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -100,9 +100,9 @@ builtin def $strip_suffix(text, text')
 builtin def $strip_all_whitespace(text)
 
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:95.1-95.28
-def $is_some_<X>((X')?)
+def $is_some_<X>((X)?)
 
-+ 1. Case analysis on (X')?
++ 1. Case analysis on (X)?
 
     1. Case (% matches pattern ())
 
@@ -110,9 +110,7 @@ def $is_some_<X>((X')?)
 
     2. Case (% matches pattern (_))
 
-+     1. (Let ?(X) be (X')?)
-
-+     2. Return true
++     1. Return true
 
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:99.1-99.29
 def $opt_as_seq_<X>((X')?)
@@ -3338,7 +3336,7 @@ def $update_headerStack((value)*, value_new, n_target_idx, n_size)
 + 1. Return $update_headerStack'((value)*, value_new, 0, n_target_idx, n_size)
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:95.1-95.64
-def $update_headerStack'((value)*, _value, _nat, _nat', _nat'')
+def $update_headerStack'((value)*, value', nat, nat', nat'')
 
 + 1. Case analysis on (value)*
 
@@ -3350,19 +3348,19 @@ def $update_headerStack'((value)*, _value, _nat, _nat', _nat'')
 
 +     1. (Let value_h :: (value_t)* be (value)*)
 
-+     2. If ((_nat = _nat'')), then
++     2. If ((nat = nat'')), then
 
 -       1. Return []
 
-+     3. Case analysis on _nat'
++     3. Case analysis on nat'
 
-        1. Case (% = _nat)
+        1. Case (% = nat)
 
-+         1. Return _value :: (value_t)*
++         1. Return value' :: (value_t)*
 
-        2. Case (% =/= _nat)
+        2. Case (% =/= nat)
 
-+         1. Return value_h :: $update_headerStack'((value_t)*, _value, (_nat + 1), _nat', _nat'')
++         1. Return value_h :: $update_headerStack'((value_t)*, value', (nat + 1), nat', nat'')
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:122.1-122.59
 def $update_headerUnion((fieldValue')*, nameIR)
@@ -3409,9 +3407,7 @@ def $write_value_from_bits'(value', n_var, (bool)*)
 
     1. Case (% has type boolValue)
 
-+     1. (Let (_bool) be (value' as boolValue))
-
-+     2. If (((bool)* matches pattern _ :: _)), then
++     1. If (((bool)* matches pattern _ :: _)), then
 
 +       1. (Let b_h :: (b_t)* be (bool)*)
 
@@ -3928,9 +3924,7 @@ def $is_baseTypeIR(typeIR)
 
 - 1. If ((typeIR has type baseTypeIR)), then
 
--   1. (Let baseTypeIR be (typeIR as baseTypeIR))
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -4006,9 +4000,7 @@ def $is_integerTypeIR(typeIR)
 
 - 1. If ((typeIR has type integerTypeIR)), then
 
--   1. (Let integerTypeIR be (typeIR as integerTypeIR))
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -4038,9 +4030,7 @@ def $is_fixedIntTypeIR(typeIR)
 
 -   2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--     1. (Let (int< _nat >) be integerTypeIR)
-
--     2. Return true
+-     1. Return true
 
 - 2. Otherwise
 
@@ -4055,9 +4045,7 @@ def $is_fixedBitTypeIR(typeIR)
 
 +   2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+     1. (Let (bit< _nat >) be integerTypeIR)
-
-+     2. Return true
++     1. Return true
 
 + 2. Otherwise
 
@@ -4068,9 +4056,7 @@ def $is_dataTypeIR(typeIR)
 
 - 1. If ((typeIR has type dataTypeIR)), then
 
--   1. (Let dataTypeIR be (typeIR as dataTypeIR))
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -4081,9 +4067,7 @@ def $is_headerStackTypeIR(typeIR)
 
 + 1. If ((typeIR has type headerStackTypeIR)), then
 
--   1. (Let headerStackTypeIR be (typeIR as headerStackTypeIR))
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -4094,9 +4078,7 @@ def $is_objectTypeIR(typeIR)
 
 + 1. If ((typeIR has type objectTypeIR)), then
 
-+   1. (Let objectTypeIR be (typeIR as objectTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4107,9 +4089,7 @@ def $is_externObjectTypeIR(typeIR)
 
 + 1. If ((typeIR has type externObjectTypeIR)), then
 
-+   1. (Let externObjectTypeIR be (typeIR as externObjectTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4120,9 +4100,7 @@ def $is_parserObjectTypeIR(typeIR)
 
 + 1. If ((typeIR has type parserObjectTypeIR)), then
 
-+   1. (Let parserObjectTypeIR be (typeIR as parserObjectTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4133,9 +4111,7 @@ def $is_controlObjectTypeIR(typeIR)
 
 + 1. If ((typeIR has type controlObjectTypeIR)), then
 
-+   1. (Let controlObjectTypeIR be (typeIR as controlObjectTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4146,9 +4122,7 @@ def $is_packageObjectTypeIR(typeIR)
 
 + 1. If ((typeIR has type packageObjectTypeIR)), then
 
-+   1. (Let packageObjectTypeIR be (typeIR as packageObjectTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4159,9 +4133,7 @@ def $is_tableObjectTypeIR(typeIR)
 
 - 1. If ((typeIR has type controlObjectTypeIR)), then
 
--   1. (Let controlObjectTypeIR be (typeIR as controlObjectTypeIR))
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -4172,9 +4144,7 @@ def $is_synthesizedTypeIR(typeIR)
 
 + 1. If ((typeIR has type synthesizedTypeIR)), then
 
--   1. (Let synthesizedTypeIR be (typeIR as synthesizedTypeIR))
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -4185,9 +4155,7 @@ def $is_tableMetadataStructTypeIR(typeIR)
 
 + 1. If ((typeIR has type tableMetadataStructTypeIR)), then
 
--   1. (Let tableMetadataStructTypeIR be (typeIR as tableMetadataStructTypeIR))
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -4198,9 +4166,7 @@ def $is_setTypeIR(typeIR)
 
 + 1. If ((typeIR has type setTypeIR)), then
 
--   1. (Let setTypeIR be (typeIR as setTypeIR))
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -4251,9 +4217,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
 -     1. If ((typeIR'' has type integerTypeIR)), then
 
--       1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $is_defaultable_typeIR(typeIR)
 
@@ -4319,9 +4283,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
 -       2. If ((enumTypeIR matches pattern `ENUM%{%}`)), then
 
--         1. (Let (enum _typeId { (_nameIR)* }) be enumTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((enum _typeId < typeIR >{ (_valueFieldIR)* }) as typeIR) -> $is_defaultable_typeIR(typeIR)
 
@@ -4355,9 +4317,7 @@ tbl def $is_equalable_typeIR(typeIR'')
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let (` typeId) be (typeIR'' as nameTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $is_equalable_typeIR(typeIR)
 
@@ -4371,41 +4331,31 @@ tbl def $is_equalable_typeIR(typeIR'')
 
 +     1. If ((typeIR'' has type externObjectTypeIR)), then
 
--       1. (Let externObjectTypeIR be (typeIR'' as externObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (parserObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (controlObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : ((default) as typeIR) -> false
 
@@ -4423,9 +4373,7 @@ tbl def $is_equalable_typeIR(typeIR'')
 
 -       2. If ((sequenceTypeIR matches pattern `SEQ<%,...>`)), then
 
--         1. (Let (seq< (_typeIR)* ,...>) be sequenceTypeIR)
-
--         2. Return false
+-         1. Return false
 
  Row : ((record{ (_fieldTypeIR)* ,...}) as typeIR) -> false
 
@@ -4435,9 +4383,7 @@ tbl def $is_equalable_typeIR(typeIR'')
 
 -       2. If ((recordTypeIR matches pattern `RECORD{%,...}`)), then
 
--         1. (Let (record{ (_fieldTypeIR)* ,...}) be recordTypeIR)
-
--         2. Return false
+-         1. Return false
 
  Row : ((header_invalid) as typeIR) -> false
 
@@ -4451,17 +4397,13 @@ tbl def $is_equalable_typeIR(typeIR'')
 
 +     1. If ((typeIR'' has type setTypeIR)), then
 
--       1. (Let setTypeIR be (typeIR'' as setTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableMetadataTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableMetadataTypeIR)), then
 
--       1. (Let tableMetadataTypeIR be (typeIR'' as tableMetadataTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -4509,17 +4451,13 @@ tbl def $is_assignable_typeIR(typeIR'')
 
 +     1. If ((typeIR'' has type objectTypeIR)), then
 
--       1. (Let objectTypeIR be (typeIR'' as objectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (synthesizedTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type synthesizedTypeIR)), then
 
--       1. (Let synthesizedTypeIR be (typeIR'' as synthesizedTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -4530,9 +4468,7 @@ def $is_typedefTypeDefIR(typeDefIR)
 
 + 1. If ((typeDefIR has type typedefTypeIR)), then
 
-+   1. (Let typedefTypeIR be (typeDefIR as typedefTypeIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -4719,15 +4655,11 @@ def $typeParameterListIR_of_typeDefIR(typeDefIR)
 
     1. Case (% has type nameTypeDefIR)
 
--     1. (Let nameTypeDefIR be (typeDefIR as nameTypeDefIR))
-
--     2. Return ([], [])
+-     1. Return ([], [])
 
     2. Case (% has type aliasTypeDefIR)
 
-+     1. (Let aliasTypeDefIR be (typeDefIR as aliasTypeDefIR))
-
-+     2. Return ([], [])
++     1. Return ([], [])
 
     3. Case (% has type structTypeDefIR)
 
@@ -4749,9 +4681,7 @@ def $typeParameterListIR_of_typeDefIR(typeDefIR)
 
     6. Case (% has type enumTypeDefIR)
 
-+     1. (Let enumTypeDefIR be (typeDefIR as enumTypeDefIR))
-
-+     2. Return ([], [])
++     1. Return ([], [])
 
     7. Case (% has type externObjectTypeDefIR)
 
@@ -4779,9 +4709,7 @@ def $typeParameterListIR_of_typeDefIR(typeDefIR)
 
     11. Case (% has type tableObjectTypeDefIR)
 
--     1. (Let tableObjectTypeDefIR be (typeDefIR as tableObjectTypeDefIR))
-
--     2. Return ([], [])
+-     1. Return ([], [])
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:159.1-161.44
 def $is_monomorphic_typeDefIR(typeDefIR)
@@ -4790,27 +4718,19 @@ def $is_monomorphic_typeDefIR(typeDefIR)
 
     1. Case (% has type nameTypeDefIR)
 
-+     1. (Let nameTypeDefIR be (typeDefIR as nameTypeDefIR))
-
-+     2. Return true
++     1. Return true
 
     2. Case (% has type aliasTypeDefIR)
 
-+     1. (Let aliasTypeDefIR be (typeDefIR as aliasTypeDefIR))
-
-+     2. Return true
++     1. Return true
 
     3. Case (% has type enumTypeDefIR)
 
-+     1. (Let enumTypeDefIR be (typeDefIR as enumTypeDefIR))
-
-+     2. Return true
++     1. Return true
 
     4. Case (% has type tableObjectTypeDefIR)
 
--     1. (Let tableObjectTypeDefIR be (typeDefIR as tableObjectTypeDefIR))
-
--     2. Return true
+-     1. Return true
 
 + 2. Otherwise
 
@@ -4897,9 +4817,9 @@ def $id_of_parameterIR((_annotationList _direction _typeIR id _constantInitializ
 + 1. Return id
 
 ;; ../../../../spec-concrete/2-static-runtime/2.3.2-type-callable-aux.watsup:9.1-10.52
-def $default_of_parameterIR((_annotationList _direction _typeIR _id _constantInitializerOptIR))
+def $default_of_parameterIR((_annotationList _direction _typeIR _id constantInitializerOptIR))
 
-+ 1. (Let (constantInitializerIR)? be _constantInitializerOptIR)
++ 1. (Let (constantInitializerIR)? be constantInitializerOptIR)
 
 + 2. If (((constantInitializerIR)? matches pattern ())), then
 
@@ -5018,9 +4938,7 @@ def $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
 
     1. Case (% has type actionTypeDefIR)
 
-+     1. (Let actionTypeDefIR be (callableTypeDefIR as actionTypeDefIR))
-
-+     2. Return ([], [])
++     1. Return ([], [])
 
     2. Case (% has type definedFunctionTypeDefIR)
 
@@ -5054,15 +4972,11 @@ def $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
 
     5. Case (% has type parserApplyMethodTypeDefIR)
 
-+     1. (Let parserApplyMethodTypeDefIR be (callableTypeDefIR as parserApplyMethodTypeDefIR))
-
-+     2. Return ([], [])
++     1. Return ([], [])
 
     6. Case (% has type controlApplyMethodTypeDefIR)
 
-+     1. (Let controlApplyMethodTypeDefIR be (callableTypeDefIR as controlApplyMethodTypeDefIR))
-
-+     2. Return ([], [])
++     1. Return ([], [])
 
 ;; ../../../../spec-concrete/2-static-runtime/2.3.4-type-callable-def-aux.watsup:87.1-89.40
 def $parameterListIR_of_callableTypeDefIR(callableTypeDefIR)
@@ -5206,9 +5120,7 @@ def $free_typeIR(typeIR')
 
     1. Case (% has type baseTypeIR)
 
-+     1. (Let baseTypeIR be (typeIR' as baseTypeIR))
-
-+     2. Return ({ [] })
++     1. Return ({ [] })
 
     2. Case (% has type nameTypeIR)
 
@@ -5272,9 +5184,7 @@ def $free_typeIR(typeIR')
 
         1. Case (% matches pattern `ENUM%{%}`)
 
--         1. (Let (enum _typeId { (_nameIR)* }) be enumTypeIR)
-
--         2. Return ({ [] })
+-         1. Return ({ [] })
 
         2. Case (% matches pattern `ENUM%<%>{%}`)
 
@@ -5308,9 +5218,7 @@ def $free_typeIR(typeIR')
 
     16. Case (% has type tableObjectTypeIR)
 
--     1. (Let (table _typeId { _tableMetadataStructTypeIR }) be (typeIR' as tableObjectTypeIR))
-
--     2. Return ({ [] })
+-     1. Return ({ [] })
 
     17. Case (% has type defaultTypeIR)
 
@@ -5368,9 +5276,7 @@ def $free_typeIR(typeIR')
 
     22. Case (% has type tableMetadataTypeIR)
 
--     1. (Let tableMetadataTypeIR be (typeIR' as tableMetadataTypeIR))
-
--     2. Return ({ [] })
+-     1. Return ({ [] })
 
 ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:11.1-12.47
 def $free_typeDefIR(typeDefIR)
@@ -5477,9 +5383,7 @@ def $free_callableTypeIR(callableTypeIR)
 
     8. Case (% has type tableApplyMethodTypeIR)
 
--     1. (Let (table_apply: _tableMetadataStructTypeIR) be (callableTypeIR as tableApplyMethodTypeIR))
-
--     2. Return ({ [] })
+-     1. Return ({ [] })
 
 ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:18.1-19.47
 def $free_callableTypeDefIR(callableTypeDefIR)
@@ -6278,15 +6182,15 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     5. Case (% has type structTypeIR)
 
-+     1. (Let (struct typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) be (typeIR as structTypeIR))
++     1. (Let (struct typeId < (typeArgumentIR_a)* >{ (fieldTypeIR)* }) be (typeIR as structTypeIR))
 
 +     2. If ((typeIR' has type structTypeIR)), then
 
-+       1. (Let (struct typeId' < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) be (typeIR' as structTypeIR))
++       1. (Let (struct typeId' < (typeArgumentIR_b)* >{ (fieldTypeIR')* }) be (typeIR' as structTypeIR))
 
 +       2. If ((typeId = typeId')), then
 
-+         1. Group structTypeIR: ((struct typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) as typeIR) ~~ ((struct typeId < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) as typeIR)
++         1. Group structTypeIR: ((struct typeId < (typeArgumentIR_a)* >{ (fieldTypeIR)* }) as typeIR) ~~ ((struct typeId < (typeArgumentIR_b)* >{ (fieldTypeIR')* }) as typeIR)
 
 +           1. If (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)* holds, then
 
@@ -6294,15 +6198,15 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     6. Case (% has type headerTypeIR)
 
-+     1. (Let (header typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) be (typeIR as headerTypeIR))
++     1. (Let (header typeId < (typeArgumentIR_a)* >{ (fieldTypeIR'')* }) be (typeIR as headerTypeIR))
 
 +     2. If ((typeIR' has type headerTypeIR)), then
 
-+       1. (Let (header typeId' < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) be (typeIR' as headerTypeIR))
++       1. (Let (header typeId' < (typeArgumentIR_b)* >{ (fieldTypeIR''')* }) be (typeIR' as headerTypeIR))
 
 +       2. If ((typeId = typeId')), then
 
-+         1. Group headerTypeIR: ((header typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) as typeIR) ~~ ((header typeId < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) as typeIR)
++         1. Group headerTypeIR: ((header typeId < (typeArgumentIR_a)* >{ (fieldTypeIR'')* }) as typeIR) ~~ ((header typeId < (typeArgumentIR_b)* >{ (fieldTypeIR''')* }) as typeIR)
 
 +           1. If (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)* holds, then
 
@@ -6310,15 +6214,15 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     7. Case (% has type headerUnionTypeIR)
 
-+     1. (Let (header_union typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) be (typeIR as headerUnionTypeIR))
++     1. (Let (header_union typeId < (typeArgumentIR_a)* >{ (fieldTypeIR'''')* }) be (typeIR as headerUnionTypeIR))
 
 +     2. If ((typeIR' has type headerUnionTypeIR)), then
 
-+       1. (Let (header_union typeId' < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) be (typeIR' as headerUnionTypeIR))
++       1. (Let (header_union typeId' < (typeArgumentIR_b)* >{ (fieldTypeIR''''')* }) be (typeIR' as headerUnionTypeIR))
 
 +       2. If ((typeId = typeId')), then
 
-+         1. Group headerUnionTypeIR: ((header_union typeId < (typeArgumentIR_a)* >{ (_fieldTypeIR)* }) as typeIR) ~~ ((header_union typeId < (typeArgumentIR_b)* >{ (_fieldTypeIR')* }) as typeIR)
++         1. Group headerUnionTypeIR: ((header_union typeId < (typeArgumentIR_a)* >{ (fieldTypeIR'''')* }) as typeIR) ~~ ((header_union typeId < (typeArgumentIR_b)* >{ (fieldTypeIR''''')* }) as typeIR)
 
 +           1. If (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)* holds, then
 
@@ -6362,15 +6266,15 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     9. Case (% has type externObjectTypeIR)
 
-+     1. (Let (extern typeId < (typeArgumentIR_a)* > _externMethodTypeDefEnv) be (typeIR as externObjectTypeIR))
++     1. (Let (extern typeId < (typeArgumentIR_a)* > externMethodTypeDefEnv) be (typeIR as externObjectTypeIR))
 
 +     2. If ((typeIR' has type externObjectTypeIR)), then
 
-+       1. (Let (extern typeId' < (typeArgumentIR_b)* > _externMethodTypeDefEnv') be (typeIR' as externObjectTypeIR))
++       1. (Let (extern typeId' < (typeArgumentIR_b)* > externMethodTypeDefEnv') be (typeIR' as externObjectTypeIR))
 
 +       2. If ((typeId = typeId')), then
 
-+         1. Group externObjectTypeIR: ((extern typeId < (typeArgumentIR_a)* > _externMethodTypeDefEnv) as typeIR) ~~ ((extern typeId < (typeArgumentIR_b)* > _externMethodTypeDefEnv') as typeIR)
++         1. Group externObjectTypeIR: ((extern typeId < (typeArgumentIR_a)* > externMethodTypeDefEnv) as typeIR) ~~ ((extern typeId < (typeArgumentIR_b)* > externMethodTypeDefEnv') as typeIR)
 
 +           1. If (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)* holds, then
 
@@ -6378,13 +6282,13 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     10. Case (% has type parserObjectTypeIR)
 
-+     1. (Let (parser _typeId < (_typeArgumentIR)* >( (parameterIR_a)* )) be (typeIR as parserObjectTypeIR))
++     1. (Let (parser typeId'''' < (typeArgumentIR)* >( (parameterIR_a)* )) be (typeIR as parserObjectTypeIR))
 
 +     2. If ((typeIR' has type parserObjectTypeIR)), then
 
-+       1. (Let (parser _typeId' < (_typeArgumentIR')* >( (parameterIR_b)* )) be (typeIR' as parserObjectTypeIR))
++       1. (Let (parser typeId''''' < (typeArgumentIR')* >( (parameterIR_b)* )) be (typeIR' as parserObjectTypeIR))
 
-+       2. Group parserObjectTypeIR: ((parser _typeId < (_typeArgumentIR)* >( (parameterIR_a)* )) as typeIR) ~~ ((parser _typeId' < (_typeArgumentIR')* >( (parameterIR_b)* )) as typeIR)
++       2. Group parserObjectTypeIR: ((parser typeId'''' < (typeArgumentIR)* >( (parameterIR_a)* )) as typeIR) ~~ ((parser typeId''''' < (typeArgumentIR')* >( (parameterIR_b)* )) as typeIR)
 
 +         1. If (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)* holds, then
 
@@ -6392,13 +6296,13 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     11. Case (% has type controlObjectTypeIR)
 
-+     1. (Let (control _typeId < (_typeArgumentIR)* >( (parameterIR_a)* )) be (typeIR as controlObjectTypeIR))
++     1. (Let (control typeId'''''' < (typeArgumentIR'')* >( (parameterIR_a)* )) be (typeIR as controlObjectTypeIR))
 
 +     2. If ((typeIR' has type controlObjectTypeIR)), then
 
-+       1. (Let (control _typeId' < (_typeArgumentIR')* >( (parameterIR_b)* )) be (typeIR' as controlObjectTypeIR))
++       1. (Let (control typeId''''''' < (typeArgumentIR''')* >( (parameterIR_b)* )) be (typeIR' as controlObjectTypeIR))
 
-+       2. Group controlObjectTypeIR: ((control _typeId < (_typeArgumentIR)* >( (parameterIR_a)* )) as typeIR) ~~ ((control _typeId' < (_typeArgumentIR')* >( (parameterIR_b)* )) as typeIR)
++       2. Group controlObjectTypeIR: ((control typeId'''''' < (typeArgumentIR'')* >( (parameterIR_a)* )) as typeIR) ~~ ((control typeId''''''' < (typeArgumentIR''')* >( (parameterIR_b)* )) as typeIR)
 
 +         1. If (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)* holds, then
 
@@ -6406,13 +6310,13 @@ rel Type_alpha: typeIR ~~ typeIR'
 
     12. Case (% has type packageObjectTypeIR)
 
--     1. (Let (package _typeId < (_typeArgumentIR)* >{ (typeIR_a)* }) be (typeIR as packageObjectTypeIR))
+-     1. (Let (package typeId'''''''' < (typeArgumentIR'''')* >{ (typeIR_a)* }) be (typeIR as packageObjectTypeIR))
 
 -     2. If ((typeIR' has type packageObjectTypeIR)), then
 
--       1. (Let (package _typeId' < (_typeArgumentIR')* >{ (typeIR_b)* }) be (typeIR' as packageObjectTypeIR))
+-       1. (Let (package typeId''''''''' < (typeArgumentIR''''')* >{ (typeIR_b)* }) be (typeIR' as packageObjectTypeIR))
 
--       2. Group packetObjectTypeIR: ((package _typeId < (_typeArgumentIR)* >{ (typeIR_a)* }) as typeIR) ~~ ((package _typeId' < (_typeArgumentIR')* >{ (typeIR_b)* }) as typeIR)
+-       2. Group packetObjectTypeIR: ((package typeId'''''''' < (typeArgumentIR'''')* >{ (typeIR_a)* }) as typeIR) ~~ ((package typeId''''''''' < (typeArgumentIR''''')* >{ (typeIR_b)* }) as typeIR)
 
 -         1. If (Type_alpha: typeIR_a ~~ typeIR_b)* holds, then
 
@@ -6561,11 +6465,11 @@ rel Type_alpha: typeIR ~~ typeIR'
 -           1. The relation holds
 
 ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:11.1-15.56
-rel ParameterType_alpha: (_annotationList direction typeIR_a _id _constantInitializerOptIR) ~~ (_annotationList' direction' typeIR_b _id' _constantInitializerOptIR')
+rel ParameterType_alpha: (annotationList direction typeIR_a id constantInitializerOptIR) ~~ (annotationList' direction' typeIR_b id' constantInitializerOptIR')
 
 + 1. If ((direction = direction')), then
 
-+   1. Group : (_annotationList direction typeIR_a _id _constantInitializerOptIR) ~~ (_annotationList' direction typeIR_b _id' _constantInitializerOptIR')
++   1. Group : (annotationList direction typeIR_a id constantInitializerOptIR) ~~ (annotationList' direction typeIR_b id' constantInitializerOptIR')
 
 +     1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
@@ -7680,9 +7584,7 @@ def $bin_shr(value, value')
 
 -             2. (Let i_l' be $bitstr_to_int((w_l as int), i_l))
 
--             3. (Let i_r' be $bitstr_to_int((w_r as int), i_r))
-
--             4. If ((i_l' < (0 as int))), then
+-             3. If ((i_l' < (0 as int))), then
 
 -               1. (Let int be (w_l - 1))
 
@@ -7696,7 +7598,7 @@ def $bin_shr(value, value')
 
 -                 4. Return ((w_l s i'') as value)
 
--             5. If ((i_l' >= (0 as int))), then
+-             4. If ((i_l' >= (0 as int))), then
 
 -               1. (Let i' be $shr(i_l, i_r))
 
@@ -8170,21 +8072,17 @@ def $bin_eqs((value)*, (value')*)
 
         2. Case (% matches pattern _ :: _)
 
--         1. (Let _value :: (_value')* be (value')*)
-
--         2. Return false
+-         1. Return false
 
     2. Case (% matches pattern _ :: _)
 
-+     1. (Let _value :: (_value')* be (value)*)
-
-+     2. If (((value')* matches pattern [])), then
++     1. If (((value')* matches pattern [])), then
 
 -       1. Return false
 
-+     3. (Let value_a_h :: (value_a_t)* be (value)*)
++     2. (Let value_a_h :: (value_a_t)* be (value)*)
 
-+     4. If (((value')* matches pattern _ :: _)), then
++     3. If (((value')* matches pattern _ :: _)), then
 
 +       1. (Let value_b_h :: (value_b_t)* be (value')*)
 
@@ -8205,21 +8103,17 @@ def $bin_eqs_fields(((value, id))*, ((value, id)')*)
 
         2. Case (% matches pattern _ :: _)
 
--         1. (Let _(value, id) :: (_(value, id)')* be ((value, id)')*)
-
--         2. Return false
+-         1. Return false
 
     2. Case (% matches pattern _ :: _)
 
-+     1. (Let _(value, id) :: (_(value, id)')* be ((value, id))*)
-
-+     2. If ((((value, id)')* matches pattern [])), then
++     1. If ((((value, id)')* matches pattern [])), then
 
 -       1. Return false
 
-+     3. (Let (value_a_h, id_a_h) :: ((value_a_t, id_a_t))* be ((value, id))*)
++     2. (Let (value_a_h, id_a_h) :: ((value_a_t, id_a_t))* be ((value, id))*)
 
-+     4. If ((((value, id)')* matches pattern _ :: _)), then
++     3. If ((((value, id)')* matches pattern _ :: _)), then
 
 +       1. (Let (value_b_h, id_b_h) :: ((value_b_t, id_b_t))* be ((value, id)')*)
 
@@ -9294,9 +9188,7 @@ def $sizeof_minSizeInBits'(typeIR')
 
         3. Case (% matches pattern `VARBIT<%>`)
 
-+         1. (Let (varbit< _nat >) be integerTypeIR)
-
-+         2. Return 0
++         1. Return 0
 
     3. Case (% has type typedefTypeIR)
 
@@ -10426,11 +10318,9 @@ def $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR')*, (argum
 
 +       2. If ((argumentIR_h has type typedExpressionIR)), then
 
-+         1. (Let typedExpressionIR be (argumentIR_h as typedExpressionIR))
++         1. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
 
-+         2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
-
-+         3. Return (parameterIR_h :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
++         2. Return (parameterIR_h :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
 
 +       3. Case analysis on argumentIR_h
 
@@ -10497,9 +10387,7 @@ def $callTargetKey'(argumentIR)
 
 + 1. If ((argumentIR has type typedExpressionIR)), then
 
-+   1. (Let typedExpressionIR be (argumentIR as typedExpressionIR))
-
-+   2. Return ?()
++   1. Return ?()
 
 + 2. Case analysis on argumentIR
 
@@ -10815,9 +10703,7 @@ def $is_function_localKind(localKind)
 
 - 1. If ((localKind matches pattern `FUNCTION:%`)), then
 
--   1. (Let (function: _typeIR) be localKind)
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -10828,9 +10714,7 @@ def $is_extern_function_localKind(localKind)
 
 - 1. If ((localKind matches pattern `EXTERN_FUNCTION:%`)), then
 
--   1. (Let (extern_function: _typeIR) be localKind)
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -10852,9 +10736,7 @@ def $is_extern_method_localKind(localKind)
 
 + 1. If ((localKind matches pattern `EXTERN_METHOD:%`)), then
 
--   1. (Let (extern_method: _typeIR) be localKind)
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -10865,9 +10747,7 @@ def $is_extern_abstract_method_localKind(localKind)
 
 + 1. If ((localKind matches pattern `EXTERN_METHODABSTRACT:%`)), then
 
--   1. (Let (extern_methodabstract: _typeIR) be localKind)
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -11700,9 +11580,7 @@ def $update_mode(TBLC, text, typeIR')
 
 -     3. If ((matchMode matches pattern `NOPRILPM%`)), then
 
--       1. (Let (noprilpm _nat) be matchMode)
-
--       2. Return TBLC[mode = (prilpm)]
+-       1. Return TBLC[mode = (prilpm)]
 
     3. Case (% = "ternary")
 
@@ -11714,9 +11592,7 @@ def $update_mode(TBLC, text, typeIR')
 
 -     3. If ((matchMode matches pattern `NOPRILPM%`)), then
 
--       1. (Let (noprilpm _nat) be matchMode)
-
--       2. Return TBLC[mode = (prilpm)]
+-       1. Return TBLC[mode = (prilpm)]
 
     4. Case (% = "optional")
 
@@ -11728,9 +11604,7 @@ def $update_mode(TBLC, text, typeIR')
 
 +     3. If ((matchMode matches pattern `NOPRILPM%`)), then
 
--       1. (Let (noprilpm _nat) be matchMode)
-
--       2. Return TBLC[mode = (prilpm)]
+-       1. Return TBLC[mode = (prilpm)]
 
 + 2. Otherwise
 
@@ -11820,15 +11694,15 @@ def $tableEntry_lpm_prefix'(value, n_prefix)
 
 +   2. If ((integerLiteral matches pattern `%W%`)), then
 
-+     1. (Let (nat w _int) be integerLiteral)
++     1. (Let (nat w int) be integerLiteral)
 
 +     2. If ((nat = 0)), then
 
 +       1. Return n_prefix
 
-+     3. If ((_int has type nat)), then
++     3. If ((int has type nat)), then
 
-+       1. (Let n be (_int as nat))
++       1. (Let n be (int as nat))
 
 +       2. If ((nat > 0)), then
 
@@ -11891,9 +11765,9 @@ rel Type_wf: B |- typeIR'
 
     3. Case (% has type typedefTypeIR)
 
-+     1. (Let (typedef _typeId typeIR) be (typeIR' as typedefTypeIR))
++     1. (Let (typedef typeId' typeIR) be (typeIR' as typedefTypeIR))
 
-+     2. Group typedefTypeIR: B |- ((typedef _typeId typeIR) as typeIR)
++     2. Group typedefTypeIR: B |- ((typedef typeId' typeIR) as typeIR)
 
 +       1. If ($nestable_typedef(typeIR)), then
 
@@ -11903,9 +11777,9 @@ rel Type_wf: B |- typeIR'
 
     4. Case (% has type newTypeIR)
 
-+     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
++     1. (Let (type typeId'' typeIR) be (typeIR' as newTypeIR))
 
-+     2. Group newTypeIR: B |- ((type _typeId typeIR) as typeIR)
++     2. Group newTypeIR: B |- ((type typeId'' typeIR) as typeIR)
 
 +       1. If ($nestable_new(typeIR)), then
 
@@ -11939,9 +11813,9 @@ rel Type_wf: B |- typeIR'
 
     7. Case (% has type headerStackTypeIR)
 
-+     1. (Let (typeIR [ _nat ]) be (typeIR' as headerStackTypeIR))
++     1. (Let (typeIR [ nat ]) be (typeIR' as headerStackTypeIR))
 
-+     2. Group headerStackTypeIR: B |- ((typeIR [ _nat ]) as typeIR)
++     2. Group headerStackTypeIR: B |- ((typeIR [ nat ]) as typeIR)
 
 +       1. If ($nestable_headerStack(typeIR)), then
 
@@ -11951,9 +11825,9 @@ rel Type_wf: B |- typeIR'
 
     8. Case (% has type structTypeIR)
 
-+     1. (Let (struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as structTypeIR))
++     1. (Let (struct typeId''' < (typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as structTypeIR))
 
-+     2. Group structTypeIR: B |- ((struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
++     2. Group structTypeIR: B |- ((struct typeId''' < (typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
 
 +       1. If ($distinct_<nameIR>((nameIR_field)*)), then
 
@@ -11965,9 +11839,9 @@ rel Type_wf: B |- typeIR'
 
     9. Case (% has type headerTypeIR)
 
-+     1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerTypeIR))
++     1. (Let (header typeId'''' < (typeArgumentIR')* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerTypeIR))
 
-+     2. Group headerTypeIR: B |- ((header _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
++     2. Group headerTypeIR: B |- ((header typeId'''' < (typeArgumentIR')* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
 
 +       1. If ($distinct_<nameIR>((nameIR_field)*)), then
 
@@ -11979,9 +11853,9 @@ rel Type_wf: B |- typeIR'
 
     10. Case (% has type headerUnionTypeIR)
 
-+     1. (Let (header_union _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerUnionTypeIR))
++     1. (Let (header_union typeId''''' < (typeArgumentIR'')* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR' as headerUnionTypeIR))
 
-+     2. Group headerUnionTypeIR: B |- ((header_union _typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
++     2. Group headerUnionTypeIR: B |- ((header_union typeId''''' < (typeArgumentIR'')* >{ ((typeIR_field nameIR_field ;))* }) as typeIR)
 
 +       1. If ($distinct_<nameIR>((nameIR_field)*)), then
 
@@ -12021,9 +11895,9 @@ rel Type_wf: B |- typeIR'
 
     12. Case (% has type externObjectTypeIR)
 
-+     1. (Let (extern _typeId < (_typeArgumentIR)* > ({ ((_callableId : externMethodTypeDefIR))* })) be (typeIR' as externObjectTypeIR))
++     1. (Let (extern typeId'''''''' < (typeArgumentIR''')* > ({ ((callableId : externMethodTypeDefIR))* })) be (typeIR' as externObjectTypeIR))
 
-+     2. Group externObjectTypeIR: B |- ((extern _typeId < (_typeArgumentIR)* > ({ ((_callableId : externMethodTypeDefIR))* })) as typeIR)
++     2. Group externObjectTypeIR: B |- ((extern typeId'''''''' < (typeArgumentIR''')* > ({ ((callableId : externMethodTypeDefIR))* })) as typeIR)
 
 +       1. If (CallableTypeDef_wf: B |- (externMethodTypeDefIR as callableTypeDefIR))* holds, then
 
@@ -12031,9 +11905,9 @@ rel Type_wf: B |- typeIR'
 
     13. Case (% has type parserObjectTypeIR)
 
-+     1. (Let (parser _typeId < (_typeArgumentIR)* >( (parameterIR)* )) be (typeIR' as parserObjectTypeIR))
++     1. (Let (parser typeId''''''''' < (typeArgumentIR'''')* >( (parameterIR)* )) be (typeIR' as parserObjectTypeIR))
 
-+     2. Group parserObjectTypeIR: B |- ((parser _typeId < (_typeArgumentIR)* >( (parameterIR)* )) as typeIR)
++     2. Group parserObjectTypeIR: B |- ((parser typeId''''''''' < (typeArgumentIR'''')* >( (parameterIR)* )) as typeIR)
 
 +       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
@@ -12041,9 +11915,9 @@ rel Type_wf: B |- typeIR'
 
     14. Case (% has type controlObjectTypeIR)
 
-+     1. (Let (control _typeId < (_typeArgumentIR)* >( (parameterIR)* )) be (typeIR' as controlObjectTypeIR))
++     1. (Let (control typeId'''''''''' < (typeArgumentIR''''')* >( (parameterIR)* )) be (typeIR' as controlObjectTypeIR))
 
-+     2. Group controlObjectTypeIR: B |- ((control _typeId < (_typeArgumentIR)* >( (parameterIR)* )) as typeIR)
++     2. Group controlObjectTypeIR: B |- ((control typeId'''''''''' < (typeArgumentIR''''')* >( (parameterIR)* )) as typeIR)
 
 +       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
@@ -12051,9 +11925,9 @@ rel Type_wf: B |- typeIR'
 
     15. Case (% has type packageObjectTypeIR)
 
-+     1. (Let (package _typeId < (_typeArgumentIR)* >{ (typeIR)* }) be (typeIR' as packageObjectTypeIR))
++     1. (Let (package typeId''''''''''' < (typeArgumentIR'''''')* >{ (typeIR)* }) be (typeIR' as packageObjectTypeIR))
 
-+     2. Group packageObjectTypeIR: B |- ((package _typeId < (_typeArgumentIR)* >{ (typeIR)* }) as typeIR)
++     2. Group packageObjectTypeIR: B |- ((package typeId''''''''''' < (typeArgumentIR'''''')* >{ (typeIR)* }) as typeIR)
 
 +       1. If (Type_wf: B |- typeIR)* holds, then
 
@@ -12061,9 +11935,9 @@ rel Type_wf: B |- typeIR'
 
     16. Case (% has type tableObjectTypeIR)
 
--     1. (Let (table _typeId { tableMetadataStructTypeIR }) be (typeIR' as tableObjectTypeIR))
+-     1. (Let (table typeId'''''''''''' { tableMetadataStructTypeIR }) be (typeIR' as tableObjectTypeIR))
 
--     2. Group tableObjectTypeIR: B |- ((table _typeId { tableMetadataStructTypeIR }) as typeIR)
+-     2. Group tableObjectTypeIR: B |- ((table typeId'''''''''''' { tableMetadataStructTypeIR }) as typeIR)
 
 -       1. If (Type_wf: B |- (tableMetadataStructTypeIR as typeIR)) holds, then
 
@@ -12189,9 +12063,9 @@ rel TypeDef_wf: B |- typeDefIR
 +       1. The relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:17.1-21.89
-rel ParameterType_wf: B |- (_annotationList direction typeIR _id (constantInitializerIR)?)
+rel ParameterType_wf: B |- (annotationList direction typeIR id (constantInitializerIR)?)
 
-+ 1. Group : B |- (_annotationList direction typeIR _id (constantInitializerIR)?)
++ 1. Group : B |- (annotationList direction typeIR id (constantInitializerIR)?)
 
 +   1. If (((constantInitializerIR)? = ?())), then
 
@@ -12209,9 +12083,7 @@ rel ParameterType_wf: B |- (_annotationList direction typeIR _id (constantInitia
 
 +   3. If ((constantInitializerOptIR matches pattern (_))), then
 
-+     1. (Let ?((= value)) be constantInitializerOptIR)
-
-+     2. If (Type_wf: B |- typeIR) holds, then
++     1. If (Type_wf: B |- typeIR) holds, then
 
 +       1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
@@ -12426,11 +12298,9 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +       2. If ((typeIR' has type externObjectTypeIR)), then
 
-+         1. (Let externObjectTypeIR be (typeIR' as externObjectTypeIR))
++         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
-+         2. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
-
-+         3. If ($nestable_constructor_extern(typeIR))*, then
++         2. If ($nestable_constructor_extern(typeIR))*, then
 
 +           1. The relation holds
 
@@ -12444,11 +12314,9 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +       2. If ((typeIR' has type parserObjectTypeIR)), then
 
-+         1. (Let parserObjectTypeIR be (typeIR' as parserObjectTypeIR))
++         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
-+         2. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
-
-+         3. If ($nestable_constructor_parser(typeIR))*, then
++         2. If ($nestable_constructor_parser(typeIR))*, then
 
 +           1. The relation holds
 
@@ -12462,11 +12330,9 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +       2. If ((typeIR' has type controlObjectTypeIR)), then
 
-+         1. (Let controlObjectTypeIR be (typeIR' as controlObjectTypeIR))
++         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
-+         2. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
-
-+         3. If ($nestable_constructor_control(typeIR))*, then
++         2. If ($nestable_constructor_control(typeIR))*, then
 
 +           1. The relation holds
 
@@ -12480,9 +12346,7 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 -       2. If ((typeIR has type tableObjectTypeIR)), then
 
--         1. (Let tableObjectTypeIR be (typeIR as tableObjectTypeIR))
-
--         2. The relation holds
+-         1. The relation holds
 
 + 5. Group packageObjectTypeIR: B |- (constructor( (parameterIR)* ): typeIR_object)
 
@@ -12494,11 +12358,9 @@ rel ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
 +       2. If ((typeIR' has type packageObjectTypeIR)), then
 
-+         1. (Let packageObjectTypeIR be (typeIR' as packageObjectTypeIR))
++         1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
-+         2. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
-
-+         3. If ($nestable_constructor_package(typeIR))*, then
++         2. If ($nestable_constructor_package(typeIR))*, then
 
 +           1. The relation holds
 
@@ -12551,17 +12413,13 @@ tbl def $nestable_typedef(typeIR'')
 
 +     1. If ((typeIR'' has type integerTypeIR)), then
 
-+       1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_typedef(typeIR)
 
@@ -12575,49 +12433,37 @@ tbl def $nestable_typedef(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (dataTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type dataTypeIR)), then
 
-+       1. (Let dataTypeIR be (typeIR'' as dataTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (externObjectTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type externObjectTypeIR)), then
 
-+       1. (Let externObjectTypeIR be (typeIR'' as externObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (parserObjectTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (controlObjectTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (packageObjectTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -12643,9 +12489,7 @@ tbl def $nestable_new(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((int< _nat >) as typeIR) -> true
 
@@ -12655,17 +12499,13 @@ tbl def $nestable_new(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_new(typeIR)
 
@@ -12679,9 +12519,7 @@ tbl def $nestable_new(typeIR'')
 
 -     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -12727,17 +12565,13 @@ tbl def $nestable_list(typeIR'')
 
 -     1. If ((typeIR'' has type integerTypeIR)), then
 
--       1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_list(typeIR)
 
@@ -12751,17 +12585,13 @@ tbl def $nestable_list(typeIR'')
 
 -     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (dataTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type dataTypeIR)), then
 
--       1. (Let dataTypeIR be (typeIR'' as dataTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -12795,9 +12625,7 @@ tbl def $nestable_tuple(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((int< _nat >) as typeIR) -> true
 
@@ -12807,9 +12635,7 @@ tbl def $nestable_tuple(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((varbit< _nat >) as typeIR) -> true
 
@@ -12819,17 +12645,13 @@ tbl def $nestable_tuple(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `VARBIT<%>`)), then
 
-+         1. (Let (varbit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_tuple(typeIR)
 
@@ -12843,57 +12665,43 @@ tbl def $nestable_tuple(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
-+       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (tupleTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type tupleTypeIR)), then
 
--       1. (Let tupleTypeIR be (typeIR'' as tupleTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (headerStackTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type headerStackTypeIR)), then
 
-+       1. (Let headerStackTypeIR be (typeIR'' as headerStackTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (structTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type structTypeIR)), then
 
-+       1. (Let structTypeIR be (typeIR'' as structTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (headerTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type headerTypeIR)), then
 
-+       1. (Let headerTypeIR be (typeIR'' as headerTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (headerUnionTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type headerUnionTypeIR)), then
 
-+       1. (Let headerUnionTypeIR be (typeIR'' as headerUnionTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (enumTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type enumTypeIR)), then
 
-+       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -12907,9 +12715,7 @@ tbl def $nestable_headerStack(typeIR'')
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_headerStack(typeIR)
 
@@ -12923,17 +12729,13 @@ tbl def $nestable_headerStack(typeIR'')
 
 +     1. If ((typeIR'' has type headerTypeIR)), then
 
-+       1. (Let headerTypeIR be (typeIR'' as headerTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (headerUnionTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type headerUnionTypeIR)), then
 
-+       1. (Let headerUnionTypeIR be (typeIR'' as headerUnionTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -12964,9 +12766,7 @@ tbl def $nestable_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -12976,9 +12776,7 @@ tbl def $nestable_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((varbit< _nat >) as typeIR) -> true
 
@@ -12988,17 +12786,13 @@ tbl def $nestable_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `VARBIT<%>`)), then
 
-+         1. (Let (varbit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
-+       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_header(typeIR)
 
@@ -13012,9 +12806,7 @@ tbl def $nestable_header(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
-+       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : ((enum _typeId < _typeIR >{ (_valueFieldIR)* }) as typeIR) -> true
 
@@ -13024,9 +12816,7 @@ tbl def $nestable_header(typeIR'')
 
 +       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
-+         1. (Let (enum _typeId < _typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field _nameIR ;))* }) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*)
 
@@ -13060,9 +12850,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13072,17 +12860,13 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_struct_in_header(typeIR)
 
@@ -13096,9 +12880,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((enum _typeId < _typeIR >{ (_valueFieldIR)* }) as typeIR) -> true
 
@@ -13108,9 +12890,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 -       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
--         1. (Let (enum _typeId < _typeIR >{ (_valueFieldIR)* }) be enumTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field _nameIR ;))* }) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*)
 
@@ -13132,9 +12912,7 @@ tbl def $nestable_headerUnion(typeIR'')
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_headerUnion(typeIR)
 
@@ -13148,17 +12926,13 @@ tbl def $nestable_headerUnion(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : (headerTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type headerTypeIR)), then
 
-+       1. (Let headerTypeIR be (typeIR'' as headerTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -13176,9 +12950,7 @@ tbl def $nestable_enum_serializable(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13188,17 +12960,13 @@ tbl def $nestable_enum_serializable(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_enum_serializable(typeIR)
 
@@ -13232,9 +13000,7 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13244,17 +13010,13 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
--         1. (Let (bit< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_new_in_enum_serializable(typeIR)
 
@@ -13268,9 +13030,7 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
 -     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -13304,9 +13064,7 @@ tbl def $nestable_set(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13316,17 +13074,13 @@ tbl def $nestable_set(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_set(typeIR)
 
@@ -13340,9 +13094,7 @@ tbl def $nestable_set(typeIR'')
 
 +     1. If ((typeIR'' has type newTypeIR)), then
 
-+       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : ((tuple< (typeIR)* >) as typeIR) -> $forall_(($nestable_tuple_in_set(typeIR))*)
 
@@ -13356,9 +13108,7 @@ tbl def $nestable_set(typeIR'')
 
 -     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((seq< (typeIR)* >) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*)
 
@@ -13396,9 +13146,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13408,17 +13156,13 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
--         1. (Let (bit< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_tuple_in_set(typeIR)
 
@@ -13432,9 +13176,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
 -     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((tuple< (typeIR)* >) as typeIR) -> $forall_(($nestable_tuple_in_set(typeIR))*)
 
@@ -13448,9 +13190,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
 -     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -13476,9 +13216,7 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -13488,17 +13226,13 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
--         1. (Let (bit< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : (nameTypeIR as typeIR) -> true
 
 -     1. If ((typeIR'' has type nameTypeIR)), then
 
--       1. (Let nameTypeIR be (typeIR'' as nameTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $nestable_sequence_in_set(typeIR)
 
@@ -13512,9 +13246,7 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
 -     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let newTypeIR be (typeIR'' as newTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((tuple< (typeIR)* >) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*)
 
@@ -13528,9 +13260,7 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
 -     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : ((seq< (typeIR)* >) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*)
 
@@ -13554,7 +13284,7 @@ def $directionless_trailing((direction)*)
 + 1. Return $directionless_trailing'(true, $rev_<direction>((direction)*))
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:474.1-474.54
-def $directionless_trailing'(_bool, (direction')*)
+def $directionless_trailing'(bool, (direction')*)
 
 + 1. Case analysis on (direction')*
 
@@ -13570,7 +13300,7 @@ def $directionless_trailing'(_bool, (direction')*)
 
 +       1. Return $directionless_trailing'(false, (direction_t)*)
 
-+ 2. Case analysis on _bool
++ 2. Case analysis on bool
 
     1. Case (% = true)
 
@@ -13618,17 +13348,13 @@ tbl def $nestable_action(typeIR'')
 
 +     1. If ((typeIR'' has type objectTypeIR)), then
 
--       1. (Let objectTypeIR be (typeIR'' as objectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (synthesizedTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type synthesizedTypeIR)), then
 
--       1. (Let synthesizedTypeIR be (typeIR'' as synthesizedTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13650,17 +13376,13 @@ tbl def $nestable_definedFunction(typeIR'')
 
 +     1. If ((typeIR'' has type objectTypeIR)), then
 
--       1. (Let objectTypeIR be (typeIR'' as objectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (synthesizedTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type synthesizedTypeIR)), then
 
--       1. (Let synthesizedTypeIR be (typeIR'' as synthesizedTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13682,33 +13404,25 @@ tbl def $nestable_externFunction(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (controlObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13730,33 +13444,25 @@ tbl def $nestable_externMethod(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (controlObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13778,33 +13484,25 @@ tbl def $nestable_parserApplyMethod(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (controlObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13826,25 +13524,19 @@ tbl def $nestable_controlApplyMethod(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13866,33 +13558,25 @@ tbl def $nestable_constructor_extern(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (controlObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13914,25 +13598,19 @@ tbl def $nestable_constructor_parser(typeIR'')
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
--       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13954,25 +13632,19 @@ tbl def $nestable_constructor_control(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
--       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (packageObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
--       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : (tableObjectTypeIR as typeIR) -> false
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -13994,9 +13666,7 @@ tbl def $nestable_constructor_package(typeIR'')
 
 +     1. If ((typeIR'' has type tableObjectTypeIR)), then
 
--       1. (Let tableObjectTypeIR be (typeIR'' as tableObjectTypeIR))
-
--       2. Return false
+-       1. Return false
 
  Row : _typeIR -> true
 
@@ -14018,33 +13688,25 @@ tbl def $definable_constructor(typeIR'')
 
 +     1. If ((typeIR'' has type externObjectTypeIR)), then
 
-+       1. (Let externObjectTypeIR be (typeIR'' as externObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (parserObjectTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
-+       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (controlObjectTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
-+       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (packageObjectTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type packageObjectTypeIR)), then
 
-+       1. (Let packageObjectTypeIR be (typeIR'' as packageObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -14054,7 +13716,7 @@ tbl def $definable_constructor(typeIR'')
 extern relation ExternFunctionCall_eval_lctk: typingContext |- nameIR ( (nameIR')* )~> %
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:13.1-18.33
-rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
+rel Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
 + 1. Case analysis on expressionIR
 
@@ -14062,7 +13724,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-+     2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # _expressionNoteIR) ~> %
++     2. Group literalExpressionIR-boolean: p TC |- ((booleanLiteral as expressionIR) # expressionNoteIR) ~> %
 
 +       1. Case analysis on booleanLiteral
 
@@ -14078,7 +13740,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
-+     2. Group literalExpressionIR-number: p TC |- ((integerLiteral as expressionIR) # _expressionNoteIR) ~> %
++     2. Group literalExpressionIR-number: p TC |- ((integerLiteral as expressionIR) # expressionNoteIR) ~> %
 
 +       1. Case analysis on integerLiteral
 
@@ -14104,7 +13766,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-+     2. Group literalExpressionIR-stringLiteral: p TC |- (((" text ") as expressionIR) # _expressionNoteIR) ~> %
++     2. Group literalExpressionIR-stringLiteral: p TC |- (((" text ") as expressionIR) # expressionNoteIR) ~> %
 
 +       1. Result in: % % |- % ~> ((" text ") as value)
 
@@ -14112,7 +13774,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
--     2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Let value be $find_var_value_t(p, TC, prefixedNameIR))
 
@@ -14122,7 +13784,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
--     2. Group defaultExpressionIR: p TC |- (((...) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group defaultExpressionIR: p TC |- (((...) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. Result in: % % |- % ~> ((default) as value)
 
@@ -14130,7 +13792,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
--     2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group unaryExpressionIR: p TC |- (((unop typedExpressionIR) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Expr_eval_lctk: p TC |- typedExpressionIR ~> value)
 
@@ -14140,7 +13802,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-+     2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) ~> %
++     2. Group binaryExpressionIR: p TC |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # expressionNoteIR) ~> %
 
 +       1. If (~binop' is in [(&&), (||)]), then
 
@@ -14184,7 +13846,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
--     2. Group ternaryExpressionIR: p TC |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group ternaryExpressionIR: p TC |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Expr_eval_lctk: p TC |- typedExpressionIR_cond ~> value)
 
@@ -14204,7 +13866,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-+     2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) ~> %
++     2. Group castExpressionIR: p TC |- (((( typeIR ) typedExpressionIR) as expressionIR) # expressionNoteIR) ~> %
 
 +       1. (Expr_eval_lctk: p TC |- typedExpressionIR ~> value)
 
@@ -14212,7 +13874,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +       3. Result in: % % |- % ~> value_cast
 
-+ 2. (Let (( _typeIR _ctk )) be _expressionNoteIR)
++ 2. (Let (( typeIR'' ctk )) be expressionNoteIR)
 
 + 3. Case analysis on expressionIR
 
@@ -14222,11 +13884,11 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
--       1. Group dataExpressionIR-invalid: p TC |- ((({#}) as expressionIR) # (( _typeIR _ctk ))) ~> %
+-       1. Group dataExpressionIR-invalid: p TC |- ((({#}) as expressionIR) # (( typeIR'' ctk ))) ~> %
 
 -         1. Result in: % % |- % ~> (({#}) as value)
 
-+     3. Group dataExpressionIR-sequence: p TC |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) ~> %
++     3. Group dataExpressionIR-sequence: p TC |- ((dataExpressionIR as expressionIR) # expressionNoteIR) ~> %
 
 +       1. Case analysis on dataExpressionIR
 
@@ -14246,7 +13908,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -           3. Result in: % % |- % ~> ((seq( (value)* ,...)) as value)
 
--     4. Group dataExpressionIR-record: p TC |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) ~> %
+-     4. Group dataExpressionIR-record: p TC |- ((dataExpressionIR as expressionIR) # expressionNoteIR) ~> %
 
 -       1. Case analysis on dataExpressionIR
 
@@ -14270,7 +13932,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
--     2. Group errorAccessExpressionIR: p TC |- (((error. nameIR) as expressionIR) # (( _typeIR _ctk ))) ~> %
+-     2. Group errorAccessExpressionIR: p TC |- (((error. nameIR) as expressionIR) # (( typeIR'' ctk ))) ~> %
 
 -       1. (Let nameIR_error be "error." ++ nameIR)
 
@@ -14286,7 +13948,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -       1. (Let (type prefixedNameIR_base) be memberAccessBaseIR)
 
--       2. Group memberAccessExpressionIR-type: p TC |- ((((type prefixedNameIR_base) . nameIR) as expressionIR) # _expressionNoteIR) ~> %
+-       2. Group memberAccessExpressionIR-type: p TC |- ((((type prefixedNameIR_base) . nameIR) as expressionIR) # expressionNoteIR) ~> %
 
 -         1. (Let (typeDefIR)? be $find_typeDef_t(p, TC, prefixedNameIR_base))
 
@@ -14330,7 +13992,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
--       2. Group memberAccessExpressionIR-typedExpressionIR: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) ~> %
+-       2. Group memberAccessExpressionIR-typedExpressionIR: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR) ~> %
 
 -         1. If ((nameIR = "size")), then
 
@@ -14394,7 +14056,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
--     2. Group indexAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group indexAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base)
 
@@ -14442,7 +14104,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
--     2. Group sliceAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group sliceAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base)
 
@@ -14466,7 +14128,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 +         2. If (((typeArgumentIR)* matches pattern [])), then
 
-+           1. Group callExpressionIR-static_assert: p TC |- ((((prefixedNameIR as callableTargetIR) < [] >( (argumentIR)* )) as expressionIR) # _expressionNoteIR) ~> %
++           1. Group callExpressionIR-static_assert: p TC |- ((((prefixedNameIR as callableTargetIR) < [] >( (argumentIR)* )) as expressionIR) # expressionNoteIR) ~> %
 
 +             1. If ((prefixedNameIR = (. "static_assert"))), then
 
@@ -14564,7 +14226,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -         1. If (((argumentIR)* matches pattern [])), then
 
--           1. Group callExpressionIR-builtin-size: p TC |- (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR) ~> %
+-           1. Group callExpressionIR-builtin-size: p TC |- (((callableTargetIR < [] >( [] )) as expressionIR) # expressionNoteIR) ~> %
 
 -             1. Case analysis on callableTargetIR
 
@@ -14612,9 +14274,9 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -         1. (Let (( callableTargetIR )) be callableTargetIR)
 
--         2. Group callExpressionIR-parenthesized: p TC |- ((((( callableTargetIR )) < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # (( _typeIR _ctk ))) ~> %
+-         2. Group callExpressionIR-parenthesized: p TC |- ((((( callableTargetIR )) < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # (( typeIR'' ctk ))) ~> %
 
--           1. (Expr_eval_lctk: p TC |- (((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # (( _typeIR _ctk ))) ~> value)
+-           1. (Expr_eval_lctk: p TC |- (((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # (( typeIR'' ctk ))) ~> value)
 
 -           2. Result in: % % |- % ~> value
 
@@ -14622,7 +14284,7 @@ rel Expr_eval_lctk: p TC |- (expressionIR # _expressionNoteIR) ~> %
 
 -     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
--     2. Group parenthesizedExpressionIR: p TC |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) ~> %
+-     2. Group parenthesizedExpressionIR: p TC |- (((( typedExpressionIR )) as expressionIR) # expressionNoteIR) ~> %
 
 -       1. (Expr_eval_lctk: p TC |- typedExpressionIR ~> value)
 
@@ -15049,15 +14711,11 @@ rel Sub_expl_unroll_neq: typeIR <: typeIR'
 
                 1. Case (% matches pattern `INT<%>`)
 
--                 1. (Let (int< _nat >) be integerTypeIR')
-
--                 2. The relation holds
+-                 1. The relation holds
 
                 2. Case (% matches pattern `BIT<%>`)
 
-+                 1. (Let (bit< _nat >) be integerTypeIR')
-
-+                 2. The relation holds
++                 1. The relation holds
 
         2. Case (% matches pattern `INT<%>`)
 
@@ -15177,15 +14835,11 @@ rel Sub_expl_unroll_neq: typeIR <: typeIR'
 
           1. Case (% has type headerTypeIR)
 
--           1. (Let headerTypeIR be (typeIR' as headerTypeIR))
-
--           2. The relation holds
+-           1. The relation holds
 
           2. Case (% has type headerUnionTypeIR)
 
--           1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
-
--           2. The relation holds
+-           1. The relation holds
 
     3. Case (% has type sequenceTypeIR)
 
@@ -15506,15 +15160,11 @@ rel Sub_impl_unroll_neq: typeIR <: typeIR'
 
               1. Case (% matches pattern `INT<%>`)
 
-+               1. (Let (int< _nat >) be integerTypeIR)
-
-+               2. The relation holds
++               1. The relation holds
 
               2. Case (% matches pattern `BIT<%>`)
 
-+               1. (Let (bit< _nat >) be integerTypeIR)
-
-+               2. The relation holds
++               1. The relation holds
 
     2. Case (% has type enumTypeIR)
 
@@ -15522,9 +15172,9 @@ rel Sub_impl_unroll_neq: typeIR <: typeIR'
 
 +     2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
-+       1. (Let (enum _typeId < typeIR_a >{ (_valueFieldIR)* }) be enumTypeIR)
++       1. (Let (enum typeId < typeIR_a >{ (valueFieldIR)* }) be enumTypeIR)
 
-+       2. Group enumTypeIR-serializable: ((enum _typeId < typeIR_a >{ (_valueFieldIR)* }) as typeIR) <: typeIR'
++       2. Group enumTypeIR-serializable: ((enum typeId < typeIR_a >{ (valueFieldIR)* }) as typeIR) <: typeIR'
 
 +         1. If (Sub_impl: typeIR_a <: typeIR') holds, then
 
@@ -15550,15 +15200,11 @@ rel Sub_impl_unroll_neq: typeIR <: typeIR'
 
           1. Case (% has type headerTypeIR)
 
--           1. (Let headerTypeIR be (typeIR' as headerTypeIR))
-
--           2. The relation holds
+-           1. The relation holds
 
           2. Case (% has type headerUnionTypeIR)
 
--           1. (Let headerUnionTypeIR be (typeIR' as headerUnionTypeIR))
-
--           2. The relation holds
+-           1. The relation holds
 
     5. Case (% has type sequenceTypeIR)
 
@@ -16241,17 +15887,15 @@ rel Expr_ok: p TC |- expression''' : %
 
 +             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be ((typedExpressionIR, typedExpressionIR)')?)
 
-+             2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
++             2. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-+             3. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
++             3. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-+             4. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
++             4. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-+             5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
++             5. (Let expressionNoteIR be (( ((bool) as typeIR) ctk_reduced )))
 
-+             6. (Let expressionNoteIR be (( ((bool) as typeIR) ctk_reduced )))
-
-+             7. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
++             6. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
 +     8. Group binaryExpression-bitwise: p TC |- ((expression_l binop expression_r) as expression) : %
 
@@ -16427,7 +16071,7 @@ rel Expr_ok: p TC |- expression''' : %
 
         2. Case (% matches pattern `{%%}`)
 
-+         1. (Let ({ dataElementExpression _trailingCommaOpt }) be dataExpression)
++         1. (Let ({ dataElementExpression trailingCommaOpt }) be dataExpression)
 
 +         2. Case analysis on dataElementExpression
 
@@ -16435,7 +16079,7 @@ rel Expr_ok: p TC |- expression''' : %
 
 +             1. (Let expressionList be (dataElementExpression as expressionList))
 
-+             2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) _trailingCommaOpt }) as expression) : %
++             2. Group dataExpression-sequence: p TC |- (({ (expressionList as dataElementExpression) trailingCommaOpt }) as expression) : %
 
 +               1. (Let (expression_e)* be $flatten_expressionList(expressionList))
 
@@ -16493,7 +16137,7 @@ rel Expr_ok: p TC |- expression''' : %
 
 +             1. (Let recordElementExpression be (dataElementExpression as recordElementExpression))
 
-+             2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) _trailingCommaOpt }) as expression) : %
++             2. Group dataExpression-record: p TC |- (({ (recordElementExpression as dataElementExpression) trailingCommaOpt }) as expression) : %
 
 +               1. Case analysis on recordElementExpression
 
@@ -16673,11 +16317,9 @@ rel Expr_ok: p TC |- expression''' : %
 
 +             4. If ((typeIR' has type headerStackTypeIR)), then
 
--               1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
+-               1. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (lctk) )))
 
--               2. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (lctk) )))
-
--               3. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # expressionNoteIR)
+-               2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "size") as expressionIR) # expressionNoteIR)
 
 +           2. If (("lastIndex" = $name(member))), then
 
@@ -16691,11 +16333,9 @@ rel Expr_ok: p TC |- expression''' : %
 
 -               4. If ((typeIR' has type headerStackTypeIR)), then
 
--                 1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
+-                 1. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (dyn) )))
 
--                 2. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (dyn) )))
-
--                 3. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "lastIndex") as expressionIR) # expressionNoteIR)
+-                 2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "lastIndex") as expressionIR) # expressionNoteIR)
 
 +             2. If (((p = (local)) /\ $is_parser_state_localKind(TC.local.kind))), then
 
@@ -16707,11 +16347,9 @@ rel Expr_ok: p TC |- expression''' : %
 
 +               4. If ((typeIR' has type headerStackTypeIR)), then
 
-+                 1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
++                 1. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (dyn) )))
 
-+                 2. (Let expressionNoteIR be (( ((bit< 32 >) as typeIR) (dyn) )))
-
-+                 3. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "lastIndex") as expressionIR) # expressionNoteIR)
++                 2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . "lastIndex") as expressionIR) # expressionNoteIR)
 
 +           3. If (("last" = $name(member))), then
 
@@ -16841,7 +16479,7 @@ rel Expr_ok: p TC |- expression''' : %
 
               4. Case (% has type tableMetadataStructTypeIR)
 
-+               1. (Let (table_struct _typeId {hit boolTypeIR ;miss _boolTypeIR ;action_run _tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
++               1. (Let (table_struct _typeId {hit boolTypeIR ;miss boolTypeIR' ;action_run tableMetadataEnumTypeIR ;}) be (typeIR' as tableMetadataStructTypeIR))
 
 +               2. (Let nameIR be $name(member))
 
@@ -16855,13 +16493,13 @@ rel Expr_ok: p TC |- expression''' : %
 
                   2. Case (% = "miss")
 
-+                   1. (Let expressionNoteIR be (( (_boolTypeIR as typeIR) (dyn) )))
++                   1. (Let expressionNoteIR be (( (boolTypeIR' as typeIR) (dyn) )))
 
 +                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
                   3. Case (% = "action_run")
 
-+                   1. (Let expressionNoteIR be (( (_tableMetadataEnumTypeIR as typeIR) (dyn) )))
++                   1. (Let expressionNoteIR be (( (tableMetadataEnumTypeIR as typeIR) (dyn) )))
 
 +                   2. Result in: % % |- % : ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR)
 
@@ -16879,13 +16517,11 @@ rel Expr_ok: p TC |- expression''' : %
 
 +       4. (Let ctk_base be $ctk_of_typedExpressionIR(typedExpressionIR_base))
 
-+       5. (Let typeIR_index be $type_of_typedExpressionIR(typedExpressionIR_index))
++       5. (Let ctk_index be $ctk_of_typedExpressionIR(typedExpressionIR_index))
 
-+       6. (Let ctk_index be $ctk_of_typedExpressionIR(typedExpressionIR_index))
++       6. (Let (typedExpressionIR)? be $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
 
-+       7. (Let (typedExpressionIR)? be $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
-
-+       8. If (((typedExpressionIR)? matches pattern (_))), then
++       7. If (((typedExpressionIR)? matches pattern (_))), then
 
 +         1. (Let ?(typedExpressionIR_index_reduced) be (typedExpressionIR)?)
 
@@ -16985,15 +16621,11 @@ rel Expr_ok: p TC |- expression''' : %
 
 +             1. (Let ?(typedExpressionIR_lo_reduced) be (typedExpressionIR'')?)
 
-+             2. (Let typeIR_hi_reduced be $type_of_typedExpressionIR(typedExpressionIR_hi_reduced))
++             2. (Let ctk_hi_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced))
 
-+             3. (Let ctk_hi_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced))
++             3. (Let ctk_lo_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced))
 
-+             4. (Let typeIR_lo_reduced be $type_of_typedExpressionIR(typedExpressionIR_lo_reduced))
-
-+             5. (Let ctk_lo_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced))
-
-+             6. If ((ctk_hi_reduced matches pattern `LCTK`)), then
++             4. If ((ctk_hi_reduced matches pattern `LCTK`)), then
 
 +               1. (Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value)
 
@@ -17525,11 +17157,9 @@ rel Stmt_ok: p TC f l |- statement' : % % %
 
 +           3. (Let typeIR_l be $type_of_typedLvalueIR(typedLvalueIR))
 
-+           4. (Let typeIR_r be $type_of_typedExpressionIR(typedExpressionIR))
++           4. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_l))
 
-+           5. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_l))
-
-+           6. If (((typedExpressionIR')? matches pattern (_))), then
++           5. If (((typedExpressionIR')? matches pattern (_))), then
 
 +             1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
 
@@ -17733,11 +17363,9 @@ rel Stmt_ok: p TC f l |- statement' : % % %
 
 +             2. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-+             3. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
++             3. (Let (typeIR')? be $find_local_return_type_t(TC))
 
-+             4. (Let (typeIR')? be $find_local_return_type_t(TC))
-
-+             5. If (((typeIR')? matches pattern (_))), then
++             4. If (((typeIR')? matches pattern (_))), then
 
 +               1. (Let ?(typeIR_ret) be (typeIR')?)
 
@@ -17791,11 +17419,9 @@ rel Stmt_ok: p TC f l |- statement' : % % %
 
 +             3. (Stmt_ok: (local) TC_2 f (loop) |- statement : TC_3 f_post statementIR)
 
-+             4. (Let TC_4 be $exit_t(TC_3))
++             4. (Let forStatementIR be (annotationList for( (forInitStatementIR)* ; typedExpressionIR ; (forUpdateStatementIR)* ) statementIR))
 
-+             5. (Let forStatementIR be (annotationList for( (forInitStatementIR)* ; typedExpressionIR ; (forUpdateStatementIR)* ) statementIR))
-
-+             6. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
++             5. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
 
 +       3. Group forStatement-in: (local) TC f l |- (forStatement as statement) : % % %
 
@@ -17823,11 +17449,9 @@ rel Stmt_ok: p TC f l |- statement' : % % %
 
 +                   5. (Stmt_ok: (local) TC_2 f (loop) |- statement : TC_3 f_post statementIR)
 
-+                   6. (Let TC_4 be $exit_t(TC_3))
++                   6. (Let forStatementIR be (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR))
 
-+                   7. (Let forStatementIR be (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR))
-
-+                   8. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
++                   7. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
 
             2. Case (% matches pattern `%FOR(%%%IN%)%`)
 
@@ -18053,9 +17677,7 @@ rel Parameter_ok: p TC |- (annotationList direction type name initializerOpt) : 
 
 +       1. (Expr_ok: p TC |- expression_init : typedExpressionIR_init)
 
-+       2. (Let typeIR_init be $type_of_typedExpressionIR(typedExpressionIR_init))
-
-+       3. If (($ctk_of_typedExpressionIR(typedExpressionIR_init) matches pattern `LCTK`)), then
++       2. If (($ctk_of_typedExpressionIR(typedExpressionIR_init) matches pattern `LCTK`)), then
 
 +         1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_init, typeIR))
 
@@ -18141,13 +17763,11 @@ rel ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : % %
 
 +           3. (Parameters_ok: (local) TC_2 |- (parameter)* : (parameterIR)* # (typeId_impl)*)
 
-+           4. (Let TC_3 be $add_parameters_t((local), TC_2, (parameterIR)*))
++           4. (Let callableId be $callableId(name, parameterList))
 
-+           5. (Let callableId be $callableId(name, parameterList))
++           5. (Let externMethodTypeDefIR be (extern_method< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
 
-+           6. (Let externMethodTypeDefIR be (extern_method< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
-
-+           7. If (CallableTypeDef_wf: $bound((block), TC_0) |- (externMethodTypeDefIR as callableTypeDefIR)) holds, then
++           6. If (CallableTypeDef_wf: $bound((block), TC_0) |- (externMethodTypeDefIR as callableTypeDefIR)) holds, then
 
 +             1. (Let TC_4 be $add_callableDef_overload_t((block), TC_0, callableId, (externMethodTypeDefIR as callableTypeDefIR)))
 
@@ -18181,13 +17801,11 @@ rel ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : % %
 
 -           3. (Parameters_ok: (local) TC_2 |- (parameter)* : (parameterIR)* # (typeId_impl)*)
 
--           4. (Let TC_3 be $add_parameters_t((local), TC_2, (parameterIR)*))
+-           4. (Let callableId be $callableId(name, parameterList))
 
--           5. (Let callableId be $callableId(name, parameterList))
+-           5. (Let externMethodTypeDefIR be (extern_methodabstract< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
 
--           6. (Let externMethodTypeDefIR be (extern_methodabstract< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
-
--           7. If (CallableTypeDef_wf: $bound((block), TC_0) |- (externMethodTypeDefIR as callableTypeDefIR)) holds, then
+-           6. If (CallableTypeDef_wf: $bound((block), TC_0) |- (externMethodTypeDefIR as callableTypeDefIR)) holds, then
 
 -             1. (Let TC_4 be $add_callableDef_non_overload_t((block), TC_0, callableId, (externMethodTypeDefIR as callableTypeDefIR)))
 
@@ -18484,11 +18102,9 @@ rel ParserStmt_ok: TC_0 |- parserStatement' : % %
 
 -       3. (ParserStmts_ok: TC_1 |- (parserStatement)* : TC_2 (parserStatementIR)*)
 
--       4. (Let TC_3 be $exit_t(TC_2))
+-       4. (Let parserBlockStatementIR be (annotationList { (parserStatementIR)* }))
 
--       5. (Let parserBlockStatementIR be (annotationList { (parserStatementIR)* }))
-
--       6. Result in: % |- % : TC_1 (parserBlockStatementIR as parserStatementIR)
+-       5. Result in: % |- % : TC_1 (parserBlockStatementIR as parserStatementIR)
 
     8. Case (% has type parserConditionalStatement)
 
@@ -18566,11 +18182,9 @@ rel ParserState_ok: TC_0 (nameIR_state)* |- (annotationList state name { parserS
 
 +   5. (ParserTransition_ok: TC_2 (nameIR_state)* |- transitionStatement : transitionStatementIR)
 
-+   6. (Let TC_3 be $exit_t(TC_2))
++   6. (Let parserStateIR be (annotationList state nameIR { (parserStatementIR)* transitionStatementIR }))
 
-+   7. (Let parserStateIR be (annotationList state nameIR { (parserStatementIR)* transitionStatementIR }))
-
-+   8. Result in: % % |- % : parserStateIR
++   7. Result in: % % |- % : parserStateIR
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:253.1-257.47
 rel ParserStates_ok: TC |- (parserState)* : %
@@ -19047,11 +18661,9 @@ rel TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
 -           2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
--             1. (Let (noprilpm n) be matchMode)
+-             1. (Let TBLS be (lpm 0))
 
--             2. (Let TBLS be (lpm 0))
-
--             3. Result in: % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
+-             2. Result in: % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
 
 -           3. Case analysis on TBLC.mode
 
@@ -19169,11 +18781,9 @@ rel TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
 +         2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
-+           1. (Let (noprilpm n) be matchMode)
++           1. (Let TBLS be (lpm 0))
 
-+           2. (Let TBLS be (lpm 0))
-
-+           3. Result in: % % |- % : TBLS ((_) as keysetExpressionIR)
++           2. Result in: % % |- % : TBLS ((_) as keysetExpressionIR)
 
 +         3. Case analysis on TBLC.mode
 
@@ -19255,9 +18865,7 @@ rel TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority')? : % %
 
 +       3. If ((matchMode matches pattern `NOPRILPM%`)), then
 
-+         1. (Let (noprilpm n) be matchMode)
-
-+         2. If ((TBLS matches pattern `LPM%`)), then
++         1. If ((TBLS matches pattern `LPM%`)), then
 
 +           1. (Let (lpm n_prefix) be TBLS)
 
@@ -20412,9 +20020,9 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
       2. Case (% has type matchKindDeclaration)
 
-+       1. (Let (match_kind{ nameList _trailingCommaOpt }) be (declaration as matchKindDeclaration))
++       1. (Let (match_kind{ nameList trailingCommaOpt }) be (declaration as matchKindDeclaration))
 
-+       2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList _trailingCommaOpt }) as declaration) : % %
++       2. Group matchKindDeclaration: (global) TC_0 |- ((match_kind{ nameList trailingCommaOpt }) as declaration) : % %
 
 +         1. (Let (name)* be $flatten_nameList(nameList))
 
@@ -20452,13 +20060,11 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
 +           3. (Parameters_ok: (local) TC_2 |- (parameter)* : (parameterIR)* # (typeId_impl)*)
 
-+           4. (Let TC_3 be $add_parameters_t((local), TC_2, (parameterIR)*))
++           4. (Let callableId be $callableId(name, parameterList))
 
-+           5. (Let callableId be $callableId(name, parameterList))
++           5. (Let externFunctionTypeDefIR be (extern_function< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
 
-+           6. (Let externFunctionTypeDefIR be (extern_function< (typeId_expl)* , (typeId_impl)* >( (parameterIR)* ): typeIR_ret))
-
-+           7. If (CallableTypeDef_wf: $bound((global), TC_0) |- (externFunctionTypeDefIR as callableTypeDefIR)) holds, then
++           6. If (CallableTypeDef_wf: $bound((global), TC_0) |- (externFunctionTypeDefIR as callableTypeDefIR)) holds, then
 
 +             1. (Let TC_4 be $add_callableDef_overload_t((global), TC_0, callableId, (externFunctionTypeDefIR as callableTypeDefIR)))
 
@@ -20640,9 +20246,9 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
           1. Case (% matches pattern `%ENUM%{%%}`)
 
-+           1. (Let (annotationList enum name { nameList_field _trailingCommaOpt }) be enumTypeDeclaration)
++           1. (Let (annotationList enum name { nameList_field trailingCommaOpt' }) be enumTypeDeclaration)
 
-+           2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field _trailingCommaOpt }) as declaration) : % %
++           2. Group enumTypeDeclaration-non-serializable: (global) TC_0 |- ((annotationList enum name { nameList_field trailingCommaOpt' }) as declaration) : % %
 
 +             1. (Let nameIR be $name(name))
 
@@ -20670,9 +20276,9 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
           2. Case (% matches pattern `%ENUM%%{%%}`)
 
-+           1. (Let (annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) be enumTypeDeclaration)
++           1. (Let (annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) be enumTypeDeclaration)
 
-+           2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field _trailingCommaOpt }) as declaration) : % %
++           2. Group enumTypeDeclaration-serializable: (global) TC_0 |- ((annotationList enum type name { namedExpressionList_field trailingCommaOpt'' }) as declaration) : % %
 
 +             1. (Type_ok: (global) TC_0 |- (type as typeOrVoid) : typeIR # (typeId)*)
 
@@ -20870,11 +20476,9 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
 -                           4. If (TypeDef_wf: $bound((global), TC_0) |- (typedefTypeIR as typeDefIR)) holds, then
 
--                             1. (Let TC_2 be $add_typeDef_t((global), TC_0, nameIR, (typedefTypeIR as typeDefIR)))
+-                             1. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
 
--                             2. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
-
--                             3. Result in: % % |- % : TC_1 (typedefDeclarationIR as declarationIR)
+-                             2. Result in: % % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
                           2. Case false
 
@@ -20888,11 +20492,9 @@ rel Decl_ok: p TC_0 |- declaration : % %
 
 -                             4. If (TypeDef_wf: $bound((global), TC_0) |- (typedefTypeIR as typeDefIR)) holds, then
 
--                               1. (Let TC_2 be $add_typeDef_t((global), TC_0, nameIR, (typedefTypeIR as typeDefIR)))
+-                               1. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
 
--                               2. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
-
--                               3. Result in: % % |- % : TC_1 (typedefDeclarationIR as declarationIR)
+-                               2. Result in: % % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
           2. Case (% matches pattern `%TYPE%%;`)
 
@@ -21062,11 +20664,11 @@ syntax actctxt =
    | noaction
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:423.1-428.84
-rel Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
+rel Call_convention_expr_ok: p TC actctxt |- (annotationList direction typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
 + 1. If ((direction matches pattern `IN`)), then
 
-+   1. Group in: p TC actctxt |- (_annotationList (in) typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
++   1. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
 +     1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
 
@@ -21076,7 +20678,7 @@ rel Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typeIR_p
 
 +       2. Result in: % % % |- % @ % : typedExpressionIR_arg_cast
 
-+ 2. Group out-inout: p TC actctxt |- (_annotationList direction typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
++ 2. Group out-inout: p TC actctxt |- (annotationList direction typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
 +   1. Case analysis on direction
 
@@ -21102,7 +20704,7 @@ rel Call_convention_expr_ok: p TC actctxt |- (_annotationList direction typeIR_p
 
 + 3. If ((direction matches pattern ``EMPTY`)), then
 
-+   1. Group empty: p TC actctxt |- (_annotationList () typeIR_param _id _constantInitializerOptIR) @ typedExpressionIR_arg : %
++   1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
 +     1. Case analysis on actctxt
 
@@ -21386,11 +20988,9 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +               3. If ((typeIR has type headerTypeIR)), then
 
-+                 1. (Let (header _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerTypeIR))
++                 1. (Let methodTypeIR be ((builtin_method( [] ): ((bool) as typeIR)) as methodTypeIR))
 
-+                 2. (Let methodTypeIR be ((builtin_method( [] ): ((bool) as typeIR)) as methodTypeIR))
-
-+                 3. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
++                 2. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
 
 +           3. Group typedExpressionIR-nameIR-builtin-method-union-isValid: p TC |- (typedExpressionIR_base . nameIR) < [] >( [] ): % <# % >(# % )
 
@@ -21402,11 +21002,9 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +               3. If ((typeIR has type headerUnionTypeIR)), then
 
-+                 1. (Let (header_union _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerUnionTypeIR))
++                 1. (Let methodTypeIR be ((builtin_method( [] ): ((bool) as typeIR)) as methodTypeIR))
 
-+                 2. (Let methodTypeIR be ((builtin_method( [] ): ((bool) as typeIR)) as methodTypeIR))
-
-+                 3. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
++                 2. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
 
 +           4. Group typedExpressionIR-nameIR-builtin-method-header-set-ValidInvalid: p TC |- (typedExpressionIR_base . nameIR) < [] >( [] ): % <# % >(# % )
 
@@ -21418,11 +21016,9 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +               3. If ((typeIR has type headerTypeIR)), then
 
-+                 1. (Let (header _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerTypeIR))
++                 1. (Let methodTypeIR be ((builtin_method( [] ): ((void) as typeIR)) as methodTypeIR))
 
-+                 2. (Let methodTypeIR be ((builtin_method( [] ): ((void) as typeIR)) as methodTypeIR))
-
-+                 3. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
++                 2. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
 
           2. Case (% matches pattern [ _/1 ])
 
@@ -21438,13 +21034,11 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +               3. If ((typeIR' has type headerStackTypeIR)), then
 
-+                 1. (Let (typeIR [ _nat ]) be (typeIR' as headerStackTypeIR))
++                 1. (Let parameterIR be (() () ((int) as typeIR) "count" ?()))
 
-+                 2. (Let parameterIR be (() () ((int) as typeIR) "count" ?()))
++                 2. (Let methodTypeIR be ((builtin_method( [parameterIR] ): ((int) as typeIR)) as methodTypeIR))
 
-+                 3. (Let methodTypeIR be ((builtin_method( [parameterIR] ): ((int) as typeIR)) as methodTypeIR))
-
-+                 4. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
++                 3. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
 
 +     3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
 
@@ -21882,15 +21476,13 @@ rel Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # (type
 
 +     3. If ((typeIR has type packageObjectTypeIR)), then
 
-+       1. (Let (package _typeId < (_typeArgumentIR)* >{ (_typeIR)* }) be (typeIR as packageObjectTypeIR))
++       1. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*, (_parameterIR)*, (_value)*) be $align_parameterListIR((parameterIR)*, (argumentIR)*, (id_default)*))
 
-+       2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*, (_parameterIR)*, (_value)*) be $align_parameterListIR((parameterIR)*, (argumentIR)*, (id_default)*))
++       2. (Let inference be $infer((typeId_infer)*, (parameterIR_aligned)*, (argumentIR)*))
 
-+       3. (Let inference be $infer((typeId_infer)*, (parameterIR_aligned)*, (argumentIR)*))
++       3. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*
 
-+       4. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*
-
-+       5. If (((typeIR')? matches pattern (_)))*, then
++       4. If (((typeIR')? matches pattern (_)))*, then
 
 +         1. (Let ?(typeIR_inferred) be (typeIR')?)*
 
@@ -21970,7 +21562,7 @@ def $reduce_serenum(typedExpressionIR)
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:431.1-435.95
 def $reduce_serenum_unary(typedExpressionIR, $check)
 
-+ 1. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
++ 1. (Let (_expressionIR # (( typeIR ctk ))) be typedExpressionIR)
 
 + 2. Case analysis on $check(typeIR)
 
@@ -21990,7 +21582,7 @@ def $reduce_serenum_unary(typedExpressionIR, $check)
 
 +         1. (Let (enum _typeId < typeIR_underlying >{ (_valueFieldIR)* }) be enumTypeIR)
 
-+         2. (Let typedExpressionIR_cast be (((( typeIR_underlying ) typedExpressionIR) as expressionIR) # (( typeIR_underlying _ctk ))))
++         2. (Let typedExpressionIR_cast be (((( typeIR_underlying ) typedExpressionIR) as expressionIR) # (( typeIR_underlying ctk ))))
 
 +         3. Return $reduce_serenum_unary(typedExpressionIR_cast, $check)
 
@@ -22003,7 +21595,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
 + 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
 
-+ 2. (Let (_expressionIR' # (( typeIR_r _ctk' ))) be typedExpressionIR_r)
++ 2. (Let (_expressionIR' # (( typeIR_r ctk' ))) be typedExpressionIR_r)
 
 + 3. Case analysis on $check(typeIR_l, typeIR_r)
 
@@ -22023,7 +21615,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
 -         1. (Let (enum _typeId < typeIR_l_underlying >{ (_valueFieldIR)* }) be enumTypeIR)
 
--         2. (Let typedExpressionIR_l_cast be (((( typeIR_l_underlying ) typedExpressionIR_l) as expressionIR) # (( typeIR_l_underlying _ctk' ))))
+-         2. (Let typedExpressionIR_l_cast be (((( typeIR_l_underlying ) typedExpressionIR_l) as expressionIR) # (( typeIR_l_underlying ctk' ))))
 
 -         3. Return $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r, $check)
 
@@ -22037,7 +21629,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 
 -         1. (Let (enum _typeId < typeIR_r_underlying >{ (_valueFieldIR)* }) be enumTypeIR)
 
--         2. (Let typedExpressionIR_r_cast be (((( typeIR_r_underlying ) typedExpressionIR_r) as expressionIR) # (( typeIR_r_underlying _ctk' ))))
+-         2. (Let typedExpressionIR_r_cast be (((( typeIR_r_underlying ) typedExpressionIR_r) as expressionIR) # (( typeIR_r_underlying ctk' ))))
 
 -         3. Return $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r_cast, $check)
 
@@ -22048,7 +21640,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:499.1-500.44
 def $coerce_unary(typedExpressionIR, typeIR_to)
 
-+ 1. (Let (_expressionIR # (( typeIR _ctk ))) be typedExpressionIR)
++ 1. (Let (_expressionIR # (( typeIR ctk ))) be typedExpressionIR)
 
 + 2. If (Type_alpha: typeIR ~~ typeIR_to) holds, then
 
@@ -22058,7 +21650,7 @@ def $coerce_unary(typedExpressionIR, typeIR_to)
 
 +   1. If (Sub_impl: typeIR <: typeIR_to) holds, then
 
-+     1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR) as expressionIR) # (( typeIR_to _ctk ))))
++     1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR) as expressionIR) # (( typeIR_to ctk ))))
 
 +     2. Return ?(typedExpressionIR_cast)
 
@@ -22067,7 +21659,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 + 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
 
-+ 2. (Let (_expressionIR' # (( typeIR_r _ctk' ))) be typedExpressionIR_r)
++ 2. (Let (_expressionIR' # (( typeIR_r ctk' ))) be typedExpressionIR_r)
 
 + 3. If (Type_alpha: typeIR_l ~~ typeIR_r) holds, then
 
@@ -22077,7 +21669,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 +   1. If (Sub_impl: typeIR_l <: typeIR_r) holds, then
 
-+     1. (Let typedExpressionIR_l_cast be (((( typeIR_r ) typedExpressionIR_l) as expressionIR) # (( typeIR_r _ctk' ))))
++     1. (Let typedExpressionIR_l_cast be (((( typeIR_r ) typedExpressionIR_l) as expressionIR) # (( typeIR_r ctk' ))))
 
 +     2. Return ?((typedExpressionIR_l_cast, typedExpressionIR_r))
 
@@ -22085,7 +21677,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 +     1. If (Sub_impl: typeIR_r <: typeIR_l) holds, then
 
-+       1. (Let typedExpressionIR_r_cast be (((( typeIR_l ) typedExpressionIR_r) as expressionIR) # (( typeIR_l _ctk' ))))
++       1. (Let typedExpressionIR_r_cast be (((( typeIR_l ) typedExpressionIR_r) as expressionIR) # (( typeIR_l ctk' ))))
 
 +       2. Return ?((typedExpressionIR_l, typedExpressionIR_r_cast))
 
@@ -22145,9 +21737,7 @@ tbl def $compat_bnot(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -22157,9 +21747,7 @@ tbl def $compat_bnot(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_bnot(typeIR)
 
@@ -22195,9 +21783,7 @@ tbl def $compat_uplusminus(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -22207,9 +21793,7 @@ tbl def $compat_uplusminus(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_uplusminus(typeIR)
 
@@ -22441,9 +22025,7 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 -           2. If ((integerTypeIR' matches pattern `INT<%>`)), then
 
--             1. (Let (int< _nat >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((int) as typeIR), ((bit< _nat >) as typeIR) -> true
 
@@ -22459,9 +22041,7 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 -           2. If ((integerTypeIR' matches pattern `BIT<%>`)), then
 
--             1. (Let (bit< _nat >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((int< _nat >) as typeIR), ((int) as typeIR) -> true
 
@@ -22471,9 +22051,7 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
@@ -22489,17 +22067,13 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `INT<%>`)), then
 
--             1. (Let (int< _nat' >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((int< _nat >) as typeIR), ((bit< _nat' >) as typeIR) -> true
 
@@ -22509,17 +22083,13 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `BIT<%>`)), then
 
-+             1. (Let (bit< _nat' >) be integerTypeIR')
-
-+             2. Return true
++             1. Return true
 
  Row : ((bit< _nat >) as typeIR), ((int) as typeIR) -> true
 
@@ -22529,9 +22099,7 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
@@ -22547,17 +22115,13 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `INT<%>`)), then
 
--             1. (Let (int< _nat' >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((bit< _nat >) as typeIR), ((bit< _nat' >) as typeIR) -> true
 
@@ -22567,17 +22131,13 @@ tbl def $compat_shift(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `BIT<%>`)), then
 
-+             1. (Let (bit< _nat' >) be integerTypeIR')
-
-+             2. Return true
++             1. Return true
 
  Row : ((typedef _typeId typeIR_l) as typeIR), typeIR_r -> $compat_shift(typeIR_l, typeIR_r)
 
@@ -22767,17 +22327,13 @@ tbl def $compat_concat(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `INT<%>`)), then
 
-+             1. (Let (int< _nat' >) be integerTypeIR')
-
-+             2. Return true
++             1. Return true
 
  Row : ((int< _nat >) as typeIR), ((bit< _nat' >) as typeIR) -> true
 
@@ -22787,17 +22343,13 @@ tbl def $compat_concat(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. If ((typeIR''' has type integerTypeIR)), then
+-         1. If ((typeIR''' has type integerTypeIR)), then
 
 -           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 -           2. If ((integerTypeIR' matches pattern `BIT<%>`)), then
 
--             1. (Let (bit< _nat' >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((bit< _nat >) as typeIR), ((int< _nat' >) as typeIR) -> true
 
@@ -22807,17 +22359,13 @@ tbl def $compat_concat(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `INT<%>`)), then
 
--             1. (Let (int< _nat' >) be integerTypeIR')
-
--             2. Return true
+-             1. Return true
 
  Row : ((bit< _nat >) as typeIR), ((bit< _nat' >) as typeIR) -> true
 
@@ -22827,17 +22375,13 @@ tbl def $compat_concat(typeIR'', typeIR''')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. If ((typeIR''' has type integerTypeIR)), then
++         1. If ((typeIR''' has type integerTypeIR)), then
 
 +           1. (Let integerTypeIR' be (typeIR''' as integerTypeIR))
 
 +           2. If ((integerTypeIR' matches pattern `BIT<%>`)), then
 
-+             1. (Let (bit< _nat' >) be integerTypeIR')
-
-+             2. Return true
++             1. Return true
 
  Row : ((typedef _typeId typeIR_l) as typeIR), typeIR_r -> $compat_concat(typeIR_l, typeIR_r)
 
@@ -22994,9 +22538,7 @@ tbl def $compat_array_index(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
-+         1. (Let (int< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -23006,9 +22548,7 @@ tbl def $compat_array_index(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_array_index(typeIR)
 
@@ -23056,9 +22596,7 @@ tbl def $compat_bitslice_base(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_bitslice_base(typeIR)
 
@@ -23094,9 +22632,7 @@ tbl def $compat_bitslice_index(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -23106,9 +22642,7 @@ tbl def $compat_bitslice_index(typeIR'')
 
 -       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
--         1. (Let (bit< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_bitslice_index(typeIR)
 
@@ -23200,9 +22734,7 @@ def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 - 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then
 
--   1. (Let (extern_method< (_typeParameterIR)* , (_typeParameterIR')* >( (_parameterIR)* ): _typeIR) be externMethodTypeDefIR)
-
--   2. Return true
+-   1. Return true
 
 - 2. Otherwise
 
@@ -23267,17 +22799,13 @@ tbl def $compat_direct_application(typeIR'')
 
 +     1. If ((typeIR'' has type parserObjectTypeIR)), then
 
-+       1. (Let parserObjectTypeIR be (typeIR'' as parserObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : (controlObjectTypeIR as typeIR) -> true
 
 +     1. If ((typeIR'' has type controlObjectTypeIR)), then
 
-+       1. (Let controlObjectTypeIR be (typeIR'' as controlObjectTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -23757,9 +23285,7 @@ tbl def $compat_switch(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -23769,9 +23295,7 @@ tbl def $compat_switch(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_switch(typeIR)
 
@@ -23785,9 +23309,7 @@ tbl def $compat_switch(typeIR'')
 
 -     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
-
--       2. Return true
+-       1. Return true
 
  Row : _typeIR -> false
 
@@ -23945,9 +23467,7 @@ def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 + 1. If ((externConstructorOrMethodPrototype has type externConstructorPrototype)), then
 
-+   1. (Let externConstructorPrototype be (externConstructorOrMethodPrototype as externConstructorPrototype))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -23958,9 +23478,7 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 + 1. If ((externConstructorOrMethodPrototype has type externMethodPrototype)), then
 
-+   1. (Let externMethodPrototype be (externConstructorOrMethodPrototype as externMethodPrototype))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -24107,11 +23625,9 @@ rel SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : %
 
 +           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be ((typedExpressionIR, typedExpressionIR)')?)
 
-+           2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
++           2. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
 
-+           3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
-
-+           4. If (((typedExpressionIR)? matches pattern (_))), then
++           3. If (((typedExpressionIR)? matches pattern (_))), then
 
 +             1. (Let ?(typedExpressionIR_l_coerced) be (typedExpressionIR)?)
 
@@ -24477,9 +23993,7 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
 +     1. If ((typeIR'' has type integerTypeIR)), then
 
-+       1. (Let integerTypeIR be (typeIR'' as integerTypeIR))
-
-+       2. Return true
++       1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_table_exact_optional_key(typeIR)
 
@@ -24505,9 +24019,7 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
 -       2. If ((enumTypeIR matches pattern `ENUM%{%}`)), then
 
--         1. (Let (enum _typeId { (_nameIR)* }) be enumTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((enum _typeId < typeIR >{ (_valueFieldIR)* }) as typeIR) -> $compat_table_exact_optional_key(typeIR)
 
@@ -24547,9 +24059,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. (Let (int< _nat >) be integerTypeIR)
-
--         2. Return true
+-         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -24559,9 +24069,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `BIT<%>`)), then
 
-+         1. (Let (bit< _nat >) be integerTypeIR)
-
-+         2. Return true
++         1. Return true
 
  Row : ((typedef _typeId typeIR) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
 
@@ -24682,18 +24190,16 @@ def $has_table_apply_arg(argumentIR)
 
     2. Case (% matches pattern `%=_`)
 
--     1. (Let (nameIR =_) be argumentIR)
-
--     2. Return false
+-     1. Return false
 
     3. Case (% matches pattern `_`)
 
 -     1. Return false
 
 ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:104.1-104.52
-def $has_table_apply_expr((_expressionIR # _expressionNoteIR))
+def $has_table_apply_expr((expressionIR # expressionNoteIR))
 
-+ 1. (Let (( typeIR _ctk )) be _expressionNoteIR)
++ 1. (Let (( typeIR _ctk )) be expressionNoteIR)
 
 + 2. If ($is_tableMetadataStructTypeIR($unroll_typeIR(typeIR))), then
 
@@ -24701,7 +24207,7 @@ def $has_table_apply_expr((_expressionIR # _expressionNoteIR))
 
 + 3. Otherwise
 
-+   1. Return $has_table_apply_expr'(_expressionIR)
++   1. Return $has_table_apply_expr'(expressionIR)
 
 ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:105.1-105.48
 def $has_table_apply_expr'(expressionIR)
@@ -24710,21 +24216,15 @@ def $has_table_apply_expr'(expressionIR)
 
     1. Case (% has type literalExpressionIR)
 
-+     1. (Let literalExpressionIR be (expressionIR as literalExpressionIR))
-
-+     2. Return false
++     1. Return false
 
     2. Case (% has type referenceExpressionIR)
 
-+     1. (Let referenceExpressionIR be (expressionIR as referenceExpressionIR))
-
-+     2. Return false
++     1. Return false
 
     3. Case (% has type defaultExpressionIR)
 
--     1. (Let defaultExpressionIR be (expressionIR as defaultExpressionIR))
-
--     2. Return false
+-     1. Return false
 
     4. Case (% has type unaryExpressionIR)
 
@@ -24786,9 +24286,7 @@ def $has_table_apply_expr'(expressionIR)
 
     9. Case (% has type errorAccessExpressionIR)
 
--     1. (Let errorAccessExpressionIR be (expressionIR as errorAccessExpressionIR))
-
--     2. Return false
+-     1. Return false
 
     10. Case (% has type memberAccessExpressionIR)
 
@@ -24796,9 +24294,7 @@ def $has_table_apply_expr'(expressionIR)
 
 +     2. If ((memberAccessBaseIR matches pattern `TYPE%`)), then
 
--       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
-
--       2. Return false
+-       1. Return false
 
 +     3. If ((memberAccessBaseIR has type typedExpressionIR)), then
 
@@ -24836,9 +24332,7 @@ def $has_table_apply_expr'(expressionIR)
 
 -         2. If ((callableTargetIR has type referenceExpressionIR)), then
 
--           1. (Let referenceExpressionIR be (callableTargetIR as referenceExpressionIR))
-
--           2. Return $exists_(($has_table_apply_arg(argumentIR))*)
+-           1. Return $exists_(($has_table_apply_arg(argumentIR))*)
 
 -         3. Case analysis on callableTargetIR
 
@@ -24850,9 +24344,7 @@ def $has_table_apply_expr'(expressionIR)
 
             2. Case (% matches pattern `TYPE%.%`)
 
--             1. (Let (type prefixedNameIR . nameIR) be callableTargetIR)
-
--             2. Return $exists_(($has_table_apply_arg(argumentIR))*)
+-             1. Return $exists_(($has_table_apply_arg(argumentIR))*)
 
             3. Case (% matches pattern `(%)`)
 
@@ -25031,9 +24523,7 @@ rel TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeysetExp
 
 -           2. If ((matchMode matches pattern `NOPRILPM%`)), then
 
--             1. (Let (noprilpm _nat) be matchMode)
-
--             2. Result in: % % |- % @ % : (lpm 0) (_)
+-             1. Result in: % % |- % @ % : (lpm 0) (_)
 
           2. Case (% =/= "lpm")
 
@@ -25109,9 +24599,7 @@ def $is_tableKeysProperty(tableProperty)
 
 + 1. If ((tableProperty matches pattern `KEY={%}`)), then
 
-+   1. (Let (key={ _tableKeyList }) be tableProperty)
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -25122,9 +24610,7 @@ def $is_tableActionsProperty(tableProperty)
 
 + 1. If ((tableProperty matches pattern `ACTIONS={%}`)), then
 
-+   1. (Let (actions={ _tableActionList }) be tableProperty)
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -25187,7 +24673,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, (tablePropertyIR)*)
 +     4. Return (TBLC_1, tablePropertyIR_h :: (tablePropertyIR_t_updated)*)
 
 ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:18.1-21.82
-rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
+rel Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk' )))
 
 + 1. Case analysis on expressionIR
 
@@ -25195,7 +24681,7 @@ rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 +     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-+     2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # (( _typeIR _ctk )))
++     2. Group referenceExpressionIR: p TC |- ((prefixedNameIR as expressionIR) # (( typeIR ctk' )))
 
 +       1. (Let (varTypeIR)? be $find_var_t(p, TC, prefixedNameIR))
 
@@ -25223,7 +24709,7 @@ rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 +       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-+       2. Group accessExpressionIR-memberAccessExpressionIR: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # (( _typeIR _ctk )))
++       2. Group accessExpressionIR-memberAccessExpressionIR: p TC |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # (( typeIR ctk' )))
 
 +         1. If (Expr_lvalue_ok: p TC |- typedExpressionIR_base) holds, then
 
@@ -25233,9 +24719,7 @@ rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 +           3. If ((typeIR' has type headerStackTypeIR)), then
 
-+             1. (Let (typeIR [ _nat ]) be (typeIR' as headerStackTypeIR))
-
-+             2. Case analysis on nameIR
++             1. Case analysis on nameIR
 
                 1. Case (% = "next")
 
@@ -25265,7 +24749,7 @@ rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 +     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
-+     2. Group accessExpressionIR-indexAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # (( _typeIR _ctk )))
++     2. Group accessExpressionIR-indexAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # (( typeIR ctk' )))
 
 +       1. If (Expr_lvalue_ok: p TC |- typedExpressionIR_base) holds, then
 
@@ -25275,7 +24759,7 @@ rel Expr_lvalue_ok: p TC |- (expressionIR # (( _typeIR _ctk )))
 
 +     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-+     2. Group accessExpressionIR-indexAccessExpressionIR-bitslice: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( _typeIR _ctk )))
++     2. Group accessExpressionIR-indexAccessExpressionIR-bitslice: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( typeIR ctk' )))
 
 +       1. If (Expr_lvalue_ok: p TC |- typedExpressionIR_base) holds, then
 
@@ -25339,9 +24823,7 @@ def $infer'(constraint, parameterIR, argumentIR)
 
     2. Case (% matches pattern `%=_`)
 
--     1. (Let (nameIR =_) be argumentIR)
-
--     2. Return constraint
+-     1. Return constraint
 
     3. Case (% matches pattern `_`)
 
@@ -26237,9 +25719,7 @@ def $parameterListIR_of_constructorDef(constructorDef)
 
     5. Case (% has type tableObjectConstructorDef)
 
--     1. (Let (table _nameIR { _tablePropertyListIR }) be (constructorDef as tableObjectConstructorDef))
-
--     2. Return []
+-     1. Return []
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.4-parser-state.watsup:6.3-7.53
 syntax state = 
@@ -26293,9 +25773,7 @@ def $is_externObject(object)
 
 + 1. If ((object has type externObject)), then
 
--   1. (Let externObject be (object as externObject))
-
--   2. Return true
+-   1. Return true
 
 + 2. Otherwise
 
@@ -26468,13 +25946,13 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 +             3. Return simpleKeysetExpressionIR
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:112.1-115.30
-def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, _tableKeysetInterface)
+def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInterface)
 
 + 1. If ((((nameIR, nameIR, typeIR))* matches pattern [])), then
 
 +   1. Return []
 
-+ 2. (Let (tableKeyInterface)* be _tableKeysetInterface)
++ 2. (Let (tableKeyInterface)* be tableKeysetInterface)
 
 + 3. If ((((nameIR, nameIR, typeIR))* matches pattern _ :: _)), then
 
@@ -27090,7 +26568,7 @@ def $find_constructorDef_i(IC, prefixedNameIR, (argumentIR)*)
 -     3. Return $find_overloaded<constructorDef>(IC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:5.1-7.26
-rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
+rel Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
 + 1. Case analysis on expressionIR
 
@@ -27098,7 +26576,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-+     2. Group literalExpressionIR-boolean: p IC STO |- ((booleanLiteral as expressionIR) # _expressionNoteIR) : % %
++     2. Group literalExpressionIR-boolean: p IC STO |- ((booleanLiteral as expressionIR) # expressionNoteIR) : % %
 
 +       1. Case analysis on booleanLiteral
 
@@ -27114,7 +26592,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
-+     2. Group literalExpressionIR-number: p IC STO |- ((integerLiteral as expressionIR) # _expressionNoteIR) : % %
++     2. Group literalExpressionIR-number: p IC STO |- ((integerLiteral as expressionIR) # expressionNoteIR) : % %
 
 +       1. Case analysis on integerLiteral
 
@@ -27140,7 +26618,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (" text ") be (expressionIR as stringLiteral))
 
--     2. Group literalExpressionIR-stringLiteral: p IC STO |- (((" text ") as expressionIR) # _expressionNoteIR) : % %
+-     2. Group literalExpressionIR-stringLiteral: p IC STO |- (((" text ") as expressionIR) # expressionNoteIR) : % %
 
 -       1. Result in: % % % |- % : STO ((" text ") as value)
 
@@ -27148,7 +26626,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-+     2. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) : % %
++     2. Group referenceExpressionIR: p IC STO |- ((prefixedNameIR as expressionIR) # expressionNoteIR) : % %
 
 +       1. (Let value be $find_var_i(p, IC, prefixedNameIR))
 
@@ -27158,7 +26636,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
--     2. Group defaultExpressionIR: p IC STO |- (((...) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group defaultExpressionIR: p IC STO |- (((...) as expressionIR) # expressionNoteIR) : % %
 
 -       1. Result in: % % % |- % : STO ((default) as value)
 
@@ -27166,7 +26644,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
--     2. Group unaryExpressionIR: p IC STO |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group unaryExpressionIR: p IC STO |- (((unop typedExpressionIR) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
@@ -27176,7 +26654,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
--     2. Group binaryExpressionIR: p IC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group binaryExpressionIR: p IC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # expressionNoteIR) : % %
 
 -       1. If (~binop' is in [(&&), (||)]), then
 
@@ -27220,7 +26698,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
--     2. Group ternaryExpressionIR: p IC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group ternaryExpressionIR: p IC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Expr_inst: p IC STO |- typedExpressionIR_cond : STO_1 value)
 
@@ -27240,7 +26718,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-+     2. Group castExpressionIR: p IC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) : % %
++     2. Group castExpressionIR: p IC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # expressionNoteIR) : % %
 
 +       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
@@ -27254,11 +26732,11 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
--       1. Group dataExpressionIR-invalid: p IC STO |- ((({#}) as expressionIR) # _expressionNoteIR) : % %
+-       1. Group dataExpressionIR-invalid: p IC STO |- ((({#}) as expressionIR) # expressionNoteIR) : % %
 
 -         1. Result in: % % % |- % : STO (({#}) as value)
 
--     3. Group dataExpressionIR-sequence: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
+-     3. Group dataExpressionIR-sequence: p IC STO |- ((dataExpressionIR as expressionIR) # expressionNoteIR) : % %
 
 -       1. Case analysis on dataExpressionIR
 
@@ -27278,7 +26756,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -           3. Result in: % % % |- % : STO_1 ((seq( (value)* ,...)) as value)
 
--     4. Group dataExpressionIR-record: p IC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % %
+-     4. Group dataExpressionIR-record: p IC STO |- ((dataExpressionIR as expressionIR) # expressionNoteIR) : % %
 
 -       1. Case analysis on dataExpressionIR
 
@@ -27302,7 +26780,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
--     2. Group errorAccessExpressionIR: p IC STO |- (((error. nameIR) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group errorAccessExpressionIR: p IC STO |- (((error. nameIR) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Let nameIR_error be "error." ++ nameIR)
 
@@ -27318,7 +26796,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-+       2. Group memberAccessExpressionIR-type: p IC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
++       2. Group memberAccessExpressionIR-type: p IC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # expressionNoteIR) : % %
 
 +         1. (Let (typeDefIR')? be $find_typeDef_i(p, IC, prefixedNameIR))
 
@@ -27354,7 +26832,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
--       2. Group memberAccessExpressionIR-typedExpressionIR: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) : % %
+-       2. Group memberAccessExpressionIR-typedExpressionIR: p IC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR) : % %
 
 -         1. If ((nameIR = "size")), then
 
@@ -27418,7 +26896,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
--     2. Group indexAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group indexAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -27466,7 +26944,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
--     2. Group sliceAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group sliceAccessExpressionIR: p IC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value_base)
 
@@ -27486,7 +26964,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 +         1. (Let ((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) be callExpressionIR)
 
-+         2. Group callExpressionIR-constructor: p IC STO |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
++         2. Group callExpressionIR-constructor: p IC STO |- ((((prefixedNameIR < typeArgumentListIR >) ( argumentListIR )) as expressionIR) # expressionNoteIR) : % %
 
 +           1. (Constructor_inst: p IC |- prefixedNameIR < typeArgumentListIR >( argumentListIR ): constructorDef < typeArgumentListIR_inst >(# (id_default)* ))
 
@@ -27506,7 +26984,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -           1. If (((argumentIR)* matches pattern [])), then
 
--             1. Group callExpressionIR-builtin-size: p IC STO |- (((callableTargetIR < [] >( [] )) as expressionIR) # _expressionNoteIR) : % %
+-             1. Group callExpressionIR-builtin-size: p IC STO |- (((callableTargetIR < [] >( [] )) as expressionIR) # expressionNoteIR) : % %
 
 -               1. Case analysis on callableTargetIR
 
@@ -27556,9 +27034,9 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -           1. (Let (( callableTargetIR )) be callableTargetIR')
 
--           2. Group callExpressionIR-parenthesized: p IC STO |- ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : % %
+-           2. Group callExpressionIR-parenthesized: p IC STO |- ((((( callableTargetIR )) < typeArgumentListIR >( argumentListIR )) as expressionIR) # expressionNoteIR) : % %
 
--             1. (Expr_inst: p IC STO |- (((callableTargetIR < typeArgumentListIR >( argumentListIR )) as expressionIR) # _expressionNoteIR) : STO_1 value)
+-             1. (Expr_inst: p IC STO |- (((callableTargetIR < typeArgumentListIR >( argumentListIR )) as expressionIR) # expressionNoteIR) : STO_1 value)
 
 -             2. Result in: % % % |- % : STO_1 value
 
@@ -27566,7 +27044,7 @@ rel Expr_inst: p IC STO |- (expressionIR # _expressionNoteIR) : % %
 
 -     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
--     2. Group parenthesizedExpressionIR: p IC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % %
+-     2. Group parenthesizedExpressionIR: p IC STO |- (((( typedExpressionIR )) as expressionIR) # expressionNoteIR) : % %
 
 -       1. (Expr_inst: p IC STO |- typedExpressionIR : STO_1 value)
 
@@ -28393,19 +27871,17 @@ rel ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
 +     2. Group tableDeclarationIR: IC_0 STO_0 |- ((annotationList table typeIR nameIR { tablePropertyListIR }) as controlLocalDeclarationIR) : % % %
 
-+       1. (Let IC_inner be $enter_path_i(IC_0, nameIR))
++       1. (Constructor_call: (block) IC_0 STO_0 |- ((table nameIR { tablePropertyListIR }) as constructorDef) < [] >( [] # [] ): STO_1 object_table)
 
-+       2. (Constructor_call: (block) IC_0 STO_0 |- ((table nameIR { tablePropertyListIR }) as constructorDef) < [] >( [] # [] ): STO_1 object_table)
++       2. (Let objectId be IC_0.path ++ [nameIR])
 
-+       3. (Let objectId be IC_0.path ++ [nameIR])
++       3. (Let STO_2 be $add_map<objectId, object>(STO_1, objectId, object_table))
 
-+       4. (Let STO_2 be $add_map<objectId, object>(STO_1, objectId, object_table))
++       4. (Let IC_1 be $add_var_i((block), IC_0, nameIR, ((! objectId) as value)))
 
-+       5. (Let IC_1 be $add_var_i((block), IC_0, nameIR, ((! objectId) as value)))
++       5. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
 
-+       6. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
-
-+       7. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
++       6. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:114.1-117.23
 rel ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)* : % % %
@@ -29231,19 +28707,17 @@ rel Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (argum
 
 +           1. Group tableConstructorDef: p IC STO_0 |- ((table nameIR { tablePropertyListIR }) as constructorDef) < [] >( [] # [] ): % %
 
-+             1. (Let p_callee be (local))
++             1. (Let IC_callee_0 be $inherit_i((block), IC))
 
-+             2. (Let IC_callee_0 be $inherit_i((block), IC))
++             2. (Let IC_frame be $enter_i(IC_callee_0))
 
-+             3. (Let IC_frame be $enter_i(IC_callee_0))
++             3. (TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
 
-+             4. (TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
++             4. (Let TBL be $init_table(tablePropertyListIR_inst))
 
-+             5. (Let TBL be $init_table(tablePropertyListIR_inst))
++             5. (Let (frame')* be IC_frame.local.frames)
 
-+             6. (Let (frame')* be IC_frame.local.frames)
-
-+             7. If (((frame')* matches pattern _ :: _)), then
++             6. If (((frame')* matches pattern _ :: _)), then
 
 +               1. (Let frame :: (_frame)* be (frame')*)
 
@@ -29384,9 +28858,7 @@ def $is_tableKeysPropertyIR(tablePropertyIR)
 
 + 1. If ((tablePropertyIR has type tableKeysPropertyIR)), then
 
-+   1. (Let tableKeysPropertyIR be (tablePropertyIR as tableKeysPropertyIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -29397,9 +28869,7 @@ def $is_tableActionsPropertyIR(tablePropertyIR)
 
 + 1. If ((tablePropertyIR has type tableActionsPropertyIR)), then
 
-+   1. (Let tableActionsPropertyIR be (tablePropertyIR as tableActionsPropertyIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -29410,9 +28880,7 @@ def $is_tableDefaultActionPropertyIR(tablePropertyIR)
 
 + 1. If ((tablePropertyIR has type tableDefaultActionPropertyIR)), then
 
-+   1. (Let tableDefaultActionPropertyIR be (tablePropertyIR as tableDefaultActionPropertyIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -29423,9 +28891,7 @@ def $is_tableEntriesPropertyIR(tablePropertyIR)
 
 + 1. If ((tablePropertyIR has type tableEntriesPropertyIR)), then
 
-+   1. (Let tableEntriesPropertyIR be (tablePropertyIR as tableEntriesPropertyIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -29436,9 +28902,7 @@ def $is_tableCustomPropertyIR(tablePropertyIR)
 
 + 1. If ((tablePropertyIR has type tableCustomPropertyIR)), then
 
-+   1. (Let tableCustomPropertyIR be (tablePropertyIR as tableCustomPropertyIR))
-
-+   2. Return true
++   1. Return true
 
 + 2. Otherwise
 
@@ -29801,9 +29265,7 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
 -   3. If (((value')? matches pattern (_))), then
 
--     1. (Let ?(value) be (value')?)
-
--     2. Return (global)
+-     1. Return (global)
 
 - 2. Case analysis on p
 
@@ -29817,9 +29279,7 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
 -       3. If (((value')? matches pattern (_))), then
 
--         1. (Let ?(value) be (value')?)
-
--         2. Return (global)
+-         1. Return (global)
 
     2. Case (% matches pattern `BLOCK`)
 
@@ -29831,9 +29291,7 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
 -       3. If (((value')? matches pattern (_))), then
 
--         1. (Let ?(value) be (value')?)
-
--         2. Return (block)
+-         1. Return (block)
 
 -       4. If ((?() = $find_map<id, value>(EC.block.frame, id))), then
 
@@ -29849,9 +29307,7 @@ def $find_var_cursor_e(p, EC, prefixedNameIR)
 
 -       3. If (((value')? matches pattern (_))), then
 
--         1. (Let ?(value) be (value')?)
-
--         2. Return (local)
+-         1. Return (local)
 
 -       4. If ((?() = $find_maps<id, value>(EC.local.frames, id))), then
 
@@ -30071,7 +29527,7 @@ syntax expressionResult =
    | exit
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:32.1-37.95
-rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
+rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 + 1. Case analysis on expressionIR
 
@@ -30079,7 +29535,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let booleanLiteral be (expressionIR as booleanLiteral))
 
-+     2. Group literalExpressionIR-boolean: p EC STO |- ((booleanLiteral as expressionIR) # _expressionNoteIR) : % % %
++     2. Group literalExpressionIR-boolean: p EC STO |- ((booleanLiteral as expressionIR) # expressionNoteIR) : % % %
 
 +       1. Case analysis on booleanLiteral
 
@@ -30099,7 +29555,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let integerLiteral be (expressionIR as integerLiteral))
 
-+     2. Group literalExpressionIR-number: p EC STO |- ((integerLiteral as expressionIR) # _expressionNoteIR) : % % %
++     2. Group literalExpressionIR-number: p EC STO |- ((integerLiteral as expressionIR) # expressionNoteIR) : % % %
 
 +       1. Case analysis on integerLiteral
 
@@ -30131,7 +29587,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (" text ") be (expressionIR as stringLiteral))
 
-+     2. Group literalExpressionIR-stringLiteral: p EC STO |- (((" text ") as expressionIR) # _expressionNoteIR) : % % %
++     2. Group literalExpressionIR-stringLiteral: p EC STO |- (((" text ") as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Let expressionResult be ((` ((" text ") as value)) as expressionResult))
 
@@ -30141,7 +29597,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let prefixedNameIR be (expressionIR as prefixedNameIR))
 
-+     2. Group referenceExpressionIR: p EC STO |- ((prefixedNameIR as expressionIR) # _expressionNoteIR) : % % %
++     2. Group referenceExpressionIR: p EC STO |- ((prefixedNameIR as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Let value be $find_var_e(p, EC, prefixedNameIR))
 
@@ -30153,7 +29609,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 -     1. (Let defaultExpression be (expressionIR as defaultExpression))
 
--     2. Group defaultExpressionIR: p EC STO |- (((...) as expressionIR) # _expressionNoteIR) : % % %
+-     2. Group defaultExpressionIR: p EC STO |- (((...) as expressionIR) # expressionNoteIR) : % % %
 
 -       1. (Let expressionResult be ((` ((default) as value)) as expressionResult))
 
@@ -30163,7 +29619,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (unop typedExpressionIR) be (expressionIR as unaryExpressionIR))
 
-+     2. Group unaryExpressionIR: p EC STO |- (((unop typedExpressionIR) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group unaryExpressionIR: p EC STO |- (((unop typedExpressionIR) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult')
 
@@ -30187,7 +29643,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (typedExpressionIR_l binop' typedExpressionIR_r) be (expressionIR as binaryExpressionIR))
 
-+     2. Group binaryExpressionIR: p EC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group binaryExpressionIR: p EC STO |- (((typedExpressionIR_l binop' typedExpressionIR_r) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. If (~binop' is in [(&&), (||)]), then
 
@@ -30279,7 +29735,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) be (expressionIR as ternaryExpressionIR))
 
-+     2. Group ternaryExpressionIR: p EC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group ternaryExpressionIR: p EC STO |- (((typedExpressionIR_cond ? typedExpressionIR_true : typedExpressionIR_false) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_1 STO_1 expressionResult)
 
@@ -30305,7 +29761,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (( typeIR ) typedExpressionIR) be (expressionIR as castExpressionIR))
 
-+     2. Group castExpressionIR: p EC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group castExpressionIR: p EC STO |- (((( typeIR ) typedExpressionIR) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult')
 
@@ -30331,13 +29787,13 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     2. If ((dataExpressionIR matches pattern `{#}`)), then
 
--       1. Group dataExpressionIR-invalid: p EC STO |- ((({#}) as expressionIR) # _expressionNoteIR) : % % %
+-       1. Group dataExpressionIR-invalid: p EC STO |- ((({#}) as expressionIR) # expressionNoteIR) : % % %
 
 -         1. (Let expressionResult be ((` (({#}) as value)) as expressionResult))
 
 -         2. Result in: % % % |- % : EC STO expressionResult
 
-+     3. Group dataExpressionIR-sequence: p EC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % % %
++     3. Group dataExpressionIR-sequence: p EC STO |- ((dataExpressionIR as expressionIR) # expressionNoteIR) : % % %
 
 +       1. Case analysis on dataExpressionIR
 
@@ -30385,7 +29841,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 -               3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-+     4. Group dataExpressionIR-record: p EC STO |- ((dataExpressionIR as expressionIR) # _expressionNoteIR) : % % %
++     4. Group dataExpressionIR-record: p EC STO |- ((dataExpressionIR as expressionIR) # expressionNoteIR) : % % %
 
 +       1. Case analysis on dataExpressionIR
 
@@ -30437,7 +29893,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (error. nameIR) be (expressionIR as errorAccessExpressionIR))
 
-+     2. Group errorAccessExpressionIR: p EC STO |- (((error. nameIR) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group errorAccessExpressionIR: p EC STO |- (((error. nameIR) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Let nameIR_error be "error." ++ nameIR)
 
@@ -30455,7 +29911,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +       1. (Let (type prefixedNameIR) be memberAccessBaseIR)
 
-+       2. Group memberAccessExpressionIR-type: p EC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # _expressionNoteIR) : % % %
++       2. Group memberAccessExpressionIR-type: p EC STO |- ((((type prefixedNameIR) . nameIR) as expressionIR) # expressionNoteIR) : % % %
 
 +         1. (Let (typeDefIR')? be $find_typeDef_e(p, EC, prefixedNameIR))
 
@@ -30495,13 +29951,11 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +       1. (Let typedExpressionIR_base be (memberAccessBaseIR as typedExpressionIR))
 
-+       2. Group memberAccessExpressionIR-expression: p EC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # _expressionNoteIR) : % % %
++       2. Group memberAccessExpressionIR-expression: p EC STO |- ((((typedExpressionIR_base as memberAccessBaseIR) . nameIR) as expressionIR) # expressionNoteIR) : % % %
 
-+         1. (Let (( typeIR_base _ctk )) be _expressionNoteIR)
++         1. (Expr_eval: p EC STO |- typedExpressionIR_base : EC_1 STO_1 expressionResult')
 
-+         2. (Expr_eval: p EC STO |- typedExpressionIR_base : EC_1 STO_1 expressionResult')
-
-+         3. Case analysis on expressionResult'
++         2. Case analysis on expressionResult'
 
             1. Case (% has type exitResult)
 
@@ -30557,7 +30011,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-+         4. Case analysis on nameIR
++         3. Case analysis on nameIR
 
             1. Case (% = "size")
 
@@ -30641,7 +30095,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (typedExpressionIR_base [ typedExpressionIR_index ]) be (expressionIR as indexAccessExpressionIR))
 
-+     2. Group indexAccessExpressionIR: p EC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group indexAccessExpressionIR: p EC STO |- (((typedExpressionIR_base [ typedExpressionIR_index ]) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 STO_1 expressionListResult)
 
@@ -30711,7 +30165,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-+     2. Group sliceAccessExpressionIR: p EC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group sliceAccessExpressionIR: p EC STO |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Exprs_eval: p EC STO |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 STO_1 expressionListResult)
 
@@ -30743,7 +30197,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +       1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) be callExpressionIR)
 
-+       2. Group callExpressionIR: p EC STO |- (((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # _expressionNoteIR) : % % %
++       2. Group callExpressionIR: p EC STO |- (((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) as expressionIR) # expressionNoteIR) : % % %
 
 +         1. (Callee_eval: p EC STO |- callableTargetIR <_>( (argumentIR)* ): EC_1 STO_1 calleeResult)
 
@@ -30783,7 +30237,7 @@ rel Expr_eval: p EC STO |- (expressionIR # _expressionNoteIR) : % % %
 
 +     1. (Let (( typedExpressionIR )) be (expressionIR as parenthesizedExpressionIR))
 
-+     2. Group parenthesizedExpressionIR: p EC STO |- (((( typedExpressionIR )) as expressionIR) # _expressionNoteIR) : % % %
++     2. Group parenthesizedExpressionIR: p EC STO |- (((( typedExpressionIR )) as expressionIR) # expressionNoteIR) : % % %
 
 +       1. (Expr_eval: p EC STO |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
@@ -30935,13 +30389,13 @@ rel Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 +       1. Result in: % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:81.1-84.26
-rel Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
+rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 + 1. If ((lvalueIR has type referenceExpressionIR)), then
 
 +   1. (Let referenceExpressionIR be (lvalueIR as referenceExpressionIR))
 
-+   2. Group referenceExpressionIR: p EC STO |- ((referenceExpressionIR as lvalueIR) # _lvalueNoteIR) : % % %
++   2. Group referenceExpressionIR: p EC STO |- ((referenceExpressionIR as lvalueIR) # lvalueNoteIR) : % % %
 
 +     1. Result in: % % % |- % : EC STO ((` ?((referenceExpressionIR as storageReference))) as storageReferenceResult)
 
@@ -30951,7 +30405,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
 +     1. (Let (typedLvalueIR . nameIR) be lvalueIR)
 
-+     2. Group typedLvalueIR-nameIR: p EC STO |- ((typedLvalueIR . nameIR) # _lvalueNoteIR) : % % %
++     2. Group typedLvalueIR-nameIR: p EC STO |- ((typedLvalueIR . nameIR) # lvalueNoteIR) : % % %
 
 +       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
@@ -30979,7 +30433,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
 +     1. (Let (typedLvalueIR [ typedExpressionIR ]) be lvalueIR)
 
-+     2. Group typedLvalueIR-indexAccess: p EC STO |- ((typedLvalueIR [ typedExpressionIR ]) # _lvalueNoteIR) : % % %
++     2. Group typedLvalueIR-indexAccess: p EC STO |- ((typedLvalueIR [ typedExpressionIR ]) # lvalueNoteIR) : % % %
 
 +       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
@@ -31021,7 +30475,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
 +     1. (Let (typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ]) be lvalueIR)
 
-+     2. Group typedLvalueIR-sliceAccess: p EC STO |- ((typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ]) # _lvalueNoteIR) : % % %
++     2. Group typedLvalueIR-sliceAccess: p EC STO |- ((typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ]) # lvalueNoteIR) : % % %
 
 +       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
@@ -31067,7 +30521,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # _lvalueNoteIR) : % % %
 
 -     1. (Let (( typedLvalueIR )) be lvalueIR)
 
--     2. Group parenthesized: p EC STO |- ((( typedLvalueIR )) # _lvalueNoteIR) : % % %
+-     2. Group parenthesized: p EC STO |- ((( typedLvalueIR )) # lvalueNoteIR) : % % %
 
 -       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
 
@@ -31503,11 +30957,9 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +     2. Group callStatementIR: p EC STO |- ((callableTargetIR < (typeArgumentIR)* >( (argumentIR)* );) as statementIR) : % % %
 
-+       1. (Let callStatementIR be (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* );))
++       1. (Callee_eval: p EC STO |- callableTargetIR <_>( (argumentIR)* ): EC_1 STO_1 calleeResult)
 
-+       2. (Callee_eval: p EC STO |- callableTargetIR <_>( (argumentIR)* ): EC_1 STO_1 calleeResult)
-
-+       3. Case analysis on calleeResult
++       2. Case analysis on calleeResult
 
           1. Case (% has type exitResult)
 
@@ -31537,9 +30989,7 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
               3. Case (% has type returnResult)
 
-+               1. (Let returnResult be (callResult as returnResult))
-
-+               2. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
++               1. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
 
     4. Case (% has type exitStatement)
 
@@ -31856,13 +31306,11 @@ rel BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
 +       1. If (((initializerIR')? = ?())), then
 
-+         1. (Let typeIR_subst be $subst_type_e((local), EC_0, typeIR))
++         1. (Let value_init be $default(typeIR))
 
-+         2. (Let value_init be $default(typeIR))
++         2. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
 
-+         3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
-
-+         4. Result in: % % |- % : EC_1 STO_0 ((`) as statementResult)
++         3. Result in: % % |- % : EC_1 STO_0 ((`) as statementResult)
 
 +       2. (Let initializerOptIR be (initializerIR')?)
 
@@ -31990,13 +31438,11 @@ rel ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
 +       1. If (((initializerIR)? = ?())), then
 
-+         1. (Let typeIR_subst be $subst_type_e((block), EC_0, typeIR))
++         1. (Let value_init be $default(typeIR))
 
-+         2. (Let value_init be $default(typeIR))
++         2. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
 
-+         3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
-
-+         4. Result in: % % |- % : EC_1 STO_0 ((`) as parserStatementResult)
++         3. Result in: % % |- % : EC_1 STO_0 ((`) as parserStatementResult)
 
 +       2. (Let initializerOptIR be (initializerIR)?)
 
@@ -32474,13 +31920,11 @@ rel ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
 +       1. If (((initializerIR')? = ?())), then
 
-+         1. (Let typeIR_subst be $subst_type_e((block), EC_0, typeIR))
++         1. (Let value_init be $default(typeIR))
 
-+         2. (Let value_init be $default(typeIR))
++         2. (Let EC_1 be $add_var_e((block), EC_0, (` nameIR), value_init))
 
-+         3. (Let EC_1 be $add_var_e((block), EC_0, (` nameIR), value_init))
-
-+         4. Result in: % % |- % : EC_1 STO_0 ((`) as declarationResult)
++         3. Result in: % % |- % : EC_1 STO_0 ((`) as declarationResult)
 
 +       2. (Let initializerOptIR be (initializerIR')?)
 
@@ -32644,9 +32088,7 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +         1. If ((argumentListIR matches pattern [ _/1 ])), then
 
-+           1. (Let [argumentIR] be argumentListIR)
-
-+           2. If (((typedLvalueIR')? matches pattern (_))), then
++           1. If (((typedLvalueIR')? matches pattern (_))), then
 
 +             1. (Let ?(typedLvalueIR) be (typedLvalueIR')?)
 
@@ -32670,9 +32112,7 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +         1. If ((argumentListIR matches pattern [ _/1 ])), then
 
-+           1. (Let [argumentIR] be argumentListIR)
-
-+           2. If (((typedLvalueIR')? matches pattern (_))), then
++           1. If (((typedLvalueIR')? matches pattern (_))), then
 
 +             1. (Let ?(typedLvalueIR) be (typedLvalueIR')?)
 
@@ -32994,9 +32434,9 @@ syntax copyInResult =
    | exit
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:248.1-252.35
-rel Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
+rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
-+ 1. Group directionless-in: STO_0 p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
++ 1. Group directionless-in: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 +   1. Case analysis on direction
 
@@ -33044,7 +32484,7 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction type
 
     1. Case (% matches pattern `INOUT`)
 
-+     1. Group inout: STO_0 p_caller EC_caller_0 (_annotationList (inout) typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
++     1. Group inout: STO_0 p_caller EC_caller_0 (annotationList (inout) typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 +       1. (Argument_eval_lvalue: p_caller EC_caller_0 STO_0 |- argumentIR : EC_caller_1 STO_1 storageReferenceResult)
 
@@ -33072,7 +32512,7 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (_annotationList direction type
 
     2. Case (% matches pattern `OUT`)
 
-+     1. Group out: STO_0 p_caller EC_caller_0 (_annotationList (out) typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
++     1. Group out: STO_0 p_caller EC_caller_0 (annotationList (out) typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 +       1. (Argument_eval_lvalue: p_caller EC_caller_0 STO_0 |- argumentIR : EC_caller_1 STO_1 storageReferenceResult)
 
@@ -33172,11 +32612,11 @@ rel Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 +   3. Result in: % @ % % % ~>@ EC_callee_1
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
-rel Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
+rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
 + 1. If (((storageReference')? matches pattern ())), then
 
-+   1. Group in-directionless: STO p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee ?() ~> %
++   1. Group in-directionless: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee ?() ~> %
 
 +     1. Case analysis on direction
 
@@ -33188,7 +32628,7 @@ rel Copy_out_argument: STO p_caller EC_caller_0 (_annotationList direction typeI
 
 +         1. Result in: % % % % @ % % % ~> EC_caller_0
 
-+ 2. Group out-inout: STO p_caller EC_caller_0 (_annotationList direction typeIR nameIR _constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
++ 2. Group out-inout: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
 +   1. If (((storageReference')? = ?())), then
 
@@ -33374,27 +32814,27 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       5. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)* @ (local) EC_callee_1 (argumentIR_aligned)* ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
-+       6. If ((copyInListResult has type exitResult)), then
++       6. Case analysis on copyInListResult
 
--         1. (Let exitResult be (copyInListResult as exitResult))
+          1. Case (% has type exitResult)
 
--         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-           1. (Let exitResult be (copyInListResult as exitResult))
 
-+       7. (Let EC_callee_1 be EC_callee_0[local.type = ({ ((typeParameterIR : typeArgumentIR))* })])
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-+       8. If ((copyInListResult has type continueResult<storageReference?*>)), then
+          2. Case (% has type continueResult<storageReference?*>)
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++           1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_2 (value_default)* ~>@ EC_callee_3)
++           2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_2 (value_default)* ~>@ EC_callee_3)
 
-+         3. (DefinedFunctionBody_eval: EC_callee_3 STO_1 |- blockStatementIR : EC_callee_4 STO_2 definedFunctionResult)
++           3. (DefinedFunctionBody_eval: EC_callee_3 STO_1 |- blockStatementIR : EC_callee_4 STO_2 definedFunctionResult)
 
-+         4. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
++           4. (Let EC_2 be EC_1[global.frame = EC_callee_3.global.frame])
 
-+         5. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_3)
++           5. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_3)
 
-+         6. Result in: % % % |- % @< % >( % ): EC_3 STO_2 (definedFunctionResult as callResult)
++           6. Result in: % % % |- % @< % >( % ): EC_3 STO_2 (definedFunctionResult as callResult)
 
 + 3. (Let (argumentIR)* be argumentListIR)
 
@@ -33416,29 +32856,29 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       5. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)* @ (local) EC_callee_1 (argumentIR_aligned)* ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
-+       6. If ((copyInListResult has type exitResult)), then
++       6. Case analysis on copyInListResult
 
--         1. (Let exitResult be (copyInListResult as exitResult))
+          1. Case (% has type exitResult)
 
--         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-           1. (Let exitResult be (copyInListResult as exitResult))
 
-+       7. (Let EC_callee_1 be EC_callee_0[local.type = ({ ((typeParameterIR : typeArgumentIR))* })])
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-+       8. If ((copyInListResult has type continueResult<storageReference?*>)), then
+          2. Case (% has type continueResult<storageReference?*>)
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++           1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_2 (value_default)* ~>@ EC_callee_3)
++           2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_2 (value_default)* ~>@ EC_callee_3)
 
-+         3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*
++           3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*
 
-+         4. (ExternFunctionCall_eval: EC_callee_3 STO_1 |- nameIR ( (nameIR_param)* ): EC_callee_4 STO_2 callResult)
++           4. (ExternFunctionCall_eval: EC_callee_3 STO_1 |- nameIR ( (nameIR_param)* ): EC_callee_4 STO_2 callResult)
 
-+         5. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
++           5. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
 
-+         6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_3)
++           6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_3)
 
-+         7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
++           7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
     2. Case (% has type builtinMethodCallee)
 
@@ -33462,11 +32902,9 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +                 1. If ((parameterListIR matches pattern [ _/1 ])), then
 
-+                   1. (Let [parameterIR] be parameterListIR)
++                   1. (Lvalue_read: p EC_0 STO_0 |- storageReference : value')
 
-+                   2. (Lvalue_read: p EC_0 STO_0 |- storageReference : value')
-
-+                   3. If ((value' has type headerStackValue)), then
++                   2. If ((value' has type headerStackValue)), then
 
 +                     1. (Let headerStackValue be (value' as headerStackValue))
 
@@ -33524,11 +32962,9 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +                 1. If ((parameterListIR matches pattern [ _/1 ])), then
 
-+                   1. (Let [parameterIR] be parameterListIR)
++                   1. (Lvalue_read: p EC_0 STO_0 |- storageReference : value')
 
-+                   2. (Lvalue_read: p EC_0 STO_0 |- storageReference : value')
-
-+                   3. If ((value' has type headerStackValue)), then
++                   2. If ((value' has type headerStackValue)), then
 
 +                     1. (Let headerStackValue be (value' as headerStackValue))
 
@@ -33684,33 +33120,29 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +         6. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)* @ (local) EC_callee_3 (argumentIR_aligned)* ~> STO_1 EC_1 @ EC_callee_4 # copyInListResult)
 
-+         7. If ((copyInListResult has type exitResult)), then
++         7. Case analysis on copyInListResult
 
--           1. (Let exitResult be (copyInListResult as exitResult))
+            1. Case (% has type exitResult)
 
--           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-             1. (Let exitResult be (copyInListResult as exitResult))
 
-+         8. (Let EC_callee_1 be EC_callee_0[block.type = theta])
+-             2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-+         9. (Let EC_callee_2 be EC_callee_1[block.frame = frame])
+            2. Case (% has type continueResult<storageReference?*>)
 
-+         10. (Let EC_callee_3 be EC_callee_2[local.type = ({ ((typeParameterIR : typeArgumentIR))* })])
++             1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
 
-+         11. If ((copyInListResult has type continueResult<storageReference?*>)), then
++             2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_4 (value_default)* ~>@ EC_callee_5)
 
-+           1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++             3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*
 
-+           2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_4 (value_default)* ~>@ EC_callee_5)
++             4. (ExternMethodCall_eval: EC_callee_5 STO_1 |- objectId . nameIR ( (nameIR_param)* ): EC_callee_6 STO_2 callResult)
 
-+           3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*
++             5. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-+           4. (ExternMethodCall_eval: EC_callee_5 STO_1 |- objectId . nameIR ( (nameIR_param)* ): EC_callee_6 STO_2 callResult)
++             6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_6 ((storageReference)?)* ~> EC_3)
 
-+           5. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
-
-+           6. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (local) EC_callee_6 ((storageReference)?)* ~> EC_3)
-
-+           7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
++             7. Result in: % % % |- % @< % >( % ): EC_3 STO_2 callResult
 
     4. Case (% has type parserApplyMethodCallee)
 
@@ -33738,37 +33170,27 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +         4. (ParserState_trans: EC_callee_4 STO_2 |-transition "start" : EC_callee_5 STO_3 transitionResult)
 
-+         5. If ((transitionResult has type acceptTransitionResult)), then
++         5. Case analysis on transitionResult
 
-+           1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
+            1. Case (% has type acceptTransitionResult)
 
-+           2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
++             1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
 
-+           3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
++             2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-+           4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
++             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
 
-+       7. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.state = stateEnv])
++             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
-+       8. If ((copyInListResult has type continueResult<storageReference?*>)), then
+            2. Case (% has type rejectTransitionResult)
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++             1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
++             2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-+         3. (ParserLocalDecls_eval: EC_callee_3 STO_1 |- parserLocalDeclarationListIR : EC_callee_4 STO_2)
++             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
 
-+         4. (ParserState_trans: EC_callee_4 STO_2 |-transition "start" : EC_callee_5 STO_3 transitionResult)
-
-+         5. If ((transitionResult has type rejectTransitionResult)), then
-
-+           1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
-
-+           2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
-
-+           3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
-
-+           4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 (rejectTransitionResult as callResult)
++             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 (rejectTransitionResult as callResult)
 
     5. Case (% has type controlApplyMethodCallee)
 
@@ -33788,81 +33210,57 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       6. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)* @ (block) EC_callee_1 (argumentIR_aligned)* ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
-+       7. If ((copyInListResult has type exitResult)), then
++       7. Case analysis on copyInListResult
 
--         1. (Let exitResult be (copyInListResult as exitResult))
+          1. Case (% has type exitResult)
 
--         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-           1. (Let exitResult be (copyInListResult as exitResult))
 
-+       8. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-+       9. If ((copyInListResult has type continueResult<storageReference?*>)), then
+          2. Case (% has type continueResult<storageReference?*>)
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++           1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
++           2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
 
-+         3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
++           3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
 
-+         4. If ((declarationResult has type exitResult)), then
++           4. Case analysis on declarationResult
 
--           1. (Let exitResult be (declarationResult as exitResult))
+              1. Case (% has type exitResult)
 
--           2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
+-               1. (Let exitResult be (declarationResult as exitResult))
 
--           3. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_4 ((storageReference)?)* ~> EC_3)
+-               2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
 
--           4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
+-               3. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_4 ((storageReference)?)* ~> EC_3)
 
-+       10. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
+-               4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 ((exit) as callResult)
 
-+       11. If ((copyInListResult has type continueResult<storageReference?*>)), then
+              2. Case (% has type continueEmptyResult)
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
++               1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
++               2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
 
-+         3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
++               3. If ((controlBodyResult has type exitResult)), then
 
-+         4. If ((declarationResult has type continueEmptyResult)), then
++                 1. (Let exitResult be (controlBodyResult as exitResult))
 
-+           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
++                 2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-+           2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
++                 3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
 
-+           3. If ((controlBodyResult has type exitResult)), then
++                 4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
 
-+             1. (Let exitResult be (controlBodyResult as exitResult))
++               4. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
 
-+             2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
++                 1. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
 
-+             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
++                 2. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
 
-+             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((exit) as callResult)
-
-+       12. (Let EC_callee_1 be EC_callee_0[block.frame = frame][block.callable = ({ ((callableId : (actionDef as callableDef)))* })])
-
-+       13. If ((copyInListResult has type continueResult<storageReference?*>)), then
-
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
-
-+         2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
-
-+         3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
-
-+         4. If ((declarationResult has type continueEmptyResult)), then
-
-+           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
-
-+           2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
-
-+           3. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
-
-+             1. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
-
-+             2. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
-
-+             3. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
++                 3. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
     6. Case (% has type tableApplyMethodCallee)
 
@@ -34612,15 +34010,11 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
     1. Case (% matches pattern `%:%`)
 
--     1. (Let (switchLabelIR : blockStatementIR) be switchCaseIR)
-
--     2. Return true
+-     1. Return true
 
     2. Case (% matches pattern `%:`)
 
--     1. (Let (switchLabelIR :) be switchCaseIR)
-
--     2. Return false
+-     1. Return false
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:733.1-735.26
 rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
@@ -34857,9 +34251,9 @@ syntax tableKeyResult =
    | exit
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:11.1-14.23
-rel TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
+rel TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR annotationList ;) : % % %
 
-+ 1. Group exit: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
++ 1. Group exit: EC_0 STO_0 |- (typedExpressionIR : nameIR annotationList ;) : % % %
 
 +   1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
@@ -34869,7 +34263,7 @@ rel TableKey_eval: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) 
 
 -     2. Result in: % % |- % : EC_1 STO_1 ((exit) as tableKeyResult)
 
-+ 2. Group cont: EC_0 STO_0 |- (typedExpressionIR : nameIR _annotationList ;) : % % %
++ 2. Group cont: EC_0 STO_0 |- (typedExpressionIR : nameIR annotationList ;) : % % %
 
 +   1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
