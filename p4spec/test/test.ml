@@ -374,7 +374,6 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
             Format.asprintf "\n>>> Running simulation test (%s) on %s with packet input %s" arch
               filename_p4 filename_stf
             |> print_endline;
-            Printf.printf "%s %s\n" filename_p4 filename_stf;
             run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
               filename_stf)
           stat filenames_stf)
