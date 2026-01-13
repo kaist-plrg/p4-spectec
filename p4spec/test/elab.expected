@@ -7509,107 +7509,107 @@ def $cast_to_enum(enumTypeIR, value) : value =
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:538.1-540.40
 def $cast_op(typeIR, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:556.1-556.51
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:557.1-557.51
   clause 0 : (typeIR, value) = $cast_bool(typeIR, b)
   -- if value <: boolValue
   -- let b = value as boolValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:571.1-571.52
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:572.1-572.52
   clause 1 : (typeIR, value) = $cast_arbint(typeIR, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `D%`
   -- let d i = integerLiteral
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:589.1-589.57
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:590.1-590.57
   clause 2 : (typeIR, value) = $cast_fixbit(typeIR, w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%W%`
   -- let w w i = integerLiteral
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:606.1-606.57
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:607.1-607.57
   clause 3 : (typeIR, value) = $cast_fixint(typeIR, w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%S%`
   -- let w s i = integerLiteral
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:617.1-617.73
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:618.1-618.73
   clause 4 : (typeIR, value) = $cast_varbit(typeIR, w_max, w, i)
   -- if value <: integerValue
   -- let integerValue = value as integerValue
   -- if integerValue matches `%.%V%`
   -- let w_max . w v i = integerValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:627.1-627.68
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:628.1-628.68
   clause 5 : (typeIR, value) = $cast_error(typeIR, nameIR)
   -- if value <: errorValue
   -- let error. nameIR = value as errorValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:639.1-640.63
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:640.1-641.63
   clause 6 : (typeIR, value) = $cast_struct(typeIR, typeId, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*})
   -- if value <: structValue
   -- let struct typeId { value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = value as structValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:652.1-653.66
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:653.1-654.66
   clause 7 : (typeIR, value) = $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*})
   -- if value <: headerValue
   -- let header typeId { b ; value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = value as headerValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:664.1-665.47
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:665.1-666.47
   clause 8 : (typeIR, value') = $cast_header_stack(typeIR, value*{value <- value*}, n_size)
   -- if value' <: headerStackValue
   -- let header_stack[ value*{value <- value*} ( _nat ; n_size )] = value' as headerStackValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:669.1-669.64
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:670.1-670.64
   clause 9 : (typeIR, value') = $cast_op(typeIR, value)
   -- if value' <: enumValue
   -- let enumValue = value' as enumValue
   -- if enumValue matches `%.%.%`
   -- let _typeId . _nameIR . value = enumValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:698.1-698.71
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:699.1-699.71
   clause 10 : (typeIR, value') = $cast_sequence(typeIR, value*{value <- value*})
   -- if value' <: sequenceValue
   -- let sequenceValue = value' as sequenceValue
   -- if sequenceValue matches `SEQ(%)`
   -- let seq( value*{value <- value*} ) = sequenceValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:726.1-727.39
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:727.1-728.39
   clause 11 : (typeIR, value') = $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
   -- if value' <: recordValue
   -- let recordValue = value' as recordValue
   -- if recordValue matches `RECORD{%}`
   -- let record{ value id ;*{id <- id*, value <- value*} } = recordValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:733.1-733.49
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:734.1-734.49
   clause 12 : (typeIR, value) = $default(typeIR)
   -- if value <: defaultValue
   -- let defaultValue = value as defaultValue
   -- if (defaultValue = default)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:743.1-743.51
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:744.1-744.51
   clause 13 : (typeIR, value) = $cast_invalid(typeIR)
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- if (invalidHeaderValue = {#})
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:769.1-770.39
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:770.1-771.39
   clause 14 : (typeIR, value') = $cast_set_singleton(typeIR, value)
   -- if value' <: setValue
   -- let setValue = value' as setValue
   -- if setValue matches `SET{%}`
   -- let set{ value } = setValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:771.1-772.45
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:772.1-773.45
   clause 15 : (typeIR, value) = $cast_set_mask(typeIR, value_b, value_m)
   -- if value <: setValue
   -- let setValue = value as setValue
   -- if setValue matches `SET{%&&&%}`
   -- let set{ value_b &&& value_m } = setValue
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:773.1-774.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:774.1-775.46
   clause 16 : (typeIR, value) = $cast_set_range(typeIR, value_l, value_u)
   -- if value <: setValue
   -- let setValue = value as setValue
@@ -7619,89 +7619,89 @@ def $cast_op(typeIR, value) : value =
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:542.1-543.49
 def $default(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:781.1-781.30
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:782.1-782.30
   clause 0 : (typeIR) = false as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:782.1-782.41
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:783.1-783.41
   clause 1 : (typeIR) = error. "NoError" as value
   -- if typeIR <: errorTypeIR
   -- let errorTypeIR = typeIR as errorTypeIR
   -- if (errorTypeIR = error)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:783.1-784.24
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:784.1-785.24
   clause 2 : (typeIR) = " text_empty " as value
   -- if typeIR <: stringTypeIR
   -- let stringTypeIR = typeIR as stringTypeIR
   -- if (stringTypeIR = string)
   -- let text_empty = ""
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:786.1-786.24
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:787.1-787.24
   clause 3 : (typeIR) = d 0 as int as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT`
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:787.1-787.33
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:788.1-788.33
   clause 4 : (typeIR) = w w 0 as int as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:788.1-788.33
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:789.1-789.33
   clause 5 : (typeIR) = w s 0 as int as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:789.1-789.41
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:790.1-790.41
   clause 6 : (typeIR) = w . 0 v 0 as int as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `VARBIT<%>`
   -- let varbit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:791.1-791.50
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:792.1-792.50
   clause 7 : (typeIR') = $default(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:793.1-793.47
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:794.1-794.47
   clause 8 : (typeIR') = $default(typeIR)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:795.1-795.64
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:796.1-796.64
   clause 9 : (typeIR') = tuple( $default(typeIR)*{typeIR <- typeIR*} ) as value
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:797.1-798.56
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:798.1-799.56
   clause 10 : (typeIR') = header_stack[ value*{value <- value*} ( 0 ; n_s )] as value
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_s ] = typeIR' as headerStackTypeIR
   -- let value*{value <- value*} = $repeat_<value>($default(typeIR), n_s)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:800.1-801.53
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:801.1-802.53
   clause 11 : (typeIR) = struct typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as structTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:803.1-804.62
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:804.1-805.62
   clause 12 : (typeIR) = header typeId { false ; $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:806.1-807.59
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:807.1-808.59
   clause 13 : (typeIR) = header_union typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: headerUnionTypeIR
   -- let header_union typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerUnionTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:809.1-809.62
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:810.1-810.62
   clause 14 : (typeIR) = typeId . id_f_h as value
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
@@ -7710,7 +7710,7 @@ def $default(typeIR) : value =
   -- if id*{id <- id*} matches _ :: _
   -- let id_f_h :: _id*{_id <- _id*} = id*{id <- id*}
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:811.1-814.79
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:812.1-815.79
   clause 15 : (typeIR') = typeId . id_zero . value_zero as value
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
@@ -7721,7 +7721,7 @@ def $default(typeIR) : value =
   -- if id?{id <- id?} matches (_)
   -- let ?(id_zero) = id?{id <- id?}
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:816.1-820.34
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:817.1-821.34
   clause 16 : (typeIR') = typeId . id_zero . value_zero as value
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
@@ -7766,66 +7766,71 @@ def $cast_bool(typeIR, bool) : value =
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:560.1-561.23
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:555.1-555.68
+  clause 5 : (typeIR', b) = set{ $cast_bool(typeIR, b) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:561.1-562.23
 def $cast_arbint(typeIR, int) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:563.1-563.41
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:564.1-564.41
   clause 0 : (typeIR, i) = (i =/= 0 as int) as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:564.1-564.31
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:565.1-565.31
   clause 1 : (typeIR, i) = d i as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT`
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:565.1-565.61
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:566.1-566.61
   clause 2 : (typeIR, i) = w w $int_to_bitstr(w as int, i) as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:566.1-566.61
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:567.1-567.61
   clause 3 : (typeIR, i) = w s $int_to_bitstr(w as int, i) as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:567.1-567.64
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:568.1-568.64
   clause 4 : (typeIR', i) = $cast_arbint(typeIR, i)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:568.1-568.61
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:569.1-569.61
   clause 5 : (typeIR', i) = $cast_arbint(typeIR, i)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:569.1-569.72
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:570.1-570.72
   clause 6 : (typeIR', i) = set{ $cast_arbint(typeIR, i) } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:575.1-576.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:576.1-577.23
 def $cast_fixbit(typeIR, nat, int) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:578.1-578.44
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:579.1-579.44
   clause 0 : (typeIR, w, i) = (i =/= 0 as int) as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:579.1-579.34
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:580.1-580.34
   clause 1 : (typeIR, _nat, i) = d i as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT`
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:580.1-581.37
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:581.1-582.37
   clause 2 : (typeIR, _nat, i) = w_to w i' as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
@@ -7833,7 +7838,7 @@ def $cast_fixbit(typeIR, nat, int) : value =
   -- let bit< w_to > = integerTypeIR
   -- let i' = $int_to_bitstr(w_to as int, i)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:582.1-583.37
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:583.1-584.37
   clause 3 : (typeIR, _nat, i) = w_to s i' as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
@@ -7841,36 +7846,36 @@ def $cast_fixbit(typeIR, nat, int) : value =
   -- let int< w_to > = integerTypeIR
   -- let i' = $int_to_bitstr(w_to as int, i)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:584.1-584.70
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:585.1-585.70
   clause 4 : (typeIR', w, i) = $cast_fixbit(typeIR, w, i)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:585.1-585.67
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:586.1-586.67
   clause 5 : (typeIR', w, i) = $cast_fixbit(typeIR, w, i)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:586.1-586.78
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:587.1-587.78
   clause 6 : (typeIR', w, i) = set{ $cast_fixbit(typeIR, w, i) } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:587.1-587.70
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:588.1-588.70
   clause 7 : (typeIR, w, i) = $cast_to_enum(enumTypeIR, w w i as value)
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:593.1-594.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:594.1-595.23
 def $cast_fixint(typeIR, nat, int) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:596.1-596.53
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:597.1-597.53
   clause 0 : (typeIR, w, i) = d $bitstr_to_int(w as int, i) as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT`
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:597.1-598.61
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:598.1-599.61
   clause 1 : (typeIR, w_from, i) = w_to w i' as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
@@ -7878,7 +7883,7 @@ def $cast_fixint(typeIR, nat, int) : value =
   -- let bit< w_to > = integerTypeIR
   -- let i' = $int_to_bitstr(w_to as int, $bitstr_to_int(w_from as int, i))
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:599.1-600.61
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:600.1-601.61
   clause 2 : (typeIR, w_from, i) = w_to s i' as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
@@ -7886,30 +7891,30 @@ def $cast_fixint(typeIR, nat, int) : value =
   -- let int< w_to > = integerTypeIR
   -- let i' = $int_to_bitstr(w_to as int, $bitstr_to_int(w_from as int, i))
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:601.1-601.70
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:602.1-602.70
   clause 3 : (typeIR', w, i) = $cast_fixint(typeIR, w, i)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:602.1-602.67
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:603.1-603.67
   clause 4 : (typeIR', w, i) = $cast_fixint(typeIR, w, i)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:603.1-603.78
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:604.1-604.78
   clause 5 : (typeIR', w, i) = set{ $cast_fixint(typeIR, w, i) } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:604.1-604.70
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:605.1-605.70
   clause 6 : (typeIR, w, i) = $cast_to_enum(enumTypeIR, w s i as value)
   -- if typeIR <: enumTypeIR
   -- let enumTypeIR = typeIR as enumTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:610.1-611.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:611.1-612.23
 def $cast_varbit(typeIR, nat, nat, int) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:613.1-613.66
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:614.1-614.66
   clause 0 : (typeIR, w_max', w, i) = w_max . w v i as value
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
@@ -7917,108 +7922,108 @@ def $cast_varbit(typeIR, nat, nat, int) : value =
   -- let varbit< w_max > = integerTypeIR
   -- if (w_max = w_max')
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:614.1-615.38
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:615.1-616.38
   clause 1 : (typeIR', w_max, w, i) = $cast_varbit(typeIR, w_max, w, i)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:621.1-622.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:622.1-623.23
 def $cast_error(typeIR, nameIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:624.1-624.49
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:625.1-625.49
   clause 0 : (typeIR, nameIR) = error. nameIR as value
   -- if typeIR <: errorTypeIR
   -- let errorTypeIR = typeIR as errorTypeIR
   -- if (errorTypeIR = error)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:625.1-625.80
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:626.1-626.80
   clause 1 : (typeIR', nameIR) = set{ $cast_error(typeIR, nameIR) } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:631.1-632.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:632.1-633.23
 def $cast_struct(typeIR, typeId, (value, id)*) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:634.1-635.47
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:635.1-636.47
   clause 0 : (typeIR', typeId, (value, id)*{id <- id*, value <- value*}) = $cast_struct(typeIR, typeId, (value, id)*{id <- id*, value <- value*})
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:636.1-637.54
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:637.1-638.54
   clause 1 : (typeIR, typeId', (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = struct typeId { value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as structTypeIR
   -- if (typeId = typeId')
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:644.1-645.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:645.1-646.23
 def $cast_header(typeIR, typeId, bool, (value, id)*) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:647.1-648.50
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:648.1-649.50
   clause 0 : (typeIR', typeId, b, (value, id)*{id <- id*, value <- value*}) = $cast_header(typeIR, typeId, b, (value, id)*{id <- id*, value <- value*})
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:649.1-650.59
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:650.1-651.59
   clause 1 : (typeIR, typeId', b, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = header typeId { b ; value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerTypeIR
   -- if (typeId = typeId')
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:657.1-658.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:658.1-659.23
 def $cast_header_stack(typeIR, value*, nat) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:660.1-662.25
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:661.1-663.25
   clause 0 : (typeIR', value*{value <- value*}, n_size') = header_stack[ value*{value <- value*} ( 0 ; n_size )] as value
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- if (n_size = n_size')
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:673.1-674.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:674.1-675.23
 def $cast_sequence(typeIR, value*) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:676.1-677.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:677.1-678.35
   clause 0 : (typeIR', value*{value <- value*}) = $cast_sequence(typeIR, value*{value <- value*})
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:679.1-680.39
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:680.1-681.39
   clause 1 : (typeIR', value*{value <- value*}) = list[ $cast_op(typeIR, value)*{value <- value*} ] as value
   -- if typeIR' <: listTypeIR
   -- let list< typeIR > = typeIR' as listTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:682.1-683.40
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:683.1-684.40
   clause 2 : (typeIR', value*{value <- value*}) = tuple( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} ) as value
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:685.1-688.25
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:686.1-689.25
   clause 3 : (typeIR', value*{value <- value*}) = header_stack[ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size )] as value
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- (let value_cast = $cast_op(typeIR, value))*{value <- value*, value_cast <- value_cast*}
   -- let n_idx = |value*{value <- value*}|
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:690.1-692.54
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:691.1-693.54
   clause 4 : (typeIR, value*{value <- value*}) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:694.1-696.54
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:695.1-697.54
   clause 5 : (typeIR, value*{value <- value*}) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:704.1-705.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:705.1-706.23
 def $cast_record(typeIR, (value, id)*) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:707.1-708.39
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:708.1-709.39
   clause 0 : (typeIR', (value, id)*{id <- id*, value <- value*}) = $cast_record(typeIR, (value, id)*{id <- id*, value <- value*})
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:710.1-716.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:711.1-717.69
   clause 1 : (typeIR, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = struct typeId { value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_t_field id_t_field ;*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
@@ -8027,7 +8032,7 @@ def $cast_record(typeIR, (value, id)*) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' <- value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast <- value_field_cast*}
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:718.1-724.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:719.1-725.69
   clause 2 : (typeIR, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = header typeId { true ; value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_t_field id_t_field ;*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
@@ -8036,56 +8041,56 @@ def $cast_record(typeIR, (value, id)*) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' <- value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast <- value_field_cast*}
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:737.1-737.34
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:738.1-738.34
 def $cast_invalid(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:739.1-739.60
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:740.1-740.60
   clause 0 : (typeIR') = $cast_invalid(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:740.1-740.57
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:741.1-741.57
   clause 1 : (typeIR) = $default(headerTypeIR as typeIR)
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:741.1-741.67
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:742.1-742.67
   clause 2 : (typeIR) = $default(headerUnionTypeIR as typeIR)
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:747.1-748.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:748.1-749.23
 def $cast_set_singleton(typeIR, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:750.1-751.37
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:751.1-752.37
   clause 0 : (typeIR', value) = set{ $cast_op(typeIR, value) } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:753.1-754.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:754.1-755.23
 def $cast_set_mask(typeIR, value, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:756.1-759.49
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:757.1-760.49
   clause 0 : (typeIR', value_b, value_m) = set{ value_b_cast &&& value_m_cast } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
   -- let value_b_cast = $cast_op(typeIR, value_b)
   -- let value_m_cast = $cast_op(typeIR, value_m)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:761.1-762.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:762.1-763.23
 def $cast_set_range(typeIR, value, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:764.1-767.49
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:765.1-768.49
   clause 0 : (typeIR', value_l, value_u) = set{ value_l_cast .. value_u_cast } as value
   -- if typeIR' <: setTypeIR
   -- let set< typeIR > = typeIR' as setTypeIR
   -- let value_l_cast = $cast_op(typeIR, value_l)
   -- let value_u_cast = $cast_op(typeIR, value_u)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:826.1-827.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:827.1-828.23
 def $bitacc_op(value, value, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:829.1-834.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:830.1-835.35
   clause 0 : (value, value', value'') = w w i as value
   -- if value <: integerValue
   -- let integerValue_b = value as integerValue
@@ -8101,10 +8106,10 @@ def $bitacc_op(value, value, value) : value =
   -- let w = int as nat
   -- let i = $bitacc(i_b, i_h, i_l)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:840.1-841.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:841.1-842.23
 def $bitacc_replace_op(value, value, value, value) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:843.1-848.48
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:844.1-849.48
   clause 0 : (value, value', value'', value''') = w w i as value
   -- if value <: integerValue
   -- let integerValue_b = value as integerValue
@@ -8128,192 +8133,192 @@ def $bitacc_replace_op(value, value, value, value) : value =
   -- let _nat w i_r = integerLiteral'
   -- let i = $bitacc_replace(i_b, i_h, i_l, i_r)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:854.1-855.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:855.1-856.23
 def $sizeof(typeIR, id) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:898.1-898.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:899.1-899.69
   clause 0 : (typeIR, text) = $sizeof_minSizeInBits(typeIR)
   -- if (text = "minSizeInBits")
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:905.1-905.71
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:906.1-906.71
   clause 1 : (typeIR, text) = $sizeof_minSizeInBytes(typeIR)
   -- if (text = "minSizeInBytes")
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:932.1-932.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:933.1-933.69
   clause 2 : (typeIR, text) = $sizeof_maxSizeInBits(typeIR)
   -- if (text = "maxSizeInBits")
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:939.1-939.71
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:940.1-940.71
   clause 3 : (typeIR, text) = $sizeof_maxSizeInBytes(typeIR)
   -- if (text = "maxSizeInBytes")
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:857.1-858.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:858.1-859.23
 def $sizeof_minSizeInBits(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:875.1-875.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:876.1-876.69
   clause 0 : (typeIR) = d $sizeof_minSizeInBits'(typeIR) as int as value
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:859.1-860.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:860.1-861.23
 def $sizeof_minSizeInBits'(typeIR) : nat =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:877.1-877.37
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:878.1-878.37
   clause 0 : (typeIR) = 1
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:878.1-878.43
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:879.1-879.43
   clause 1 : (typeIR) = w
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:879.1-879.43
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:880.1-880.43
   clause 2 : (typeIR) = w
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:880.1-880.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:881.1-881.46
   clause 3 : (typeIR) = 0
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `VARBIT<%>`
   -- let varbit< _nat > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:881.1-882.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:882.1-883.35
   clause 4 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:883.1-884.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:884.1-885.35
   clause 5 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:885.1-886.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:886.1-887.35
   clause 6 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
   -- if enumTypeIR matches `ENUM%<%>{%}`
   -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:887.1-888.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:888.1-889.46
   clause 7 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:889.1-890.47
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:890.1-891.47
   clause 8 : (typeIR') = ($sizeof_minSizeInBits'(typeIR) * n_size)
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:891.1-892.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:892.1-893.46
   clause 9 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: structTypeIR
   -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:893.1-894.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:894.1-895.46
   clause 10 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerTypeIR
   -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:895.1-896.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:896.1-897.46
   clause 11 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:862.1-863.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:863.1-864.23
 def $sizeof_minSizeInBytes(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:902.1-903.48
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:903.1-904.48
   clause 0 : (typeIR) = d (n_size / 8) as int as value
   -- let n_size = $sizeof_minSizeInBits'(typeIR)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:865.1-866.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:866.1-867.23
 def $sizeof_maxSizeInBits(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:909.1-909.69
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:910.1-910.69
   clause 0 : (typeIR) = d $sizeof_maxSizeInBits'(typeIR) as int as value
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:867.1-868.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:868.1-869.23
 def $sizeof_maxSizeInBits'(typeIR) : nat =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:911.1-911.37
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:912.1-912.37
   clause 0 : (typeIR) = 1
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:912.1-912.43
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:913.1-913.43
   clause 1 : (typeIR) = w
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `INT<%>`
   -- let int< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:913.1-913.43
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:914.1-914.43
   clause 2 : (typeIR) = w
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `BIT<%>`
   -- let bit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:914.1-914.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:915.1-915.46
   clause 3 : (typeIR) = w
   -- if typeIR <: integerTypeIR
   -- let integerTypeIR = typeIR as integerTypeIR
   -- if integerTypeIR matches `VARBIT<%>`
   -- let varbit< w > = integerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:915.1-916.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:916.1-917.35
   clause 4 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:917.1-918.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:918.1-919.35
   clause 5 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:919.1-920.35
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:920.1-921.35
   clause 6 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
   -- if typeIR' <: enumTypeIR
   -- let enumTypeIR = typeIR' as enumTypeIR
   -- if enumTypeIR matches `ENUM%<%>{%}`
   -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:921.1-922.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:922.1-923.46
   clause 7 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:923.1-924.47
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:924.1-925.47
   clause 8 : (typeIR') = ($sizeof_maxSizeInBits'(typeIR) * n_size)
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:925.1-926.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:926.1-927.46
   clause 9 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: structTypeIR
   -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:927.1-928.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:928.1-929.46
   clause 10 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerTypeIR
   -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:929.1-930.46
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:930.1-931.46
   clause 11 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:870.1-871.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:871.1-872.23
 def $sizeof_maxSizeInBytes(typeIR) : value =
 
-  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:936.1-937.48
+  ;; ../../../../spec-concrete/3-operations/3-operations.watsup:937.1-938.48
   clause 0 : (typeIR) = d (n_size / 8) as int as value
   -- let n_size = $sizeof_maxSizeInBits'(typeIR)
 
