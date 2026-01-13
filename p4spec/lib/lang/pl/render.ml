@@ -17,13 +17,20 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
-let adoc_mono s = "``" ^ s ^ "``"
+(* Subscript, superscript, and ligature *)
+
 let adoc_subscript s = "~" ^ s ^ "~"
 let adoc_superscript s = "^" ^ s ^ "^"
 let adoc_bold s = "*" ^ s ^ "*"
-let adoc_indent level = String.make (level * 2) ' '
-let adoc_attach_block _level = "+\n"
-let adoc_open_block _level s = F.asprintf "--\n%s\n--" s
+
+(* Monospaced text *)
+
+let adoc_mono s = "``" ^ s ^ "``"
+
+let adoc_as_code (ctx : context) (s : string) : string =
+  if ctx.in_code then s else adoc_mono s
+
+(* Lists *)
 
 let adoc_ordered_bullet level =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')
@@ -31,14 +38,23 @@ let adoc_ordered_bullet level =
 let adoc_unordered_bullet level =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '*')
 
+(* Links *)
+
 let adoc_link ~(link : string) (text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
 
-let as_code (ctx : context) (s : string) : string =
-  if ctx.in_code then s else adoc_mono s
-
-let as_link (ctx : context) ~link (s : string) : string =
+let adoc_as_link (ctx : context) ~link (s : string) : string =
   if ctx.in_link then s else adoc_link ~link s
+
+(* Blocks *)
+
+let adoc_attach_block = "+\n"
+let adoc_open_block s = F.asprintf "--\n%s\n--" s
+
+(* Widths *)
+
+let adoc_width_short = 20
+let adoc_fits_in_width_short s = String.length s <= adoc_width_short
 
 (* Rendering utils *)
 
@@ -80,15 +96,15 @@ let string_of_relid relid = Il.Print.string_of_relid relid
 let string_of_defid defid = Il.Print.string_of_varid defid
 
 let render_varid (ctx : context) (id_var : Sl.id) =
-  if Id.is_underscored id_var then "++_++" |> as_code ctx
+  if Id.is_underscored id_var then "++_++" |> adoc_as_code ctx
   else
     let var_slices = String.split_on_char '_' id_var.it in
     match var_slices with
     | [] -> assert false
-    | [ var_type ] -> var_type |> as_code ctx
+    | [ var_type ] -> var_type |> adoc_as_code ctx
     | var_type :: var_subscripts ->
         var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
-        |> as_code ctx
+        |> adoc_as_code ctx
 
 (* Notation *)
 
@@ -122,14 +138,14 @@ let code_of_iterexp (iter, _) = code_of_iter iter
 (* Variables *)
 
 let render_var ctx (id, _typ, iters) =
-  if Id.is_underscored id then "++_++" |> as_code ctx
+  if Id.is_underscored id then "++_++" |> adoc_as_code ctx
   else render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
 
 let render_in_itervars ctx vars : string =
   let render_in_var var =
     F.asprintf "%s in %s"
-      (render_var in_code var |> as_code ctx)
-      (render_var in_code var ^ code_of_iter List |> as_code ctx)
+      (render_var in_code var |> adoc_as_code ctx)
+      (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx)
   in
   List.map render_in_var vars |> render_list
 
@@ -141,15 +157,15 @@ let render_out_itervars ctx vars : string =
     else
       Some
         (F.asprintf "%s be the list of %s"
-           (render_var in_code var ^ code_of_iter List |> as_code ctx)
-           (render_var in_code var |> as_code ctx))
+           (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx)
+           (render_var in_code var |> adoc_as_code ctx))
   in
   List.filter_map render_out_var vars |> render_list
 
 (* Types *)
 
 let code_of_typ (ctx : context) (typ : typ) : string =
-  Sl.Print.string_of_typ typ |> as_code ctx
+  Sl.Print.string_of_typ typ |> adoc_as_code ctx
 
 (* Operators *)
 
@@ -178,8 +194,9 @@ let render_cmpop ctx cmpop =
 
 (* Hints *)
 
-let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context) (hint : Hints.Alter.t)
-    (render : context -> 'a -> string) (items : 'a list) : string =
+let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context)
+    (hint : Hints.Alter.t) (render : context -> 'a -> string) (items : 'a list)
+    : string =
   items
   |> Hints.Alter.alternate
        ~base_text:(fun s -> reindent_lines ~level s)
@@ -192,29 +209,44 @@ let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context) (hint : Hints
 let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
   match rel_call with
   | ProseRelCall (`Hold (id_rel, hint, exps_input)) ->
-      render_alter_hint ctx hint render_exp exps_input
-      |> as_link ctx ~link:(string_of_relid id_rel)
-  | ProseRelCall (`Yield (id_rel, hint, exps_input, exps_output)) ->
-      F.asprintf "%s be the result of %s"
-        (render_exps in_prose exps_output)
-        (render_alter_hint ctx hint render_exp exps_input
-        |> as_link in_prose ~link:(string_of_relid id_rel))
+      render_alter_hint in_link hint render_exp exps_input
+      |> adoc_as_link ctx ~link:(string_of_relid id_rel)
+  | ProseRelCall
+      (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
+      let prose_out =
+        render_alter_hint in_link hint_output render_exp exps_output
+      in
+      let prose_in =
+        render_alter_hint in_link hint_input render_exp exps_input
+      in
+      if adoc_fits_in_width_short prose_out || adoc_fits_in_width_short prose_in
+      then
+        F.asprintf "%s be the result of %s"
+          (render_alter_hint in_link hint_output render_exp exps_output)
+          (render_alter_hint in_link hint_input render_exp exps_input
+          |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+      else
+        F.asprintf "\n%s%s be\n%sthe result of %s" (adoc_unordered_bullet 0)
+          (render_alter_hint in_link hint_output render_exp exps_output)
+          (adoc_unordered_bullet 0)
+          (render_alter_hint in_link hint_input render_exp exps_input
+          |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
   | MathRelCall (id_rel, mixop, exps) ->
-      code_of_notexp in_link (mixop, exps)
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      code_of_notexp (in_link |> code) (mixop, exps)
+      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
 
 (* Expressions *)
 
 and render_exp ctx exp : string =
   let in_code = code ctx in
   match exp.it with
-  | BoolE b -> string_of_bool b |> as_code ctx
-  | NumE n -> string_of_num n |> as_code ctx
-  | TextE text -> "\"" ^ String.escaped text ^ "\"" |> as_code ctx
-  | VarE id_var -> render_varid in_code id_var |> as_code ctx
+  | BoolE b -> string_of_bool b |> adoc_as_code ctx
+  | NumE n -> string_of_num n |> adoc_as_code ctx
+  | TextE text -> "\"" ^ String.escaped text ^ "\"" |> adoc_as_code ctx
+  | VarE id_var -> render_varid in_code id_var |> adoc_as_code ctx
   | UnE (#Bool.unop, _, { it = MatchE (exp, pattern); _ }) ->
       F.asprintf "%s does not match pattern %s" (render_exp ctx exp)
-        (code_of_pattern pattern |> as_code ctx)
+        (code_of_pattern pattern |> adoc_as_code ctx)
   | UnE (#Bool.unop, _, { it = SubE (exp, typ); _ }) ->
       F.asprintf "%s does not have type %s"
         (render_exp_as_code ctx exp)
@@ -224,7 +256,7 @@ and render_exp ctx exp : string =
         (render_exp_as_code ctx exp_e)
         (render_exp_as_code ctx exp_s)
   | UnE (unop, _, exp) ->
-      render_unop unop ^ render_exp in_code exp |> as_code ctx
+      render_unop unop ^ render_exp in_code exp |> adoc_as_code ctx
   | BinE ((#Bool.binop as binop), _, exp_l, exp_r) ->
       render_exp_as_code ctx exp_l
       ^ " " ^ render_binop ctx binop ^ " "
@@ -232,7 +264,7 @@ and render_exp ctx exp : string =
   | BinE ((#Num.binop as binop), _, exp_l, exp_r) ->
       render_exp in_code exp_l ^ " " ^ render_binop in_code binop ^ " "
       ^ render_exp in_code exp_r
-      |> as_code ctx
+      |> adoc_as_code ctx
   | CmpE (cmpop, _, exp_l, exp_r) ->
       render_exp ctx exp_l ^ " " ^ render_cmpop ctx cmpop ^ " "
       ^ render_exp ctx exp_r
@@ -247,12 +279,12 @@ and render_exp ctx exp : string =
       F.asprintf "%s is a non-empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP (`Fixed len)) ->
       F.asprintf "%s is a list of length %d" (render_exp ctx exp) len
-  | MatchE (exp, Il.OptP `None) -> F.asprintf "%s is None" (render_exp ctx exp)
+  | MatchE (exp, Il.OptP `None) -> F.asprintf "%s is none" (render_exp ctx exp)
   | MatchE (exp, Il.OptP `Some) ->
-      F.asprintf "%s is Some value" (render_exp ctx exp)
+      F.asprintf "%s is defined" (render_exp ctx exp)
   | MatchE (exp, pattern) ->
       F.asprintf "%s matches pattern %s" (render_exp ctx exp)
-        (code_of_pattern pattern |> as_code ctx)
+        (code_of_pattern pattern |> adoc_as_code ctx)
   | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
   | CaseE (id, mixop, exps, hint) -> (
       if ctx.in_code then code_of_notexp ctx (mixop, exps)
@@ -260,7 +292,7 @@ and render_exp ctx exp : string =
         match hint with
         | Some hint ->
             render_alter_hint (ctx |> link) hint render_exp exps
-            |> as_link ctx ~link:id.it
+            |> adoc_as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
       "{"
@@ -270,35 +302,36 @@ and render_exp ctx exp : string =
              expfields)
       ^ "}"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
-  | OptE None -> "None" |> as_code ctx
-  | ListE [] -> "·" |> as_code ctx
-  | ListE exps -> "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> as_code ctx
+  | OptE None -> "None" |> adoc_as_code ctx
+  | ListE [] -> "·" |> adoc_as_code ctx
+  | ListE exps ->
+      "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> adoc_as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
       render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t
-      |> as_code ctx
+      |> adoc_as_code ctx
   | CatE (exp_l, exp_r) ->
       (* always print as code *)
       render_exp in_code exp_l ^ " {pp} " ^ render_exp in_code exp_r
-      |> as_code ctx
+      |> adoc_as_code ctx
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
   | DotE (exp_b, atom) ->
-      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> as_code ctx
+      render_exp in_code exp_b ^ "." ^ code_of_atom atom |> adoc_as_code ctx
   | IdxE (exp_b, exp_i) ->
       render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_i ^ "]"
-      |> as_code ctx
+      |> adoc_as_code ctx
   | SliceE (exp_b, exp_l, exp_h) ->
       (* always print as code *)
       render_exp in_code exp_b ^ "[" ^ render_exp in_code exp_l ^ " : "
       ^ render_exp in_code exp_h ^ "]"
-      |> as_code ctx
+      |> adoc_as_code ctx
   | UpdE (exp_b, path, exp_f) ->
       (* always print as code *)
       render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
       ^ render_exp in_code exp_f ^ "]"
-      |> as_code ctx
+      |> adoc_as_code ctx
   | CallE func_call when ctx.in_code ->
       let id, targs, args =
         match func_call with
@@ -308,7 +341,8 @@ and render_exp ctx exp : string =
       in
       string_of_defid id ^ string_of_targs targs
       ^ render_args (ctx |> link |> code) args
-      |> as_link ctx ~link:id.it |> as_code ctx
+      |> adoc_as_link ctx ~link:id.it
+      |> adoc_as_code ctx
   | CallE (ProseFuncCall (`Check (id, hint_true, _, _, args))) ->
       let exps =
         args
@@ -316,23 +350,24 @@ and render_exp ctx exp : string =
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
       render_alter_hint (link ctx) hint_true render_exp exps
-      |> as_link ctx ~link:id.it
+      |> adoc_as_link ctx ~link:id.it
   | CallE (ProseFuncCall (`Yield (id, hint_in, _targs, args))) ->
       render_alter_hint (link ctx) hint_in render_arg args
-      |> as_link ctx ~link:id.it
+      |> adoc_as_link ctx ~link:id.it
   | CallE (MathFuncCall (id, targs, args)) ->
       string_of_defid id ^ string_of_targs targs
       ^ render_args (ctx |> link |> code) args
-      |> as_link ctx ~link:id.it |> as_code ctx
+      |> adoc_as_link ctx ~link:id.it
+      |> adoc_as_code ctx
   | IterE (exp, (_, [])) -> render_exp ctx exp
   | IterE (({ it = VarE _; _ } as exp), iterexp) ->
-      render_exp in_code exp ^ code_of_iterexp iterexp |> as_code ctx
+      render_exp in_code exp ^ code_of_iterexp iterexp |> adoc_as_code ctx
   | IterE (exp, iterexp) ->
       "(" ^ render_exp in_code exp ^ ")" ^ code_of_iterexp iterexp
-      |> as_code ctx
+      |> adoc_as_code ctx
 
 and render_exp_as_code ctx (exp : exp) =
-  render_exp (code ctx) exp |> as_code ctx
+  render_exp (code ctx) exp |> adoc_as_code ctx
 
 and render_exps ctx ?sep:sep_opt exps =
   match (ctx.in_code, sep_opt) with
@@ -348,7 +383,7 @@ and code_of_notexp ctx notexp =
       if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
       else idx / 2 |> List.nth exps |> render_exp in_code)
   |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " " |> as_code ctx
+  |> String.concat " " |> adoc_as_code ctx
 
 (* Patterns *)
 
@@ -431,10 +466,10 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | ForEachI (vars_out, instr, vars_in) ->
       F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s" bullet
         (render_out_itervars in_prose vars_out)
-        (adoc_attach_block level)
+        adoc_attach_block
         (render_instr ~level:(level + 1) ~unordered:true instr
-        |> adoc_open_block level)
-        (adoc_attach_block level)
+        |> adoc_open_block)
+        adoc_attach_block
         (render_in_itervars in_prose vars_in)
   | BranchI
       ( branch,
@@ -442,7 +477,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         { it = LetI (exp_l, exp_r); _ } :: instrs_rest )
     when Eq.eq_exp exp_r exp ->
       F.asprintf "%s%slet %s be %s:%s" bullet (render_branch branch)
-        (render_exp in_code exp_l |> as_code in_prose)
+        (render_exp in_code exp_l |> adoc_as_code in_prose)
         (render_exp in_prose exp_r)
         (render_instrs ~level:(level + 1) instrs_rest)
   | BranchI
@@ -472,7 +507,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
       F.asprintf "%sLet %s." bullet (render_rel_call in_prose rel_call)
   | ReturnI exp ->
       F.asprintf "%sReturn %s." bullet
-        (render_exp in_code exp |> as_code in_prose)
+        (render_exp in_code exp |> adoc_as_code in_prose)
   | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
   | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet
@@ -524,14 +559,14 @@ and render_rel_title (rel_title : rel_title) : string =
   | ProseRelTitle (`Hold (id_rel, hint_hold, exps_input)) ->
       F.asprintf "%s:\n\n%s%s"
         (Sl.Print.string_of_relid id_rel
-        |> as_link in_prose ~link:(string_of_relid id_rel))
+        |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       F.asprintf "%s:\n\n%s%s:\n%s%s."
         (Sl.Print.string_of_relid id_rel
-        |> as_link in_prose ~link:(string_of_relid id_rel))
+        |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input)
         (adoc_unordered_bullet 0)
@@ -542,7 +577,7 @@ and render_rel_title (rel_title : rel_title) : string =
       F.asprintf "%s: %s"
         (Sl.Print.string_of_relid id_rel)
         (code_of_notexp in_prose (mixop, exps))
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
 
 (* Extern relation definitions *)
 
@@ -557,13 +592,13 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
   | ProseRuleTitle (`Hold (_id_rulegroup, hintexp, exps_input)) ->
       render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
       ^ " when"
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRuleTitle (`Yield (_id_rulegroup, hintexp, exps_input)) ->
       render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
-      |> as_link in_prose ~link:(string_of_relid id_rel)
+      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
 
 and render_rulegroup (id_rel : id) (rulegroup : rulegroup) : string =
   let rulegroup_title, instrs = rulegroup in
@@ -589,15 +624,15 @@ and render_func_title (func_title : func_title) : string =
   match func_title with
   | ProseFuncTitle (`Check (id_func, hint_true, params)) ->
       render_alter_hint ~caps:true in_prose hint_true render_param params
-      |> as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
   | ProseFuncTitle (`Yield (id_func, hint_input, params)) ->
       render_alter_hint ~caps:true in_prose hint_input render_param params
-      |> as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
   | MathFuncTitle (id_func, tparams, params) ->
       string_of_defid id_func
       ^ Sl.Print.string_of_tparams tparams
       ^ render_params (in_link |> code) params
-      |> as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
 
 (* Extern function definitions *)
 

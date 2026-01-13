@@ -1,15 +1,25 @@
-[#sec-constantDeclaration]
+[#sec-constant-declaration]
 === Constant declarations
 
+// Modified section 11 of the P4-16 Language Specification
 Constant values are defined with the syntax:
 
+// Added
 ${syntax: initializer
-          constantDeclaration
-          constantInitializerIR
+          constantDeclaration}
+
+The `initializer` expression must be a local compile-time known value. In P4~IR~,
+constant declarations have the syntax:
+
+// Added
+${syntax: constantInitializerIR
           constantDeclarationIR}
 
-Such a declaration introduces a constant whose value has the specified type. The
-following are all legal constant declarations:
+Notice that `constantInitializerIR` is reduced to a `value` in P4~IR~, where
+`value` is computed from `initializer` via local compile-time evaluation.
+
+A constant declaration introduces a constant whose value has the specified type.
+The following are all legal constant declarations:
 
 [source,p4]
 ----
@@ -21,18 +31,14 @@ struct Version {
 const Version version = { 32w0, 32w0 };
 ----
 
-The `initializer` expression must be a local compile-time known value.
-
-[[sem-type-check-constantDeclaration]]
 [discrete]
-==== Type checking
+====== Type checking constant declarations
 
 ${rulegroup-source: Decl_ok/constantDeclaration}
 ${rulegroup-prose: Decl_ok/constantDeclaration}
 
-[[sem-compile-time-eval-constantDeclaration]]
 [discrete]
-==== Compile-time evaluation
+====== Compile-time evaluation of constant declarations
 
 ${rulegroup-source: Decl_inst/constantDeclarationIR}
 ${rulegroup-prose: Decl_inst/constantDeclarationIR}

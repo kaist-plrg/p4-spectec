@@ -617,15 +617,20 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
   let exps_output_pl_indexed =
     List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_output_indexed
   in
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
+  let prose_out_opt = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
   let rel_call_pl =
-    match Ctx.find_hint_prose_in ctx (`Rel id_rel) with
-    | Some prose_in ->
+    match (prose_in_opt, prose_out_opt) with
+    | Some prose_in, Some prose_out ->
         let exps_input_pl = List.map snd exps_input_pl_indexed in
         Ctx.validate_hint_alter at prose_in exps_input_pl;
         let exps_output_pl = List.map snd exps_output_pl_indexed in
+        let prose_out_aligned = Hints.Alter.realign prose_out inputs in
+        Ctx.validate_hint_alter at prose_out_aligned exps_output_pl;
         Pl.ProseRelCall
-          (`Yield (id_rel, prose_in, exps_input_pl, exps_output_pl))
-    | None ->
+          (`Yield
+            (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
+    | _ ->
         let exps_pl_indexed =
           exps_input_pl_indexed @ exps_output_pl_indexed
           |> List.sort (fun (idx_a, _) (idx_b, _) -> Int.compare idx_a idx_b)
