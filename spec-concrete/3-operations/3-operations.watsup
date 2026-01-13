@@ -642,6 +642,18 @@ def $cast_header(HEADER typeId `< _ > `{ _ }, typeId, b, (value_field, nameIR_fi
 def $cast_op(typeIR, HEADER typeId `{ b `; (value_field nameIR_field `;)* })
   = $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
 
+;;; Cast from header stack
+
+dec $cast_header_stack(typeIR, value*, nat) : value
+  hint(testgen_ignore)
+
+def $cast_header_stack(typeIR `[ n_size ], value*, n_size')
+  = HEADER_STACK `[ value* `( 0; n_size )]
+  -- if n_size = n_size'
+
+def $cast_op(typeIR, HEADER_STACK `[ value* `( _; n_size ) ])
+  = $cast_header_stack(typeIR, value*, n_size)
+
 ;;; Cast from serializable enum field
 
 def $cast_op(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
@@ -767,6 +779,8 @@ def $default(INT `< w >) = w S 0
 def $default(VARBIT `< w >) = w `. 0 V 0
 
 def $default(TYPEDEF _ typeIR) = $default(typeIR)
+
+def $default(TYPE _ typeIR) = $default(typeIR)
 
 def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 
