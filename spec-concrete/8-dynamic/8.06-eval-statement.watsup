@@ -389,51 +389,51 @@ rulegroup ForInitStmts_eval {
 ;;;;   statementIR
 
 relation ForThreeClauseLoop_eval:
-  evalContext store |- typedExpressionIR statementIR forUpdateStatementListIR
-                     : evalContext store statementResult
-  hint(input %0 %1 %2 %3 %4)
+  evalContext store nat |- typedExpressionIR statementIR forUpdateStatementListIR
+                         : evalContext store statementResult
+  hint(input %0 %1 %2 %3 %4 %5)
 
 rulegroup ForThreeClauseLoop_eval {
 
   rule ForThreeClauseLoop_eval/cond-exit:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_1 STO_1 EXIT
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_1 STO_1 EXIT
     -- Expr_eval: 
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
 
   rule ForThreeClauseLoop_eval/cond-false:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_1 STO_1 ``
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_1 STO_1 ``
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B false))
 
   rule ForThreeClauseLoop_eval/cond-true-loop-exit:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_2 STO_2 EXIT
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_2 STO_2 EXIT
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 EXIT
 
   rule ForThreeClauseLoop_eval/cond-true-loop-return:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_2 STO_2 returnResult
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_2 STO_2 returnResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 returnResult
 
   rule ForThreeClauseLoop_eval/cond-true-loop-break:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_2 STO_2 ``
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_2 STO_2 ``
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 BREAK
 
   rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-exit:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_3 STO_3 EXIT
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_3 STO_3 EXIT
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
@@ -443,8 +443,8 @@ rulegroup ForThreeClauseLoop_eval {
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 EXIT
 
   rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-cont:
-    EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_4 STO_4 statementResult
+    EC_0 STO_0 n |- typedExpressionIR statementIR forUpdateStatementListIR
+                  : EC_4 STO_4 statementResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
@@ -452,9 +452,10 @@ rulegroup ForThreeClauseLoop_eval {
     -- if statementResult_loop <- [ ``, CONTINUE ]
     -- ForUpdateStmts_eval:
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 ``
+    -- if $(n < $loop_bound)
     -- ForThreeClauseLoop_eval: 
-        EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
-                    : EC_4 STO_4 statementResult
+        EC_3 STO_3 $(n + 1) |- typedExpressionIR statementIR forUpdateStatementListIR
+                             : EC_4 STO_4 statementResult
 
 }
 
@@ -481,8 +482,8 @@ rulegroup Stmt_eval/forStatementIR-three-clause {
     -- ForInitStmts_eval:
         EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 ``
     -- ForThreeClauseLoop_eval:
-        EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR
-                    : EC_3 STO_2 statementResult
+        EC_2 STO_1 0 |- typedExpressionIR statementIR forUpdateStatementListIR
+                      : EC_3 STO_2 statementResult
     -- if EC_4 = $exit_e(EC_3)
 
 }
