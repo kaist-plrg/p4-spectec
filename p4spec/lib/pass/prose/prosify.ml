@@ -544,7 +544,7 @@ and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
 
 and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
     (cases : case list) (phantom_opt : phantom option) : Pl.instr list =
-  let total = Option.is_some phantom_opt in
+  let total = Option.is_none phantom_opt in
   prosify_cases ~total at ctx exp cases
 
 (* Otherwise instruction prosification *)

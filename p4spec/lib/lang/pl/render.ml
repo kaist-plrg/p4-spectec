@@ -471,6 +471,9 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         |> adoc_open_block)
         adoc_attach_block
         (render_in_itervars in_prose vars_in)
+  | BranchI (Else, _, instrs) ->
+      F.asprintf "%sElse:%s" bullet
+        (render_instrs ~level:(level + 1) instrs)
   | BranchI
       ( branch,
         ExpCond { it = MatchE (exp, _); _ },
@@ -532,7 +535,6 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) instrs =
-  (* let instrs = Shorthand.apply_all_shorthands instrs in *)
   match instrs with
   | [ { it = ReturnI ({ it = BoolE _; _ } as exp); _ } ] ->
       F.asprintf " return %s." (render_exp_as_code in_prose exp)
