@@ -21,7 +21,8 @@ syntax localEvalLayer = localInstLayer
 syntax evalContext =
   { GLOBAL globalEvalLayer,
     BLOCK blockEvalLayer,
-    LOCAL localEvalLayer }
+    LOCAL localEvalLayer,
+    COUNT nat }
 
 var EC : evalContext
 
@@ -46,17 +47,40 @@ dec $inherit_e(cursor, evalContext)
   : evalContext
 
 def $inherit_e(GLOBAL, EC)
-  = EC[ .BLOCK = blockEvalLayer ][ .LOCAL = localEvalLayer ]
+  = EC[ .BLOCK = blockEvalLayer ][ .LOCAL = localEvalLayer ][ .COUNT = 0 ]
   -- if blockEvalLayer = { TYPE $empty_theta,
                            CALLABLE $empty_callableDefEnv,
                            STATE $empty_stateEnv,
                            FRAME $empty_frame }
   -- if localEvalLayer = { TYPE $empty_theta,
                            FRAMES ([ $empty_frame ]) }
-def $inherit_e(BLOCK, EC) = EC[ .LOCAL = localEvalLayer ]
+def $inherit_e(BLOCK, EC) = EC[ .LOCAL = localEvalLayer ][ .COUNT = 0 ]
   -- if localEvalLayer = { TYPE $empty_theta,
                            FRAMES ([ $empty_frame ]) }
-def $inherit_e(LOCAL, EC) = EC
+def $inherit_e(LOCAL, EC) = EC[ .COUNT = 0 ]
+
+;;
+;; Loop counter update and merge
+;;
+
+dec $loop_bound : nat
+
+def $loop_bound = 1000
+
+dec $update_loop_count_e(evalContext) : evalContext?
+
+def $update_loop_count_e(EC) = EC[ .COUNT = $(EC.COUNT + 1) ]
+  -- if $(EC.COUNT < $loop_bound)
+def $update_loop_count_e(EC) = eps
+  -- otherwise
+
+dec $merge_loop_count_e(evalContext, evalContext) : evalContext?
+
+def $merge_loop_count_e(EC_to, EC_from) = EC_to[ .COUNT = n ]
+  -- if n = $(EC_to.COUNT + EC_from.COUNT)
+  -- if $(n <= $loop_bound)
+def $merge_loop_count_e(EC_to, EC_from) = eps
+  -- otherwise
 
 ;;
 ;; Adders
