@@ -69,6 +69,9 @@ let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n" ^ adoc_unordered_bullet level) lines
 
+let unindent_lines (s : string) : string =
+  s |> String.split_on_char '\n' |> String.concat ""
+
 let render_list (items : string list) : string =
   match items with
   | [] -> ""
@@ -194,14 +197,11 @@ let render_cmpop ctx cmpop =
 
 (* Hints *)
 
-let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context)
-    (hint : Hints.Alter.t) (render : context -> 'a -> string) (items : 'a list)
-    : string =
+let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
+    (render_base : string -> string) (render : context -> 'a -> string)
+    (items : 'a list) : string =
   items
-  |> Hints.Alter.alternate
-       ~base_text:(fun s -> reindent_lines ~level s)
-       hint
-       (fun a -> render ctx a)
+  |> Hints.Alter.alternate ~base_text:render_base hint (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
 
 (* Call prose *)
@@ -209,28 +209,25 @@ let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context)
 let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
   match rel_call with
   | ProseRelCall (`Hold (id_rel, hint, exps_input)) ->
-      render_alter_hint in_link hint render_exp exps_input
+      render_alter_hint in_link hint (reindent_lines ~level:0) render_exp
+        exps_input
       |> adoc_as_link ctx ~link:(string_of_relid id_rel)
   | ProseRelCall
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       let prose_out =
-        render_alter_hint in_link hint_output render_exp exps_output
+        render_alter_hint in_link hint_output unindent_lines render_exp
+          exps_output
       in
       let prose_in =
-        render_alter_hint in_link hint_input render_exp exps_input
+        render_alter_hint in_link hint_input unindent_lines render_exp
+          exps_input
+        |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
       in
       if adoc_fits_in_width_short prose_out || adoc_fits_in_width_short prose_in
-      then
-        F.asprintf "%s be the result of %s"
-          (render_alter_hint in_link hint_output render_exp exps_output)
-          (render_alter_hint in_link hint_input render_exp exps_input
-          |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+      then F.asprintf "%s be the result of %s" prose_out prose_in
       else
         F.asprintf "\n%s%s be\n%sthe result of %s" (adoc_unordered_bullet 0)
-          (render_alter_hint in_link hint_output render_exp exps_output)
-          (adoc_unordered_bullet 0)
-          (render_alter_hint in_link hint_input render_exp exps_input
-          |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+          prose_out (adoc_unordered_bullet 0) prose_in
   | MathRelCall (id_rel, mixop, exps) ->
       code_of_notexp (in_link |> code) (mixop, exps)
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
@@ -294,7 +291,8 @@ and render_exp ctx exp : string =
       else
         match hint with
         | Some hint ->
-            render_alter_hint (ctx |> link) hint render_exp exps
+            render_alter_hint (ctx |> link) hint (reindent_lines ~level:0)
+              render_exp exps
             |> adoc_as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
@@ -352,10 +350,12 @@ and render_exp ctx exp : string =
         |> List.filter_map (fun arg ->
                match arg.it with ExpA exp -> Some exp | DefA _ -> None)
       in
-      render_alter_hint (link ctx) hint_true render_exp exps
+      render_alter_hint (link ctx) hint_true (reindent_lines ~level:0)
+        render_exp exps
       |> adoc_as_link ctx ~link:id.it
   | CallE (ProseFuncCall (`Yield (id, hint_in, _targs, args))) ->
-      render_alter_hint (link ctx) hint_in render_arg args
+      render_alter_hint (link ctx) hint_in (reindent_lines ~level:0) render_arg
+        args
       |> adoc_as_link ctx ~link:id.it
   | CallE (MathFuncCall (id, targs, args)) ->
       string_of_defid id ^ string_of_targs targs
@@ -516,7 +516,8 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
   | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet
-        (render_alter_hint in_prose hint render_exp exps)
+        (render_alter_hint in_prose hint (reindent_lines ~level:0) render_exp
+           exps)
   | ResultI (MathResult []) -> bullet ^ "The relation holds."
   | ResultI (MathResult exps) ->
       F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
@@ -565,18 +566,20 @@ and render_rel_title (rel_title : rel_title) : string =
         (Sl.Print.string_of_relid id_rel
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
+        (render_alter_hint ~caps:true in_prose hint_hold
+           (reindent_lines ~level:0) render_exp exps_input)
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
       F.asprintf "%s:\n\n%s%s:\n%s%s."
         (Sl.Print.string_of_relid id_rel
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input)
+        (render_alter_hint ~caps:true in_prose hint_input
+           (reindent_lines ~level:1) render_exp exps_input)
         (adoc_unordered_bullet 0)
         ("Results in "
-        ^ render_alter_hint ~level:1 ~caps:false in_prose hint_output render_exp
-            exps_output)
+        ^ render_alter_hint ~caps:false in_prose hint_output
+            (reindent_lines ~level:1) render_exp exps_output)
   | MathRelTitle (id_rel, mixop, exps) ->
       F.asprintf "%s: %s"
         (Sl.Print.string_of_relid id_rel)
@@ -594,11 +597,13 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
   | ProseRuleTitle (`Hold (_id_rulegroup, hintexp, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
+      render_alter_hint ~caps:true in_prose hintexp (reindent_lines ~level:0)
+        render_exp exps_input
       ^ " when"
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRuleTitle (`Yield (_id_rulegroup, hintexp, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hintexp render_exp exps_input
+      render_alter_hint ~caps:true in_prose hintexp (reindent_lines ~level:0)
+        render_exp exps_input
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->
       code_of_notexp in_prose (mixop, exps)
@@ -627,10 +632,12 @@ and render_defined_rel_def (rel : rel) : string =
 and render_func_title (func_title : func_title) : string =
   match func_title with
   | ProseFuncTitle (`Check (id_func, hint_true, params)) ->
-      render_alter_hint ~caps:true in_prose hint_true render_param params
+      render_alter_hint ~caps:true in_prose hint_true (reindent_lines ~level:0)
+        render_param params
       |> adoc_as_link in_prose ~link:(string_of_defid id_func)
   | ProseFuncTitle (`Yield (id_func, hint_input, params)) ->
-      render_alter_hint ~caps:true in_prose hint_input render_param params
+      render_alter_hint ~caps:true in_prose hint_input (reindent_lines ~level:0)
+        render_param params
       |> adoc_as_link in_prose ~link:(string_of_defid id_func)
   | MathFuncTitle (id_func, tparams, params) ->
       string_of_defid id_func

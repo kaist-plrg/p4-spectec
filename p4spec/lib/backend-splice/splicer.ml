@@ -140,7 +140,17 @@ module Make
     List.iter (fun key -> ignore (S.use_opt !sto key)) keys
 
   let render (keys : K.t list) : string =
-    let values = List.filter_map (S.find_opt !sto) keys in
+    let values =
+      List.filter_map
+        (fun key ->
+          let value_opt = S.find_opt !sto key in
+          if Option.is_none value_opt then
+            warn no_region
+              (Format.asprintf "%s splice key not found: %s" name
+                 (K.to_string key));
+          value_opt)
+        keys
+    in
     V.render values
 
   let splice (source : Source.t) : string =

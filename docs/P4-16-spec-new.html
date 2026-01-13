@@ -909,49 +909,50 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-declaration">11. Declarations</a>
 <ul class="sectlevel2">
-<li><a href="#sec-constant-declaration">11.1. Constant declarations</a></li>
-<li><a href="#sec-instantiation-declaration">11.2. Instantiation</a>
+<li><a href="#sec-variable-declaration">11.1. Variable declarations</a></li>
+<li><a href="#sec-constant-declaration">11.2. Constant declarations</a></li>
+<li><a href="#sec-instantiation-declaration">11.3. Instantiation</a>
 <ul class="sectlevel3">
-<li><a href="#_instantiating_objects_without_abstract_methods">11.2.1. Instantiating objects without abstract methods</a>
+<li><a href="#_instantiating_objects_without_abstract_methods">11.3.1. Instantiating objects without abstract methods</a>
 <ul class="sectlevel4">
-<li><a href="#sem-type-check-instantiation-non-init">11.2.1.1. Type checking</a></li>
+<li><a href="#sem-type-check-instantiation-non-init">11.3.1.1. Type checking</a></li>
 </ul>
 </li>
-<li><a href="#_instantiating_objects_with_abstract_methods">11.2.2. Instantiating objects with abstract methods</a></li>
+<li><a href="#_instantiating_objects_with_abstract_methods">11.3.2. Instantiating objects with abstract methods</a></li>
 </ul>
 </li>
-<li><a href="#sec-functionDeclaration">11.3. Function declaration</a></li>
-<li><a href="#sec-actionDeclaration">11.4. Action declaration</a></li>
-<li><a href="#sec-errorDeclaration">11.5. Error declaration</a></li>
-<li><a href="#sec-matchKindDeclaration">11.6. Match kind declaration</a></li>
-<li><a href="#sec-externDeclaration">11.7. Extern declaration</a>
+<li><a href="#sec-functionDeclaration">11.4. Function declaration</a></li>
+<li><a href="#sec-actionDeclaration">11.5. Action declaration</a></li>
+<li><a href="#sec-errorDeclaration">11.6. Error declaration</a></li>
+<li><a href="#sec-matchKindDeclaration">11.7. Match kind declaration</a></li>
+<li><a href="#sec-externDeclaration">11.8. Extern declaration</a>
 <ul class="sectlevel3">
-<li><a href="#sec-externFunctionDeclaration">11.7.1. Extern function declaration</a></li>
-<li><a href="#sec-extern-object-declaration">11.7.2. Extern object declaration</a></li>
+<li><a href="#sec-externFunctionDeclaration">11.8.1. Extern function declaration</a></li>
+<li><a href="#sec-extern-object-declaration">11.8.2. Extern object declaration</a></li>
 </ul>
 </li>
-<li><a href="#sec-parserDeclaration">11.8. Parser declaration</a></li>
-<li><a href="#sec-controlDeclaration">11.9. Control declaration</a></li>
-<li><a href="#sec-typeDeclaration">11.10. Type declaration</a>
+<li><a href="#sec-parserDeclaration">11.9. Parser declaration</a></li>
+<li><a href="#sec-controlDeclaration">11.10. Control declaration</a></li>
+<li><a href="#sec-typeDeclaration">11.11. Type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#sec-enum-type-declaration">11.10.1. Enum type declaration</a>
+<li><a href="#sec-enum-type-declaration">11.11.1. Enum type declaration</a>
 <ul class="sectlevel4">
-<li><a href="#sec-enumTypeDeclaration-non-serializable">11.10.1.1. Enum type declaration without an underlying type</a></li>
-<li><a href="#sec-enumTypeDeclaration-serializable">11.10.1.2. Enum type declaration with an underlying type</a></li>
+<li><a href="#sec-enumTypeDeclaration-non-serializable">11.11.1.1. Enum type declaration without an underlying type</a></li>
+<li><a href="#sec-enumTypeDeclaration-serializable">11.11.1.2. Enum type declaration with an underlying type</a></li>
 </ul>
 </li>
-<li><a href="#sec-struct-type-declaration">11.10.2. Struct type declaration</a></li>
-<li><a href="#sec-header-type-declaration">11.10.3. Header type declaration</a></li>
-<li><a href="#sec-header-union-type-declaration">11.10.4. Header union type declaration</a></li>
-<li><a href="#_typedef_declaration_2">11.10.5. Typedef declaration</a>
+<li><a href="#sec-struct-type-declaration">11.11.2. Struct type declaration</a></li>
+<li><a href="#sec-header-type-declaration">11.11.3. Header type declaration</a></li>
+<li><a href="#sec-header-union-type-declaration">11.11.4. Header union type declaration</a></li>
+<li><a href="#_typedef_declaration_2">11.11.5. Typedef declaration</a>
 <ul class="sectlevel4">
-<li><a href="#sec-typdef-declaration">11.10.5.1. <code>typedef</code> declaration</a></li>
-<li><a href="#sec-newtype-declaration">11.10.5.2. New type declaration</a></li>
+<li><a href="#sec-typdef-declaration">11.11.5.1. <code>typedef</code> declaration</a></li>
+<li><a href="#sec-newtype-declaration">11.11.5.2. New type declaration</a></li>
 </ul>
 </li>
-<li><a href="#sec-parser-type-declaration">11.10.6. Parser type declaration</a></li>
-<li><a href="#sec-control-type-declaration">11.10.7. Control type declaration</a></li>
-<li><a href="#sec-package-type-declaration">11.10.8. Package type declaration</a></li>
+<li><a href="#sec-parser-type-declaration">11.11.6. Parser type declaration</a></li>
+<li><a href="#sec-control-type-declaration">11.11.7. Control type declaration</a></li>
+<li><a href="#sec-package-type-declaration">11.11.8. Package type declaration</a></li>
 </ul>
 </li>
 </ul>
@@ -4634,7 +4635,17 @@ instantiated to create a <code>store</code>, which maps <code>objectId</code>s t
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the typed P4 program <code>declarationIR<sup>*</sup> ;</code> be the result of <a href="#Program_ok">typing <code>p4program</code></a>.</p>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the typed P4 program <code>declarationIR<sup>*</sup> ;</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Program_ok">typing <code>p4program</code></a>.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Let <code>IC<sub>0</sub></code> be <a href="#empty_instContext">an empty instantiation context</a>.</p>
@@ -4643,15 +4654,11 @@ instantiated to create a <code>store</code>, which maps <code>objectId</code>s t
 <p>Let <code>STO<sub>0</sub></code> be <a href="#empty_store">an empty store</a>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the updated store <code>STO<sub>1</sub></code> be</p>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,and the updated store <code>STO<sub>1</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Decls_inst">instantiating <code>declarationIR<sup>*</sup></code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
@@ -5598,7 +5605,7 @@ type (these errors are declared in the P4 core library):</p>
 <p>The underlying representation of errors is target-dependent.</p>
 </div>
 <div class="paragraph">
-<p>The semantics of an error declaration is described in <a href="#sec-errorDeclaration">Section 11.5</a>.</p>
+<p>The semantics of an error declaration is described in <a href="#sec-errorDeclaration">Section 11.6</a>.</p>
 </div>
 <h5 id="_type_checking_error_types" class="discrete">Type checking error types</h5>
 <details>
@@ -5676,7 +5683,7 @@ cannot declare new match kinds.</p>
 </div>
 <div class="paragraph">
 <p>The semantics of a match kind declaration is described in
-<a href="#sec-matchKindDeclaration">Section 11.6</a>.</p>
+<a href="#sec-matchKindDeclaration">Section 11.7</a>.</p>
 </div>
 <h5 id="_type_checking_match_kind_types" class="discrete">Type checking match kind types</h5>
 <details>
@@ -7378,7 +7385,7 @@ syntax structValue =
 <h5 id="_type_checking_struct_types" class="discrete">Type checking struct types</h5>
 <div class="paragraph">
 <p>Struct types are introduced by <code>struct</code> declarations. Its typing rule is
-explained in <a href="#sec-struct-type-declaration">Section 11.10.2</a>. Struct types are then used by
+explained in <a href="#sec-struct-type-declaration">Section 11.11.2</a>. Struct types are then used by
 referencing their names. Thus struct types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -7585,7 +7592,7 @@ syntax headerValue =
 <h5 id="_type_checking_header_types" class="discrete">Type checking header types</h5>
 <div class="paragraph">
 <p>Header types are introduced by <code>header</code> declarations. Its typing rule is
-explained in <a href="#sec-header-type-declaration">Section 11.10.3</a>. Header types are then used by
+explained in <a href="#sec-header-type-declaration">Section 11.11.3</a>. Header types are then used by
 referencing their names. Thus header types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -7698,7 +7705,7 @@ syntax headerUnionValue =
 <h5 id="_type_checking_header_union_types" class="discrete">Type checking header union types</h5>
 <div class="paragraph">
 <p>Header union types are introduced by <code>header_union</code> declarations. Its typing
-rule is explained in <a href="#sec-header-union-type-declaration">Section 11.10.4</a>. Header union types
+rule is explained in <a href="#sec-header-union-type-declaration">Section 11.11.4</a>. Header union types
 are then used by referencing their names. Thus header union types can be
 obtained from named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -7880,7 +7887,7 @@ representation range of the underlying type.</p>
 <h5 id="_type_checking_enum_types" class="discrete">Type checking enum types</h5>
 <div class="paragraph">
 <p>Enum types are introduced by <code>enum</code> declarations. Its typing rule is explained
-in <a href="#sec-enum-type-declaration">Section 11.10.1</a>. Enum types are then used by referencing their
+in <a href="#sec-enum-type-declaration">Section 11.11.1</a>. Enum types are then used by referencing their
 names. Thus enum types can be obtained from named types, as illustrated in
 <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8141,7 +8148,7 @@ Internally, parser types are represented as:</p>
 <h5 id="_type_checking_parser_object_types" class="discrete">Type checking parser object types</h5>
 <div class="paragraph">
 <p>Parser object types are introduced by <code>parser</code> declarations. Its typing rule is
-explained in <a href="#sec-parser-type-declaration">Section 11.10.6</a>. Parser object types are then used
+explained in <a href="#sec-parser-type-declaration">Section 11.11.6</a>. Parser object types are then used
 by referencing their names. Thus parser object types can be obtained from named
 types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8218,7 +8225,7 @@ Internally, control types are represented as:</p>
 <h5 id="_type_checking_control_object_types" class="discrete">Type checking control object types</h5>
 <div class="paragraph">
 <p>Control object types are introduced by <code>control</code> declarations. Its typing rule
-is explained in <a href="#sec-control-type-declaration">Section 11.10.7</a>. Control object types are then
+is explained in <a href="#sec-control-type-declaration">Section 11.11.7</a>. Control object types are then
 used by referencing their names. Thus control object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8292,7 +8299,7 @@ Internally, package types are represented as:</p>
 <h5 id="_type_checking_package_object_types" class="discrete">Type checking package object types</h5>
 <div class="paragraph">
 <p>Package object types are introduced by <code>package</code> declarations. Its typing rule
-is explained in <a href="#sec-package-type-declaration">Section 11.10.8</a>. Package object types are then
+is explained in <a href="#sec-package-type-declaration">Section 11.11.8</a>. Package object types are then
 used by referencing their names. Thus package object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8576,7 +8583,7 @@ with the control-plane software).</p>
 <h5 id="_type_checking_new_types" class="discrete">Type checking new types</h5>
 <div class="paragraph">
 <p><code>type</code>s are introduced by <code>type</code> declarations. Its typing rule is explained
-in <a href="#sec-newtype-declaration">Section 11.10.5.2</a>. <code>type</code>s are then used by referencing their
+in <a href="#sec-newtype-declaration">Section 11.11.5.2</a>. <code>type</code>s are then used by referencing their
 names. Thus <code>type</code> types can be obtained from named types, as illustrated in
 <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
@@ -11002,7 +11009,7 @@ how a fully-qualified name is constructed.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Using instantiations, described in <a href="#sec-instantiation-declaration">Section 11.2</a>.</p>
+<p>Using instantiations, described in <a href="#sec-instantiation-declaration">Section 11.3</a>.</p>
 </li>
 <li>
 <p>Using constructor call expressions, described in <a href="#sec-constructor-call-expression">Section 13.10.2</a>.</p>
@@ -12117,16 +12124,125 @@ instantiated at compile time, and evaluated at runtime.</p>
 </div>
 <div class="paragraph">
 <p>Instantiation statically allocates instantiated objects in the global
-<code>store</code>. <a href="#sec-instantiation-declaration">Section 11.2</a> describes how objects are
+<code>store</code>. <a href="#sec-instantiation-declaration">Section 11.3</a> describes how objects are
 instantiated from a declaration.</p>
 </div>
 <h5 id="Decl_eval" class="discrete">Runtime evaluation of declarations</h5>
+<div class="paragraph">
+<p>All declarations except constant and variable declarations are evaluated at
+compile-time. See <a href="#sec-variable-declaration">Section 11.1</a> for the runtime evaluation of
+variable declarations and <a href="#sec-constant-declaration">Section 11.2</a> for the runtime
+evaluation of constant declarations.</p>
+</div>
+<div class="paragraph">
+<p>The subsequent sections describe each kind of declaration in detail.</p>
+</div>
+<div class="sect2">
+<h3 id="sec-variable-declaration">11.1. Variable declarations</h3>
+<div class="paragraph">
+<p>Local variables are declared with a type, a name, and an optional initializer
+(as well as an optional annotation):</p>
+</div>
+<div id="variableDeclaration" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax initializer =
+   | = expression
+
+syntax initializerOpt =
+   | `EMPTY
+   | initializer
+
+syntax variableDeclaration =
+   | annotationList type name initializerOpt ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Variable declarations without an initializer are uninitialized (except for
+headers and other header-related types, which are initialized to invalid in the
+same way as described for direction <code>out</code> parameters in
+<a href="#sec-call-convention">Chapter 17</a>). The language places few restrictions on the types of
+the variables: most P4 types that can be written explicitly can be used (e.g.,
+base types, <code>struct</code>, <code>header</code>, header stack, <code>tuple</code>). However, it is
+impossible to declare variables with type <code>int</code>, or with types that are only
+synthesized by the compiler (e.g., <code>set</code>) In addition, variables of type
+<code>parser</code>, <code>control</code>, <code>package</code>, or <code>extern</code> types must be declared using
+instantiations (see <a href="#sec-instantiation-declaration">Section 11.3</a>).</p>
+</div>
+<div class="paragraph">
+<p>After typing, variable declarations are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax initializerIR =
+   | = typedExpressionIR
+
+syntax variableDeclarationIR =
+   | annotationList typeIR nameIR initializerOptIR ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Reading the value of a variable that has not been initialized yields an
+undefined result. The compiler should attempt to detect and emit a warning in
+such situations.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+P4-SpecTec implements zero-initialization for local variables.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Variables declarations can appear in the following locations within a P4
+program:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In a block statement,</p>
+</li>
+<li>
+<p>In a <code>parser</code> state,</p>
+</li>
+<li>
+<p>In an <code>action</code> body,</p>
+</li>
+<li>
+<p>In a <code>control</code> block&#8217;s <code>apply</code> sub-block,</p>
+</li>
+<li>
+<p>In the list of local declarations in a <code>parser</code>, and</p>
+</li>
+<li>
+<p>In the list of local declarations in a <code>control</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that variable declarations <em>cannot</em> appear at the top level of a P4
+program.</p>
+</div>
+<div class="paragraph">
+<p>Variables have local scope, and behave like stack-allocated variables in
+languages such as C. The value of a variable is never preserved from one
+invocation of its enclosing block to the next. In particular, variables cannot
+be used to maintain state between different network packets.</p>
+</div>
+<h6 id="_type_checking_variable_declarations" class="discrete">Type checking variable declarations</h6>
+<div class="paragraph">
+<p>Variable declarations are type checked using the following relation:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre></pre>
+<pre>relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext variableDeclarationIR</pre>
 </div>
 </div>
 </div>
@@ -12138,11 +12254,223 @@ instantiated from a declaration.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-
+<div class="paragraph">
+<p><a href="#VarDecl_ok">VarDecl_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>variableDeclaration</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated typing context <code>typingContext'</code> and <code>variableDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 <div class="paragraph">
-<p>The result of evaluating a declaration is:</p>
+<p>It is defined by the following rules:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup VarDecl_ok:
+  rule VarDecl_ok/non-initializer:
+  p TC_0 |- annotationList type name `EMPTY ; : TC_1 variableDeclarationIR
+ -- Type_ok: p TC_0 |- type : typeIR # eps
+ -- Type_wf: $bound(p, TC_0) |- typeIR
+ -- if $is_assignable_typeIR(typeIR)
+ -- if nameIR = $name(name)
+ -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
+ -- if variableDeclarationIR = annotationList typeIR nameIR eps ;
+  rule VarDecl_ok/initializer:
+  p TC_0 |- annotationList type name (= expression_init) ; : TC_1 variableDeclarationIR
+ -- Type_ok: p TC_0 |- type : typeIR # eps
+ -- Type_wf: $bound(p, TC_0) |- typeIR
+ -- if $is_assignable_typeIR(typeIR)
+ -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
+ -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
+ -- if nameIR = $name(name)
+ -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
+ -- if variableDeclarationIR = annotationList typeIR nameIR (= typedExpressionIR_init_cast) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#VarDecl_ok">Typing <code>annotationList type name initializerOpt ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>initializerOpt</code> is <code>`EMPTY</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>INOUT typeIR DYN None</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR None ;</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>= expression<sub>init</sub></code> be <code>initializerOpt</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typedExpressionIR<sub>init</sub></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>INOUT typeIR DYN None</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>variableDeclarationIR</code> be <code>annotationList typeIR nameIR = typedExpressionIR<sub>init_cast</sub> ;</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<h6 id="_runtime_evaluation_of_variable_declarations" class="discrete">Runtime evaluation of variable declarations</h6>
+<div class="paragraph">
+<p>Variable declarations are evaluated at runtime using the following relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation VarDecl_eval: cursor evalContext store |- variableDeclarationIR : evalContext store declarationResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#VarDecl_eval">VarDecl_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>variableDeclarationIR</code>, under cursor <code>cursor</code>, evaluation context <code>evalContext</code>, and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated evaluation context <code>evalContext'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>store'</code>,</p>
+</li>
+<li>
+<p>and the result <code>declarationResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a variable declaration is:</p>
 </div>
 <div id="declarationResult" class="listingblock">
 <div class="content">
@@ -12158,13 +12486,171 @@ syntax declarationResult =
 </div>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-exit-statement">Section 12.6</a> for how <code>exitResult</code> may occur.</p>
+<p>See <a href="#sec-exit-statement">Section 12.6</a> for how <code>exitResult</code> may occur. The relation is
+defined by the following rule:</p>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup VarDecl_eval:
+  rule VarDecl_eval/non-initializer:
+  p EC_0 STO |- annotationList typeIR nameIR eps ; : EC_1 STO `
+ -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
+ -- if value_init = $default(typeIR_subst)
+ -- if EC_1 = $add_var_e(p, EC_0, ` nameIR, value_init)
+  rule VarDecl_eval/initializer-cont:
+  p EC_0 STO_0 |- annotationList typeIR nameIR (= typedExpressionIR_init) ; : EC_2 STO_1 `
+ -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 (` value_init)
+ -- if EC_2 = $add_var_e(p, EC_1, ` nameIR, value_init)
+  rule VarDecl_eval/initializer-exit:
+  p EC_0 STO_0 |- annotationList typeIR nameIR (= typedExpressionIR_init) ; : EC_1 STO_1 EXIT
+ -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 EXIT</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
 <div class="paragraph">
-<p>The subsequent sections describe each kind of declaration in detail.</p>
+<p><a href="#VarDecl_eval">Evaluating <code>annotationList typeIR nameIR initializerIR<sup>?</sup> ;</code>, under cursor <code>p</code>, evaluation context <code>EC<sub>0</sub></code>, and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>initializerIR<sup>?</sup></code> is equal to <code>None</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typeIR<sub>subst</sub></code> be <code><a href="#subst_type_e">subst_type_e(BLOCK, EC<sub>0</sub>, typeIR)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>init</sub></code> be <a href="#default">the default value for type <code>typeIR<sub>subst</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <a href="#add_var_e"><code>EC<sub>0</sub></code> where <code>nameIR</code> to <code>value<sub>init</sub></code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated evaluation context <code>EC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>store</code>,</p>
+</li>
+<li>
+<p>and the result <code>``</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Let <code>initializerOptIR</code> be <code>initializerIR<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Else if let <code>= typedExpressionIR<sub>init</sub></code> be <code>initializerOptIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated evaluation context <code>EC<sub>1</sub></code>, store <code>STO<sub>1</sub></code> and expression result <code>expressionResult</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>init</sub></code>, under cursor <code>p</code>, evaluation context <code>EC<sub>0</sub></code>, and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>value<sub>init</sub></code> be <code>expressionResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be <a href="#add_var_e"><code>EC<sub>1</sub></code> where <code>nameIR</code> to <code>value<sub>init</sub></code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated evaluation context <code>EC<sub>2</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the result <code>``</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>exitResult</code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated evaluation context <code>EC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and the result <code>EXIT</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Currently in P4-SpecTec, instantiation of a variable declaration is
+implemented as a no-op. But, instantiation <em>may</em> occur within the right-hand
+side, initializer expression. Ideally, revisit this.
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
-<h3 id="sec-constant-declaration">11.1. Constant declarations</h3>
+<h3 id="sec-constant-declaration">11.2. Constant declarations</h3>
 <div class="paragraph">
 <p>Constant values are defined with the syntax:</p>
 </div>
@@ -12209,6 +12695,140 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <h6 id="_type_checking_constant_declarations" class="discrete">Type checking constant declarations</h6>
+<div class="paragraph">
+<p>Constant declarations are type checked with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingContext constantDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_ok">ConstDecl_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>constantDeclaration</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated typing context <code>typingContext'</code> and <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It is defined by the following rule:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ConstDecl_ok:
+  rule ConstDecl_ok:
+  p TC_0 |- annotationList CONST type name (= expression_value) ; : TC_1 constantDeclarationIR
+ -- Type_ok: p TC_0 |- type : typeIR # eps
+ -- Type_wf: $bound(p, TC_0) |- typeIR
+ -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
+ -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_value)
+ -- if typedExpressionIR_value_cast = $coerce_unary(typedExpressionIR_value, typeIR)
+ -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~&gt; value
+ -- if nameIR = $name(name)
+ -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR LCTK value)
+ -- if constantDeclarationIR = annotationList CONST typeIR nameIR (= value) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_ok">Typing <code>annotationList CONST type name = expression<sub>value</sub> ;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, assuming bound type ids <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typedExpressionIR<sub>value</sub></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression<sub>value</sub></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>value</sub></code></a> is <code>LCTK</code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>value_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>value</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+</li>
+<li>
+<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>value_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>typeIR LCTK value</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, constant declarations are typed with:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12255,6 +12875,107 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <h6 id="_compile_time_evaluation_of_constant_declarations" class="discrete">Compile-time evaluation of constant declarations</h6>
+<div class="paragraph">
+<p>Constant declarations are evaluated during instantiation phase with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ConstDecl_inst: cursor instContext |- constantDeclarationIR : instContext constantDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_inst">ConstDecl_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Instantiating <code>constantDeclarationIR</code>, under cursor <code>cursor</code>, and instantiation context <code>instContext</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>instContext'</code>,</p>
+</li>
+<li>
+<p>and <code>constantDeclarationIR'</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It is defined by the following rule:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ConstDecl_inst:
+  rule ConstDecl_inst:
+  p IC_0 |- annotationList CONST typeIR nameIR (= value) ; : IC_1 constantDeclarationIR
+ -- if IC_1 = $add_var_i(p, IC_0, nameIR, value)
+ -- if constantDeclarationIR = annotationList CONST typeIR nameIR (= value) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_inst">Instantiating <code>annotationList CONST typeIR nameIR = value ;</code>, under cursor <code>p</code>, and instantiation context <code>IC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>value</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>and <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, constant declarations are compile-time
+evaluated with:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12281,15 +13002,11 @@ The following are all legal constant declarations:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated constant declaration <code>constantDeclarationIR'</code> be</p>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,and <code>constantDeclarationIR'</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#ConstDecl_inst">instantiating <code>constantDeclarationIR</code>, under cursor <code>GLOBAL</code>, and instantiation context <code>IC<sub>0</sub></code></a>.</p>
@@ -12318,12 +13035,15 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <h6 id="_runtime_evaluation_of_constant_declarations" class="discrete">Runtime evaluation of constant declarations</h6>
+<div class="paragraph">
+<p>Constant declarations are evaluated at runtime using the following relation:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre></pre>
+<pre>relation ConstDecl_eval: cursor evalContext |- constantDeclarationIR : evalContext</pre>
 </div>
 </div>
 </div>
@@ -12335,12 +13055,59 @@ The following are all legal constant declarations:</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_eval">ConstDecl_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>constantDeclarationIR</code>, under cursor <code>cursor</code>, and evaluation context <code>evalContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated evaluation context <code>evalContext'</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ConstDecl_eval:
+  rule ConstDecl_eval:
+  p EC_0 |- annotationList CONST typeIR nameIR (= value) ; : EC_1
+ -- if EC_1 = $add_var_e(p, EC_0, ` nameIR, value)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstDecl_eval">Evaluating <code>annotationList CONST typeIR nameIR = value ;</code>, under cursor <code>p</code>, and evaluation context <code>EC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <a href="#add_var_e"><code>EC<sub>0</sub></code> where <code>nameIR</code> to <code>value</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Result in the updated evaluation context <code>EC<sub>1</sub></code>.</p>
+</li>
+</ol>
+</div>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-instantiation-declaration">11.2. Instantiation</h3>
+<h3 id="sec-instantiation-declaration">11.3. Instantiation</h3>
 <div class="paragraph">
 <p>Instantiations are similar to variable declarations, but are reserved for the
 types with constructors (<code>extern</code> objects, <code>control</code> blocks, <code>parser</code>s, and
@@ -12404,9 +13171,9 @@ c<span style="color: #24292f;background-color: #f6f8fa">()</span> c1<span style=
 declarations of constants and instantiations of extern objects are permitted.</p>
 </div>
 <div class="sect3">
-<h4 id="_instantiating_objects_without_abstract_methods">11.2.1. Instantiating objects without abstract methods</h4>
+<h4 id="_instantiating_objects_without_abstract_methods">11.3.1. Instantiating objects without abstract methods</h4>
 <div class="sect4">
-<h5 id="sem-type-check-instantiation-non-init">11.2.1.1. Type checking</h5>
+<h5 id="sem-type-check-instantiation-non-init">11.3.1.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12430,7 +13197,7 @@ declarations of constants and instantiations of extern objects are permitted.</p
 </div>
 </div>
 <div class="sect3">
-<h4 id="_instantiating_objects_with_abstract_methods">11.2.2. Instantiating objects with abstract methods</h4>
+<h4 id="_instantiating_objects_with_abstract_methods">11.3.2. Instantiating objects with abstract methods</h4>
 <div class="paragraph">
 <p>When instantiating an extern type that has <code>abstract</code> methods users have to
 supply implementations for all such methods.  This is done using object
@@ -12587,18 +13354,11 @@ methods.</p>
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND = EXTERN_METHOD : typeIR<sub>ret</sub>]</code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>_</code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f</code>,</p>
-</li>
-<li>
-<p>and the typed block statement <code>blockStatementIR</code> be</p>
+<p>the typing context <code>_</code>,the abstract control flow <code>f</code>,and the typed block statement <code>blockStatementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
@@ -12776,18 +13536,11 @@ methods.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the reference to the object <code>_</code> be</p>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the reference to the object <code>_</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#InstDecl_inst">instantiating <code>instantiationIR</code>, under cursor <code>GLOBAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>.</p>
@@ -12815,7 +13568,7 @@ methods.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-functionDeclaration">11.3. Function declaration</h3>
+<h3 id="sec-functionDeclaration">11.4. Function declaration</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototype =
@@ -12935,7 +13688,7 @@ syntax functionDeclarationIR =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-actionDeclaration">11.4. Action declaration</h3>
+<h3 id="sec-actionDeclaration">11.5. Action declaration</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDeclaration =
@@ -13049,7 +13802,7 @@ syntax actionDeclarationIR =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-errorDeclaration">11.5. Error declaration</h3>
+<h3 id="sec-errorDeclaration">11.6. Error declaration</h3>
 <div class="paragraph">
 <p>The error type contains opaque distinct values that can be used to signal
 errors. It is written as <code>error</code>. New elements of the error type are defined
@@ -13284,7 +14037,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-matchKindDeclaration">11.6. Match kind declaration</h3>
+<h3 id="sec-matchKindDeclaration">11.7. Match kind declaration</h3>
 <div class="paragraph">
 <p>The <code>match_kind</code> type is very similar to the <code>error</code> type and is used to
 declare a set of distinct names that may be used in a table&#8217;s key property
@@ -13486,7 +14239,7 @@ cannot declare new match kinds.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-externDeclaration">11.7. Extern declaration</h3>
+<h3 id="sec-externDeclaration">11.8. Extern declaration</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externDeclaration =
@@ -13499,7 +14252,7 @@ syntax externDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-externFunctionDeclaration">11.7.1. Extern function declaration</h4>
+<h4 id="sec-externFunctionDeclaration">11.8.1. Extern function declaration</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externFunctionDeclaration =
@@ -13690,7 +14443,7 @@ syntax externFunctionDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-extern-object-declaration">11.7.2. Extern object declaration</h4>
+<h4 id="sec-extern-object-declaration">11.8.2. Extern object declaration</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObjectDeclaration =
@@ -14080,7 +14833,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-parserDeclaration">11.8. Parser declaration</h3>
+<h3 id="sec-parserDeclaration">11.9. Parser declaration</h3>
 <h4 id="sec-sem-Decl_ok-parserDeclaration" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14305,7 +15058,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-controlDeclaration">11.9. Control declaration</h3>
+<h3 id="sec-controlDeclaration">11.10. Control declaration</h3>
 <h4 id="sec-sem-Decl_ok-controlDeclaration" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14418,18 +15171,11 @@ syntax externObjectDeclarationIR =
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND = CONTROL_APPLY_METHOD]</code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>_</code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>_</code>,</p>
-</li>
-<li>
-<p>and the typed block statement <code>controlBodyIR</code> be</p>
+<p>the typing context <code>_</code>,the abstract control flow <code>_</code>,and the typed block statement <code>controlBodyIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under typing context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
@@ -14533,7 +15279,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-typeDeclaration">11.10. Type declaration</h3>
+<h3 id="sec-typeDeclaration">11.11. Type declaration</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax derivedTypeDeclaration =
@@ -14572,7 +15318,7 @@ syntax typeDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-enum-type-declaration">11.10.1. Enum type declaration</h4>
+<h4 id="sec-enum-type-declaration">11.11.1. Enum type declaration</h4>
 <div class="paragraph">
 <p>An enumeration type is defined using the following syntax:</p>
 </div>
@@ -14588,7 +15334,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-enumTypeDeclaration-non-serializable">11.10.1.1. Enum type declaration without an underlying type</h5>
+<h5 id="sec-enumTypeDeclaration-non-serializable">11.11.1.1. Enum type declaration without an underlying type</h5>
 <h6 id="sec-sem-Decl_ok-enumTypeDeclaration-non-serializable" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14816,7 +15562,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-enumTypeDeclaration-serializable">11.10.1.2. Enum type declaration with an underlying type</h5>
+<h5 id="sec-enumTypeDeclaration-serializable">11.11.1.2. Enum type declaration with an underlying type</h5>
 <h6 id="sec-sem-Decl_ok-enumTypeDeclaration-serializable" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -15136,7 +15882,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-struct-type-declaration">11.10.2. Struct type declaration</h4>
+<h4 id="sec-struct-type-declaration">11.11.2. Struct type declaration</h4>
 <h5 id="sec-sem-Decl_ok-structTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -15342,7 +16088,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-header-type-declaration">11.10.3. Header type declaration</h4>
+<h4 id="sec-header-type-declaration">11.11.3. Header type declaration</h4>
 <h5 id="sec-sem-Decl_ok-headerTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -15548,7 +16294,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-header-union-type-declaration">11.10.4. Header union type declaration</h4>
+<h4 id="sec-header-union-type-declaration">11.11.4. Header union type declaration</h4>
 <h5 id="sec-sem-Decl_ok-headerUnionTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -15754,7 +16500,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="_typedef_declaration_2">11.10.5. Typedef declaration</h4>
+<h4 id="_typedef_declaration_2">11.11.5. Typedef declaration</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typedef =
@@ -15775,7 +16521,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-typdef-declaration">11.10.5.1. <code>typedef</code> declaration</h5>
+<h5 id="sec-typdef-declaration">11.11.5.1. <code>typedef</code> declaration</h5>
 <h6 id="sec-sem-Decl_ok-typedefDeclaration-typedef" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16073,15 +16819,11 @@ syntax typedefDeclarationIR =
 <p>Let <code>derivedTypeDeclarationIR</code> be <code>typedefIR</code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>local</sub></code>,</p>
-</li>
-<li>
-<p>and the updated store <code>_</code> be</p>
+<p>the updated instantiation context <code>IC<sub>local</sub></code>,and the updated store <code>_</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Decl_inst">instantiating <code>derivedTypeDeclarationIR</code>, under instantiation context <code>IC<sub>0</sub></code>, and store an empty store</a>.</p>
@@ -16177,7 +16919,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 <div class="sect4">
-<h5 id="sec-newtype-declaration">11.10.5.2. New type declaration</h5>
+<h5 id="sec-newtype-declaration">11.11.5.2. New type declaration</h5>
 <h6 id="sec-sem-Decl_ok-typedefDeclaration-newtype" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16310,7 +17052,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-parser-type-declaration">11.10.6. Parser type declaration</h4>
+<h4 id="sec-parser-type-declaration">11.11.6. Parser type declaration</h4>
 <h5 id="sec-sem-Decl_ok-parserTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16469,7 +17211,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-control-type-declaration">11.10.7. Control type declaration</h4>
+<h4 id="sec-control-type-declaration">11.11.7. Control type declaration</h4>
 <h5 id="sec-sem-Decl_ok-controlTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16625,7 +17367,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-package-type-declaration">11.10.8. Package type declaration</h4>
+<h4 id="sec-package-type-declaration">11.11.8. Package type declaration</h4>
 <h5 id="sec-sem-Decl_ok-packageTypeDeclaration" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -18740,18 +19482,11 @@ invoked.</p>
 <p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>_</code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>_</code>,</p>
-</li>
-<li>
-<p>and the typed statement <code>statementIR</code> be</p>
+<p>the typing context <code>_</code>,the abstract control flow <code>_</code>,and the typed statement <code>statementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_ok">typing <code>lvalue ( argumentList ) ;</code>, under cursor <code>p</code>, typing context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -19332,18 +20067,11 @@ are only visible within the block.</p>
 <p>Let <code>TC<sub>1</sub></code> be <code><a href="#enter_t">enter_t(TC)</a></code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>2</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the typed block statement <code>blockStatementIR</code> be</p>
+<p>the typing context <code>TC<sub>2</sub></code>,the abstract control flow <code>f<sub>1</sub></code>,and the typed block statement <code>blockStatementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -19546,18 +20274,11 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>post</sub></code>,</p>
-</li>
-<li>
-<p>and the typed statement <code>statementIR</code> be</p>
+<p>the typing context <code>TC<sub>1</sub></code>,the abstract control flow <code>f<sub>post</sub></code>,and the typed statement <code>statementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_ok">typing <code>statement</code>, under cursor <code>LOCAL</code>, typing context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -19675,15 +20396,11 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated constant declaration <code>constantDeclarationIR<sub>inst</sub></code> be</p>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,and <code>constantDeclarationIR<sub>inst</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#ConstDecl_inst">instantiating <code>constantDeclarationIR</code>, under cursor <code>LOCAL</code>, and instantiation context <code>IC<sub>0</sub></code></a>.</p>
@@ -19755,18 +20472,11 @@ are only visible within the block.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementIR<sub>inst</sub></code> be</p>
+<p>the instantiation context <code>IC<sub>1</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the instantiated statement <code>statementIR<sub>inst</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR</code>, under cursor <code>LOCAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
@@ -19867,18 +20577,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <p>Check that <code>BOOL</code> is equal to <a href="#unroll_typeIR"><code>typeIR<sub>cond</sub></code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>and the typed statement <code>statementIR<sub>then</sub></code> be</p>
+<p>the typing context <code>TC<sub>then</sub></code>,the abstract control flow <code>f<sub>then</sub></code>,and the typed statement <code>statementIR<sub>then</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under cursor <code>p</code>, typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -19932,18 +20635,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <p>Check that <code>BOOL</code> is equal to <a href="#unroll_typeIR"><code>typeIR<sub>cond</sub></code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>and the typed statement <code>statementIR<sub>then</sub></code> be</p>
+<p>the typing context <code>TC<sub>then</sub></code>,the abstract control flow <code>f<sub>then</sub></code>,and the typed statement <code>statementIR<sub>then</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under cursor <code>p</code>, typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -19952,18 +20648,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>else</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>else</sub></code>,</p>
-</li>
-<li>
-<p>and the typed statement <code>statementIR<sub>else</sub></code> be</p>
+<p>the typing context <code>TC<sub>else</sub></code>,the abstract control flow <code>f<sub>else</sub></code>,and the typed statement <code>statementIR<sub>else</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_ok">typing <code>statement<sub>else</sub></code>, under cursor <code>p</code>, typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -20032,18 +20721,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementIR<sub>then_inst</sub></code> be</p>
+<p>the instantiation context <code>IC<sub>then</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the instantiated statement <code>statementIR<sub>then_inst</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
@@ -20078,18 +20760,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <p>Let <code>IF ( typedExpressionIR<sub>cond</sub> ) statementIR<sub>then</sub> ELSE statementIR<sub>else</sub></code> be <code>conditionalStatementIR</code>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementIR<sub>then_inst</sub></code> be</p>
+<p>the instantiation context <code>IC<sub>then</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the instantiated statement <code>statementIR<sub>then_inst</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
@@ -20098,18 +20773,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>else</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>2</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementIR<sub>else_inst</sub></code> be</p>
+<p>the instantiation context <code>IC<sub>else</sub></code>,the updated store <code>STO<sub>2</sub></code>,and the instantiated statement <code>statementIR<sub>else_inst</sub></code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_inst">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>1</sub></code></a>.</p>
@@ -20229,18 +20897,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the evaluation context <code>EC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementResult</code> be</p>
+<p>the evaluation context <code>EC<sub>then</sub></code>,the updated store <code>STO<sub>then</sub></code>,and the instantiated statement <code>statementResult</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
@@ -20341,18 +21002,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the evaluation context <code>EC<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>then</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementResult</code> be</p>
+<p>the evaluation context <code>EC<sub>then</sub></code>,the updated store <code>STO<sub>then</sub></code>,and the instantiated statement <code>statementResult</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>then</sub></code>, under cursor <code>p</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
@@ -20384,18 +21038,11 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the evaluation context <code>EC<sub>else</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>else</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementResult</code> be</p>
+<p>the evaluation context <code>EC<sub>else</sub></code>,the updated store <code>STO<sub>else</sub></code>,and the instantiated statement <code>statementResult</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_eval">the compile-time evaluation of <code>statementIR<sub>else</sub></code>, under cursor <code>p</code>, evaluation context <code>EC<sub>cond</sub></code>, and store <code>STO<sub>cond</sub></code></a>.</p>
@@ -20750,18 +21397,11 @@ table missed and the <code>default_action</code> was executed.</p>
 <p>Let <a href="#SwitchLabel_table_ok">TC typeId<sub>table</sub> b<sub>last</sub> |- switchLabel : switchLabelIR</a>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>post</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>post</sub></code>,</p>
-</li>
-<li>
-<p>and the typed block statement <code>blockStatementIR</code> be</p>
+<p>the typing context <code>TC<sub>post</sub></code>,the abstract control flow <code>f<sub>post</sub></code>,and the typed block statement <code>blockStatementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -21073,18 +21713,11 @@ ambiguity with a block statement.</p>
 <p>Let <a href="#SwitchLabel_general_ok">TC typeIR<sub>switch</sub> b<sub>last</sub> |- switchLabel : switchLabelIR</a>.</p>
 </li>
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the typing context <code>TC<sub>post</sub></code>,</p>
-</li>
-<li>
-<p>the abstract control flow <code>f<sub>post</sub></code>,</p>
-</li>
-<li>
-<p>and the typed block statement <code>blockStatementIR</code> be</p>
+<p>the typing context <code>TC<sub>post</sub></code>,the abstract control flow <code>f<sub>post</sub></code>,and the typed block statement <code>blockStatementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
@@ -21246,18 +21879,11 @@ ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let
-*</p>
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the instantiation context <code>IC<sub>switch</sub></code>,</p>
-</li>
-<li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
-</li>
-<li>
-<p>and the instantiated statement <code>statementIR</code> be</p>
+<p>the instantiation context <code>IC<sub>switch</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the instantiated statement <code>statementIR</code> be</p>
 </li>
 <li>
 <p>the result of <a href="#Stmt_inst">the compile-time evaluation of <code>blockStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>store</code></a>.</p>

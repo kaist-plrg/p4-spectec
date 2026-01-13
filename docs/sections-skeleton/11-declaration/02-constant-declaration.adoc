@@ -1,13 +1,14 @@
 [#sec-constant-declaration]
 === Constant declarations
 
-// Modified section 11 of the P4-16 Language Specification
+// Section 11 of the P4-16 Language Specification
 Constant values are defined with the syntax:
 
 // Added
 ${syntax: initializer
           constantDeclaration}
 
+// Section 11 of the P4-16 Language Specification
 The `initializer` expression must be a local compile-time known value. In P4~IR~,
 constant declarations have the syntax:
 
@@ -15,9 +16,11 @@ constant declarations have the syntax:
 ${syntax: constantInitializerIR
           constantDeclarationIR}
 
+// Added
 Notice that `constantInitializerIR` is reduced to a `value` in P4~IR~, where
 `value` is computed from `initializer` via local compile-time evaluation.
 
+// Section 11 of the P4-16 Language Specification
 A constant declaration introduces a constant whose value has the specified type.
 The following are all legal constant declarations:
 
@@ -31,20 +34,53 @@ struct Version {
 const Version version = { 32w0, 32w0 };
 ----
 
+// Added
 [discrete]
 ====== Type checking constant declarations
+
+Constant declarations are type checked with the relation:
+
+${relation-title-source: ConstDecl_ok}
+${relation-title-prose: ConstDecl_ok}
+
+It is defined by the following rule:
+
+${rulegroup-source: ConstDecl_ok}
+${rulegroup-prose: ConstDecl_ok}
+
+When used as a top-level declaration, constant declarations are typed with:
 
 ${rulegroup-source: Decl_ok/constantDeclaration}
 ${rulegroup-prose: Decl_ok/constantDeclaration}
 
+// Added
 [discrete]
 ====== Compile-time evaluation of constant declarations
+
+Constant declarations are evaluated during instantiation phase with:
+
+${relation-title-source: ConstDecl_inst}
+${relation-title-prose: ConstDecl_inst}
+
+It is defined by the following rule:
+
+${rulegroup-source: ConstDecl_inst}
+${rulegroup-prose: ConstDecl_inst}
+
+When used as a top-level declaration, constant declarations are compile-time
+evaluated with:
 
 ${rulegroup-source: Decl_inst/constantDeclarationIR}
 ${rulegroup-prose: Decl_inst/constantDeclarationIR}
 
+// Added
 [discrete]
 ====== Runtime evaluation of constant declarations
 
-${rulegroup-source: Decl_eval/constantDeclarationIR}
-${rulegroup-prose: Decl_eval/constantDeclarationIR}
+Constant declarations are evaluated at runtime using the following relation:
+
+${relation-title-source: ConstDecl_eval}
+${relation-title-prose: ConstDecl_eval}
+
+${rulegroup-source: ConstDecl_eval}
+${rulegroup-prose: ConstDecl_eval}
