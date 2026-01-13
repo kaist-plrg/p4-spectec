@@ -472,8 +472,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         adoc_attach_block
         (render_in_itervars in_prose vars_in)
   | BranchI (Else, _, instrs) ->
-      F.asprintf "%sElse:%s" bullet
-        (render_instrs ~level:(level + 1) instrs)
+      F.asprintf "%sElse:%s" bullet (render_instrs ~level:(level + 1) instrs)
   | BranchI
       ( branch,
         ExpCond { it = MatchE (exp, _); _ },

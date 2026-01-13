@@ -347,7 +347,9 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
 
 and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   (* Expand nested calls *)
-  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
+  let instrs =
+    Expand.expand (ctx.ihenv, ctx.frees) Expand.expand_nested_calls instrs
+  in
   (* Prosify instructions *)
   let instrs_pl = prosify_instrs' ctx instrs in
   (* Apply shorthands *)

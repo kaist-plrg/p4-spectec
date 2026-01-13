@@ -9613,42 +9613,42 @@ def $empty_typingContext : typingContext =
   -- let localTypingLayer = {kind , type $empty_typeDefEnv, frames [$empty_typeFrame]}
   -- let TC = {global globalTypingLayer, block blockTypingLayer, local localTypingLayer}
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:142.1-142.42
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:142.1-143.64
 def $bound(cursor, typingContext) : bound =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:144.1-144.34
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:145.1-145.34
   clause 0 : (cursor, TC) = { [] }
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:145.1-145.67
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:146.1-146.67
   clause 1 : (cursor, TC) = $dom_map<typeId, typeDefIR>(TC.block.type)
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:146.1-148.61
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:147.1-149.61
   clause 2 : (cursor, TC) = $union_set<typeId>(B_block, B_local)
   -- if cursor matches `LOCAL`
   -- let B_block = $bound(block, TC)
   -- let B_local = $dom_map<typeId, typeDefIR>(TC.local.type)
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:154.1-154.44
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:155.1-155.44
 def $enter_t(typingContext) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:156.1-157.62
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:157.1-158.62
   clause 0 : (TC) = TC[local.frames = $empty_typeFrame :: TC.local.frames]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:159.1-159.43
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:160.1-160.43
 def $exit_t(typingContext) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:161.1-162.54
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:162.1-163.54
   clause 0 : (TC) = TC[local.frames = typeFrame_t*{typeFrame_t <- typeFrame_t*}]
   -- let typeFrame*{typeFrame <- typeFrame*} = TC.local.frames
   -- if typeFrame*{typeFrame <- typeFrame*} matches _ :: _
   -- let typeFrame_h :: typeFrame_t*{typeFrame_t <- typeFrame_t*} = typeFrame*{typeFrame <- typeFrame*}
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:170.1-171.68
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:171.1-172.68
 def $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:175.1-182.54
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:176.1-183.54
   clause 0 : (cursor, TC, id, varTypeIR) = TC'
   -- if cursor matches `GLOBAL`
   -- let typeFrame = TC.global.frame
@@ -9658,7 +9658,7 @@ def $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext =
   -- let typeFrame_update = $add_map<nameIR, varTypeIR>(typeFrame, id, varTypeIR)
   -- let TC' = TC[global.frame = typeFrame_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:183.1-189.53
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:184.1-190.53
   clause 1 : (cursor, TC, id, varTypeIR) = TC'
   -- if cursor matches `BLOCK`
   -- let typeFrame = TC.block.frame
@@ -9667,7 +9667,7 @@ def $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext =
   -- let typeFrame_update = $add_map<nameIR, varTypeIR>(TC.block.frame, id, varTypeIR)
   -- let TC' = TC[block.frame = typeFrame_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:190.1-197.48
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:191.1-198.48
   clause 2 : (cursor, TC, id, varTypeIR) = TC'
   -- if cursor matches `LOCAL`
   -- let typeFrame'*{typeFrame' <- typeFrame'*} = TC.local.frames
@@ -9679,15 +9679,15 @@ def $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext =
   -- let typeFrame*{typeFrame <- typeFrame*} = typeFrame_h_update :: typeFrame_t*{typeFrame_t <- typeFrame_t*}
   -- let TC' = TC[local.frames = typeFrame*{typeFrame <- typeFrame*}]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:172.1-173.85
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:173.1-174.85
 def $add_vars_t(cursor, typingContext, id*, varTypeIR*) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:199.1-199.38
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:200.1-200.38
   clause 0 : (p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*}) = TC
   -- if id*{id <- id*} matches []
   -- if varTypeIR*{varTypeIR <- varTypeIR*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:200.1-202.56
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:201.1-203.56
   clause 1 : (p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*}) = TC''
   -- if id*{id <- id*} matches _ :: _
   -- let id_h :: id_t*{id_t <- id_t*} = id*{id <- id*}
@@ -9696,69 +9696,69 @@ def $add_vars_t(cursor, typingContext, id*, varTypeIR*) : typingContext =
   -- let TC' = $add_var_t(p, TC, id_h, varTypeIR_h)
   -- let TC'' = $add_vars_t(p, TC', id_t*{id_t <- id_t*}, varTypeIR_t*{varTypeIR_t <- varTypeIR_t*})
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:206.1-206.73
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:207.1-207.73
 def $add_parameter_t(cursor, typingContext, parameterIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:209.1-211.52
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:210.1-212.52
   clause 0 : (cursor, TC, _annotationList direction typeIR id = value?{value <- value?}) = TC'
   -- if direction matches ``EMPTY`
   -- let varTypeIR = typeIR ctk value?{value <- value?}
   -- let TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:212.1-215.52
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:213.1-216.52
   clause 1 : (cursor, TC, _annotationList direction typeIR id = value?{value <- value?}) = TC'
   -- if (direction =/= )
   -- let varTypeIR = direction typeIR dyn value?{value <- value?}
   -- let TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:207.1-207.75
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:208.1-208.75
 def $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:217.1-217.44
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:218.1-218.44
   clause 0 : (cursor, TC, parameterIR*{parameterIR <- parameterIR*}) = TC
   -- if parameterIR*{parameterIR <- parameterIR*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:218.1-220.62
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:219.1-221.62
   clause 1 : (cursor, TC, parameterIR*{parameterIR <- parameterIR*}) = TC''
   -- if parameterIR*{parameterIR <- parameterIR*} matches _ :: _
   -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR*{parameterIR <- parameterIR*}
   -- let TC' = $add_parameter_t(cursor, TC, parameterIR_h)
   -- let TC'' = $add_parameters_t(cursor, TC', parameterIR_t*{parameterIR_t <- parameterIR_t*})
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:224.1-224.76
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:225.1-225.76
 def $add_constructorParameter_t(typingContext, parameterIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:227.1-229.51
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:228.1-230.51
   clause 0 : (TC, _annotationList direction typeIR id constantInitializerIR?{constantInitializerIR <- constantInitializerIR?}) = TC'
   -- if constantInitializerIR?{constantInitializerIR <- constantInitializerIR?} matches ()
   -- let varTypeIR = direction typeIR ctk ?()
   -- let TC' = $add_var_t(block, TC, id, varTypeIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:230.1-232.51
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:231.1-233.51
   clause 1 : (TC, _annotationList direction typeIR id constantInitializerOptIR) = TC'
   -- if constantInitializerOptIR matches (_)
   -- let ?(= value) = constantInitializerOptIR
   -- let varTypeIR = direction typeIR ctk ?(value)
   -- let TC' = $add_var_t(block, TC, id, varTypeIR)
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:225.1-225.78
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:226.1-226.78
 def $add_constructorParameters_t(typingContext, parameterIR*) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:234.1-234.47
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:235.1-235.47
   clause 0 : (TC, parameterIR*{parameterIR <- parameterIR*}) = TC
   -- if parameterIR*{parameterIR <- parameterIR*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:235.1-237.65
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:236.1-238.65
   clause 1 : (TC, parameterIR*{parameterIR <- parameterIR*}) = TC''
   -- if parameterIR*{parameterIR <- parameterIR*} matches _ :: _
   -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR*{parameterIR <- parameterIR*}
   -- let TC' = $add_constructorParameter_t(TC, parameterIR_h)
   -- let TC'' = $add_constructorParameters_t(TC', parameterIR_t*{parameterIR_t <- parameterIR_t*})
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:241.1-241.77
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:242.1-242.77
 def $add_typeDef_t(cursor, typingContext, typeId, typeDefIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:244.1-249.54
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:245.1-250.54
   clause 0 : (cursor, TC, typeId, typeDefIR) = TC'
   -- if cursor matches `GLOBAL`
   -- let typeDefEnv = TC.block.type
@@ -9766,7 +9766,7 @@ def $add_typeDef_t(cursor, typingContext, typeId, typeDefIR) : typingContext =
   -- let typeDefEnv_update = $add_map<typeId, typeDefIR>(TC.global.type, typeId, typeDefIR)
   -- let TC' = TC[global.type = typeDefEnv_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:250.1-255.53
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:251.1-256.53
   clause 1 : (cursor, TC, typeId, typeDefIR) = TC'
   -- if cursor matches `BLOCK`
   -- let typeDefEnv = TC.block.type
@@ -9774,7 +9774,7 @@ def $add_typeDef_t(cursor, typingContext, typeId, typeDefIR) : typingContext =
   -- let typeDefEnv_update = $add_map<typeId, typeDefIR>(typeDefEnv, typeId, typeDefIR)
   -- let TC' = TC[block.type = typeDefEnv_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:256.1-261.53
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:257.1-262.53
   clause 2 : (cursor, TC, typeId, typeDefIR) = TC'
   -- if cursor matches `LOCAL`
   -- let typeDefEnv = TC.local.type
@@ -9782,15 +9782,15 @@ def $add_typeDef_t(cursor, typingContext, typeId, typeDefIR) : typingContext =
   -- let typeDefEnv_update = $add_map<typeId, typeDefIR>(typeDefEnv, typeId, typeDefIR)
   -- let TC' = TC[local.type = typeDefEnv_update]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:242.1-242.80
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:243.1-243.80
 def $add_typeDefs_t(cursor, typingContext, typeId*, typeDefIR*) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:263.1-263.42
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:264.1-264.42
   clause 0 : (p, TC, typeId*{typeId <- typeId*}, typeDefIR*{typeDefIR <- typeDefIR*}) = TC
   -- if typeId*{typeId <- typeId*} matches []
   -- if typeDefIR*{typeDefIR <- typeDefIR*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:264.1-266.64
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:265.1-267.64
   clause 1 : (p, TC, typeId*{typeId <- typeId*}, typeDefIR*{typeDefIR <- typeDefIR*}) = TC''
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -9799,10 +9799,10 @@ def $add_typeDefs_t(cursor, typingContext, typeId*, typeDefIR*) : typingContext 
   -- let TC' = $add_typeDef_t(p, TC, typeId_h, typeDefIR_h)
   -- let TC'' = $add_typeDefs_t(p, TC', typeId_t*{typeId_t <- typeId_t*}, typeDefIR_t*{typeDefIR_t <- typeDefIR_t*})
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:270.1-271.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:271.1-272.18
 def $add_callableDef_overload_t(cursor, typingContext, callableId, callableTypeDefIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:273.1-280.66
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:274.1-281.66
   clause 0 : (cursor, TC, callableId, callableTypeDefIR) = TC'
   -- if cursor matches `GLOBAL`
   -- let callableTypeDefEnv = TC.global.callable
@@ -9810,7 +9810,7 @@ def $add_callableDef_overload_t(cursor, typingContext, callableId, callableTypeD
   -- let callableTypeDefEnv_update = $add_map<callableId, callableTypeDefIR>(callableTypeDefEnv, callableId, callableTypeDefIR)
   -- let TC' = TC[global.callable = callableTypeDefEnv_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:281.1-288.65
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:282.1-289.65
   clause 1 : (cursor, TC, callableId, callableTypeDefIR) = TC'
   -- if cursor matches `BLOCK`
   -- let callableTypeDefEnv = TC.block.callable
@@ -9818,10 +9818,10 @@ def $add_callableDef_overload_t(cursor, typingContext, callableId, callableTypeD
   -- let callableTypeDefEnv_update = $add_map<callableId, callableTypeDefIR>(callableTypeDefEnv, callableId, callableTypeDefIR)
   -- let TC' = TC[block.callable = callableTypeDefEnv_update]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:290.1-291.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:291.1-292.18
 def $add_callableDef_non_overload_t(cursor, typingContext, callableId, callableTypeDefIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:293.1-302.66
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:294.1-303.66
   clause 0 : (cursor, TC, callableId, callableTypeDefIR) = TC'
   -- if cursor matches `GLOBAL`
   -- let callableTypeDefEnv = TC.global.callable
@@ -9831,7 +9831,7 @@ def $add_callableDef_non_overload_t(cursor, typingContext, callableId, callableT
   -- let callableTypeDefEnv_update = $add_map<callableId, callableTypeDefIR>(callableTypeDefEnv, callableId, callableTypeDefIR)
   -- let TC' = TC[global.callable = callableTypeDefEnv_update]
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:303.1-312.65
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:304.1-313.65
   clause 1 : (cursor, TC, callableId, callableTypeDefIR) = TC'
   -- if cursor matches `BLOCK`
   -- let callableTypeDefEnv = TC.block.callable
@@ -9841,33 +9841,33 @@ def $add_callableDef_non_overload_t(cursor, typingContext, callableId, callableT
   -- let callableTypeDefEnv_update = $add_map<callableId, callableTypeDefIR>(callableTypeDefEnv, callableId, callableTypeDefIR)
   -- let TC' = TC[block.callable = callableTypeDefEnv_update]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:316.1-317.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:317.1-318.18
 def $add_constructorDef_t(typingContext, callableId, constructorTypeDefIR) : typingContext =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:319.1-326.72
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:320.1-327.72
   clause 0 : (TC, callableId, constructorTypeDefIR) = TC'
   -- let constructorTypeDefEnv = TC.global.constructor
   -- if ~$in_set<callableId>(callableId, $dom_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv))
   -- let constructorTypeDefEnv_update = $add_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv, callableId, constructorTypeDefIR)
   -- let TC' = TC[global.constructor = constructorTypeDefEnv_update]
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:334.1-335.69
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:335.1-336.69
 def $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:337.1-339.36
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:338.1-340.36
   clause 0 : (p, TC, prefixedNameIR) = $find_map<id, varTypeIR>(typeFrame, id)
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
   -- let typeFrame = TC.global.frame
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:340.1-342.36
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:341.1-343.36
   clause 1 : (cursor, TC, prefixedNameIR) = $find_map<id, varTypeIR>(typeFrame, id)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- let typeFrame = TC.global.frame
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:343.1-345.60
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:344.1-346.60
   clause 2 : (cursor, TC, prefixedNameIR) = ?(varTypeIR)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -9877,7 +9877,7 @@ def $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR? =
   -- if varTypeIR'?{varTypeIR' <- varTypeIR'?} matches (_)
   -- let ?(varTypeIR) = varTypeIR'?{varTypeIR' <- varTypeIR'?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:346.1-348.54
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:347.1-349.54
   clause 3 : (cursor, TC, prefixedNameIR) = $find_var_t(global, TC, ` id)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -9885,7 +9885,7 @@ def $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR? =
   -- let typeFrame = TC.block.frame
   -- if (?() = $find_map<id, varTypeIR>(typeFrame, id))
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:349.1-351.62
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:350.1-352.62
   clause 4 : (cursor, TC, prefixedNameIR) = ?(varTypeIR)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -9895,7 +9895,7 @@ def $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR? =
   -- if varTypeIR'?{varTypeIR' <- varTypeIR'?} matches (_)
   -- let ?(varTypeIR) = varTypeIR'?{varTypeIR' <- varTypeIR'?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:352.1-354.56
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:353.1-355.56
   clause 5 : (cursor, TC, prefixedNameIR) = $find_var_t(block, TC, ` id)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -9903,10 +9903,10 @@ def $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR? =
   -- let typeFrame*{typeFrame <- typeFrame*} = TC.local.frames
   -- if (?() = $find_maps<id, varTypeIR>(typeFrame*{typeFrame <- typeFrame*}, id))
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:358.1-359.70
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:359.1-360.70
 def $find_var_value_t(cursor, typingContext, prefixedNameIR) : value =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:361.1-362.57
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:362.1-363.57
   clause 0 : (p, TC, prefixedNameIR) = value
   -- let varTypeIR?{varTypeIR <- varTypeIR?} = $find_var_t(p, TC, prefixedNameIR)
   -- if varTypeIR?{varTypeIR <- varTypeIR?} matches (_)
@@ -9914,23 +9914,23 @@ def $find_var_value_t(cursor, typingContext, prefixedNameIR) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:366.1-367.71
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:367.1-368.71
 def $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:369.1-371.36
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:370.1-372.36
   clause 0 : (p, TC, prefixedNameIR) = $find_map<typeId, typeDefIR>(typeDefEnv, typeId)
   -- if prefixedNameIR matches `.%`
   -- let . typeId = prefixedNameIR
   -- let typeDefEnv = TC.global.type
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:372.1-374.36
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:373.1-375.36
   clause 1 : (cursor, TC, prefixedNameIR) = $find_map<typeId, typeDefIR>(typeDefEnv, typeId)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` typeId = prefixedNameIR
   -- let typeDefEnv = TC.global.type
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:375.1-378.69
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:376.1-379.69
   clause 2 : (cursor, TC, prefixedNameIR) = ?(typeDefIR)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -9940,7 +9940,7 @@ def $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR? =
   -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
   -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:379.1-382.63
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:380.1-383.63
   clause 3 : (cursor, TC, prefixedNameIR) = $find_typeDef_t(global, TC, ` typeId)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -9948,7 +9948,7 @@ def $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR? =
   -- let typeDefEnv = TC.block.type
   -- if (?() = $find_map<typeId, typeDefIR>(typeDefEnv, typeId))
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:383.1-386.71
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:384.1-387.71
   clause 4 : (cursor, TC, prefixedNameIR) = ?(typeDefIR)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -9958,7 +9958,7 @@ def $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR? =
   -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
   -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:387.1-390.65
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:388.1-391.65
   clause 5 : (cursor, TC, prefixedNameIR) = $find_typeDef_t(block, TC, ` typeId)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -9966,10 +9966,10 @@ def $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR? =
   -- let typeDefEnv*{typeDefEnv <- typeDefEnv*} = [TC.local.type]
   -- if (?() = $find_maps<typeId, typeDefIR>(typeDefEnv*{typeDefEnv <- typeDefEnv*}, typeId))
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:394.1-396.95
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:395.1-397.95
 def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argumentIR*) : (callableId, callableTypeDefIR, id*)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:398.1-402.60
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:399.1-403.60
   clause 0 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
@@ -9977,7 +9977,7 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- let callableTypeDefEnv = TC.global.callable
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:403.1-407.60
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:404.1-408.60
   clause 1 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -9985,7 +9985,7 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- let callableTypeDefEnv = TC.global.callable
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:408.1-414.88
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:409.1-415.88
   clause 2 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?((callableId, callableTypeDefIR, id_default*{id_default <- id_default*}))
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -9996,7 +9996,7 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- if (callableId, callableTypeDefIR, nameIR*)?{(callableId, callableTypeDefIR, nameIR*) <- (callableId, callableTypeDefIR, nameIR*)?} matches (_)
   -- let ?((callableId, callableTypeDefIR, id_default*{id_default <- id_default*})) = (callableId, callableTypeDefIR, nameIR*)?{(callableId, callableTypeDefIR, nameIR*) <- (callableId, callableTypeDefIR, nameIR*)?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:415.1-421.88
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:416.1-422.88
   clause 3 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(global, TC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -10005,27 +10005,27 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR))
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:422.1-423.70
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:423.1-424.70
   clause 4 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(block, TC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:425.1-427.90
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:426.1-428.90
 def $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR) : (callableId, callableTypeDefIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:429.1-430.72
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:430.1-431.72
   clause 0 : (p, TC, prefixedNameIR) = $find_non_overloaded<callableTypeDefIR>(TC.global.callable, nameIR)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:431.1-432.72
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:432.1-433.72
   clause 1 : (cursor, TC, prefixedNameIR) = $find_non_overloaded<callableTypeDefIR>(TC.global.callable, nameIR)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:433.1-436.75
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:434.1-437.75
   clause 2 : (cursor, TC, prefixedNameIR) = ?((callableId, callableTypeDefIR))
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -10034,70 +10034,70 @@ def $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR) : 
   -- if (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)
   -- let ?((callableId, callableTypeDefIR)) = (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?}
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:437.1-440.75
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:438.1-441.75
   clause 3 : (cursor, TC, prefixedNameIR) = $find_callableDef_non_overloaded_t(global, TC, ` nameIR)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- if (?() = $find_non_overloaded<callableTypeDefIR>(TC.block.callable, nameIR))
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:441.1-442.61
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:442.1-443.61
   clause 4 : (cursor, TC, prefixedNameIR) = $find_callableDef_non_overloaded_t(block, TC, ` nameIR)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:446.1-447.45
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:447.1-448.45
 def $find_constructorDef_overloaded_t(typingContext, prefixedNameIR, argumentIR*) : (callableId, constructorTypeDefIR, id*)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:449.1-454.60
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:450.1-455.60
   clause 0 : (TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorTypeDefIR>(TC.global.constructor, callTargetKey, $parameterListIR_of_constructorTypeDefIR)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:455.1-460.60
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:456.1-461.60
   clause 1 : (TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorTypeDefIR>(TC.global.constructor, callTargetKey, $parameterListIR_of_constructorTypeDefIR)
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:464.1-465.50
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:465.1-466.50
 def $find_local_return_type_t(typingContext) : typeIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:467.1-468.47
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:468.1-469.47
   clause 0 : (TC) = ?(typeIR_ret)
   -- let localKind = TC.local.kind
   -- if localKind matches `FUNCTION:%`
   -- let function: typeIR_ret = localKind
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:469.1-470.54
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:470.1-471.54
   clause 1 : (TC) = ?(typeIR_ret)
   -- let localKind = TC.local.kind
   -- if localKind matches `EXTERN_FUNCTION:%`
   -- let extern_function: typeIR_ret = localKind
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:471.1-472.31
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:472.1-473.31
   clause 2 : (TC) = ?(void as typeIR)
   -- if (action = TC.local.kind)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:473.1-474.52
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:474.1-475.52
   clause 3 : (TC) = ?(typeIR_ret)
   -- let localKind = TC.local.kind
   -- if localKind matches `EXTERN_METHOD:%`
   -- let extern_method: typeIR_ret = localKind
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:475.1-477.22
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:476.1-478.22
   clause 4 : (TC) = ?(typeIR_ret)
   -- let localKind = TC.local.kind
   -- if localKind matches `EXTERN_METHODABSTRACT:%`
   -- let extern_methodabstract: typeIR_ret = localKind
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:478.1-479.45
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:479.1-480.45
   clause 5 : (TC) = ?(void as typeIR)
   -- if (control_apply_method = TC.local.kind)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:480.1-481.15
+  ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:481.1-482.15
   clause 6 : (TC) = ?()
   -- otherwise
 
