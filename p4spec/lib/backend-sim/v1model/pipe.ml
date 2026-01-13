@@ -360,24 +360,37 @@ struct
 
   let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
-    (* Get egress port *)
-    let port =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-        "egress_spec"
-      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+    let drop =
+      let value_egress_spec =
+        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
+          "egress_spec"
+      in
+      let width_egress_spec, int_egress_spec =
+        unpack_p4_fixedBit value_egress_spec
+      in
+      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
     in
-    (* Get output packet *)
-    let header =
-      get_packet_out value_sto |> Format.asprintf "%a" Core.Object.PacketOut.pp
-    in
-    let payload =
-      get_packet_in value_sto
-      |> Format.asprintf "%a" Core.Object.PacketIn.pp_payload
-    in
-    let packet = header ^ payload in
-    (* Return port and packet *)
-    let tx = (port, packet) in
-    Some tx
+    if drop then None
+    else
+      (* Get egress port *)
+      let port =
+        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
+          "egress_spec"
+        |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+      in
+      (* Get output packet *)
+      let header =
+        get_packet_out value_sto
+        |> Format.asprintf "%a" Core.Object.PacketOut.pp
+      in
+      let payload =
+        get_packet_in value_sto
+        |> Format.asprintf "%a" Core.Object.PacketIn.pp_payload
+      in
+      let packet = header ^ payload in
+      (* Return port and packet *)
+      let tx = (port, packet) in
+      Some tx
 
   let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * bool =
