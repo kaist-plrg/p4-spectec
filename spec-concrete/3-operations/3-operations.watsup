@@ -616,6 +616,16 @@ def $cast_varbit(TYPEDEF _ typeIR, w_max, w, i)
 
 def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
 
+;;; Cast from error
+
+dec $cast_error(typeIR, nameIR) : value
+  hint(testgen_ignore)
+
+def $cast_error(ERROR, nameIR) = ERROR `. nameIR
+def $cast_error(SET `< typeIR >, nameIR) = SET `{ $cast_error(typeIR, nameIR) }
+
+def $cast_op(typeIR, ERROR `. nameIR) = $cast_error(typeIR, nameIR)
+
 ;;; Cast from struct
 
 dec $cast_struct(typeIR, typeId, (value, id)*) : value

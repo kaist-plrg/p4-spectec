@@ -3087,6 +3087,24 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Let ``b~r~`` be ``value'``.
 . Return ``b~l~ \/ b~r~``.
 
+<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value~target~)>>
+
+
+. Check that ``valueFieldIR^{asterisk}^`` is a non-empty list.
+. Let ``valueFieldIR~h~ {two-colons} valueFieldIR~t~^{asterisk}^`` be ``valueFieldIR^{asterisk}^``.
+. Let ``nameIR = value ;`` be ``valueFieldIR~h~``.
+. If ``<<bin_eq, bin_eq(value, value~target~)>>``:
+ .. Return ``value~target~``.
+. Else if ``~<<bin_eq, bin_eq(value, value~target~)>>``:
+ .. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR~t~^{asterisk}^, value~target~)>>``.
+
+<<cast_to_enum, cast_to_enum(enumTypeIR, value)>>
+
+
+. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
+. Let ``ENUM typeId < typeIR > { valueFieldIR^{asterisk}^ }`` be ``enumTypeIR``.
+. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value)>>``.
+
 <<cast_op, Cast ``value'`` to type ``typeIR``>>
 
 
@@ -3099,10 +3117,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
   ... Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
  .. Else if let ``w S i`` be ``integerLiteral``:
   ... Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
+. Else if let ``ERROR . nameIR`` be ``value'``:
+ .. Return ``<<cast_error, cast_error(typeIR, nameIR)>>``.
 . Else if let ``STRUCT typeId { (value~field~ nameIR~field~ ;)^{asterisk}^ }`` be ``value'``:
  .. Return ``<<cast_struct, cast_struct(typeIR, typeId, ((value~field~, nameIR~field~))^{asterisk}^)>>``.
 . Else if let ``HEADER typeId { b ; (value~field~ nameIR~field~ ;)^{asterisk}^ }`` be ``value'``:
  .. Return ``<<cast_header, cast_header(typeIR, typeId, b, ((value~field~, nameIR~field~))^{asterisk}^)>>``.
+. Else if let ``HEADER_STACK [ value^{asterisk}^ ( ++_++ ; n~size~ ) ]`` be ``value'``:
+ .. Return ``<<cast_header_stack, cast_header_stack(typeIR, value^{asterisk}^, n~size~)>>``.
 . Else if let ``enumValue`` be ``value'``:
  .. Check that ``enumValue`` matches pattern ``% . % . %``.
  .. Let ``++_++ . ++_++ . value`` be ``enumValue``.
@@ -3151,6 +3173,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Else if let ``VARBIT < w >`` be ``integerTypeIR``:
   ... Return ``w . 0 V 0``.
 . Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
+ .. Return ``<<default, default(typeIR)>>``.
+. Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<default, default(typeIR)>>``.
 . Else if let ``TUPLE < typeIR^{asterisk}^ >`` be ``typeIR'``:
  .. Return ``TUPLE ( (<<default, default(typeIR)>>)^{asterisk}^ )``.
@@ -3232,8 +3256,10 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
 . Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
-. Else let ``SET < typeIR >`` be ``typeIR'``:
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixbit, cast_fixbit(typeIR, w, i)>> }``.
+. Else let ``enumTypeIR`` be ``typeIR'``:
+ .. Return ``<<cast_to_enum, cast_to_enum(enumTypeIR, w W i)>>``.
 
 <<cast_fixint, cast_fixint(typeIR', w, i)>>
 
@@ -3253,8 +3279,10 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
 . Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
-. Else let ``SET < typeIR >`` be ``typeIR'``:
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixint, cast_fixint(typeIR, w, i)>> }``.
+. Else let ``enumTypeIR`` be ``typeIR'``:
+ .. Return ``<<cast_to_enum, cast_to_enum(enumTypeIR, w S i)>>``.
 
 <<cast_varbit, cast_varbit(typeIR', w~max'~, w, i)>>
 
@@ -3266,6 +3294,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``w~max~ . w V i``.
 . Else let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_varbit, cast_varbit(typeIR, w~max'~, w, i)>>``.
+
+<<cast_error, cast_error(typeIR', nameIR)>>
+
+
+. If let ``errorTypeIR`` be ``typeIR'``:
+ .. Return ``ERROR . nameIR``.
+. Else let ``SET < typeIR >`` be ``typeIR'``:
+ .. Return ``SET { <<cast_error, cast_error(typeIR, nameIR)>> }``.
 
 <<cast_struct, cast_struct(typeIR', typeId', ((value', id'))^{asterisk}^)>>
 
@@ -3298,6 +3334,14 @@ for each ``value'`` in ``value'^{asterisk}^`` and ``id'`` in ``id'^{asterisk}^``
 . Else let ``HEADER typeId < ++_++^{asterisk}^ > { ++_++^{asterisk}^ }`` be ``typeIR'``:
  .. Check that ``typeId`` is equal to ``typeId'``.
  .. Return ``HEADER typeId { b ; (value id ;)^{asterisk}^ }``.
+
+<<cast_header_stack, cast_header_stack(typeIR', value^{asterisk}^, n~size'~)>>
+
+
+. Check that ``typeIR'`` has type ``headerStackTypeIR``.
+. Let ``typeIR [ n~size~ ]`` be ``typeIR'``.
+. Check that ``n~size~`` is equal to ``n~size'~``.
+. Return ``HEADER_STACK [ value^{asterisk}^ ( 0 ; n~size~ ) ]``.
 
 <<cast_sequence, cast_sequence(typeIR', value^{asterisk}^)>>
 
@@ -14091,11 +14135,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
  .. Check that ``value~base~`` has type ``headerStackValue``.
- .. Let ``HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; ++_++ ) ]`` be ``value~base~``.
+ .. Let ``HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; n~size~ ) ]`` be ``value~base~``.
  .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
  .. Check that ``int`` has type ``nat``.
  .. Let ``n~index~`` be ``int``.
- .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
+ .. Let ``int'`` be ``<<min_int, min_int([n~index~, n~size~ - 1])>>``.
+ .. Check that ``int'`` has type ``nat``.
+ .. Let ``n~idx~`` be ``int'``.
+ .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``++_++``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
@@ -14799,10 +14846,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Check that ``expressionListResult`` has type ``continueResult<value*>``.
 . Let ``value~key~^{asterisk}^`` be ``expressionListResult``.
 . Let <<SelectCases_match, ``EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ nameIR^?^``>>.
-. Check that ``nameIR^?^`` is Some value.
-. Let ``nameIR~state~`` be ``nameIR^?^``.
-. Let <<ParserTransition_eval, ``EC~2~ STO~2~ |- TRANSITION nameIR~state~ ; : EC~3~ STO~3~ transitionResult``>>.
-. Result in ``EC~3~``, ``STO~3~``, and ``transitionResult``.
+. If ``nameIR^?^`` is None:
+ .. Let ``rejectTransitionResult`` be ``REJECT ERROR . "NoMatch"``.
+ .. Result in ``EC~2~``, ``STO~2~``, and ``rejectTransitionResult``.
+. Else if let ``nameIR~state~`` be ``nameIR^?^``:
+ .. Let <<ParserTransition_eval, ``EC~2~ STO~2~ |- TRANSITION nameIR~state~ ; : EC~3~ STO~3~ transitionResult``>>.
+ .. Result in ``EC~3~``, ``STO~3~``, and ``transitionResult``.
 
 <<ParserState_eval, ParserState_eval: ``EC~0~ STO~0~ |- annotationList STATE { parserStatementListIR transitionStatementIR } : % % %``>>
 
