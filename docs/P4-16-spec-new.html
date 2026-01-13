@@ -11291,12 +11291,16 @@ syntax parserDeclaration =
 </div>
 </div>
 <div class="paragraph">
-<p>Unlike parser type declarations, parser declarations may not be generic&#8212;&#8203;e.g.,
-the following declaration is illegal:</p>
+<p>Although the syntax for a parser declaration allows for type parameters, the
+current version of the P4 language does not support generic parser
+declarations. Note that this restriction applies only to parser declarations;
+parser type declarations may still be generic. For example, the following
+parser declaration is illegal:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// generic parser type declaration is legal
+</span><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// generic parser declaration is illegal</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11455,13 +11459,14 @@ syntax controlDeclaration =
 </div>
 </div>
 <div class="paragraph">
-<p>It is illegal to instantiate a <code>parser</code> within a <code>control</code> block. Unlike
-control type declarations, control declarations may not be generic&#8212;&#8203;e.g., the
+<p>It is illegal to instantiate a <code>parser</code> within a <code>control</code> block. Similar to
+parser declarations, control declarations may not be generic&#8212;&#8203;e.g., the
 following declaration is illegal:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* Body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// generic control type declaration is legal
+</span><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// generic control declaration is illegal</span></code></pre>
 </div>
 </div>
 <div class="paragraph">

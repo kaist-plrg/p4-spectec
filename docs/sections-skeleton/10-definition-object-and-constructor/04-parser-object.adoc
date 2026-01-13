@@ -11,15 +11,20 @@ ${syntax: parserLocalDeclaration
           parserState
           parserDeclaration}
 
-// Section 13.2 of the P4-16 Language Specification
-Unlike parser type declarations, parser declarations may not be generic--e.g.,
-the following declaration is illegal:
+// Modified ection 13.2 of the P4-16 Language Specification
+Although the syntax for a parser declaration allows for type parameters, the
+current version of the P4 language does not support generic parser
+declarations. Note that this restriction applies only to parser declarations;
+parser type declarations may still be generic. For example, the following
+parser declaration is illegal:
 
 [source,p4]
 ----
-parser P<H>(inout H data) { /* body omitted */ }
+parser P<H>(inout H data); // generic parser type declaration is legal
+parser P<H>(inout H data) { /* body omitted */ } // generic parser declaration is illegal
 ----
 
+// Section 13.2 of the P4-16 Language Specification
 At least one state, named `start`, must be present in any `parser`. A parser
 may not define two states with the same name. It is also illegal for a parser
 to give explicit definitions for the `accept` and `reject` states--those
