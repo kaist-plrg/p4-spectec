@@ -25,13 +25,14 @@ let lex (filename : string) =
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error
 
 let parse (lexbuf : Lexing.lexbuf) =
-  try Parser.stmts Lexer.token lexbuf
-  with Parser.Error ->
-    let pos = Lexing.lexeme_start_p lexbuf in
-    Printf.eprintf "Current lexeme: %S\n" (Lexing.lexeme lexbuf);
-    Format.asprintf "Parse error at %s:%d:%d\n" pos.pos_fname pos.pos_lnum
-      (pos.pos_cnum - pos.pos_bol)
-    |> error
+  try Parser.stmts Lexer.token lexbuf with
+  | Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error
+  | Parser.Error ->
+      let pos = Lexing.lexeme_start_p lexbuf in
+      Printf.eprintf "Current lexeme: %S\n" (Lexing.lexeme lexbuf);
+      Format.asprintf "Parse error at %s:%d:%d\n" pos.pos_fname pos.pos_lnum
+        (pos.pos_cnum - pos.pos_bol)
+      |> error
 
 let parse_file (filename : string) =
   let tokens = lex filename in

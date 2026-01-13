@@ -14,6 +14,22 @@ let rec collect_files ~(suffix : string) (dir : string) =
       else files)
     [] files
 
+let collect_files_with_basedir ~(suffix : string) (dir : string) =
+  let rec aux ~rel_dir dir =
+    let files = Sys_unix.readdir (dir ^ "/" ^ rel_dir) in
+    Array.sort String.compare files;
+    Array.fold_left
+      (fun acc file ->
+        let abs = dir ^ "/" ^ rel_dir ^ "/" ^ file in
+        let rel = if rel_dir = "" then file else rel_dir ^ "/" ^ file in
+        if Sys_unix.is_directory_exn abs && file <> "include" then
+          acc @ aux ~rel_dir:rel dir
+        else if String.ends_with ~suffix abs then acc @ [ (dir, rel) ]
+        else acc)
+      [] files
+  in
+  aux ~rel_dir:"" dir
+
 let base ~(suffix : string) (filename : string) : string =
   let filename_base =
     String.split_on_char '/' filename |> List.rev |> List.hd

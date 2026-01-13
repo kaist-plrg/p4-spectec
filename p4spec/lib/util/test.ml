@@ -1,12 +1,11 @@
 (* stf helper *)
 
-let p4_matches_stf basename_p4 basename_stf =
-  String.equal basename_p4 basename_stf
-  ||
-  match String.split_on_char '_' basename_stf with
-  | [ base; suffix ] ->
-      String.equal basename_p4 base
-      && String.for_all (function '0' .. '9' -> true | _ -> false) suffix
+let p4_matches_stf basename_p4 filepath_stf =
+  match String.split_on_char '/' filepath_stf with
+  | [ basedir; _ ] -> basedir = basename_p4
+  | [ filename_stf ] ->
+      let basename_stf = Filesys.base ~suffix:".stf" filename_stf in
+      String.equal basename_p4 basename_stf
   | _ -> false
 
 (* Collectors *)
@@ -47,4 +46,21 @@ let patch ~(suffix : string) (filenames : string list)
       match filename_patch_opt with
       | Some filename_patch -> filename_patch
       | None -> filename)
+    filenames
+
+let patch_with_basedir ~(suffix : string) (filenames : (string * string) list)
+    (filenames_patch : (string * string) list) : (string * string) list =
+  List.map
+    (fun (basedir, filename) ->
+      let filename_base = Filesys.base ~suffix filename in
+      let filename_patch_opt =
+        List.find_opt
+          (fun (basedir_patch, filename_patch) ->
+            let filename_patch_base = Filesys.base ~suffix filename_patch in
+            String.equal filename_base filename_patch_base)
+          filenames_patch
+      in
+      match filename_patch_opt with
+      | Some filename_patch -> filename_patch
+      | None -> (basedir, filename))
     filenames
