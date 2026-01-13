@@ -273,6 +273,9 @@ and render_exp ctx exp : string =
       F.asprintf "%s has type %s"
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
+  | MatchE (exp, Il.CaseP mixop) when List.length mixop = 1 ->
+      F.asprintf "%s is %s" (render_exp ctx exp)
+        (code_of_pattern (Il.CaseP mixop) |> adoc_as_code ctx)
   | MatchE (exp, Il.ListP `Nil) ->
       F.asprintf "%s is an empty list" (render_exp ctx exp)
   | MatchE (exp, Il.ListP `Cons) ->
