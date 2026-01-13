@@ -29,7 +29,7 @@ let adoc_ordered_bullet level =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')
 
 let adoc_unordered_bullet level =
-  Format.asprintf "%s%s " (String.make (level * 2) ' ') "*"
+  Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '*')
 
 let adoc_link ~(link : string) (text : string) : string =
   "<<" ^ link ^ ", " ^ text ^ ">>"
@@ -178,11 +178,11 @@ let render_cmpop ctx cmpop =
 
 (* Hints *)
 
-let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
+let render_alter_hint ?(caps = false) ?(level = 0) (ctx : context) (hint : Hints.Alter.t)
     (render : context -> 'a -> string) (items : 'a list) : string =
   items
   |> Hints.Alter.alternate
-       ~base_text:(fun s -> reindent_lines ~level:0 s)
+       ~base_text:(fun s -> reindent_lines ~level s)
        hint
        (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
@@ -529,14 +529,14 @@ and render_rel_title (rel_title : rel_title) : string =
         (render_alter_hint ~caps:true in_prose hint_hold render_exp exps_input)
   | ProseRelTitle
       (`Yield (id_rel, hint_input, exps_input, hint_output, exps_output)) ->
-      F.asprintf "%s:\n\n%s%s\n%s%s"
+      F.asprintf "%s:\n\n%s%s:\n%s%s."
         (Sl.Print.string_of_relid id_rel
         |> as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true in_prose hint_input render_exp exps_input)
         (adoc_unordered_bullet 0)
-        ("results in "
-        ^ render_alter_hint ~caps:false in_prose hint_output render_exp
+        ("Results in "
+        ^ render_alter_hint ~level:1 ~caps:false in_prose hint_output render_exp
             exps_output)
   | MathRelTitle (id_rel, mixop, exps) ->
       F.asprintf "%s: %s"

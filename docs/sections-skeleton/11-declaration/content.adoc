@@ -1,7 +1,52 @@
 [#sec-declaration]
 == Declarations
 
-${syntax: declaration declarationIR}
+The syntax of top-level declarations is defined as follows:
+
+${syntax: declaration}
+
+As described in <<sec-p4-abstract-machine>>, declarations are type checked,
+instantiated at compile time, and evaluated at runtime.
+
+[discrete]
+[[Decl_ok]]
+===== Type checking declarations
+
+${relation-title-source: Decl_ok}
+${relation-title-prose: Decl_ok}
+
+After type checking, declarations are represented in P4~IR~ as follows:
+
+${syntax: declarationIR}
+
+[discrete]
+[[Decl_inst]]
+===== Compile-time evaluation of declarations
+
+${relation-title-source: Decl_inst}
+${relation-title-prose: Decl_inst}
+
+Instantiation statically allocates instantiated objects in the global
+`store`. <<sec-instantiation-declaration>> describes how objects are
+instantiated from a declaration.
+
+[discrete]
+[[Decl_eval]]
+===== Runtime evaluation of declarations
+
+${relation-title-source: Decl_eval}
+${relation-title-prose: Decl_eval}
+
+The result of evaluating a declaration is:
+
+[[declarationResult]]
+${syntax: continueEmptyResult
+          exitResult
+          declarationResult}
+
+See <<sec-exit-statement>> for how `exitResult` may occur.
+
+The subsequent sections describe each kind of declaration in detail.
 
 include::01-constant-declaration.adoc[]
 
