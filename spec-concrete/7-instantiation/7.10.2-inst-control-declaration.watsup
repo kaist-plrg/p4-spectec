@@ -7,18 +7,18 @@
 ;;; constantDeclarationIR
 
 rule ControlLocalDecl_inst/constantDeclarationIR:
-  IC_0 STO_0 |- constantDeclarationIR
-              : IC_1 STO_1 constantDeclarationIR_inst
-  -- Decl_inst:
-      BLOCK IC_0 STO_0 |- constantDeclarationIR
-                        : IC_1 STO_1 constantDeclarationIR_inst
+  IC_0 STO |- constantDeclarationIR
+            : IC_1 STO constantDeclarationIR_inst
+  -- ConstDecl_inst:
+      BLOCK IC_0 |- constantDeclarationIR
+                  : IC_1 constantDeclarationIR_inst
 
 ;;; instantiationIR
 
 rule ControlLocalDecl_inst/instantiationIR:
   IC_0 STO_0 |- instantiationIR
               : IC_1 STO_1 constantDeclarationIR
-  -- Decl_inst:
+  -- InstDecl_inst:
       BLOCK IC_0 STO_0 |- instantiationIR
                         : IC_1 STO_1 constantDeclarationIR
 
@@ -31,11 +31,10 @@ rule ControlLocalDecl_inst/variableDeclarationIR:
 ;;; actionDeclarationIR
 
 rule ControlLocalDecl_inst/actionDeclarationIR:
-  IC_0 STO_0 |- actionDeclarationIR
-              : IC_1 STO_1 eps
-  -- Decl_inst:
-      BLOCK IC_0 STO_0 |- actionDeclarationIR
-                        : IC_1 STO_1 eps
+  IC_0 STO |- actionDeclarationIR
+            : IC_1 STO eps
+  -- ActionDecl_inst:
+      BLOCK IC_0 |- actionDeclarationIR : IC_1
 
 ;;; tableDeclarationIR
 ;;; syntax tableDeclaration =

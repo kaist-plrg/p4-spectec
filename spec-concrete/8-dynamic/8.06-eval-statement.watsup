@@ -895,54 +895,29 @@ rulegroup Stmt_eval/switchStatementIR-general {
 ;;
 ;;; constantDeclarationIR
 
-rulegroup BlockElementStmt_eval/constantDeclarationIR {
-
-  rule BlockElementStmt_eval/exit:
-    EC_0 STO_0 |- constantDeclarationIR
-                : EC_1 STO_1 EXIT
-    -- Decl_eval:
-        LOCAL EC_0 STO_0 |- constantDeclarationIR
-                          : EC_1 STO_1 EXIT
-
-  rule BlockElementStmt_eval/cont:
-    EC_0 STO_0 |- constantDeclarationIR
-                : EC_1 STO_1 ``
-    -- Decl_eval:
-        LOCAL EC_0 STO_0 |- constantDeclarationIR
-                          : EC_1 STO_1 ``
-
-}
+rule BlockElementStmt_eval/constantDeclarationIR:
+  EC_0 STO |- constantDeclarationIR
+            : EC_1 STO ``
+  -- ConstDecl_eval:
+      LOCAL EC_0 |- constantDeclarationIR : EC_1
 
 ;;; variableDeclarationIR
 
 rulegroup BlockElementStmt_eval/variableDeclarationIR {
 
-  rule BlockElementStmt_eval/non-initializer:
-    EC_0 STO |- annotationList typeIR nameIR eps `;
-              : EC_1 STO ``
-    ---- ;; get initial value
-    -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
-    -- if value_init = $default(typeIR)
-    ---- ;; update evaluation context
-    -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
-
-  rule BlockElementStmt_eval/initializer-exit:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+  rule BlockElementStmt_eval/exit:
+    EC_0 STO_0 |- variableDeclarationIR
                 : EC_1 STO_1 EXIT
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+    -- VarDecl_eval:
+        LOCAL EC_0 STO_0 |- variableDeclarationIR
                           : EC_1 STO_1 EXIT
 
-  rule BlockElementStmt_eval/initializer-cont:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_2 STO_1 ``
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 (`` value_init)
-    ---- ;; update evaluation context
-    -- if EC_2 = $add_var_e(LOCAL, EC_1, `` nameIR, value_init)
+  rule BlockElementStmt_eval/cont:
+    EC_0 STO_0 |- variableDeclarationIR
+                : EC_1 STO_1 ``
+    -- VarDecl_eval:
+        LOCAL EC_0 STO_0 |- variableDeclarationIR
+                          : EC_1 STO_1 ``
 
 }
 

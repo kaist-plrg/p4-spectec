@@ -392,17 +392,52 @@ relation ControlLocalDecls_ok:
 ;;;; Declaration typing
 ;;
 
-relation Decl_ok:
-  cursor typingContext |- declaration : typingContext declarationIR
+relation VarDecl_ok:
+  cursor typingContext |- variableDeclaration
+                        : typingContext variableDeclarationIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed declaration" %4)
+  hint(prose_out "the updated typing context" %3 "and" %4)
+
+relation ConstDecl_ok:
+  cursor typingContext |- constantDeclaration
+                        : typingContext constantDeclarationIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the updated typing context" %3 "and" %4)
+
+relation InstDecl_ok:
+  cursor typingContext |- instantiation
+                        : typingContext instantiationIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the updated typing context" %3 "and" %4)
+
+relation FuncDecl_ok:
+  cursor typingContext |- functionDeclaration
+                        : typingContext functionDeclarationIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the updated typing context" %3 "and" %4)
+
+relation ActionDecl_ok:
+  cursor typingContext |- actionDeclaration
+                        : typingContext actionDeclarationIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_out "the updated typing context" %3 "and" %4)
+
+relation Decl_ok:
+  typingContext |- declaration : typingContext declarationIR
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under typing context" %0)
+  hint(prose_out "the updated typing context" %2 "and the typed declaration" %3)
 
 relation Decls_ok:
-  cursor typingContext |- declaration* : typingContext declarationIR*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed declarations" %4)
+  typingContext |- declaration* : typingContext declarationIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under typing context" %0)
+  hint(prose_out "the updated typing context" %2 "and the typed declarations" %3)
 
 relation Program_ok:
   |- p4program : p4programIR

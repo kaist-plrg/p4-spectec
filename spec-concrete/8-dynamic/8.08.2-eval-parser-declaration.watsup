@@ -7,41 +7,22 @@
 ;;; constantDeclarationIR
 
 rule ParserLocalDecl_eval/constantDeclarationIR:
-  EC_0 STO_0 |- constantDeclarationIR
-              : EC_1 STO_1
-  -- Decl_eval:
-      BLOCK EC_0 STO_0 |- constantDeclarationIR
-                        : EC_1 STO_1 ``
+  EC_0 STO |- constantDeclarationIR
+            : EC_1 STO
+  -- ConstDecl_eval:
+      BLOCK EC_0 |- constantDeclarationIR : EC_1
 
 ;;; instantiationIR
 ;;; should have been handled during instantiation
 
 ;;; variableDeclarationIR
-;;; syntax variableDeclarationIR =
-;;;   annotationList typeIR nameIR initializerOptIR `;
 
-rulegroup ParserLocalDecl_eval/variableDeclarationIR {
-
-  rule ParserLocalDecl_eval/non-initializer:
-    EC_0 STO |- annotationList typeIR nameIR eps `;
-              : EC_1 STO
-    ---- ;; get initial value
-    -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
-    -- if value_init = $default(typeIR_subst)
-    ---- ;; update evaluation context
-    -- if EC_1 = $add_var_e(BLOCK, EC_0, `` nameIR, value_init)
-
-  rule ParserLocalDecl_eval/initializer:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_2 STO_1
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        BLOCK EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 (`` value_init)
-    ---- ;; update evaluation context
-    -- if EC_2 = $add_var_e(BLOCK, EC_1, `` nameIR, value_init)
-
-}
+rule ParserLocalDecl_eval/cont:
+  EC_0 STO_0 |- variableDeclarationIR
+              : EC_1 STO_1
+  -- VarDecl_eval:
+      BLOCK EC_0 STO_0 |- variableDeclarationIR
+                        : EC_1 STO_1 ``
 
 ;;
 ;; Parser local declaration list evaluation
