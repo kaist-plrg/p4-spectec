@@ -545,10 +545,10 @@ relation ConstructorType_ok:
   cursor typingContext |- prefixedNameIR `< typeArgumentListIR > `( argumentIR* )
                         : constructorTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "finding the type of constructor"
-             %2#"<"#%3#">("#%4#"), under cursor" %0 "and typing context" %1)
-  hint(prose_out "the constructor type" %5 "with fresh type variables" %6
-             "and default parameter ids" %7)
+  hint(prose_in "type checking constructor"
+                %2#"<"#%3#">("#%4#"), under cursor" %0 "and typing context" %1)
+  hint(prose_out %5 "with fresh type variables" %6
+                 "and default parameter ids" %7)
 
 ;; Checks that a constructor invocation is valid,
 ;; gets the return type,
@@ -565,7 +565,7 @@ relation Inst_ok:
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "typing the instantiation" %3#"<"#%4#">("#%6#") with omitted type arguments"
              %5 "and omitted arguments" %7
-             ", under cursor" %0 "and typing context" %1
-             #", and instantiation site context" %2)
-  hint(prose_out "the constructed type" %8 "with inferred type arguments" %9
-             "and the casted argument list" %10)
+             ", under cursor" %0#", typing context" %1
+             #", and" %2 "instantiation site context")
+  hint(prose_out "constructed type" %8 "with inferred" %9
+                 "and cast-inserted" %10)

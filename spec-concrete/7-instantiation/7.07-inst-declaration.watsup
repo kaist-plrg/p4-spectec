@@ -57,35 +57,35 @@ def $merge_externMethodDefEnvs(
   -- if externMethodDefEnv_post
       = $update_map<callableId, externMethodDef>(externMethodDefEnv, callableId_h, externMethodDef_h)
 
-relation Decl_object_inst:
+relation ObjectDecl_inst:
   instContext store |- objectDeclarationIR : instContext store
   hint(input %0 %1 %2)
 
-rule Decl_object_inst/functionDeclarationIR:
+rule ObjectDecl_inst/functionDeclarationIR:
   IC_0 STO |- functionDeclarationIR : IC_1 STO
   -- FuncDecl_inst:
       BLOCK IC_0 |- functionDeclarationIR : IC_1
 
-rule Decl_object_inst/instantiationIR:
+rule ObjectDecl_inst/instantiationIR:
   IC_0 STO_0 |- instantiationIR
               : IC_1 STO_1
   -- InstDecl_inst:
       GLOBAL IC_0 STO_0 |- instantiationIR
                          : IC_1 STO_1 _
 
-relation Decls_object_inst:
+relation ObjectDecls_inst:
   instContext store |- objectDeclarationListIR : instContext store
   hint(input %0 %1 %2)
 
-rule Decls_object_inst/nil:
+rule ObjectDecls_inst/nil:
   IC STO |- eps : IC STO
 
-rule Decls_object_inst/cons:
+rule ObjectDecls_inst/cons:
   IC_0 STO_0 |- objectDeclarationIR_h :: objectDeclarationIR_t*
               : IC_2 STO_2
-  -- Decl_object_inst:
+  -- ObjectDecl_inst:
       IC_0 STO_0 |- objectDeclarationIR_h : IC_1 STO_1
-  -- Decls_object_inst:
+  -- ObjectDecls_inst:
       IC_1 STO_1 |- objectDeclarationIR_t* : IC_2 STO_2
 
 rulegroup InstDecl_inst/instantiationIR {
@@ -110,7 +110,7 @@ rulegroup InstDecl_inst/instantiationIR {
         = $empty_instContext[ .PATH = IC_0.PATH ][ .GLOBAL = IC_0.GLOBAL ]
     -- if objectDeclarationListIR
         = $flatten_objectInitializerOptIR(objectInitializerOptIR)
-    -- Decls_object_inst:
+    -- ObjectDecls_inst:
         IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2
     ---- ;; merge value environments
     -- if frame_merged

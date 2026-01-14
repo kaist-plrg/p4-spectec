@@ -22491,7 +22491,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
     1. (Let (annotationList type ( argumentList ) name ;) be instantiation)
 
-    2. Group instantiation-non-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name ;) : % %
+    2. Group non-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name ;) : % %
 
       1. Case analysis on type
 
@@ -22551,7 +22551,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
     1. (Let (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) be instantiation)
 
-    2. Group instantiation-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) : % %
+    2. Group objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) : % %
 
       1. Case analysis on type
 
@@ -22579,7 +22579,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
               3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
-              4. (Decls_object_ok: p TC_1 ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
+              4. (ObjectDecls_ok: p TC_1 |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
 
               5. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
@@ -22631,7 +22631,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
             3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
-            4. (Decls_object_ok: p TC_1 ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
+            4. (ObjectDecls_ok: p TC_1 |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
 
             5. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
@@ -24427,7 +24427,7 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
     2. Else Phantom#1509
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:544.1-551.45
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:544.1-551.49
 relation ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
 
 1. Group non-aliased-none-type: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
@@ -24531,7 +24531,7 @@ syntax instctxt =
    | named
    | anon
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:560.1-571.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:560.1-571.42
 relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # (typeId_infer)* >( (argumentIR)* # (id_default)* ): % < % >( % )
 
 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -26111,12 +26111,12 @@ def $is_valid_bitslice(typeIR', n_lo, n_hi)
 
   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1218.1-1218.46
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1218.1-1220.79
 def $is_concrete_extern_object(typeIR)
 
 1. Return $is_concrete_extern_object'($unroll_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1219.1-1219.47
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1221.1-1221.47
 def $is_concrete_extern_object'(typeIR)
 
 1. If (~$is_externObjectTypeIR(typeIR)), then
@@ -26135,7 +26135,7 @@ def $is_concrete_extern_object'(typeIR)
 
   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1220.1-1220.63
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1222.1-1222.63
 def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then
@@ -26838,7 +26838,7 @@ tbl def $compat_switch(typeIR'')
     1. Return false
 
 ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:146.1-150.29
-relation Decl_object_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
+relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
 1. Case analysis on objectDeclaration
 
@@ -26937,7 +26937,7 @@ relation Decl_object_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclar
       4. Else Phantom#1751
 
 ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:215.1-219.29
-relation Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)* : % % %
+relation ObjectDecls_ok_inner: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)* : % % %
 
 1. Case analysis on (objectDeclaration)*
 
@@ -26953,13 +26953,22 @@ relation Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclar
 
     2. Group cons: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h :: (objectDeclaration_t)* : % % %
 
-      1. (Decl_object_ok: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h)
+      1. (ObjectDecl_ok: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h)
 
-      2. (Decls_object_ok: p TC typeFrame_1 externMethodTypeDefEnv_1 |- (objectDeclaration_t)* : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_t)*)
+      2. (ObjectDecls_ok_inner: p TC typeFrame_1 externMethodTypeDefEnv_1 |- (objectDeclaration_t)* : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_t)*)
 
       3. Result in: % % % % |- % : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_h :: (objectDeclarationIR_t)*
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:238.1-240.27
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:238.1-245.72
+relation ObjectDecls_ok: p TC |- (objectDeclaration)* : % % %
+
+1. Group : p TC |- (objectDeclaration)* : % % %
+
+  1. (ObjectDecls_ok_inner: p TC ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame externMethodTypeDefEnv objectDeclarationListIR)
+
+  2. Result in: % % |- % : typeFrame externMethodTypeDefEnv objectDeclarationListIR
+
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:255.1-258.85
 def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callableId, externMethodTypeDefIR>>)
 
 1. If ((set<pair<callableId, externMethodTypeDefIR>> = ({ [] }))), then
@@ -27002,7 +27011,7 @@ def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callab
 
 3. Else Phantom#1756
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:526.1-526.78
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:542.1-542.78
 def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externConstructorPrototype)), then
@@ -27013,7 +27022,7 @@ def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:532.1-532.73
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:548.1-548.73
 def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 1. If ((externConstructorOrMethodPrototype has type externMethodPrototype)), then
@@ -27024,7 +27033,7 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:716.1-719.26
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:732.1-735.26
 relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
 
 1. Group : TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
@@ -27057,7 +27066,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
   3. Else Phantom#1758
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:738.1-741.26
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:754.1-757.26
 relation Enum_serializable_fields_ok: TC nameIR_enum typeIR |- (namedExpression)* : % % # %
 
 1. Case analysis on (namedExpression)*
@@ -31892,7 +31901,7 @@ relation InstDecl_inst: p IC_0 STO_0 |- (annotationList typeIR prefixedNameIR < 
 
     3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
 
-    4. (Decls_object_inst: IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2)
+    4. (ObjectDecls_inst: IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2)
 
     5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
@@ -32770,7 +32779,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 3. Else Phantom#2021
 
 ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:60.1-62.23
-relation Decl_object_inst: IC_0 STO |- objectDeclarationIR : % %
+relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
 1. Case analysis on objectDeclarationIR
 
@@ -32795,7 +32804,7 @@ relation Decl_object_inst: IC_0 STO |- objectDeclarationIR : % %
       2. Result in: % % |- % : IC_1 STO_1
 
 ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:76.1-78.23
-relation Decls_object_inst: IC STO |- (objectDeclarationIR)* : % %
+relation ObjectDecls_inst: IC STO |- (objectDeclarationIR)* : % %
 
 1. Case analysis on (objectDeclarationIR)*
 
@@ -32811,9 +32820,9 @@ relation Decls_object_inst: IC STO |- (objectDeclarationIR)* : % %
 
     2. Group cons: IC STO |- objectDeclarationIR_h :: (objectDeclarationIR_t)* : % %
 
-      1. (Decl_object_inst: IC STO |- objectDeclarationIR_h : IC_1 STO_1)
+      1. (ObjectDecl_inst: IC STO |- objectDeclarationIR_h : IC_1 STO_1)
 
-      2. (Decls_object_inst: IC_1 STO_1 |- (objectDeclarationIR_t)* : IC_2 STO_2)
+      2. (ObjectDecls_inst: IC_1 STO_1 |- (objectDeclarationIR_t)* : IC_2 STO_2)
 
       3. Result in: % % |- % : IC_2 STO_2
 
