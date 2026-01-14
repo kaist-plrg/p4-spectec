@@ -367,6 +367,18 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if value_last = value_elem* [ n_idx_last ]
     -- if expressionResult = `` value_last
 
+  rule Expr_eval/stack-lastIndex:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "lastIndex") `# `( typeIR_base _ )
+                  : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base) 
+    -- if HEADER_STACK `[ value_elem* `( n_idx; _ ) ] = value_base
+    -- if n_idx_last = $($max_nat([n_idx, 1]) - 1)
+    ---- ;; hs.lastIndex produces a 32-bit unsigned integer
+    -- if value_idx_last = 32 W n_idx_last
+    -- if expressionResult = `` value_idx_last
+
   rule Expr_eval/struct:
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult

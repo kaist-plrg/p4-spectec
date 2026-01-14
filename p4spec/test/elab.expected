@@ -27485,7 +27485,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` typeId . nameIR . value as value as expressionResult
     -- output: % % % |- % : EC STO expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:341.1-433.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:341.1-445.2
   rulegroup memberAccessExpressionIR-expression
 
    match
@@ -27534,6 +27534,22 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let n_idx_last = int as nat
     -- let value_last = value_elem*{value_elem <- value_elem*}[n_idx_last]
     -- let expressionResult = ` value_last as expressionResult
+    -- output: % % % |- % : EC_1 STO_1 expressionResult
+
+    rulepath stack-lastIndex
+    -- if (nameIR' = "lastIndex")
+    -- let ( typeIR_base _ctk ) = expressionNoteIR
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 expressionResult'
+    -- if expressionResult' <: continueResult<value>
+    -- let ` value_base = expressionResult' as continueResult<value>
+    -- let value = value_base
+    -- if value <: headerStackValue
+    -- let header_stack[ value_elem*{value_elem <- value_elem*} ( n_idx ; _nat )] = value as headerStackValue
+    -- let int = ($max_nat([n_idx, 1]) - 1)
+    -- if int <: nat
+    -- let n_idx_last = int as nat
+    -- let value_idx_last = 32 w n_idx_last as int as value
+    -- let expressionResult = ` value_idx_last as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
     rulepath struct
@@ -27617,7 +27633,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` tableMetadataEnumValue as value as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:439.1-469.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:451.1-481.2
   rulegroup indexAccessExpressionIR
 
    match
@@ -27673,7 +27689,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:475.1-496.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:487.1-508.2
   rulegroup sliceAccessExpressionIR
 
    match
@@ -27701,7 +27717,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` $bitacc_op(value_base, value_hi, value_lo) as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:506.1-535.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:518.1-547.2
   rulegroup callExpressionIR
 
    match
@@ -27743,7 +27759,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let ?(value) = value'?{value' <- value'?}
     -- output: % % % |- % : EC_2 STO_2 ` value as expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:540.1-545.50
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:552.1-557.50
   rulegroup parenthesizedExpressionIR
 
    match
@@ -27767,7 +27783,7 @@ syntax expressionListResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.100
 relation Exprs_eval: cursor evalContext store |- typedExpressionIR* : evalContext store expressionListResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:553.1-580.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:565.1-592.2
   rulegroup 
 
    match
