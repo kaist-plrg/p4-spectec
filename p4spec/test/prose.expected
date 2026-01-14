@@ -3926,7 +3926,7 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( id~arg_inner~^{asterisk}^ ), get_parameterListIR)>>``.
  .. If let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
   ... Return ``(callableId~found~, V~found~, id~default~^{asterisk}^)``.
-. Else if ``id~arg~^?^`` is equal to ``None``, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
+. Else if ``id~arg~^?^`` is none, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
  .. If ``·`` is equal to ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``:
   ... Return ``None``.
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``.
@@ -4715,14 +4715,13 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 
 <<ParameterType_wf, ``annotationList direction typeIR id constantInitializerIR^?^`` is a well-formed parameter type, assuming bound type ids ``B`` when>>:
 
-. If ``constantInitializerIR^?^`` is equal to ``None``:
+. If ``constantInitializerIR^?^`` is none:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(typeIR~unroll~)>>``.
  .. Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
  .. The relation holds.
-. Let ``constantInitializerOptIR`` be ``constantInitializerIR^?^``.
-. If ``constantInitializerOptIR`` is defined:
+. Else:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(typeIR~unroll~)>>``.
@@ -15901,7 +15900,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 <<VarDecl_eval, Evaluating ``annotationList typeIR nameIR initializerIR^?^ ;``, under cursor ``p``, evaluation context ``EC~0~``, and store ``store``>>:
 
-. If ``initializerIR^?^`` is equal to ``None``:
+. If ``initializerIR^?^`` is none:
  .. Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(BLOCK, EC~0~, typeIR)>>``.
  .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
  .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``p`` layer>>.
@@ -15909,8 +15908,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the updated evaluation context ``EC~1~``,
 * the updated store ``store``,
 * and the result ````.
-. Let ``initializerOptIR`` be ``initializerIR^?^``.
-. If let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
+. Else:
+ .. Let ``= typedExpressionIR~init~`` be ``initializerIR^?^``.
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``p``, evaluation context ``EC~0~``, and store ``store``>>.
@@ -16225,7 +16224,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Copy_out_argument, ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>:
 
-. If ``storageReference'^?^`` is equal to ``None``:
+. If ``storageReference'^?^`` is none:
  .. If ``direction`` is ``OUT``:
   ... Result in ``EC~caller_0~``.
  .. Else if ``direction`` is ``INOUT``:
@@ -16714,13 +16713,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<ForInitStmt_eval, ``EC~0~ store |- annotationList typeIR nameIR initializerIR'^?^ : % % %``>>:
 
-. If ``initializerIR'^?^`` is equal to ``None``:
+. If ``initializerIR'^?^`` is none:
  .. Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(LOCAL, EC~0~, typeIR)>>``.
  .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
  .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
  .. Result in ``EC~1~``, ``store``, and ````.
-. Let ``initializerOptIR`` be ``initializerIR'^?^``.
-. If let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
+. Else:
+ .. Let ``= typedExpressionIR~init~`` be ``initializerIR'^?^``.
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.

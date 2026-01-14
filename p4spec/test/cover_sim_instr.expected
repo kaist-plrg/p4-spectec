@@ -1,4 +1,4 @@
-;; Instruction coverage: 8858/12410 (71.38%)
+;; Instruction coverage: 8854/12404 (71.38%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -10540,7 +10540,7 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 -       2. Return ?((callableId_found, V_found, (id_default)*))
 
-+ 2. If (((id_arg)? = ?()))*, then
++ 2. If (((id_arg)? matches pattern ()))*, then
 
 +   1. If (([] = $find_overloadeds_unnamed<V>(({ ((callableId : V))* }), (nameIR_f ( |((id_arg)?)*| )), $get_parameterListIR))), then
 
@@ -12067,41 +12067,41 @@ rel ParameterType_wf: B |- (annotationList direction typeIR id (constantInitiali
 
 + 1. Group : B |- (annotationList direction typeIR id (constantInitializerIR)?)
 
-+   1. If (((constantInitializerIR)? = ?())), then
++   1. Case analysis on (constantInitializerIR)?
 
-+     1. If (Type_wf: B |- typeIR) holds, then
+      1. Case (% matches pattern ())
 
-+       1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
++       1. If (Type_wf: B |- typeIR) holds, then
 
-+       2. If (~$is_synthesizedTypeIR(typeIR_unroll)), then
++         1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
-+         1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
++         2. If (~$is_synthesizedTypeIR(typeIR_unroll)), then
 
-+           1. The relation holds
++           1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
 
-+   2. (Let constantInitializerOptIR be (constantInitializerIR)?)
++             1. The relation holds
 
-+   3. If ((constantInitializerOptIR matches pattern (_))), then
+      2. Case (% matches pattern (_))
 
-+     1. If (Type_wf: B |- typeIR) holds, then
++       1. If (Type_wf: B |- typeIR) holds, then
 
-+       1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
++         1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
-+       2. If (~$is_synthesizedTypeIR(typeIR_unroll)), then
++         2. If (~$is_synthesizedTypeIR(typeIR_unroll)), then
 
-+         1. Case analysis on direction
++           1. Case analysis on direction
 
-            1. Case (% matches pattern `IN`)
+              1. Case (% matches pattern `IN`)
 
-+             1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
++               1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
 
-+               1. The relation holds
++                 1. The relation holds
 
-            2. Case (% matches pattern ``EMPTY`)
+              2. Case (% matches pattern ``EMPTY`)
 
-+             1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
++               1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
 
-+               1. The relation holds
++                 1. The relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:23.1-27.86
 rel ReturnType_wf: B |- typeIR_ret
@@ -27735,7 +27735,7 @@ rel ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)* : % % %
 
 +         3. Result in: % % |- % : IC_2 STO_2 controlLocalDeclarationIR_h_inst :: (controlLocalDeclarationIR_t_inst)*
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.68
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.30
 rel ConstDecl_inst: p IC_0 |- (annotationList const typeIR nameIR (= value) ;) : % %
 
 + 1. Group : p IC_0 |- (annotationList const typeIR nameIR (= value) ;) : % %
@@ -31727,44 +31727,44 @@ rel VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initializerIR)?
 
 + 1. Group : p EC_0 store |- (annotationList typeIR nameIR (initializerIR)? ;) : % % %
 
-+   1. If (((initializerIR)? = ?())), then
++   1. Case analysis on (initializerIR)?
 
-+     1. (Let typeIR_subst be $subst_type_e((block), EC_0, typeIR))
+      1. Case (% matches pattern ())
 
-+     2. (Let value_init be $default(typeIR_subst))
++       1. (Let typeIR_subst be $subst_type_e((block), EC_0, typeIR))
 
-+     3. (Let EC_1 be $add_var_e(p, EC_0, (` nameIR), value_init))
++       2. (Let value_init be $default(typeIR_subst))
 
-+     4. Result in: % % % |- % : EC_1 store ((`) as declarationResult)
++       3. (Let EC_1 be $add_var_e(p, EC_0, (` nameIR), value_init))
 
-+   2. (Let initializerOptIR be (initializerIR)?)
++       4. Result in: % % % |- % : EC_1 store ((`) as declarationResult)
 
-+   3. If ((initializerOptIR matches pattern (_))), then
+      2. Case (% matches pattern (_))
 
-+     1. (Let ?((= typedExpressionIR_init)) be initializerOptIR)
++       1. (Let ?((= typedExpressionIR_init)) be (initializerIR)?)
 
-+     2. (Expr_eval: p EC_0 store |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
++       2. (Expr_eval: p EC_0 store |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
 
-+     3. Case analysis on expressionResult
++       3. Case analysis on expressionResult
 
-        1. Case (% has type continueResult<value>)
+          1. Case (% has type continueResult<value>)
 
-+         1. (Let (` value_init) be (expressionResult as continueResult<value>))
++           1. (Let (` value_init) be (expressionResult as continueResult<value>))
 
-+         2. (Let EC_2 be $add_var_e(p, EC_1, (` nameIR), value_init))
++           2. (Let EC_2 be $add_var_e(p, EC_1, (` nameIR), value_init))
 
-+         3. Result in: % % % |- % : EC_2 STO_1 ((`) as declarationResult)
++           3. Result in: % % % |- % : EC_2 STO_1 ((`) as declarationResult)
 
-        2. Case (% has type exitResult)
+          2. Case (% has type exitResult)
 
-+         1. (Let exitResult be (expressionResult as exitResult))
++           1. (Let exitResult be (expressionResult as exitResult))
 
-+         2. Result in: % % % |- % : EC_1 STO_1 ((exit) as declarationResult)
++           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as declarationResult)
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:236.1-242.54
 rel ConstDecl_eval: p EC_0 |- (annotationList const typeIR nameIR (= value) ;) : %
 
-+ 1. Group constantDeclarationIR: p EC_0 |- (annotationList const typeIR nameIR (= value) ;) : %
++ 1. Group : p EC_0 |- (annotationList const typeIR nameIR (= value) ;) : %
 
 +   1. (Let EC_1 be $add_var_e(p, EC_0, (` nameIR), value))
 
@@ -32404,7 +32404,7 @@ rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR
 
 + 2. Group out-inout: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
-+   1. If (((storageReference')? = ?())), then
++   1. If (((storageReference')? matches pattern ())), then
 
 +     1. Case analysis on direction
 
@@ -33400,39 +33400,39 @@ rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 -   2. Group variableDeclarationIR: EC_0 store |- (annotationList typeIR nameIR (initializerIR')?) : % % %
 
--     1. If (((initializerIR')? = ?())), then
+-     1. Case analysis on (initializerIR')?
 
--       1. (Let typeIR_subst be $subst_type_e((local), EC_0, typeIR))
+        1. Case (% matches pattern ())
 
--       2. (Let value_init be $default(typeIR_subst))
+-         1. (Let typeIR_subst be $subst_type_e((local), EC_0, typeIR))
 
--       3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
+-         2. (Let value_init be $default(typeIR_subst))
 
--       4. Result in: % % |- % : EC_1 store ((`) as statementResult)
+-         3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
 
--     2. (Let initializerOptIR be (initializerIR')?)
+-         4. Result in: % % |- % : EC_1 store ((`) as statementResult)
 
--     3. If ((initializerOptIR matches pattern (_))), then
+        2. Case (% matches pattern (_))
 
--       1. (Let ?((= typedExpressionIR_init)) be initializerOptIR)
+-         1. (Let ?((= typedExpressionIR_init)) be (initializerIR')?)
 
--       2. (Expr_eval: (local) EC_0 store |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
+-         2. (Expr_eval: (local) EC_0 store |- typedExpressionIR_init : EC_1 STO_1 expressionResult)
 
--       3. Case analysis on expressionResult
+-         3. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+            1. Case (% has type exitResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-             1. (Let exitResult be (expressionResult as exitResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-             2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
 
-          2. Case (% has type continueResult<value>)
+            2. Case (% has type continueResult<value>)
 
--           1. (Let (` value_init) be (expressionResult as continueResult<value>))
+-             1. (Let (` value_init) be (expressionResult as continueResult<value>))
 
--           2. (Let EC_2 be $add_var_e((local), EC_1, (` nameIR), value_init))
+-             2. (Let EC_2 be $add_var_e((local), EC_1, (` nameIR), value_init))
 
--           3. Result in: % % |- % : EC_2 STO_1 ((`) as statementResult)
+-             3. Result in: % % |- % : EC_2 STO_1 ((`) as statementResult)
 
 + 2. If ((forInitStatementIR has type forUpdateStatementIR)), then
 

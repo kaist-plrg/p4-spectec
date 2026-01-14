@@ -12,7 +12,9 @@ open Util.Source
 
    if (x == 0) then { let z = x + x; let y = 1; let k = y + y; ... }
 
-   Notice the stop condition when we meet a shadowing let binding *)
+   Notice the stop condition when we meet a shadowing let binding
+
+   Other trivial binds include: let y = x*, let y = x? *)
 
 let rec rename (renamer : Renamer.t) (instrs : instr list) : instr list =
   match instrs with
@@ -68,6 +70,60 @@ let rec rename (renamer : Renamer.t) (instrs : instr list) : instr list =
           let instrs_t = rename renamer instrs_t in
           instr_h :: instrs_t)
 
+let rec subst (subster : Subster.t) (instrs : instr list) : instr list =
+  match instrs with
+  | [] -> []
+  | instr_h :: instrs_t -> (
+      match instr_h.it with
+      | LetI (exp_l, _, _)
+        when not
+               (IdSet.is_empty
+                  (IdSet.inter (Subster.dom subster) (Il.Free.free_exp exp_l)))
+        ->
+          instr_h :: instrs_t
+      | IfI (exp_cond, iterexps, instrs_then) ->
+          let exp_cond = Subster.subst_exp subster exp_cond in
+          let iterexps = Subster.subst_iterexps subster iterexps in
+          let instrs_then = subst subster instrs_then in
+          let instr_h = IfI (exp_cond, iterexps, instrs_then) $ instr_h.at in
+          let instrs_t = subst subster instrs_t in
+          instr_h :: instrs_t
+      | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
+          let exps = Subster.subst_exps subster exps in
+          let iterexps = Subster.subst_iterexps subster iterexps in
+          let instrs_hold = subst subster instrs_hold in
+          let instrs_nothold = subst subster instrs_nothold in
+          let instr_h =
+            HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold)
+            $ instr_h.at
+          in
+          let instrs_t = subst subster instrs_t in
+          instr_h :: instrs_t
+      | CaseI (exp, cases, total) ->
+          let exp = Subster.subst_exp subster exp in
+          let cases =
+            let guards, instrs = List.split cases in
+            let guards = List.map (Subster.subst_guard subster) guards in
+            let instrs = List.map (subst subster) instrs in
+            List.combine guards instrs
+          in
+          let instr_h = CaseI (exp, cases, total) $ instr_h.at in
+          let instrs_t = subst subster instrs_t in
+          instr_h :: instrs_t
+      | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+          let instrs_group = subst subster instrs_group in
+          let exps_group = Subster.subst_exps subster exps_group in
+          let instr_h =
+            GroupI (id_group, rel_signature, exps_group, instrs_group)
+            $ instr_h.at
+          in
+          let instrs_t = subst subster instrs_t in
+          instr_h :: instrs_t
+      | _ ->
+          let instr_h = Subster.subst_instr subster instr_h in
+          let instrs_t = subst subster instrs_t in
+          instr_h :: instrs_t)
+
 let rec remove (instrs : instr list) : instr list =
   match instrs with
   | [] -> []
@@ -76,6 +132,12 @@ let rec remove (instrs : instr list) : instr list =
       | LetI ({ it = VarE id_l; _ }, { it = VarE id_r; _ }, _) ->
           let renamer = Renamer.singleton id_l id_r in
           instrs_t |> rename renamer |> remove
+      | LetI
+          ( { it = VarE id_l; _ },
+            ({ it = IterE ({ it = VarE _; _ }, _); _ } as exp_r),
+            _ ) ->
+          let subster = Subster.singleton id_l exp_r in
+          instrs_t |> subst subster |> remove
       | IfI (exp_cond, iterexps, instrs_then) ->
           let instrs_then = remove instrs_then in
           let instr_h = IfI (exp_cond, iterexps, instrs_then) $ instr_h.at in

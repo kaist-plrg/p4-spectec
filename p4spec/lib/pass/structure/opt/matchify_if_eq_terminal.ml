@@ -7,10 +7,14 @@ open Util.Source
 let matchify_exp_eq_terminal (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
+  | CmpE (`EqOp, _, exp_l, { it = OptE None; _ }) ->
+      Il.MatchE (exp_l, OptP `None) $$ (at, note)
   | CmpE (`EqOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
       Il.MatchE (exp_l, CaseP mixop) $$ (at, note)
   | CmpE (`EqOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
       Il.MatchE (exp_r, CaseP mixop) $$ (at, note)
+  | CmpE (`NeOp, _, exp_l, { it = OptE None; _ }) ->
+      Il.MatchE (exp_l, OptP `Some) $$ (at, note)
   | CmpE (`NeOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
       let exp = Il.MatchE (exp_l, CaseP mixop) $$ (at, note) in
       Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
