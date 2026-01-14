@@ -197,8 +197,15 @@ let render_cmpop ctx cmpop =
 let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
     (render_base : string -> string) (render : context -> 'a -> string)
     (items : 'a list) : string =
+  let render_atom (atom : atom) : string =
+    match atom.it with
+    | LAngle | RAngle | LParen | RParen | LBrack | RBrack | LBrace | RBrace ->
+        atom |> Sl.Print.string_of_atom |> adoc_as_code ctx
+    | _ -> atom |> Sl.Print.string_of_atom
+  in
   items
-  |> Hints.Alter.alternate ~base_text:render_base hint (fun a -> render ctx a)
+  |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hint
+       (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
 
 (* Call prose *)
