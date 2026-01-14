@@ -300,7 +300,7 @@ and render_exp ctx exp : string =
              expfields)
       ^ "}"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
-  | OptE None -> "None" |> adoc_as_code ctx
+  | OptE None -> "·" |> adoc_as_code ctx
   | ListE [] -> "·" |> adoc_as_code ctx
   | ListE exps ->
       "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> adoc_as_code ctx

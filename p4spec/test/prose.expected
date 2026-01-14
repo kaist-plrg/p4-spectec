@@ -198,7 +198,7 @@
 . If ``n~b~`` is not equal to ``0``:
  .. Return ``n~a~ \ n~b~``.
 . If ``n~b~`` is equal to ``0``:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<modulo_42, ``n`` mod 42>>
 
@@ -430,7 +430,7 @@
 . Else:
  .. Return ``|``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<flatten_forUpdateStatementList, flatten_forUpdateStatementList(forUpdateStatementList)>>
 
@@ -541,7 +541,7 @@
 
 
 . If ``constOpt`` is ```EMPTY``:
- .. Return ``None``.
+ .. Return ``·``.
 . Else:
  .. Let ``const`` be ``constOpt``.
  .. Return ``const``.
@@ -3258,7 +3258,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
   ... Let ``id^?^`` be ``<<assoc_, assoc_<value, id>(value~zero~, ((value~field~, nameIR~field~))^{asterisk}^)>>``.
   ... If let ``id~zero~`` be ``id^?^``:
    .... Return ``typeId . id~zero~ . value~zero~``.
-  ... If ``None`` is equal to ``<<assoc_, assoc_<value, id>(value~zero~, ((value~field~, nameIR~field~))^{asterisk}^)>>``:
+  ... If ``·`` is equal to ``<<assoc_, assoc_<value, id>(value~zero~, ((value~field~, nameIR~field~))^{asterisk}^)>>``:
    .... Let ``id~zero~`` be ``"__UNSPECIFIED"``.
    .... Return ``typeId . id~zero~ . value~zero~``.
 
@@ -3835,13 +3835,13 @@ for each ``argumentIR`` in ``argumentIR^{asterisk}^``
 
 
 . If ``argumentIR`` has type ``typedExpressionIR``:
- .. Return ``None``.
+ .. Return ``·``.
 . Else if let ``id~arg~ = ++_++`` be ``argumentIR``:
  .. Return ``id~arg~``.
 . Else if let ``id~arg~ = _`` be ``argumentIR``:
  .. Return ``id~arg~``.
 . Else:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<match_overloaded_named, match_overloaded_named<V>(callTargetId : V, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>
 
@@ -3929,13 +3929,13 @@ for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
 +
 for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. If ``·`` is equal to ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( id~arg_inner~^{asterisk}^ ), get_parameterListIR)>>``:
-  ... Return ``None``.
+  ... Return ``·``.
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( id~arg_inner~^{asterisk}^ ), get_parameterListIR)>>``.
  .. If let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
   ... Return ``(callableId~found~, V~found~, id~default~^{asterisk}^)``.
 . If ``id~arg~^?^`` is none, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
  .. If ``·`` is equal to ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``:
-  ... Return ``None``.
+  ... Return ``·``.
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``.
  .. If let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
   ... Return ``(callableId~found~, V~found~, id~default~^{asterisk}^)``.
@@ -3947,7 +3947,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 . If let ``[(callableId~found~, V~found~)]`` be ``(callableId, V)^{asterisk}^``:
  .. Return ``(callableId~found~, V~found~)``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<find_non_overloadeds, find_non_overloadeds<V>(set<pair<callableId, V>>, nameIR~f~)>>
 
@@ -4166,7 +4166,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 . Let ``constantInitializerIR^?^`` be ``constantInitializerOptIR``.
 . If ``constantInitializerIR^?^`` is none:
- .. Let ``varTypeIR`` be ``direction typeIR CTK None``.
+ .. Let ``varTypeIR`` be ``direction typeIR CTK ·``.
  .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
  .. Return ``TC'``.
 . If let ``= value`` be ``constantInitializerOptIR``:
@@ -4284,7 +4284,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``varTypeIR'^?^`` be <<find_map, ``typeFrame``[``id``]>>.
  .. If let ``varTypeIR`` be ``varTypeIR'^?^``:
   ... Return ``varTypeIR``.
- .. If ``None`` is equal to <<find_map, ``typeFrame``[``id``]>>:
+ .. If ``·`` is equal to <<find_map, ``typeFrame``[``id``]>>:
   ... Return ``<<find_var_t, find_var_t(GLOBAL, TC, id)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -4293,7 +4293,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``varTypeIR'^?^`` be <<find_maps, ``typeFrame^{asterisk}^``[``id``]>>.
  .. If let ``varTypeIR`` be ``varTypeIR'^?^``:
   ... Return ``varTypeIR``.
- .. If ``None`` is equal to <<find_maps, ``typeFrame^{asterisk}^``[``id``]>>:
+ .. If ``·`` is equal to <<find_maps, ``typeFrame^{asterisk}^``[``id``]>>:
   ... Return ``<<find_var_t, find_var_t(BLOCK, TC, id)>>``.
 
 <<find_var_value_t, The value of variable ``prefixedNameIR`` in the ``p`` layer of ``TC``>>
@@ -4322,7 +4322,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``typeDefIR'^?^`` be <<find_map, ``typeDefEnv``[``typeId``]>>.
  .. If let ``typeDefIR`` be ``typeDefIR'^?^``:
   ... Return ``typeDefIR``.
- .. If ``None`` is equal to <<find_map, ``typeDefEnv``[``typeId``]>>:
+ .. If ``·`` is equal to <<find_map, ``typeDefEnv``[``typeId``]>>:
   ... Return ``<<find_typeDef_t, find_typeDef_t(GLOBAL, TC, typeId)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -4331,7 +4331,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``typeDefIR'^?^`` be <<find_maps, ``typeDefEnv^{asterisk}^``[``typeId``]>>.
  .. If let ``typeDefIR`` be ``typeDefIR'^?^``:
   ... Return ``typeDefIR``.
- .. If ``None`` is equal to <<find_maps, ``typeDefEnv^{asterisk}^``[``typeId``]>>:
+ .. If ``·`` is equal to <<find_maps, ``typeDefEnv^{asterisk}^``[``typeId``]>>:
   ... Return ``<<find_typeDef_t, find_typeDef_t(BLOCK, TC, typeId)>>``.
 
 <<find_callableDef_overloaded_t, The overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) in the ``cursor`` layer of ``TC``>>
@@ -4355,7 +4355,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``(callableId, callableTypeDefIR, nameIR*)^?^`` be ``<<find_overloaded, find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, parameterListIR_of_callableTypeDefIR)>>``.
  .. If let ``(callableId, callableTypeDefIR, id~default~^{asterisk}^)`` be ``(callableId, callableTypeDefIR, nameIR*)^?^``:
   ... Return ``(callableId, callableTypeDefIR, id~default~^{asterisk}^)``.
- .. If ``None`` is equal to ``<<find_overloaded, find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, parameterListIR_of_callableTypeDefIR)>>``:
+ .. If ``·`` is equal to ``<<find_overloaded, find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, parameterListIR_of_callableTypeDefIR)>>``:
   ... Return ``<<find_callableDef_overloaded_t, find_callableDef_overloaded_t(GLOBAL, TC, nameIR, argumentIR^{asterisk}^)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -4377,7 +4377,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``(callableId, callableTypeDefIR)^?^`` be ``<<find_non_overloaded, find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, nameIR)>>``.
  .. If let ``(callableId, callableTypeDefIR)`` be ``(callableId, callableTypeDefIR)^?^``:
   ... Return ``(callableId, callableTypeDefIR)``.
- .. If ``None`` is equal to ``<<find_non_overloaded, find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, nameIR)>>``:
+ .. If ``·`` is equal to ``<<find_non_overloaded, find_non_overloaded<callableTypeDefIR>(TC.BLOCK.CALLABLE, nameIR)>>``:
   ... Return ``<<find_callableDef_non_overloaded_t, find_callableDef_non_overloaded_t(GLOBAL, TC, nameIR)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -4413,7 +4413,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 . Else:
  .. Return ``VOID``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<empty_tableContext, empty_tableContext>>
 
@@ -4491,7 +4491,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 
 . If ``matchAction^{asterisk}^`` is an empty list:
- .. Return ``None``.
+ .. Return ``·``.
 . Else:
  .. Let ``matchAction~h~ {two-colons} matchAction~t~^{asterisk}^`` be ``matchAction^{asterisk}^``.
  .. Let ``(prefixedNameIR', parameterIR^{asterisk}^, argumentListIR)`` be ``matchAction~h~``.
@@ -7286,12 +7286,12 @@ for each ``argument`` in ``argument^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``, and instantiation site context ``ANON``>>.
- .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object~)>>``.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC``, and ``ANON`` instantiation site context>>.
+ .. Check that <<is_concrete_extern_object, ``typeIR~object~`` is an extern object type without abstract methods>>.
  .. Let ``callExpressionIR`` be ``prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~object~`` and compile-time known-ness ``CTK``>>.
  .. Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR``>>.
@@ -7310,13 +7310,13 @@ for each ``argument`` in ``argument^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^ {pp} typeId~inserted~^{asterisk}^``.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``, and instantiation site context ``ANON``>>.
- .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object~)>>``.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC``, and ``ANON`` instantiation site context>>.
+ .. Check that <<is_concrete_extern_object, ``typeIR~object~`` is an extern object type without abstract methods>>.
  .. Let ``callExpressionIR`` be ``prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ )``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~object~`` and compile-time known-ness ``CTK``>>.
  .. Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR``>>.
@@ -7605,7 +7605,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Check that ``argumentIR^{asterisk}^`` is an empty list.
 . Check that ``<<compat_direct_application, compat_direct_application(typeIR~object~)>>``.
 . Let ``nameIR~object~`` be ``"__direct_application"``.
-. Let ``TC~1~`` be <<add_var_t, ``TC`` where ``nameIR~object~`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
+. Let ``TC~1~`` be <<add_var_t, ``TC`` where ``nameIR~object~`` to ```EMPTY typeIR~object~ CTK ·`` is added to the ``p`` layer>>.
 . Let ``lvalue`` be ```ID nameIR~object~ . `ID "apply"``.
 . Let 
 * the typing context ``++_++``,the abstract control flow ``++_++``,and the typed statement ``statementIR`` be
@@ -7734,7 +7734,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let <<ForCollectionExpr_ok, TC typeIR |- forCollectionExpression : forCollectionExpressionIR>>.
  .. Let ``TC~1~`` be ``<<enter_t, enter_t(TC)>>``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~1~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~2~`` be <<add_var_t, ``TC~1~`` where ``nameIR`` to ``INOUT typeIR DYN ·`` is added to the ``LOCAL`` layer>>.
  .. Let 
 * the typing context ``TC~3~``,the abstract control flow ``f~post~``,and the typed statement ``statementIR`` be
 * the result of <<Stmt_ok, typing ``statement``, under cursor ``LOCAL``, typing context ``TC~2~``, abstract control flow ``f``, and loop context ``LOOP``>>.
@@ -7905,7 +7905,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~fresh~^{asterisk}^ }``>>.
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Result in the parameter ``annotationList direction typeIR nameIR None`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+ .. Result in the parameter ``annotationList direction typeIR nameIR ·`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 . Else:
  .. Let ``= expression~init~`` be ``initializerOpt``.
  .. Let 
@@ -8361,7 +8361,7 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> does not match pattern ``DYN``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
-. Let ``varTypeIR`` be ```EMPTY SET < typeIR > CTK None``.
+. Let ``varTypeIR`` be ```EMPTY SET < typeIR > CTK ·``.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Let ``valueSetDeclarationIR`` be ``annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;``.
 . Result in the updated typing context ``TC~1~`` and the typed parser local declaration ``valueSetDeclarationIR``.
@@ -8694,10 +8694,10 @@ for each ``argument`` in ``argument^{asterisk}^``
 * Typing ``tableEntryPriority^?^``, under typing context ``typingContext`` and table context ``tableContext``, and table entry state ``tableEntryState``:
 * Results in the updated table context ``tableContext'`` and the typed table entry priority ``tableEntryPriorityOptIR``.
 
-<<TableEntry_priority_ok, Typing ``None``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``>>:
+<<TableEntry_priority_ok, Typing ``·``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``>>:
 
 . If ``tableContext.MODE`` is ``NOPRI``:
- .. Result in the updated table context ``tableContext`` and the typed table entry priority ``None``.
+ .. Result in the updated table context ``tableContext`` and the typed table entry priority ``·``.
 . Let ``matchMode`` be ``tableContext.MODE``.
 . If ``matchMode`` matches pattern ``NOPRILPM %``:
  .. Check that ``TBLS`` matches pattern ``LPM %``.
@@ -8888,7 +8888,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<TableEntry_action_ok, typing ``tableActionReference``, under typing context ``TC`` and table context ``TBLC~0~``>>.
 . Let 
 * the updated table context ``TBLC~1~`` and the typed table entry priority ``tableEntryPriorityOptIR`` be
-* the result of <<TableEntry_priority_ok, typing ``None``, under typing context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``>>.
+* the result of <<TableEntry_priority_ok, typing ``·``, under typing context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``>>.
 . Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>.
 . Let ``tableEntryIR`` be ``constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;``.
 . Result in the updated table context ``TBLC~1~`` and the typed table entry ``tableEntryIR``.
@@ -9072,7 +9072,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the updated table context ``TBLC~1~`` and the typed table properties ``tablePropertyIR^{asterisk}^`` be
 * the result of <<TableProperties_ok, typing ``tableProperty^{asterisk}^``, under typing context ``TC`` and table context ``TBLC~0~``>>.
- .. Let ``tablePropertyIR~default_action~`` be ```EMPTY None DEFAULT_ACTION = "NoAction" ( · ) ;``.
+ .. Let ``tablePropertyIR~default_action~`` be ```EMPTY · DEFAULT_ACTION = "NoAction" ( · ) ;``.
  .. Let ``(TBLC~2~, tablePropertyIR~updated~^{asterisk}^)`` be ``<<insert_NoAction_tablePropertyIR, insert_NoAction_tablePropertyIR(TBLC~1~, tablePropertyIR^{asterisk}^)>>``.
  .. Result in the updated typing context ``TBLC~2~`` and the typed table ``tablePropertyIR~updated~^{asterisk}^ {pp} [tablePropertyIR~default_action~]``.
 . Else if the length of ``<<filter_, filter_<tableProperty>(tableProperty^{asterisk}^, is_tableDefaultActionProperty)>>`` is equal to ``1``:
@@ -9164,7 +9164,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let 
 * the updated typing context ``TC~2~`` and the table type ``typeIR~table~`` be
 * the result of <<TableType_ok, typing ``name``, under typing context ``TC~1~`` and table context ``TBLC``>>.
-. Let ``varTypeIR`` be ```EMPTY typeIR~table~ DYN None``.
+. Let ``varTypeIR`` be ```EMPTY typeIR~table~ DYN ·``.
 . Let ``TC~3~`` be <<add_var_t, ``TC~2~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Let ``tableDeclarationIR`` be ``annotationList TABLE typeIR~table~ nameIR { tablePropertyIR^{asterisk}^ }``.
 . Result in the updated typing context ``TC~3~`` and the typed control local declaration ``tableDeclarationIR``.
@@ -9204,8 +9204,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``bound``>>.
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``p`` layer>>.
- .. Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR None ;``.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN ·`` is added to the ``p`` layer>>.
+ .. Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR · ;``.
  .. Result in the updated typing context ``TC~1~`` and ``variableDeclarationIR``.
 . Else:
  .. Let ``= expression~init~`` be ``initializerOpt``.
@@ -9221,7 +9221,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``p`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN ·`` is added to the ``p`` layer>>.
  .. Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR = typedExpressionIR~init_cast~ ;``.
  .. Result in the updated typing context ``TC~1~`` and ``variableDeclarationIR``.
 
@@ -9267,14 +9267,14 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;``.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK ·`` is added to the ``p`` layer>>.
+ .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR · ;``.
  .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 . Else if let ``prefixedTypeName < typeArgumentList >`` be ``type``:
  .. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
@@ -9291,15 +9291,15 @@ for each ``argument`` in ``argument^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^ {pp} typeId~inserted~^{asterisk}^``.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR None ;``.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK ·`` is added to the ``p`` layer>>.
+ .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR · ;``.
  .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 
 <<InstDecl_ok, Typing ``annotationList type ( argumentList ) name = { objectDeclarationList } ;``, under cursor ``p`` and typing context ``TC~0~``>>:
@@ -9315,22 +9315,24 @@ for each ``argument`` in ``argument^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
  .. Check that <<is_externObjectTypeIR, ``typeIR~object~`` with typedefs unrolled is extern object type>>.
  .. Check that ``typeIR~object~`` has type ``externObjectTypeIR``.
  .. Let ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~extern~`` be ``typeIR~object~``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK ·`` is added to the ``LOCAL`` layer>>.
  .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
- .. Let <<Decls_object_ok, p TC~1~ { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^>>.
- .. Let ``externMethodTypeDefEnv~init_subst~`` be ``<<subst_externMethodTypeDefEnv, subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern~, externMethodTypeDefEnv~init~)>>``.
+ .. Let 
+* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
+* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
+ .. Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
  .. Let ``typeIR~object_init~`` be ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~init_subst~``.
- .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object_init~)>>``.
+ .. Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK ·`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;``.
  .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
 . Else if let ``prefixedTypeName < typeArgumentList >`` be ``type``:
@@ -9348,23 +9350,25 @@ for each ``argument`` in ``argument^{asterisk}^``
 for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
-* the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, finding the type of constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
+* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^ {pp} typeId~inserted~^{asterisk}^``.
  .. Let 
-* the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
  .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
  .. Check that ``typeIR`` has type ``externObjectTypeIR``.
  .. Let ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~extern~`` be ``typeIR``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK ·`` is added to the ``LOCAL`` layer>>.
  .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
- .. Let <<Decls_object_ok, p TC~1~ { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^>>.
- .. Let ``externMethodTypeDefEnv~init_subst~`` be ``<<subst_externMethodTypeDefEnv, subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern~, externMethodTypeDefEnv~init~)>>``.
+ .. Let 
+* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
+* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
+ .. Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
  .. Let ``typeIR~object_init~`` be ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~init_subst~``.
- .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object_init~)>>``.
+ .. Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK ·`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;``.
  .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
 
@@ -10251,7 +10255,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . Check that ``typeIR'`` has type ``headerStackTypeIR``.
-. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
+. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" ·``.
 . Let ``methodTypeIR`` be ``BUILTIN_METHOD ( [parameterIR] ) : INT``.
 . Result in the callable type ``methodTypeIR`` with fresh type variables ``·`` and default parameter ids ``·``.
 
@@ -10507,20 +10511,20 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 <<ConstructorType_ok, ConstructorType_ok>>:
 
-* Finding the type of constructor ``prefixedNameIR``<``typeArgumentListIR``>(``argumentIR^{asterisk}^``), under cursor ``cursor`` and typing context ``typingContext``:
-* Results in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^``.
+* Type checking constructor ``prefixedNameIR``<``typeArgumentListIR``>(``argumentIR^{asterisk}^``), under cursor ``cursor`` and typing context ``typingContext``:
+* Results in ``constructorTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^``.
 
-<<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
+<<ConstructorType_ok, Type checking constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
 
-. Check that ``None`` is equal to <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
+. Check that ``·`` is equal to <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Let ``(callableId, constructorTypeDefIR, id~default~^{asterisk}^)`` be <<option_get, *!*>> ``<<find_constructorDef_overloaded_t, find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR^{asterisk}^)>>``.
 . Let ``(constructorTypeIR, typeId~impl~^{asterisk}^)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``>>.
 . Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
 . Check that <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>.
-. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
+. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
-<<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
+<<ConstructorType_ok, Type checking constructor ``prefixedNameIR``<``typeArgumentIR'^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeDefIR`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that ``~<<is_typedefTypeDefIR, is_typedefTypeDefIR(typeDefIR)>>``.
@@ -10529,9 +10533,9 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
 . Check that <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>.
-. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
+. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
-<<ConstructorType_ok, Finding the type of constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
+<<ConstructorType_ok, Type checking constructor ``prefixedNameIR``<``·``>(``argumentIR^{asterisk}^``), under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeDefIR`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that ``typeDefIR`` has type ``typedefTypeIR``.
@@ -10542,14 +10546,14 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
 . Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{ typeId~impl~^{asterisk}^ }``>>.
 . Check that <<ConstructorType_wf, ``constructorTypeIR`` is a well-formed constructor type, assuming bound type ids ``B``>>.
-. Result in the constructor type ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
+. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^``.
 
 <<Inst_ok, Inst_ok>>:
 
-* Typing the instantiation ``constructorTypeIR``<``typeArgumentListIR``>(``argumentListIR``) with omitted type arguments ``typeId^{asterisk}^`` and omitted arguments ``id^{asterisk}^`` , under cursor ``cursor`` and typing context ``typingContext``, and instantiation site context ``instctxt``:
-* Results in the constructed type ``typeIR`` with inferred type arguments ``typeArgumentListIR'`` and the casted argument list ``argumentListIR'``.
+* Typing the instantiation ``constructorTypeIR``<``typeArgumentListIR``>(``argumentListIR``) with omitted type arguments ``typeId^{asterisk}^`` and omitted arguments ``id^{asterisk}^`` , under cursor ``cursor``, typing context ``typingContext``, and ``instctxt`` instantiation site context:
+* Results in constructed type ``typeIR`` with inferred ``typeArgumentListIR'`` and cast-inserted ``argumentListIR'``.
 
-<<Inst_ok, Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``GLOBAL`` and typing context ``TC``, and instantiation site context ``instctxt``>>:
+<<Inst_ok, Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``GLOBAL``, typing context ``TC``, and ``instctxt`` instantiation site context>>:
 
 . Let ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` be ``constructorTypeIR``.
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
@@ -10585,9 +10589,9 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Check that <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``bound``>>.
 . Check that ``<<instantiable, instantiable(GLOBAL, TC, instctxt, typeIR~object_inferred~)>>``.
 . Let <<Call_convention_ok, BLOCK TC NOACTION |- parameterIR~aligned_inferred~^{asterisk}^ @ argumentIR^{asterisk}^ : argumentIR~cast~^{asterisk}^>>.
-. Result in the constructed type ``typeIR~object_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
+. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^``.
 
-<<Inst_ok, Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``cursor`` and typing context ``TC``, and instantiation site context ``instctxt``>>:
+<<Inst_ok, Typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``cursor``, typing context ``TC``, and ``instctxt`` instantiation site context>>:
 
 . Let ``CONSTRUCTOR ( parameterIR^{asterisk}^ ) : typeIR~object~`` be ``constructorTypeIR``.
 . Check that ``~<<is_packageObjectTypeIR, is_packageObjectTypeIR(unroll_typeIR(typeIR~object~))>>``.
@@ -10622,7 +10626,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Check that <<ConstructorType_wf, ``constructorTypeIR~inferred~`` is a well-formed constructor type, assuming bound type ids ``bound``>>.
 . Check that ``<<instantiable, instantiable(cursor, TC, instctxt, typeIR~object_inferred~)>>``.
 . Let <<Call_convention_ok, cursor TC NOACTION |- parameterIR~aligned_inferred~^{asterisk}^ @ argumentIR^{asterisk}^ : argumentIR~cast~^{asterisk}^>>.
-. Result in the constructed type ``typeIR~object_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
+. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^``.
 
 <<reduce_serenum, reduce_serenum(typedExpressionIR)>>
 
@@ -10653,7 +10657,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``( typeIR~underlying~ ) typedExpressionIR`` annotated with type ``typeIR~underlying~`` and compile-time known-ness ``ctk``>>.
  .. Return ``<<reduce_serenum_unary, reduce_serenum_unary(typedExpressionIR~cast~, check)>>``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<reduce_serenum_binary, reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r~, check)>>
 
@@ -10676,7 +10680,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
   ... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~r_underlying~ ) typedExpressionIR~r~`` annotated with type ``typeIR~r_underlying~`` and compile-time known-ness ``ctk'``>>.
   ... Return ``<<reduce_serenum_binary, reduce_serenum_binary(typedExpressionIR~l~, typedExpressionIR~r_cast~, check)>>``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
 
@@ -10713,7 +10717,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
     ..... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.
     ..... Return ``<<coerce_binary, coerce_binary(typedExpressionIR~l~, typedExpressionIR~r_cast~)>>``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<compat_lnot, compat_lnot(typeIR'')>>:
 [cols="2", options="header"]
@@ -10953,7 +10957,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Return ``<<is_valid_bitslice, is_valid_bitslice(typeIR, n~lo~, n~hi~)>>``.
 . Otherwise: return ``false``.
 
-<<is_concrete_extern_object, is_concrete_extern_object(typeIR)>>
+<<is_concrete_extern_object, ``typeIR`` is an extern object type without abstract methods>>
 
 
 . Return ``<<is_concrete_extern_object', is_concrete_extern_object'(unroll_typeIR(typeIR))>>``.
@@ -11046,8 +11050,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``bound``>>.
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``LOCAL`` layer>>.
- .. Result in ``TC~1~`` and ``annotationList typeIR nameIR None``.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN ·`` is added to the ``LOCAL`` layer>>.
+ .. Result in ``TC~1~`` and ``annotationList typeIR nameIR ·``.
 . Else:
  .. Let ``= expression~init~`` be ``initializerOpt``.
  .. Let 
@@ -11062,7 +11066,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
  .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN ·`` is added to the ``LOCAL`` layer>>.
  .. Result in ``TC~1~`` and ``annotationList typeIR nameIR = typedExpressionIR~init_cast~``.
 
 <<ForInitStmt_ok, ``TC~0~ |- forUpdateStatement : % %``>>:
@@ -11238,9 +11242,9 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 |===
 
-<<Decl_object_ok, Decl_object_ok: ``p TC~0~ typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %``>>
+<<ObjectDecl_ok, ObjectDecl_ok: ``p TC~0~ typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %``>>
 
-<<Decl_object_ok, ``p TC~0~ typeFrame externMethodTypeDefEnv |- annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement : % % %``>>:
+<<ObjectDecl_ok, ``p TC~0~ typeFrame externMethodTypeDefEnv |- annotationList typeOrVoid name typeParameterListOpt ( parameterList ) blockStatement : % % %``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND = EXTERN]``.
 . Let ``TC~2~`` be ``TC~1~[BLOCK.FRAME = typeFrame]``.
@@ -11285,7 +11289,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Let ``functionDeclarationIR`` be ``annotationList typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) blockStatementIR``.
  .. Result in ``typeFrame``, ``externMethodTypeDefEnv~init~``, and ``functionDeclarationIR``.
 
-<<Decl_object_ok, ``p TC~0~ typeFrame externMethodTypeDefEnv |- instantiation : % % %``>>:
+<<ObjectDecl_ok, ``p TC~0~ typeFrame externMethodTypeDefEnv |- instantiation : % % %``>>:
 
 . Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
@@ -11295,19 +11299,29 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``typeFrame~init~`` be <<update_map, the map ``typeFrame`` with the value for key ``nameIR`` updated to ``varTypeIR``>>.
 . Result in ``typeFrame~init~``, ``externMethodTypeDefEnv``, and ``instantiationIR``.
 
-<<Decls_object_ok, Decls_object_ok: ``p TC typeFrame externMethodTypeDefEnv |- objectDeclaration^{asterisk}^ : % % %``>>
+<<ObjectDecls_ok_inner, ObjectDecls_ok_inner: ``p TC typeFrame externMethodTypeDefEnv |- objectDeclaration^{asterisk}^ : % % %``>>
 
-<<Decls_object_ok, ``p TC typeFrame externMethodTypeDefEnv |- · : % % %``>>:
+<<ObjectDecls_ok_inner, ``p TC typeFrame externMethodTypeDefEnv |- · : % % %``>>:
 
 . Result in ``typeFrame``, ``externMethodTypeDefEnv``, and ``·``.
 
-<<Decls_object_ok, ``p TC typeFrame externMethodTypeDefEnv |- objectDeclaration~h~ {two-colons} objectDeclaration~t~^{asterisk}^ : % % %``>>:
+<<ObjectDecls_ok_inner, ``p TC typeFrame externMethodTypeDefEnv |- objectDeclaration~h~ {two-colons} objectDeclaration~t~^{asterisk}^ : % % %``>>:
 
-. Let <<Decl_object_ok, p TC typeFrame externMethodTypeDefEnv |- objectDeclaration~h~ : typeFrame~1~ externMethodTypeDefEnv~1~ objectDeclarationIR~h~>>.
-. Let <<Decls_object_ok, p TC typeFrame~1~ externMethodTypeDefEnv~1~ |- objectDeclaration~t~^{asterisk}^ : typeFrame~2~ externMethodTypeDefEnv~2~ objectDeclarationIR~t~^{asterisk}^>>.
+. Let <<ObjectDecl_ok, p TC typeFrame externMethodTypeDefEnv |- objectDeclaration~h~ : typeFrame~1~ externMethodTypeDefEnv~1~ objectDeclarationIR~h~>>.
+. Let <<ObjectDecls_ok_inner, p TC typeFrame~1~ externMethodTypeDefEnv~1~ |- objectDeclaration~t~^{asterisk}^ : typeFrame~2~ externMethodTypeDefEnv~2~ objectDeclarationIR~t~^{asterisk}^>>.
 . Result in ``typeFrame~2~``, ``externMethodTypeDefEnv~2~``, and ``objectDeclarationIR~h~ {two-colons} objectDeclarationIR~t~^{asterisk}^``.
 
-<<subst_externMethodTypeDefEnv, subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern~, set<pair<callableId, externMethodTypeDefIR>>)>>
+<<ObjectDecls_ok, ObjectDecls_ok>>:
+
+* Typing ``objectDeclaration^{asterisk}^`` under cursor ``cursor`` and typing context ``typingContext``:
+* Results in ``typeFrame`` and ``externMethodTypeDefEnv`` local to the object declaration block, and typed ``objectDeclarationListIR``.
+
+<<ObjectDecls_ok, Typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC``>>:
+
+. Let <<ObjectDecls_ok_inner, p TC { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame externMethodTypeDefEnv objectDeclarationListIR>>.
+. Result in ``typeFrame`` and ``externMethodTypeDefEnv`` local to the object declaration block, and typed ``objectDeclarationListIR``.
+
+<<subst_externMethodTypeDefEnv, Substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``set<pair<callableId, externMethodTypeDefIR>>``>>
 
 
 . If ``set<pair<callableId, externMethodTypeDefIR>>`` is equal to ``{ · }``:
@@ -12362,7 +12376,7 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . Let ``int^?^`` be ``tableEntryPriorityInterface``.
 . If ``int^?^`` is none:
- .. Return ``None``.
+ .. Return ``·``.
 . If let ``int`` be ``tableEntryPriorityInterface``:
  .. Check that ``int`` has type ``nat``.
  .. Let ``n~priority~`` be ``int``.
@@ -12385,7 +12399,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Let ``nameIR~name_found~`` be ``nameIR^?^``.
  .. Return ``nameIR~name_found~``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<name_annotation_of_tableKeyIR', name_annotation_of_tableKeyIR'(annotation)>>
 
@@ -12398,7 +12412,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Let ``nameIR~name~`` be <<print_, ``annotationToken`` as text>>.
  .. Return ``<<strip_prefix, strip_prefix(strip_suffix(nameIR~name~, "\""), "\"")>>``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<interface_of_tableKeyIR, interface_of_tableKeyIR(typedExpressionIR : nameIR~matchKind~ annotationList ;)>>
 
@@ -12407,7 +12421,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . If let ``nameIR~key~`` be ``nameIR^?^``:
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Return ``(nameIR~key~, nameIR~matchKind~, typeIR)``.
-. If ``None`` is equal to ``<<name_annotation_of_tableKeyIR, name_annotation_of_tableKeyIR(annotationList)>>``:
+. If ``·`` is equal to ``<<name_annotation_of_tableKeyIR, name_annotation_of_tableKeyIR(annotationList)>>``:
  .. Let ``text`` be <<print_, ``typedExpressionIR`` as text>>.
  .. Let ``nameIR~key~`` be <<strip_all_whitespace, the text ``text`` with all whitespace removed>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
@@ -12552,7 +12566,7 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 . Let ``tableEntryPriorityOptIR`` be ``<<tableObject_create_entry_priority, tableObject_create_entry_priority(tableEntryPriorityInterface)>>``.
 . Let ``keysetExpressionIR`` be ``<<tableObject_create_entry_keyset, tableObject_create_entry_keyset(TBL.KEYS, tableKeysetInterface)>>``.
 . Let ``tableActionReferenceIR`` be ``<<tableObject_create_entry_action, tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)>>``.
-. Let ``tableEntryIR~update~`` be ``None tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR `EMPTY ;``.
+. Let ``tableEntryIR~update~`` be ``· tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR `EMPTY ;``.
 . Let ``annotationList constOptIR ENTRIES = { tableEntryIR^{asterisk}^ }`` be ``TBL.ENTRIES``.
 . Let ``tableEntriesPropertyIR~updated~`` be ``annotationList constOptIR ENTRIES = { tableEntryIR^{asterisk}^ {pp} [tableEntryIR~update~] }``.
 . Let ``TBL~updated~`` be ``TBL[ENTRIES = tableEntriesPropertyIR~updated~]``.
@@ -12595,7 +12609,7 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 . Let ``object~id~^?^^{asterisk}^`` be the list of ``object~id~^?^``, obtained by repeating:
 +
 --
- ** Let ``object~id~^?^`` be <<ite, ``object`` if ``bool`` otherwise ``None``>>.
+ ** Let ``object~id~^?^`` be <<ite, ``object`` if ``bool`` otherwise ``·``>>.
 --
 +
 for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{asterisk}^``
@@ -12605,7 +12619,7 @@ for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{as
  .. Let ``object~id_found~`` be ``object'^?^``.
  .. Return ``object~id_found~``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<is_some_object, is_some_object(object^?^)>>
 
@@ -12622,12 +12636,12 @@ for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{as
  .. Let ``EXTERN ++_++ < ++_++ > { externState ++_++ ++_++ }`` be ``externObject``.
  .. Return ``externState``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<update_store_qualified, update_store_qualified(STO~0~, objectId, object)>>
 
 
-. Check that ``None`` is not equal to ``<<find_store_qualified, find_store_qualified(STO~0~, objectId)>>``.
+. Check that ``·`` is not equal to ``<<find_store_qualified, find_store_qualified(STO~0~, objectId)>>``.
 . Let ``STO~1~`` be <<add_map, ``STO~0~``[``objectId`` := ``object``]>>.
 . Return ``STO~1~``.
 
@@ -12639,7 +12653,7 @@ for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{as
 . Let ``objectId~id~^?^^{asterisk}^`` be the list of ``objectId~id~^?^``, obtained by repeating:
 +
 --
- ** Let ``objectId~id~^?^`` be <<ite, ``objectId`` if ``bool`` otherwise ``None``>>.
+ ** Let ``objectId~id~^?^`` be <<ite, ``objectId`` if ``bool`` otherwise ``·``>>.
 --
 +
 for each ``objectId`` in ``objectId^{asterisk}^``
@@ -12668,7 +12682,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``STO~1~`` be <<add_map, ``STO~0~``[``objectId`` := ``externObject~update~``]>>.
  .. Return ``STO~1~``.
 . Otherwise:
- .. Return ``None``.
+ .. Return ``·``.
 
 <<empty_instContext, An empty instantiation context>>
 
@@ -12846,7 +12860,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``value'^?^`` be <<find_map, ``IC.BLOCK.FRAME``[``id``]>>.
  .. If let ``value`` be ``value'^?^``:
   ... Return ``value``.
- .. If ``None`` is equal to <<find_map, ``IC.BLOCK.FRAME``[``id``]>>:
+ .. If ``·`` is equal to <<find_map, ``IC.BLOCK.FRAME``[``id``]>>:
   ... Return ``<<find_var_i, find_var_i(GLOBAL, IC, id)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -12854,7 +12868,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``value'^?^`` be <<find_maps, ``IC.LOCAL.FRAMES``[``id``]>>.
  .. If let ``value`` be ``value'^?^``:
   ... Return ``value``.
- .. If ``None`` is equal to <<find_maps, ``IC.LOCAL.FRAMES``[``id``]>>:
+ .. If ``·`` is equal to <<find_maps, ``IC.LOCAL.FRAMES``[``id``]>>:
   ... Return ``<<find_var_i, find_var_i(BLOCK, IC, id)>>``.
 
 <<find_typeDef_i, find_typeDef_i(++_++, IC, prefixedNameIR)>>
@@ -13299,7 +13313,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ExternMethod_inst, ``IC~0~ |- annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ; : %``>>:
 
 . Let ``callableId`` be ``<<callableId_IR, callableId_IR(nameIR, parameterListIR)>>``.
-. Let ``externMethodDef`` be ``EXTERN_METHOD nameIR < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterListIR ) None``.
+. Let ``externMethodDef`` be ``EXTERN_METHOD nameIR < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterListIR ) ·``.
 . Let ``IC~1~`` be ``<<add_callableDef_overload_i, add_callableDef_overload_i(BLOCK, IC~0~, callableId, externMethodDef)>>``.
 . Result in ``IC~1~``.
 
@@ -13531,7 +13545,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let 
 * the updated instantiation context ``IC~1~`` be
 * the result of <<ActionDecl_inst, instantiating ``actionDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
-. Result in ``IC~1~``, ``STO``, and ``None``.
+. Result in ``IC~1~``, ``STO``, and ``·``.
 
 <<ControlLocalDecl_inst, ``IC~0~ STO |- annotationList TABLE typeIR nameIR { tablePropertyListIR } : % % %``>>:
 
@@ -13590,7 +13604,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . If let ``EXTERN typeId < theta > { externState frame externMethodDefEnv }`` be ``object``:
  .. Let ``IC~decl~`` be ``<<empty_instContext, empty_instContext>>[PATH = IC~0~.PATH][GLOBAL = IC~0~.GLOBAL]``.
  .. Let ``objectDeclarationListIR`` be ``<<flatten_objectInitializerOptIR, flatten_objectInitializerOptIR(objectInitializerOptIR)>>``.
- .. Let <<Decls_object_inst, IC~decl~ STO~1~ |- objectDeclarationListIR : IC~decl_post~ STO~2~>>.
+ .. Let <<ObjectDecls_inst, IC~decl~ STO~1~ |- objectDeclarationListIR : IC~decl_post~ STO~2~>>.
  .. Let ``frame~merged~`` be ``<<merge_frames, merge_frames(frame, IC~decl_post~.BLOCK.FRAME)>>``.
  .. Let ``externMethodDefEnv~merged~`` be ``<<merge_externMethodDefEnvs, merge_externMethodDefEnvs(externMethodDefEnv, IC~decl_post~.BLOCK.CALLABLE)>>``.
  .. Let ``object~merged~`` be ``EXTERN typeId < theta > { externState frame~merged~ externMethodDefEnv~merged~ }``.
@@ -13986,7 +14000,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Constructor_inst, ``p IC |- prefixedNameIR < typeArgumentIR'^{asterisk}^ > ( argumentIR^{asterisk}^ ) : % < % > ( # % )``>>:
 
-. Check that ``None`` is equal to ``<<find_typeDef_i, find_typeDef_i(p, IC, prefixedNameIR)>>``.
+. Check that ``·`` is equal to ``<<find_typeDef_i, find_typeDef_i(p, IC, prefixedNameIR)>>``.
 . Let ``(++_++, constructorDef, id~default~^{asterisk}^)`` be <<option_get, *!*>> ``<<find_constructorDef_i, find_constructorDef_i(IC, prefixedNameIR, argumentIR^{asterisk}^)>>``.
 . Result in ``constructorDef``, ``typeArgumentIR'^{asterisk}^``, and ``id~default~^{asterisk}^``.
 
@@ -14209,32 +14223,32 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``externMethodDefEnv~post~`` be <<update_map, the map ``externMethodDefEnv`` with the value for key ``callableId~h~`` updated to ``externMethodDef~h~``>>.
  .. Return ``<<merge_externMethodDefEnvs, merge_externMethodDefEnvs(externMethodDefEnv~post~, { (callableId~t~ : callableDef~t~)^{asterisk}^ })>>``.
 
-<<Decl_object_inst, Decl_object_inst: ``IC~0~ STO |- objectDeclarationIR : % %``>>
+<<ObjectDecl_inst, ObjectDecl_inst: ``IC~0~ STO |- objectDeclarationIR : % %``>>
 
-<<Decl_object_inst, ``IC~0~ STO |- functionDeclarationIR : % %``>>:
+<<ObjectDecl_inst, ``IC~0~ STO |- functionDeclarationIR : % %``>>:
 
 . Let 
 * the updated instantiation context ``IC~1~`` be
 * the result of <<FuncDecl_inst, instantiating ``functionDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
 . Result in ``IC~1~`` and ``STO``.
 
-<<Decl_object_inst, ``IC~0~ STO |- instantiationIR : % %``>>:
+<<ObjectDecl_inst, ``IC~0~ STO |- instantiationIR : % %``>>:
 
 . Let 
 * the updated instantiation context ``IC~1~``,the updated store ``STO~1~``,and the reference to the object ``++_++`` be
 * the result of <<InstDecl_inst, instantiating ``instantiationIR``, under cursor ``GLOBAL``, instantiation context ``IC~0~``, and store ``STO``>>.
 . Result in ``IC~1~`` and ``STO~1~``.
 
-<<Decls_object_inst, Decls_object_inst: ``IC STO |- objectDeclarationIR^{asterisk}^ : % %``>>
+<<ObjectDecls_inst, ObjectDecls_inst: ``IC STO |- objectDeclarationIR^{asterisk}^ : % %``>>
 
-<<Decls_object_inst, ``IC STO |- · : % %``>>:
+<<ObjectDecls_inst, ``IC STO |- · : % %``>>:
 
 . Result in ``IC`` and ``STO``.
 
-<<Decls_object_inst, ``IC STO |- objectDeclarationIR~h~ {two-colons} objectDeclarationIR~t~^{asterisk}^ : % %``>>:
+<<ObjectDecls_inst, ``IC STO |- objectDeclarationIR~h~ {two-colons} objectDeclarationIR~t~^{asterisk}^ : % %``>>:
 
-. Let <<Decl_object_inst, IC STO |- objectDeclarationIR~h~ : IC~1~ STO~1~>>.
-. Let <<Decls_object_inst, IC~1~ STO~1~ |- objectDeclarationIR~t~^{asterisk}^ : IC~2~ STO~2~>>.
+. Let <<ObjectDecl_inst, IC STO |- objectDeclarationIR~h~ : IC~1~ STO~1~>>.
+. Let <<ObjectDecls_inst, IC~1~ STO~1~ |- objectDeclarationIR~t~^{asterisk}^ : IC~2~ STO~2~>>.
 . Result in ``IC~2~`` and ``STO~2~``.
 
 <<callableId_of_externMethodPrototypeIR, The callable id of  ``externMethodPrototypeIR``>>
@@ -14339,7 +14353,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``tableEntriesPropertyIR'^{asterisk}^`` is a list of length 1.
  .. Let ``[tableEntriesPropertyIR]`` be ``tableEntriesPropertyIR'^{asterisk}^``.
  .. Return ``tableEntriesPropertyIR``.
-. Return ```EMPTY None ENTRIES = { · }``.
+. Return ```EMPTY · ENTRIES = { · }``.
 
 <<enter_e, enter_e(EC)>>
 
@@ -14460,7 +14474,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``value'^?^`` be <<find_map, ``EC.BLOCK.FRAME``[``id``]>>.
  .. If let ``value`` be ``value'^?^``:
   ... Return ``value``.
- .. If ``None`` is equal to <<find_map, ``EC.BLOCK.FRAME``[``id``]>>:
+ .. If ``·`` is equal to <<find_map, ``EC.BLOCK.FRAME``[``id``]>>:
   ... Return ``<<find_var_e, find_var_e(GLOBAL, EC, id)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -14468,7 +14482,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``value'^?^`` be <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>.
  .. If let ``value`` be ``value'^?^``:
   ... Return ``value``.
- .. If ``None`` is equal to <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>:
+ .. If ``·`` is equal to <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>:
   ... Return ``<<find_var_e, find_var_e(BLOCK, EC, id)>>``.
 
 <<find_var_cursor_e, find_var_cursor_e(p, EC, prefixedNameIR)>>
@@ -14490,7 +14504,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``value'^?^`` be <<find_map, ``EC.BLOCK.FRAME``[``id``]>>.
  .. If ``value'^?^`` is defined:
   ... Return ``BLOCK``.
- .. If ``None`` is equal to <<find_map, ``EC.BLOCK.FRAME``[``id``]>>:
+ .. If ``·`` is equal to <<find_map, ``EC.BLOCK.FRAME``[``id``]>>:
   ... Return ``<<find_var_cursor_e, find_var_cursor_e(GLOBAL, EC, id)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -14498,7 +14512,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``value'^?^`` be <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>.
  .. If ``value'^?^`` is defined:
   ... Return ``LOCAL``.
- .. If ``None`` is equal to <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>:
+ .. If ``·`` is equal to <<find_maps, ``EC.LOCAL.FRAMES``[``id``]>>:
   ... Return ``<<find_var_cursor_e, find_var_cursor_e(BLOCK, EC, id)>>``.
 
 <<find_typeDef_e, find_typeDef_e(++_++, EC, prefixedNameIR)>>
@@ -14519,7 +14533,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``typeIR'^?^`` be <<find_map, ``EC.LOCAL.TYPE``[``nameIR``]>>.
  .. If let ``typeIR`` be ``typeIR'^?^``:
   ... Return ``typeIR``.
- .. If ``None`` is equal to <<find_map, ``EC.LOCAL.TYPE``[``nameIR``]>>:
+ .. If ``·`` is equal to <<find_map, ``EC.LOCAL.TYPE``[``nameIR``]>>:
   ... Return ``<<find_type_e, find_type_e(BLOCK, EC, nameIR)>>``.
 
 <<find_callableDef_overloaded_e, find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, argumentIR^{asterisk}^)>>
@@ -14531,16 +14545,16 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let ``(callableId, callableDef, nameIR*)^?^`` be ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``.
   ... If let ``(callableId, callableDef, id~default~^{asterisk}^)`` be ``(callableId, callableDef, nameIR*)^?^``:
    .... Return ``(GLOBAL, callableId, callableDef, id~default~^{asterisk}^)``.
-  ... If ``None`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
-   .... Return ``None``.
+  ... If ``·`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
+   .... Return ``·``.
  .. Else:
   ... Let ``. nameIR`` be ``prefixedNameIR``.
   ... Let ``callTargetKey`` be ``<<callTargetKey, callTargetKey(nameIR, argumentIR^{asterisk}^)>>``.
   ... Let ``(callableId, callableDef, nameIR*)^?^`` be ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``.
   ... If let ``(callableId, callableDef, id~default~^{asterisk}^)`` be ``(callableId, callableDef, nameIR*)^?^``:
    .... Return ``(GLOBAL, callableId, callableDef, id~default~^{asterisk}^)``.
-  ... If ``None`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
-   .... Return ``None``.
+  ... If ``·`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.GLOBAL.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
+   .... Return ``·``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
  .. Let ``nameIR`` be ``prefixedNameIR``.
@@ -14548,7 +14562,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``(callableId, callableDef, nameIR*)^?^`` be ``<<find_overloaded, find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``.
  .. If let ``(callableId, callableDef, id~default~^{asterisk}^)`` be ``(callableId, callableDef, nameIR*)^?^``:
   ... Return ``(BLOCK, callableId, callableDef, id~default~^{asterisk}^)``.
- .. If ``None`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
+ .. If ``·`` is equal to ``<<find_overloaded, find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, parameterListIR_of_callableDef)>>``:
   ... Return ``<<find_callableDef_overloaded_e, find_callableDef_overloaded_e(GLOBAL, EC, nameIR, argumentIR^{asterisk}^)>>``.
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``` %``.
@@ -14570,7 +14584,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 
 . If ``cursor`` is ``GLOBAL``:
- .. Return ``None``.
+ .. Return ``·``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Return ``<<find_map, find_map<nameIR, state>(EC.BLOCK.STATE, nameIR)>>``.
 . Else:
@@ -15007,11 +15021,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 <<Argument_eval_lvalue, ``p EC~0~ STO~0~ |- nameIR = _ : % % %``>>:
 
-. Result in ``EC~0~``, ``STO~0~``, and ``None``.
+. Result in ``EC~0~``, ``STO~0~``, and ``·``.
 
 <<Argument_eval_lvalue, ``p EC~0~ STO~0~ |- _ : % % %``>>:
 
-. Result in ``EC~0~``, ``STO~0~``, and ``None``.
+. Result in ``EC~0~``, ``STO~0~``, and ``·``.
 
 <<Lvalue_eval, Lvalue_eval: ``p EC STO |- lvalueIR # lvalueNoteIR : % % %``>>
 
@@ -15372,7 +15386,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in 
 * the evaluation context ``EC``,
 * the updated store ``STO``,
-* and the instantiated statement ``RETURN None``.
+* and the instantiated statement ``RETURN ·``.
 . Else:
  .. Let ``RETURN typedExpressionIR ;`` be ``returnStatementIR``.
  .. Let 
@@ -15778,7 +15792,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let <<Block_eval, EC~0~ STO~0~ |- controlBodyIR : EC~1~ STO~1~ statementResult>>.
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 
 <<ControlBody_eval, ``EC~0~ STO~0~ |- controlBodyIR : % % %``>>:
 
@@ -15790,8 +15804,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<ControlBody_eval, ``EC~0~ STO~0~ |- controlBodyIR : % % %``>>:
 
 . Let <<Block_eval, EC~0~ STO~0~ |- controlBodyIR : EC~1~ STO~1~ statementResult>>.
-. Check that ``statementResult`` is equal to ``RETURN None``.
-. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+. Check that ``statementResult`` is equal to ``RETURN ·``.
+. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 
 <<ControlLocalDecl_eval, ControlLocalDecl_eval: ``EC~0~ STO |- controlLocalDeclarationIR : % % %``>>
 
@@ -15916,7 +15930,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
  .. Let ``storageReference`` be ``storageReference'^?^``.
- .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
+ .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" ·``.
  .. Let ``builtinMethodCallee`` be ``BUILTIN_METHOD storageReference . "push_front" < · > ( [parameterIR] )``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``builtinMethodCallee``.
 . Else if ``nameIR'`` is equal to ``"pop_front"``:
@@ -15928,7 +15942,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
  .. Let ``storageReference`` be ``storageReference'^?^``.
- .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
+ .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" ·``.
  .. Let ``builtinMethodCallee`` be ``BUILTIN_METHOD storageReference . "pop_front" < · > ( [parameterIR] )``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``builtinMethodCallee``.
 . Else if ``nameIR'`` is equal to ``"isValid"``:
@@ -16071,7 +16085,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``None``.
+  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
 . Else if ``direction`` is ``IN``:
  .. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
  .. If let ``exitResult`` be ``expressionResult``:
@@ -16079,7 +16093,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``None``.
+  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
 
 <<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList INOUT typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
@@ -16147,7 +16161,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Copy_out_argument, Copy_out_argument: ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ storageReference'^?^ ~> %``>>
 
-<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ None ~> %``>>:
+<<Copy_out_argument, ``STO p~caller~ EC~caller_0~ annotationList direction typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee~ · ~> %``>>:
 
 . If ``direction`` is ``IN``:
  .. Result in ``EC~caller_0~``.
@@ -16209,10 +16223,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]``.
    .... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
    .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``EXIT``.
-  ... If ``actionResult`` is equal to ``RETURN None``:
+  ... If ``actionResult`` is equal to ``RETURN ·``:
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME]``.
    .... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
-   .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``RETURN None``.
+   .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``RETURN ·``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Let ``EC~callee_0~`` be ``<<inherit_e, inherit_e(BLOCK, EC~0~)>>``.
  .. Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentListIR, id~default~^{asterisk}^)>>``.
@@ -16227,10 +16241,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]``.
    .... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
    .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``EXIT``.
-  ... If ``actionResult`` is equal to ``RETURN None``:
+  ... If ``actionResult`` is equal to ``RETURN ·``:
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_3~.GLOBAL.FRAME][BLOCK.FRAME = EC~callee_3~.BLOCK.FRAME]``.
    .... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
-   .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``RETURN None``.
+   .... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``RETURN ·``.
 
 <<Call_eval, Calling ``definedFunctionCallee``<``typeArgumentIR^{asterisk}^``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
@@ -16312,7 +16326,7 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
    .... Let ``n~idx_updated~`` be ``<<min_nat, min_nat([n~size~, n~idx~ + n~count~])>>``.
    .... Let ``headerStackValue~updated~`` be ``HEADER_STACK [ value~element_updated~^{asterisk}^ ( n~idx_updated~ ; n~size~ ) ]``.
    .... Let <<Lvalue_write, p EC~1~ STO~1~ |- storageReference -> headerStackValue~updated~ : EC~2~>>.
-   .... Result in the updated evaluation context ``EC~2~``, store ``STO~1~``, and call result ``RETURN None``.
+   .... Result in the updated evaluation context ``EC~2~``, store ``STO~1~``, and call result ``RETURN ·``.
  .. Else if ``text`` is equal to ``"pop_front"``:
   ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
   ... Check that ``parameterListIR`` is a list of length 1.
@@ -16345,7 +16359,7 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
    .... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^ {pp} value~back_invalidated~^{asterisk}^``.
    .... Let ``headerStackValue~updated~`` be ``HEADER_STACK [ value~element_updated~^{asterisk}^ ( n~front~ ; n~size~ ) ]``.
    .... Let <<Lvalue_write, p EC~1~ STO~1~ |- storageReference -> headerStackValue~updated~ : EC~2~>>.
-   .... Result in the updated evaluation context ``EC~2~``, store ``STO~1~``, and call result ``RETURN None``.
+   .... Result in the updated evaluation context ``EC~2~``, store ``STO~1~``, and call result ``RETURN ·``.
 . If ``argumentListIR`` is equal to ``·``:
  .. Let ``BUILTIN_METHOD storageReference . text < typeArgumentIR'^{asterisk}^ > ( parameterIR'^{asterisk}^ )`` be ``builtinMethodCallee``.
  .. If ``text`` is equal to ``"isValid"``:
@@ -16371,7 +16385,7 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
   ... Let ``HEADER typeId { ++_++ ; fieldValue^{asterisk}^ }`` be ``headerValue``.
   ... Let ``value`` be ``HEADER typeId { true ; fieldValue^{asterisk}^ }``.
   ... Let <<Lvalue_write, p EC~0~ STO~0~ |- storageReference -> value : EC~1~>>.
-  ... Let ``returnResult`` be ``RETURN None``.
+  ... Let ``returnResult`` be ``RETURN ·``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~0~``, and call result ``returnResult``.
  .. Else if ``text`` is equal to ``"setInvalid"``:
   ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
@@ -16382,7 +16396,7 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
   ... Let ``HEADER typeId { ++_++ ; fieldValue^{asterisk}^ }`` be ``headerValue``.
   ... Let ``value`` be ``HEADER typeId { false ; fieldValue^{asterisk}^ }``.
   ... Let <<Lvalue_write, p EC~0~ STO~0~ |- storageReference -> value : EC~1~>>.
-  ... Let ``returnResult`` be ``RETURN None``.
+  ... Let ``returnResult`` be ``RETURN ·``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~0~``, and call result ``returnResult``.
 
 <<Call_eval, Calling ``externMethodCallee``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
@@ -16429,7 +16443,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If let ``acceptTransitionResult`` be ``transitionResult``:
  .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
  .. Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
- .. Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
+ .. Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN ·``.
 . Else if let ``rejectTransitionResult`` be ``transitionResult``:
  .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
  .. Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
@@ -16460,10 +16474,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
    .... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
    .... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``EXIT``.
-  ... If ``controlBodyResult`` is equal to ``RETURN None``:
+  ... If ``controlBodyResult`` is equal to ``RETURN ·``:
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
    .... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
-   .... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
+   .... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN ·``.
 
 <<Call_eval, Calling ``tableApplyMethodCallee``<``typeArgumentListIR``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
@@ -16805,7 +16819,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<SwitchCases_table_eval, ``id |- switchCaseIR^{asterisk}^ : %``>>:
 
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``None``.
+ .. Result in ``·``.
 . If let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
  .. If let ``switchLabelIR~h~ : blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... If ``<<match_switchLabelIR_table, match_switchLabelIR_table(id, switchLabelIR~h~)>>``:
@@ -16883,7 +16897,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<SwitchCases_general_eval, ``LOCAL EC~0~ STO~0~ value |- switchCaseIR^{asterisk}^ : % % %``>>:
 
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``EC~0~``, ``STO~0~``, and ``None``.
+ .. Result in ``EC~0~``, ``STO~0~``, and ``·``.
 . If let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
  .. If let ``switchLabelIR~h~ : blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... Let <<SwitchLabelIR_general_eval, LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult>>.
@@ -16918,7 +16932,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Check that ``keysetExpressionResult`` has type ``continueResult<setValue*>``.
 . Let ``setValue^{asterisk}^`` be ``keysetExpressionResult``.
 . If ``~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``·``.
 . Else:
  .. Result in ``EC~1~``, ``STO~1~``, and ``nameIR``.
 
@@ -16927,7 +16941,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<SelectCases_match, ``evalContext store value~key~^{asterisk}^ |- selectCaseIR^{asterisk}^ : % % %``>>:
 
 . If ``selectCaseIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ``None``.
+ .. Result in ``evalContext``, ``store``, and ``·``.
 . If let ``selectCaseIR~h~ {two-colons} selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR^{asterisk}^``:
  .. Let <<SelectCase_match, evalContext store value~key~^{asterisk}^ |- selectCaseIR~h~ : EC~1~ STO~1~ nameIR^?^>>.
  .. If let ``nameIR~state~`` be ``nameIR^?^``:
@@ -16979,9 +16993,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<TableEntryPriority_eval, TableEntryPriority_eval: ``EC STO |- tableEntryPriorityIR'^?^ : %``>>
 
-<<TableEntryPriority_eval, ``EC STO |- None : %``>>:
+<<TableEntryPriority_eval, ``EC STO |- · : %``>>:
 
-. Result in ``None``.
+. Result in ``·``.
 
 <<TableEntryPriority_eval, ``EC STO |- PRIORITY = integerLiteral : : %``>>:
 
@@ -17009,7 +17023,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 +
 for each ``tableKeyValue`` in ``tableKeyValue^{asterisk}^``
  .. If ``~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``None``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``·``.
  .. Else:
   ... Let ``tableMatch`` be ``n~priority~^?^ : tableActionReferenceIR``.
   ... Result in ``EC~1~``, ``STO~1~``, and ``tableMatch``.
@@ -17098,11 +17112,11 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 
 . Let <<Block_eval, EC~0~ STO~0~ |- blockStatementIR : EC~1~ STO~1~ statementResult>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
-. If ``statementResult`` is equal to ``RETURN None``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+. If ``statementResult`` is equal to ``RETURN ·``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 
 <<DefinedFunctionBody_eval, DefinedFunctionBody_eval: ``EC~0~ STO~0~ |- blockStatementIR : % % %``>>
 
@@ -17110,7 +17124,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 
 . Let <<Block_eval, EC~0~ STO~0~ |- blockStatementIR : EC~1~ STO~1~ statementResult>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 . Else if let ``returnResult`` be ``statementResult``:
@@ -17400,7 +17414,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR < · > ( argumentIR^{asterisk}^ ) ;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 
@@ -17421,7 +17435,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . If let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 
 <<V1Model_egress, V1Model_egress: ``EC~0~ STO~0~ |- % % %``>>
 
@@ -17438,7 +17452,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR < · > ( argumentIR^{asterisk}^ ) ;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 
@@ -17456,7 +17470,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR < · > ( argumentIR^{asterisk}^ ) ;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 
@@ -17474,6 +17488,6 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR < · > ( argumentIR^{asterisk}^ ) ;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN None``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN ·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
