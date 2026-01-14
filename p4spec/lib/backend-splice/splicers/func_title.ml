@@ -68,6 +68,7 @@ module Source = struct
     let name = "func-title-source"
     let prefix = prefix_source
     let suffix = suffix_source
+    let header = false
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
@@ -131,6 +132,7 @@ module Prose = struct
     let name = "func-title-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
+    let header = true
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
