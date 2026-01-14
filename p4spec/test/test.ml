@@ -320,48 +320,7 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
-    List.concat_map (Filesys.collect_files_with_basedir ~suffix:".p4") testdirs_p4
-  in
-  let filenames_p4 =
-    List.filter
-      (fun (dir, filename) ->
-        let contents = Filesys.read_file (dir ^ "/" ^ filename) in
-        match arch with
-        | "v1model" ->
-            Strings.contains_substring "#include <v1model.p4>" contents
-            || Strings.contains_substring "#include \"v1model.p4\"" contents
-        | _ -> false)
-      filenames_p4
-  in
-  let filenames_p4_patch = Filesys.collect_files_with_basedir ~suffix:".p4" patchdir in
-  let filenames_p4 = Test.patch_with_basedir ~suffix:".p4" filenames_p4 filenames_p4_patch in
-  let filenames_stf =
-    List.concat_map
-      (Filesys.collect_files_with_basedir ~suffix:".stf")
-      testdirs_stf
-  in
-  (* let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in *)
-  let filenames_stf_patch = Filesys.collect_files_with_basedir ~suffix:".stf" patchdir in
-  let filenames_stf =
-    Test.patch_with_basedir ~suffix:".stf" filenames_stf filenames_stf_patch
-  in
-  let filenames_test =
-    filenames_p4
-    |> List.filter_map (fun (basedir_p4, filename_p4) ->
-        let filename_p4_base = Util.Filesys.base ~suffix:".p4" filename_p4 in
-        let filenames_stf =
-          List.filter_map
-            (fun (basedir_stf, filename_stf) ->
-              if Util.Test.p4_matches_stf filename_p4_base filename_stf then
-                Some (basedir_stf ^ "/" ^ filename_stf)
-              else None)
-            filenames_stf
-        in
-        match filenames_stf with
-        | [] -> None
-        | _ -> Some (basedir_p4 ^ "/" ^ filename_p4, filenames_stf))
-  in
+  let filenames_test = Test.collect_tests_mapped arch testdirs_p4 testdirs_stf patchdir in
   let total =
     List.fold_left (fun acc (_, xs) -> acc + List.length xs) 0 filenames_test
   in
@@ -455,53 +414,10 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
-    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
-  in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 ->
-        not (List.exists (String.equal filename_p4) excludes_p4))
-      filenames_p4
-  in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 ->
-        let contents = Filesys.read_file filename_p4 in
-        match arch with
-        | "v1model" ->
-            Strings.contains_substring "#include <v1model.p4>" contents
-            || Strings.contains_substring "#include \"v1model.p4\"" contents
-        | _ -> false)
-      filenames_p4
-  in
-  let filenames_p4_patch = Filesys.collect_files ~suffix:".p4" patchdir in
-  let filenames_p4 =
-    Test.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
-  in
-  let filenames_stf =
-    List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf
-  in
-  let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
-  let filenames_stf =
-    Test.patch ~suffix:".stf" filenames_stf filenames_stf_patch
-  in
   let filenames_p4, filenames_stf =
-    filenames_p4
-    |> List.filter_map (fun filename_p4 ->
-        let filename_p4_base = Util.Filesys.base ~suffix:".p4" filename_p4 in
-        let filenames_stf =
-          List.filter
-            (fun filename_stf ->
-              let filename_stf_base =
-                Util.Filesys.base ~suffix:".stf" filename_stf
-              in
-              Util.Test.p4_matches_stf filename_p4_base filename_stf_base)
-            filenames_stf
-        in
-        match filenames_stf with
-        | [] -> None
-        | _ -> Some (filename_p4, filenames_stf))
+    Test.collect_tests_mapped arch testdirs_p4 testdirs_stf patchdir
+    |> List.filter (fun (filename_p4, _) ->
+        not (List.exists (String.equal filename_p4) excludes_p4))
     |> List.split
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
