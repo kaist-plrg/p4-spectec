@@ -1,5 +1,7 @@
 open Domain.Lib
 open Ol.Ast
+open Runtime.Dynamic_Sl
+open Envs
 open Util.Source
 
 (* Rename ticks in relation input expressions
@@ -45,7 +47,7 @@ let find_rename_ticks (frees : IdSet.t) (id : Id.t) : Id.t option =
   let id_rename = id_strip.it ^ String.make count_min '\'' $ id.at in
   if Id.eq id id_rename then None else Some id_rename
 
-let apply_rel ((exps_match, instrs) : exp list * instr list) :
+let apply_rel (ihenv : IHEnv.t) ((exps_match, instrs) : exp list * instr list) :
     exp list * instr list =
   let frees_match = Ol.Free.free_exps exps_match in
   let frees_instrs = Ol.Free.free_instrs instrs in
@@ -59,15 +61,15 @@ let apply_rel ((exps_match, instrs) : exp list * instr list) :
                let frees_instrs = IdSet.add id_rename frees_instrs in
                let renamer = Renamer.singleton id_match id_rename in
                let exps_match = Renamer.rename_exps renamer exps_match in
-               let instrs = Renamer.rename_instrs renamer instrs in
+               let instrs = Renamer.rename_instrs ihenv renamer instrs in
                (frees_instrs, exps_match, instrs)
            | None -> (frees_instrs, exps_match, instrs))
          (frees_instrs, exps_match, instrs)
   in
   (exps_match, instrs)
 
-let apply_func ((args_input, instrs) : arg list * instr list) :
-    arg list * instr list =
+let apply_func (ihenv : IHEnv.t) ((args_input, instrs) : arg list * instr list)
+    : arg list * instr list =
   let frees_match = Ol.Free.free_args args_input in
   let frees_instrs = Ol.Free.free_instrs instrs in
   let _, args_input, instrs =
@@ -80,7 +82,7 @@ let apply_func ((args_input, instrs) : arg list * instr list) :
                let frees_instrs = IdSet.add id_rename frees_instrs in
                let renamer = Renamer.singleton id_match id_rename in
                let args_input = Renamer.rename_args renamer args_input in
-               let instrs = Renamer.rename_instrs renamer instrs in
+               let instrs = Renamer.rename_instrs ihenv renamer instrs in
                (frees_instrs, args_input, instrs)
            | None -> (frees_instrs, args_input, instrs))
          (frees_instrs, args_input, instrs)
