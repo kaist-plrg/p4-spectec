@@ -29,6 +29,8 @@
    (ignore-outputs
     (diff sim_sl_v1model.expected sim_sl_v1model.actual))
    (ignore-outputs
+    (diff sim_sl_ebpf.expected sim_sl_ebpf.actual))
+   (ignore-outputs
     (diff cover_dangling.expected cover_dangling.actual))
    (ignore-outputs
     (diff cover_sim_instr.expected cover_sim_instr.actual))
@@ -115,7 +117,23 @@
  (action
   (progn
    (ignore-outputs
+    (diff sim_sl_v1model.expected sim_sl_v1model.actual))
+   (ignore-outputs
+    (diff sim_sl_ebpf.expected sim_sl_ebpf.actual)))))
+
+(rule
+ (alias p4sim-v1model)
+ (action
+  (progn
+   (ignore-outputs
     (diff sim_sl_v1model.expected sim_sl_v1model.actual)))))
+
+(rule
+ (alias p4sim-ebpf)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_sl_ebpf.expected sim_sl_ebpf.actual)))))
 
 ;; Testgen - dangling coverage tests
 
@@ -350,6 +368,40 @@
      ../../../../testdata/custom
      -p
      ../../../../patches/v1model)))))
+
+(rule
+ (target sim_sl_ebpf.actual)
+ (action
+  (with-stdout-to
+   sim_sl_ebpf.actual
+   (with-stderr-to
+    sim_sl_ebpf.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     ebpf
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes/static
+     -e
+     ../../../../excludes/dynamic
+     -p4-dir
+     ../../../../p4c/testdata/p4_16_samples
+     -p4-dir
+     ../../../../testdata/custom
+     -stf-dir
+     ../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../testdata/p4testgen
+     -stf-dir
+     ../../../../testdata/custom
+     -p
+     ../../../../patches/ebpf)))))
 
 (rule
  (target cover_dangling.actual)

@@ -330,6 +330,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
         | "v1model" ->
             Strings.contains_substring "#include <v1model.p4>" contents
             || Strings.contains_substring "#include \"v1model.p4\"" contents
+        | "ebpf" ->
+            Strings.contains_substring "#include <ebpf_model.p4>" contents
+            || Strings.contains_substring "#include \"ebpf_model.p4\"" contents
         | _ -> false)
       filenames_p4
   in
