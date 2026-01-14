@@ -211,7 +211,8 @@
 
 . If let ``name`` be ``nameList'``:
  .. Return ``[name]``.
-. If let ``nameList , name`` be ``nameList'``:
+. Else:
+ .. Let ``nameList , name`` be ``nameList'``.
  .. Return ``<<flatten_nameList, flatten_nameList(nameList)>> {pp} [name]``.
 
 <<flatten_typeParameterList, The list of type parameters in ``typeParameterList'``>>
@@ -219,7 +220,8 @@
 
 . If let ``typeParameter`` be ``typeParameterList'``:
  .. Return ``[typeParameter]``.
-. If let ``typeParameterList , typeParameter`` be ``typeParameterList'``:
+. Else:
+ .. Let ``typeParameterList , typeParameter`` be ``typeParameterList'``.
  .. Return ``<<flatten_typeParameterList, flatten_typeParameterList(typeParameterList)>> {pp} [typeParameter]``.
 
 <<flatten_typeParameterListOpt, The list of type parameters in ``typeParameterListOpt``>>
@@ -236,7 +238,7 @@
 
 . If ``parameterList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``parameter`` be ``parameterList``:
+. Else if let ``parameter`` be ``parameterList``:
  .. Return ``[parameter]``.
 . If let ``nonEmptyParameterList'`` be ``parameterList``:
  .. Check that ``nonEmptyParameterList'`` matches pattern ``% , %``.
@@ -257,7 +259,8 @@
 
 . If let ``namedExpression`` be ``namedExpressionList'``:
  .. Return ``[namedExpression]``.
-. If let ``namedExpressionList , namedExpression`` be ``namedExpressionList'``:
+. Else:
+ .. Let ``namedExpressionList , namedExpression`` be ``namedExpressionList'``.
  .. Return ``<<flatten_namedExpressionList, flatten_namedExpressionList(namedExpressionList)>> {pp} [namedExpression]``.
 
 <<flatten_expressionList, The list of expressions in ``expressionList'``>>
@@ -265,10 +268,11 @@
 
 . If ``expressionList'`` is ```EMPTY``:
  .. Return ``·``.
-. Else if let ``expressionList , expression`` be ``expressionList'``:
- .. Return ``<<flatten_expressionList, flatten_expressionList(expressionList)>> {pp} [expression]``.
-. If let ``expression`` be ``expressionList'``:
+. Else if let ``expression`` be ``expressionList'``:
  .. Return ``[expression]``.
+. Else:
+ .. Let ``expressionList , expression`` be ``expressionList'``.
+ .. Return ``<<flatten_expressionList, flatten_expressionList(expressionList)>> {pp} [expression]``.
 
 <<expressionNonBrace_as_expression, The expression corresponding to ``expressionNonBrace'``>>
 
@@ -323,7 +327,8 @@
 
 . If let ``simpleKeysetExpression`` be ``simpleKeysetExpressionList'``:
  .. Return ``[simpleKeysetExpression]``.
-. If let ``simpleKeysetExpressionList , simpleKeysetExpression`` be ``simpleKeysetExpressionList'``:
+. Else:
+ .. Let ``simpleKeysetExpressionList , simpleKeysetExpression`` be ``simpleKeysetExpressionList'``.
  .. Return ``<<flatten_simpleKeysetExpressionList, flatten_simpleKeysetExpressionList(simpleKeysetExpressionList)>> {pp} [simpleKeysetExpression]``.
 
 <<flatten_realTypeArgumentList, The list of real type arguments in ``realTypeArgumentList'``>>
@@ -331,7 +336,8 @@
 
 . If let ``realTypeArgument`` be ``realTypeArgumentList'``:
  .. Return ``[realTypeArgument]``.
-. If let ``realTypeArgumentList , realTypeArgument`` be ``realTypeArgumentList'``:
+. Else:
+ .. Let ``realTypeArgumentList , realTypeArgument`` be ``realTypeArgumentList'``.
  .. Return ``<<flatten_realTypeArgumentList, flatten_realTypeArgumentList(realTypeArgumentList)>> {pp} [realTypeArgument]``.
 
 <<flatten_typeArgumentList, The list of type arguments in ``typeArgumentList'``>>
@@ -339,17 +345,18 @@
 
 . If ``typeArgumentList'`` is ```EMPTY``:
  .. Return ``·``.
-. Else if let ``typeArgumentList , typeArgument`` be ``typeArgumentList'``:
- .. Return ``<<flatten_typeArgumentList, flatten_typeArgumentList(typeArgumentList)>> {pp} [typeArgument]``.
-. If let ``typeArgument`` be ``typeArgumentList'``:
+. Else if let ``typeArgument`` be ``typeArgumentList'``:
  .. Return ``[typeArgument]``.
+. Else:
+ .. Let ``typeArgumentList , typeArgument`` be ``typeArgumentList'``.
+ .. Return ``<<flatten_typeArgumentList, flatten_typeArgumentList(typeArgumentList)>> {pp} [typeArgument]``.
 
 <<flatten_argumentList, The list of arguments in ``argumentList``>>
 
 
 . If ``argumentList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``argument`` be ``argumentList``:
+. Else if let ``argument`` be ``argumentList``:
  .. Return ``[argument]``.
 . If let ``argumentListNonEmpty'`` be ``argumentList``:
  .. Check that ``argumentListNonEmpty'`` matches pattern ``% , %``.
@@ -361,7 +368,7 @@
 
 . If let ``referenceExpression`` be ``lvalue'``:
  .. Return ``referenceExpression``.
-. If let ``lvalue~base~ . member`` be ``lvalue'``:
+. Else if let ``lvalue~base~ . member`` be ``lvalue'``:
  .. Let ``expression~base~`` be <<lvalue_as_expression, the expression corresponding to ``lvalue~base~``>>.
  .. Return ``expression~base~ . member``.
 . Else if let ``lvalue~base~ [ expression~index~ ]`` be ``lvalue'``:
@@ -370,7 +377,8 @@
 . Else if let ``lvalue~base~ [ expression~hi~ : expression~lo~ ]`` be ``lvalue'``:
  .. Let ``expression~base~`` be <<lvalue_as_expression, the expression corresponding to ``lvalue~base~``>>.
  .. Return ``expression~base~ [ expression~hi~ : expression~lo~ ]``.
-. Else if let ``( lvalue )`` be ``lvalue'``:
+. Else:
+ .. Let ``( lvalue )`` be ``lvalue'``.
  .. Let ``expression`` be <<lvalue_as_expression, the expression corresponding to ``lvalue``>>.
  .. Return ``( expression )``.
 
@@ -429,7 +437,7 @@
 
 . If ``forUpdateStatementList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``forUpdateStatement`` be ``forUpdateStatementList``:
+. Else if let ``forUpdateStatement`` be ``forUpdateStatementList``:
  .. Return ``[forUpdateStatement]``.
 . If let ``forUpdateStatementListNonEmpty'`` be ``forUpdateStatementList``:
  .. Check that ``forUpdateStatementListNonEmpty'`` matches pattern ``% , %``.
@@ -441,7 +449,7 @@
 
 . If ``forInitStatementList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``forInitStatement`` be ``forInitStatementList``:
+. Else if let ``forInitStatement`` be ``forInitStatementList``:
  .. Return ``[forInitStatement]``.
 . If let ``forInitStatementListNonEmpty'`` be ``forInitStatementList``:
  .. Check that ``forInitStatementListNonEmpty'`` matches pattern ``% , %``.
@@ -516,7 +524,8 @@
 
 . If let ``parserState`` be ``parserStateList'``:
  .. Return ``[parserState]``.
-. If let ``parserStateList parserState`` be ``parserStateList'``:
+. Else:
+ .. Let ``parserStateList parserState`` be ``parserStateList'``.
  .. Return ``<<flatten_parserStateList, flatten_parserStateList(parserStateList)>> {pp} [parserState]``.
 
 <<flatten_parserLocalDeclarationList, The list of parser local declarations in ``parserLocalDeclarationList'``>>
@@ -533,7 +542,8 @@
 
 . If ``constOpt`` is ```EMPTY``:
  .. Return ``None``.
-. If let ``const`` be ``constOpt``:
+. Else:
+ .. Let ``const`` be ``constOpt``.
  .. Return ``const``.
 
 <<flatten_tableKeyList, The list of table keys in ``tableKeyList'``>>
@@ -586,7 +596,7 @@
 
 . If ``annotationList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``annotation`` be ``annotationList``:
+. Else if let ``annotation`` be ``annotationList``:
  .. Return ``[annotation]``.
 . If let ``annotationListNonEmpty'`` be ``annotationList``:
  .. Check that ``annotationListNonEmpty'`` matches pattern ``%  %``.
@@ -637,7 +647,7 @@
 
 . If ``parameterList`` is ```EMPTY``:
  .. Return ``·``.
-. If let ``++_++ ++_++ ++_++ name ++_++`` be ``parameterList``:
+. Else if let ``++_++ ++_++ ++_++ name ++_++`` be ``parameterList``:
  .. Return ``[<<name, name(name)>>]``.
 . If let ``nonEmptyParameterList'`` be ``parameterList``:
  .. Check that ``nonEmptyParameterList'`` matches pattern ``% , %``.
@@ -685,7 +695,8 @@
  .. Else:
   ... Let ``w W i`` be ``integerLiteral``.
   ... Return ``i``.
-. If let ``++_++ . ++_++ V i`` be ``integerValue``:
+. Else:
+ .. Let ``++_++ . ++_++ V i`` be ``integerValue``.
  .. Return ``i``.
 
 <<update_fieldValue, update_fieldValue(fieldValue^{asterisk}^, nameIR, value)>>
@@ -3649,7 +3660,8 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``nonTypeName`` be ``prefixedNonTypeName``:
  .. Return ``<<name, name(nonTypeName)>>``.
-. If let ```ID . nonTypeName`` be ``prefixedNonTypeName``:
+. Else:
+ .. Let ```ID . nonTypeName`` be ``prefixedNonTypeName``.
  .. Return ``. <<name, name(nonTypeName)>>``.
 
 <<prefixedTypeName, The prefixed name of  ``prefixedTypeName``>>
@@ -3657,7 +3669,8 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``typeName`` be ``prefixedTypeName``:
  .. Return ``<<name, name(typeName)>>``.
-. If let ```TID . typeName`` be ``prefixedTypeName``:
+. Else:
+ .. Let ```TID . typeName`` be ``prefixedTypeName``.
  .. Return ``. <<name, name(typeName)>>``.
 
 <<flatten_prefixedNameIR, The string form of  ``prefixedNameIR``>>
@@ -3698,7 +3711,7 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``referenceExpressionIR`` be ``lvalueIR``:
  .. Return ``referenceExpressionIR # ( typeIR DYN )``.
-. If let ``typedLvalueIR . nameIR`` be ``lvalueIR``:
+. Else if let ``typedLvalueIR . nameIR`` be ``lvalueIR``:
  .. Let ``typedExpressionIR`` be <<option_get, *!*>> ``<<typedLvalueIR_as_typedExpressionIR, typedLvalueIR_as_typedExpressionIR(typedLvalueIR)>>``.
  .. Return ``typedExpressionIR . nameIR # ( typeIR DYN )``.
 . Else if let ``typedLvalueIR~base~ [ typedExpressionIR~index~ ]`` be ``lvalueIR``:
@@ -3793,14 +3806,15 @@ for each ``constantInitializerOptIR`` in ``constantInitializerOptIR^{asterisk}^`
  .. If ``argumentIR~h~`` has type ``typedExpressionIR``:
   ... Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^)`` be ``<<align_parameterListIR', align_parameterListIR'({ (id : parameterIR)^{asterisk}^ }, parameterIR~t~^{asterisk}^, argumentIR~t~^{asterisk}^)>>``.
   ... Return ``(parameterIR~h~ {two-colons} parameterIR~aligned~^{asterisk}^, argumentIR~h~ {two-colons} argumentIR~aligned~^{asterisk}^)``.
- .. If ``argumentIR~h~`` is ``_``:
+ .. Else if ``argumentIR~h~`` is ``_``:
   ... Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^)`` be ``<<align_parameterListIR', align_parameterListIR'({ (id : parameterIR)^{asterisk}^ }, parameterIR~t~^{asterisk}^, argumentIR~t~^{asterisk}^)>>``.
   ... Return ``(parameterIR~h~ {two-colons} parameterIR~aligned~^{asterisk}^, argumentIR~h~ {two-colons} argumentIR~aligned~^{asterisk}^)``.
  .. Else if let ``nameIR = ++_++`` be ``argumentIR~h~``:
   ... Let ``parameterIR~match~`` be <<option_get, *!*>> <<find_map, ``{ (id : parameterIR)^{asterisk}^ }``[``nameIR``]>>.
   ... Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^)`` be ``<<align_parameterListIR', align_parameterListIR'({ (id : parameterIR)^{asterisk}^ }, parameterIR~t~^{asterisk}^, argumentIR~t~^{asterisk}^)>>``.
   ... Return ``(parameterIR~match~ {two-colons} parameterIR~aligned~^{asterisk}^, argumentIR~h~ {two-colons} argumentIR~aligned~^{asterisk}^)``.
- .. Else if let ``nameIR = _`` be ``argumentIR~h~``:
+ .. Else:
+  ... Let ``nameIR = _`` be ``argumentIR~h~``.
   ... Let ``parameterIR~match~`` be <<option_get, *!*>> <<find_map, ``{ (id : parameterIR)^{asterisk}^ }``[``nameIR``]>>.
   ... Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^)`` be ``<<align_parameterListIR', align_parameterListIR'({ (id : parameterIR)^{asterisk}^ }, parameterIR~t~^{asterisk}^, argumentIR~t~^{asterisk}^)>>``.
   ... Return ``(parameterIR~match~ {two-colons} parameterIR~aligned~^{asterisk}^, argumentIR~h~ {two-colons} argumentIR~aligned~^{asterisk}^)``.
@@ -3822,11 +3836,11 @@ for each ``argumentIR`` in ``argumentIR^{asterisk}^``
 
 . If ``argumentIR`` has type ``typedExpressionIR``:
  .. Return ``None``.
-. If let ``id~arg~ = ++_++`` be ``argumentIR``:
+. Else if let ``id~arg~ = ++_++`` be ``argumentIR``:
  .. Return ``id~arg~``.
 . Else if let ``id~arg~ = _`` be ``argumentIR``:
  .. Return ``id~arg~``.
-. Else if ``argumentIR`` is ``_``:
+. Else:
  .. Return ``None``.
 
 <<match_overloaded_named, match_overloaded_named<V>(callTargetId : V, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>
@@ -5654,6 +5668,11 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
  .. Check that ```B true`` is equal to ``boolValue``.
  .. Result in ``boolValue``.
 
+<<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``( callableTargetIR ) < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
+
+. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``, under cursor ``p`` and typing context ``TC``>>.
+. Result in ``value``.
+
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < · > ( · )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``typedExpressionIR~base~ . nameIR`` be ``callableTargetIR``:
@@ -5671,11 +5690,6 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
   ... Let ``typeIR~base~`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR~base~``>>.
   ... Check that ``nameIR`` is in ``["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]``.
   ... Result in ``<<sizeof, sizeof(typeIR~base~, nameIR)>>``.
-
-<<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``( callableTargetIR ) < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
-
-. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with type ``typeIR''`` and compile-time known-ness ``ctk``, under cursor ``p`` and typing context ``TC``>>.
-. Result in ``value``.
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``( typedExpressionIR )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
@@ -7892,7 +7906,8 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Result in the parameter ``annotationList direction typeIR nameIR None`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
-. If let ``= expression~init~`` be ``initializerOpt``:
+. Else:
+ .. Let ``= expression~init~`` be ``initializerOpt``.
  .. Let 
 * ``typeIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>.
@@ -9192,7 +9207,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``p`` layer>>.
  .. Let ``variableDeclarationIR`` be ``annotationList typeIR nameIR None ;``.
  .. Result in the updated typing context ``TC~1~`` and ``variableDeclarationIR``.
-. If let ``= expression~init~`` be ``initializerOpt``:
+. Else:
+ .. Let ``= expression~init~`` be ``initializerOpt``.
  .. Let 
 * ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC~0~``>>.
@@ -10962,7 +10978,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 . If let ``referenceExpression`` be ``lvalue'``:
  .. Return ``referenceExpression``.
-. If let ``lvalue~base~ . member`` be ``lvalue'``:
+. Else if let ``lvalue~base~ . member`` be ``lvalue'``:
  .. Let ``expression~base~`` be ``<<lvalue_to_expression, lvalue_to_expression(lvalue~base~)>>``.
  .. Return ``expression~base~ . member``.
 . Else if let ``lvalue~base~ [ expression~index~ ]`` be ``lvalue'``:
@@ -10971,7 +10987,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Else if let ``lvalue~base~ [ expression~hi~ : expression~lo~ ]`` be ``lvalue'``:
  .. Let ``expression~base~`` be ``<<lvalue_to_expression, lvalue_to_expression(lvalue~base~)>>``.
  .. Return ``expression~base~ [ expression~hi~ : expression~lo~ ]``.
-. Else if let ``( lvalue )`` be ``lvalue'``:
+. Else:
+ .. Let ``( lvalue )`` be ``lvalue'``.
  .. Let ``expression`` be ``<<lvalue_to_expression, lvalue_to_expression(lvalue)>>``.
  .. Return ``( expression )``.
 
@@ -11031,7 +11048,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT typeIR DYN None`` is added to the ``LOCAL`` layer>>.
  .. Result in ``TC~1~`` and ``annotationList typeIR nameIR None``.
-. If let ``= expression~init~`` be ``initializerOpt``:
+. Else:
+ .. Let ``= expression~init~`` be ``initializerOpt``.
  .. Let 
 * ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
@@ -11600,10 +11618,10 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 
 . If let ``typedExpressionIR`` be ``argumentIR``:
  .. Return ``<<has_table_apply_expr, has_table_apply_expr(typedExpressionIR)>>``.
-. If let ``nameIR = typedExpressionIR`` be ``argumentIR``:
+. Else if let ``nameIR = typedExpressionIR`` be ``argumentIR``:
  .. Return ``<<has_table_apply_expr, has_table_apply_expr(typedExpressionIR)>>``.
 . Else if ``argumentIR`` matches pattern ``% = _``: return ``false``.
-. Else if ``argumentIR`` is ``_``: return ``false``.
+. Else: return ``false``.
 
 <<has_table_apply_expr, has_table_apply_expr(expressionIR # expressionNoteIR)>>
 
@@ -11641,7 +11659,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 . Else if ``expressionIR`` has type ``errorAccessExpressionIR``: return ``false``.
 . Else if let ``memberAccessBaseIR . nameIR`` be ``expressionIR``:
  .. If ``memberAccessBaseIR`` matches pattern ``TYPE %``: return ``false``.
- .. If let ``typedExpressionIR`` be ``memberAccessBaseIR``:
+ .. Else:
+  ... Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
   ... Return ``<<has_table_apply_expr, has_table_apply_expr(typedExpressionIR)>>``.
 . Else if let ``typedExpressionIR~base~ [ typedExpressionIR~index~ ]`` be ``expressionIR``:
  .. Return ``<<has_table_apply_expr, has_table_apply_expr(typedExpressionIR~base~)>> \/ <<has_table_apply_expr, has_table_apply_expr(typedExpressionIR~index~)>>``.
@@ -11654,11 +11673,12 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
   ... Let ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` be ``callExpressionIR``.
   ... If ``callableTargetIR`` has type ``referenceExpressionIR``:
    .... Return ``<<exists_, exists_((has_table_apply_arg(argumentIR))^{asterisk}^)>>``.
-  ... If let ``typedExpressionIR . nameIR`` be ``callableTargetIR``:
+  ... Else if let ``typedExpressionIR . nameIR`` be ``callableTargetIR``:
    .... Return ``<<has_table_apply_expr, has_table_apply_expr(typedExpressionIR)>> \/ <<exists_, exists_((has_table_apply_arg(argumentIR))^{asterisk}^)>>``.
   ... Else if ``callableTargetIR`` matches pattern ``TYPE % . %``:
    .... Return ``<<exists_, exists_((has_table_apply_arg(argumentIR))^{asterisk}^)>>``.
-  ... Else if let ``( callableTargetIR )`` be ``callableTargetIR``:
+  ... Else:
+   .... Let ``( callableTargetIR )`` be ``callableTargetIR``.
    .... Return ``<<has_table_apply_expr', has_table_apply_expr'(callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ))>>``.
 . Else:
  .. Let ``( typedExpressionIR )`` be ``expressionIR``.
@@ -11889,13 +11909,13 @@ for each ``argumentIR`` in ``argumentIR^{asterisk}^`` and ``parameterIR`` in ``p
  .. Let ``typeIR~param~`` be the type of ``parameterIR``.
  .. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Return ``<<gen_constraint, gen_constraint(constraint, typeIR~param~, typeIR~arg~)>>``.
-. If let ``nameIR = typedExpressionIR`` be ``argumentIR``:
+. Else if let ``nameIR = typedExpressionIR`` be ``argumentIR``:
  .. Let ``typeIR~param~`` be the type of ``parameterIR``.
  .. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Return ``<<gen_constraint, gen_constraint(constraint, typeIR~param~, typeIR~arg~)>>``.
 . Else if ``argumentIR`` matches pattern ``% = _``:
  .. Return ``constraint``.
-. Else if ``argumentIR`` is ``_``:
+. Else:
  .. Return ``constraint``.
 
 <<resolve_inference, resolve_inference({ (typeId : typeIR)^{asterisk}^ })>>
@@ -16770,7 +16790,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 
 . If ``switchLabelIR`` is ``DEFAULT``: return ``true``.
-. If ``switchLabelIR`` has type ``typedExpressionIR``:
+. Else:
  .. Let ``expressionIR`` be the expression of ``switchLabelIR``.
  .. Check that ``expressionIR`` has type ``prefixedNameIR``.
  .. Let ``prefixedNameIR`` be ``expressionIR``.
@@ -16818,7 +16838,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 . If ``switchLabelIR`` is ``DEFAULT``:
  .. Result in ``EC~0~``, ``STO~0~``, and ``DEFAULT``.
-. If let ``typedExpressionIR`` be ``switchLabelIR``:
+. Else:
+ .. Let ``typedExpressionIR`` be ``switchLabelIR``.
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
