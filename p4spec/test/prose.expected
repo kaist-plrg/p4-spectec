@@ -780,7 +780,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 . If ``value'`` has type ``boolValue``:
  .. Check that ``bool^{asterisk}^`` is a non-empty list.
  .. Let ``b~h~ {two-colons} b~t~^{asterisk}^`` be ``bool^{asterisk}^``.
- .. Return ``(b~h~, b~t~^{asterisk}^)``.
+ .. Return ``(`B b~h~, b~t~^{asterisk}^)``.
 . Else if let ``integerLiteral`` be ``value'``:
  .. If let ``w W ++_++`` be ``integerLiteral``:
   ... Check that the length of ``bool^{asterisk}^`` is greater than or equal to ``w``.
@@ -848,7 +848,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 <<write_bits_from_value, write_bits_from_value(value')>>
 
 
-. If let ``b`` be ``value'``:
+. If let ```B b`` be ``value'``:
  .. Return ``[b]``.
 . Else if let ``integerLiteral`` be ``value'``:
  .. If let ``w S i`` be ``integerLiteral``:
@@ -2384,8 +2384,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . Check that ``value`` has type ``boolValue``.
-. Let ``b`` be ``value``.
-. Return ``~b``.
+. Let ```B b`` be ``value``.
+. Return ```B ~b``.
 
 <<un_plus, un_plus(value)>>
 
@@ -2439,17 +2439,17 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else if ``binop`` is ``>>``:
  .. Return ``<<bin_shr, bin_shr(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``<=``:
- .. Return ``<<bin_le, bin_le(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_le, bin_le(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``>=``:
- .. Return ``<<bin_ge, bin_ge(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_ge, bin_ge(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``<``:
- .. Return ``<<bin_lt, bin_lt(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_lt, bin_lt(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``>``:
- .. Return ``<<bin_gt, bin_gt(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_gt, bin_gt(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``==``:
- .. Return ``<<bin_eq, bin_eq(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_eq, bin_eq(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``!=``:
- .. Return ``<<bin_ne, bin_ne(value~l~, value~r~)>>``.
+ .. Return ```B <<bin_ne, bin_ne(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``&``:
  .. Return ``<<bin_band, bin_band(value~l~, value~r~)>>``.
 . Else if ``binop`` is ``^``:
@@ -2904,9 +2904,9 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 <<bin_eq, bin_eq(value, value')>>
 
 
-. If let ``b~a~`` be ``value``:
+. If let ```B b~a~`` be ``value``:
  .. Check that ``value'`` has type ``boolValue``.
- .. Let ``b~b~`` be ``value'``.
+ .. Let ```B b~b~`` be ``value'``.
  .. Return ``b~a~ = b~b~``.
 . Else if let ``ERROR . id~a~`` be ``value``:
  .. Check that ``value'`` has type ``errorValue``.
@@ -3143,24 +3143,24 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . Check that ``value`` has type ``boolValue``.
-. Let ``b~l~`` be ``value``.
+. Let ```B b~l~`` be ``value``.
 . Check that ``value'`` has type ``boolValue``.
-. Let ``b~r~`` be ``value'``.
-. Return ``b~l~ /\ b~r~``.
+. Let ```B b~r~`` be ``value'``.
+. Return ```B b~l~ /\ b~r~``.
 
 <<bin_lor, bin_lor(value, value')>>
 
 
 . Check that ``value`` has type ``boolValue``.
-. Let ``b~l~`` be ``value``.
+. Let ```B b~l~`` be ``value``.
 . Check that ``value'`` has type ``boolValue``.
-. Let ``b~r~`` be ``value'``.
-. Return ``b~l~ \/ b~r~``.
+. Let ```B b~r~`` be ``value'``.
+. Return ```B b~l~ \/ b~r~``.
 
 <<cast_op, Cast ``value'`` to type ``typeIR``>>
 
 
-. If let ``b`` be ``value'``:
+. If let ```B b`` be ``value'``:
  .. Return ``<<cast_bool, cast_bool(typeIR, b)>>``.
 . Else if let ``integerLiteral`` be ``value'``:
  .. If let ``D i`` be ``integerLiteral``:
@@ -3206,7 +3206,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . If let ``boolTypeIR`` be ``typeIR'``:
- .. Return ``false``.
+ .. Return ```B false``.
 . Else if let ``errorTypeIR`` be ``typeIR'``:
  .. Return ``ERROR . "NoError"``.
 . Else if let ``stringTypeIR`` be ``typeIR'``:
@@ -3255,7 +3255,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . If let ``boolTypeIR`` be ``typeIR'``:
- .. Return ``b``.
+ .. Return ```B b``.
 . Else if let ``integerTypeIR`` be ``typeIR'``:
  .. Check that ``integerTypeIR`` matches pattern ``BIT < % >``.
  .. Let ``BIT < w >`` be ``integerTypeIR``.
@@ -3272,7 +3272,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . If let ``boolTypeIR`` be ``typeIR'``:
- .. Return ``i =/= 0``.
+ .. Return ```B i =/= 0``.
 . Else if let ``integerTypeIR`` be ``typeIR'``:
  .. If ``integerTypeIR`` is ``INT``:
   ... Return ``D i``.
@@ -3291,7 +3291,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 
 . If let ``boolTypeIR`` be ``typeIR'``:
- .. Return ``i =/= 0``.
+ .. Return ```B i =/= 0``.
 . Else if let ``integerTypeIR`` be ``typeIR'``:
  .. If ``integerTypeIR`` is ``INT``:
   ... Return ``D i``.
@@ -3649,7 +3649,7 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``nonTypeName`` be ``prefixedNonTypeName``:
  .. Return ``<<name, name(nonTypeName)>>``.
-. Else if let `` . nonTypeName`` be ``prefixedNonTypeName``:
+. Else if let ```ID . nonTypeName`` be ``prefixedNonTypeName``:
  .. Return ``. <<name, name(nonTypeName)>>``.
 
 <<prefixedTypeName, The prefixed name of  ``prefixedTypeName``>>
@@ -3657,7 +3657,7 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``typeName`` be ``prefixedTypeName``:
  .. Return ``<<name, name(typeName)>>``.
-. Else if let `` . typeName`` be ``prefixedTypeName``:
+. Else if let ```TID . typeName`` be ``prefixedTypeName``:
  .. Return ``. <<name, name(typeName)>>``.
 
 <<flatten_prefixedNameIR, The string form of  ``prefixedNameIR``>>
@@ -4051,8 +4051,8 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 
 . Let ``globalTypingLayer`` be {CONSTRUCTOR ``<<empty_constructorTypeDefEnv, empty_constructorTypeDefEnv>>``, TYPE ``<<empty_typeDefEnv, empty_typeDefEnv>>``, CALLABLE ``<<empty_callableTypeDefEnv, empty_callableTypeDefEnv>>``, FRAME ``<<empty_typeFrame, empty_typeFrame>>``}.
-. Let ``blockTypingLayer`` be {KIND ````, TYPE ``<<empty_typeDefEnv, empty_typeDefEnv>>``, CALLABLE ``<<empty_callableTypeDefEnv, empty_callableTypeDefEnv>>``, FRAME ``<<empty_typeFrame, empty_typeFrame>>``}.
-. Let ``localTypingLayer`` be {KIND ````, TYPE ``<<empty_typeDefEnv, empty_typeDefEnv>>``, FRAMES ``[<<empty_typeFrame, empty_typeFrame>>]``}.
+. Let ``blockTypingLayer`` be {KIND ```EMPTY``, TYPE ``<<empty_typeDefEnv, empty_typeDefEnv>>``, CALLABLE ``<<empty_callableTypeDefEnv, empty_callableTypeDefEnv>>``, FRAME ``<<empty_typeFrame, empty_typeFrame>>``}.
+. Let ``localTypingLayer`` be {KIND ```EMPTY``, TYPE ``<<empty_typeDefEnv, empty_typeDefEnv>>``, FRAMES ``[<<empty_typeFrame, empty_typeFrame>>]``}.
 . Let ``TC`` be {GLOBAL ``globalTypingLayer``, BLOCK ``blockTypingLayer``, LOCAL ``localTypingLayer``}.
 . Return ``TC``.
 
@@ -4128,7 +4128,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 
 . If ``direction`` is ```EMPTY``:
- .. Let ``varTypeIR`` be ``typeIR CTK value^?^``.
+ .. Let ``varTypeIR`` be ```EMPTY typeIR CTK value^?^``.
  .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer>>.
  .. Return ``TC'``.
 . Else:
@@ -4712,17 +4712,17 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(typeIR~unroll~)>>``.
- .. Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
+ .. Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = `EMPTY``.
  .. The relation holds.
 . Else:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(typeIR~unroll~)>>``.
  .. If ``direction`` is ``IN``:
-  ... Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
+  ... Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = `EMPTY``.
   ... The relation holds.
  .. Else if ``direction`` is ```EMPTY``:
-  ... Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
+  ... Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = `EMPTY``.
   ... The relation holds.
 
 <<ReturnType_wf, ReturnType_wf>>:
@@ -5366,9 +5366,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``booleanLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . If ``booleanLiteral`` is ``TRUE``:
- .. Result in ``true``.
+ .. Result in ```B true``.
 . Else:
- .. Result in ``false``.
+ .. Result in ```B false``.
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``integerLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
@@ -5406,26 +5406,26 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Result in <<bin_op, ``value~l~`` ``binop'`` ``value~r~``>>.
 . If ``binop'`` is ``&&``:
  .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~l~``, under cursor ``p`` and typing context ``TC``>>.
- .. If ``value`` is equal to ``false``:
-  ... Result in ``false``.
- .. Else if ``value`` is equal to ``true``:
+ .. If ``value`` is equal to ```B false``:
+  ... Result in ```B false``.
+ .. Else if ``value`` is equal to ```B true``:
   ... Let ``value~r~`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r~``, under cursor ``p`` and typing context ``TC``>>.
   ... Result in ``value~r~``.
 . Else if ``binop'`` is ``||``:
  .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~l~``, under cursor ``p`` and typing context ``TC``>>.
- .. If ``value`` is equal to ``true``:
-  ... Result in ``true``.
- .. Else if ``value`` is equal to ``false``:
+ .. If ``value`` is equal to ```B true``:
+  ... Result in ```B true``.
+ .. Else if ``value`` is equal to ```B false``:
   ... Let ``value~r~`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r~``, under cursor ``p`` and typing context ``TC``>>.
   ... Result in ``value~r~``.
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~cond~``, under cursor ``p`` and typing context ``TC``>>.
-. If ``value`` is equal to ``true``:
+. If ``value`` is equal to ```B true``:
  .. Let ``value~true~`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~true~``, under cursor ``p`` and typing context ``TC``>>.
  .. Result in ``value~true~``.
-. Else if ``value`` is equal to ``false``:
+. Else if ``value`` is equal to ```B false``:
  .. Let ``value~false~`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~false~``, under cursor ``p`` and typing context ``TC``>>.
  .. Result in ``value~false~``.
 
@@ -5602,7 +5602,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
  .. Let ``value'`` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
  .. Check that ``value'`` has type ``boolValue``.
  .. Let ``boolValue`` be ``value'``.
- .. Check that ``true`` is equal to ``boolValue``.
+ .. Check that ```B true`` is equal to ``boolValue``.
  .. Result in ``boolValue``.
 . Else if ``prefixedNameIR`` is equal to ``"static_assert"``:
  .. Let 
@@ -5651,7 +5651,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
  .. Let ``value'`` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
  .. Check that ``value'`` has type ``boolValue``.
  .. Let ``boolValue`` be ``value'``.
- .. Check that ``true`` is equal to ``boolValue``.
+ .. Check that ```B true`` is equal to ``boolValue``.
  .. Result in ``boolValue``.
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``callableTargetIR < · > ( · )`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
@@ -7582,7 +7582,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 . Let 
 * ``expressionIR`` annotated with type ``typeIR~object~`` and compile-time known-ness ``++_++`` be
-* the result of <<Expr_ok, typing ``namedType ( )``, under cursor ``p`` and typing context ``TC``>>.
+* the result of <<Expr_ok, typing ``namedType ( `EMPTY )``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``expressionIR`` has type ``callExpressionIR``.
 . Let ``callExpressionIR`` be ``expressionIR``.
 . Check that ``callExpressionIR`` matches pattern ``% ( % )``.
@@ -7591,8 +7591,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Check that ``argumentIR^{asterisk}^`` is an empty list.
 . Check that ``<<compat_direct_application, compat_direct_application(typeIR~object~)>>``.
 . Let ``nameIR~object~`` be ``"__direct_application"``.
-. Let ``TC~1~`` be <<add_var_t, ``TC`` where ``nameIR~object~`` to ``typeIR~object~ CTK None`` is added to the ``p`` layer>>.
-. Let ``lvalue`` be ``nameIR~object~ . "apply"``.
+. Let ``TC~1~`` be <<add_var_t, ``TC`` where ``nameIR~object~`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
+. Let ``lvalue`` be ```ID nameIR~object~ . `ID "apply"``.
 . Let 
 * the typing context ``++_++``,the abstract control flow ``++_++``,and the typed statement ``statementIR`` be
 * the result of <<Stmt_ok, typing ``lvalue ( argumentList ) ;``, under cursor ``p``, typing context ``TC~1~``, abstract control flow ``f``, and loop context ``l``>>.
@@ -8086,7 +8086,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 * Typing ``transitionStatement``, under typing context ``typingContext`` and parser state names ``nameIR^{asterisk}^``:
 * Results in the typed transition statement ``transitionStatementIR``.
 
-<<ParserTransition_ok, Typing ````, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``>>:
+<<ParserTransition_ok, Typing ```EMPTY``, under typing context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``>>:
 
 . Result in the typed transition statement ``TRANSITION "reject" ;``.
 
@@ -8346,7 +8346,7 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> does not match pattern ``DYN``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
-. Let ``varTypeIR`` be ``SET < typeIR > CTK None``.
+. Let ``varTypeIR`` be ```EMPTY SET < typeIR > CTK None``.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Let ``valueSetDeclarationIR`` be ``annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;``.
 . Result in the updated typing context ``TC~1~`` and the typed parser local declaration ``valueSetDeclarationIR``.
@@ -8968,10 +8968,10 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that ``BOOL`` is equal to <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``boolValue``.
- .. Let ``b~largest_priority_wins~`` be ``value``.
+ .. Let ```B b~largest_priority_wins~`` be ``value``.
  .. Let ``TBLC~1~`` be ``TBLC~0~[PRIORITIES.LARGEST_WINS = b~largest_priority_wins~]``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt``>>.
- .. Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = b~largest_priority_wins~ ;``.
+ .. Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "largest_priority_wins" = `B b~largest_priority_wins~ ;``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
 . Else if ``"priority_delta"`` is equal to <<tableCustomName, the name of ``tableCustomName``>>:
  .. Let 
@@ -9057,7 +9057,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the updated table context ``TBLC~1~`` and the typed table properties ``tablePropertyIR^{asterisk}^`` be
 * the result of <<TableProperties_ok, typing ``tableProperty^{asterisk}^``, under typing context ``TC`` and table context ``TBLC~0~``>>.
- .. Let ``tablePropertyIR~default_action~`` be ``None DEFAULT_ACTION = "NoAction" ( · ) ;``.
+ .. Let ``tablePropertyIR~default_action~`` be ```EMPTY None DEFAULT_ACTION = "NoAction" ( · ) ;``.
  .. Let ``(TBLC~2~, tablePropertyIR~updated~^{asterisk}^)`` be ``<<insert_NoAction_tablePropertyIR, insert_NoAction_tablePropertyIR(TBLC~1~, tablePropertyIR^{asterisk}^)>>``.
  .. Result in the updated typing context ``TBLC~2~`` and the typed table ``tablePropertyIR~updated~^{asterisk}^ {pp} [tablePropertyIR~default_action~]``.
 . Else if the length of ``<<filter_, filter_<tableProperty>(tableProperty^{asterisk}^, is_tableDefaultActionProperty)>>`` is equal to ``1``:
@@ -9095,7 +9095,7 @@ for each ``nameIR~enum_field~`` in ``nameIR~enum_field~^{asterisk}^``
 . Let ``varTypeIR~enum_field~^{asterisk}^`` be the list of ``varTypeIR~enum_field~``, obtained by repeating:
 +
 --
- ** Let ``varTypeIR~enum_field~`` be ``tableMetadataEnumTypeIR LCTK value~enum_field~``.
+ ** Let ``varTypeIR~enum_field~`` be ```EMPTY tableMetadataEnumTypeIR LCTK value~enum_field~``.
 --
 +
 for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
@@ -9149,7 +9149,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let 
 * the updated typing context ``TC~2~`` and the table type ``typeIR~table~`` be
 * the result of <<TableType_ok, typing ``name``, under typing context ``TC~1~`` and table context ``TBLC``>>.
-. Let ``varTypeIR`` be ``typeIR~table~ DYN None``.
+. Let ``varTypeIR`` be ```EMPTY typeIR~table~ DYN None``.
 . Let ``TC~3~`` be <<add_var_t, ``TC~2~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Let ``tableDeclarationIR`` be ``annotationList TABLE typeIR~table~ nameIR { tablePropertyIR^{asterisk}^ }``.
 . Result in the updated typing context ``TC~3~`` and the typed control local declaration ``tableDeclarationIR``.
@@ -9229,7 +9229,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``typedExpressionIR~value_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~value~`` implicitly cast to ``typeIR``>>.
 . Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
-. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``typeIR LCTK value`` is added to the ``p`` layer>>.
+. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR LCTK value`` is added to the ``p`` layer>>.
 . Let ``constantDeclarationIR`` be ``annotationList CONST typeIR nameIR = value ;``.
 . Result in the updated typing context ``TC~1~`` and ``constantDeclarationIR``.
 
@@ -9257,7 +9257,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
 * the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``·``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``typeIR~object~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR^{asterisk}^ ) nameIR None ;``.
  .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 . Else if let ``prefixedTypeName < typeArgumentList >`` be ``type``:
@@ -9282,7 +9282,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the constructed type ``typeIR~object~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
 * the result of <<Inst_ok, typing the instantiation ``constructorTypeIR``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``) with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC~0~``, and instantiation site context ``NAMED``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``typeIR~object~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR None ;``.
  .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 
@@ -9307,14 +9307,14 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that <<is_externObjectTypeIR, ``typeIR~object~`` with typedefs unrolled is extern object type>>.
  .. Check that ``typeIR~object~`` has type ``externObjectTypeIR``.
  .. Let ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~extern~`` be ``typeIR~object~``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ``typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
  .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
  .. Let <<Decls_object_ok, p TC~1~ { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^>>.
  .. Let ``externMethodTypeDefEnv~init_subst~`` be ``<<subst_externMethodTypeDefEnv, subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern~, externMethodTypeDefEnv~init~)>>``.
  .. Let ``typeIR~object_init~`` be ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~init_subst~``.
  .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object_init~)>>``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;``.
  .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
 . Else if let ``prefixedTypeName < typeArgumentList >`` be ``type``:
@@ -9341,14 +9341,14 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
  .. Check that ``typeIR`` has type ``externObjectTypeIR``.
  .. Let ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~extern~`` be ``typeIR``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ``typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
+ .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY typeIR~object~ CTK None`` is added to the ``LOCAL`` layer>>.
  .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
  .. Let <<Decls_object_ok, p TC~1~ { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame~init~ externMethodTypeDefEnv~init~ objectDeclarationIR^{asterisk}^>>.
  .. Let ``externMethodTypeDefEnv~init_subst~`` be ``<<subst_externMethodTypeDefEnv, subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern~, externMethodTypeDefEnv~init~)>>``.
  .. Let ``typeIR~object_init~`` be ``EXTERN typeId~extern~ < typeIR~arg~^{asterisk}^ > externMethodTypeDefEnv~init_subst~``.
  .. Check that ``<<is_concrete_extern_object, is_concrete_extern_object(typeIR~object_init~)>>``.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
+ .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY typeIR~object_init~ CTK None`` is added to the ``p`` layer>>.
  .. Let ``instantiationIR`` be ``annotationList typeIR~object_init~ prefixedNameIR < typeArgumentIR~inferred~^{asterisk}^ > ( argumentIR~cast~^{asterisk}^ ) nameIR = { objectDeclarationIR^{asterisk}^ } ;``.
  .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
 
@@ -9429,35 +9429,35 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 <<Decl_ok, Decl_ok>>:
 
 * Typing ``declaration`` under typing context ``typingContext``:
-* Results in the updated typing context ``typingContext'`` and the typed declaration ``declarationIR``.
+* Results in the updated typing context ``typingContext'`` and ``declarationIR``.
 
 <<Decl_ok, Typing ``constantDeclaration`` under typing context ``TC~0~``>>:
 
 . Let 
 * the updated typing context ``TC~1~`` and ``constantDeclarationIR`` be
 * the result of <<ConstDecl_ok, typing ``constantDeclaration``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``constantDeclarationIR``.
+. Result in the updated typing context ``TC~1~`` and ``constantDeclarationIR``.
 
 <<Decl_ok, Typing ``instantiation`` under typing context ``TC~0~``>>:
 
 . Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
 * the result of <<InstDecl_ok, typing ``instantiation``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``instantiationIR``.
+. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 
 <<Decl_ok, Typing ``functionDeclaration`` under typing context ``TC~0~``>>:
 
 . Let 
 * the updated typing context ``TC~1~`` and ``functionDeclarationIR`` be
 * the result of <<FuncDecl_ok, typing ``functionDeclaration``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``functionDeclarationIR``.
+. Result in the updated typing context ``TC~1~`` and ``functionDeclarationIR``.
 
 <<Decl_ok, Typing ``actionDeclaration`` under typing context ``TC~0~``>>:
 
 . Let 
 * the updated typing context ``TC~1~`` and ``actionDeclarationIR`` be
 * the result of <<ActionDecl_ok, typing ``actionDeclaration``, under cursor ``GLOBAL`` and typing context ``TC~0~``>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``actionDeclarationIR``.
+. Result in the updated typing context ``TC~1~`` and ``actionDeclarationIR``.
 
 <<Decl_ok, Typing ``ERROR { nameList }`` under typing context ``TC~0~``>>:
 
@@ -9487,12 +9487,12 @@ for each ``nameIR`` in ``nameIR^{asterisk}^``
 . Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
 +
 --
- ** Let ``varTypeIR`` be ``ERROR LCTK value~error~``.
+ ** Let ``varTypeIR`` be ```EMPTY ERROR LCTK value~error~``.
 --
 +
 for each ``value~error~`` in ``value~error~^{asterisk}^``
 . Let ``TC~1~`` be <<add_vars_t, ``TC~0~`` where each of ``nameIR~error~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``ERROR { nameIR^{asterisk}^ }``.
+. Result in the updated typing context ``TC~1~`` and ``ERROR { nameIR^{asterisk}^ }``.
 
 <<Decl_ok, Typing ``MATCH_KIND { nameList trailingCommaOpt }`` under typing context ``TC~0~``>>:
 
@@ -9515,12 +9515,12 @@ for each ``nameIR`` in ``nameIR^{asterisk}^``
 . Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
 +
 --
- ** Let ``varTypeIR`` be ``MATCH_KIND LCTK value~match_kind~``.
+ ** Let ``varTypeIR`` be ```EMPTY MATCH_KIND LCTK value~match_kind~``.
 --
 +
 for each ``value~match_kind~`` in ``value~match_kind~^{asterisk}^``
 . Let ``TC~1~`` be <<add_vars_t, ``TC~0~`` where each of ``nameIR^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``MATCH_KIND { nameIR^{asterisk}^ }``.
+. Result in the updated typing context ``TC~1~`` and ``MATCH_KIND { nameIR^{asterisk}^ }``.
 
 <<Decl_ok, Typing ``annotationList EXTERN typeOrVoid name typeParameterListOpt ( parameterList ) ;`` under typing context ``TC~0~``>>:
 
@@ -9549,7 +9549,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``TC~4~`` be ``<<add_callableDef_overload_t, add_callableDef_overload_t(GLOBAL, TC~0~, callableId, externFunctionTypeDefIR)>>``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``externFunctionDeclarationIR`` be ``annotationList EXTERN typeIR~ret~ nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
-. Result in the updated typing context ``TC~4~`` and the typed declaration ``externFunctionDeclarationIR``.
+. Result in the updated typing context ``TC~4~`` and ``externFunctionDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }`` under typing context ``TC~0~``>>:
 
@@ -9592,9 +9592,9 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 * the result of <<ExternConstructors_ok, typing ``externConstructorPrototype^{asterisk}^``, under typing context ``TC~6~`` for an extern object ``nameIR``>>.
 . Let ``TC~8~`` be ``TC~4~[GLOBAL.CONSTRUCTOR = TC~7~.GLOBAL.CONSTRUCTOR]``.
 . Let ``externObjectDeclarationIR`` be ``annotationList EXTERN nameIR < typeId~expl~^{asterisk}^ , > { externConstructorPrototypeIR^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }``.
-. Result in the updated typing context ``TC~8~`` and the typed declaration ``externObjectDeclarationIR``.
+. Result in the updated typing context ``TC~8~`` and ``externObjectDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }`` under typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList PARSER name `EMPTY ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND = PARSER]``.
 . Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
@@ -9629,9 +9629,9 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 . Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~6~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>``.
 . Let ``parserDeclarationIR`` be ``annotationList PARSER nameIR < · > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ }``.
-. Result in the updated typing context ``TC~6~`` and the typed declaration ``parserDeclarationIR``.
+. Result in the updated typing context ``TC~6~`` and ``parserDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }`` under typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList CONTROL name `EMPTY ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND = CONTROL]``.
 . Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
@@ -9665,7 +9665,7 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 . Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~6~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~0~, constructorId, constructorTypeDefIR)>>``.
 . Let ``controlDeclarationIR`` be ``annotationList CONTROL nameIR < · > ( parameterIR^{asterisk}^ ) ( constructorParameterIR^{asterisk}^ ) { controlLocalDeclarationIR^{asterisk}^ APPLY controlBodyIR }``.
-. Result in the updated typing context ``TC~6~`` and the typed declaration ``controlDeclarationIR``.
+. Result in the updated typing context ``TC~6~`` and ``controlDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList ENUM name { nameList~field~ trailingCommaOpt' }`` under typing context ``TC~0~``>>:
 
@@ -9699,13 +9699,13 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 . Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
 +
 --
- ** Let ``varTypeIR`` be ``enumTypeDefIR LCTK value~field~``.
+ ** Let ``varTypeIR`` be ```EMPTY enumTypeDefIR LCTK value~field~``.
 --
 +
 for each ``value~field~`` in ``value~field~^{asterisk}^``
 . Let ``TC~2~`` be <<add_vars_t, ``TC~1~`` where each of ``id~field~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
 . Let ``enumTypeDeclarationIR`` be ``annotationList ENUM nameIR { nameIR~field~^{asterisk}^ }``.
-. Result in the updated typing context ``TC~2~`` and the typed declaration ``enumTypeDeclarationIR``.
+. Result in the updated typing context ``TC~2~`` and ``enumTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList ENUM type name { namedExpressionList~field~ trailingCommaOpt'' }`` under typing context ``TC~0~``>>:
 
@@ -9736,7 +9736,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 . Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
 +
 --
- ** Let ``varTypeIR`` be ``enumTypeDefIR LCTK value~field~``.
+ ** Let ``varTypeIR`` be ```EMPTY enumTypeDefIR LCTK value~field~``.
 --
 +
 for each ``value~field~`` in ``value~field~^{asterisk}^``
@@ -9745,7 +9745,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 . Check that <<TypeDef_wf, ``enumTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~2~, nameIR, enumTypeDefIR)>>``.
 . Let ``enumTypeDeclarationIR`` be ``annotationList ENUM typeIR nameIR { namedExpressionIR~field~^{asterisk}^ }``.
-. Result in the updated typing context ``TC~3~`` and the typed declaration ``enumTypeDeclarationIR``.
+. Result in the updated typing context ``TC~3~`` and ``enumTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList STRUCT name typeParameterListOpt { typeFieldList }`` under typing context ``TC~0~``>>:
 
@@ -9782,7 +9782,7 @@ for each ``name~field~`` in ``name~field~^{asterisk}^``
 . Check that <<TypeDef_wf, ``structTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, structTypeDefIR)>>``.
 . Let ``structTypeDeclarationIR`` be ``annotationList STRUCT nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~field~ typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
-. Result in the updated typing context ``TC~2~`` and the typed declaration ``structTypeDeclarationIR``.
+. Result in the updated typing context ``TC~2~`` and ``structTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList HEADER name typeParameterListOpt { typeFieldList }`` under typing context ``TC~0~``>>:
 
@@ -9819,7 +9819,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Check that <<TypeDef_wf, ``headerTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, headerTypeDefIR)>>``.
 . Let ``headerTypeDeclarationIR`` be ``annotationList HEADER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~f~ typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
-. Result in the updated typing context ``TC~2~`` and the typed declaration ``headerTypeDeclarationIR``.
+. Result in the updated typing context ``TC~2~`` and ``headerTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }`` under typing context ``TC~0~``>>:
 
@@ -9856,7 +9856,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Check that <<TypeDef_wf, ``headerUnionTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~2~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, headerUnionTypeDefIR)>>``.
 . Let ``headerUnionTypeDeclarationIR`` be ``annotationList HEADER_UNION nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > { (annotationList~f~ typeIR~f~ nameIR~f~ ;)^{asterisk}^ }``.
-. Result in the updated typing context ``TC~2~`` and the typed declaration ``headerUnionTypeDeclarationIR``.
+. Result in the updated typing context ``TC~2~`` and ``headerUnionTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList TYPEDEF typedef name ;`` under typing context ``TC~0~``>>:
 
@@ -9873,11 +9873,11 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
  .. Check that <<TypeDef_wf, ``typeDefIR~typedef~`` is a well-formed type definition, assuming bound type ids ``bound``>>.
  .. Let ``TC~1~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, typeDefIR~typedef~)>>``.
  .. Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF typeIR nameIR ;``.
- .. Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
+ .. Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
 . Else:
  .. Let ``derivedTypeDeclaration`` be ``typedef``.
  .. Let 
-* the updated typing context ``TC~1~`` and the typed declaration ``declarationIR`` be
+* the updated typing context ``TC~1~`` and ``declarationIR`` be
 * the result of <<Decl_ok, typing ``derivedTypeDeclaration`` under typing context ``TC~0~``>>.
  .. Check that ``declarationIR`` has type ``derivedTypeDeclarationIR``.
  .. Let ``derivedTypeDeclarationIR`` be ``declarationIR``.
@@ -9894,7 +9894,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
   ... Check that <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
   ... Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;``.
-  ... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
+  ... Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
  .. Else:
   ... Check that (``·``, ``·``) is equal to <<typeParameterListIR_of_typeDefIR, the type parameters of ``typeDefIR``>>.
   ... Let ``nameIR`` be <<name, the name of ``name``>>.
@@ -9903,7 +9903,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
   ... Check that <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
   ... Let ``typedefDeclarationIR`` be ``annotationList TYPEDEF derivedTypeDeclarationIR nameIR ;``.
-  ... Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
+  ... Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList TYPE type name ;`` under typing context ``TC~0~``>>:
 
@@ -9919,7 +9919,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Check that <<TypeDef_wf, ``newTypeIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~1~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, newTypeIR)>>``.
 . Let ``typedefDeclarationIR`` be ``annotationList TYPE typeIR nameIR ;``.
-. Result in the updated typing context ``TC~1~`` and the typed declaration ``typedefDeclarationIR``.
+. Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList PARSER name typeParameterListOpt ( parameterList ) ;`` under typing context ``TC~0~``>>:
 
@@ -9943,7 +9943,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Check that <<TypeDef_wf, ``parserObjectTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, parserObjectTypeDefIR)>>``.
 . Let ``parserTypeDeclarationIR`` be ``annotationList PARSER nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
-. Result in the updated typing context ``TC~3~`` and the typed declaration ``parserTypeDeclarationIR``.
+. Result in the updated typing context ``TC~3~`` and ``parserTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList CONTROL name typeParameterListOpt ( parameterList ) ;`` under typing context ``TC~0~``>>:
 
@@ -9967,7 +9967,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Check that <<TypeDef_wf, ``controlObjectTypeDefIR`` is a well-formed type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~3~`` be ``<<add_typeDef_t, add_typeDef_t(GLOBAL, TC~0~, nameIR, controlObjectTypeDefIR)>>``.
 . Let ``controlTypeDeclarationIR`` be ``annotationList CONTROL nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( parameterIR^{asterisk}^ ) ;``.
-. Result in the updated typing context ``TC~3~`` and the typed declaration ``controlTypeDeclarationIR``.
+. Result in the updated typing context ``TC~3~`` and ``controlTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;`` under typing context ``TC~0~``>>:
 
@@ -10004,26 +10004,26 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, assuming bound type ids ``bound``>>.
 . Let ``TC~4~`` be ``<<add_constructorDef_t, add_constructorDef_t(TC~3~, constructorId, constructorTypeDefIR)>>``.
 . Let ``packageTypeDeclarationIR`` be ``annotationList PACKAGE nameIR < typeId~expl~^{asterisk}^ , typeId~impl~^{asterisk}^ > ( constructorParameterIR^{asterisk}^ ) ;``.
-. Result in the updated typing context ``TC~4~`` and the typed declaration ``packageTypeDeclarationIR``.
+. Result in the updated typing context ``TC~4~`` and ``packageTypeDeclarationIR``.
 
 <<Decls_ok, Decls_ok>>:
 
 * Typing ``declaration^{asterisk}^`` under typing context ``typingContext``:
-* Results in the updated typing context ``typingContext'`` and the typed declarations ``declarationIR^{asterisk}^``.
+* Results in the updated typing context ``typingContext'`` and ``declarationIR^{asterisk}^``.
 
 <<Decls_ok, Typing ``·`` under typing context ``TC``>>:
 
-. Result in the updated typing context ``TC`` and the typed declarations ``·``.
+. Result in the updated typing context ``TC`` and ``·``.
 
 <<Decls_ok, Typing ``declaration~h~ {two-colons} declaration~t~^{asterisk}^`` under typing context ``TC``>>:
 
 . Let 
-* the updated typing context ``TC~1~`` and the typed declaration ``declarationIR~h~`` be
+* the updated typing context ``TC~1~`` and ``declarationIR~h~`` be
 * the result of <<Decl_ok, typing ``declaration~h~`` under typing context ``TC``>>.
 . Let 
-* the updated typing context ``TC~2~`` and the typed declarations ``declarationIR~t~^{asterisk}^`` be
+* the updated typing context ``TC~2~`` and ``declarationIR~t~^{asterisk}^`` be
 * the result of <<Decls_ok, typing ``declaration~t~^{asterisk}^`` under typing context ``TC~1~``>>.
-. Result in the updated typing context ``TC~2~`` and the typed declarations ``declarationIR~h~ {two-colons} declarationIR~t~^{asterisk}^``.
+. Result in the updated typing context ``TC~2~`` and ``declarationIR~h~ {two-colons} declarationIR~t~^{asterisk}^``.
 
 <<Program_ok, Program_ok>>:
 
@@ -10035,7 +10035,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``declaration^{asterisk}^`` be <<flatten_p4program, the list of declarations in ``p4program``>>.
 . Let ``TC~0~`` be <<empty_typingContext, an empty typing context>>.
 . Let 
-* the updated typing context ``TC~1~`` and the typed declarations ``declarationIR^{asterisk}^`` be
+* the updated typing context ``TC~1~`` and ``declarationIR^{asterisk}^`` be
 * the result of <<Decls_ok, typing ``declaration^{asterisk}^`` under typing context ``TC~0~``>>.
 . Result in the typed P4 program ``declarationIR^{asterisk}^ ;``.
 
@@ -10059,7 +10059,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Check that <<Expr_lvalue_ok, p TC |- typedExpressionIR~arg~>>.
  .. Result in ``typedExpressionIR~arg~``.
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList typeIR~param~ id constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList `EMPTY typeIR~param~ id constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``actctxt`` is ``ACTION``:
  .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
@@ -10235,7 +10235,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . Check that ``typeIR'`` has type ``headerStackTypeIR``.
-. Let ``parameterIR`` be ``INT "count" None``.
+. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
 . Let ``methodTypeIR`` be ``BUILTIN_METHOD ( [parameterIR] ) : INT``.
 . Result in the callable type ``methodTypeIR`` with fresh type variables ``·`` and default parameter ids ``·``.
 
@@ -11330,7 +11330,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``enumTypeDefIR`` be ``ENUM nameIR~enum~ < typeIR > { · }``.
 . Let ``value~enum~`` be ``nameIR~enum~ . nameIR . value``.
-. Let ``varTypeIR`` be ``enumTypeDefIR LCTK value~enum~``.
+. Let ``varTypeIR`` be ```EMPTY enumTypeDefIR LCTK value~enum~``.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Result in ``TC~1~``, ``nameIR = typedExpressionIR~cast~``, and ``value``.
 
@@ -11814,7 +11814,7 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
  .. Let ``tableActionReferenceIR~NoAction~`` be ``. "NoAction" ( · )``.
  .. If ``tableActionReferenceIR~NoAction~`` is not in ``tableActionReferenceIR^{asterisk}^``:
   ... Let ``TBLC~1~`` be ``<<add_action, add_action(TBLC, . "NoAction", ·, ·)>>``.
-  ... Let ``tableActionIR~NoAction~`` be ``tableActionReferenceIR~NoAction~ # ( · , · ) ;``.
+  ... Let ``tableActionIR~NoAction~`` be ```EMPTY tableActionReferenceIR~NoAction~ # ( · , · ) ;``.
   ... Let ``tablePropertyIR~h_updated~`` be ``ACTIONS = { tableActionIR^{asterisk}^ {pp} [tableActionIR~NoAction~] }``.
   ... Return ``(TBLC~1~, tablePropertyIR~h_updated~ {two-colons} tablePropertyIR~t~^{asterisk}^)``.
  .. Else:
@@ -12533,7 +12533,7 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 . Let ``tableEntryPriorityOptIR`` be ``<<tableObject_create_entry_priority, tableObject_create_entry_priority(tableEntryPriorityInterface)>>``.
 . Let ``keysetExpressionIR`` be ``<<tableObject_create_entry_keyset, tableObject_create_entry_keyset(TBL.KEYS, tableKeysetInterface)>>``.
 . Let ``tableActionReferenceIR`` be ``<<tableObject_create_entry_action, tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)>>``.
-. Let ``tableEntryIR~update~`` be ``None tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR ;``.
+. Let ``tableEntryIR~update~`` be ``None tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR `EMPTY ;``.
 . Let ``annotationList constOptIR ENTRIES = { tableEntryIR^{asterisk}^ }`` be ``TBL.ENTRIES``.
 . Let ``tableEntriesPropertyIR~updated~`` be ``annotationList constOptIR ENTRIES = { tableEntryIR^{asterisk}^ {pp} [tableEntryIR~update~] }``.
 . Let ``TBL~updated~`` be ``TBL[ENTRIES = tableEntriesPropertyIR~updated~]``.
@@ -12863,9 +12863,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<Expr_inst, ``p IC STO |- booleanLiteral # expressionNoteIR : % %``>>:
 
 . If ``booleanLiteral`` is ``TRUE``:
- .. Result in ``STO`` and ``true``.
+ .. Result in ``STO`` and ```B true``.
 . Else:
- .. Result in ``STO`` and ``false``.
+ .. Result in ``STO`` and ```B false``.
 
 <<Expr_inst, ``p IC STO |- integerLiteral # expressionNoteIR : % %``>>:
 
@@ -12903,26 +12903,26 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Result in ``STO~2~`` and <<bin_op, ``value~l~`` ``binop'`` ``value~r~``>>.
 . If ``binop'`` is ``&&``:
  .. Let <<Expr_inst, p IC STO |- typedExpressionIR~l~ : STO~1~ value>>.
- .. If ``value`` is equal to ``false``:
-  ... Result in ``STO~1~`` and ``false``.
- .. Else if ``value`` is equal to ``true``:
+ .. If ``value`` is equal to ```B false``:
+  ... Result in ``STO~1~`` and ```B false``.
+ .. Else if ``value`` is equal to ```B true``:
   ... Let <<Expr_inst, p IC STO~1~ |- typedExpressionIR~r~ : STO~2~ value~r~>>.
   ... Result in ``STO~2~`` and ``value~r~``.
 . Else if ``binop'`` is ``||``:
  .. Let <<Expr_inst, p IC STO |- typedExpressionIR~l~ : STO~1~ value>>.
- .. If ``value`` is equal to ``true``:
-  ... Result in ``STO~1~`` and ``true``.
- .. Else if ``value`` is equal to ``false``:
+ .. If ``value`` is equal to ```B true``:
+  ... Result in ``STO~1~`` and ```B true``.
+ .. Else if ``value`` is equal to ```B false``:
   ... Let <<Expr_inst, p IC STO~1~ |- typedExpressionIR~r~ : STO~2~ value~r~>>.
   ... Result in ``STO~2~`` and ``value~r~``.
 
 <<Expr_inst, ``p IC STO |- typedExpressionIR~cond~ ? typedExpressionIR~true~ : typedExpressionIR~false~ # expressionNoteIR : % %``>>:
 
 . Let <<Expr_inst, p IC STO |- typedExpressionIR~cond~ : STO~1~ value>>.
-. If ``value`` is equal to ``true``:
+. If ``value`` is equal to ```B true``:
  .. Let <<Expr_inst, p IC STO~1~ |- typedExpressionIR~true~ : STO~2~ value~true~>>.
  .. Result in ``STO~2~`` and ``value~true~``.
-. Else if ``value`` is equal to ``false``:
+. Else if ``value`` is equal to ```B false``:
  .. Let <<Expr_inst, p IC STO~1~ |- typedExpressionIR~false~ : STO~2~ value~false~>>.
  .. Result in ``STO~2~`` and ``value~false~``.
 
@@ -13123,10 +13123,10 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId, "_", typeId~fresh~]``>>.
 . Let ``objectId`` be ``IC.PATH {pp} [nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
-. Let ``constantDeclarationIR`` be ``CONST typeIR nameIR = ! objectId ;``.
+. Let ``constantDeclarationIR`` be ```EMPTY CONST typeIR nameIR = ! objectId ;``.
 . Let ``callableTargetIR`` be ``nameIR # ( typeIR CTK ) . "apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR < · > ( argumentListIR ) ;``.
-. Let ``blockStatementIR`` be ``{ [constantDeclarationIR, callStatementIR] }``.
+. Let ``blockStatementIR`` be ```EMPTY { [constantDeclarationIR, callStatementIR] }``.
 . Result in 
 * the instantiation context ``IC``,
 * the updated store ``STO~2~``,
@@ -13239,7 +13239,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<BlockElementStmt_inst, ``IC~0~ STO~0~ |- constantDeclarationIR : % % %``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and ``constantDeclarationIR~inst~`` be
+* the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
 * the result of <<ConstDecl_inst, instantiating ``constantDeclarationIR``, under cursor ``LOCAL``, and instantiation context ``IC~0~``>>.
 . Result in ``IC~1~``, ``STO~0~``, and ``constantDeclarationIR~inst~``.
 
@@ -13308,7 +13308,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ParserStmt_inst, ``IC~0~ STO |- constantDeclarationIR : % % %``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and ``constantDeclarationIR~inst~`` be
+* the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
 * the result of <<ConstDecl_inst, instantiating ``constantDeclarationIR``, under cursor ``LOCAL``, and instantiation context ``IC~0~``>>.
 . Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
 
@@ -13355,10 +13355,10 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH {pp} [nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``typeIR`` be ``typeId``.
-. Let ``constantDeclarationIR`` be ``CONST typeIR nameIR = ! objectId ;``.
+. Let ``constantDeclarationIR`` be ```EMPTY CONST typeIR nameIR = ! objectId ;``.
 . Let ``callableTargetIR`` be ``typeId # ( typeIR CTK ) . "apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR < · > ( argumentListIR ) ;``.
-. Let ``parserBlockStatementIR`` be ``{ [constantDeclarationIR, callStatementIR] }``.
+. Let ``parserBlockStatementIR`` be ```EMPTY { [constantDeclarationIR, callStatementIR] }``.
 . Result in ``IC~0~``, ``STO~2~``, and ``parserBlockStatementIR``.
 
 <<ParserStmt_inst, ``IC~0~ STO |- annotationList { parserStatementListIR } : % % %``>>:
@@ -13416,7 +13416,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ParserLocalDecl_inst, ``IC~0~ STO |- constantDeclarationIR : % % %``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and ``constantDeclarationIR~inst~`` be
+* the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
 * the result of <<ConstDecl_inst, instantiating ``constantDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
 . Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
 
@@ -13492,7 +13492,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ControlLocalDecl_inst, ``IC~0~ STO |- constantDeclarationIR : % % %``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and ``constantDeclarationIR~inst~`` be
+* the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
 * the result of <<ConstDecl_inst, instantiating ``constantDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
 . Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
 
@@ -13520,7 +13520,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH {pp} [nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object~table~``]>>.
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``! objectId`` is added to the ``BLOCK`` layer>>.
-. Let ``constantDeclarationIR`` be ``CONST typeIR nameIR = ! objectId ;``.
+. Let ``constantDeclarationIR`` be ```EMPTY CONST typeIR nameIR = ! objectId ;``.
 . Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ControlLocalDecls_inst, ControlLocalDecls_inst: ``IC STO |- controlLocalDeclarationIR^{asterisk}^ : % % %``>>
@@ -13547,17 +13547,13 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ConstDecl_inst, ConstDecl_inst>>:
 
 * Instantiating ``constantDeclarationIR``, under cursor ``cursor``, and instantiation context ``instContext``:
-* Results in 
- ** the updated instantiation context ``instContext'``,
- ** and ``constantDeclarationIR'``.
+* Results in the updated instantiation context ``instContext'`` and ``constantDeclarationIR'``.
 
 <<ConstDecl_inst, Instantiating ``annotationList CONST typeIR nameIR = value ;``, under cursor ``p``, and instantiation context ``IC~0~``>>:
 
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``value`` is added to the ``p`` layer>>.
 . Let ``constantDeclarationIR`` be ``annotationList CONST typeIR nameIR = value ;``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and ``constantDeclarationIR``.
+. Result in the updated instantiation context ``IC~1~`` and ``constantDeclarationIR``.
 
 <<InstDecl_inst, InstDecl_inst>>:
 
@@ -13582,7 +13578,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``objectId`` be ``IC~0~.PATH {pp} [nameIR]``.
  .. Let ``STO~3~`` be <<add_map, ``STO~2~``[``objectId`` := ``object~merged~``]>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``! objectId`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR`` be ``CONST typeIR nameIR = ! objectId ;``.
+ .. Let ``constantDeclarationIR`` be ```EMPTY CONST typeIR nameIR = ! objectId ;``.
  .. Result in 
 * the updated instantiation context ``IC~1~``,
 * the updated store ``STO~3~``,
@@ -13591,7 +13587,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``objectId`` be ``IC~0~.PATH {pp} [nameIR]``.
  .. Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``! objectId`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR`` be ``CONST typeIR nameIR = ! objectId ;``.
+ .. Let ``constantDeclarationIR`` be ```EMPTY CONST typeIR nameIR = ! objectId ;``.
  .. Result in 
 * the updated instantiation context ``IC~1~``,
 * the updated store ``STO~2~``,
@@ -13624,46 +13620,36 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<Decl_inst, Decl_inst>>:
 
 * Instantiating ``declarationIR``, under instantiation context ``instContext``, and store ``store``:
-* Results in 
- ** the updated instantiation context ``instContext'``,
- ** and the updated store ``store'``.
+* Results in the updated instantiation context ``instContext'`` and the updated store ``store'``.
 
 <<Decl_inst, Instantiating ``constantDeclarationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and ``constantDeclarationIR'`` be
+* the updated instantiation context ``IC~1~`` and ``constantDeclarationIR'`` be
 * the result of <<ConstDecl_inst, instantiating ``constantDeclarationIR``, under cursor ``GLOBAL``, and instantiation context ``IC~0~``>>.
 . Check that ``constantDeclarationIR'`` is equal to ``constantDeclarationIR``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``instantiationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let 
 * the updated instantiation context ``IC~1~``,the updated store ``STO~1~``,and the reference to the object ``++_++`` be
 * the result of <<InstDecl_inst, instantiating ``instantiationIR``, under cursor ``GLOBAL``, instantiation context ``IC~0~``, and store ``STO``>>.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO~1~``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO~1~``.
 
 <<Decl_inst, Instantiating ``functionDeclarationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let 
 * the updated instantiation context ``IC~1~`` be
 * the result of <<FuncDecl_inst, instantiating ``functionDeclarationIR``, under cursor ``GLOBAL``, and instantiation context ``IC~0~``>>.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``actionDeclarationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let 
 * the updated instantiation context ``IC~1~`` be
 * the result of <<ActionDecl_inst, instantiating ``actionDeclarationIR``, under cursor ``GLOBAL``, and instantiation context ``IC~0~``>>.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``ERROR { nameIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13682,9 +13668,7 @@ for each ``nameIR`` in ``nameIR^{asterisk}^``
 +
 for each ``nameIR`` in ``nameIR^{asterisk}^``
 . Let ``IC~1~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR~error~^{asterisk}^`` to each of ``value~error~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``MATCH_KIND { nameIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13696,18 +13680,14 @@ for each ``nameIR`` in ``nameIR^{asterisk}^``
 +
 for each ``nameIR`` in ``nameIR^{asterisk}^``
 . Let ``IC~1~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR^{asterisk}^`` to each of ``value~match_kind~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList EXTERN typeIR nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterListIR ) ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``callableId`` be ``<<callableId_IR, callableId_IR(nameIR, parameterListIR)>>``.
 . Let ``externFunctionDef`` be ``EXTERN_FUNCTION nameIR < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterListIR )``.
 . Let ``IC~1~`` be ``<<add_callableDef_overload_i, add_callableDef_overload_i(GLOBAL, IC~0~, callableId, externFunctionDef)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList EXTERN nameIR < typeParameterListIR , > { externConstructorPrototypeIR'^{asterisk}^ externMethodPrototypeIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13732,9 +13712,7 @@ for each ``externMethodPrototypeIR`` in ``externMethodPrototypeIR^{asterisk}^``
 . Let ``callableId~constructor~`` be ``<<callableId_IR, callableId_IR(nameIR, ·)>>``.
 . Let ``constructorDef`` be ``EXTERN nameIR < typeParameterListIR > ( · ) { externMethodPrototypeIR^{asterisk}^ }``.
 . Let ``IC~2~`` be ``<<add_constructorDef_i, add_constructorDef_i(IC~1~, callableId~constructor~, constructorDef)>>``.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO``.
 . Let ``callableId~method~^{asterisk}^`` be the list of ``callableId~method~``, obtained by repeating:
 +
 --
@@ -13767,27 +13745,21 @@ for each ``externConstructorPrototypeIR'`` in ``externConstructorPrototypeIR'^{a
 +
 for each ``externConstructorPrototypeIR'`` in ``externConstructorPrototypeIR'^{asterisk}^``
 . Let ``IC~2~`` be ``<<add_constructorDefs_i, add_constructorDefs_i(IC~1~, callableId~constructor~^{asterisk}^, constructorDef^{asterisk}^)>>``.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList PARSER nameIR < · > ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``callableId`` be ``<<callableId_IR, callableId_IR(nameIR, constructorParameterListIR)>>``.
 . Let ``constructorDef`` be ``PARSER ( parameterListIR ) ( constructorParameterListIR ) { parserLocalDeclarationListIR parserStateListIR }``.
 . Let ``IC~1~`` be ``<<add_constructorDef_i, add_constructorDef_i(IC~0~, callableId, constructorDef)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList CONTROL nameIR < · > ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``callableId`` be ``<<callableId_IR, callableId_IR(nameIR, constructorParameterListIR)>>``.
 . Let ``constructorDef`` be ``CONTROL ( parameterListIR ) ( constructorParameterListIR ) { controlLocalDeclarationListIR APPLY controlBodyIR }``.
 . Let ``IC~1~`` be ``<<add_constructorDef_i, add_constructorDef_i(IC~0~, callableId, constructorDef)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList ENUM nameIR { nameIR~field~^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13808,9 +13780,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 . Let ``IC~1~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR~enum_field~^{asterisk}^`` to each of ``value~enum_field~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
 . Let ``enumTypeDefIR`` be ``ENUM nameIR { nameIR~field~^{asterisk}^ }``.
 . Let ``IC~2~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~1~, nameIR, enumTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList ENUM typeIR nameIR { (nameIR~field~ = typedExpressionIR~field~)^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13832,9 +13802,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~``
 . Let ``IC~1~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR~serenum_field~^{asterisk}^`` to each of ``value~serenum_field~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
 . Let ``enumTypeDefIR`` be ``ENUM nameIR < typeIR > { (nameIR~field~ = value~field~ ;)^{asterisk}^ }``.
 . Let ``IC~2~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~1~, nameIR, enumTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO~1~``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO~1~``.
 
 <<Decl_inst, Instantiating ``annotationList STRUCT nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13847,9 +13815,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~``
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 . Let ``structTypeDefIR`` be ``STRUCT nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, structTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList HEADER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13862,9 +13828,7 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 . Let ``headerTypeDefIR`` be ``HEADER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, headerTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList HEADER_UNION nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { typeFieldIR^{asterisk}^ }``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13877,22 +13841,18 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 . Let ``headerUnionTypeDefIR`` be ``HEADER_UNION nameIR < typeParameterListIR , typeParameterListIR~inferred~ > { (typeIR~field~ nameIR~field~ ;)^{asterisk}^ }``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, headerUnionTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList TYPEDEF typedefIR nameIR ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . If let ``typeIR`` be ``typedefIR``:
  .. Let ``aliasTypeDefIR`` be ``TYPEDEF nameIR typeIR``.
  .. Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>``.
- .. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+ .. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 . Else:
  .. Let ``derivedTypeDeclarationIR`` be ``typedefIR``.
  .. Let 
-* the updated instantiation context ``IC~local~``,and the updated store ``++_++`` be
+* the updated instantiation context ``IC~local~`` and the updated store ``++_++`` be
 * the result of <<Decl_inst, instantiating ``derivedTypeDeclarationIR``, under instantiation context ``IC~0~``, and store an empty store>>.
  .. Let ``set<typeId>`` be <<dom_map, the domain of the map ``IC~local~.GLOBAL.TYPE``>>.
  .. Let ``set<typeId>'`` be <<dom_map, the domain of the map ``IC~0~.GLOBAL.TYPE``>>.
@@ -13904,41 +13864,31 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
   ... Let ``typeIR`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR``>>.
   ... Let ``aliasTypeDefIR`` be ``TYPEDEF nameIR typeIR``.
   ... Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>``.
-  ... Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+  ... Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
  .. Else:
   ... Check that (``·``, ``·``) is equal to <<typeParameterListIR_of_typeDefIR, the type parameters of ``typeDefIR``>>.
   ... Let ``typeIR`` be <<specialize_typeDefIR, ``typeDefIR`` specialized by ``·``>>.
   ... Let ``typedefTypeIR`` be ``TYPEDEF nameIR typeIR``.
   ... Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, typedefTypeIR)>>``.
-  ... Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+  ... Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList TYPE typeIR nameIR ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``aliasTypeDefIR`` be ``TYPE nameIR typeIR``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, aliasTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``parserObjectTypeDefIR`` be ``PARSER nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, parserObjectTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``controlObjectTypeDefIR`` be ``CONTROL nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )``.
 . Let ``IC~1~`` be ``<<add_typeDef_i, add_typeDef_i(GLOBAL, IC~0~, nameIR, controlObjectTypeDefIR)>>``.
-. Result in 
-* the updated instantiation context ``IC~1~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~1~`` and the updated store ``STO``.
 
 <<Decl_inst, Instantiating ``annotationList PACKAGE nameIR < typeParameterListIR , typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ ) ;``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -13954,40 +13904,31 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``callableId`` be ``<<callableId_IR, callableId_IR(nameIR, parameterIR^{asterisk}^)>>``.
 . Let ``constructorDef`` be ``PACKAGE < typeParameterListIR {pp} typeParameterListIR~inferred~ > ( parameterIR^{asterisk}^ )``.
 . Let ``IC~2~`` be ``<<add_constructorDef_i, add_constructorDef_i(IC~1~, callableId, constructorDef)>>``.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO``.
 
 <<Decls_inst, Decls_inst>>:
 
 * Instantiating ``declarationIR^{asterisk}^``, under instantiation context ``instContext``, and store ``store``:
-* Results in 
- ** the updated instantiation context ``instContext'``,
- ** and the updated store ``store'``.
+* Results in the updated instantiation context ``instContext'`` and the updated store ``store'``.
 
 <<Decls_inst, Instantiating ``·``, under instantiation context ``IC``, and store ``STO``>>:
 
-. Result in 
-* the updated instantiation context ``IC``,
-* and the updated store ``STO``.
+. Result in the updated instantiation context ``IC`` and the updated store ``STO``.
 
 <<Decls_inst, Instantiating ``declarationIR~h~ {two-colons} declarationIR~t~^{asterisk}^``, under instantiation context ``IC``, and store ``STO``>>:
 
 . Let 
-* the updated instantiation context ``IC~1~``,and the updated store ``STO~1~`` be
+* the updated instantiation context ``IC~1~`` and the updated store ``STO~1~`` be
 * the result of <<Decl_inst, instantiating ``declarationIR~h~``, under instantiation context ``IC``, and store ``STO``>>.
 . Let 
-* the updated instantiation context ``IC~2~``,and the updated store ``STO~2~`` be
+* the updated instantiation context ``IC~2~`` and the updated store ``STO~2~`` be
 * the result of <<Decls_inst, instantiating ``declarationIR~t~^{asterisk}^``, under instantiation context ``IC~1~``, and store ``STO~1~``>>.
-. Result in 
-* the updated instantiation context ``IC~2~``,
-* and the updated store ``STO~2~``.
+. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO~2~``.
 
 <<Program_inst, Program_inst>>:
 
 * Instantiating ``p4program``:
-* Results in 
- ** the global instantiation layer ``globalInstLayer``, and the store ``store``.
+* Results in the global instantiation layer ``globalInstLayer`` and the store ``store``.
 
 <<Program_inst, Instantiating ``p4program``>>:
 
@@ -13997,10 +13938,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``IC~0~`` be <<empty_instContext, an empty instantiation context>>.
 . Let ``STO~0~`` be <<empty_store, an empty store>>.
 . Let 
-* the updated instantiation context ``IC~1~``,and the updated store ``STO~1~`` be
+* the updated instantiation context ``IC~1~`` and the updated store ``STO~1~`` be
 * the result of <<Decls_inst, instantiating ``declarationIR^{asterisk}^``, under instantiation context ``IC~0~``, and store ``STO~0~``>>.
-. Result in 
-* the global instantiation layer ``IC~1~.GLOBAL``, and the store ``STO~1~``.
+. Result in the global instantiation layer ``IC~1~.GLOBAL`` and the store ``STO~1~``.
 
 <<Bind_arg, Bind_arg: ``p~caller~ IC~caller~ | p~callee~ IC~callee_0~ STO~0~ |- id argumentIR : % %``>>
 
@@ -14381,7 +14321,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Check that ``tableEntriesPropertyIR'^{asterisk}^`` is a list of length 1.
 . Let ``[tableEntriesPropertyIR]`` be ``tableEntriesPropertyIR'^{asterisk}^``.
 . Return ``tableEntriesPropertyIR``.
-. Return ``None ENTRIES = { · }``.
+. Return ```EMPTY None ENTRIES = { · }``.
 
 <<enter_e, enter_e(EC)>>
 
@@ -14618,7 +14558,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Else:
  .. Return ``<<find_map, find_map<nameIR, state>(EC.BLOCK.STATE, nameIR)>>``.
 
-<<subst_type_e, subst_type_e(cursor, EC, typeIR)>>
+<<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC`` from the ``cursor`` layer>>
 
 
 . If ``cursor`` is ``GLOBAL``:
@@ -14642,10 +14582,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Expr_eval, Evaluating <<typedExpressionIR, ``booleanLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If ``booleanLiteral`` is ``TRUE``:
- .. Let ``expressionResult`` be ``true``.
+ .. Let ``expressionResult`` be ```B true``.
  .. Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 . Else:
- .. Let ``expressionResult`` be ``false``.
+ .. Let ``expressionResult`` be ```B false``.
  .. Result in the updated evaluation context ``EC``, store ``STO`` and expression result ``expressionResult``.
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``integerLiteral`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
@@ -14711,10 +14651,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
  .. If let ``exitResult`` be ``expressionResult'``:
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
- .. Else if ``expressionResult'`` is equal to ``false``:
-  ... Let ``expressionResult`` be ``false``.
+ .. Else if ``expressionResult'`` is equal to ```B false``:
+  ... Let ``expressionResult`` be ```B false``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
- .. Else if ``expressionResult'`` is equal to ``true``:
+ .. Else if ``expressionResult'`` is equal to ```B true``:
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult''`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -14731,10 +14671,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
  .. If let ``exitResult`` be ``expressionResult'``:
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
- .. Else if ``expressionResult'`` is equal to ``true``:
-  ... Let ``expressionResult`` be ``true``.
+ .. Else if ``expressionResult'`` is equal to ```B true``:
+  ... Let ``expressionResult`` be ```B true``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
- .. Else if ``expressionResult'`` is equal to ``false``:
+ .. Else if ``expressionResult'`` is equal to ```B false``:
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult''`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -14753,12 +14693,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . If let ``exitResult`` be ``expressionResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
-. Else if ``expressionResult`` is equal to ``true``:
+. Else if ``expressionResult`` is equal to ```B true``:
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~true~`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~true~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
  .. Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~true~``.
-. Else if ``expressionResult`` is equal to ``false``:
+. Else if ``expressionResult`` is equal to ```B false``:
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~false~`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~false~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -15259,7 +15199,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Result in 
 * the evaluation context ``EC``,
 * the updated store ``STO``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 
 <<Stmt_eval, The compile-time evaluation of ``typedLvalueIR assignop' typedExpressionIR ;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -15291,7 +15231,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in 
 * the evaluation context ``EC~3~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 . Else if ``assignop'`` is ``=``:
  .. Check that ``storageReferenceResult`` has type ``continueResult<storageReference?>``.
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
@@ -15311,7 +15251,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in 
 * the evaluation context ``EC~3~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 
 <<Stmt_eval, The compile-time evaluation of ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -15340,7 +15280,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in 
 * the evaluation context ``EC~2~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 
 <<Stmt_eval, The compile-time evaluation of ``EXIT ;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -15370,7 +15310,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the evaluation context ``EC~cond~``,
 * the updated store ``STO~cond~``,
 * and the instantiated statement ``EXIT``.
- .. Else if ``expressionResult`` is equal to ``true``:
+ .. Else if ``expressionResult`` is equal to ```B true``:
   ... Let 
 * the evaluation context ``EC~then~``,the updated store ``STO~then~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
@@ -15378,11 +15318,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the evaluation context ``EC~then~``,
 * the updated store ``STO~then~``,
 * and the instantiated statement ``statementResult``.
- .. Else if ``expressionResult`` is equal to ``false``:
+ .. Else if ``expressionResult`` is equal to ```B false``:
   ... Result in 
 * the evaluation context ``EC~cond~``,
 * the updated store ``STO~cond~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 . Else:
  .. Let ``IF ( typedExpressionIR~cond~ ) statementIR~then~ ELSE statementIR~else~`` be ``conditionalStatementIR``.
  .. Let 
@@ -15393,7 +15333,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the evaluation context ``EC~cond~``,
 * the updated store ``STO~cond~``,
 * and the instantiated statement ``EXIT``.
- .. Else if ``expressionResult`` is equal to ``true``:
+ .. Else if ``expressionResult`` is equal to ```B true``:
   ... Let 
 * the evaluation context ``EC~then~``,the updated store ``STO~then~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
@@ -15401,7 +15341,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the evaluation context ``EC~then~``,
 * the updated store ``STO~then~``,
 * and the instantiated statement ``statementResult``.
- .. Else if ``expressionResult`` is equal to ``false``:
+ .. Else if ``expressionResult`` is equal to ```B false``:
   ... Let 
 * the evaluation context ``EC~else~``,the updated store ``STO~else~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR~else~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
@@ -15465,7 +15405,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * and the instantiated statement ``EXIT``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
-  ... Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(LOCAL, EC, typeIR)>>``.
+  ... Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC`` from the ``LOCAL`` layer>>.
   ... Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
   ... Let ``EC~3~`` be <<add_var_e, ``EC~2~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
   ... Let <<ForInLoop_eval, EC~3~ STO~1~ |- nameIR value^{asterisk}^ statementIR : EC~4~ STO~2~ statementResult>>.
@@ -15524,7 +15464,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 
 <<Stmt_eval, The compile-time evaluation of ``SWITCH ( typedExpressionIR ) { switchCaseIR^{asterisk}^ }``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -15551,7 +15491,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in 
 * the evaluation context ``EC~2~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ````.
+* and the instantiated statement ```EMPTY``.
 
 <<BlockElementStmt_eval, BlockElementStmt_eval: ``EC~0~ STO |- blockElementStatementIR : % % %``>>
 
@@ -15560,18 +15500,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~`` be
 * the result of <<ConstDecl_eval, evaluating ``constantDeclarationIR``, under cursor ``LOCAL``, and evaluation context ``EC~0~``>>.
-. Result in ``EC~1~``, ``STO``, and ````.
+. Result in ``EC~1~``, ``STO``, and ```EMPTY``.
 
 <<BlockElementStmt_eval, ``EC~0~ STO |- variableDeclarationIR : % % %``>>:
 
 . Let 
-* the updated evaluation context ``EC~1~``,the updated store ``STO~1~``,and the result ``declarationResult`` be
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . If let ``exitResult`` be ``declarationResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 . Else:
  .. Let ``continueEmptyResult`` be ``declarationResult``.
- .. Result in ``EC~1~``, ``STO~1~``, and ````.
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<BlockElementStmt_eval, ``EC~0~ STO |- statementIR : % % %``>>:
 
@@ -15585,7 +15525,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<BlockElementStmts_eval, ``evalContext store |- blockElementStatementIR^{asterisk}^ : % % %``>>:
 
 . If ``blockElementStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``:
  .. Let <<BlockElementStmt_eval, evalContext store |- blockElementStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
@@ -15614,16 +15554,16 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~`` be
 * the result of <<ConstDecl_eval, evaluating ``constantDeclarationIR``, under cursor ``LOCAL``, and evaluation context ``EC~0~``>>.
-. Result in ``EC~1~``, ``STO``, and ````.
+. Result in ``EC~1~``, ``STO``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- variableDeclarationIR : % % %``>>:
 
 . Let 
-* the updated evaluation context ``EC~1~``,the updated store ``STO~1~``,and the result ``declarationResult`` be
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``declarationResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``declarationResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ````.
+. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- emptyStatementIR : % % %``>>:
 
@@ -15632,7 +15572,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Stmt_eval, the compile-time evaluation of ``emptyStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ````.
+. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- assignmentStatementIR : % % %``>>:
 
@@ -15641,7 +15581,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Stmt_eval, the compile-time evaluation of ``assignmentStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ````.
+. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- callStatementIR : % % %``>>:
 
@@ -15651,7 +15591,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If let ``rejectTransitionResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ````.
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- parserConditionalStatementIR : % % %``>>:
 
@@ -15659,20 +15599,20 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
- .. If ``expressionResult`` is equal to ``true``:
+ .. If ``expressionResult`` is equal to ```B true``:
   ... Let <<ParserStmt_eval, EC~cond~ STO~cond~ |- parserStatementIR~then~ : EC~then~ STO~then~ parserStatementResult>>.
   ... Result in ``EC~then~``, ``STO~then~``, and ``parserStatementResult``.
- .. Else if ``expressionResult`` is equal to ``false``:
-  ... Result in ``EC~cond~``, ``STO~cond~``, and ````.
+ .. Else if ``expressionResult`` is equal to ```B false``:
+  ... Result in ``EC~cond~``, ``STO~cond~``, and ```EMPTY``.
 . Else:
  .. Let ``IF ( typedExpressionIR~cond~ ) parserStatementIR~then~ ELSE parserStatementIR~else~`` be ``parserConditionalStatementIR``.
  .. Let 
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
- .. If ``expressionResult`` is equal to ``true``:
+ .. If ``expressionResult`` is equal to ```B true``:
   ... Let <<ParserStmt_eval, EC~cond~ STO~cond~ |- parserStatementIR~then~ : EC~then~ STO~then~ parserStatementResult>>.
   ... Result in ``EC~then~``, ``STO~then~``, and ``parserStatementResult``.
- .. Else if ``expressionResult`` is equal to ``false``:
+ .. Else if ``expressionResult`` is equal to ```B false``:
   ... Let <<ParserStmt_eval, EC~cond~ STO~cond~ |- parserStatementIR~else~ : EC~else~ STO~else~ parserStatementResult>>.
   ... Result in ``EC~else~``, ``STO~else~``, and ``parserStatementResult``.
 
@@ -15681,7 +15621,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<ParserStmts_eval, ``evalContext store |- parserStatementIR^{asterisk}^ : % % %``>>:
 
 . If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``parserStatementIR~h~ {two-colons} parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``:
  .. Let <<ParserStmt_eval, evalContext store |- parserStatementIR~h~ : EC~1~ STO~1~ parserStatementResult'>>.
  .. If let ``rejectTransitionResult`` be ``parserStatementResult'``:
@@ -15768,7 +15708,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<ParserLocalDecl_eval, ``EC~0~ STO |- variableDeclarationIR : % %``>>:
 
 . Let 
-* the updated evaluation context ``EC~1~``,the updated store ``STO~1~``,and the result ``declarationResult`` be
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``declarationResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``declarationResult``.
@@ -15812,7 +15752,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
    .... Let ``b~miss~`` be ``~b~hit~``.
    .... Let ``nameIR`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
    .... Let ``tableMetadataEnumValue`` be ``TABLE_ENUM "action_list(" {pp} typeId {pp} ")" . nameIR``.
-   .... Let ``tableMetadataStructValue`` be ``TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT b~hit~ ; MISS b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }``.
+   .... Let ``tableMetadataStructValue`` be ``TABLE_STRUCT "apply_result(" {pp} typeId {pp} ")" { HIT `B b~hit~ ; MISS `B b~miss~ ; ACTION_RUN tableMetadataEnumValue ; }``.
    .... Result in ``EC~3~``, ``STO~3~``, and ``RETURN tableMetadataStructValue``.
 
 <<ControlBody_eval, ControlBody_eval: ``EC~0~ STO~0~ |- controlBodyIR : % % %``>>
@@ -15844,25 +15784,25 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~`` be
 * the result of <<ConstDecl_eval, evaluating ``constantDeclarationIR``, under cursor ``BLOCK``, and evaluation context ``EC~0~``>>.
-. Result in ``EC~1~``, ``STO``, and ````.
+. Result in ``EC~1~``, ``STO``, and ```EMPTY``.
 
 <<ControlLocalDecl_eval, ``EC~0~ STO |- variableDeclarationIR : % % %``>>:
 
 . Let 
-* the updated evaluation context ``EC~1~``,the updated store ``STO~1~``,and the result ``declarationResult`` be
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
 . If let ``exitResult`` be ``declarationResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 . Else:
  .. Let ``continueEmptyResult`` be ``declarationResult``.
- .. Result in ``EC~1~``, ``STO~1~``, and ````.
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ControlLocalDecls_eval, ControlLocalDecls_eval: ``evalContext store |- controlLocalDeclarationIR^{asterisk}^ : % % %``>>
 
 <<ControlLocalDecls_eval, ``evalContext store |- controlLocalDeclarationIR^{asterisk}^ : % % %``>>:
 
 . If ``controlLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR^{asterisk}^``:
  .. Let <<ControlLocalDecl_eval, evalContext store |- controlLocalDeclarationIR~h~ : EC~1~ STO~1~ declarationResult'>>.
  .. If let ``exitResult`` be ``declarationResult'``:
@@ -15876,20 +15816,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 * Evaluating ``variableDeclarationIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``:
 * Results in 
- ** the updated evaluation context ``evalContext'``,
- ** the updated store ``store'``,
+ ** the updated evaluation context ``evalContext'``, the updated store ``store'``,
  ** and the result ``declarationResult``.
 
 <<VarDecl_eval, Evaluating ``annotationList typeIR nameIR initializerIR^?^ ;``, under cursor ``p``, evaluation context ``EC~0~``, and store ``store``>>:
 
 . If ``initializerIR^?^`` is none:
- .. Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(BLOCK, EC~0~, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``BLOCK`` layer>>.
  .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
  .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``p`` layer>>.
  .. Result in 
-* the updated evaluation context ``EC~1~``,
-* the updated store ``store``,
-* and the result ````.
+* the updated evaluation context ``EC~1~``, the updated store ``store``,
+* and the result ```EMPTY``.
 . Else:
  .. Let ``= typedExpressionIR~init~`` be ``initializerIR^?^``.
  .. Let 
@@ -15898,14 +15836,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. If let ``value~init~`` be ``expressionResult``:
   ... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``p`` layer>>.
   ... Result in 
-* the updated evaluation context ``EC~2~``,
-* the updated store ``STO~1~``,
-* and the result ````.
+* the updated evaluation context ``EC~2~``, the updated store ``STO~1~``,
+* and the result ```EMPTY``.
  .. Else:
   ... Let ``exitResult`` be ``expressionResult``.
   ... Result in 
-* the updated evaluation context ``EC~1~``,
-* the updated store ``STO~1~``,
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,
 * and the result ``EXIT``.
 
 <<ConstDecl_eval, ConstDecl_eval>>:
@@ -15964,7 +15900,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
  .. Let ``storageReference`` be ``storageReference'^?^``.
- .. Let ``parameterIR`` be ``INT "count" None``.
+ .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
  .. Let ``builtinMethodCallee`` be ``BUILTIN_METHOD storageReference . "push_front" < · > ( [parameterIR] )``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``builtinMethodCallee``.
 . Else if ``nameIR'`` is equal to ``"pop_front"``:
@@ -15976,7 +15912,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
  .. Let ``storageReference`` be ``storageReference'^?^``.
- .. Let ``parameterIR`` be ``INT "count" None``.
+ .. Let ``parameterIR`` be ```EMPTY `EMPTY INT "count" None``.
  .. Let ``builtinMethodCallee`` be ``BUILTIN_METHOD storageReference . "pop_front" < · > ( [parameterIR] )``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``builtinMethodCallee``.
 . Else if ``nameIR'`` is equal to ``"isValid"``:
@@ -16149,7 +16085,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``EXIT``.
 . Else:
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
- .. Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(p~callee~, EC~callee_0~, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~callee_0~`` from the ``p~callee~`` layer>>.
  .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
  .. Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value~init~`` is added to the ``p~callee~`` layer>>.
  .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``storageReference^?^``.
@@ -16402,13 +16338,13 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
   ... Let <<Lvalue_read, p EC~0~ STO~0~ |- storageReference : value'>>.
   ... If let ``headerValue`` be ``value'``:
    .... Let ``HEADER ++_++ { b~valid~ ; ++_++^{asterisk}^ }`` be ``headerValue``.
-   .... Let ``returnResult`` be ``RETURN b~valid~``.
+   .... Let ``returnResult`` be ``RETURN `B b~valid~``.
    .... Result in the updated evaluation context ``EC~0~``, store ``STO~0~``, and call result ``returnResult``.
   ... Else if let ``headerUnionValue`` be ``value'``:
    .... Let ``HEADER_UNION typeId { fieldValue^{asterisk}^ }`` be ``headerUnionValue``.
    .... Let ``fieldValue~valid~^{asterisk}^`` be ``<<filter_, filter_<fieldValue>(fieldValue^{asterisk}^, isValid_fieldValue)>>``.
    .... Let ``b~valid~`` be ``fieldValue~valid~^{asterisk}^`` is equal to ``·``.
-   .... Let ``returnResult`` be ``RETURN b~valid~``.
+   .... Let ``returnResult`` be ``RETURN `B b~valid~``.
    .... Result in the updated evaluation context ``EC~0~``, store ``STO~0~``, and call result ``returnResult``.
  .. Else if ``text`` is equal to ``"setValid"``:
   ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
@@ -16677,7 +16613,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<ForUpdateStmts_eval, ``evalContext store |- forUpdateStatementIR^{asterisk}^ : % % %``>>:
 
 . If ``forUpdateStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``forUpdateStatementIR~h~ {two-colons} forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR^{asterisk}^``:
  .. Let <<ForUpdateStmt_eval, evalContext store |- forUpdateStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
@@ -16691,10 +16627,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<ForInitStmt_eval, ``EC~0~ store |- annotationList typeIR nameIR initializerIR'^?^ : % % %``>>:
 
 . If ``initializerIR'^?^`` is none:
- .. Let ``typeIR~subst~`` be ``<<subst_type_e, subst_type_e(LOCAL, EC~0~, typeIR)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``LOCAL`` layer>>.
  .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
  .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
- .. Result in ``EC~1~``, ``store``, and ````.
+ .. Result in ``EC~1~``, ``store``, and ```EMPTY``.
 . Else:
  .. Let ``= typedExpressionIR~init~`` be ``initializerIR'^?^``.
  .. Let 
@@ -16705,7 +16641,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Else:
   ... Let ``value~init~`` be ``expressionResult``.
   ... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
-  ... Result in ``EC~2~``, ``STO~1~``, and ````.
+  ... Result in ``EC~2~``, ``STO~1~``, and ```EMPTY``.
 
 <<ForInitStmt_eval, ``EC~0~ store |- forUpdateStatementIR : % % %``>>:
 
@@ -16717,7 +16653,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<ForInitStmts_eval, ``evalContext store |- forInitStatementIR^{asterisk}^ : % % %``>>:
 
 . If ``forInitStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``forInitStatementIR~h~ {two-colons} forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``:
  .. Let <<ForInitStmt_eval, evalContext store |- forInitStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
@@ -16735,9 +16671,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``exitResult`` be ``expressionResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
-. Else if ``expressionResult`` is equal to ``false``:
- .. Result in ``EC~1~``, ``STO~1~``, and ````.
-. Else if ``expressionResult`` is equal to ``true``:
+. Else if ``expressionResult`` is equal to ```B false``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+. Else if ``expressionResult`` is equal to ```B true``:
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~2~``,and the instantiated statement ``statementResult'`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -16746,11 +16682,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Else if let ``returnResult`` be ``statementResult'``:
   ... Result in ``EC~2~``, ``STO~2~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ````.
+  ... Result in ``EC~2~``, ``STO~2~``, and ```EMPTY``.
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~2~``,and the instantiated statement ``statementResult~loop~`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If ``statementResult~loop~`` is in ``[, CONTINUE]``:
+ .. If ``statementResult~loop~`` is in ``[`EMPTY, CONTINUE]``:
   ... Let <<ForUpdateStmts_eval, EC~2~ STO~2~ |- forUpdateStatementListIR : EC~3~ STO~3~ statementResult'>>.
   ... If let ``exitResult`` be ``statementResult'``:
    .... Result in ``EC~3~``, ``STO~3~``, and ``EXIT``.
@@ -16815,7 +16751,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<ForInLoop_eval, ``evalContext store |- nameIR value^{asterisk}^ statementIR : % % %``>>:
 
 . If ``value^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ````.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . Else if let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value^{asterisk}^``:
  .. Let ``EC~1~`` be ``<<update_var_e, update_var_e(LOCAL, evalContext, nameIR, value~h~)>>``.
  .. Let 
@@ -16826,11 +16762,11 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Else if let ``returnResult`` be ``statementResult'``:
   ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ````.
+  ... Result in ``EC~2~``, ``STO~1~``, and ```EMPTY``.
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult~loop~`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. If ``statementResult~loop~`` is in ``[, CONTINUE]``:
+ .. If ``statementResult~loop~`` is in ``[`EMPTY, CONTINUE]``:
   ... Let <<ForInLoop_eval, EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult>>.
   ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult``.
 
@@ -17099,7 +17035,7 @@ for each ``tableKeyValue`` in ``tableKeyValue^{asterisk}^``
  .. Check that ``tableCustomPropertyIR'`` matches pattern ``%  % CUSTOM_CONST %  % ;``.
  .. Let ``++_++ ++_++ CUSTOM_CONST ++_++ = value ;`` be ``tableCustomPropertyIR'``.
  .. Check that ``value`` has type ``boolValue``.
- .. Let ``b`` be ``value``.
+ .. Let ```B b`` be ``value``.
  .. Return ``b``.
 . Else if ``·`` is equal to ``<<filter_, filter_<tableCustomPropertyIR>(tableCustomPropertyIR^{asterisk}^, is_largest_priority_wins)>>``: return ``true``.
 
@@ -17203,7 +17139,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 <<Program_init, Initializing the evaluation context and store for ``p4program``>>:
 
 . Let 
-* the global instantiation layer ``globalEvalLayer``, and the store ``STO`` be
+* the global instantiation layer ``globalEvalLayer`` and the store ``STO`` be
 * the result of <<Program_inst, instantiating ``p4program``>>.
 . Let ``blockEvalLayer`` be {TYPE ``<<empty_theta, empty_theta>>``, CALLABLE ``<<empty_callableDefEnv, empty_callableDefEnv>>``, STATE ``<<empty_stateEnv, empty_stateEnv>>``, FRAME ``<<empty_frame, empty_frame>>``}.
 . Let ``localEvalLayer`` be {TYPE ``<<empty_theta, empty_theta>>``, FRAMES ``[<<empty_frame, empty_frame>>]``}.

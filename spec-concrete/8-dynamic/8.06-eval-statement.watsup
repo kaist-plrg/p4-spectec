@@ -7,7 +7,7 @@
 ;;; emptyStatementIR
 
 rule Stmt_eval/emptyStatementIR:
-  p EC STO |- `; : EC STO ``
+  p EC STO |- `; : EC STO `EMPTY
 
 ;;; assignmentStatementIR
 ;;; syntax assignmentStatementIR = typedLvalueIR assignop typedExpressionIR `;
@@ -52,7 +52,7 @@ rulegroup Stmt_eval/assignmentStatementIR {
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
     p EC_0 STO_0 |- typedLvalueIR `= typedExpressionIR `;
-                  : EC_3 STO_2 ``
+                  : EC_3 STO_2 `EMPTY
     ---- ;; evaluate l-value
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
@@ -68,7 +68,7 @@ rulegroup Stmt_eval/assignmentStatementIR {
 
   rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-cont:
     p EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
-                  : EC_3 STO_2 ``
+                  : EC_3 STO_2 `EMPTY
     ---- ;; evaluate l-value
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
@@ -127,7 +127,7 @@ rulegroup Stmt_eval/callStatementIR {
 
   rule Stmt_eval/callee-cont-call-return:
     p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                  : EC_2 STO_2 ``
+                  : EC_2 STO_2 `EMPTY
     -- Callee_eval:
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
                       : EC_1 STO_1 (`` callee)
@@ -212,7 +212,7 @@ rulegroup Stmt_eval/conditionalStatementIR {
 
   rule Stmt_eval/non-else-cont-false:
     p EC STO |- IF `( typedExpressionIR_cond ) statementIR_then
-              : EC_cond STO_cond ``
+              : EC_cond STO_cond `EMPTY
     -- Expr_eval:
         p EC STO |- typedExpressionIR_cond
                   : EC_cond STO_cond (`` (`B false))
@@ -290,7 +290,7 @@ relation ForUpdateStmts_eval:
 rulegroup ForUpdateStmts_eval {
 
   rule ForUpdateStmts_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
   rule ForUpdateStmts_eval/cons-head-exit:
     EC_0 STO_0 |- forUpdateStatementIR_h :: forUpdateStatementIR_t*
@@ -302,7 +302,7 @@ rulegroup ForUpdateStmts_eval {
     EC_0 STO_0 |- forUpdateStatementIR_h :: forUpdateStatementIR_t*
                 : EC_2 STO_2 statementResult
     -- ForUpdateStmt_eval:
-        EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 ``
+        EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 `EMPTY
     -- ForUpdateStmts_eval:
         EC_1 STO_1 |- forUpdateStatementIR_t* : EC_2 STO_2 statementResult
 
@@ -321,7 +321,7 @@ rulegroup ForInitStmt_eval/variableDeclarationIR {
 
   rule ForInitStmt_eval/non-initializer:
     EC_0 STO |- annotationList typeIR nameIR eps
-              : EC_1 STO ``
+              : EC_1 STO `EMPTY
     ---- ;; get initial value
     -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
     -- if value_init = $default(typeIR_subst)
@@ -338,7 +338,7 @@ rulegroup ForInitStmt_eval/variableDeclarationIR {
 
   rule ForInitStmt_eval/initializer-cont:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init)
-                : EC_2 STO_1 ``
+                : EC_2 STO_1 `EMPTY
     ---- ;; evaluate initializer
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR_init
@@ -366,7 +366,7 @@ relation ForInitStmts_eval:
 rulegroup ForInitStmts_eval {
 
   rule ForInitStmts_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
   rule ForInitStmts_eval/cons-head-exit:
     EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
@@ -378,7 +378,7 @@ rulegroup ForInitStmts_eval {
     EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
                 : EC_2 STO_2 statementResult
     -- ForInitStmt_eval:
-        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 ``
+        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 `EMPTY
     -- ForInitStmts_eval:
         EC_1 STO_1 |- forInitStatementIR_t* : EC_2 STO_2 statementResult
 
@@ -403,7 +403,7 @@ rulegroup ForThreeClauseLoop_eval {
 
   rule ForThreeClauseLoop_eval/cond-false:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_1 STO_1 ``
+                : EC_1 STO_1 `EMPTY
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B false))
 
@@ -425,7 +425,7 @@ rulegroup ForThreeClauseLoop_eval {
 
   rule ForThreeClauseLoop_eval/cond-true-loop-break:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_2 STO_2 ``
+                : EC_2 STO_2 `EMPTY
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
@@ -438,7 +438,7 @@ rulegroup ForThreeClauseLoop_eval {
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
     -- ForUpdateStmts_eval: 
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 EXIT
 
@@ -449,9 +449,9 @@ rulegroup ForThreeClauseLoop_eval {
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
     -- ForUpdateStmts_eval:
-        EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 ``
+        EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 `EMPTY
     -- ForThreeClauseLoop_eval: 
         EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
                     : EC_4 STO_4 statementResult
@@ -479,7 +479,7 @@ rulegroup Stmt_eval/forStatementIR-three-clause {
                       : EC_4 STO_2 statementResult
     -- if EC_1 = $enter_e(EC_0)
     -- ForInitStmts_eval:
-        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 ``
+        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 `EMPTY
     -- ForThreeClauseLoop_eval:
         EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR
                     : EC_3 STO_2 statementResult
@@ -575,7 +575,7 @@ relation ForInLoop_eval:
 rulegroup ForInLoop_eval {
 
   rule ForInLoop_eval/nil:
-    EC STO |- nameIR eps statementIR : EC STO ``
+    EC STO |- nameIR eps statementIR : EC STO `EMPTY
 
   rule ForInLoop_eval/cons-loop-exit:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
@@ -591,7 +591,7 @@ rulegroup ForInLoop_eval {
 
   rule ForInLoop_eval/cons-loop-break:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
-                : EC_2 STO_1 ``
+                : EC_2 STO_1 `EMPTY
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 BREAK
 
@@ -600,7 +600,7 @@ rulegroup ForInLoop_eval {
                 : EC_3 STO_2 statementResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
-    -- if statementResult_loop <- [ ``, CONTINUE ]
+    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
     -- ForInLoop_eval:
         EC_2 STO_1 |- nameIR value_t* statementIR : EC_3 STO_2 statementResult
 
@@ -840,7 +840,7 @@ rulegroup Stmt_eval/switchStatementIR-table {
 
   rule Stmt_eval/target-cont-no-match:
     LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                      : EC_1 STO_1 ``
+                      : EC_1 STO_1 `EMPTY
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
@@ -876,7 +876,7 @@ rulegroup Stmt_eval/switchStatementIR-general {
 
   rule Stmt_eval/target-cont-no-match:
     LOCAL EC_0 STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                      : EC_2 STO_2 ``
+                      : EC_2 STO_2 `EMPTY
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` value)
@@ -897,7 +897,7 @@ rulegroup Stmt_eval/switchStatementIR-general {
 
 rule BlockElementStmt_eval/constantDeclarationIR:
   EC_0 STO |- constantDeclarationIR
-            : EC_1 STO ``
+            : EC_1 STO `EMPTY
   -- ConstDecl_eval:
       LOCAL EC_0 |- constantDeclarationIR : EC_1
 
@@ -914,10 +914,10 @@ rulegroup BlockElementStmt_eval/variableDeclarationIR {
 
   rule BlockElementStmt_eval/cont:
     EC_0 STO_0 |- variableDeclarationIR
-                : EC_1 STO_1 ``
+                : EC_1 STO_1 `EMPTY
     -- VarDecl_eval:
         LOCAL EC_0 STO_0 |- variableDeclarationIR
-                          : EC_1 STO_1 ``
+                          : EC_1 STO_1 `EMPTY
 
 }
 
@@ -937,7 +937,7 @@ rule BlockElementStmt_eval/statementIR:
 rulegroup BlockElementStmts_eval {
 
   rule BlockElementStmts_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
   rule BlockElementStmts_eval/cons-head-exit:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
@@ -972,7 +972,7 @@ rulegroup BlockElementStmts_eval {
                 : EC_2 STO_2 statementResult
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 ``
+                    : EC_1 STO_1 `EMPTY
     -- BlockElementStmts_eval:
         EC_1 STO_1 |- blockElementStatementIR_t*
                     : EC_2 STO_2 statementResult

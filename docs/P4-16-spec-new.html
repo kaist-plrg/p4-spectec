@@ -9882,7 +9882,7 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Check that <code>~<a href="#is_synthesizedTypeIR">is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = </code>.</p>
+<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = `EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -9908,7 +9908,7 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = </code>.</p>
+<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = `EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -9921,7 +9921,7 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = </code>.</p>
+<p>Check that <code><a href="#is_stringTypeIR">is_stringTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_arbitraryIntTypeIR">is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a> \/ <a href="#is_objectTypeIR">is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction = `EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -12445,7 +12445,7 @@ be used to maintain state between different network packets.</p>
 <div id="declarationResult" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax continueEmptyResult =
-   | `
+   | `EMPTY
 
 syntax exitResult =
    | EXIT
@@ -12466,12 +12466,12 @@ defined by the following rule:</p>
 <div class="content">
 <pre>rulegroup VarDecl_eval:
   rule VarDecl_eval/non-initializer:
-  p EC_0 STO |- annotationList typeIR nameIR eps ; : EC_1 STO `
+  p EC_0 STO |- annotationList typeIR nameIR eps ; : EC_1 STO `EMPTY
  -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
  -- if value_init = $default(typeIR_subst)
  -- if EC_1 = $add_var_e(p, EC_0, ` nameIR, value_init)
   rule VarDecl_eval/initializer-cont:
-  p EC_0 STO_0 |- annotationList typeIR nameIR (= typedExpressionIR_init) ; : EC_2 STO_1 `
+  p EC_0 STO_0 |- annotationList typeIR nameIR (= typedExpressionIR_init) ; : EC_2 STO_1 `EMPTY
  -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_init : EC_1 STO_1 (` value_init)
  -- if EC_2 = $add_var_e(p, EC_1, ` nameIR, value_init)
   rule VarDecl_eval/initializer-exit:
@@ -12514,7 +12514,7 @@ defined by the following rule:</p>
 <p>the updated evaluation context <code>EC<sub>1</sub></code>, the updated store <code>store</code>,</p>
 </li>
 <li>
-<p>and the result <code>``</code>.</p>
+<p>and the result <code>`EMPTY</code>.</p>
 </li>
 </ul>
 </div>
@@ -12557,7 +12557,7 @@ defined by the following rule:</p>
 <p>the updated evaluation context <code>EC<sub>2</sub></code>, the updated store <code>STO<sub>1</sub></code>,</p>
 </li>
 <li>
-<p>and the result <code>``</code>.</p>
+<p>and the result <code>`EMPTY</code>.</p>
 </li>
 </ul>
 </div>
@@ -12775,7 +12775,7 @@ The following are all legal constant declarations:</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>typeIR LCTK value</code> is added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>`EMPTY typeIR LCTK value</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>constantDeclarationIR</code> be <code>annotationList CONST typeIR nameIR = value ;</code>.</p>
@@ -13834,7 +13834,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>varTypeIR</code> be <code>ERROR LCTK value<sub>error</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY ERROR LCTK value<sub>error</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14044,7 +14044,7 @@ cannot declare new match kinds.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>varTypeIR</code> be <code>MATCH_KIND LCTK value<sub>match_kind</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY MATCH_KIND LCTK value<sub>match_kind</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -14724,7 +14724,7 @@ syntax externObjectDeclarationIR =
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_ok">Typing <code>annotationList PARSER name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#Decl_ok">Typing <code>annotationList PARSER name `EMPTY ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14938,7 +14938,7 @@ syntax externObjectDeclarationIR =
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_ok">Typing <code>annotationList CONTROL name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#Decl_ok">Typing <code>annotationList CONTROL name `EMPTY ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15275,7 +15275,7 @@ syntax enumTypeDeclarationIR =
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>varTypeIR</code> be <code>enumTypeDefIR LCTK value<sub>field</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY enumTypeDefIR LCTK value<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -15447,7 +15447,7 @@ syntax enumTypeDeclarationIR =
 <p>Let <code>value<sub>enum</sub></code> be <code>nameIR<sub>enum</sub> . nameIR . value</code>.</p>
 </li>
 <li>
-<p>Let <code>varTypeIR</code> be <code>enumTypeDefIR LCTK value<sub>enum</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY enumTypeDefIR LCTK value<sub>enum</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>varTypeIR</code> is added to the <code>BLOCK</code> layer</a>.</p>
@@ -15571,7 +15571,7 @@ syntax enumTypeDeclarationIR =
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>varTypeIR</code> be <code>enumTypeDefIR LCTK value<sub>field</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY enumTypeDefIR LCTK value<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
@@ -19151,7 +19151,7 @@ invoked.</p>
 <p><code>expressionIR</code> annotated with type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>_</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Expr_ok">typing <code>namedType ( )</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Expr_ok">typing <code>namedType ( `EMPTY )</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -19181,10 +19181,10 @@ invoked.</p>
 <p>Let <code>nameIR<sub>object</sub></code> be <code>"__direct_application"</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC</code> where <code>nameIR<sub>object</sub></code> to <code>typeIR<sub>object</sub> CTK None</code> is added to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC</code> where <code>nameIR<sub>object</sub></code> to <code>`EMPTY typeIR<sub>object</sub> CTK None</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>lvalue</code> be <code>nameIR<sub>object</sub> . "apply"</code>.</p>
+<p>Let <code>lvalue</code> be <code>`ID nameIR<sub>object</sub> . `ID "apply"</code>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -19305,7 +19305,7 @@ invoked.</p>
 <p>Let <code>STO<sub>2</sub></code> be <a href="#add_map"><code>STO<sub>1</sub></code>[<code>objectId</code> := <code>object</code>]</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>CONST typeIR nameIR = ! objectId ;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY CONST typeIR nameIR = ! objectId ;</code>.</p>
 </li>
 <li>
 <p>Let <code>callableTargetIR</code> be <code>nameIR # ( typeIR CTK ) . "apply"</code>.</p>
@@ -19314,7 +19314,7 @@ invoked.</p>
 <p>Let <code>callStatementIR</code> be <code>callableTargetIR &lt; · &gt; ( argumentListIR ) ;</code>.</p>
 </li>
 <li>
-<p>Let <code>blockStatementIR</code> be <code>{ [constantDeclarationIR, callStatementIR] }</code>.</p>
+<p>Let <code>blockStatementIR</code> be <code>`EMPTY { [constantDeclarationIR, callStatementIR] }</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -20528,7 +20528,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
  -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (` (`B true))
  -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
   rule Stmt_eval/non-else-cont-false:
-  p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC_cond STO_cond `
+  p EC STO |- IF `(typedExpressionIR_cond) statementIR_then : EC_cond STO_cond `EMPTY
  -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond (` (`B false))
   rule Stmt_eval/else-exit:
   p EC STO |- IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else : EC_cond STO_cond EXIT
@@ -20598,7 +20598,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> is equal to <code>true</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -20634,7 +20634,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> is equal to <code>false</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -20648,7 +20648,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <p>the updated store <code>STO<sub>cond</sub></code>,</p>
 </li>
 <li>
-<p>and the instantiated statement <code>``</code>.</p>
+<p>and the instantiated statement <code>`EMPTY</code>.</p>
 </li>
 </ul>
 </div>
@@ -20703,7 +20703,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> is equal to <code>true</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -20739,7 +20739,7 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 </div>
 </li>
 <li>
-<p>Else if <code>expressionResult</code> is equal to <code>false</code>:</p>
+<p>Else if <code>expressionResult</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -21906,7 +21906,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in <code>true</code>.</p>
+<p>Result in <code>`B true</code>.</p>
 </li>
 </ol>
 </div>
@@ -21916,7 +21916,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in <code>false</code>.</p>
+<p>Result in <code>`B false</code>.</p>
 </li>
 </ol>
 </div>
@@ -21957,7 +21957,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in <code>STO</code> and <code>true</code>.</p>
+<p>Result in <code>STO</code> and <code>`B true</code>.</p>
 </li>
 </ol>
 </div>
@@ -21967,7 +21967,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in <code>STO</code> and <code>false</code>.</p>
+<p>Result in <code>STO</code> and <code>`B false</code>.</p>
 </li>
 </ol>
 </div>
@@ -24047,17 +24047,17 @@ syntax binaryExpressionIR =
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>false</code>:</p>
+<p>If <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>false</code>.</p>
+<p>Result in <code>`B false</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>true</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -24080,17 +24080,17 @@ syntax binaryExpressionIR =
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>true</code>:</p>
+<p>If <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>true</code>.</p>
+<p>Result in <code>`B true</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>false</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -24175,17 +24175,17 @@ syntax binaryExpressionIR =
 <p>Let <a href="#Expr_inst">p IC STO |- typedExpressionIR<sub>l</sub> : STO<sub>1</sub> value</a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>false</code>:</p>
+<p>If <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>false</code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>`B false</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>true</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -24208,17 +24208,17 @@ syntax binaryExpressionIR =
 <p>Let <a href="#Expr_inst">p IC STO |- typedExpressionIR<sub>l</sub> : STO<sub>1</sub> value</a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>true</code>:</p>
+<p>If <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in <code>STO<sub>1</sub></code> and <code>true</code>.</p>
+<p>Result in <code>STO<sub>1</sub></code> and <code>`B true</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>false</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -24397,7 +24397,7 @@ syntax ternaryExpressionIR =
 <p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>cond</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>true</code>:</p>
+<p>If <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -24410,7 +24410,7 @@ syntax ternaryExpressionIR =
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>false</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -24461,7 +24461,7 @@ syntax ternaryExpressionIR =
 <p>Let <a href="#Expr_inst">p IC STO |- typedExpressionIR<sub>cond</sub> : STO<sub>1</sub> value</a>.</p>
 </li>
 <li>
-<p>If <code>value</code> is equal to <code>true</code>:</p>
+<p>If <code>value</code> is equal to <code>`B true</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -24474,7 +24474,7 @@ syntax ternaryExpressionIR =
 </div>
 </li>
 <li>
-<p>Else if <code>value</code> is equal to <code>false</code>:</p>
+<p>Else if <code>value</code> is equal to <code>`B false</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>

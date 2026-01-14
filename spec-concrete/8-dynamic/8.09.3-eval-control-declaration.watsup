@@ -8,7 +8,7 @@
 
 rule ControlLocalDecl_eval/constantDeclarationIR:
   EC_0 STO |- constantDeclarationIR
-            : EC_1 STO ``
+            : EC_1 STO `EMPTY
   -- ConstDecl_eval:
       BLOCK EC_0 |- constantDeclarationIR : EC_1
 
@@ -28,10 +28,10 @@ rulegroup ControlLocalDecl_eval/variableDeclarationIR {
 
   rule ControlLocalDecl_eval/cont:
     EC_0 STO_0 |- variableDeclarationIR
-                : EC_1 STO_1 ``
+                : EC_1 STO_1 `EMPTY
     -- VarDecl_eval:
         BLOCK EC_0 STO_0 |- variableDeclarationIR
-                          : EC_1 STO_1 ``
+                          : EC_1 STO_1 `EMPTY
 
 }
 
@@ -50,7 +50,7 @@ rulegroup ControlLocalDecl_eval/variableDeclarationIR {
 rulegroup ControlLocalDecls_eval {
 
   rule ControlLocalDecls_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
    rule ControlLocalDecls_eval/cons-head-exit:
     EC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t
@@ -64,7 +64,7 @@ rulegroup ControlLocalDecls_eval {
                 : EC_2 STO_2 declarationResult
     -- ControlLocalDecl_eval:
         EC_0 STO_0 |- controlLocalDeclarationIR_h
-                    : EC_1 STO_1 ``
+                    : EC_1 STO_1 `EMPTY
     -- ControlLocalDecls_eval:
         EC_1 STO_1 |- controlLocalDeclarationListIR_t
                     : EC_2 STO_2 declarationResult

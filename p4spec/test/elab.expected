@@ -303,7 +303,7 @@ def $modulo_42(nat) : nat =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:6.1-7.7
 syntax trailingCommaOpt = 
-   | 
+   | `empty
    | ,
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:14.1-15.10
@@ -323,15 +323,15 @@ syntax stringLiteral =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:43.21-43.29
 syntax identifier = 
-   | text
+   | `id text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:44.25-44.34
 syntax typeIdentifier = 
-   | text
+   | `tid text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:51.1-53.30
 syntax nonTypeName = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -342,7 +342,7 @@ syntax nonTypeName =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:56.1-57.23
 syntax prefixedNonTypeName = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -350,20 +350,20 @@ syntax prefixedNonTypeName =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:63.19-63.33
 syntax typeName = typeIdentifier
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:66.1-67.21
 syntax prefixedTypeName = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:74.1-76.36
 syntax tableCustomName = 
-   | text
-   | text
+   | `id text
+   | `tid text
    | apply
    | state
    | type
@@ -371,7 +371,7 @@ syntax tableCustomName =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:83.1-85.9
 syntax name = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -379,12 +379,12 @@ syntax name =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:88.1-89.21
 syntax nameList = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -392,7 +392,7 @@ syntax nameList =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
    | nameList , name
 
@@ -414,7 +414,7 @@ syntax member = name
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.45
 syntax direction = 
-   | 
+   | `empty
    | in
    | out
    | inout
@@ -440,8 +440,8 @@ syntax specializedType =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:138.1-139.20
 syntax namedType = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:145.26-145.51
@@ -470,8 +470,8 @@ syntax type =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -491,21 +491,21 @@ syntax typeOrVoid =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
-   | text
+   | `id text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:181.24-181.28
 syntax typeParameter = name
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:184.1-185.39
 syntax typeParameterList = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -513,7 +513,7 @@ syntax typeParameterList =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
    | typeParameterList , typeParameter
 
@@ -532,7 +532,7 @@ def $flatten_typeParameterList(typeParameterList) : typeParameter* =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:194.1-195.27
 syntax typeParameterListOpt = 
-   | 
+   | `empty
    | < typeParameterList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:197.1-198.53
@@ -558,7 +558,7 @@ syntax nonEmptyParameterList =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:217.1-218.26
 syntax parameterList = 
-   | 
+   | `empty
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
@@ -589,7 +589,7 @@ syntax constructorParameterList = parameterList
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:236.1-237.23
 syntax constructorParameterListOpt = 
-   | 
+   | `empty
    | ( parameterList )
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:239.1-241.60
@@ -637,7 +637,7 @@ syntax literalExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:280.1-281.9
 syntax referenceExpression = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -645,7 +645,7 @@ syntax referenceExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:287.28-287.32
@@ -776,7 +776,7 @@ syntax expression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -784,7 +784,7 @@ syntax expression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -803,14 +803,14 @@ syntax expression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:414.1-416.33
 syntax expressionList = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -818,7 +818,7 @@ syntax expressionList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -855,15 +855,15 @@ def $flatten_expressionList(expressionList) : expression* =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:426.1-427.15
 syntax memberAccessBase = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -871,7 +871,7 @@ syntax memberAccessBase =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -900,14 +900,14 @@ syntax recordElementExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:438.1-439.28
 syntax dataElementExpression = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -915,7 +915,7 @@ syntax dataElementExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -951,7 +951,7 @@ syntax callTarget =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -959,7 +959,7 @@ syntax callTarget =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -975,8 +975,8 @@ syntax callTarget =
    | callTarget ( argumentList )
    | callableTarget < realTypeArgumentList >( argumentList )
    | ( expression )
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:453.1-461.28
@@ -987,7 +987,7 @@ syntax expressionNonBrace =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -995,7 +995,7 @@ syntax expressionNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1011,15 +1011,15 @@ syntax expressionNonBrace =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:464.1-465.23
 syntax memberAccessBaseNonBrace = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1027,7 +1027,7 @@ syntax memberAccessBaseNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1052,7 +1052,7 @@ syntax callTargetNonBrace =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1060,7 +1060,7 @@ syntax callTargetNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1073,8 +1073,8 @@ syntax callTargetNonBrace =
    | callTargetNonBrace ( argumentList )
    | callableTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:473.1-474.54
@@ -1184,7 +1184,7 @@ syntax simpleKeysetExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1192,7 +1192,7 @@ syntax simpleKeysetExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1221,7 +1221,7 @@ syntax simpleKeysetExpressionList =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1229,7 +1229,7 @@ syntax simpleKeysetExpressionList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1280,7 +1280,7 @@ syntax keysetExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1288,7 +1288,7 @@ syntax keysetExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1328,8 +1328,8 @@ syntax realTypeArgument =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -1351,8 +1351,8 @@ syntax realTypeArgumentList =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -1388,15 +1388,15 @@ syntax typeArgument =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
    | _
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1407,7 +1407,7 @@ syntax typeArgument =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:582.1-584.37
 syntax typeArgumentList = 
-   | 
+   | `empty
    | bool
    | error
    | match_kind
@@ -1420,15 +1420,15 @@ syntax typeArgumentList =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
    | _
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1463,7 +1463,7 @@ syntax argument =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1471,7 +1471,7 @@ syntax argument =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1499,7 +1499,7 @@ syntax argumentListNonEmpty =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1507,7 +1507,7 @@ syntax argumentListNonEmpty =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1530,14 +1530,14 @@ syntax argumentListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:608.1-609.25
 syntax argumentList = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1545,7 +1545,7 @@ syntax argumentList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1587,7 +1587,7 @@ def $flatten_argumentList(argumentList) : argument* =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:623.1-627.16
 syntax lvalue = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1595,7 +1595,7 @@ syntax lvalue =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | lvalue . member
    | lvalue [ expression ]
@@ -1797,7 +1797,7 @@ syntax forUpdateStatementListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:758.1-759.35
 syntax forUpdateStatementList = 
-   | 
+   | `empty
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
    | lvalue assignop expression
@@ -1839,7 +1839,7 @@ syntax forInitStatementListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:780.1-781.33
 syntax forInitStatementList = 
-   | 
+   | `empty
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
@@ -1873,7 +1873,7 @@ syntax forCollectionExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1881,7 +1881,7 @@ syntax forCollectionExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1914,7 +1914,7 @@ syntax switchLabel =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1922,7 +1922,7 @@ syntax switchLabel =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1943,7 +1943,7 @@ syntax switchCase =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:816.1-817.30
 syntax switchCaseList = 
-   | 
+   | `empty
    | switchCaseList switchCase
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:819.1-820.50
@@ -2000,7 +2000,7 @@ syntax constantDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:867.1-868.16
 syntax initializerOpt = 
-   | 
+   | `empty
    | = expression
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:871.3-871.45
@@ -2031,7 +2031,7 @@ syntax blockElementStatement =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:879.1-880.52
 syntax blockElementStatementList = 
-   | 
+   | `empty
    | blockElementStatementList blockElementStatement
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:882.1-884.62
@@ -2075,7 +2075,7 @@ syntax objectDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:926.1-927.44
 syntax objectDeclarationList = 
-   | 
+   | `empty
    | objectDeclarationList objectDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:929.1-930.57
@@ -2109,7 +2109,7 @@ syntax typeField =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:968.1-969.28
 syntax typeFieldList = 
-   | 
+   | `empty
    | typeFieldList typeField
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:971.1-972.49
@@ -2158,8 +2158,8 @@ syntax typedef =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -2196,7 +2196,7 @@ syntax externConstructorOrMethodPrototype =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1023.1-1024.78
 syntax externConstructorOrMethodPrototypeList = 
-   | 
+   | `empty
    | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1026.1-1029.77
@@ -2226,7 +2226,7 @@ syntax selectCase =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1057.1-1058.30
 syntax selectCaseList = 
-   | 
+   | `empty
    | selectCaseList selectCase
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1060.1-1061.50
@@ -2252,7 +2252,7 @@ syntax stateExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1077.1-1078.31
 syntax transitionStatement = 
-   | 
+   | `empty
    | transition stateExpression
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1085.1-1087.21
@@ -2270,8 +2270,8 @@ syntax valueSetType =
    | varbit< int >
    | varbit<( expression )>
    | tuple< typeArgumentList >
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1090.3-1090.69
 syntax valueSetDeclaration = 
@@ -2305,7 +2305,7 @@ syntax parserStatement =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1122.1-1123.40
 syntax parserStatementList = 
-   | 
+   | `empty
    | parserStatementList parserStatement
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1125.1-1126.55
@@ -2352,7 +2352,7 @@ syntax parserLocalDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1151.1-1152.54
 syntax parserLocalDeclarationList = 
-   | 
+   | `empty
    | parserLocalDeclarationList parserLocalDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1154.1-1156.63
@@ -2377,7 +2377,7 @@ syntax const =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1179.1-1180.10
 syntax constOpt = 
-   | 
+   | `empty
    | const
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1182.1-1183.54
@@ -2398,7 +2398,7 @@ syntax tableKey =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1194.1-1195.26
 syntax tableKeyList = 
-   | 
+   | `empty
    | tableKeyList tableKey
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1197.1-1198.48
@@ -2415,7 +2415,7 @@ def $flatten_tableKeyList(tableKeyList) : tableKey* =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1208.1-1209.42
 syntax tableActionReference = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -2423,7 +2423,7 @@ syntax tableActionReference =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | prefixedNonTypeName ( argumentList )
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1211.22-1211.60
@@ -2432,7 +2432,7 @@ syntax tableAction =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1214.1-1215.32
 syntax tableActionList = 
-   | 
+   | `empty
    | tableActionList tableAction
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1217.1-1218.51
@@ -2459,7 +2459,7 @@ syntax tableEntry =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1236.1-1237.30
 syntax tableEntryList = 
-   | 
+   | `empty
    | tableEntryList tableEntry
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1239.1-1240.51
@@ -2483,7 +2483,7 @@ syntax tableProperty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1256.1-1257.36
 syntax tablePropertyList = 
-   | 
+   | `empty
    | tablePropertyList tableProperty
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1259.1-1260.54
@@ -2520,7 +2520,7 @@ syntax controlLocalDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1289.1-1290.56
 syntax controlLocalDeclarationList = 
-   | 
+   | `empty
    | controlLocalDeclarationList controlLocalDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1292.1-1294.64
@@ -2632,8 +2632,8 @@ syntax annotationToken =
    | list
    | void
    | _
-   | text
-   | text
+   | `id text
+   | `tid text
    | " text " hint(print "#%#")
    | d int hint(print %)
    | nat w int hint(print %#W#%)
@@ -2676,7 +2676,7 @@ syntax annotationToken =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1365.1-1367.35
 syntax annotationBody = 
-   | 
+   | `empty
    | annotationBody ( annotationBody )
    | annotationBody annotationToken
 
@@ -2699,7 +2699,7 @@ syntax annotationListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1382.1-1383.27
 syntax annotationList = 
-   | 
+   | `empty
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
@@ -2726,7 +2726,7 @@ def $flatten_annotationList(annotationList) : annotation* =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1397.1-1399.17
 syntax p4program = 
-   | 
+   | `empty
    | p4program declaration
    | p4program ;
 
@@ -2857,7 +2857,7 @@ def $objectId_ends_with(objectId, nameIR) : bool =
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:9.20-9.27
 syntax boolValue = 
-   | bool
+   | `b bool
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:10.21-10.36
 syntax errorValue = 
@@ -2879,7 +2879,7 @@ syntax integerValue =
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:19.1-23.17
 syntax baseValue = 
-   | bool
+   | `b bool
    | error. nameIR
    | match_kind. nameIR
    | " text " hint(print "#%#")
@@ -2991,7 +2991,7 @@ syntax synthesizedValue =
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:106.1-109.21
 syntax value = 
-   | bool
+   | `b bool
    | error. nameIR
    | match_kind. nameIR
    | " text " hint(print "#%#")
@@ -3191,9 +3191,9 @@ def $write_value_from_bits(value, nat, bool*) : value =
 def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
 
   ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:151.1-151.71
-  clause 0 : (value, n_var, bool*{bool <- bool*}) = (b_h as value, b_t*{b_t <- b_t*})
+  clause 0 : (value, n_var, bool*{bool <- bool*}) = (`b b_h as value, b_t*{b_t <- b_t*})
   -- if value <: boolValue
-  -- let _bool = value as boolValue
+  -- let `b _bool = value as boolValue
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
@@ -3294,7 +3294,7 @@ def $write_bits_from_value(value) : bool* =
   ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:209.1-209.41
   clause 0 : (value) = [b]
   -- if value <: boolValue
-  -- let b = value as boolValue
+  -- let `b b = value as boolValue
 
   ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:210.1-211.30
   clause 1 : (value) = $int_to_bits_signed(w, i)
@@ -6232,9 +6232,9 @@ def $un_bnot(value) : value =
 def $un_lnot(value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:43.1-43.29
-  clause 0 : (value) = ~b as value
+  clause 0 : (value) = `b ~b as value
   -- if value <: boolValue
-  -- let b = value as boolValue
+  -- let `b b = value as boolValue
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:49.1-50.23
 def $un_plus(value) : value =
@@ -6326,27 +6326,27 @@ def $bin_op(binop, value, value) : value =
   -- if binop matches `>>`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:299.1-299.66
-  clause 9 : (binop, value_l, value_r) = $bin_le(value_l, value_r) as value
+  clause 9 : (binop, value_l, value_r) = `b $bin_le(value_l, value_r) as value
   -- if binop matches `<=`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:312.1-312.66
-  clause 10 : (binop, value_l, value_r) = $bin_ge(value_l, value_r) as value
+  clause 10 : (binop, value_l, value_r) = `b $bin_ge(value_l, value_r) as value
   -- if binop matches `>=`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:325.1-325.66
-  clause 11 : (binop, value_l, value_r) = $bin_lt(value_l, value_r) as value
+  clause 11 : (binop, value_l, value_r) = `b $bin_lt(value_l, value_r) as value
   -- if binop matches `<`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:338.1-338.66
-  clause 12 : (binop, value_l, value_r) = $bin_gt(value_l, value_r) as value
+  clause 12 : (binop, value_l, value_r) = `b $bin_gt(value_l, value_r) as value
   -- if binop matches `>`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:421.1-421.66
-  clause 13 : (binop, value_l, value_r) = $bin_eq(value_l, value_r) as value
+  clause 13 : (binop, value_l, value_r) = `b $bin_eq(value_l, value_r) as value
   -- if binop matches `==`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:430.1-430.66
-  clause 14 : (binop, value_l, value_r) = $bin_ne(value_l, value_r) as value
+  clause 14 : (binop, value_l, value_r) = `b $bin_ne(value_l, value_r) as value
   -- if binop matches `!=`
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:444.1-444.64
@@ -7094,9 +7094,9 @@ def $bin_eq(value, value) : bool =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:349.1-349.42
   clause 0 : (value, value') = (b_a = b_b)
   -- if value <: boolValue
-  -- let b_a = value as boolValue
+  -- let `b b_a = value as boolValue
   -- if value' <: boolValue
-  -- let b_b = value' as boolValue
+  -- let `b b_b = value' as boolValue
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:350.1-350.58
   clause 1 : (value, value') = (id_a = id_b)
@@ -7465,21 +7465,21 @@ def $bin_concat(value, value) : value =
 def $bin_land(value, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:510.1-510.48
-  clause 0 : (value, value') = (b_l /\ b_r) as value
+  clause 0 : (value, value') = `b (b_l /\ b_r) as value
   -- if value <: boolValue
-  -- let b_l = value as boolValue
+  -- let `b b_l = value as boolValue
   -- if value' <: boolValue
-  -- let b_r = value' as boolValue
+  -- let `b b_r = value' as boolValue
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:514.1-515.23
 def $bin_lor(value, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:517.1-517.47
-  clause 0 : (value, value') = (b_l \/ b_r) as value
+  clause 0 : (value, value') = `b (b_l \/ b_r) as value
   -- if value <: boolValue
-  -- let b_l = value as boolValue
+  -- let `b b_l = value as boolValue
   -- if value' <: boolValue
-  -- let b_r = value' as boolValue
+  -- let `b b_r = value' as boolValue
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:523.1-525.40
 def $cast_op(typeIR, value) : value =
@@ -7487,7 +7487,7 @@ def $cast_op(typeIR, value) : value =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:541.1-541.51
   clause 0 : (typeIR, value) = $cast_bool(typeIR, b)
   -- if value <: boolValue
-  -- let b = value as boolValue
+  -- let `b b = value as boolValue
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:556.1-556.52
   clause 1 : (typeIR, value) = $cast_arbint(typeIR, i)
@@ -7585,7 +7585,7 @@ def $cast_op(typeIR, value) : value =
 def $default(typeIR) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:742.1-742.30
-  clause 0 : (typeIR) = false as value
+  clause 0 : (typeIR) = `b false as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
@@ -7695,7 +7695,7 @@ def $default(typeIR) : value =
 def $cast_bool(typeIR, bool) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:535.1-535.31
-  clause 0 : (typeIR, b) = b as value
+  clause 0 : (typeIR, b) = `b b as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
@@ -7730,7 +7730,7 @@ def $cast_bool(typeIR, bool) : value =
 def $cast_arbint(typeIR, int) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:548.1-548.41
-  clause 0 : (typeIR, i) = (i =/= 0 as int) as value
+  clause 0 : (typeIR, i) = `b (i =/= 0 as int) as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
@@ -7774,7 +7774,7 @@ def $cast_arbint(typeIR, int) : value =
 def $cast_fixbit(typeIR, nat, int) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:563.1-563.44
-  clause 0 : (typeIR, w, i) = (i =/= 0 as int) as value
+  clause 0 : (typeIR, w, i) = `b (i =/= 0 as int) as value
   -- if typeIR <: boolTypeIR
   -- let boolTypeIR = typeIR as boolTypeIR
   -- if (boolTypeIR = bool)
@@ -8260,7 +8260,7 @@ def $prefixedNonTypeName(prefixedNonTypeName) : prefixedNameIR =
   ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:12.1-12.69
   clause 1 : (prefixedNonTypeName) = . $name(nonTypeName as name)
   -- if prefixedNonTypeName matches ``ID.%`
-  -- let . nonTypeName = prefixedNonTypeName
+  -- let `id. nonTypeName = prefixedNonTypeName
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:14.1-15.44
 def $prefixedTypeName(prefixedTypeName) : prefixedNameIR =
@@ -8273,7 +8273,7 @@ def $prefixedTypeName(prefixedTypeName) : prefixedNameIR =
   ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:17.1-17.61
   clause 1 : (prefixedTypeName) = . $name(typeName as name)
   -- if prefixedTypeName matches ``TID.%`
-  -- let . typeName = prefixedTypeName
+  -- let `tid. typeName = prefixedTypeName
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:19.1-20.42
 def $flatten_prefixedNameIR(prefixedNameIR) : nameIR =
@@ -9460,7 +9460,7 @@ syntax globalTypingLayer = {constructor constructorTypeDefEnv, type typeDefEnv, 
 
 ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:16.1-20.12
 syntax blockKind = 
-   | 
+   | `empty
    | extern
    | parser
    | control
@@ -9495,7 +9495,7 @@ syntax blockTypingLayer = {kind blockKind, type typeDefEnv, callable callableTyp
 
 ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:43.1-51.23
 syntax localKind = 
-   | 
+   | `empty
    | function: typeIR
    | extern_function: typeIR
    | action
@@ -9609,8 +9609,8 @@ def $empty_typingContext : typingContext =
   ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:118.1-136.35
   clause 0 :  = TC
   -- let globalTypingLayer = {constructor $empty_constructorTypeDefEnv, type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame}
-  -- let blockTypingLayer = {kind , type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame}
-  -- let localTypingLayer = {kind , type $empty_typeDefEnv, frames [$empty_typeFrame]}
+  -- let blockTypingLayer = {kind `empty, type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame}
+  -- let localTypingLayer = {kind `empty, type $empty_typeDefEnv, frames [$empty_typeFrame]}
   -- let TC = {global globalTypingLayer, block blockTypingLayer, local localTypingLayer}
 
 ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:142.1-143.66
@@ -9702,12 +9702,12 @@ def $add_parameter_t(cursor, typingContext, parameterIR) : typingContext =
   ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:210.1-212.52
   clause 0 : (cursor, TC, _annotationList direction typeIR id = value?{value <- value?}) = TC'
   -- if direction matches ``EMPTY`
-  -- let varTypeIR = typeIR ctk value?{value <- value?}
+  -- let varTypeIR = `empty typeIR ctk value?{value <- value?}
   -- let TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
   ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:213.1-216.52
   clause 1 : (cursor, TC, _annotationList direction typeIR id = value?{value <- value?}) = TC'
-  -- if (direction =/= )
+  -- if (direction =/= `empty)
   -- let varTypeIR = direction typeIR dyn value?{value <- value?}
   -- let TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
@@ -10799,7 +10799,7 @@ relation ParameterType_wf: bound |- parameterIR
     -- if Type_wf: B |- typeIR holds
     -- let typeIR_unroll = $unroll_typeIR(typeIR)
     -- if ~$is_synthesizedTypeIR(typeIR_unroll)
-    -- if ((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ))
+    -- if ((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = `empty))
     -- the relation holds
 
     rulepath default
@@ -10809,8 +10809,8 @@ relation ParameterType_wf: bound |- parameterIR
     -- if Type_wf: B |- typeIR holds
     -- let typeIR_unroll = $unroll_typeIR(typeIR)
     -- if ~$is_synthesizedTypeIR(typeIR_unroll)
-    -- if ((direction = in) \/ (direction = ))
-    -- if ((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ))
+    -- if ((direction = in) \/ (direction = `empty))
+    -- if ((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = `empty))
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:23.1-27.86
@@ -11849,7 +11849,7 @@ def $directionless_trailing'(bool, direction*) : bool =
   clause 3 : (_bool, direction*{direction <- direction*}) = $directionless_trailing'(false, direction_t*{direction_t <- direction_t*})
   -- if direction*{direction <- direction*} matches _ :: _
   -- let direction_h :: direction_t*{direction_t <- direction_t*} = direction*{direction <- direction*}
-  -- if (direction_h =/= )
+  -- if (direction_h =/= `empty)
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:487.1-489.58
 tbl def $nestable_action(typeIR) : bool =
@@ -12168,11 +12168,11 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
     rulepath true
     -- if (booleanLiteral = true)
-    -- output: % % |- % ~> true as value
+    -- output: % % |- % ~> `b true as value
 
     rulepath false
     -- if (booleanLiteral = false)
-    -- output: % % |- % ~> false as value
+    -- output: % % |- % ~> `b false as value
 
   ;; ../../../../spec-concrete/5-typing/5.06.2-typing-expression-eval.watsup:27.1-38.2
   rulegroup literalExpressionIR-number
@@ -12289,26 +12289,26 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     rulepath land-false
     -- if (binop' = &&)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value
-    -- if (value = false as value)
-    -- output: % % |- % ~> false as value
+    -- if (value = `b false as value)
+    -- output: % % |- % ~> `b false as value
 
     rulepath land-true
     -- if (binop' = &&)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value
-    -- if (value = true as value)
+    -- if (value = `b true as value)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> value_r
 
     rulepath lor-true
     -- if (binop' = ||)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value
-    -- if (value = true as value)
-    -- output: % % |- % ~> true as value
+    -- if (value = `b true as value)
+    -- output: % % |- % ~> `b true as value
 
     rulepath lor-false
     -- if (binop' = ||)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value
-    -- if (value = false as value)
+    -- if (value = `b false as value)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r
     -- output: % % |- % ~> value_r
 
@@ -12326,13 +12326,13 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
     rulepath true
     -- Expr_eval_lctk: p TC |- typedExpressionIR_cond ~> value
-    -- if (value = true as value)
+    -- if (value = `b true as value)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_true ~> value_true
     -- output: % % |- % ~> value_true
 
     rulepath false
     -- Expr_eval_lctk: p TC |- typedExpressionIR_cond ~> value
-    -- if (value = false as value)
+    -- if (value = `b false as value)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_false ~> value_false
     -- output: % % |- % ~> value_false
 
@@ -12637,7 +12637,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- ExternFunctionCall_eval_lctk: TC_callee_1 |- "static_assert" ( nameIR_param*{nameIR_param <- nameIR_param*} )~> value'
     -- if value' <: boolValue
     -- let boolValue = value' as boolValue
-    -- if (true = boolValue)
+    -- if (`b true = boolValue)
     -- output: % % |- % ~> boolValue as value
 
   ;; ../../../../spec-concrete/5-typing/5.06.2-typing-expression-eval.watsup:332.1-357.2
@@ -15529,7 +15529,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath directApplicationStatement-prefixedTypeName
-    -- Expr_ok: p TC_0 |- namedType as callTarget ( ) as expression : expressionIR # ( typeIR_object _ctk )
+    -- Expr_ok: p TC_0 |- namedType as callTarget ( `empty ) as expression : expressionIR # ( typeIR_object _ctk )
     -- if expressionIR <: callExpressionIR
     -- let callExpressionIR = expressionIR as callExpressionIR
     -- if callExpressionIR matches `%(%)`
@@ -15538,8 +15538,8 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
     -- if $compat_direct_application(typeIR_object)
     -- let nameIR_object = "__direct_application"
-    -- let TC_1 = $add_var_t(p, TC_0, nameIR_object, typeIR_object ctk ?())
-    -- let lvalue = nameIR_object as lvalue . "apply" as member
+    -- let TC_1 = $add_var_t(p, TC_0, nameIR_object, `empty typeIR_object ctk ?())
+    -- let lvalue = `id nameIR_object as lvalue . `id "apply" as member
     -- Stmt_ok: p TC_1 f l |- lvalue ( argumentList ); as statement : _typingContext _flow statementIR
     -- if statementIR <: callStatementIR
     -- let callStatementIR = statementIR as callStatementIR
@@ -15919,7 +15919,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR # typeId*
    paths
 
     rulepath non-initializer
-    -- if (initializerOpt = )
+    -- if (initializerOpt = `empty)
     -- Type_ok: p TC |- type as typeOrVoid : typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- let B = $union_set<typeId>($bound(p, TC), { typeId_fresh*{typeId_fresh <- typeId_fresh*} })
     -- if Type_wf: B |- typeIR holds
@@ -16185,7 +16185,7 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
    match
 
-    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- : %
+    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- `empty : %
     TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
     -- if transitionStatement matches ``EMPTY`
 
@@ -16554,7 +16554,7 @@ relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingCon
     -- Expr_ok: block TC_0 |- expression : typedExpressionIR
     -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR))
     -- let nameIR = $name(name)
-    -- let varTypeIR = set< typeIR > as typeIR ctk ?()
+    -- let varTypeIR = `empty set< typeIR > as typeIR ctk ?()
     -- let TC_1 = $add_var_t(block, TC_0, nameIR, varTypeIR)
     -- let valueSetDeclarationIR = annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
     -- output: % |- % : TC_1 valueSetDeclarationIR as parserLocalDeclarationIR
@@ -17442,10 +17442,10 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- if (bool as typeIR = $unroll_typeIR(typeIR))
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
     -- if value <: boolValue
-    -- let b_largest_priority_wins = value as boolValue
+    -- let `b b_largest_priority_wins = value as boolValue
     -- let TBLC_1 = TBLC_0[priorities.largest_wins = b_largest_priority_wins]
     -- let constOptIR = $flatten_constOpt(constOpt)
-    -- let tablePropertyIR = annotationList constOptIR custom_const "largest_priority_wins" = b_largest_priority_wins as value ; as tablePropertyIR
+    -- let tablePropertyIR = annotationList constOptIR custom_const "largest_priority_wins" = `b b_largest_priority_wins as value ; as tablePropertyIR
     -- output: % % |- % : TBLC_1 tablePropertyIR
 
     rulepath priority-delta
@@ -17529,7 +17529,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty)| = 0)
     -- let TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
-    -- let tablePropertyIR_default_action = ?() default_action= ` "NoAction" ( [] ) ; as tablePropertyIR
+    -- let tablePropertyIR_default_action = `empty ?() default_action= ` "NoAction" ( [] ) ; as tablePropertyIR
     -- let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
     -- output: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
 
@@ -17561,7 +17561,7 @@ relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
     -- (let nameIR_enum_field = $flatten_prefixedNameIR(prefixedNameIR_action))*{nameIR_enum_field <- nameIR_enum_field*, prefixedNameIR_action <- prefixedNameIR_action*}
     -- let tableMetadataEnumTypeIR = table_enum typeId_enum { nameIR_enum_field*{nameIR_enum_field <- nameIR_enum_field*} }
     -- (let value_enum_field = table_enum typeId_enum . nameIR_enum_field as value)*{nameIR_enum_field <- nameIR_enum_field*, value_enum_field <- value_enum_field*}
-    -- (let varTypeIR_enum_field = tableMetadataEnumTypeIR as typeIR lctk ?(value_enum_field))*{value_enum_field <- value_enum_field*, varTypeIR_enum_field <- varTypeIR_enum_field*}
+    -- (let varTypeIR_enum_field = `empty tableMetadataEnumTypeIR as typeIR lctk ?(value_enum_field))*{value_enum_field <- value_enum_field*, varTypeIR_enum_field <- varTypeIR_enum_field*}
     -- let TC_1 = $add_vars_t(block, TC_0, typeId_enum ++ "." ++ nameIR_enum_field*{nameIR_enum_field <- nameIR_enum_field*}, varTypeIR_enum_field*{varTypeIR_enum_field <- varTypeIR_enum_field*})
     -- let typeId_struct = "apply_result(" ++ nameIR ++ ")"
     -- let tableMetadataStructTypeIR = table_struct typeId_struct {hit bool ;miss bool ;action_run tableMetadataEnumTypeIR ;}
@@ -17653,7 +17653,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
     -- Table_ok: TC_1 |- tableProperty*{tableProperty <- tableProperty*} : TBLC tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- let nameIR = $name(name)
     -- TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table
-    -- let varTypeIR = typeIR_table dyn ?()
+    -- let varTypeIR = `empty typeIR_table dyn ?()
     -- let TC_3 = $add_var_t(block, TC_2, nameIR, varTypeIR)
     -- let tableDeclarationIR = annotationList table typeIR_table nameIR { tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} }
     -- output: % |- % : TC_3 tableDeclarationIR as controlLocalDeclarationIR
@@ -17706,7 +17706,7 @@ relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext
    paths
 
     rulepath non-initializer
-    -- if (initializerOpt = )
+    -- if (initializerOpt = `empty)
     -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
     -- if Type_wf: $bound(p, TC_0) |- typeIR holds
@@ -17757,7 +17757,7 @@ relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingConte
     -- let ?(typedExpressionIR_value_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
     -- let nameIR = $name(name)
-    -- let TC_1 = $add_var_t(p, TC_0, nameIR, typeIR lctk ?(value))
+    -- let TC_1 = $add_var_t(p, TC_0, nameIR, `empty typeIR lctk ?(value))
     -- let constantDeclarationIR = annotationList const typeIR nameIR = value ;
     -- output: % % |- % : TC_1 constantDeclarationIR
 
@@ -17786,7 +17786,7 @@ relation InstDecl_ok: cursor typingContext |- instantiation : typingContext inst
     -- ConstructorType_ok: p TC_0 |- prefixedNameIR < [] >( argumentIR*{argumentIR <- argumentIR*} ): constructorTypeIR <# typeId_impl*{typeId_impl <- typeId_impl*} >(# id_default*{id_default <- id_default*} )
     -- Inst_ok: p TC_0 named |- constructorTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let nameIR = $name(name)
-    -- let TC_1 = $add_var_t(p, TC_0, nameIR, typeIR_object ctk ?())
+    -- let TC_1 = $add_var_t(p, TC_0, nameIR, `empty typeIR_object ctk ?())
     -- let instantiationIR = annotationList typeIR_object prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR*{argumentIR <- argumentIR*} ) nameIR ?() ;
     -- output: % % |- % : TC_1 instantiationIR
 
@@ -17803,7 +17803,7 @@ relation InstDecl_ok: cursor typingContext |- instantiation : typingContext inst
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
     -- Inst_ok: p TC_0 named |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} ): typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let nameIR = $name(name)
-    -- let TC_1 = $add_var_t(p, TC_0, nameIR, typeIR_object ctk ?())
+    -- let TC_1 = $add_var_t(p, TC_0, nameIR, `empty typeIR_object ctk ?())
     -- let instantiationIR = annotationList typeIR_object prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?() ;
     -- output: % % |- % : TC_1 instantiationIR
 
@@ -17832,14 +17832,14 @@ relation InstDecl_ok: cursor typingContext |- instantiation : typingContext inst
     -- let typeIR = typeIR_object
     -- if typeIR <: externObjectTypeIR
     -- let extern typeId_extern < typeIR_arg*{typeIR_arg <- typeIR_arg*} > externMethodTypeDefEnv_extern = typeIR as externObjectTypeIR
-    -- let TC_1 = $add_var_t(local, TC_0, "this", typeIR_object ctk ?())
+    -- let TC_1 = $add_var_t(local, TC_0, "this", `empty typeIR_object ctk ?())
     -- let objectDeclaration*{objectDeclaration <- objectDeclaration*} = $flatten_objectDeclarationList(objectDeclarationList)
     -- Decls_object_ok: p TC_1 { [] } { [] } |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*}
     -- let externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
     -- let typeIR_object_init = extern typeId_extern < typeIR_arg*{typeIR_arg <- typeIR_arg*} > externMethodTypeDefEnv_init_subst as typeIR
     -- if $is_concrete_extern_object(typeIR_object_init)
     -- let nameIR = $name(name)
-    -- let TC_2 = $add_var_t(p, TC_0, nameIR, typeIR_object_init ctk ?())
+    -- let TC_2 = $add_var_t(p, TC_0, nameIR, `empty typeIR_object_init ctk ?())
     -- let instantiationIR = annotationList typeIR_object_init prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?(={ objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} }) ;
     -- output: % % |- % : TC_2 instantiationIR
 
@@ -17858,14 +17858,14 @@ relation InstDecl_ok: cursor typingContext |- instantiation : typingContext inst
     -- let typeIR = $unroll_typeIR(typeIR_object)
     -- if typeIR <: externObjectTypeIR
     -- let extern typeId_extern < typeIR_arg*{typeIR_arg <- typeIR_arg*} > externMethodTypeDefEnv_extern = typeIR as externObjectTypeIR
-    -- let TC_1 = $add_var_t(local, TC_0, "this", typeIR_object ctk ?())
+    -- let TC_1 = $add_var_t(local, TC_0, "this", `empty typeIR_object ctk ?())
     -- let objectDeclaration*{objectDeclaration <- objectDeclaration*} = $flatten_objectDeclarationList(objectDeclarationList)
     -- Decls_object_ok: p TC_1 { [] } { [] } |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*}
     -- let externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
     -- let typeIR_object_init = extern typeId_extern < typeIR_arg*{typeIR_arg <- typeIR_arg*} > externMethodTypeDefEnv_init_subst as typeIR
     -- if $is_concrete_extern_object(typeIR_object_init)
     -- let nameIR = $name(name)
-    -- let TC_2 = $add_var_t(p, TC_0, nameIR, typeIR_object_init ctk ?())
+    -- let TC_2 = $add_var_t(p, TC_0, nameIR, `empty typeIR_object_init ctk ?())
     -- let instantiationIR = annotationList typeIR_object_init prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) nameIR ?(={ objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} }) ;
     -- output: % % |- % : TC_2 instantiationIR
 
@@ -17930,7 +17930,7 @@ relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContex
     -- let actionDeclarationIR = annotationList action nameIR ( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR
     -- output: % % |- % : TC_3 actionDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:430.1-434.81
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:430.1-434.59
 relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:78.1-83.48
@@ -18015,7 +18015,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if $distinct_<nameIR>(nameIR*{nameIR <- nameIR*})
     -- (let nameIR_error = "error." ++ nameIR)*{nameIR <- nameIR*, nameIR_error <- nameIR_error*}
     -- (let value_error = error. nameIR as value)*{nameIR <- nameIR*, value_error <- value_error*}
-    -- (let varTypeIR = error as typeIR lctk ?(value_error))*{value_error <- value_error*, varTypeIR <- varTypeIR*}
+    -- (let varTypeIR = `empty error as typeIR lctk ?(value_error))*{value_error <- value_error*, varTypeIR <- varTypeIR*}
     -- let TC_1 = $add_vars_t(global, TC_0, nameIR_error*{nameIR_error <- nameIR_error*}, varTypeIR*{varTypeIR <- varTypeIR*})
     -- output: % |- % : TC_1 error{ nameIR*{nameIR <- nameIR*} } as declarationIR
 
@@ -18036,7 +18036,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- (let nameIR = $name(name))*{name <- name*, nameIR <- nameIR*}
     -- if $distinct_<nameIR>(nameIR*{nameIR <- nameIR*})
     -- (let value_match_kind = match_kind. nameIR as value)*{nameIR <- nameIR*, value_match_kind <- value_match_kind*}
-    -- (let varTypeIR = match_kind as typeIR lctk ?(value_match_kind))*{value_match_kind <- value_match_kind*, varTypeIR <- varTypeIR*}
+    -- (let varTypeIR = `empty match_kind as typeIR lctk ?(value_match_kind))*{value_match_kind <- value_match_kind*, varTypeIR <- varTypeIR*}
     -- let TC_1 = $add_vars_t(global, TC_0, nameIR*{nameIR <- nameIR*}, varTypeIR*{varTypeIR <- varTypeIR*})
     -- output: % |- % : TC_1 match_kind{ nameIR*{nameIR <- nameIR*} } as declarationIR
 
@@ -18113,7 +18113,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
    match
 
-    (signature) TC_0 |- annotationList parser name ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList } as declaration : % %
+    (signature) TC_0 |- annotationList parser name `empty ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList } as declaration : % %
     TC_0 |- declaration : % %
     -- if declaration <: parserDeclaration
     -- let annotationList parser name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList } = declaration as parserDeclaration
@@ -18152,7 +18152,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
    match
 
-    (signature) TC_0 |- annotationList control name ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody } as declaration : % %
+    (signature) TC_0 |- annotationList control name `empty ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody } as declaration : % %
     TC_0 |- declaration : % %
     -- if declaration <: controlDeclaration
     -- let annotationList control name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody } = declaration as controlDeclaration
@@ -18208,7 +18208,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let TC_1 = $add_typeDef_t(global, TC_0, nameIR, enumTypeDefIR as typeDefIR)
     -- (let id_field = nameIR ++ "." ++ nameIR_field)*{id_field <- id_field*, nameIR_field <- nameIR_field*}
     -- (let value_field = nameIR . nameIR_field as value)*{nameIR_field <- nameIR_field*, value_field <- value_field*}
-    -- (let varTypeIR = enumTypeDefIR as typeIR lctk ?(value_field))*{value_field <- value_field*, varTypeIR <- varTypeIR*}
+    -- (let varTypeIR = `empty enumTypeDefIR as typeIR lctk ?(value_field))*{value_field <- value_field*, varTypeIR <- varTypeIR*}
     -- let TC_2 = $add_vars_t(global, TC_1, id_field*{id_field <- id_field*}, varTypeIR*{varTypeIR <- varTypeIR*})
     -- let enumTypeDeclarationIR = annotationList enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }
     -- output: % |- % : TC_2 enumTypeDeclarationIR as declarationIR
@@ -18237,7 +18237,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- (let nameIR_field = _typedExpressionIR = namedExpressionIR_field)*{_typedExpressionIR <- _typedExpressionIR*, nameIR_field <- nameIR_field*, namedExpressionIR_field <- namedExpressionIR_field*}
     -- (let id_field = nameIR ++ "." ++ nameIR_field)*{id_field <- id_field*, nameIR_field <- nameIR_field*}
     -- let enumTypeDefIR = enum nameIR < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }
-    -- (let varTypeIR = enumTypeDefIR as typeIR lctk ?(value_field))*{value_field <- value_field*, varTypeIR <- varTypeIR*}
+    -- (let varTypeIR = `empty enumTypeDefIR as typeIR lctk ?(value_field))*{value_field <- value_field*, varTypeIR <- varTypeIR*}
     -- let TC_2 = $add_vars_t(global, TC_0, id_field*{id_field <- id_field*}, varTypeIR*{varTypeIR <- varTypeIR*})
     -- if TypeDef_wf: $bound(global, TC_0) |- enumTypeDefIR as typeDefIR holds
     -- let TC_3 = $add_typeDef_t(global, TC_2, nameIR, enumTypeDefIR as typeDefIR)
@@ -18507,7 +18507,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let packageTypeDeclarationIR = annotationList package nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} );
     -- output: % |- % : TC_4 packageTypeDeclarationIR as declarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:436.1-440.82
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:436.1-440.59
 relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1055.1-1056.21
@@ -18607,7 +18607,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
 
    match
 
-    (signature) p TC actctxt |- _annotationList typeIR_param _id _constantInitializerOptIR @ typedExpressionIR_arg : %
+    (signature) p TC actctxt |- _annotationList `empty typeIR_param _id _constantInitializerOptIR @ typedExpressionIR_arg : %
     p TC actctxt |- _annotationList direction typeIR_param _id _constantInitializerOptIR @ typedExpressionIR_arg : %
     -- if direction matches ``EMPTY`
 
@@ -18926,7 +18926,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerStackTypeIR
     -- let typeIR [ _nat ] = typeIR' as headerStackTypeIR
-    -- let parameterIR = int as typeIR "count" ?()
+    -- let parameterIR = `empty `empty int as typeIR "count" ?()
     -- let methodTypeIR = builtin_method( [parameterIR] ): int as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as callableTypeIR <# [] >(# [] )
 
@@ -20441,7 +20441,7 @@ relation ForInitStmt_ok: typingContext |- forInitStatement : typingContext forIn
    paths
 
     rulepath empty
-    -- if (initializerOpt = )
+    -- if (initializerOpt = `empty)
     -- Type_ok: local TC_0 |- type as typeOrVoid : typeIR # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
     -- if Type_wf: $bound(local, TC_0) |- typeIR holds
@@ -21020,7 +21020,7 @@ relation Enum_serializable_field_ok: typingContext nameIR typeIR |- namedExpress
     -- let nameIR = $name(name)
     -- let enumTypeDefIR = enum nameIR_enum < typeIR >{ [] }
     -- let value_enum = nameIR_enum . nameIR . value as value
-    -- let varTypeIR = enumTypeDefIR as typeIR lctk ?(value_enum)
+    -- let varTypeIR = `empty enumTypeDefIR as typeIR lctk ?(value_enum)
     -- let TC_1 = $add_var_t(block, TC_0, nameIR, varTypeIR)
     -- output: % % % |- % : TC_1 nameIR = typedExpressionIR_cast # value
 
@@ -21641,7 +21641,7 @@ def $split_dataplane_parameters(parameterIR*) : (parameterIR*, parameterIR*) =
   -- if parameterIR*{parameterIR <- parameterIR*} matches _ :: _
   -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR*{parameterIR <- parameterIR*}
   -- let _annotationList direction _typeIR _id _constantInitializerOptIR = parameterIR_h
-  -- if (direction =/= )
+  -- if (direction =/= `empty)
   -- let (parameterIR_data*{parameterIR_data <- parameterIR_data*}, parameterIR_control*{parameterIR_control <- parameterIR_control*}) = $split_dataplane_parameters(parameterIR_t*{parameterIR_t <- parameterIR_t*})
 
 ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:103.1-103.44
@@ -22085,7 +22085,7 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- let tableActionReferenceIR_NoAction = . "NoAction" ( [] )
   -- if ~tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
   -- let TBLC_1 = $add_action(TBLC_0, . "NoAction", [], [])
-  -- let tableActionIR_NoAction = tableActionReferenceIR_NoAction #( [] , [] );
+  -- let tableActionIR_NoAction = `empty tableActionReferenceIR_NoAction #( [] , [] );
   -- let tablePropertyIR_h_updated = actions={ tableActionIR*{tableActionIR <- tableActionIR*} ++ [tableActionIR_NoAction] } as tablePropertyIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1093.1-1102.69
@@ -23266,7 +23266,7 @@ def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeyset
   -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- let keysetExpressionIR = $tableObject_create_entry_keyset(TBL.keys, tableKeysetInterface)
   -- let tableActionReferenceIR = $tableObject_create_entry_action(TBL.actions, tableActionInterface)
-  -- let tableEntryIR_update = ?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR ;
+  -- let tableEntryIR_update = ?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR `empty ;
   -- let annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} } = TBL.entries
   -- let tableEntriesPropertyIR_updated = annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] }
   -- let TBL_updated = TBL[entries = tableEntriesPropertyIR_updated]
@@ -23709,11 +23709,11 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
     rulepath true
     -- if (booleanLiteral = true)
-    -- output: % % % |- % : STO true as value
+    -- output: % % % |- % : STO `b true as value
 
     rulepath false
     -- if (booleanLiteral = false)
-    -- output: % % % |- % : STO false as value
+    -- output: % % % |- % : STO `b false as value
 
   ;; ../../../../spec-concrete/7-instantiation/7.04-inst-expression.watsup:27.1-38.2
   rulegroup literalExpressionIR-number
@@ -23830,26 +23830,26 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     rulepath land-false
     -- if (binop' = &&)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l : STO_1 value
-    -- if (value = false as value)
-    -- output: % % % |- % : STO_1 false as value
+    -- if (value = `b false as value)
+    -- output: % % % |- % : STO_1 `b false as value
 
     rulepath land-true
     -- if (binop' = &&)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l : STO_1 value
-    -- if (value = true as value)
+    -- if (value = `b true as value)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r
     -- output: % % % |- % : STO_2 value_r
 
     rulepath lor-true
     -- if (binop' = ||)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l : STO_1 value
-    -- if (value = true as value)
-    -- output: % % % |- % : STO_1 true as value
+    -- if (value = `b true as value)
+    -- output: % % % |- % : STO_1 `b true as value
 
     rulepath lor-false
     -- if (binop' = ||)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_l : STO_1 value
-    -- if (value = false as value)
+    -- if (value = `b false as value)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r
     -- output: % % % |- % : STO_2 value_r
 
@@ -23867,13 +23867,13 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
     rulepath true
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_cond : STO_1 value
-    -- if (value = true as value)
+    -- if (value = `b true as value)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_true : STO_2 value_true
     -- output: % % % |- % : STO_2 value_true
 
     rulepath false
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_cond : STO_1 value
-    -- if (value = false as value)
+    -- if (value = `b false as value)
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_false : STO_2 value_false
     -- output: % % % |- % : STO_2 value_false
 
@@ -24381,10 +24381,10 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     -- let nameIR = $concat_text([typeId, "_", typeId_fresh])
     -- let objectId = IC.path ++ [nameIR]
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
-    -- let constantDeclarationIR = const typeIR nameIR = ! objectId as value ;
+    -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
     -- let callableTargetIR = ` nameIR as expressionIR # ( typeIR ctk ) . "apply"
     -- let callStatementIR = callableTargetIR < [] >( argumentListIR );
-    -- let blockStatementIR = { [constantDeclarationIR as blockElementStatementIR, callStatementIR as blockElementStatementIR] }
+    -- let blockStatementIR = `empty { [constantDeclarationIR as blockElementStatementIR, callStatementIR as blockElementStatementIR] }
     -- output: % % % |- % : IC STO_2 blockStatementIR as statementIR
 
   ;; ../../../../spec-concrete/7-instantiation/7.06-inst-statement.watsup:55.1-56.63
@@ -24845,10 +24845,10 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
     -- let objectId = IC.path ++ [nameIR]
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
     -- let typeIR = ` typeId as typeIR
-    -- let constantDeclarationIR = const typeIR nameIR = ! objectId as value ;
+    -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
     -- let callableTargetIR = ` typeId as expressionIR # ( typeIR ctk ) . "apply"
     -- let callStatementIR = callableTargetIR < [] >( argumentListIR );
-    -- let parserBlockStatementIR = { [constantDeclarationIR as parserStatementIR, callStatementIR as parserStatementIR] }
+    -- let parserBlockStatementIR = `empty { [constantDeclarationIR as parserStatementIR, callStatementIR as parserStatementIR] }
     -- output: % % |- % : IC STO_2 parserBlockStatementIR as parserStatementIR
 
   ;; ../../../../spec-concrete/7-instantiation/7.09.1-inst-parser-statement.watsup:84.1-92.55
@@ -25298,7 +25298,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let objectId = IC_0.path ++ [nameIR]
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object_table)
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ! objectId as value)
-    -- let constantDeclarationIR = const typeIR nameIR = ! objectId as value ;
+    -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
     -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:114.1-117.23
@@ -25355,7 +25355,7 @@ relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR*
     -- ControlLocalDecls_inst: IC_1 STO_1 |- controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} : IC_2 STO_2 controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
     -- output: % % |- % : IC_2 STO_2 controlLocalDeclarationIR_h_inst :: controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.30
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.27
 relation ConstDecl_inst: cursor instContext |- constantDeclarationIR : instContext constantDeclarationIR
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:11.1-16.57
@@ -25402,7 +25402,7 @@ relation InstDecl_inst: cursor instContext store |- instantiationIR : instContex
     -- let objectId = IC_0.path ++ [nameIR]
     -- let STO_3 = $add_map<objectId, object>(STO_2, objectId, object_merged)
     -- let IC_1 = $add_var_i(p, IC_0, nameIR, ! objectId as value)
-    -- let constantDeclarationIR = const typeIR nameIR = ! objectId as value ;
+    -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
     -- output: % % % |- % : IC_1 STO_3 constantDeclarationIR
 
     rulepath non-extern
@@ -25413,7 +25413,7 @@ relation InstDecl_inst: cursor instContext store |- instantiationIR : instContex
     -- let objectId = IC_0.path ++ [nameIR]
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
     -- let IC_1 = $add_var_i(p, IC_0, nameIR, ! objectId as value)
-    -- let constantDeclarationIR = const typeIR nameIR = ! objectId as value ;
+    -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
     -- output: % % % |- % : IC_1 STO_2 constantDeclarationIR
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:142.1-148.57
@@ -25454,7 +25454,7 @@ relation ActionDecl_inst: cursor instContext |- actionDeclarationIR : instContex
     -- let IC_1 = $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef as callableDef)
     -- output: % % |- % : IC_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:158.1-165.48
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:158.1-165.45
 relation Decl_inst: instContext store |- declarationIR : instContext store
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:18.1-23.48
@@ -25879,7 +25879,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_2 = $add_constructorDef_i(IC_1, callableId, constructorDef)
     -- output: % % |- % : IC_2 STO
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:167.1-174.48
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:167.1-174.45
 relation Decls_inst: instContext store |- declarationIR* : instContext store
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:617.1-618.25
@@ -26501,7 +26501,7 @@ def $init_tableEntries(tablePropertyListIR) : tableEntriesPropertyIR =
   -- let [tableEntriesPropertyIR] = tableEntriesPropertyIR'*{tableEntriesPropertyIR' <- tableEntriesPropertyIR'*}
 
   ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:106.1-107.35
-  clause 1 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = ?() entries={ [] }
+  clause 1 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = `empty ?() entries={ [] }
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:7.26-7.41
 syntax globalEvalLayer = globalInstLayer
@@ -26893,20 +26893,20 @@ def $find_state_e(cursor, evalContext, nameIR) : state? =
   clause 2 : (cursor, EC, nameIR) = $find_map<nameIR, state>(EC.block.state, nameIR)
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-275.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-276.86
 def $subst_type_e(cursor, evalContext, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:277.1-277.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:278.1-278.47
   clause 0 : (cursor, EC, typeIR) = typeIR
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:278.1-280.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:279.1-281.52
   clause 1 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `BLOCK`
   -- let theta = EC.block.type
   -- let typeIR_subst = $subst_typeIR(theta, typeIR)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:281.1-285.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:282.1-286.52
   clause 2 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `LOCAL`
   -- let theta_block = EC.block.type
@@ -26914,9 +26914,9 @@ def $subst_type_e(cursor, evalContext, typeIR) : typeIR =
   -- let theta = $extend_map<typeId, typeIR>(theta_block, theta_local)
   -- let typeIR_subst = $subst_typeIR(theta, typeIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:7.30-7.32
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:7.30-7.36
 syntax continueEmptyResult = 
-   | `
+   | `empty
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:8.28-8.32
 syntax continueResult<X> = 
@@ -26964,12 +26964,12 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
 
     rulepath true
     -- if (booleanLiteral = true)
-    -- let expressionResult = ` true as value as expressionResult
+    -- let expressionResult = ` `b true as value as expressionResult
     -- output: % % % |- % : EC STO expressionResult
 
     rulepath false
     -- if (booleanLiteral = false)
-    -- let expressionResult = ` false as value as expressionResult
+    -- let expressionResult = ` `b false as value as expressionResult
     -- output: % % % |- % : EC STO expressionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:29.1-43.2
@@ -27124,14 +27124,14 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     rulepath land-false
     -- if (binop' = &&)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` false as value as expressionResult)
-    -- let expressionResult = ` false as value as expressionResult
+    -- if (expressionResult' = ` `b false as value as expressionResult)
+    -- let expressionResult = ` `b false as value as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
     rulepath land-true-exit
     -- if (binop' = &&)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` true as value as expressionResult)
+    -- if (expressionResult' = ` `b true as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult''
     -- if expressionResult'' <: exitResult
     -- let exitResult = expressionResult'' as exitResult
@@ -27141,7 +27141,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     rulepath land-true
     -- if (binop' = &&)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` true as value as expressionResult)
+    -- if (expressionResult' = ` `b true as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r
     -- output: % % % |- % : EC_2 STO_2 expressionResult_r
 
@@ -27156,14 +27156,14 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     rulepath lor-true
     -- if (binop' = ||)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` true as value as expressionResult)
-    -- let expressionResult = ` true as value as expressionResult
+    -- if (expressionResult' = ` `b true as value as expressionResult)
+    -- let expressionResult = ` `b true as value as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
     rulepath lor-false-exit
     -- if (binop' = ||)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` false as value as expressionResult)
+    -- if (expressionResult' = ` `b false as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult''
     -- if expressionResult'' <: exitResult
     -- let exitResult = expressionResult'' as exitResult
@@ -27173,7 +27173,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     rulepath lor-false
     -- if (binop' = ||)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 expressionResult'
-    -- if (expressionResult' = ` false as value as expressionResult)
+    -- if (expressionResult' = ` `b false as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r
     -- output: % % % |- % : EC_2 STO_2 expressionResult_r
 
@@ -27198,13 +27198,13 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
 
     rulepath cond-true
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_true : EC_2 STO_2 expressionResult_true
     -- output: % % % |- % : EC_2 STO_2 expressionResult_true
 
     rulepath cond-false
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
+    -- if (expressionResult = ` `b false as value as expressionResult)
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_false : EC_2 STO_2 expressionResult_false
     -- output: % % % |- % : EC_2 STO_2 expressionResult_false
 
@@ -28363,7 +28363,7 @@ syntax forContinueResult =
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
 syntax statementResult = 
-   | `
+   | `empty
    | exit
    | reject errorValue
    | return value?
@@ -28373,7 +28373,7 @@ syntax statementResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-121.55
 relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store statementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:9.1-10.29
+  ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:9.1-10.33
   rulegroup emptyStatementIR
 
    match
@@ -28387,7 +28387,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
    paths
 
     rulepath emptyStatementIR
-    -- output: % % % |- % : EC STO ` as statementResult
+    -- output: % % % |- % : EC STO `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:15.1-92.2
   rulegroup assignmentStatementIR
@@ -28448,7 +28448,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
     -- Lvalue_write: p EC_2 STO_2 |- storageReference -> value : EC_3
-    -- output: % % % |- % : EC_3 STO_2 ` as statementResult
+    -- output: % % % |- % : EC_3 STO_2 `empty as statementResult
 
     rulepath typedLvalueIR-cont-compound-typedExpressionIR-cont
     -- let assignop = assignop'
@@ -28467,7 +28467,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- let ?(binop) = binop'?{binop' <- binop'?}
     -- let value_update = $bin_op(binop, value_l, value_r)
     -- Lvalue_write: p EC_2 STO_2 |- storageReference -> value_update : EC_3
-    -- output: % % % |- % : EC_3 STO_2 ` as statementResult
+    -- output: % % % |- % : EC_3 STO_2 `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:98.1-138.2
   rulegroup callStatementIR
@@ -28515,7 +28515,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- Call_eval: p EC_1 STO_1 |- callee @< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): EC_2 STO_2 callResult
     -- if callResult <: returnResult
     -- let returnResult = callResult as returnResult
-    -- output: % % % |- % : EC_2 STO_2 ` as statementResult
+    -- output: % % % |- % : EC_2 STO_2 `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:149.1-168.2
   rulegroup returnStatementIR
@@ -28620,7 +28620,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
     -- output: % % % |- % : EC_then STO_then statementResult
 
@@ -28629,8 +28629,8 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if conditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
-    -- output: % % % |- % : EC_cond STO_cond ` as statementResult
+    -- if (expressionResult = ` `b false as value as expressionResult)
+    -- output: % % % |- % : EC_cond STO_cond `empty as statementResult
 
     rulepath else-exit
     -- let conditionalStatementIR' = conditionalStatementIR
@@ -28647,7 +28647,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult
     -- output: % % % |- % : EC_then STO_then statementResult
 
@@ -28656,7 +28656,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- if conditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) statementIR_then else statementIR_else = conditionalStatementIR'
     -- Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
+    -- if (expressionResult = ` `b false as value as expressionResult)
     -- Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult
     -- output: % % % |- % : EC_else STO_else statementResult
 
@@ -28689,7 +28689,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- ForInitStmts_eval: EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ForThreeClauseLoop_eval: EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_3 STO_2 statementResult
     -- let EC_4 = $exit_e(EC_3)
     -- output: % % % |- % : EC_4 STO_2 statementResult
@@ -28817,7 +28817,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- let table_enum _typeId . id_enum = value' as tableMetadataEnumValue
     -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
-    -- output: % % % |- % : EC_1 STO_1 ` as statementResult
+    -- output: % % % |- % : EC_1 STO_1 `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:855.1-887.2
   rulegroup switchStatementIR-general
@@ -28855,7 +28855,7 @@ relation Stmt_eval: cursor evalContext store |- statementIR : evalContext store 
     -- let ` value = expressionResult as continueResult<value>
     -- SwitchCases_general_eval: local EC_1 STO_1 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_2 STO_2 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
-    -- output: % % % |- % : EC_2 STO_2 ` as statementResult
+    -- output: % % % |- % : EC_2 STO_2 `empty as statementResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
 relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : evalContext store statementResult
@@ -28874,7 +28874,7 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
 
     rulepath constantDeclarationIR
     -- ConstDecl_eval: local EC_0 |- constantDeclarationIR : EC_1
-    -- output: % % |- % : EC_1 STO ` as statementResult
+    -- output: % % |- % : EC_1 STO `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:906.1-922.2
   rulegroup variableDeclarationIR
@@ -28899,8 +28899,8 @@ relation BlockElementStmt_eval: evalContext store |- blockElementStatementIR : e
     -- VarDecl_eval: local EC_0 STO_0 |- variableDeclarationIR : EC_1 STO_1 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as statementResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:926.1-931.53
   rulegroup statementIR
@@ -28935,7 +28935,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
     -- let EC = evalContext
     -- let STO = store
     -- if (blockElementStatementIR''''*{blockElementStatementIR'''' <- blockElementStatementIR''''*} = [])
-    -- output: % % |- % : EC STO ` as statementResult
+    -- output: % % |- % : EC STO `empty as statementResult
 
     rulepath cons-head-exit
     -- let EC_0 = evalContext
@@ -28993,7 +28993,7 @@ relation BlockElementStmts_eval: evalContext store |- blockElementStatementListI
     -- BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- BlockElementStmts_eval: EC_1 STO_1 |- blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 STO_2 statementResult
     -- output: % % |- % : EC_2 STO_2 statementResult
 
@@ -29016,7 +29016,7 @@ relation Block_eval: evalContext store |- blockStatementIR : evalContext store s
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
 syntax parserStatementResult = 
-   | `
+   | `empty
    | reject errorValue
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
@@ -29036,9 +29036,9 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
 
     rulepath constantDeclarationIR
     -- ConstDecl_eval: local EC_0 |- constantDeclarationIR : EC_1
-    -- output: % % |- % : EC_1 STO ` as parserStatementResult
+    -- output: % % |- % : EC_1 STO `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:128.1-133.40
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:128.1-133.44
   rulegroup cont
 
    match
@@ -29054,10 +29054,10 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- VarDecl_eval: local EC_0 STO_0 |- variableDeclarationIR : EC_1 STO_1 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as parserStatementResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:137.1-142.40
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:137.1-142.44
   rulegroup emptyStatementIR
 
    match
@@ -29073,10 +29073,10 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- Stmt_eval: local EC_0 STO_0 |- emptyStatementIR as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as parserStatementResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:146.1-151.40
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:146.1-151.44
   rulegroup assignmentStatementIR
 
    match
@@ -29092,8 +29092,8 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- Stmt_eval: local EC_0 STO_0 |- assignmentStatementIR as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as parserStatementResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as parserStatementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:155.1-171.2
   rulegroup callStatementIR
@@ -29117,8 +29117,8 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- Stmt_eval: local EC_0 STO_0 |- callStatementIR as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as parserStatementResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as parserStatementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:185.1-226.2
   rulegroup parserConditionalStatementIR
@@ -29137,7 +29137,7 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- if parserConditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) parserStatementIR_then = parserConditionalStatementIR'
     -- Expr_eval: local EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_then : EC_then STO_then parserStatementResult
     -- output: % % |- % : EC_then STO_then parserStatementResult
 
@@ -29146,15 +29146,15 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- if parserConditionalStatementIR' matches `IF(%)%`
     -- let if( typedExpressionIR_cond ) parserStatementIR_then = parserConditionalStatementIR'
     -- Expr_eval: local EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
-    -- output: % % |- % : EC_cond STO_cond ` as parserStatementResult
+    -- if (expressionResult = ` `b false as value as expressionResult)
+    -- output: % % |- % : EC_cond STO_cond `empty as parserStatementResult
 
     rulepath else-cont-true
     -- let parserConditionalStatementIR' = parserConditionalStatementIR
     -- if parserConditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else = parserConditionalStatementIR'
     -- Expr_eval: local EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_then : EC_then STO_then parserStatementResult
     -- output: % % |- % : EC_then STO_then parserStatementResult
 
@@ -29163,7 +29163,7 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- if parserConditionalStatementIR' matches `IF(%)%ELSE%`
     -- let if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else = parserConditionalStatementIR'
     -- Expr_eval: local EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
+    -- if (expressionResult = ` `b false as value as expressionResult)
     -- ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_else : EC_else STO_else parserStatementResult
     -- output: % % |- % : EC_else STO_else parserStatementResult
 
@@ -29184,7 +29184,7 @@ relation ParserStmts_eval: evalContext store |- parserStatementListIR : evalCont
     -- let EC = evalContext
     -- let STO = store
     -- if (parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} = [])
-    -- output: % % |- % : EC STO ` as parserStatementResult
+    -- output: % % |- % : EC STO `empty as parserStatementResult
 
     rulepath cons-head-reject
     -- let EC_0 = evalContext
@@ -29206,7 +29206,7 @@ relation ParserStmts_eval: evalContext store |- parserStatementListIR : evalCont
     -- ParserStmt_eval: EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 parserStatementResult'
     -- if parserStatementResult' <: continueEmptyResult
     -- let continueEmptyResult = parserStatementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ParserStmts_eval: EC_1 STO_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 STO_2 parserStatementResult
     -- output: % % |- % : EC_2 STO_2 parserStatementResult
 
@@ -29291,7 +29291,7 @@ relation ParserState_eval: evalContext store |- state : evalContext store transi
     -- ParserStmts_eval: EC_0 STO_0 |- parserStatementListIR : EC_1 STO_1 parserStatementResult
     -- if parserStatementResult <: continueEmptyResult
     -- let continueEmptyResult = parserStatementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ParserTransition_eval: EC_1 STO_1 |- transitionStatementIR : EC_2 STO_2 transitionResult
     -- output: % % |- % : EC_2 STO_2 transitionResult
 
@@ -29376,7 +29376,7 @@ relation ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR : e
     -- ConstDecl_eval: block EC_0 |- constantDeclarationIR : EC_1
     -- output: % % |- % : EC_1 STO
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:20.1-25.40
+  ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:20.1-25.44
   rulegroup cont
 
    match
@@ -29392,7 +29392,7 @@ relation ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR : e
     -- VarDecl_eval: block EC_0 STO_0 |- variableDeclarationIR : EC_1 STO_1 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 STO_1
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:181.1-184.23
@@ -29491,11 +29491,11 @@ relation Table_eval: evalContext store |- typeId tableObjectProperty : evalConte
     -- Stmt_eval: local EC_2 STO_2 |- prefixedNameIR as callableTargetIR < [] >( argumentListIR ); as statementIR : EC_3 STO_3 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- let b_hit = ~(tableMatch*{tableMatch <- tableMatch*} = [])
     -- let b_miss = ~b_hit
     -- let tableMetadataEnumValue = table_enum "action_list(" ++ typeId ++ ")" . $flatten_prefixedNameIR(prefixedNameIR)
-    -- let tableMetadataStructValue = table_struct "apply_result(" ++ typeId ++ ")" {hit b_hit ;miss b_miss ;action_run tableMetadataEnumValue ;}
+    -- let tableMetadataStructValue = table_struct "apply_result(" ++ typeId ++ ")" {hit `b b_hit ;miss `b b_miss ;action_run tableMetadataEnumValue ;}
     -- output: % % |- % % : EC_3 STO_3 return ?(tableMetadataStructValue as value) as tableResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:200.1-201.17
@@ -29506,7 +29506,7 @@ syntax controlBodyResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-206.23
 relation ControlBody_eval: evalContext store |- controlBodyIR : evalContext store controlBodyResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.09.2-eval-control-statement.watsup:7.1-12.34
+  ;; ../../../../spec-concrete/8-dynamic/8.09.2-eval-control-statement.watsup:7.1-12.38
   rulegroup cont
 
    match
@@ -29520,7 +29520,7 @@ relation ControlBody_eval: evalContext store |- controlBodyIR : evalContext stor
     -- Block_eval: EC_0 STO_0 |- controlBodyIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 STO_1 return ?() as controlBodyResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.2-eval-control-statement.watsup:14.1-19.36
@@ -29557,7 +29557,7 @@ relation ControlBody_eval: evalContext store |- controlBodyIR : evalContext stor
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
 syntax declarationResult = 
-   | `
+   | `empty
    | exit
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
@@ -29577,7 +29577,7 @@ relation ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR :
 
     rulepath constantDeclarationIR
     -- ConstDecl_eval: block EC_0 |- constantDeclarationIR : EC_1
-    -- output: % % |- % : EC_1 STO ` as declarationResult
+    -- output: % % |- % : EC_1 STO `empty as declarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.3-eval-control-declaration.watsup:20.1-36.2
   rulegroup variableDeclarationIR
@@ -29602,8 +29602,8 @@ relation ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR :
     -- VarDecl_eval: block EC_0 STO_0 |- variableDeclarationIR : EC_1 STO_1 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
-    -- output: % % |- % : EC_1 STO_1 ` as declarationResult
+    -- if (continueEmptyResult = `empty)
+    -- output: % % |- % : EC_1 STO_1 `empty as declarationResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.1-220.23
 relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR* : evalContext store declarationResult
@@ -29622,7 +29622,7 @@ relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR*
     -- let EC = evalContext
     -- let STO = store
     -- if (controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} = [])
-    -- output: % % |- % : EC STO ` as declarationResult
+    -- output: % % |- % : EC STO `empty as declarationResult
 
     rulepath cons-head-exit
     -- let EC_0 = evalContext
@@ -29645,7 +29645,7 @@ relation ControlLocalDecls_eval: evalContext store |- controlLocalDeclarationIR*
     -- ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR_h : EC_1 STO_1 declarationResult'
     -- if declarationResult' <: continueEmptyResult
     -- let continueEmptyResult = declarationResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ControlLocalDecls_eval: EC_1 STO_1 |- controlLocalDeclarationListIR_t : EC_2 STO_2 declarationResult
     -- output: % % |- % : EC_2 STO_2 declarationResult
 
@@ -29668,7 +29668,7 @@ relation VarDecl_eval: cursor evalContext store |- variableDeclarationIR : evalC
     -- let typeIR_subst = $subst_type_e(block, EC_0, typeIR)
     -- let value_init = $default(typeIR_subst)
     -- let EC_1 = $add_var_e(p, EC_0, ` nameIR, value_init)
-    -- output: % % % |- % : EC_1 STO ` as declarationResult
+    -- output: % % % |- % : EC_1 STO `empty as declarationResult
 
     rulepath initializer-cont
     -- let STO_0 = store
@@ -29679,7 +29679,7 @@ relation VarDecl_eval: cursor evalContext store |- variableDeclarationIR : evalC
     -- if expressionResult <: continueResult<value>
     -- let ` value_init = expressionResult as continueResult<value>
     -- let EC_2 = $add_var_e(p, EC_1, ` nameIR, value_init)
-    -- output: % % % |- % : EC_2 STO_1 ` as declarationResult
+    -- output: % % % |- % : EC_2 STO_1 `empty as declarationResult
 
     rulepath initializer-exit
     -- let STO_0 = store
@@ -29820,7 +29820,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let parameterIR = int as typeIR "count" ?()
+    -- let parameterIR = `empty `empty int as typeIR "count" ?()
     -- let builtinMethodCallee = builtin_method storageReference . "push_front" < [] >( [parameterIR] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
@@ -29837,7 +29837,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let parameterIR = int as typeIR "count" ?()
+    -- let parameterIR = `empty `empty int as typeIR "count" ?()
     -- let builtinMethodCallee = builtin_method storageReference . "pop_front" < [] >( [parameterIR] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
@@ -30095,7 +30095,7 @@ relation Copy_in_argument: store cursor evalContext parameterIR @ cursor evalCon
    paths
 
     rulepath exit
-    -- if ((direction = ) \/ (direction = in))
+    -- if ((direction = `empty) \/ (direction = in))
     -- Argument_eval: p_caller EC_caller_0 STO_0 |- argumentIR : EC_caller_1 STO_1 expressionResult
     -- if expressionResult <: exitResult
     -- let exitResult = expressionResult as exitResult
@@ -30103,7 +30103,7 @@ relation Copy_in_argument: store cursor evalContext parameterIR @ cursor evalCon
     -- output: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # exit as copyInResult
 
     rulepath cont
-    -- if ((direction = ) \/ (direction = in))
+    -- if ((direction = `empty) \/ (direction = in))
     -- Argument_eval: p_caller EC_caller_0 STO_0 |- argumentIR : EC_caller_1 STO_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
@@ -30280,7 +30280,7 @@ relation Copy_out_argument: store cursor evalContext parameterIR @ cursor evalCo
    paths
 
     rulepath in-directionless
-    -- if ((direction = in) \/ (direction = ))
+    -- if ((direction = in) \/ (direction = `empty))
     -- output: % % % % @ % % % ~> EC_caller_0
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:16.1-38.2
@@ -30654,7 +30654,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- if value' <: headerValue
     -- let headerValue = value' as headerValue
     -- let header _typeId { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} } = headerValue
-    -- let returnResult = return ?(b_valid as value)
+    -- let returnResult = return ?(`b b_valid as value)
     -- output: % % % |- % @< % >( % ): EC STO returnResult as callResult
 
     rulepath header-union-isValid
@@ -30671,7 +30671,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let header_union typeId { fieldValue*{fieldValue <- fieldValue*} } = headerUnionValue
     -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $isValid_fieldValue)
     -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
-    -- let returnResult = return ?(b_valid as value)
+    -- let returnResult = return ?(`b b_valid as value)
     -- output: % % % |- % @< % >( % ): EC STO returnResult as callResult
 
     rulepath header-setValid
@@ -30854,7 +30854,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
     -- if controlBodyResult <: exitResult
     -- let exitResult = controlBodyResult as exitResult
@@ -30876,7 +30876,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult
     -- if declarationResult <: continueEmptyResult
     -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult
     -- if (controlBodyResult = return ?() as controlBodyResult)
     -- let EC_2 = EC_1[global.frame = EC_callee_5.global.frame]
@@ -31227,7 +31227,7 @@ relation ForUpdateStmts_eval: evalContext store |- forUpdateStatementListIR : ev
     -- let EC = evalContext
     -- let STO = store
     -- if (forUpdateStatementIR'*{forUpdateStatementIR' <- forUpdateStatementIR'*} = [])
-    -- output: % % |- % : EC STO ` as statementResult
+    -- output: % % |- % : EC STO `empty as statementResult
 
     rulepath cons-head-exit
     -- let EC_0 = evalContext
@@ -31250,7 +31250,7 @@ relation ForUpdateStmts_eval: evalContext store |- forUpdateStatementListIR : ev
     -- ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ForUpdateStmts_eval: EC_1 STO_1 |- forUpdateStatementIR_t*{forUpdateStatementIR_t <- forUpdateStatementIR_t*} : EC_2 STO_2 statementResult
     -- output: % % |- % : EC_2 STO_2 statementResult
 
@@ -31275,7 +31275,7 @@ relation ForInitStmt_eval: evalContext store |- forInitStatementIR : evalContext
     -- let typeIR_subst = $subst_type_e(local, EC_0, typeIR)
     -- let value_init = $default(typeIR_subst)
     -- let EC_1 = $add_var_e(local, EC_0, ` nameIR, value_init)
-    -- output: % % |- % : EC_1 STO ` as statementResult
+    -- output: % % |- % : EC_1 STO `empty as statementResult
 
     rulepath initializer-exit
     -- let STO_0 = store
@@ -31297,7 +31297,7 @@ relation ForInitStmt_eval: evalContext store |- forInitStatementIR : evalContext
     -- if expressionResult <: continueResult<value>
     -- let ` value_init = expressionResult as continueResult<value>
     -- let EC_2 = $add_var_e(local, EC_1, ` nameIR, value_init)
-    -- output: % % |- % : EC_2 STO_1 ` as statementResult
+    -- output: % % |- % : EC_2 STO_1 `empty as statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:353.1-357.70
   rulegroup forUpdateStatementIR
@@ -31332,7 +31332,7 @@ relation ForInitStmts_eval: evalContext store |- forInitStatementListIR : evalCo
     -- let EC = evalContext
     -- let STO = store
     -- if (forInitStatementIR'*{forInitStatementIR' <- forInitStatementIR'*} = [])
-    -- output: % % |- % : EC STO ` as statementResult
+    -- output: % % |- % : EC STO `empty as statementResult
 
     rulepath cons-head-exit
     -- let EC_0 = evalContext
@@ -31355,7 +31355,7 @@ relation ForInitStmts_eval: evalContext store |- forInitStatementListIR : evalCo
     -- ForInitStmt_eval: EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ForInitStmts_eval: EC_1 STO_1 |- forInitStatementIR_t*{forInitStatementIR_t <- forInitStatementIR_t*} : EC_2 STO_2 statementResult
     -- output: % % |- % : EC_2 STO_2 statementResult
 
@@ -31381,12 +31381,12 @@ relation ForThreeClauseLoop_eval: evalContext store |- typedExpressionIR stateme
 
     rulepath cond-false
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` false as value as expressionResult)
-    -- output: % % |- % % % : EC_1 STO_1 ` as statementResult
+    -- if (expressionResult = ` `b false as value as expressionResult)
+    -- output: % % |- % % % : EC_1 STO_1 `empty as statementResult
 
     rulepath cond-true-loop-exit
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
     -- if statementResult' <: exitResult
     -- let exitResult = statementResult' as exitResult
@@ -31395,7 +31395,7 @@ relation ForThreeClauseLoop_eval: evalContext store |- typedExpressionIR stateme
 
     rulepath cond-true-loop-return
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
     -- if statementResult' <: returnResult
     -- let returnResult = statementResult' as returnResult
@@ -31403,18 +31403,18 @@ relation ForThreeClauseLoop_eval: evalContext store |- typedExpressionIR stateme
 
     rulepath cond-true-loop-break
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult'
     -- if statementResult' <: forBreakResult
     -- let forBreakResult = statementResult' as forBreakResult
     -- if (forBreakResult = break)
-    -- output: % % |- % % % : EC_2 STO_2 ` as statementResult
+    -- output: % % |- % % % : EC_2 STO_2 `empty as statementResult
 
     rulepath cond-true-loop-cont-update-exit
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- if statementResult_loop <- [`empty as statementResult, continue as statementResult]
     -- ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult'
     -- if statementResult' <: exitResult
     -- let exitResult = statementResult' as exitResult
@@ -31423,13 +31423,13 @@ relation ForThreeClauseLoop_eval: evalContext store |- typedExpressionIR stateme
 
     rulepath cond-true-loop-cont-update-cont
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- if (expressionResult = ` true as value as expressionResult)
+    -- if (expressionResult = ` `b true as value as expressionResult)
     -- Stmt_eval: local EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- if statementResult_loop <- [`empty as statementResult, continue as statementResult]
     -- ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult'
     -- if statementResult' <: continueEmptyResult
     -- let continueEmptyResult = statementResult' as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- ForThreeClauseLoop_eval: EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_4 STO_4 statementResult
     -- output: % % |- % % % : EC_4 STO_4 statementResult
 
@@ -31553,7 +31553,7 @@ relation ForInLoop_eval: evalContext store |- nameIR value* statementIR : evalCo
     -- let EC = evalContext
     -- let STO = store
     -- if (value'''*{value''' <- value'''*} = [])
-    -- output: % % |- % % % : EC STO ` as statementResult
+    -- output: % % |- % % % : EC STO `empty as statementResult
 
     rulepath cons-loop-exit
     -- let EC_0 = evalContext
@@ -31591,7 +31591,7 @@ relation ForInLoop_eval: evalContext store |- nameIR value* statementIR : evalCo
     -- if statementResult' <: forBreakResult
     -- let forBreakResult = statementResult' as forBreakResult
     -- if (forBreakResult = break)
-    -- output: % % |- % % % : EC_2 STO_1 ` as statementResult
+    -- output: % % |- % % % : EC_2 STO_1 `empty as statementResult
 
     rulepath cons-loop-cont
     -- let EC_0 = evalContext
@@ -31601,7 +31601,7 @@ relation ForInLoop_eval: evalContext store |- nameIR value* statementIR : evalCo
     -- let value_h :: value_t*{value_t <- value_t*} = value''''*{value'''' <- value''''*}
     -- let EC_1 = $update_var_e(local, EC_0, ` nameIR, value_h)
     -- Stmt_eval: local EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
-    -- if statementResult_loop <- [` as statementResult, continue as statementResult]
+    -- if statementResult_loop <- [`empty as statementResult, continue as statementResult]
     -- ForInLoop_eval: EC_2 STO_1 |- nameIR value_t*{value_t <- value_t*} statementIR : EC_3 STO_2 statementResult
     -- output: % % |- % % % : EC_3 STO_2 statementResult
 
@@ -32226,7 +32226,7 @@ def $largest_priority_wins(tableObjectProperty) : bool =
   -- if tableCustomPropertyIR' matches `%%CUSTOM_CONST%%;`
   -- let _annotationList _constOptIR custom_const _nameIR = value ; = tableCustomPropertyIR'
   -- if value <: boolValue
-  -- let b = value as boolValue
+  -- let `b b = value as boolValue
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:223.1-227.65
   clause 1 : (TBL) = true
@@ -32293,7 +32293,7 @@ relation ActionBody_eval: evalContext store |- blockStatementIR : evalContext st
     -- Block_eval: EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 STO_1 return ?() as actionResult
 
     rulepath exit
@@ -32330,7 +32330,7 @@ relation DefinedFunctionBody_eval: evalContext store |- blockStatementIR : evalC
     -- Block_eval: EC_0 STO_0 |- blockStatementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 STO_1 return ?() as definedFunctionResult
 
     rulepath exit
@@ -32758,7 +32758,7 @@ relation V1Model_parser: evalContext store |- evalContext store transitionResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 accept as transitionResult
 
     rulepath reject
@@ -32798,7 +32798,7 @@ relation V1Model_verify: evalContext store |- evalContext store callResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
     rulepath exit
@@ -32852,7 +32852,7 @@ relation V1Model_ingress: evalContext store |- evalContext store callResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:441.1-443.20
@@ -32879,7 +32879,7 @@ relation V1Model_egress: evalContext store |- evalContext store callResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
     rulepath exit
@@ -32919,7 +32919,7 @@ relation V1Model_check: evalContext store |- evalContext store callResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
     rulepath exit
@@ -32958,7 +32958,7 @@ relation V1Model_deparse: evalContext store |- evalContext store callResult
     -- Stmt_eval: global EC_0 STO_0 |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ); as statementIR : EC_1 STO_1 statementResult
     -- if statementResult <: continueEmptyResult
     -- let continueEmptyResult = statementResult as continueEmptyResult
-    -- if (continueEmptyResult = `)
+    -- if (continueEmptyResult = `empty)
     -- output: % % |- EC_1 STO_1 return ?() as callResult
 
     rulepath exit

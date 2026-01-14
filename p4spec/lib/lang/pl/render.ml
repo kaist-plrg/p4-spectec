@@ -113,7 +113,6 @@ let render_varid (ctx : context) (id_var : Sl.id) =
 
 let code_of_atom atom =
   match atom.it with
-  | Atom.SilentAtom _ -> ""
   | Atom.Tick -> ""
   | _ -> Atom.string_of_atom atom.it
 

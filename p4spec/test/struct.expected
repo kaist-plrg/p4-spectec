@@ -348,7 +348,7 @@ def $modulo_42(n)
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:6.1-7.7
 syntax trailingCommaOpt = 
-   | 
+   | `empty
    | ,
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:14.1-15.10
@@ -368,15 +368,15 @@ syntax stringLiteral =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:43.21-43.29
 syntax identifier = 
-   | text
+   | `id text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:44.25-44.34
 syntax typeIdentifier = 
-   | text
+   | `tid text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:51.1-53.30
 syntax nonTypeName = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -387,7 +387,7 @@ syntax nonTypeName =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:56.1-57.23
 syntax prefixedNonTypeName = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -395,20 +395,20 @@ syntax prefixedNonTypeName =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:63.19-63.33
 syntax typeName = typeIdentifier
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:66.1-67.21
 syntax prefixedTypeName = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:74.1-76.36
 syntax tableCustomName = 
-   | text
-   | text
+   | `id text
+   | `tid text
    | apply
    | state
    | type
@@ -416,7 +416,7 @@ syntax tableCustomName =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:83.1-85.9
 syntax name = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -424,12 +424,12 @@ syntax name =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:88.1-89.21
 syntax nameList = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -437,7 +437,7 @@ syntax nameList =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
    | nameList , name
 
@@ -465,7 +465,7 @@ syntax member = name
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:103.20-103.45
 syntax direction = 
-   | 
+   | `empty
    | in
    | out
    | inout
@@ -491,8 +491,8 @@ syntax specializedType =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:138.1-139.20
 syntax namedType = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:145.26-145.51
@@ -521,8 +521,8 @@ syntax type =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -542,21 +542,21 @@ syntax typeOrVoid =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
-   | text
+   | `id text
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:181.24-181.28
 syntax typeParameter = name
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:184.1-185.39
 syntax typeParameterList = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -564,7 +564,7 @@ syntax typeParameterList =
    | entries
    | type
    | priority
-   | text
+   | `tid text
    | list
    | typeParameterList , typeParameter
 
@@ -589,7 +589,7 @@ def $flatten_typeParameterList(typeParameterList')
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:194.1-195.27
 syntax typeParameterListOpt = 
-   | 
+   | `empty
    | < typeParameterList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:197.1-198.53
@@ -618,7 +618,7 @@ syntax nonEmptyParameterList =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:217.1-218.26
 syntax parameterList = 
-   | 
+   | `empty
    | annotationList direction type name initializerOpt
    | nonEmptyParameterList , parameter
 
@@ -661,7 +661,7 @@ syntax constructorParameterList = parameterList
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:236.1-237.23
 syntax constructorParameterListOpt = 
-   | 
+   | `empty
    | ( parameterList )
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:239.1-241.60
@@ -718,7 +718,7 @@ syntax literalExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:280.1-281.9
 syntax referenceExpression = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -726,7 +726,7 @@ syntax referenceExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:287.28-287.32
@@ -857,7 +857,7 @@ syntax expression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -865,7 +865,7 @@ syntax expression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -884,14 +884,14 @@ syntax expression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:414.1-416.33
 syntax expressionList = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -899,7 +899,7 @@ syntax expressionList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -944,15 +944,15 @@ def $flatten_expressionList(expressionList')
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:426.1-427.15
 syntax memberAccessBase = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -960,7 +960,7 @@ syntax memberAccessBase =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -989,14 +989,14 @@ syntax recordElementExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:438.1-439.28
 syntax dataElementExpression = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1004,7 +1004,7 @@ syntax dataElementExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1040,7 +1040,7 @@ syntax callTarget =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1048,7 +1048,7 @@ syntax callTarget =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1064,8 +1064,8 @@ syntax callTarget =
    | callTarget ( argumentList )
    | callableTarget < realTypeArgumentList >( argumentList )
    | ( expression )
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:453.1-461.28
@@ -1076,7 +1076,7 @@ syntax expressionNonBrace =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1084,7 +1084,7 @@ syntax expressionNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1100,15 +1100,15 @@ syntax expressionNonBrace =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:464.1-465.23
 syntax memberAccessBaseNonBrace = 
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1116,7 +1116,7 @@ syntax memberAccessBaseNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1141,7 +1141,7 @@ syntax callTargetNonBrace =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1149,7 +1149,7 @@ syntax callTargetNonBrace =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -1162,8 +1162,8 @@ syntax callTargetNonBrace =
    | callTargetNonBrace ( argumentList )
    | callableTargetNonBrace < realTypeArgumentList >( argumentList )
    | ( expression )
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:473.1-474.54
@@ -1301,7 +1301,7 @@ syntax simpleKeysetExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1309,7 +1309,7 @@ syntax simpleKeysetExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1338,7 +1338,7 @@ syntax simpleKeysetExpressionList =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1346,7 +1346,7 @@ syntax simpleKeysetExpressionList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1403,7 +1403,7 @@ syntax keysetExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1411,7 +1411,7 @@ syntax keysetExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1451,8 +1451,8 @@ syntax realTypeArgument =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -1474,8 +1474,8 @@ syntax realTypeArgumentList =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -1517,15 +1517,15 @@ syntax typeArgument =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
    | _
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1536,7 +1536,7 @@ syntax typeArgument =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:582.1-584.37
 syntax typeArgumentList = 
-   | 
+   | `empty
    | bool
    | error
    | match_kind
@@ -1549,15 +1549,15 @@ syntax typeArgumentList =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
    | tuple< typeArgumentList >
    | void
    | _
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1600,7 +1600,7 @@ syntax argument =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1608,7 +1608,7 @@ syntax argument =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1636,7 +1636,7 @@ syntax argumentListNonEmpty =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1644,7 +1644,7 @@ syntax argumentListNonEmpty =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1667,14 +1667,14 @@ syntax argumentListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:608.1-609.25
 syntax argumentList = 
-   | 
+   | `empty
    | true
    | false
    | d int hint(print %)
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1682,7 +1682,7 @@ syntax argumentList =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -1736,7 +1736,7 @@ def $flatten_argumentList(argumentList)
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:623.1-627.16
 syntax lvalue = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -1744,7 +1744,7 @@ syntax lvalue =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | lvalue . member
    | lvalue [ expression ]
@@ -1996,7 +1996,7 @@ syntax forUpdateStatementListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:758.1-759.35
 syntax forUpdateStatementList = 
-   | 
+   | `empty
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
    | lvalue assignop expression
@@ -2050,7 +2050,7 @@ syntax forInitStatementListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:780.1-781.33
 syntax forInitStatementList = 
-   | 
+   | `empty
    | annotationList type name initializerOpt
    | lvalue ( argumentList )
    | lvalue < typeArgumentList >( argumentList )
@@ -2096,7 +2096,7 @@ syntax forCollectionExpression =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -2104,7 +2104,7 @@ syntax forCollectionExpression =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | ...
    | unop expression
@@ -2137,7 +2137,7 @@ syntax switchLabel =
    | nat w int hint(print %#W#%)
    | nat s int hint(print %#S#%)
    | " text " hint(print "#%#")
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -2145,7 +2145,7 @@ syntax switchLabel =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | this
    | unop expression
    | expressionNonBrace binop expression
@@ -2166,7 +2166,7 @@ syntax switchCase =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:816.1-817.30
 syntax switchCaseList = 
-   | 
+   | `empty
    | switchCaseList switchCase
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:819.1-820.50
@@ -2226,7 +2226,7 @@ syntax constantDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:867.1-868.16
 syntax initializerOpt = 
-   | 
+   | `empty
    | = expression
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:871.3-871.45
@@ -2257,7 +2257,7 @@ syntax blockElementStatement =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:879.1-880.52
 syntax blockElementStatementList = 
-   | 
+   | `empty
    | blockElementStatementList blockElementStatement
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:882.1-884.62
@@ -2304,7 +2304,7 @@ syntax objectDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:926.1-927.44
 syntax objectDeclarationList = 
-   | 
+   | `empty
    | objectDeclarationList objectDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:929.1-930.57
@@ -2341,7 +2341,7 @@ syntax typeField =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:968.1-969.28
 syntax typeFieldList = 
-   | 
+   | `empty
    | typeFieldList typeField
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:971.1-972.49
@@ -2393,8 +2393,8 @@ syntax typedef =
    | bit<( expression )>
    | varbit< int >
    | varbit<( expression )>
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
    | prefixedTypeName < typeArgumentList >
    | namedType [ expression ]
    | list< typeArgument >
@@ -2431,7 +2431,7 @@ syntax externConstructorOrMethodPrototype =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1023.1-1024.78
 syntax externConstructorOrMethodPrototypeList = 
-   | 
+   | `empty
    | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1026.1-1029.77
@@ -2464,7 +2464,7 @@ syntax selectCase =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1057.1-1058.30
 syntax selectCaseList = 
-   | 
+   | `empty
    | selectCaseList selectCase
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1060.1-1061.50
@@ -2493,7 +2493,7 @@ syntax stateExpression =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1077.1-1078.31
 syntax transitionStatement = 
-   | 
+   | `empty
    | transition stateExpression
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1085.1-1087.21
@@ -2511,8 +2511,8 @@ syntax valueSetType =
    | varbit< int >
    | varbit<( expression )>
    | tuple< typeArgumentList >
-   | text
-   | . typeName
+   | `tid text
+   | `tid. typeName
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1090.3-1090.69
 syntax valueSetDeclaration = 
@@ -2546,7 +2546,7 @@ syntax parserStatement =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1122.1-1123.40
 syntax parserStatementList = 
-   | 
+   | `empty
    | parserStatementList parserStatement
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1125.1-1126.55
@@ -2602,7 +2602,7 @@ syntax parserLocalDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1151.1-1152.54
 syntax parserLocalDeclarationList = 
-   | 
+   | `empty
    | parserLocalDeclarationList parserLocalDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1154.1-1156.63
@@ -2630,7 +2630,7 @@ syntax const =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1179.1-1180.10
 syntax constOpt = 
-   | 
+   | `empty
    | const
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1182.1-1183.54
@@ -2656,7 +2656,7 @@ syntax tableKey =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1194.1-1195.26
 syntax tableKeyList = 
-   | 
+   | `empty
    | tableKeyList tableKey
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1197.1-1198.48
@@ -2676,7 +2676,7 @@ def $flatten_tableKeyList(tableKeyList')
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1208.1-1209.42
 syntax tableActionReference = 
-   | text
+   | `id text
    | apply
    | key
    | actions
@@ -2684,7 +2684,7 @@ syntax tableActionReference =
    | entries
    | type
    | priority
-   | . nonTypeName
+   | `id. nonTypeName
    | prefixedNonTypeName ( argumentList )
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1211.22-1211.60
@@ -2693,7 +2693,7 @@ syntax tableAction =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1214.1-1215.32
 syntax tableActionList = 
-   | 
+   | `empty
    | tableActionList tableAction
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1217.1-1218.51
@@ -2723,7 +2723,7 @@ syntax tableEntry =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1236.1-1237.30
 syntax tableEntryList = 
-   | 
+   | `empty
    | tableEntryList tableEntry
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1239.1-1240.51
@@ -2750,7 +2750,7 @@ syntax tableProperty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1256.1-1257.36
 syntax tablePropertyList = 
-   | 
+   | `empty
    | tablePropertyList tableProperty
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1259.1-1260.54
@@ -2790,7 +2790,7 @@ syntax controlLocalDeclaration =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1289.1-1290.56
 syntax controlLocalDeclarationList = 
-   | 
+   | `empty
    | controlLocalDeclarationList controlLocalDeclaration
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1292.1-1294.64
@@ -2905,8 +2905,8 @@ syntax annotationToken =
    | list
    | void
    | _
-   | text
-   | text
+   | `id text
+   | `tid text
    | " text " hint(print "#%#")
    | d int hint(print %)
    | nat w int hint(print %#W#%)
@@ -2949,7 +2949,7 @@ syntax annotationToken =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1365.1-1367.35
 syntax annotationBody = 
-   | 
+   | `empty
    | annotationBody ( annotationBody )
    | annotationBody annotationToken
 
@@ -2972,7 +2972,7 @@ syntax annotationListNonEmpty =
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1382.1-1383.27
 syntax annotationList = 
-   | 
+   | `empty
    | @ name
    | @ name ( annotationBody )
    | @ name [ structuredAnnotationBody ]
@@ -3011,7 +3011,7 @@ def $flatten_annotationList(annotationList)
 
 ;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1397.1-1399.17
 syntax p4program = 
-   | 
+   | `empty
    | p4program declaration
    | p4program ;
 
@@ -3168,7 +3168,7 @@ def $objectId_ends_with(objectId, nameIR)
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:9.20-9.27
 syntax boolValue = 
-   | bool
+   | `b bool
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:10.21-10.36
 syntax errorValue = 
@@ -3190,7 +3190,7 @@ syntax integerValue =
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:19.1-23.17
 syntax baseValue = 
-   | bool
+   | `b bool
    | error. nameIR
    | match_kind. nameIR
    | " text " hint(print "#%#")
@@ -3302,7 +3302,7 @@ syntax synthesizedValue =
 
 ;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:106.1-109.21
 syntax value = 
-   | bool
+   | `b bool
    | error. nameIR
    | match_kind. nameIR
    | " text " hint(print "#%#")
@@ -3544,7 +3544,7 @@ def $write_value_from_bits'(value', n_var, (bool)*)
 
       1. (Let b_h :: (b_t)* be (bool)*)
 
-      2. Return (((b_h) as value), (b_t)*)
+      2. Return (((`b b_h) as value), (b_t)*)
 
     1. Else Phantom#67
 
@@ -3707,7 +3707,7 @@ def $write_bits_from_value(value')
 
   1. Case (% has type boolValue)
 
-    1. (Let (b) be (value' as boolValue))
+    1. (Let (`b b) be (value' as boolValue))
 
     2. Return [b]
 
@@ -7289,9 +7289,9 @@ def $un_lnot(value)
 
 1. If ((value has type boolValue)), then
 
-  1. (Let (b) be (value as boolValue))
+  1. (Let (`b b) be (value as boolValue))
 
-  2. Return ((~b) as value)
+  2. Return ((`b ~b) as value)
 
 1. Else Phantom#242
 
@@ -7400,27 +7400,27 @@ def $bin_op(binop, value_l, value_r)
 
   10. Case (% matches pattern `<=`)
 
-    1. Return (($bin_le(value_l, value_r)) as value)
+    1. Return ((`b $bin_le(value_l, value_r)) as value)
 
   11. Case (% matches pattern `>=`)
 
-    1. Return (($bin_ge(value_l, value_r)) as value)
+    1. Return ((`b $bin_ge(value_l, value_r)) as value)
 
   12. Case (% matches pattern `<`)
 
-    1. Return (($bin_lt(value_l, value_r)) as value)
+    1. Return ((`b $bin_lt(value_l, value_r)) as value)
 
   13. Case (% matches pattern `>`)
 
-    1. Return (($bin_gt(value_l, value_r)) as value)
+    1. Return ((`b $bin_gt(value_l, value_r)) as value)
 
   14. Case (% matches pattern `==`)
 
-    1. Return (($bin_eq(value_l, value_r)) as value)
+    1. Return ((`b $bin_eq(value_l, value_r)) as value)
 
   15. Case (% matches pattern `!=`)
 
-    1. Return (($bin_ne(value_l, value_r)) as value)
+    1. Return ((`b $bin_ne(value_l, value_r)) as value)
 
   16. Case (% matches pattern `&`)
 
@@ -8560,11 +8560,11 @@ def $bin_eq(value, value')
 
   1. Case (% has type boolValue)
 
-    1. (Let (b_a) be (value as boolValue))
+    1. (Let (`b b_a) be (value as boolValue))
 
     2. If ((value' has type boolValue)), then
 
-      1. (Let (b_b) be (value' as boolValue))
+      1. (Let (`b b_b) be (value' as boolValue))
 
       2. Return (b_a = b_b)
 
@@ -9210,13 +9210,13 @@ def $bin_land(value, value')
 
 1. If ((value has type boolValue)), then
 
-  1. (Let (b_l) be (value as boolValue))
+  1. (Let (`b b_l) be (value as boolValue))
 
   2. If ((value' has type boolValue)), then
 
-    1. (Let (b_r) be (value' as boolValue))
+    1. (Let (`b b_r) be (value' as boolValue))
 
-    2. Return (((b_l /\ b_r)) as value)
+    2. Return ((`b (b_l /\ b_r)) as value)
 
   2. Else Phantom#417
 
@@ -9227,13 +9227,13 @@ def $bin_lor(value, value')
 
 1. If ((value has type boolValue)), then
 
-  1. (Let (b_l) be (value as boolValue))
+  1. (Let (`b b_l) be (value as boolValue))
 
   2. If ((value' has type boolValue)), then
 
-    1. (Let (b_r) be (value' as boolValue))
+    1. (Let (`b b_r) be (value' as boolValue))
 
-    2. Return (((b_l \/ b_r)) as value)
+    2. Return ((`b (b_l \/ b_r)) as value)
 
   2. Else Phantom#419
 
@@ -9246,7 +9246,7 @@ def $cast_op(typeIR, value')
 
   1. Case (% has type boolValue)
 
-    1. (Let (b) be (value' as boolValue))
+    1. (Let (`b b) be (value' as boolValue))
 
     2. Return $cast_bool(typeIR, b)
 
@@ -9385,7 +9385,7 @@ def $default(typeIR')
 
     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
-    2. Return ((false) as value)
+    2. Return ((`b false) as value)
 
   2. Case (% has type errorTypeIR)
 
@@ -9520,7 +9520,7 @@ def $cast_bool(typeIR', b)
 
     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
-    2. Return ((b) as value)
+    2. Return ((`b b) as value)
 
   2. Case (% has type integerTypeIR)
 
@@ -9565,7 +9565,7 @@ def $cast_arbint(typeIR', i)
 
     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
-    2. Return (((i =/= (0 as int))) as value)
+    2. Return ((`b (i =/= (0 as int))) as value)
 
   2. Case (% has type integerTypeIR)
 
@@ -9620,7 +9620,7 @@ def $cast_fixbit(typeIR', w, i)
 
     1. (Let boolTypeIR be (typeIR' as boolTypeIR))
 
-    2. Return (((i =/= (0 as int))) as value)
+    2. Return ((`b (i =/= (0 as int))) as value)
 
   2. Case (% has type integerTypeIR)
 
@@ -10313,7 +10313,7 @@ def $prefixedNonTypeName(prefixedNonTypeName)
 
 2. If ((prefixedNonTypeName matches pattern ``ID.%`)), then
 
-  1. (Let (. nonTypeName) be prefixedNonTypeName)
+  1. (Let (`id. nonTypeName) be prefixedNonTypeName)
 
   2. Return (. $name((nonTypeName as name)))
 
@@ -10332,7 +10332,7 @@ def $prefixedTypeName(prefixedTypeName)
 
 2. If ((prefixedTypeName matches pattern ``TID.%`)), then
 
-  1. (Let (. typeName) be prefixedTypeName)
+  1. (Let (`tid. typeName) be prefixedTypeName)
 
   2. Return (. $name((typeName as name)))
 
@@ -11688,7 +11688,7 @@ syntax globalTypingLayer = {constructor constructorTypeDefEnv, type typeDefEnv, 
 
 ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:16.1-20.12
 syntax blockKind = 
-   | 
+   | `empty
    | extern
    | parser
    | control
@@ -11719,7 +11719,7 @@ syntax blockTypingLayer = {kind blockKind, type typeDefEnv, callable callableTyp
 
 ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:43.1-51.23
 syntax localKind = 
-   | 
+   | `empty
    | function: typeIR
    | extern_function: typeIR
    | action
@@ -11828,9 +11828,9 @@ def $empty_typingContext
 
 1. (Let globalTypingLayer be {constructor $empty_constructorTypeDefEnv, type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame})
 
-2. (Let blockTypingLayer be {kind (), type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame})
+2. (Let blockTypingLayer be {kind (`empty), type $empty_typeDefEnv, callable $empty_callableTypeDefEnv, frame $empty_typeFrame})
 
-3. (Let localTypingLayer be {kind (), type $empty_typeDefEnv, frames [$empty_typeFrame]})
+3. (Let localTypingLayer be {kind (`empty), type $empty_typeDefEnv, frames [$empty_typeFrame]})
 
 4. (Let TC be {global globalTypingLayer, block blockTypingLayer, local localTypingLayer})
 
@@ -11980,7 +11980,7 @@ def $add_parameter_t(cursor, TC, (_annotationList direction typeIR id ((= value)
 
   1. Case true
 
-    1. (Let varTypeIR be (() typeIR (ctk) (value)?))
+    1. (Let varTypeIR be ((`empty) typeIR (ctk) (value)?))
 
     2. (Let TC' be $add_var_t(cursor, TC, id, varTypeIR))
 
@@ -13326,7 +13326,7 @@ relation ParameterType_wf: B |- (annotationList direction typeIR id (constantIni
 
         2. If (~$is_synthesizedTypeIR(typeIR_unroll)), then
 
-          1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
+          1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = (`empty)))), then
 
             1. The relation holds
 
@@ -13348,7 +13348,7 @@ relation ParameterType_wf: B |- (annotationList direction typeIR id (constantIni
 
             1. Case (% matches pattern `IN`)
 
-              1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
+              1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = (`empty)))), then
 
                 1. The relation holds
 
@@ -13356,7 +13356,7 @@ relation ParameterType_wf: B |- (annotationList direction typeIR id (constantIni
 
             2. Case (% matches pattern ``EMPTY`)
 
-              1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = ()))), then
+              1. If (((($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll)) \/ $is_objectTypeIR(typeIR_unroll)) => (direction = (`empty)))), then
 
                 1. The relation holds
 
@@ -15451,11 +15451,11 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
         1. Case (% matches pattern `TRUE`)
 
-          1. Result in: % % |- % ~> ((true) as value)
+          1. Result in: % % |- % ~> ((`b true) as value)
 
         2. Case (% matches pattern `FALSE`)
 
-          1. Result in: % % |- % ~> ((false) as value)
+          1. Result in: % % |- % ~> ((`b false) as value)
 
   2. Case (% has type integerLiteral)
 
@@ -15541,13 +15541,13 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value)
 
-          2. If ((value = ((false) as value))), then
+          2. If ((value = ((`b false) as value))), then
 
-            1. Result in: % % |- % ~> ((false) as value)
+            1. Result in: % % |- % ~> ((`b false) as value)
 
           2. Else Phantom#863
 
-          3. If ((value = ((true) as value))), then
+          3. If ((value = ((`b true) as value))), then
 
             1. (Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r)
 
@@ -15559,13 +15559,13 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value)
 
-          2. If ((value = ((true) as value))), then
+          2. If ((value = ((`b true) as value))), then
 
-            1. Result in: % % |- % ~> ((true) as value)
+            1. Result in: % % |- % ~> ((`b true) as value)
 
           2. Else Phantom#865
 
-          3. If ((value = ((false) as value))), then
+          3. If ((value = ((`b false) as value))), then
 
             1. (Expr_eval_lctk: p TC |- typedExpressionIR_r ~> value_r)
 
@@ -15583,7 +15583,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
       1. (Expr_eval_lctk: p TC |- typedExpressionIR_cond ~> value)
 
-      2. If ((value = ((true) as value))), then
+      2. If ((value = ((`b true) as value))), then
 
         1. (Expr_eval_lctk: p TC |- typedExpressionIR_true ~> value_true)
 
@@ -15591,7 +15591,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
       2. Else Phantom#868
 
-      3. If ((value = ((false) as value))), then
+      3. If ((value = ((`b false) as value))), then
 
         1. (Expr_eval_lctk: p TC |- typedExpressionIR_false ~> value_false)
 
@@ -15955,7 +15955,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                             1. (Let boolValue be (value' as boolValue))
 
-                            2. If (((true) = boolValue)), then
+                            2. If (((`b true) = boolValue)), then
 
                               1. Result in: % % |- % ~> (boolValue as value)
 
@@ -16019,7 +16019,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                             1. (Let boolValue be (value' as boolValue))
 
-                            2. If (((true) = boolValue)), then
+                            2. If (((`b true) = boolValue)), then
 
                               1. Result in: % % |- % ~> (boolValue as value)
 
@@ -19726,7 +19726,7 @@ relation Stmt_ok: p TC f l |- statement' : % % %
 
     2. Group directApplicationStatement-prefixedTypeName: p TC f l |- ((namedType .apply( argumentList );) as statement) : % % %
 
-      1. (Expr_ok: p TC |- (((namedType as callTarget) ( () )) as expression) : (expressionIR # (( typeIR_object _ctk ))))
+      1. (Expr_ok: p TC |- (((namedType as callTarget) ( (`empty) )) as expression) : (expressionIR # (( typeIR_object _ctk ))))
 
       2. If ((expressionIR has type callExpressionIR)), then
 
@@ -19744,9 +19744,9 @@ relation Stmt_ok: p TC f l |- statement' : % % %
 
                 1. (Let nameIR_object be "__direct_application")
 
-                2. (Let TC_1 be $add_var_t(p, TC, nameIR_object, (() typeIR_object (ctk) ?())))
+                2. (Let TC_1 be $add_var_t(p, TC, nameIR_object, ((`empty) typeIR_object (ctk) ?())))
 
-                3. (Let lvalue be (((nameIR_object) as lvalue) . (("apply") as member)))
+                3. (Let lvalue be (((`id nameIR_object) as lvalue) . ((`id "apply") as member)))
 
                 4. (Stmt_ok: p TC_1 f l |- ((lvalue ( argumentList );) as statement) : _typingContext _flow statementIR)
 
@@ -20426,7 +20426,7 @@ relation ParserTransition_ok: TC_0 (nameIR_state)* |- transitionStatement : %
 
   1. Case (% matches pattern ``EMPTY`)
 
-    1. Group empty: TC_0 (nameIR_state)* |- () : %
+    1. Group empty: TC_0 (nameIR_state)* |- (`empty) : %
 
       1. Result in: % % |- % : (transition ("reject" ;))
 
@@ -20769,7 +20769,7 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
             1. (Let nameIR be $name(name))
 
-            2. (Let varTypeIR be (() ((set< typeIR >) as typeIR) (ctk) ?()))
+            2. (Let varTypeIR be ((`empty) ((set< typeIR >) as typeIR) (ctk) ?()))
 
             3. (Let TC_1 be $add_var_t((block), TC_0, nameIR, varTypeIR))
 
@@ -22005,13 +22005,13 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
             2. If ((value has type boolValue)), then
 
-              1. (Let (b_largest_priority_wins) be (value as boolValue))
+              1. (Let (`b b_largest_priority_wins) be (value as boolValue))
 
               2. (Let TBLC_1 be TBLC_0[priorities.largest_wins = b_largest_priority_wins])
 
               3. (Let constOptIR be $flatten_constOpt(constOpt))
 
-              4. (Let tablePropertyIR be ((annotationList constOptIR custom_const "largest_priority_wins" (= ((b_largest_priority_wins) as value)) ;) as tablePropertyIR))
+              4. (Let tablePropertyIR be ((annotationList constOptIR custom_const "largest_priority_wins" (= ((`b b_largest_priority_wins) as value)) ;) as tablePropertyIR))
 
               5. Result in: % % |- % : TBLC_1 tablePropertyIR
 
@@ -22185,7 +22185,7 @@ relation Table_ok: TC |- (tableProperty)* : % %
 
           2. (TableProperties_ok: TC TBLC_0 |- (tableProperty)* : TBLC_1 (tablePropertyIR)*)
 
-          3. (Let tablePropertyIR_default_action be ((() ?() default_action= ((` "NoAction") ( [] )) ;) as tablePropertyIR))
+          3. (Let tablePropertyIR_default_action be (((`empty) ?() default_action= ((` "NoAction") ( [] )) ;) as tablePropertyIR))
 
           4. (Let (TBLC_2, (tablePropertyIR_updated)*) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*))
 
@@ -22222,7 +22222,7 @@ relation TableType_ok: TC_0 TBLC |- name : % %
 
   6. (Let value_enum_field be ((table_enum typeId_enum . nameIR_enum_field) as value))*
 
-  7. (Let varTypeIR_enum_field be (() (tableMetadataEnumTypeIR as typeIR) (lctk) ?(value_enum_field)))*
+  7. (Let varTypeIR_enum_field be ((`empty) (tableMetadataEnumTypeIR as typeIR) (lctk) ?(value_enum_field)))*
 
   8. (Let TC_1 be $add_vars_t((block), TC_0, (typeId_enum ++ "." ++ nameIR_enum_field)*, (varTypeIR_enum_field)*))
 
@@ -22295,7 +22295,7 @@ relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
       5. (TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table)
 
-      6. (Let varTypeIR be (() typeIR_table (dyn) ?()))
+      6. (Let varTypeIR be ((`empty) typeIR_table (dyn) ?()))
 
       7. (Let TC_3 be $add_var_t((block), TC_2, nameIR, varTypeIR))
 
@@ -22420,7 +22420,7 @@ relation ConstDecl_ok: p TC_0 |- (annotationList const type name (= expression_v
 
           3. (Let nameIR be $name(name))
 
-          4. (Let TC_1 be $add_var_t(p, TC_0, nameIR, (() typeIR (lctk) ?(value))))
+          4. (Let TC_1 be $add_var_t(p, TC_0, nameIR, ((`empty) typeIR (lctk) ?(value))))
 
           5. (Let constantDeclarationIR be (annotationList const typeIR nameIR (= value) ;))
 
@@ -22463,7 +22463,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           7. (Let nameIR be $name(name))
 
-          8. (Let TC_1 be $add_var_t(p, TC_0, nameIR, (() typeIR_object (ctk) ?())))
+          8. (Let TC_1 be $add_var_t(p, TC_0, nameIR, ((`empty) typeIR_object (ctk) ?())))
 
           9. (Let instantiationIR be (annotationList typeIR_object prefixedNameIR < (typeArgumentIR_inferred)* >( (argumentIR)* ) nameIR ?() ;))
 
@@ -22491,7 +22491,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           10. (Let nameIR be $name(name))
 
-          11. (Let TC_1 be $add_var_t(p, TC_0, nameIR, (() typeIR_object (ctk) ?())))
+          11. (Let TC_1 be $add_var_t(p, TC_0, nameIR, ((`empty) typeIR_object (ctk) ?())))
 
           12. (Let instantiationIR be (annotationList typeIR_object prefixedNameIR < (typeArgumentIR_inferred)* >( (argumentIR_cast)* ) nameIR ?() ;))
 
@@ -22527,7 +22527,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
               1. (Let (extern typeId_extern < (typeIR_arg)* > externMethodTypeDefEnv_extern) be (typeIR_object as externObjectTypeIR))
 
-              2. (Let TC_1 be $add_var_t((local), TC_0, "this", (() typeIR_object (ctk) ?())))
+              2. (Let TC_1 be $add_var_t((local), TC_0, "this", ((`empty) typeIR_object (ctk) ?())))
 
               3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
@@ -22541,7 +22541,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
                 1. (Let nameIR be $name(name))
 
-                2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, (() typeIR_object_init (ctk) ?())))
+                2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, ((`empty) typeIR_object_init (ctk) ?())))
 
                 3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)* >( (argumentIR_cast)* ) nameIR ?((={ (objectDeclarationIR)* })) ;))
 
@@ -22579,7 +22579,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
             1. (Let (extern typeId_extern < (typeIR_arg)* > externMethodTypeDefEnv_extern) be (typeIR as externObjectTypeIR))
 
-            2. (Let TC_1 be $add_var_t((local), TC_0, "this", (() typeIR_object (ctk) ?())))
+            2. (Let TC_1 be $add_var_t((local), TC_0, "this", ((`empty) typeIR_object (ctk) ?())))
 
             3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
@@ -22593,7 +22593,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
               1. (Let nameIR be $name(name))
 
-              2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, (() typeIR_object_init (ctk) ?())))
+              2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, ((`empty) typeIR_object_init (ctk) ?())))
 
               3. (Let instantiationIR be (annotationList typeIR_object_init prefixedNameIR < (typeArgumentIR_inferred)* >( (argumentIR_cast)* ) nameIR ?((={ (objectDeclarationIR)* })) ;))
 
@@ -22707,7 +22707,7 @@ relation ActionDecl_ok: p TC_0 |- (annotationList action name ( parameterList ) 
 
   4. Else Phantom#1439
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:430.1-434.81
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:430.1-434.59
 relation Decl_ok: TC_0 |- declaration : % %
 
 1. Case analysis on declaration
@@ -22768,7 +22768,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
         2. (Let value_error be ((error. nameIR) as value))*
 
-        3. (Let varTypeIR be (() ((error) as typeIR) (lctk) ?(value_error)))*
+        3. (Let varTypeIR be ((`empty) ((error) as typeIR) (lctk) ?(value_error)))*
 
         4. (Let TC_1 be $add_vars_t((global), TC_0, (nameIR_error)*, (varTypeIR)*))
 
@@ -22790,7 +22790,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
         1. (Let value_match_kind be ((match_kind. nameIR) as value))*
 
-        2. (Let varTypeIR be (() ((match_kind) as typeIR) (lctk) ?(value_match_kind)))*
+        2. (Let varTypeIR be ((`empty) ((match_kind) as typeIR) (lctk) ?(value_match_kind)))*
 
         3. (Let TC_1 be $add_vars_t((global), TC_0, (nameIR)*, (varTypeIR)*))
 
@@ -22904,7 +22904,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
     2. If ((typeParameterListOpt matches pattern ``EMPTY`)), then
 
-      1. Group parserDeclaration: TC_0 |- ((annotationList parser name () ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }) as declaration) : % %
+      1. Group parserDeclaration: TC_0 |- ((annotationList parser name (`empty) ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }) as declaration) : % %
 
         1. (Let TC_1 be TC_0[block.kind = (parser)])
 
@@ -22970,7 +22970,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
     2. If ((typeParameterListOpt matches pattern ``EMPTY`)), then
 
-      1. Group controlDeclaration: TC_0 |- ((annotationList control name () ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody }) as declaration) : % %
+      1. Group controlDeclaration: TC_0 |- ((annotationList control name (`empty) ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList apply controlBody }) as declaration) : % %
 
         1. (Let TC_1 be TC_0[block.kind = (control)])
 
@@ -23056,7 +23056,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
             3. (Let value_field be ((nameIR . nameIR_field) as value))*
 
-            4. (Let varTypeIR be (() (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
+            4. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
 
             5. (Let TC_2 be $add_vars_t((global), TC_1, (id_field)*, (varTypeIR)*))
 
@@ -23090,7 +23090,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
               6. (Let enumTypeDefIR be (enum nameIR < typeIR >{ ((nameIR_field = value_field ;))* }))
 
-              7. (Let varTypeIR be (() (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
+              7. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
 
               8. (Let TC_2 be $add_vars_t((global), TC_0, (id_field)*, (varTypeIR)*))
 
@@ -23458,7 +23458,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       10. Else Phantom#1479
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:436.1-440.82
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:436.1-440.59
 relation Decls_ok: TC |- (declaration)* : % %
 
 1. Case analysis on (declaration)*
@@ -23554,7 +23554,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
 3. If ((direction matches pattern ``EMPTY`)), then
 
-  1. Group empty: p TC actctxt |- (annotationList () typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
+  1. Group empty: p TC actctxt |- (annotationList (`empty) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
     1. Case analysis on actctxt
 
@@ -23942,7 +23942,7 @@ relation CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR)* >( (argu
 
               3. If ((typeIR' has type headerStackTypeIR)), then
 
-                1. (Let parameterIR be (() () ((int) as typeIR) "count" ?()))
+                1. (Let parameterIR be ((`empty) (`empty) ((int) as typeIR) "count" ?()))
 
                 2. (Let methodTypeIR be ((builtin_method( [parameterIR] ): ((int) as typeIR)) as methodTypeIR))
 
@@ -27015,7 +27015,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
       4. (Let value_enum be ((nameIR_enum . nameIR . value) as value))
 
-      5. (Let varTypeIR be (() (enumTypeDefIR as typeIR) (lctk) ?(value_enum)))
+      5. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_enum)))
 
       6. (Let TC_1 be $add_var_t((block), TC_0, nameIR, varTypeIR))
 
@@ -28364,7 +28364,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, (tablePropertyIR)*)
 
           1. (Let TBLC_1 be $add_action(TBLC, (. "NoAction"), [], []))
 
-          2. (Let tableActionIR_NoAction be (() tableActionReferenceIR_NoAction #( [] , [] );))
+          2. (Let tableActionIR_NoAction be ((`empty) tableActionReferenceIR_NoAction #( [] , [] );))
 
           3. (Let tablePropertyIR_h_updated be ((actions={ (tableActionIR)* ++ [tableActionIR_NoAction] }) as tablePropertyIR))
 
@@ -29843,7 +29843,7 @@ def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInter
 
 3. (Let tableActionReferenceIR be $tableObject_create_entry_action(TBL.actions, tableActionInterface))
 
-4. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR () ;))
+4. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR (`empty) ;))
 
 5. (Let (annotationList constOptIR entries={ (tableEntryIR)* }) be TBL.entries)
 
@@ -30464,11 +30464,11 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
         1. Case (% matches pattern `TRUE`)
 
-          1. Result in: % % % |- % : STO ((true) as value)
+          1. Result in: % % % |- % : STO ((`b true) as value)
 
         2. Case (% matches pattern `FALSE`)
 
-          1. Result in: % % % |- % : STO ((false) as value)
+          1. Result in: % % % |- % : STO ((`b false) as value)
 
   2. Case (% has type integerLiteral)
 
@@ -30554,13 +30554,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
           1. (Expr_inst: p IC STO |- typedExpressionIR_l : STO_1 value)
 
-          2. If ((value = ((false) as value))), then
+          2. If ((value = ((`b false) as value))), then
 
-            1. Result in: % % % |- % : STO_1 ((false) as value)
+            1. Result in: % % % |- % : STO_1 ((`b false) as value)
 
           2. Else Phantom#2011
 
-          3. If ((value = ((true) as value))), then
+          3. If ((value = ((`b true) as value))), then
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
@@ -30572,13 +30572,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
           1. (Expr_inst: p IC STO |- typedExpressionIR_l : STO_1 value)
 
-          2. If ((value = ((true) as value))), then
+          2. If ((value = ((`b true) as value))), then
 
-            1. Result in: % % % |- % : STO_1 ((true) as value)
+            1. Result in: % % % |- % : STO_1 ((`b true) as value)
 
           2. Else Phantom#2013
 
-          3. If ((value = ((false) as value))), then
+          3. If ((value = ((`b false) as value))), then
 
             1. (Expr_inst: p IC STO_1 |- typedExpressionIR_r : STO_2 value_r)
 
@@ -30596,7 +30596,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
       1. (Expr_inst: p IC STO |- typedExpressionIR_cond : STO_1 value)
 
-      2. If ((value = ((true) as value))), then
+      2. If ((value = ((`b true) as value))), then
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_true : STO_2 value_true)
 
@@ -30604,7 +30604,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
       2. Else Phantom#2016
 
-      3. If ((value = ((false) as value))), then
+      3. If ((value = ((`b false) as value))), then
 
         1. (Expr_inst: p IC STO_1 |- typedExpressionIR_false : STO_2 value_false)
 
@@ -31111,13 +31111,13 @@ relation Stmt_inst: p IC STO |- statementIR' : % % %
 
           7. (Let STO_2 be $add_map<objectId, object>(STO_1, objectId, object))
 
-          8. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
+          8. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
           9. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
           10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
-          11. (Let blockStatementIR be (() { [(constantDeclarationIR as blockElementStatementIR), (callStatementIR as blockElementStatementIR)] }))
+          11. (Let blockStatementIR be ((`empty) { [(constantDeclarationIR as blockElementStatementIR), (callStatementIR as blockElementStatementIR)] }))
 
           12. Result in: % % % |- % : IC STO_2 (blockStatementIR as statementIR)
 
@@ -31489,13 +31489,13 @@ relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
           7. (Let typeIR be ((` typeId) as typeIR))
 
-          8. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
+          8. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
           9. (Let callableTargetIR be ((((` typeId) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
           10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
-          11. (Let parserBlockStatementIR be (() { [(constantDeclarationIR as parserStatementIR), (callStatementIR as parserStatementIR)] }))
+          11. (Let parserBlockStatementIR be ((`empty) { [(constantDeclarationIR as parserStatementIR), (callStatementIR as parserStatementIR)] }))
 
           12. Result in: % % |- % : IC_0 STO_2 (parserBlockStatementIR as parserStatementIR)
 
@@ -31807,7 +31807,7 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
       4. (Let IC_1 be $add_var_i((block), IC_0, nameIR, ((! objectId) as value)))
 
-      5. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
+      5. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
       6. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
@@ -31852,7 +31852,7 @@ relation ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)* : % % %
 
       2. Else Phantom#2064
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.30
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:123.1-130.27
 relation ConstDecl_inst: p IC_0 |- (annotationList const typeIR nameIR (= value) ;) : % %
 
 1. Group : p IC_0 |- (annotationList const typeIR nameIR (= value) ;) : % %
@@ -31896,7 +31896,7 @@ relation InstDecl_inst: p IC_0 STO_0 |- (annotationList typeIR prefixedNameIR < 
 
     10. (Let IC_1 be $add_var_i(p, IC_0, nameIR, ((! objectId) as value)))
 
-    11. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
+    11. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
     12. Result in: % % % |- % : IC_1 STO_3 constantDeclarationIR
 
@@ -31910,7 +31910,7 @@ relation InstDecl_inst: p IC_0 STO_0 |- (annotationList typeIR prefixedNameIR < 
 
     3. (Let IC_1 be $add_var_i(p, IC_0, nameIR, ((! objectId) as value)))
 
-    4. (Let constantDeclarationIR be (() const typeIR nameIR (= ((! objectId) as value)) ;))
+    4. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
     5. Result in: % % % |- % : IC_1 STO_2 constantDeclarationIR
 
@@ -31942,7 +31942,7 @@ relation ActionDecl_inst: p IC_0 |- (annotationList action nameIR ( parameterLis
 
   4. Result in: % % |- % : IC_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:158.1-165.48
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:158.1-165.45
 relation Decl_inst: IC_0 STO |- declarationIR : % %
 
 1. Case analysis on declarationIR
@@ -32327,7 +32327,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
       7. Result in: % % |- % : IC_2 STO
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:167.1-174.48
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:167.1-174.45
 relation Decls_inst: IC STO |- (declarationIR)* : % %
 
 1. Case analysis on (declarationIR)*
@@ -33005,7 +33005,7 @@ def $init_tableEntries((tablePropertyIR)*)
 
 2. Else Phantom#2107
 
-3. Return (() ?() entries={ [] })
+3. Return ((`empty) ?() entries={ [] })
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:7.26-7.41
 syntax globalEvalLayer = globalInstLayer
@@ -33578,7 +33578,7 @@ def $find_state_e(cursor, EC, nameIR)
 
     1. Return $find_map<nameIR, state>(EC.block.state, nameIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-275.56
+;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:275.1-276.86
 def $subst_type_e(cursor, EC, typeIR)
 
 1. Case analysis on cursor
@@ -33607,9 +33607,9 @@ def $subst_type_e(cursor, EC, typeIR)
 
     5. Return typeIR_subst
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:7.30-7.32
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:7.30-7.36
 syntax continueEmptyResult = 
-   | `
+   | `empty
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:8.28-8.32
 syntax continueResult<X> = 
@@ -33655,13 +33655,13 @@ relation Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
         1. Case (% matches pattern `TRUE`)
 
-          1. (Let expressionResult be ((` ((true) as value)) as expressionResult))
+          1. (Let expressionResult be ((` ((`b true) as value)) as expressionResult))
 
           2. Result in: % % % |- % : EC STO expressionResult
 
         2. Case (% matches pattern `FALSE`)
 
-          1. (Let expressionResult be ((` ((false) as value)) as expressionResult))
+          1. (Let expressionResult be ((` ((`b false) as value)) as expressionResult))
 
           2. Result in: % % % |- % : EC STO expressionResult
 
@@ -33801,15 +33801,15 @@ relation Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
           2. Else Phantom#2154
 
-          3. If ((expressionResult' = ((` ((false) as value)) as expressionResult))), then
+          3. If ((expressionResult' = ((` ((`b false) as value)) as expressionResult))), then
 
-            1. (Let expressionResult be ((` ((false) as value)) as expressionResult))
+            1. (Let expressionResult be ((` ((`b false) as value)) as expressionResult))
 
             2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
           3. Else Phantom#2155
 
-          4. If ((expressionResult' = ((` ((true) as value)) as expressionResult))), then
+          4. If ((expressionResult' = ((` ((`b true) as value)) as expressionResult))), then
 
             1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'')
 
@@ -33839,15 +33839,15 @@ relation Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
           2. Else Phantom#2158
 
-          3. If ((expressionResult' = ((` ((true) as value)) as expressionResult))), then
+          3. If ((expressionResult' = ((` ((`b true) as value)) as expressionResult))), then
 
-            1. (Let expressionResult be ((` ((true) as value)) as expressionResult))
+            1. (Let expressionResult be ((` ((`b true) as value)) as expressionResult))
 
             2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
           3. Else Phantom#2159
 
-          4. If ((expressionResult' = ((` ((false) as value)) as expressionResult))), then
+          4. If ((expressionResult' = ((` ((`b false) as value)) as expressionResult))), then
 
             1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'')
 
@@ -33883,7 +33883,7 @@ relation Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
       2. Else Phantom#2163
 
-      3. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+      3. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
         1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_true : EC_2 STO_2 expressionResult_true)
 
@@ -33891,7 +33891,7 @@ relation Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
       3. Else Phantom#2164
 
-      4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+      4. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
         1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_false : EC_2 STO_2 expressionResult_false)
 
@@ -35153,7 +35153,7 @@ syntax forContinueResult =
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
 syntax statementResult = 
-   | `
+   | `empty
    | exit
    | reject errorValue
    | return value?
@@ -35171,7 +35171,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
     2. Group emptyStatementIR: p EC STO |- ((;) as statementIR) : % % %
 
-      1. Result in: % % % |- % : EC STO ((`) as statementResult)
+      1. Result in: % % % |- % : EC STO ((`empty) as statementResult)
 
   2. Case (% has type assignmentStatementIR)
 
@@ -35225,7 +35225,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
                     3. (Lvalue_write: p EC_2 STO_2 |- storageReference -> value_update : EC_3)
 
-                    4. Result in: % % % |- % : EC_3 STO_2 ((`) as statementResult)
+                    4. Result in: % % % |- % : EC_3 STO_2 ((`empty) as statementResult)
 
                   3. Else Phantom#2248
 
@@ -35259,7 +35259,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
                 2. (Lvalue_write: p EC_2 STO_2 |- storageReference -> value : EC_3)
 
-                3. Result in: % % % |- % : EC_3 STO_2 ((`) as statementResult)
+                3. Result in: % % % |- % : EC_3 STO_2 ((`empty) as statementResult)
 
           2. Else Phantom#2251
 
@@ -35305,7 +35305,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
             3. Case (% has type returnResult)
 
-              1. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
+              1. Result in: % % % |- % : EC_2 STO_2 ((`empty) as statementResult)
 
   4. Case (% has type exitStatement)
 
@@ -35351,7 +35351,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
           3. Else Phantom#2254
 
-          4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+          4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
             1. (Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult)
 
@@ -35359,9 +35359,9 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
           4. Else Phantom#2255
 
-          5. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+          5. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
-            1. Result in: % % % |- % : EC_cond STO_cond ((`) as statementResult)
+            1. Result in: % % % |- % : EC_cond STO_cond ((`empty) as statementResult)
 
           5. Else Phantom#2256
 
@@ -35379,7 +35379,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
           3. Else Phantom#2257
 
-          4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+          4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
             1. (Stmt_eval: p EC_cond STO_cond |- statementIR_then : EC_then STO_then statementResult)
 
@@ -35387,7 +35387,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
           4. Else Phantom#2258
 
-          5. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+          5. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
             1. (Stmt_eval: p EC_cond STO_cond |- statementIR_else : EC_else STO_else statementResult)
 
@@ -35573,7 +35573,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
                 2. Case (% matches pattern ())
 
-                  1. Result in: % % % |- % : EC_1 STO_1 ((`) as statementResult)
+                  1. Result in: % % % |- % : EC_1 STO_1 ((`empty) as statementResult)
 
             2. Else Phantom#2264
 
@@ -35607,7 +35607,7 @@ relation Stmt_eval: p EC STO |- statementIR' : % % %
 
               2. Case (% matches pattern ())
 
-                1. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
+                1. Result in: % % % |- % : EC_2 STO_2 ((`empty) as statementResult)
 
   1. Else Phantom#2265
 
@@ -35626,7 +35626,7 @@ relation BlockElementStmt_eval: EC_0 STO |- blockElementStatementIR : % % %
 
       1. (ConstDecl_eval: (local) EC_0 |- constantDeclarationIR : EC_1)
 
-      2. Result in: % % |- % : EC_1 STO ((`) as statementResult)
+      2. Result in: % % |- % : EC_1 STO ((`empty) as statementResult)
 
   2. Case (% has type variableDeclarationIR)
 
@@ -35648,7 +35648,7 @@ relation BlockElementStmt_eval: EC_0 STO |- blockElementStatementIR : % % %
 
           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-          2. Result in: % % |- % : EC_1 STO_1 ((`) as statementResult)
+          2. Result in: % % |- % : EC_1 STO_1 ((`empty) as statementResult)
 
   3. Case (% has type statementIR)
 
@@ -35667,7 +35667,7 @@ relation BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)*
 
   1. If (((blockElementStatementIR)* = [])), then
 
-    1. Result in: % % |- % : evalContext store ((`) as statementResult)
+    1. Result in: % % |- % : evalContext store ((`empty) as statementResult)
 
   1. Else Phantom#2267
 
@@ -35726,7 +35726,7 @@ relation Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
 syntax parserStatementResult = 
-   | `
+   | `empty
    | reject errorValue
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
@@ -35742,7 +35742,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
       1. (ConstDecl_eval: (local) EC_0 |- constantDeclarationIR : EC_1)
 
-      2. Result in: % % |- % : EC_1 STO ((`) as parserStatementResult)
+      2. Result in: % % |- % : EC_1 STO ((`empty) as parserStatementResult)
 
   2. Case (% has type variableDeclarationIR)
 
@@ -35756,7 +35756,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
         1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-        2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
+        2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
       2. Else Phantom#2270
 
@@ -35772,7 +35772,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
         1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-        2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
+        2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
       2. Else Phantom#2271
 
@@ -35788,7 +35788,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
         1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-        2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
+        2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
       2. Else Phantom#2272
 
@@ -35812,7 +35812,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
           1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-          2. Result in: % % |- % : EC_1 STO_1 ((`) as parserStatementResult)
+          2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
       2. Else Phantom#2273
 
@@ -35830,7 +35830,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
           2. (Expr_eval: (local) EC_0 STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
-          3. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+          3. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
             1. (ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_then : EC_then STO_then parserStatementResult)
 
@@ -35838,9 +35838,9 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
           3. Else Phantom#2274
 
-          4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+          4. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
-            1. Result in: % % |- % : EC_cond STO_cond ((`) as parserStatementResult)
+            1. Result in: % % |- % : EC_cond STO_cond ((`empty) as parserStatementResult)
 
           4. Else Phantom#2275
 
@@ -35850,7 +35850,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
           2. (Expr_eval: (local) EC_0 STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
-          3. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+          3. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
             1. (ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_then : EC_then STO_then parserStatementResult)
 
@@ -35858,7 +35858,7 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
           3. Else Phantom#2276
 
-          4. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+          4. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
             1. (ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_else : EC_else STO_else parserStatementResult)
 
@@ -35875,7 +35875,7 @@ relation ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
   1. If (((parserStatementIR)* = [])), then
 
-    1. Result in: % % |- % : evalContext store ((`) as parserStatementResult)
+    1. Result in: % % |- % : evalContext store ((`empty) as parserStatementResult)
 
   1. Else Phantom#2279
 
@@ -36178,7 +36178,7 @@ relation Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
               4. (Let tableMetadataEnumValue be (table_enum "action_list(" ++ typeId ++ ")" . $flatten_prefixedNameIR(prefixedNameIR)))
 
-              5. (Let tableMetadataStructValue be (table_struct "apply_result(" ++ typeId ++ ")" {hit (b_hit) ;miss (b_miss) ;action_run tableMetadataEnumValue ;}))
+              5. (Let tableMetadataStructValue be (table_struct "apply_result(" ++ typeId ++ ")" {hit (`b b_hit) ;miss (`b b_miss) ;action_run tableMetadataEnumValue ;}))
 
               6. Result in: % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
@@ -36228,7 +36228,7 @@ relation ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
 syntax declarationResult = 
-   | `
+   | `empty
    | exit
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
@@ -36244,7 +36244,7 @@ relation ControlLocalDecl_eval: EC_0 STO |- controlLocalDeclarationIR : % % %
 
       1. (ConstDecl_eval: (block) EC_0 |- constantDeclarationIR : EC_1)
 
-      2. Result in: % % |- % : EC_1 STO ((`) as declarationResult)
+      2. Result in: % % |- % : EC_1 STO ((`empty) as declarationResult)
 
   2. Case (% has type variableDeclarationIR)
 
@@ -36266,7 +36266,7 @@ relation ControlLocalDecl_eval: EC_0 STO |- controlLocalDeclarationIR : % % %
 
           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-          2. Result in: % % |- % : EC_1 STO_1 ((`) as declarationResult)
+          2. Result in: % % |- % : EC_1 STO_1 ((`empty) as declarationResult)
 
 1. Else Phantom#2301
 
@@ -36277,7 +36277,7 @@ relation ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR
 
   1. If (((controlLocalDeclarationIR)* = [])), then
 
-    1. Result in: % % |- % : evalContext store ((`) as declarationResult)
+    1. Result in: % % |- % : evalContext store ((`empty) as declarationResult)
 
   1. Else Phantom#2302
 
@@ -36320,7 +36320,7 @@ relation VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initialize
 
       3. (Let EC_1 be $add_var_e(p, EC_0, (` nameIR), value_init))
 
-      4. Result in: % % % |- % : EC_1 store ((`) as declarationResult)
+      4. Result in: % % % |- % : EC_1 store ((`empty) as declarationResult)
 
     2. Case (% matches pattern (_))
 
@@ -36336,7 +36336,7 @@ relation VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initialize
 
           2. (Let EC_2 be $add_var_e(p, EC_1, (` nameIR), value_init))
 
-          3. Result in: % % % |- % : EC_2 STO_1 ((`) as declarationResult)
+          3. Result in: % % % |- % : EC_2 STO_1 ((`empty) as declarationResult)
 
         2. Case (% has type exitResult)
 
@@ -36477,7 +36477,7 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 1. (Let ?(storageReference) be (storageReference')?)
 
-                2. (Let parameterIR be (() () ((int) as typeIR) "count" ?()))
+                2. (Let parameterIR be ((`empty) (`empty) ((int) as typeIR) "count" ?()))
 
                 3. (Let builtinMethodCallee be (builtin_method storageReference . "push_front" < [] >( [parameterIR] )))
 
@@ -36509,7 +36509,7 @@ relation Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
                 1. (Let ?(storageReference) be (storageReference')?)
 
-                2. (Let parameterIR be (() () ((int) as typeIR) "count" ?()))
+                2. (Let parameterIR be ((`empty) (`empty) ((int) as typeIR) "count" ?()))
 
                 3. (Let builtinMethodCallee be (builtin_method storageReference . "pop_front" < [] >( [parameterIR] )))
 
@@ -37583,7 +37583,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                       2. (Let (header _typeId { b_valid ; (_fieldValue)* }) be headerValue)
 
-                      3. (Let returnResult be (return ?(((b_valid) as value))))
+                      3. (Let returnResult be (return ?(((`b b_valid) as value))))
 
                       4. Result in: % % % |- % @< % >( % ): EC_0 STO_0 (returnResult as callResult)
 
@@ -37597,7 +37597,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                       4. (Let b_valid be ((fieldValue_valid)* = []))
 
-                      5. (Let returnResult be (return ?(((b_valid) as value))))
+                      5. (Let returnResult be (return ?(((`b b_valid) as value))))
 
                       6. Result in: % % % |- % @< % >( % ): EC_0 STO_0 (returnResult as callResult)
 
@@ -38204,7 +38204,7 @@ relation ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % %
 
   1. If (((forUpdateStatementIR)* = [])), then
 
-    1. Result in: % % |- % : evalContext store ((`) as statementResult)
+    1. Result in: % % |- % : evalContext store ((`empty) as statementResult)
 
   1. Else Phantom#2436
 
@@ -38253,7 +38253,7 @@ relation ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
         3. (Let EC_1 be $add_var_e((local), EC_0, (` nameIR), value_init))
 
-        4. Result in: % % |- % : EC_1 store ((`) as statementResult)
+        4. Result in: % % |- % : EC_1 store ((`empty) as statementResult)
 
       2. Case (% matches pattern (_))
 
@@ -38275,7 +38275,7 @@ relation ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
             2. (Let EC_2 be $add_var_e((local), EC_1, (` nameIR), value_init))
 
-            3. Result in: % % |- % : EC_2 STO_1 ((`) as statementResult)
+            3. Result in: % % |- % : EC_2 STO_1 ((`empty) as statementResult)
 
 1. Else Phantom#2439
 
@@ -38298,7 +38298,7 @@ relation ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
   1. If (((forInitStatementIR)* = [])), then
 
-    1. Result in: % % |- % : evalContext store ((`) as statementResult)
+    1. Result in: % % |- % : evalContext store ((`empty) as statementResult)
 
   1. Else Phantom#2441
 
@@ -38343,13 +38343,13 @@ relation ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR fo
 
   2. Else Phantom#2444
 
-  3. If ((expressionResult = ((` ((false) as value)) as expressionResult))), then
+  3. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
-    1. Result in: % % |- % % % : EC_1 STO_1 ((`) as statementResult)
+    1. Result in: % % |- % % % : EC_1 STO_1 ((`empty) as statementResult)
 
   3. Else Phantom#2445
 
-  4. If ((expressionResult = ((` ((true) as value)) as expressionResult))), then
+  4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
     1. (Stmt_eval: (local) EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult')
 
@@ -38371,13 +38371,13 @@ relation ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR fo
 
         1. (Let forBreakResult be (statementResult' as forBreakResult))
 
-        2. Result in: % % |- % % % : EC_2 STO_2 ((`) as statementResult)
+        2. Result in: % % |- % % % : EC_2 STO_2 ((`empty) as statementResult)
 
     2. Else Phantom#2446
 
     3. (Stmt_eval: (local) EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop)
 
-    4. If (statementResult_loop is in [((`) as statementResult), ((continue) as statementResult)]), then
+    4. If (statementResult_loop is in [((`empty) as statementResult), ((continue) as statementResult)]), then
 
       1. (ForUpdateStmts_eval: EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 statementResult')
 
@@ -38528,7 +38528,7 @@ relation ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % 
 
   1. If (((value)* = [])), then
 
-    1. Result in: % % |- % % % : evalContext store ((`) as statementResult)
+    1. Result in: % % |- % % % : evalContext store ((`empty) as statementResult)
 
   1. Else Phantom#2457
 
@@ -38558,13 +38558,13 @@ relation ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % 
 
         1. (Let forBreakResult be (statementResult' as forBreakResult))
 
-        2. Result in: % % |- % % % : EC_2 STO_1 ((`) as statementResult)
+        2. Result in: % % |- % % % : EC_2 STO_1 ((`empty) as statementResult)
 
     4. Else Phantom#2458
 
     5. (Stmt_eval: (local) EC_1 store |- statementIR : EC_2 STO_1 statementResult_loop)
 
-    6. If (statementResult_loop is in [((`) as statementResult), ((continue) as statementResult)]), then
+    6. If (statementResult_loop is in [((`empty) as statementResult), ((continue) as statementResult)]), then
 
       1. (ForInLoop_eval: EC_2 STO_1 |- nameIR (value_t)* statementIR : EC_3 STO_2 statementResult)
 
@@ -39183,7 +39183,7 @@ def $largest_priority_wins(TBL)
 
     2. If ((value has type boolValue)), then
 
-      1. (Let (b) be (value as boolValue))
+      1. (Let (`b b) be (value as boolValue))
 
       2. Return b
 
