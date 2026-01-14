@@ -156,6 +156,12 @@ struct
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
+      | PacketIn packet_in, "length", [] ->
+          let packet_in, value_ctx, value_sto, value_callResult =
+            Core.Object.PacketIn.length value_ctx value_sto packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_sto, value_callResult)
       | CounterArray counter_array, "increment", [ "index" ] ->
           let counter_array, value_ctx, value_sto, value_callResult =
             Object.CounterArray.increment value_ctx value_sto counter_array
