@@ -1,4 +1,4 @@
-;; Instruction coverage: 8854/12404 (71.38%)
+;; Instruction coverage: 8829/12377 (71.33%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -10522,11 +10522,9 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 + 1. If ((|((id_arg)?)*| > 0)), then
 
-+   1. (Let (id)? be (id_arg)?)*
++   1. If (((id_arg)? matches pattern (_)))*, then
 
-+   2. If (((id)? matches pattern (_)))*, then
-
--     1. (Let ?(id_arg_inner) be (id)?)*
+-     1. (Let ?(id_arg_inner) be (id_arg)?)*
 
 -     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
 
@@ -20789,15 +20787,15 @@ rel CallableTarget_lvalue_ok: p TC |- lvalue : %
 +   3. Result in: % % |- % : callableTargetIR
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:512.1-518.44
-rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
+rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR)* >( (argumentIR')* ): % <# % >(# % )
 
 + 1. If ((callableTargetIR' has type prefixedNameIR)), then
 
 +   1. (Let prefixedNameIR be (callableTargetIR' as prefixedNameIR))
 
-+   2. Group referenceExpressionIR: p TC |- (prefixedNameIR as callableTargetIR) < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
++   2. Group referenceExpressionIR: p TC |- (prefixedNameIR as callableTargetIR) < (typeArgumentIR)* >( (argumentIR')* ): % <# % >(# % )
 
-+     1. If (((typeArgumentIR')* = [])), then
++     1. If (((typeArgumentIR)* = [])), then
 
 +       1. (Let ((callableId, callableTypeDefIR, id*)')? be $find_callableDef_overloaded_t(p, TC, prefixedNameIR, (argumentIR')*))
 
@@ -20813,11 +20811,9 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +             1. Result in: % % |- % < % >( % ): (actionTypeIR as callableTypeIR) <# [] >(# (id_default)* )
 
-+     2. (Let (typeArgumentIR)* be (typeArgumentIR')*)
++     2. (Let ((callableId, callableTypeDefIR, id*)')? be $find_callableDef_overloaded_t(p, TC, prefixedNameIR, (argumentIR')*))
 
-+     3. (Let ((callableId, callableTypeDefIR, id*)')? be $find_callableDef_overloaded_t(p, TC, prefixedNameIR, (argumentIR')*))
-
-+     4. If ((((callableId, callableTypeDefIR, id*)')? matches pattern (_))), then
++     3. If ((((callableId, callableTypeDefIR, id*)')? matches pattern (_))), then
 
 +       1. (Let ?((callableId, callableTypeDefIR, id*)) be ((callableId, callableTypeDefIR, id*)')?)
 
@@ -20843,7 +20839,7 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +     1. (Let (typedExpressionIR_base . nameIR) be callableTargetIR')
 
-+     2. If (((typeArgumentIR')* matches pattern [])), then
++     2. If (((typeArgumentIR)* matches pattern [])), then
 
 +       1. Case analysis on (argumentIR')*
 
@@ -20919,7 +20915,7 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +                 3. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] )
 
-+     3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
++     3. Group typedExpressionIR-nameIR-extern-method: p TC |- (typedExpressionIR_base . nameIR) < (typeArgumentIR)* >( (argumentIR')* ): % <# % >(# % )
 
 +       1. (Let typeIR_base be $type_of_typedExpressionIR(typedExpressionIR_base))
 
@@ -20937,7 +20933,7 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +           1. (Let ?((_callableId, externMethodTypeDefIR, (id_default)*)) be ((callableId, externMethodTypeDefIR, nameIR*))?)
 
-+           2. (Let (callableTypeIR, typeId*) be $specialize_callableTypeDefIR((externMethodTypeDefIR as callableTypeDefIR), (typeArgumentIR')*))
++           2. (Let (callableTypeIR, typeId*) be $specialize_callableTypeDefIR((externMethodTypeDefIR as callableTypeDefIR), (typeArgumentIR)*))
 
 +           3. If (((callableTypeIR, typeId*) has type (externMethodTypeIR, typeId*))), then
 
@@ -20951,7 +20947,7 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 +     4. If ((nameIR = "apply")), then
 
-+       1. If (((typeArgumentIR')* matches pattern [])), then
++       1. If (((typeArgumentIR)* matches pattern [])), then
 
 +         1. Group typedExpressionIR-nameIR-parser-apply-method: p TC |- (typedExpressionIR_base . "apply") < [] >( (argumentIR')* ): % <# % >(# % )
 
@@ -21029,9 +21025,9 @@ rel CallableType_ok: p TC |- callableTargetIR' < (typeArgumentIR')* >( (argument
 
 -     1. (Let (( callableTargetIR )) be callableTargetIR')
 
--     2. Group parenthesized: p TC |- (( callableTargetIR )) < (typeArgumentIR')* >( (argumentIR')* ): % <# % >(# % )
+-     2. Group parenthesized: p TC |- (( callableTargetIR )) < (typeArgumentIR)* >( (argumentIR')* ): % <# % >(# % )
 
--       1. (CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR')* >( (argumentIR')* ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* ))
+-       1. (CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argumentIR')* ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* ))
 
 -       2. Result in: % % |- % < % >( % ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* )
 
@@ -23733,19 +23729,17 @@ rel SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
 +             1. Result in: % % |- % : ((default) as keysetExpressionIR)
 
-+           2. (Let (typeIR'')* be (typeIR)*)
++           2. If (((typeIR)* matches pattern [ _/1 ])), then
 
-+           3. If (((typeIR'')* matches pattern [ _/1 ])), then
-
-+             1. (Let [typeIR_key] be (typeIR'')*)
++             1. (Let [typeIR_key] be (typeIR)*)
 
 +             2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
 
 +             3. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-+           4. If ((|(typeIR'')*| > 1)), then
++           3. If ((|(typeIR)*| > 1)), then
 
-+             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR'')* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
++             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR)* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
 
 +             2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
@@ -23753,19 +23747,17 @@ rel SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
 +         1. Group simpleKeysetExpression-dontcare: TC (typeIR)* |- ((_) as keysetExpression) : %
 
-+           1. (Let (typeIR')* be (typeIR)*)
++           1. If (((typeIR)* matches pattern [ _/1 ])), then
 
-+           2. If (((typeIR')* matches pattern [ _/1 ])), then
-
-+             1. (Let [typeIR_key] be (typeIR')*)
++             1. (Let [typeIR_key] be (typeIR)*)
 
 +             2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
 
 +             3. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
--           3. If ((|(typeIR')*| > 1)), then
+-           2. If ((|(typeIR)*| > 1)), then
 
--             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR')* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
+-             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR)* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
 
 -             2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
@@ -23779,19 +23771,17 @@ rel SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
 -         1. Group tupleKeysetExpression-default: TC (typeIR)* |- (((default)) as keysetExpression) : %
 
--           1. (Let (typeIR')* be (typeIR)*)
+-           1. If (((typeIR)* matches pattern [ _/1 ])), then
 
--           2. If (((typeIR')* matches pattern [ _/1 ])), then
-
--             1. (Let [typeIR_key] be (typeIR')*)
+-             1. (Let [typeIR_key] be (typeIR)*)
 
 -             2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (default) : simpleKeysetExpressionIR)
 
 -             3. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
--           3. If ((|(typeIR')*| > 1)), then
+-           2. If ((|(typeIR)*| > 1)), then
 
--             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR')* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
+-             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR)* >) as typeIR) |- (default) : simpleKeysetExpressionIR)
 
 -             2. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
@@ -23799,19 +23789,17 @@ rel SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
 -         1. Group tupleKeysetExpression-dontcare: TC (typeIR)* |- (((_)) as keysetExpression) : %
 
--           1. (Let (typeIR')* be (typeIR)*)
+-           1. If (((typeIR)* matches pattern [ _/1 ])), then
 
--           2. If (((typeIR')* matches pattern [ _/1 ])), then
-
--             1. (Let [typeIR_key] be (typeIR')*)
+-             1. (Let [typeIR_key] be (typeIR)*)
 
 -             2. (SelectCase_keyset_simple_ok: TC typeIR_key |- (_) : simpleKeysetExpressionIR)
 
 -             3. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
--           3. If ((|(typeIR')*| > 1)), then
+-           2. If ((|(typeIR)*| > 1)), then
 
--             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR')* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
+-             1. (SelectCase_keyset_simple_ok: TC ((seq< (typeIR)* >) as typeIR) |- (_) : simpleKeysetExpressionIR)
 
 -             2. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
@@ -27934,25 +27922,23 @@ rel Decl_inst: IC_0 STO |- declarationIR : % %
 
 +         9. Result in: % % |- % : IC_2 STO
 
-+       2. (Let (externConstructorPrototypeIR)* be (externConstructorPrototypeIR')*)
++       2. (Let callableId_method be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
-+       3. (Let callableId_method be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*
++       3. (Let externMethodTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
-+       4. (Let externMethodTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
++       4. (Let externMethodTypeDefEnv be ({ ((callableId_method : externMethodTypeDefIR))* }))
 
-+       5. (Let externMethodTypeDefEnv be ({ ((callableId_method : externMethodTypeDefIR))* }))
++       5. (Let externObjectTypeDefIR be (extern nameIR < typeParameterListIR , [] > externMethodTypeDefEnv))
 
-+       6. (Let externObjectTypeDefIR be (extern nameIR < typeParameterListIR , [] > externMethodTypeDefEnv))
++       6. (Let IC_1 be $add_typeDef_i((global), IC_0, nameIR, (externObjectTypeDefIR as typeDefIR)))
 
-+       7. (Let IC_1 be $add_typeDef_i((global), IC_0, nameIR, (externObjectTypeDefIR as typeDefIR)))
++       7. (Let callableId_constructor be $callableId_of_externConstructorPrototypeIR(externConstructorPrototypeIR'))*
 
-+       8. (Let callableId_constructor be $callableId_of_externConstructorPrototypeIR(externConstructorPrototypeIR))*
++       8. (Let constructorDef be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, (externMethodPrototypeIR)*, externConstructorPrototypeIR'))*
 
-+       9. (Let constructorDef be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, (externMethodPrototypeIR)*, externConstructorPrototypeIR))*
++       9. (Let IC_2 be $add_constructorDefs_i(IC_1, (callableId_constructor)*, (constructorDef)*))
 
-+       10. (Let IC_2 be $add_constructorDefs_i(IC_1, (callableId_constructor)*, (constructorDef)*))
-
-+       11. Result in: % % |- % : IC_2 STO
++       10. Result in: % % |- % : IC_2 STO
 
     9. Case (% has type parserDeclarationIR)
 
@@ -30082,11 +30068,9 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +     1. Result in: % % % |- % : evalContext store ((` []) as expressionListResult)
 
-+   2. (Let (typedExpressionIR''')* be (typedExpressionIR)*)
++   2. If (((typedExpressionIR)* matches pattern _ :: _)), then
 
-+   3. If (((typedExpressionIR''')* matches pattern _ :: _)), then
-
-+     1. (Let typedExpressionIR_h :: (typedExpressionIR_t)* be (typedExpressionIR''')*)
++     1. (Let typedExpressionIR_h :: (typedExpressionIR_t)* be (typedExpressionIR)*)
 
 +     2. (Expr_eval: p evalContext store |- typedExpressionIR_h : EC_1 STO_1 expressionResult)
 
@@ -31152,11 +31136,9 @@ rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % 
 
 +     1. Result in: % % |- % : evalContext store ((`) as statementResult)
 
-+   2. (Let (blockElementStatementIR''''')* be (blockElementStatementIR)*)
++   2. If (((blockElementStatementIR)* matches pattern _ :: _)), then
 
-+   3. If (((blockElementStatementIR''''')* matches pattern _ :: _)), then
-
-+     1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR''''')*)
++     1. (Let blockElementStatementIR_h :: (blockElementStatementIR_t)* be (blockElementStatementIR)*)
 
 +     2. (BlockElementStmt_eval: evalContext store |- blockElementStatementIR_h : EC_1 STO_1 statementResult')
 
@@ -31338,11 +31320,9 @@ rel ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 +     1. Result in: % % |- % : evalContext store ((`) as parserStatementResult)
 
-+   2. (Let (parserStatementIR'')* be (parserStatementIR)*)
++   2. If (((parserStatementIR)* matches pattern _ :: _)), then
 
-+   3. If (((parserStatementIR'')* matches pattern _ :: _)), then
-
-+     1. (Let parserStatementIR_h :: (parserStatementIR_t)* be (parserStatementIR'')*)
++     1. (Let parserStatementIR_h :: (parserStatementIR_t)* be (parserStatementIR)*)
 
 +     2. (ParserStmt_eval: evalContext store |- parserStatementIR_h : EC_1 STO_1 parserStatementResult')
 
@@ -31531,11 +31511,9 @@ rel ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % 
 
 +     1. Result in: % % |- % : evalContext store
 
-+   2. (Let (parserLocalDeclarationIR')* be (parserLocalDeclarationIR)*)
++   2. If (((parserLocalDeclarationIR)* matches pattern _ :: _)), then
 
-+   3. If (((parserLocalDeclarationIR')* matches pattern _ :: _)), then
-
-+     1. (Let parserLocalDeclarationIR_h :: parserLocalDeclarationListIR_t be (parserLocalDeclarationIR')*)
++     1. (Let parserLocalDeclarationIR_h :: parserLocalDeclarationListIR_t be (parserLocalDeclarationIR)*)
 
 +     2. (ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR_h : EC_1 STO_1)
 
@@ -31698,11 +31676,9 @@ rel ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR)* : 
 
 +     1. Result in: % % |- % : evalContext store ((`) as declarationResult)
 
-+   2. (Let (controlLocalDeclarationIR'')* be (controlLocalDeclarationIR)*)
++   2. If (((controlLocalDeclarationIR)* matches pattern _ :: _)), then
 
-+   3. If (((controlLocalDeclarationIR'')* matches pattern _ :: _)), then
-
-+     1. (Let controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t be (controlLocalDeclarationIR'')*)
++     1. (Let controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t be (controlLocalDeclarationIR)*)
 
 +     2. (ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR_h : EC_1 STO_1 declarationResult')
 
@@ -32326,17 +32302,13 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
 +       1. Result in: % % % % @ % % % ~> store evalContext @ evalContext' # ((` []) as copyInListResult)
 
-+   2. (Let (parameterIR''')* be (parameterIR)*)
++   2. If (((parameterIR)* matches pattern _ :: _)), then
 
-+   3. If (((parameterIR''')* matches pattern _ :: _)), then
++     1. (Let parameterIR_h :: (parameterIR_t)* be (parameterIR)*)
 
-+     1. (Let parameterIR_h :: (parameterIR_t)* be (parameterIR''')*)
++     2. If (((argumentIR)* matches pattern _ :: _)), then
 
-+     2. (Let (argumentIR''')* be (argumentIR)*)
-
-+     3. If (((argumentIR''')* matches pattern _ :: _)), then
-
-+       1. (Let argumentIR_h :: (argumentIR_t)* be (argumentIR''')*)
++       1. (Let argumentIR_h :: (argumentIR_t)* be (argumentIR)*)
 
 +       2. (Copy_in_argument: store p_caller evalContext parameterIR_h @ p_callee evalContext' argumentIR_h ~> STO_1 EC_caller_1 @ EC_callee_1 # copyInResult)
 
@@ -32404,41 +32376,41 @@ rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR
 
 + 2. Group out-inout: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
-+   1. If (((storageReference')? matches pattern ())), then
++   1. Case analysis on (storageReference')?
 
-+     1. Case analysis on direction
+      1. Case (% matches pattern ())
 
-        1. Case (% matches pattern `OUT`)
++       1. Case analysis on direction
 
-+         1. Result in: % % % % @ % % % ~> EC_caller_0
+          1. Case (% matches pattern `OUT`)
 
-        2. Case (% matches pattern `INOUT`)
++           1. Result in: % % % % @ % % % ~> EC_caller_0
 
--         1. Result in: % % % % @ % % % ~> EC_caller_0
+          2. Case (% matches pattern `INOUT`)
 
-+   2. (Let (storageReference'')? be (storageReference')?)
+-           1. Result in: % % % % @ % % % ~> EC_caller_0
 
-+   3. If (((storageReference'')? matches pattern (_))), then
+      2. Case (% matches pattern (_))
 
-+     1. (Let ?(storageReference) be (storageReference'')?)
++       1. (Let ?(storageReference) be (storageReference')?)
 
-+     2. Case analysis on direction
++       2. Case analysis on direction
 
-        1. Case (% matches pattern `OUT`)
+          1. Case (% matches pattern `OUT`)
 
-+         1. (Let value be $find_var_e(p_callee, EC_callee, (` nameIR)))
++           1. (Let value be $find_var_e(p_callee, EC_callee, (` nameIR)))
 
-+         2. (Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1)
++           2. (Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1)
 
-+         3. Result in: % % % % @ % % % ~> EC_caller_1
++           3. Result in: % % % % @ % % % ~> EC_caller_1
 
-        2. Case (% matches pattern `INOUT`)
+          2. Case (% matches pattern `INOUT`)
 
-+         1. (Let value be $find_var_e(p_callee, EC_callee, (` nameIR)))
++           1. (Let value be $find_var_e(p_callee, EC_callee, (` nameIR)))
 
-+         2. (Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1)
++           2. (Lvalue_write: p_caller EC_caller_0 STO |- storageReference -> value : EC_caller_1)
 
-+         3. Result in: % % % % @ % % % ~> EC_caller_1
++           3. Result in: % % % % @ % % % ~> EC_caller_1
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:288.1-292.35
 rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
@@ -32451,11 +32423,9 @@ rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((sto
 
 +       1. Result in: % % % % @ % % % ~> evalContext
 
-+   2. (Let (parameterIR')* be (parameterIR)*)
++   2. If (((parameterIR)* matches pattern _ :: _)), then
 
-+   3. If (((parameterIR')* matches pattern _ :: _)), then
-
-+     1. (Let parameterIR_h :: (parameterIR_t)* be (parameterIR')*)
++     1. (Let parameterIR_h :: (parameterIR_t)* be (parameterIR)*)
 
 +     2. (Let ((storageReference')?)* be ((storageReference)?)*)
 
@@ -33295,11 +33265,9 @@ rel Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* :
 
 +     1. Result in: % % |- % : evalContext store ((` []) as keysetExpressionResult)
 
-+   2. (Let (simpleKeysetExpressionIR''')* be (simpleKeysetExpressionIR)*)
++   2. If (((simpleKeysetExpressionIR)* matches pattern _ :: _)), then
 
-+   3. If (((simpleKeysetExpressionIR''')* matches pattern _ :: _)), then
-
-+     1. (Let simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)* be (simpleKeysetExpressionIR''')*)
++     1. (Let simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)* be (simpleKeysetExpressionIR)*)
 
 +     2. (Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR_h : EC_1 STO_1 simpleKeysetExpressionResult)
 
@@ -33367,11 +33335,9 @@ rel ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
 
 +     1. Result in: % % |- % : evalContext store ((`) as statementResult)
 
-+   2. (Let (forUpdateStatementIR'')* be (forUpdateStatementIR)*)
++   2. If (((forUpdateStatementIR)* matches pattern _ :: _)), then
 
-+   3. If (((forUpdateStatementIR'')* matches pattern _ :: _)), then
-
-+     1. (Let forUpdateStatementIR_h :: (forUpdateStatementIR_t)* be (forUpdateStatementIR'')*)
++     1. (Let forUpdateStatementIR_h :: (forUpdateStatementIR_t)* be (forUpdateStatementIR)*)
 
 +     2. (ForUpdateStmt_eval: evalContext store |- forUpdateStatementIR_h : EC_1 STO_1 statementResult')
 
@@ -33453,11 +33419,9 @@ rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 +     1. Result in: % % |- % : evalContext store ((`) as statementResult)
 
-+   2. (Let (forInitStatementIR'')* be (forInitStatementIR)*)
++   2. If (((forInitStatementIR)* matches pattern _ :: _)), then
 
-+   3. If (((forInitStatementIR'')* matches pattern _ :: _)), then
-
-+     1. (Let forInitStatementIR_h :: (forInitStatementIR_t)* be (forInitStatementIR'')*)
++     1. (Let forInitStatementIR_h :: (forInitStatementIR_t)* be (forInitStatementIR)*)
 
 +     2. (ForInitStmt_eval: evalContext store |- forInitStatementIR_h : EC_1 STO_1 statementResult')
 
@@ -33653,11 +33617,9 @@ rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 +     1. Result in: % % |- % % % : evalContext store ((`) as statementResult)
 
-+   2. (Let (value'''')* be (value)*)
++   2. If (((value)* matches pattern _ :: _)), then
 
-+   3. If (((value'''')* matches pattern _ :: _)), then
-
-+     1. (Let value_h :: (value_t)* be (value'''')*)
++     1. (Let value_h :: (value_t)* be (value)*)
 
 +     2. (Let EC_1 be $update_var_e((local), evalContext, (` nameIR), value_h))
 
@@ -33727,11 +33689,9 @@ rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 +     1. Result in: % |- % : ?()
 
-+   2. (Let (switchCaseIR'''')* be (switchCaseIR)*)
++   2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
-+   3. If (((switchCaseIR'''')* matches pattern _ :: _)), then
-
-+     1. (Let switchCaseIR_h :: (switchCaseIR_t)* be (switchCaseIR'''')*)
++     1. (Let switchCaseIR_h :: (switchCaseIR_t)* be (switchCaseIR)*)
 
 +     2. Case analysis on switchCaseIR_h
 
@@ -33901,11 +33861,9 @@ rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 -       1. Result in: % % % % |- % : EC_0 STO_0 ?()
 
-+     2. (Let (switchCaseIR'''')* be (switchCaseIR)*)
++     2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
-+     3. If (((switchCaseIR'''')* matches pattern _ :: _)), then
-
-+       1. (Let switchCaseIR_h :: (switchCaseIR_t)* be (switchCaseIR'''')*)
++       1. (Let switchCaseIR_h :: (switchCaseIR_t)* be (switchCaseIR)*)
 
 +       2. Case analysis on switchCaseIR_h
 
@@ -33993,11 +33951,9 @@ rel SelectCases_match: evalContext store (value_key)* |- (selectCaseIR)* : % % %
 
 -     1. Result in: % % % |- % : evalContext store ?()
 
-+   2. (Let (selectCaseIR'')* be (selectCaseIR)*)
++   2. If (((selectCaseIR)* matches pattern _ :: _)), then
 
-+   3. If (((selectCaseIR'')* matches pattern _ :: _)), then
-
-+     1. (Let selectCaseIR_h :: (selectCaseIR_t)* be (selectCaseIR'')*)
++     1. (Let selectCaseIR_h :: (selectCaseIR_t)* be (selectCaseIR)*)
 
 +     2. (SelectCase_match: evalContext store (value_key)* |- selectCaseIR_h : EC_1 STO_1 (nameIR)?)
 
@@ -34063,11 +34019,9 @@ rel TableKeys_eval: evalContext store |- (tableKeyIR)* : % % %
 
 +     1. Result in: % % |- % : evalContext store ((` []) as tableKeysResult)
 
-+   2. (Let (tableKeyIR''')* be (tableKeyIR)*)
++   2. If (((tableKeyIR)* matches pattern _ :: _)), then
 
-+   3. If (((tableKeyIR''')* matches pattern _ :: _)), then
-
-+     1. (Let tableKeyIR_h :: (tableKeyIR_t)* be (tableKeyIR''')*)
++     1. (Let tableKeyIR_h :: (tableKeyIR_t)* be (tableKeyIR)*)
 
 +     2. (TableKey_eval: evalContext store |- tableKeyIR_h : EC_1 STO_1 tableKeyResult)
 
@@ -34190,11 +34144,9 @@ rel TableMatches_eval: evalContext store |- (tableKeyValue)* @ (tableEntryIR)* :
 
 +     1. Result in: % % |- % @ % : evalContext store ((` []) as tableMatchesResult)
 
-+   2. (Let (tableEntryIR''')* be (tableEntryIR)*)
++   2. If (((tableEntryIR)* matches pattern _ :: _)), then
 
-+   3. If (((tableEntryIR''')* matches pattern _ :: _)), then
-
-+     1. (Let tableEntryIR_h :: (tableEntryIR_t)* be (tableEntryIR''')*)
++     1. (Let tableEntryIR_h :: (tableEntryIR_t)* be (tableEntryIR)*)
 
 +     2. (TableMatch_eval: evalContext store |- (tableKeyValue)* @ tableEntryIR_h : EC_1 STO_1 tableMatchResult)
 
@@ -34311,11 +34263,9 @@ def $select_action(TBL, (tableMatch')*)
 
         2. Case false
 
-+         1. (Let (tableActionReferenceIR')* be (tableActionReferenceIR_sorted)*)
++         1. If (((tableActionReferenceIR_sorted)* matches pattern _ :: _)), then
 
-+         2. If (((tableActionReferenceIR')* matches pattern _ :: _)), then
-
-+           1. (Let tableActionReferenceIR_h :: (_tableActionReferenceIR)* be (tableActionReferenceIR')*)
++           1. (Let tableActionReferenceIR_h :: (_tableActionReferenceIR)* be (tableActionReferenceIR_sorted)*)
 
 +           2. Return tableActionReferenceIR_h
 

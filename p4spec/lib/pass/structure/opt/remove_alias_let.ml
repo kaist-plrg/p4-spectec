@@ -1,3 +1,4 @@
+open Lang
 open Ol.Ast
 open Runtime.Dynamic_Sl
 open Envs
@@ -13,7 +14,11 @@ open Util.Source
 
    Notice the stop condition when we meet a shadowing let binding
 
-   Other trivial binds include: let y = x*, let y = x? *)
+   Other trivial binds include:
+      - let y = x*
+      - let y = x?
+      - let y* = x*
+      - let y? = x? *)
 
 let rec remove (ihenv : IHEnv.t) (instrs : instr list) : instr list =
   match instrs with
@@ -21,6 +26,13 @@ let rec remove (ihenv : IHEnv.t) (instrs : instr list) : instr list =
   | instr_h :: instrs_t -> (
       match instr_h.it with
       | LetI ({ it = VarE id_l; _ }, { it = VarE id_r; _ }, _) ->
+          let renamer = Renamer.singleton id_l id_r in
+          instrs_t |> Renamer.rename_instrs ihenv renamer |> remove ihenv
+      | LetI
+          ( { it = IterE ({ it = VarE id_l; _ }, (iter_l, _)); _ },
+            { it = IterE ({ it = VarE id_r; _ }, (iter_r, _)); _ },
+            _ )
+        when Il.Eq.eq_iter iter_l iter_r ->
           let renamer = Renamer.singleton id_l id_r in
           instrs_t |> Renamer.rename_instrs ihenv renamer |> remove ihenv
       | LetI
