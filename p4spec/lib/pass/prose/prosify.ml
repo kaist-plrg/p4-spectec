@@ -362,25 +362,23 @@ and prosify_instrs' (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   let num_branch_instrs =
     instrs |> List.filter is_branch_instr |> List.length
   in
+  let rec trailing_instrs instrs =
+    match instrs with
+    | [] -> []
+    | instr_h :: instrs_t ->
+        if is_branch_instr instr_h then instrs_t else trailing_instrs instrs_t
+  in
   if num_branch_instrs = 1 then
-    let ctx = Ctx.set_branch ctx Check in
+    let instrs_trailing = trailing_instrs instrs in
+    let ctx =
+      match instrs_trailing with
+      | [] -> Ctx.set_branch ctx Check
+      | _ -> Ctx.set_branch ctx If
+    in
     instrs |> List.concat_map (prosify_instr ctx)
   else
-    instrs
-    |> List.fold_left
-         (fun (is_first_branch, instrs_pl) instr ->
-           let ctx, is_first_branch =
-             if is_first_branch && is_branch_instr instr then
-               let ctx = Ctx.set_branch ctx If in
-               (ctx, false)
-             else if (not is_first_branch) && is_branch_instr instr then
-               let ctx = Ctx.set_branch ctx ElseIf in
-               (ctx, false)
-             else (ctx, true)
-           in
-           (is_first_branch, instrs_pl @ prosify_instr ctx instr))
-         (true, [])
-    |> snd
+    let ctx = Ctx.set_branch ctx If in
+    instrs |> List.concat_map (prosify_instr ctx)
 
 (* If instruction prosification *)
 

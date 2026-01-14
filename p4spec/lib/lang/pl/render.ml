@@ -112,9 +112,7 @@ let render_varid (ctx : context) (id_var : Sl.id) =
 (* Notation *)
 
 let code_of_atom atom =
-  match atom.it with
-  | Atom.Tick -> ""
-  | _ -> Atom.string_of_atom atom.it
+  match atom.it with Atom.Tick -> "" | _ -> Atom.string_of_atom atom.it
 
 let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
