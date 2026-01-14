@@ -11,16 +11,33 @@ let register f = call := f
 
 (* Lvalue_read *)
 
+let lvalue_read_var (value_cursor : Value.t) (value_ctx : Value.t)
+    (value_sto : Value.t) (name : string) : Value.t =
+  let value_storageReference =
+    let value_nameIR = wrap_text_v name in
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
+  in
+  match
+    !call "Lvalue_read"
+      [ value_cursor; value_ctx; value_sto; value_storageReference ]
+  with
+  | [ value_value ] -> value_value
+  | _ -> assert false
+
+let lvalue_read_var_global (value_ctx : Value.t) (value_sto : Value.t)
+    (name : string) : Value.t =
+  let value_cursor = [ Term "GLOBAL" ]#@"cursor" in
+  lvalue_read_var value_cursor value_ctx value_sto name
+
 let lvalue_read_dot (value_cursor : Value.t) (value_ctx : Value.t)
     (value_sto : Value.t) (name : string) (member : string) : Value.t =
   let value_prefixedNameIR =
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
   in
   let value_storageReference =
     let value_memberIR = wrap_text_v member in
-    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]
-    #@ "storageReference"
+    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]#@"storageReference"
   in
   match
     !call "Lvalue_read"
@@ -31,7 +48,7 @@ let lvalue_read_dot (value_cursor : Value.t) (value_ctx : Value.t)
 
 let lvalue_read_dot_global (value_ctx : Value.t) (value_sto : Value.t)
     (name : string) (member : string) : Value.t =
-  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  let value_cursor = [ Term "GLOBAL" ]#@"cursor" in
   lvalue_read_dot value_cursor value_ctx value_sto name member
 
 (* Lvalue_write *)
@@ -40,7 +57,7 @@ let lvalue_write_var (value_cursor : Value.t) (value_ctx : Value.t)
     (value_sto : Value.t) (name : string) (value_val : Value.t) : Value.t =
   let value_prefixedNameIR =
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
   in
   match
     !call "Lvalue_write"
@@ -54,12 +71,11 @@ let lvalue_write_dot (value_cursor : Value.t) (value_ctx : Value.t)
     (value_val : Value.t) : Value.t =
   let value_prefixedNameIR =
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
   in
   let value_storageReference =
     let value_memberIR = wrap_text_v member in
-    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]
-    #@ "storageReference"
+    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]#@"storageReference"
   in
   match
     !call "Lvalue_write"
@@ -70,17 +86,17 @@ let lvalue_write_dot (value_cursor : Value.t) (value_ctx : Value.t)
 
 let lvalue_write_var_local (value_ctx : Value.t) (value_sto : Value.t)
     (name : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   lvalue_write_var value_cursor value_ctx value_sto name value_val
 
 let lvalue_write_dot_global (value_ctx : Value.t) (value_sto : Value.t)
     (name : string) (member : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  let value_cursor = [ Term "GLOBAL" ]#@"cursor" in
   lvalue_write_dot value_cursor value_ctx value_sto name member value_val
 
 let lvalue_write_dot_local (value_ctx : Value.t) (value_sto : Value.t)
     (name : string) (member : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   lvalue_write_dot value_cursor value_ctx value_sto name member value_val
 
 (* V1Model_init_packet_in/out *)
@@ -152,6 +168,39 @@ let v1model_check (value_ctx : Value.t) (value_sto : Value.t) :
 let v1model_deparse (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
   match !call "V1Model_deparse" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+(* EBPF_init_packet_in *)
+
+let ebpf_init_packet_in (value_ctx : Value.t) (value_sto : Value.t)
+    (value_packet_in_state : Value.t) : Value.t * Value.t =
+  match
+    !call "EBPF_init_packet_in" [ value_ctx; value_sto; value_packet_in_state ]
+  with
+  | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+  | _ -> assert false
+
+(* EBPF_init_globals *)
+
+let ebpf_init_globals (value_ctx : Value.t) (value_sto : Value.t) : Value.t =
+  match !call "EBPF_init_globals" [ value_ctx; value_sto ] with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* EBPF_parse/filter *)
+
+let ebpf_parse (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "EBPF_parse" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+let ebpf_filter (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "EBPF_filter" [ value_ctx; value_sto ] with
   | [ value_ctx; value_sto; value_callResult ] ->
       (value_ctx, value_sto, value_callResult)
   | _ -> assert false
