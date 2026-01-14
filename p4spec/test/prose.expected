@@ -863,7 +863,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. If ``bool`` is equal to ``true``:
   ... Return ``<<concat_, concat_<bool>((write_bits_from_value(value~field~))^{asterisk}^)>>``.
  .. Let ``HEADER ++_++ { bool ; ++_++^{asterisk}^ }`` be ``value'``.
- .. Else if ``bool`` is equal to ``false``:
+ .. If ``bool`` is equal to ``false``:
   ... Return ``·``.
 . Else if let ``HEADER_UNION ++_++ { (value id ;)^{asterisk}^ }`` be ``value'``:
  .. Return ``<<concat_, concat_<bool>((write_bits_from_value(value))^{asterisk}^)>>``.
@@ -3000,7 +3000,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else:
  .. If ``value'^{asterisk}^`` is an empty list: return ``false``.
  .. Let ``value~a_h~ {two-colons} value~a_t~^{asterisk}^`` be ``value^{asterisk}^``.
- .. Else if let ``value~b_h~ {two-colons} value~b_t~^{asterisk}^`` be ``value'^{asterisk}^``:
+ .. If let ``value~b_h~ {two-colons} value~b_t~^{asterisk}^`` be ``value'^{asterisk}^``:
   ... Return ``<<bin_eq, bin_eq(value~a_h~, value~b_h~)>> /\ <<bin_eqs, bin_eqs(value~a_t~^{asterisk}^, value~b_t~^{asterisk}^)>>``.
 
 <<bin_eqs_fields, bin_eqs_fields((value, id)^{asterisk}^, (value, id)'^{asterisk}^)>>
@@ -3012,7 +3012,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else:
  .. If ``(value, id)'^{asterisk}^`` is an empty list: return ``false``.
  .. Let ``(value~a_h~, id~a_h~) {two-colons} ((value~a_t~, id~a_t~))^{asterisk}^`` be ``(value, id)^{asterisk}^``.
- .. Else if let ``(value~b_h~, id~b_h~) {two-colons} ((value~b_t~, id~b_t~))^{asterisk}^`` be ``(value, id)'^{asterisk}^``:
+ .. If let ``(value~b_h~, id~b_h~) {two-colons} ((value~b_t~, id~b_t~))^{asterisk}^`` be ``(value, id)'^{asterisk}^``:
   ... Return ``id~a_h~ = id~b_h~ /\ <<bin_eq, bin_eq(value~a_h~, value~b_h~)>> /\ <<bin_eqs_fields, bin_eqs_fields(((value~a_t~, id~a_t~))^{asterisk}^, ((value~b_t~, id~b_t~))^{asterisk}^)>>``.
 
 <<bin_ne, bin_ne(value~l~, value~r~)>>
@@ -3882,11 +3882,11 @@ for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
 . If ``set<pair<callableId, V>>`` is equal to ``{ · }``:
  .. Return ``·``.
 . Let ``{ pair<callableId, V>^{asterisk}^ }`` be ``set<pair<callableId, V>>``.
-. Else if let ``callTargetId~h~ : V~h~ {two-colons} (callTargetId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
+. If let ``callTargetId~h~ : V~h~ {two-colons} (callTargetId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
  .. If ``<<match_overloaded_named, match_overloaded_named<V>(callTargetId~h~ : V~h~, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>`` is ``NOMATCH``:
   ... Return ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callTargetId~t~ : V~t~)^{asterisk}^ }, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>``.
  .. Let ``callTargetMatch`` be ``<<match_overloaded_named, match_overloaded_named<V>(callTargetId~h~ : V~h~, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>``.
- .. Else if let ``MATCH id~default~^{asterisk}^`` be ``callTargetMatch``:
+ .. If let ``MATCH id~default~^{asterisk}^`` be ``callTargetMatch``:
   ... Return ``(callTargetId~h~, V~h~, id~default~^{asterisk}^) {two-colons} <<find_overloadeds_named, find_overloadeds_named<V>({ (callTargetId~t~ : V~t~)^{asterisk}^ }, nameIR~f~ ( id~arg~^{asterisk}^ ), get_parameterListIR)>>``.
 
 <<find_overloadeds_unnamed, find_overloadeds_unnamed<V>(set<pair<callableId, V>>, nameIR~f~ ( nat ), get_parameterListIR)>>
@@ -3895,11 +3895,11 @@ for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
 . If ``set<pair<callableId, V>>`` is equal to ``{ · }``:
  .. Return ``·``.
 . Let ``{ pair<callableId, V>^{asterisk}^ }`` be ``set<pair<callableId, V>>``.
-. Else if let ``callTargetId~h~ : V~h~ {two-colons} (callTargetId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
+. If let ``callTargetId~h~ : V~h~ {two-colons} (callTargetId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
  .. If ``<<match_overloaded_unnamed, match_overloaded_unnamed<V>(callTargetId~h~ : V~h~, nameIR~f~ ( nat ), get_parameterListIR)>>`` is ``NOMATCH``:
   ... Return ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callTargetId~t~ : V~t~)^{asterisk}^ }, nameIR~f~ ( nat ), get_parameterListIR)>>``.
  .. Let ``callTargetMatch`` be ``<<match_overloaded_unnamed, match_overloaded_unnamed<V>(callTargetId~h~ : V~h~, nameIR~f~ ( nat ), get_parameterListIR)>>``.
- .. Else if let ``MATCH id~default~^{asterisk}^`` be ``callTargetMatch``:
+ .. If let ``MATCH id~default~^{asterisk}^`` be ``callTargetMatch``:
   ... Return ``(callTargetId~h~, V~h~, id~default~^{asterisk}^) {two-colons} <<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callTargetId~t~ : V~t~)^{asterisk}^ }, nameIR~f~ ( nat ), get_parameterListIR)>>``.
 
 <<find_overloaded, find_overloaded<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>
@@ -3924,13 +3924,13 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. If ``·`` is equal to ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( id~arg_inner~^{asterisk}^ ), get_parameterListIR)>>``:
   ... Return ``None``.
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_named, find_overloadeds_named<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( id~arg_inner~^{asterisk}^ ), get_parameterListIR)>>``.
- .. Else if let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
+ .. If let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
   ... Return ``(callableId~found~, V~found~, id~default~^{asterisk}^)``.
 . Else if ``id~arg~^?^`` is equal to ``None``, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
  .. If ``·`` is equal to ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``:
   ... Return ``None``.
  .. Let ``(callableId, V, nameIR*)^{asterisk}^`` be ``<<find_overloadeds_unnamed, find_overloadeds_unnamed<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~ ( the length of (id~arg~^?^)^{asterisk}^ ), get_parameterListIR)>>``.
- .. Else if let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
+ .. If let ``[(callableId~found~, V~found~, id~default~^{asterisk}^)]`` be ``(callableId, V, nameIR*)^{asterisk}^``:
   ... Return ``(callableId~found~, V~found~, id~default~^{asterisk}^)``.
 
 <<find_non_overloaded, find_non_overloaded<V>({ (callableId : V)^{asterisk}^ }, nameIR~f~)>>
@@ -3948,7 +3948,7 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
 . If ``set<pair<callableId, V>>`` is equal to ``{ · }``:
  .. Return ``·``.
 . Let ``{ pair<callableId, V>^{asterisk}^ }`` be ``set<pair<callableId, V>>``.
-. Else if let ``callableId~h~ : V~h~ {two-colons} (callableId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
+. If let ``callableId~h~ : V~h~ {two-colons} (callableId~t~ : V~t~)^{asterisk}^`` be ``pair<callableId, V>^{asterisk}^``:
  .. Let ``nameIR ( ++_++^{asterisk}^ )`` be ``callableId~h~``.
  .. If ``nameIR`` is equal to ``nameIR~f~``:
   ... Let ``((callableId~t_found~, V~t_found~))^{asterisk}^`` be ``<<find_non_overloadeds, find_non_overloadeds<V>({ (callableId~t~ : V~t~)^{asterisk}^ }, nameIR~f~)>>``.
@@ -4458,19 +4458,19 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. If ``TBLC.MODE`` is ``NOPRI``:
   ... Return ``TBLC[MODE = PRI]``.
  .. Let ``matchMode`` be ``TBLC.MODE``.
- .. Else if ``matchMode`` matches pattern ``NOPRILPM %``:
+ .. If ``matchMode`` matches pattern ``NOPRILPM %``:
   ... Return ``TBLC[MODE = PRILPM]``.
 . Else if ``text`` is equal to ``"ternary"``:
  .. If ``TBLC.MODE`` is ``NOPRI``:
   ... Return ``TBLC[MODE = PRI]``.
  .. Let ``matchMode`` be ``TBLC.MODE``.
- .. Else if ``matchMode`` matches pattern ``NOPRILPM %``:
+ .. If ``matchMode`` matches pattern ``NOPRILPM %``:
   ... Return ``TBLC[MODE = PRILPM]``.
 . Else:
  .. If ``TBLC.MODE`` is ``NOPRI``:
   ... Return ``TBLC[MODE = PRI]``.
  .. Let ``matchMode`` be ``TBLC.MODE``.
- .. Else if ``matchMode`` matches pattern ``NOPRILPM %``:
+ .. If ``matchMode`` matches pattern ``NOPRILPM %``:
   ... Return ``TBLC[MODE = PRILPM]``.
 . Otherwise:
  .. Return ``TBLC``.
@@ -4722,7 +4722,7 @@ for each ``id^?^`` in ``id^?^^{asterisk}^``
  .. Check that ``<<is_stringTypeIR, is_stringTypeIR(typeIR~unroll~)>> \/ <<is_arbitraryIntTypeIR, is_arbitraryIntTypeIR(typeIR~unroll~)>> \/ <<is_objectTypeIR, is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction = ``.
  .. The relation holds.
 . Let ``constantInitializerOptIR`` be ``constantInitializerIR^?^``.
-. Else if ``constantInitializerOptIR`` is defined:
+. If ``constantInitializerOptIR`` is defined:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, assuming bound type ids ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR, is_synthesizedTypeIR(typeIR~unroll~)>>``.
@@ -8692,7 +8692,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If ``tableContext.MODE`` is ``NOPRI``:
  .. Result in the updated table context ``tableContext`` and the typed table entry priority ``None``.
 . Let ``matchMode`` be ``tableContext.MODE``.
-. Else if ``matchMode`` matches pattern ``NOPRILPM %``:
+. If ``matchMode`` matches pattern ``NOPRILPM %``:
  .. Check that ``TBLS`` matches pattern ``LPM %``.
  .. Let ``LPM n~prefix~`` be ``TBLS``.
  .. Result in the updated table context ``tableContext`` and the typed table entry priority ``PRIORITY = D n~prefix~ :``.
@@ -9024,7 +9024,7 @@ for each ``argument`` in ``argument^{asterisk}^``
   ... Let ``tablePropertyIR`` be ``annotationList constOptIR CUSTOM_CONST "priority_delta" = D n~delta~ ;``.
   ... Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
 . Let ``nameIR`` be <<tableCustomName, the name of ``tableCustomName``>>.
-. Else if ``nameIR =/= "size" /\ nameIR =/= "largest_priority_wins"`` *and* ``nameIR =/= "priority_delta"``:
+. If ``nameIR =/= "size" /\ nameIR =/= "largest_priority_wins"`` *and* ``nameIR =/= "priority_delta"``:
  .. Let 
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
@@ -10194,7 +10194,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Result in the callable type ``actionTypeIR`` with fresh type variables ``·`` and default parameter ids ``id~default~^{asterisk}^``.
 . Let ``typeArgumentIR^{asterisk}^`` be ``typeArgumentIR'^{asterisk}^``.
 . Let ``(callableId, callableTypeDefIR, id*)'^?^`` be <<find_callableDef_overloaded_t, the overloaded callable definition of ``prefixedNameIR``( ``argumentIR'^{asterisk}^`` ) in the ``p`` layer of ``TC``>>.
-. Else if let ``(callableId, callableTypeDefIR, id*)`` be ``(callableId, callableTypeDefIR, id*)'^?^``:
+. If let ``(callableId, callableTypeDefIR, id*)`` be ``(callableId, callableTypeDefIR, id*)'^?^``:
  .. Check that ``(callableId, callableTypeDefIR, id*)`` has type ``(callableId, functionTypeDefIR, id*)``.
  .. Let ``(callableId, functionTypeDefIR, id~default~^{asterisk}^)`` be ``(callableId, callableTypeDefIR, id*)``.
  .. Let ``(callableTypeIR, typeId*)`` be <<specialize_callableTypeDefIR, ``functionTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``>>.
@@ -10663,7 +10663,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
   ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``( typeIR~l_underlying~ ) typedExpressionIR~l~`` annotated with type ``typeIR~l_underlying~`` and compile-time known-ness ``ctk'``>>.
   ... Return ``<<reduce_serenum_binary, reduce_serenum_binary(typedExpressionIR~l_cast~, typedExpressionIR~r~, check)>>``.
  .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~r~`` with typedefs unrolled>>.
- .. Else if let ``enumTypeIR`` be ``typeIR``:
+ .. If let ``enumTypeIR`` be ``typeIR``:
   ... Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
   ... Let ``ENUM ++_++ < typeIR~r_underlying~ > { ++_++^{asterisk}^ }`` be ``enumTypeIR``.
   ... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``( typeIR~r_underlying~ ) typedExpressionIR~r~`` annotated with type ``typeIR~r_underlying~`` and compile-time known-ness ``ctk'``>>.
@@ -11304,7 +11304,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . If ``set<pair<callableId, externMethodTypeDefIR>>`` is equal to ``{ · }``:
  .. Return ``externMethodTypeDefEnv~extern~``.
 . Let ``{ pair<callableId, externMethodTypeDefIR>^{asterisk}^ }`` be ``set<pair<callableId, externMethodTypeDefIR>>``.
-. Else if let ``callableId~init_h~ : externMethodTypeDefIR~init_h~ {two-colons} (callableId~init_t~ : externMethodTypeDefIR~init_t~)^{asterisk}^`` be ``pair<callableId, externMethodTypeDefIR>^{asterisk}^``:
+. If let ``callableId~init_h~ : externMethodTypeDefIR~init_h~ {two-colons} (callableId~init_t~ : externMethodTypeDefIR~init_t~)^{asterisk}^`` be ``pair<callableId, externMethodTypeDefIR>^{asterisk}^``:
  .. Let ``nameIR~init_h~ ( ++_++^{asterisk}^ )`` be ``callableId~init_h~``.
  .. Let ``(callableId, externMethodTypeDefIR~abstract~)`` be <<option_get, *!*>> ``<<find_non_overloaded, find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv~extern~, nameIR~init_h~)>>``.
  .. Check that ``externMethodTypeDefIR~abstract~`` matches pattern ``EXTERN_METHOD ABSTRACT < % , % > ( % ) : %``.
@@ -11482,7 +11482,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . If ``typeIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``DEFAULT``.
 . Let ``typeIR''^{asterisk}^`` be ``typeIR^{asterisk}^``.
-. Else if let ``[typeIR~key~]`` be ``typeIR''^{asterisk}^``:
+. If let ``[typeIR~key~]`` be ``typeIR''^{asterisk}^``:
  .. Let <<SelectCase_keyset_simple_ok, TC typeIR~key~ |- DEFAULT : simpleKeysetExpressionIR>>.
  .. Result in ``simpleKeysetExpressionIR``.
 . Else if the length of ``typeIR''^{asterisk}^`` is greater than ``1``:
@@ -12062,20 +12062,20 @@ for each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in
    .... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for key ``typeId~h~`` updated to ``UNKNOWN``>>.
    .... Return ``<<merge_constraint', merge_constraint'(constraint~pre~, constraint~post~, typeId~t~^{asterisk}^, constraint~updated~)>>``.
   ... Let ``infer'^?^`` be <<find_map, ``constraint~post~``[``typeId~h~``]>>.
-  ... Else if let ``infer`` be ``infer'^?^``:
+  ... If let ``infer`` be ``infer'^?^``:
    .... Check that ``infer`` matches pattern ``KNOWN AS %``.
    .... Let ``KNOWN AS typeIR~post~`` be ``infer``.
    .... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for key ``typeId~h~`` updated to ``KNOWN AS typeIR~post~``>>.
    .... Return ``<<merge_constraint', merge_constraint'(constraint~pre~, constraint~post~, typeId~t~^{asterisk}^, constraint~updated~)>>``.
  .. Let ``infer'^?^`` be <<find_map, ``constraint~pre~``[``typeId~h~``]>>.
- .. Else if let ``infer`` be ``infer'^?^``:
+ .. If let ``infer`` be ``infer'^?^``:
   ... Check that ``infer`` matches pattern ``KNOWN AS %``.
   ... Let ``KNOWN AS typeIR~pre~`` be ``infer``.
   ... If ``UNKNOWN`` is equal to <<find_map, ``constraint~post~``[``typeId~h~``]>>:
    .... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for key ``typeId~h~`` updated to ``KNOWN AS typeIR~pre~``>>.
    .... Return ``<<merge_constraint', merge_constraint'(constraint~pre~, constraint~post~, typeId~t~^{asterisk}^, constraint~updated~)>>``.
   ... Let ``infer'''^?^`` be <<find_map, ``constraint~post~``[``typeId~h~``]>>.
-  ... Else if let ``infer''`` be ``infer'''^?^``:
+  ... If let ``infer''`` be ``infer'''^?^``:
    .... Check that ``infer''`` matches pattern ``KNOWN AS %``.
    .... Let ``KNOWN AS typeIR~post~`` be ``infer''``.
    .... If <<Sub_impl, ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``>>:
@@ -12439,7 +12439,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . If ``(nameIR, nameIR, typeIR)^{asterisk}^`` is an empty list:
  .. Return ``·``.
 . Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
-. Else if let ``(nameIR~key_h~, nameIR~matchKind_h~, typeIR~h~) {two-colons} ((nameIR~key_t~, nameIR~matchKind_t~, typeIR~t~))^{asterisk}^`` be ``(nameIR, nameIR, typeIR)^{asterisk}^``:
+. If let ``(nameIR~key_h~, nameIR~matchKind_h~, typeIR~h~) {two-colons} ((nameIR~key_t~, nameIR~matchKind_t~, typeIR~t~))^{asterisk}^`` be ``(nameIR, nameIR, typeIR)^{asterisk}^``:
  .. Let ``simpleKeysetExpressionIR~h~`` be ``<<tableObject_create_entry_key, tableObject_create_entry_key((nameIR~key_h~, nameIR~matchKind_h~, typeIR~h~), tableKeyInterface^{asterisk}^)>>``.
  .. Return ``simpleKeysetExpressionIR~h~ {two-colons} <<tableObject_create_entry_keys, tableObject_create_entry_keys(((nameIR~key_t~, nameIR~matchKind_t~, typeIR~t~))^{asterisk}^, tableKeyInterface^{asterisk}^)>>``.
 
@@ -14257,7 +14257,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``set<pair<callableId, callableDef>>`` is equal to ``{ · }``:
  .. Return ``externMethodDefEnv``.
 . Let ``{ pair<callableId, callableDef>^{asterisk}^ }`` be ``set<pair<callableId, callableDef>>``.
-. Else if let ``callableId~h~ : callableDef~h~ {two-colons} (callableId~t~ : callableDef~t~)^{asterisk}^`` be ``pair<callableId, callableDef>^{asterisk}^``:
+. If let ``callableId~h~ : callableDef~h~ {two-colons} (callableId~t~ : callableDef~t~)^{asterisk}^`` be ``pair<callableId, callableDef>^{asterisk}^``:
  .. Check that ``callableDef~h~`` has type ``definedFunctionDef``.
  .. Let ``FUNCTION nameIR < typeParameterListIR > ( parameterListIR ) blockStatementIR`` be ``callableDef~h~``.
  .. Let ``externMethodDef~h~`` be ``EXTERN_METHOD nameIR < typeParameterListIR > ( parameterListIR ) blockStatementIR``.
@@ -14490,7 +14490,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. If ``·`` is equal to ``EC.LOCAL.FRAMES``:
   ... Return ``<<update_var_e, update_var_e(BLOCK, EC, id, value)>>``.
  .. Let ``frame^{asterisk}^`` be ``EC.LOCAL.FRAMES``.
- .. Else if let ``frame~h~ {two-colons} frame~t~^{asterisk}^`` be ``frame^{asterisk}^``:
+ .. If let ``frame~h~ {two-colons} frame~t~^{asterisk}^`` be ``frame^{asterisk}^``:
   ... If ``<<in_set, in_set<id>(id, dom_map<id, value>(frame~h~))>>``:
    .... Let ``frame~h'~`` be <<update_map, the map ``frame~h~`` with the value for key ``id`` updated to ``value``>>.
    .... Return ``EC[LOCAL.FRAMES = frame~h'~ {two-colons} frame~t~^{asterisk}^]``.
@@ -14947,7 +14947,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~, typedExpressionIR~index~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. Else if let ``value'^{asterisk}^`` be ``expressionListResult``:
+. If let ``value'^{asterisk}^`` be ``expressionListResult``:
  .. Check that ``value'^{asterisk}^`` is a list of length 2.
  .. Let ``[value~base~, value]`` be ``value'^{asterisk}^``.
  .. Check that ``value`` has type ``integerValue``.
@@ -15009,7 +15009,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``typedExpressionIR^{asterisk}^`` is equal to ``·``:
  .. Result in the updated evaluation context ``evalContext``, store ``store`` and expression list result ``·``.
 . Let ``typedExpressionIR'''^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``.
-. Else if let ``typedExpressionIR~h~ {two-colons} typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR'''^{asterisk}^``:
+. If let ``typedExpressionIR~h~ {two-colons} typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR'''^{asterisk}^``:
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~h~``, under cursor ``p``, evaluation context ``evalContext``, and store ``store``>>.
@@ -15602,7 +15602,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``blockElementStatementIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``blockElementStatementIR'''''^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``.
-. Else if let ``blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR'''''^{asterisk}^``:
+. If let ``blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR'''''^{asterisk}^``:
  .. Let <<BlockElementStmt_eval, evalContext store |- blockElementStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -15699,7 +15699,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``parserStatementIR''^{asterisk}^`` be ``parserStatementIR^{asterisk}^``.
-. Else if let ``parserStatementIR~h~ {two-colons} parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR''^{asterisk}^``:
+. If let ``parserStatementIR~h~ {two-colons} parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR''^{asterisk}^``:
  .. Let <<ParserStmt_eval, evalContext store |- parserStatementIR~h~ : EC~1~ STO~1~ parserStatementResult'>>.
  .. If let ``rejectTransitionResult`` be ``parserStatementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
@@ -15798,7 +15798,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``parserLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext`` and ``store``.
 . Let ``parserLocalDeclarationIR'^{asterisk}^`` be ``parserLocalDeclarationIR^{asterisk}^``.
-. Else if let ``parserLocalDeclarationIR~h~ {two-colons} parserLocalDeclarationListIR~t~`` be ``parserLocalDeclarationIR'^{asterisk}^``:
+. If let ``parserLocalDeclarationIR~h~ {two-colons} parserLocalDeclarationListIR~t~`` be ``parserLocalDeclarationIR'^{asterisk}^``:
  .. Let <<ParserLocalDecl_eval, evalContext store |- parserLocalDeclarationIR~h~ : EC~1~ STO~1~>>.
  .. Let <<ParserLocalDecls_eval, EC~1~ STO~1~ |- parserLocalDeclarationListIR~t~ : EC~2~ STO~2~>>.
  .. Result in ``EC~2~`` and ``STO~2~``.
@@ -15882,7 +15882,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``controlLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``controlLocalDeclarationIR''^{asterisk}^`` be ``controlLocalDeclarationIR^{asterisk}^``.
-. Else if let ``controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR''^{asterisk}^``:
+. If let ``controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR''^{asterisk}^``:
  .. Let <<ControlLocalDecl_eval, evalContext store |- controlLocalDeclarationIR~h~ : EC~1~ STO~1~ declarationResult'>>.
  .. If let ``exitResult`` be ``declarationResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -15910,7 +15910,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the updated store ``store``,
 * and the result ````.
 . Let ``initializerOptIR`` be ``initializerIR^?^``.
-. Else if let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
+. If let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``p``, evaluation context ``EC~0~``, and store ``store``>>.
@@ -16181,7 +16181,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``argumentIR^{asterisk}^`` is equal to ``·``.
  .. Result in ``store``, ``evalContext``, ``evalContext'``, and ``·``.
 . Let ``parameterIR'''^{asterisk}^`` be ``parameterIR^{asterisk}^``.
-. Else if let ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` be ``parameterIR'''^{asterisk}^``:
+. If let ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` be ``parameterIR'''^{asterisk}^``:
  .. Let ``argumentIR'''^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Check that ``argumentIR'''^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~ {two-colons} argumentIR~t~^{asterisk}^`` be ``argumentIR'''^{asterisk}^``.
@@ -16231,7 +16231,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Else if ``direction`` is ``INOUT``:
   ... Result in ``EC~caller_0~``.
 . Let ``storageReference''^?^`` be ``storageReference'^?^``.
-. Else if let ``storageReference`` be ``storageReference''^?^``:
+. If let ``storageReference`` be ``storageReference''^?^``:
  .. If ``direction`` is ``OUT``:
   ... Let ``value`` be <<find_var_e, the value of ``nameIR`` in ``EC~callee~`` at ``p~callee~``>>.
   ... Let <<Lvalue_write, p~caller~ EC~caller_0~ STO |- storageReference -> value : EC~caller_1~>>.
@@ -16249,7 +16249,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Check that ``(storageReference^?^)^{asterisk}^`` is equal to ``·``.
  .. Result in ``evalContext``.
 . Let ``parameterIR'^{asterisk}^`` be ``parameterIR^{asterisk}^``.
-. Else if let ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` be ``parameterIR'^{asterisk}^``:
+. If let ``parameterIR~h~ {two-colons} parameterIR~t~^{asterisk}^`` be ``parameterIR'^{asterisk}^``:
  .. Let ``(storageReference'^?^)^{asterisk}^`` be ``(storageReference^?^)^{asterisk}^``.
  .. Check that ``(storageReference'^?^)^{asterisk}^`` is a non-empty list.
  .. Let ``storageReference~h~^?^ {two-colons} (storageReference~t~^?^)^{asterisk}^`` be ``(storageReference'^?^)^{asterisk}^``.
@@ -16548,7 +16548,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``EC~1~`` be ``EC~0~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``returnResult``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~[LOCAL.FRAMES = [frame]]``.
-. Else if let ``typeId {two-colons} ++_++^{asterisk}^`` be ``typeId'^{asterisk}^``:
+. If let ``typeId {two-colons} ++_++^{asterisk}^`` be ``typeId'^{asterisk}^``:
  .. Let <<Table_eval, EC~callee_1~ STO~0~ |- typeId TBL : EC~callee_2~ STO~1~ tableResult>>.
  .. Check that ``tableResult`` has type ``exitResult``.
  .. Let ``exitResult`` be ``tableResult``.
@@ -16665,7 +16665,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``simpleKeysetExpressionIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ``·``.
 . Let ``simpleKeysetExpressionIR'''^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Else if let ``simpleKeysetExpressionIR~h~ {two-colons} simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR'''^{asterisk}^``:
+. If let ``simpleKeysetExpressionIR~h~ {two-colons} simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR'''^{asterisk}^``:
  .. Let <<Expr_eval_keyset_simple, evalContext store |- simpleKeysetExpressionIR~h~ : EC~1~ STO~1~ simpleKeysetExpressionResult>>.
  .. If let ``exitResult`` be ``simpleKeysetExpressionResult``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -16702,7 +16702,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``forUpdateStatementIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``forUpdateStatementIR''^{asterisk}^`` be ``forUpdateStatementIR^{asterisk}^``.
-. Else if let ``forUpdateStatementIR~h~ {two-colons} forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR''^{asterisk}^``:
+. If let ``forUpdateStatementIR~h~ {two-colons} forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR''^{asterisk}^``:
  .. Let <<ForUpdateStmt_eval, evalContext store |- forUpdateStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -16720,7 +16720,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
  .. Result in ``EC~1~``, ``store``, and ````.
 . Let ``initializerOptIR`` be ``initializerIR'^?^``.
-. Else if let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
+. If let ``= typedExpressionIR~init~`` be ``initializerOptIR``:
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.
@@ -16743,7 +16743,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``forInitStatementIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``forInitStatementIR''^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``.
-. Else if let ``forInitStatementIR~h~ {two-colons} forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR''^{asterisk}^``:
+. If let ``forInitStatementIR~h~ {two-colons} forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR''^{asterisk}^``:
  .. Let <<ForInitStmt_eval, evalContext store |- forInitStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
  .. If let ``exitResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -16775,7 +16775,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~2~``,and the instantiated statement ``statementResult~loop~`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. Else if ``statementResult~loop~`` is in ``[, CONTINUE]``:
+ .. If ``statementResult~loop~`` is in ``[, CONTINUE]``:
   ... Let <<ForUpdateStmts_eval, EC~2~ STO~2~ |- forUpdateStatementListIR : EC~3~ STO~3~ statementResult'>>.
   ... If let ``exitResult`` be ``statementResult'``:
    .... Result in ``EC~3~``, ``STO~3~``, and ``EXIT``.
@@ -16842,7 +16842,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``value^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ````.
 . Let ``value''''^{asterisk}^`` be ``value^{asterisk}^``.
-. Else if let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value''''^{asterisk}^``:
+. If let ``value~h~ {two-colons} value~t~^{asterisk}^`` be ``value''''^{asterisk}^``:
  .. Let ``EC~1~`` be ``<<update_var_e, update_var_e(LOCAL, evalContext, nameIR, value~h~)>>``.
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult'`` be
@@ -16856,7 +16856,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult~loop~`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. Else if ``statementResult~loop~`` is in ``[, CONTINUE]``:
+ .. If ``statementResult~loop~`` is in ``[, CONTINUE]``:
   ... Let <<ForInLoop_eval, EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult>>.
   ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult``.
 
@@ -16881,7 +16881,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``None``.
 . Let ``switchCaseIR''''^{asterisk}^`` be ``switchCaseIR^{asterisk}^``.
-. Else if let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR''''^{asterisk}^``:
+. If let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR''''^{asterisk}^``:
  .. If let ``switchLabelIR~h~ : blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... If ``<<match_switchLabelIR_table, match_switchLabelIR_table(id, switchLabelIR~h~)>>``:
    .... Result in ``blockStatementIR~h~``.
@@ -16959,7 +16959,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``EC~0~``, ``STO~0~``, and ``None``.
 . Let ``switchCaseIR''''^{asterisk}^`` be ``switchCaseIR^{asterisk}^``.
-. Else if let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR''''^{asterisk}^``:
+. If let ``switchCaseIR~h~ {two-colons} switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR''''^{asterisk}^``:
  .. If let ``switchLabelIR~h~ : blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... Let <<SwitchLabelIR_general_eval, LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult>>.
   ... Check that ``expressionResult`` has type ``continueResult<value>``.
@@ -17004,7 +17004,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``selectCaseIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ``None``.
 . Let ``selectCaseIR''^{asterisk}^`` be ``selectCaseIR^{asterisk}^``.
-. Else if let ``selectCaseIR~h~ {two-colons} selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR''^{asterisk}^``:
+. If let ``selectCaseIR~h~ {two-colons} selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR''^{asterisk}^``:
  .. Let <<SelectCase_match, evalContext store value~key~^{asterisk}^ |- selectCaseIR~h~ : EC~1~ STO~1~ nameIR^?^>>.
  .. If let ``nameIR~state~`` be ``nameIR^?^``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``nameIR~state~``.
@@ -17040,7 +17040,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``tableKeyIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ``·``.
 . Let ``tableKeyIR'''^{asterisk}^`` be ``tableKeyIR^{asterisk}^``.
-. Else if let ``tableKeyIR~h~ {two-colons} tableKeyIR~t~^{asterisk}^`` be ``tableKeyIR'''^{asterisk}^``:
+. If let ``tableKeyIR~h~ {two-colons} tableKeyIR~t~^{asterisk}^`` be ``tableKeyIR'''^{asterisk}^``:
  .. Let <<TableKey_eval, evalContext store |- tableKeyIR~h~ : EC~1~ STO~1~ tableKeyResult>>.
  .. If let ``exitResult`` be ``tableKeyResult``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -17098,7 +17098,7 @@ for each ``tableKeyValue`` in ``tableKeyValue^{asterisk}^``
 . If ``tableEntryIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ``·``.
 . Let ``tableEntryIR'''^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
-. Else if let ``tableEntryIR~h~ {two-colons} tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR'''^{asterisk}^``:
+. If let ``tableEntryIR~h~ {two-colons} tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR'''^{asterisk}^``:
  .. Let <<TableMatch_eval, evalContext store |- tableKeyValue^{asterisk}^ @ tableEntryIR~h~ : EC~1~ STO~1~ tableMatchResult>>.
  .. If let ``exitResult`` be ``tableMatchResult``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.

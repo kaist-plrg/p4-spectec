@@ -373,12 +373,10 @@ and prosify_instrs' (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
              if is_first_branch && is_branch_instr instr then
                let ctx = Ctx.set_branch ctx If in
                (ctx, false)
-             else if is_branch_instr instr then
+             else if (not is_first_branch) && is_branch_instr instr then
                let ctx = Ctx.set_branch ctx ElseIf in
                (ctx, false)
-             else
-               let ctx = Ctx.set_branch ctx Check in
-               (ctx, is_first_branch)
+             else (ctx, true)
            in
            (is_first_branch, instrs_pl @ prosify_instr ctx instr))
          (true, [])
