@@ -11095,20 +11095,20 @@ relation CallableTypeDef_wf: bound |- callableTypeDefIR
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:41.1-45.101
 relation ConstructorParameterType_wf: bound |- parameterIR
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:639.1-642.55
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:639.1-642.51
   rulegroup 
 
    match
 
-    (signature) B |- _annotationList typeIR _id _constantInitializerOptIR
-    B |- _annotationList direction typeIR _id _constantInitializerOptIR
-    -- if direction matches ``EMPTY`
+    (signature) B |- constructorParameterIR
+    B |- constructorParameterIR
 
    paths
 
     rulepath 
-    -- if Type_wf: B |- typeIR holds
-    -- if ~$is_synthesizedTypeIR($unroll_typeIR(typeIR))
+    -- let _annotationList direction _typeIR _id _constantInitializerOptIR = constructorParameterIR
+    -- if direction matches ``EMPTY`
+    -- if ParameterType_wf: B |- constructorParameterIR holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:47.1-51.91
@@ -11174,7 +11174,25 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- (if $nestable_constructor_control(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:713.1-719.47
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:705.1-708.58
+  rulegroup tableObjectTypeIR
+
+   match
+
+    (signature) B |- constructor( [] ): typeIR_object
+    B |- constructor( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_object
+    -- if constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} matches []
+
+   paths
+
+    rulepath tableObjectTypeIR
+    -- if Type_wf: B |- typeIR_object holds
+    -- let typeIR = $unroll_typeIR(typeIR_object)
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+    -- the relation holds
+
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:718.1-724.47
   rulegroup packageObjectTypeIR
 
    match
@@ -11197,7 +11215,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
 ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:53.1-57.102
 relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
 
-  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:735.1-745.64
+  ;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:742.1-752.64
   rulegroup 
 
    match
@@ -12161,7 +12179,7 @@ tbl def $nestable_constructor_control(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:705.1-707.70
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:710.1-712.70
 tbl def $nestable_constructor_package(typeIR) : bool =
   row 0 :
     (signature) typedef _typeId typeIR as typeIR
@@ -12177,7 +12195,7 @@ tbl def $nestable_constructor_package(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
-;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:725.1-725.46
+;; ../../../../spec-concrete/5-typing/5.03-typing-wellformed.watsup:730.1-732.47
 tbl def $definable_constructor(typeIR) : bool =
   row 0 :
     (signature) typedef _typeId typeIR as typeIR

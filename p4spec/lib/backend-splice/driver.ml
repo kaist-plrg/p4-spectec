@@ -1,38 +1,51 @@
 open Lang
+open Splicer
+open Splicers
 
-(* Splicing an anchor *)
+(* Splicers *)
 
-let do_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
-    (source : Source.t) : string =
-  let keys = Splice.parse_keys source in
-  let values = Splice.find_values ctx keys in
-  let content = Splice.render keys values in
-  Option.value Splice.prefix ~default:""
-  ^ content
-  ^ Option.value Splice.suffix ~default:""
+let splicers =
+  [
+    (module Syntax.Source.Splicer : SPLICER);
+    (module Rel_title.Source.Splicer : SPLICER);
+    (module Rel_title.Prose.Splicer : SPLICER);
+    (module Rulegroup.Source.Splicer : SPLICER);
+    (module Rulegroup.Prose.Splicer : SPLICER);
+    (module Func_title.Source.Splicer : SPLICER);
+    (module Func_title.Prose.Splicer : SPLICER);
+    (module Func.Source.Splicer : SPLICER);
+    (module Func.Prose.Splicer : SPLICER);
+    (module Table.Source.Splicer : SPLICER);
+    (module Table.Prose.Splicer : SPLICER);
+  ]
 
-let rec try_splice_anchor (module Splice : Splicer.Splice) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : bool =
-  let parsed_start = Parser.parse_splice_start source Splice.name in
-  if parsed_start then
-    try_splice_anchor' (module Splice : Splicer.Splice) ctx source result;
+let init (spec_el : El.spec) (spec_pl : Pl.spec) =
+  List.iter (fun (module S : SPLICER) -> S.init spec_el spec_pl) splicers
+
+(* Splicing *)
+
+let rec try_splice_anchor (module S : SPLICER) (source : Source.t)
+    (result : string ref) : bool =
+  let parsed_start = Parser.parse_splice_start source S.name in
+  if parsed_start then try_splice_anchor' (module S : SPLICER) source result;
   parsed_start
 
-and try_splice_anchor' (module Splice : Splicer.Splice) (ctx : Ctx.t)
-    (source : Source.t) (result : string ref) : unit =
+and try_splice_anchor' (module S : SPLICER) (source : Source.t)
+    (result : string ref) : unit =
   Parser.parse_space source;
-  result := do_splice_anchor (module Splice : Splicer.Splice) ctx source
+  result := S.splice source
 
-and try_splice_anchors (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) =
+and try_splice_anchors (source : Source.t) (buffer : Buffer.t) : bool =
   let result = ref "" in
-  ignore
-    (try_splice_anchor (module Splicer.Syntax) ctx source result
-    || try_splice_anchor (module Splicer.RuleGroup) ctx source result
-    || try_splice_anchor (module Splicer.RelProse) ctx source result
-    || try_splice_anchor (module Splicer.RuleProse) ctx source result
-    || try_splice_anchor (module Splicer.FuncProse) ctx source result
-    || try_splice_anchor (module Splicer.Table) ctx source result);
-  if !result <> "" then (
+  let spliced =
+    splicers
+    |> List.fold_left
+         (fun spliced (module S : SPLICER) ->
+           if spliced then true
+           else try_splice_anchor (module S : SPLICER) source result)
+         false
+  in
+  if spliced then (
     Buffer.add_string buffer !result;
     true)
   else false
@@ -51,30 +64,27 @@ let gen_directory (filename : string) : unit =
 
 (* Entry points *)
 
-let rec splice (ctx : Ctx.t) (source : Source.t) (buffer : Buffer.t) : unit =
+let rec splice (source : Source.t) (buffer : Buffer.t) : unit =
   if not (Source.eos source) then (
-    if not (try_splice_anchors ctx source buffer) then (
+    if not (try_splice_anchors source buffer) then (
       Buffer.add_char buffer (Source.get source);
       Source.adv source);
-    splice ctx source buffer)
+    splice source buffer)
 
-let splice_string (ctx : Ctx.t) (source : Source.t) (content : string) : string
-    =
+let splice_string (source : Source.t) (content : string) : string =
   let buffer = Buffer.create (String.length content) in
-  splice ctx source buffer;
+  splice source buffer;
   Buffer.contents buffer
 
-let splice_file (spec_el : El.spec) (spec_pl : Pl.spec)
-    (filename_input : string) (filename_output : string) : unit =
+let splice_file (filename_input : string) (filename_output : string) : unit =
   let ic = open_in filename_input in
   let content =
     Fun.protect
       (fun () -> In_channel.input_all ic)
       ~finally:(fun () -> In_channel.close ic)
   in
-  let ctx = Ctx.init spec_el spec_pl filename_input in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
-  let content_spliced = splice_string ctx source content in
+  let content_spliced = splice_string source content in
   gen_directory filename_output;
   let oc = open_out filename_output in
   Fun.protect
@@ -83,7 +93,9 @@ let splice_file (spec_el : El.spec) (spec_pl : Pl.spec)
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
+  init spec_el spec_pl;
   List.iter
     (fun (filename_input, filename_output) ->
-      splice_file spec_el spec_pl filename_input filename_output)
-    filenames
+      splice_file filename_input filename_output)
+    filenames;
+  List.iter (fun (module S : SPLICER) -> S.warn_unused ()) splicers

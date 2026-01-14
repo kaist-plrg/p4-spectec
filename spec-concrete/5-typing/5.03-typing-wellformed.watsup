@@ -637,9 +637,9 @@ rule CallableTypeDef_wf:
 ;;
 
 rule ConstructorParameterType_wf:
-  B |- _ `EMPTY typeIR _ _
-  -- Type_wf: B |- typeIR
-  -- if ~$is_synthesizedTypeIR($unroll_typeIR(typeIR))
+  B |- constructorParameterIR
+  -- if _ `EMPTY _ _ _ = constructorParameterIR
+  -- ParameterType_wf: B |- constructorParameterIR
 
 ;;
 ;;;; Well-formedness of constructor types
@@ -702,6 +702,11 @@ rule ConstructorType_wf/controlObjectTypeIR:
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_control(typeIR)*
 
+rule ConstructorType_wf/tableObjectTypeIR:
+  B |- CONSTRUCTOR `( eps ) `: typeIR_object
+  -- Type_wf: B |- typeIR_object
+  -- if tableObjectTypeIR = $unroll_typeIR(typeIR_object)
+
 tbl dec $nestable_constructor_package(typeIR) : bool
   hint(prose_true %0 "can be used in a package constructor type")
   hint(prose_false %0 "cannot be used in a package constructor type")
@@ -723,6 +728,8 @@ rule ConstructorType_wf/packageObjectTypeIR:
 ;;
 
 tbl dec $definable_constructor(typeIR) : bool
+  hint(prose_true %0 "can be constructed")
+  hint(prose_false %0 "cannot be constructed")
 
 tbl def $definable_constructor =
   | TYPEDEF _ typeIR => $definable_constructor(typeIR)

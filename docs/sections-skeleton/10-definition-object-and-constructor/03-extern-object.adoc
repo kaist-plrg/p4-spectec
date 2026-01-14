@@ -1,0 +1,41 @@
+[#sec-extern-object]
+=== Extern objects
+
+// Modified section 7.2.11.2 of the P4-16 Language Specification
+An `extern` object declaration introduces an extern object type and its
+associated methods. Extern object declarations can also optionally declare
+constructor methods; these must have the same name as the enclosing `extern`
+type, no type parameters, and no return type. 
+
+${syntax: externConstructorPrototype
+          externMethodPrototype
+          externObjectDeclaration}
+
+Internally, an extern object constructor is represented as:
+
+[[externObjectConstructorDef]]
+${syntax: externMethodPrototypeIR
+          externObjectConstructorDef}
+
+Extern objects are then instantiated by constructor invocations to yield:
+
+[[externObject]]
+${syntax: externObject}
+
+// Modified section 8.24 of the P4-16 Language Specification
+The only operation on `extern` objects is invoking a method of an extern object
+instance using a method call expression.
+
+Controls, parsers, packages, and extern constructors can have parameters of
+type `extern` only if they are directionless parameters. Extern object
+instances can thus be used as arguments in the construction of such objects.
+
+No other operations are available on extern objects, e.g., equality comparison
+is not defined.
+
+[discrete]
+==== Well-formedness of extern object constructor types
+
+// Added
+${rulegroup-source: ConstructorType_wf/externObjectTypeIR}
+${rulegroup-prose: ConstructorType_wf/externObjectTypeIR}

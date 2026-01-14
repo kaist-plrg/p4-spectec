@@ -137,7 +137,8 @@ type cond =
   | ForAnyCond of cond * var list
 
 type result =
-  | ProseResult of Hints.Alter.t * exp list
+  | ProseResult of
+    [ `Hold | `Yield of Hints.Alter.t * exp list ]
   | MathResult of exp list
 
 type instr = instr' phrase

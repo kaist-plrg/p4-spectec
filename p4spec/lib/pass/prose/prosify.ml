@@ -468,8 +468,8 @@ and prosify_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     prosify_hold_cond ~hold:true at ctx id_rel notexp iterexps
   in
   let instrs_hold_pl = prosify_instrs ctx instrs_hold in
-  let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
-  [ instr_hold_pl ]
+  let instr_check_pl = Pl.CheckI cond_hold_pl $ at in
+  instr_check_pl :: instrs_hold_pl
 
 and prosify_not_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) (instrs_not_hold : instr list) :
@@ -478,10 +478,8 @@ and prosify_not_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     prosify_hold_cond ~hold:false at ctx id_rel notexp iterexps
   in
   let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
-  let instr_not_hold_pl =
-    Pl.BranchI (Pl.If, cond_not_hold_pl, instrs_not_hold_pl) $ at
-  in
-  [ instr_not_hold_pl ]
+  let instr_check_pl = Pl.CheckI cond_not_hold_pl $ at in
+  instr_check_pl :: instrs_not_hold_pl
 
 (* Case instruction prosification *)
 
@@ -581,9 +579,9 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
             List.map2
               (fun exp_l prose_field ->
                 match exp_l.it with
-                | Il.VarE id when String.starts_with ~prefix:"_" id.it -> None
-                | Il.IterE ({ it = Il.VarE id; _ }, _)
-                  when String.starts_with ~prefix:"_" id.it ->
+                | Il.VarE id when Id.is_underscored id -> None
+                | Il.IterE ({ it = Il.VarE id; _ }, _) when Id.is_underscored id
+                  ->
                     None
                 | _ ->
                     let exp_pl = prosify_exp ctx exp_l in
@@ -645,17 +643,21 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
 (* Result instruction prosification *)
 
 and prosify_result_instr (at : region) (ctx : Ctx.t)
-    (_rel_signature : rel_signature) (exps : exp list) : Pl.instr list =
+    (rel_signature : rel_signature) (exps : exp list) : Pl.instr list =
   let exps_pl = prosify_exps ctx exps in
-  let id_rel = Ctx.get_namespace ctx in
+  let nottyp, inputs = rel_signature in
+  let _, typs = nottyp.it in
   let result_pl =
-    match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
-    | Some prose_out ->
-        let inputs = Ctx.find_inputs ctx id_rel in
-        let prose_out_aligned = Hints.Alter.realign prose_out inputs in
-        Ctx.validate_hint_alter at prose_out_aligned exps_pl;
-        Pl.ProseResult (prose_out_aligned, exps_pl)
-    | None -> Pl.MathResult exps_pl
+    if Hints.Input.is_conditional inputs typs then Pl.ProseResult `Hold
+    else
+      let id_rel = Ctx.get_namespace ctx in
+      match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
+      | Some prose_out ->
+          let inputs = Ctx.find_inputs ctx id_rel in
+          let prose_out_aligned = Hints.Alter.realign prose_out inputs in
+          Ctx.validate_hint_alter at prose_out_aligned exps_pl;
+          Pl.ProseResult (`Yield (prose_out_aligned, exps_pl))
+      | None -> Pl.MathResult exps_pl
   in
   let instr_pl = Pl.ResultI result_pl $ at in
   [ instr_pl ]

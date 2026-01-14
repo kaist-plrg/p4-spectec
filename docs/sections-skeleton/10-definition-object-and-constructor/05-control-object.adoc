@@ -1,6 +1,7 @@
 [#sec-control-object]
 === Control objects
 
+// Section 14 of the P4-16 Language Specification
 P4 parsers are responsible for extracting bits from a packet into headers.
 These headers (and other metadata) can be manipulated and transformed within
 `control` blocks. The body of a control block resembles a traditional
@@ -12,16 +13,21 @@ Syntactically, a `control` block is declared with a name, parameters, optional
 type parameters, and a sequence of declarations of constants, variables,
 ``action``s, ``table``s, and other instantiations:
 
+// Added
 ${syntax: controlLocalDeclaration
           controlBody
-          controlDeclaration
-          controlLocalDeclarationIR
-          controlBodyIR
-          controlDeclarationIR}
+          controlDeclaration}
 
-It is illegal to instantiate a `parser` within a `control` block. Unlike
-control type declarations, control declarations may not be generic---e.g., the
+// Section 14 of the P4-16 Language Specification
+It is illegal to instantiate a `parser` within a `control` block. Similar to
+parser declarations, control declarations may not be generic--e.g., the
 following declaration is illegal:
+
+[source,p4]
+----
+control C<H>(inout H data); // generic control type declaration is legal
+control C<H>(inout H data) { /* body omitted */ } // generic control declaration is illegal
+----
 
 P4 does not support exceptional control-flow within a `control` block. The only
 statement which has a non-local effect on control flow is `exit`, which causes
@@ -30,27 +36,21 @@ there is no equivalent of the `verify` statement or the `reject` state from
 parsers. Hence, all error handling must be performed explicitly by the
 programmer.
 
-[source,p4]
-----
-control C<H>(inout H data) { /* Body omitted */ }
-----
+// Added
+A `control` declaration introduces a control object constructor, represented
+as:
 
-A ``control`` declaration introduces a control object constructor. Its typing
-rule is explained in <<sec-sem-Decl_ok-controlDeclaration>>.
-
+[[controlObjectConstructorDef]]
 ${syntax: controlObjectConstructorDef}
 
-Control objects are then instantiated by constructor invocations in
-<<sec-callExpression-constructor>> and <<sec-instantiation>> to yield:
+Control objects are then instantiated by constructor invocations to yield:
 
+[[controlObject]]
 ${syntax: controlObject}
 
-===== Type nesting
+[discrete]
+==== Well-formedness of control object constructor types
 
-${table: nestable_constructor_control}
-
-[#sec-sem-ConstructorType_wf-controlObjectTypeIR]
-==== Well-formedness
-
-${rulegroup: ConstructorType_wf/controlObjectTypeIR}
-${ruleprose: ConstructorType_wf/controlObjectTypeIR}
+// Added
+${rulegroup-source: ConstructorType_wf/controlObjectTypeIR}
+${rulegroup-prose: ConstructorType_wf/controlObjectTypeIR}

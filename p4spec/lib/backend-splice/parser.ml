@@ -43,51 +43,29 @@ let rec parse_id' (source : Source.t) : unit =
         parse_id' source
     | _ -> ()
 
-let parse_id (source : Source.t) : string =
+let parse_id_ (source : Source.t) : string =
   let i_prev = source.i in
   parse_id' source;
   if i_prev = source.i then error no_region "cannot parse identifier";
   Source.str source i_prev
 
-let parse_id_with_sub (source : Source.t) : Kinds.RuleGroupId.t =
-  let id = parse_id source in
-  let id_sub = if parse_string source "/" then parse_id source else "" in
+let parse_id_with_sub_ (source : Source.t) : string * string =
+  let id = parse_id_ source in
+  let id_sub = if parse_string source "/" then parse_id_ source else "" in
   (id, id_sub)
 
-let rec parse_syntax_ids (source : Source.t) : Kinds.SyntaxId.t list =
+(* Entry point *)
+
+let rec parse_ids (source : Source.t) : string list =
   parse_space source;
   if parse_string source "}" then []
   else
-    let id = parse_id source in
-    id :: parse_syntax_ids source
+    let id = parse_id_ source in
+    id :: parse_ids source
 
-let rec parse_rel_ids (source : Source.t) : Kinds.RelId.t list =
+let parse_id_with_sub (source : Source.t) : string * string =
   parse_space source;
-  if parse_string source "}" then []
-  else
-    let id = parse_id source in
-    id :: parse_rel_ids source
-
-let parse_rulegroup_id (source : Source.t) : Kinds.RuleGroupId.t =
-  parse_space source;
-  let id_rulegroup = parse_id_with_sub source in
+  let id_with_sub = parse_id_with_sub_ source in
   parse_space source;
   let _ = parse_string source "}" in
-  id_rulegroup
-
-let parse_ruleprose_id (source : Source.t) : Kinds.RuleProseId.t =
-  parse_rulegroup_id source
-
-let parse_funcprose_id (source : Source.t) : Kinds.FuncProseId.t =
-  parse_space source;
-  let id_funcprose = parse_id source in
-  parse_space source;
-  let _ = parse_string source "}" in
-  id_funcprose
-
-let parse_table_id (source : Source.t) : Kinds.TableId.t =
-  parse_space source;
-  let id_table = parse_id source in
-  parse_space source;
-  let _ = parse_string source "}" in
-  id_table
+  id_with_sub
