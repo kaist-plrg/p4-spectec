@@ -71,10 +71,11 @@ let print_ctr fmt = function
 let print_stmt fmt = function
   | Wait -> print_string fmt "wait"
   | RemoveAll -> print_string fmt "remove_all"
-  | Expect (port, expect_opt, exact) ->
-      F.fprintf fmt "expect %a%a%a" print_port port
-        (pp_print_option print_expect)
-        expect_opt print_exact exact
+  | Expect (port, Some expect, exact) ->
+      F.fprintf fmt "expect %a %a%a" print_port port print_expect expect
+        print_exact exact
+  | Expect (port, None, exact) ->
+      F.fprintf fmt "expect %a %a" print_port port print_exact exact
   | Packet (port, packet, exact) ->
       F.fprintf fmt "packet %a %a%a" print_port port print_packet packet
         print_exact exact
