@@ -128,17 +128,13 @@ let expand_nested_calls (ihenv, ids_used) instrs =
       let instr_rule = HoldI (id, notexp, iterexps, holdcase) $$ (at, note) in
       Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
   | { it = RuleI (id, notexp, iterexps); at; note } :: instrs_rest ->
-      let mixop, exps = notexp in
       let inputs = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
-      let exps_input_indexed, exps_output_indexed =
-        Hints.Input.split inputs exps
-      in
-      let idxs_input, exps_input = List.split exps_input_indexed in
+      let mixop, exps = notexp in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let* instrs_new, exps_input, ids =
         replace_call_exps ~call_e_count:SkipOne ids_used exps_input
       in
-      let exps_input_indexed = List.combine idxs_input exps_input in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
       let instr_rule = RuleI (id, notexp, iterexps) $$ (at, note) in
       Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)

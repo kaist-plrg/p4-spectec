@@ -78,10 +78,10 @@ module Bind = struct
 
   let init_rule_bind (ihenv : IHEnv.t) (id : id) (notexp : notexp)
       (iterinstrs : iterinstr list) : t =
+    let inputs = IHEnv.find id ihenv in
     let exps_l, exps_r =
       let _, exps = notexp in
-      let inputs = IHEnv.find id ihenv in
-      Hints.Input.split_without_idx inputs exps
+      Hints.Input.split inputs exps
     in
     let iterexps_bound, iterexps_bind =
       iterinstrs

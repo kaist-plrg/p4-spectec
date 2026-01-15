@@ -602,32 +602,22 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterinstrs : iterinstr list) : Pl.instr list =
   let mixop, exps = notexp in
   let inputs = Ctx.find_inputs ctx id_rel in
-  let exps_input_indexed, exps_output_indexed = Hints.Input.split inputs exps in
-  let exps_input_pl_indexed =
-    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_input_indexed
-  in
-  let exps_output_pl_indexed =
-    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_output_indexed
-  in
+  let exps_input, exps_output = Hints.Input.split inputs exps in
+  let exps_input_pl = prosify_exps ctx exps_input in
+  let exps_output_pl = prosify_exps ctx exps_output in
   let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
   let prose_out_opt = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
   let rel_call_pl =
     match (prose_in_opt, prose_out_opt) with
     | Some prose_in, Some prose_out ->
-        let exps_input_pl = List.map snd exps_input_pl_indexed in
         Ctx.validate_hint_alter at prose_in exps_input_pl;
-        let exps_output_pl = List.map snd exps_output_pl_indexed in
         let prose_out_aligned = Hints.Alter.realign prose_out inputs in
         Ctx.validate_hint_alter at prose_out_aligned exps_output_pl;
         Pl.ProseRelCall
           (`Yield
             (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
     | _ ->
-        let exps_pl_indexed =
-          exps_input_pl_indexed @ exps_output_pl_indexed
-          |> List.sort (fun (idx_a, _) (idx_b, _) -> Int.compare idx_a idx_b)
-        in
-        let exps_pl = List.map snd exps_pl_indexed in
+        let exps_pl = Hints.Input.combine inputs exps_input_pl exps_output_pl in
         Pl.MathRelCall (id_rel, mixop, exps_pl)
   in
   let instr_pl = Pl.RuleI rel_call_pl $ at in

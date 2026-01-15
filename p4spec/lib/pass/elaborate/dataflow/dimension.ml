@@ -262,18 +262,12 @@ and annotate_prem_inner (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) :
   match prem.it with
   | RulePr (id, notexp) ->
       let mixop, exps = notexp in
-      let exps_input_indexed, exps_output_indexed =
-        let input = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
-        Hints.Input.split input exps
-      in
-      let idxs_input, exps_input = List.split exps_input_indexed in
+      let input = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
+      let exps_input, exps_output = Hints.Input.split input exps in
       let occurs_input, exps_input = annotate_exps bounds exps_input in
-      let exps_input_indexed = List.combine idxs_input exps_input in
-      let idxs_output, exps_output = List.split exps_output_indexed in
       let occurs_output, exps_output = annotate_exps bounds exps_output in
       let occurs = union occurs_input occurs_output in
-      let exps_output_indexed = List.combine idxs_output exps_output in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine input exps_input exps_output in
       let notexp = (mixop, exps) in
       let prem = RulePr (id, notexp) $ at in
       (occurs_output, occurs, prem)

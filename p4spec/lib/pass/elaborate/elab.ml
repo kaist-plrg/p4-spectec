@@ -1460,7 +1460,7 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     List.map
       (fun notexp_il ->
         let _, exps_il = notexp_il in
-        Hints.Input.split_without_idx inputs exps_il)
+        Hints.Input.split inputs exps_il)
       notexps_il
     |> List.split
   in

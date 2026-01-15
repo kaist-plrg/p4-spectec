@@ -62,7 +62,7 @@ let rec downstream_instr (ihenv : IHEnv.t) (defined : Defined.t) (instr : instr)
   | RuleI (id, (_, exps), _) ->
       let exps_input, _ =
         let inputs = IHEnv.find id ihenv in
-        Hints.Input.split_without_idx inputs exps
+        Hints.Input.split inputs exps
       in
       Used.init_exps defined exps_input
   | ResultI (_, exps) -> Used.init_exps defined exps
@@ -83,7 +83,7 @@ and downstream_instrs (ihenv : IHEnv.t) (defined : Defined.t)
       let used_h = downstream_instr ihenv defined instr_h in
       let _, exps_output =
         let inputs = IHEnv.find id ihenv in
-        Hints.Input.split_without_idx inputs exps
+        Hints.Input.split inputs exps
       in
       let defined_h = Defined.init_exps exps_output in
       let defined = Defined.exclude defined defined_h in

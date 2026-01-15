@@ -152,19 +152,15 @@ let rec downstream_instr (ihenv : IHEnv.t) (renamer_candid : Renamer.t)
       let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (underscores_revive, instr)
   | RuleI (id, notexp, iterinstrs) ->
+      let inputs = IHEnv.find id ihenv in
       let mixop, exps = notexp in
-      let exps_input_indexed, exps_output_indexed =
-        let inputs = IHEnv.find id ihenv in
-        Hints.Input.split inputs exps
-      in
-      let idxs_input, exps_input = List.split exps_input_indexed in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let underscores_used = Underscore.init_exps exps_input in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
       let exps_input = Renamer.rename_exps renamer_candid exps_input in
-      let exps_input_indexed = List.combine idxs_input exps_input in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
       let iterinstrs =
         Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
@@ -219,10 +215,8 @@ and downstream_instrs (ihenv : IHEnv.t) (renamer_candid : Renamer.t)
       let underscores_revive_h, instr_h =
         downstream_instr ihenv renamer_candid instr_h
       in
-      let _, exps_output =
-        let inputs = IHEnv.find id ihenv in
-        Hints.Input.split_without_idx inputs exps
-      in
+      let inputs = IHEnv.find id ihenv in
+      let _, exps_output = Hints.Input.split inputs exps in
       let underscores_h = Underscore.init_exps exps_output in
       let renamer_candid =
         Underscore.exclude_renamer renamer_candid underscores_h
@@ -304,12 +298,9 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
       let frees, instrs_t = upstream ihenv frees instrs_t in
       (frees, instr_h :: instrs_t)
   | { it = RuleI (id, notexp, iterinstrs); at; _ } :: instrs_t ->
+      let inputs = IHEnv.find id ihenv in
       let mixop, exps = notexp in
-      let exps_input_indexed, exps_output_indexed =
-        let inputs = IHEnv.find id ihenv in
-        Hints.Input.split inputs exps
-      in
-      let idxs_output, exps_output = List.split exps_output_indexed in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let underscores_bound = Underscore.init_exps exps_output in
       let frees, renamer_candid =
         Underscore.candid_renamer frees underscores_bound
@@ -322,8 +313,7 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
       in
       let notexp =
         let exps_output = Renamer.rename_exps renamer_revive exps_output in
-        let exps_output_indexed = List.combine idxs_output exps_output in
-        let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+        let exps = Hints.Input.combine inputs exps_input exps_output in
         (mixop, exps)
       in
       let iterinstrs =

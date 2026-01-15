@@ -1549,7 +1549,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let exps_input, exps_output =
       let inputs = Ctx.find_rel_inputs Local ctx id in
       let _, exps = notexp in
-      Hints.Input.split_without_idx inputs exps
+      Hints.Input.split inputs exps
     in
     let values_input = eval_exps ctx exps_input in
     let values_output = invoke_rel ctx id values_input in

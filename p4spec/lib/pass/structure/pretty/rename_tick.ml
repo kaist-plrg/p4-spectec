@@ -123,11 +123,8 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
       in
       instr_h :: instrs_t
   | { it = RuleI (id, (mixop, exps), iterinstrs); at; _ } :: instrs_t ->
-      let exps_input_indexed, exps_output_indexed =
-        let inputs = IHEnv.find id ihenv in
-        Hints.Input.split inputs exps
-      in
-      let idxs_output, exps_output = List.split exps_output_indexed in
+      let inputs = IHEnv.find id ihenv in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let frees_output = Ol.Free.free_exps exps_output in
       let frees, renamer =
         frees_output |> IdSet.to_list
@@ -147,8 +144,7 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
       in
       let exps_output = Renamer.rename_exps renamer exps_output in
       let iterinstrs = Renamer.rename_iterinstrs_bind renamer iterinstrs in
-      let exps_output_indexed = List.combine idxs_output exps_output in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let instr_h = RuleI (id, (mixop, exps), iterinstrs) $ at in
       let instrs_t =
         Renamer.rename_instrs ihenv renamer instrs_t |> upstream ihenv frees

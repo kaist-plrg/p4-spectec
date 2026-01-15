@@ -168,16 +168,14 @@ and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
   let mixop, exps = notexp in
   let hint = Dctx.find_hint dctx id in
   let exps_input, exps_output = Hints.Input.split hint exps in
-  List.map snd exps_input |> analyze_exps_as_bound dctx;
+  analyze_exps_as_bound dctx exps_input;
   let dctx, venv, exps_output, sideconditions =
-    let idxs, exps_output = List.split exps_output in
     let dctx, venv, exps_output, sideconditions =
       analyze_exps_as_bind dctx exps_output
     in
-    let exps_output = List.combine idxs exps_output in
     (dctx, venv, exps_output, sideconditions)
   in
-  let exps = Hints.Input.combine exps_input exps_output in
+  let exps = Hints.Input.combine hint exps_input exps_output in
   let notexp = (mixop, exps) in
   let prem = RulePr (id, notexp) $ at in
   (dctx, venv, prem, sideconditions)

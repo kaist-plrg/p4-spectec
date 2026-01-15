@@ -219,23 +219,14 @@ and replace_instr (ihenv : IHEnv.t) (replacer : t) (instr : instr) : t * instr =
       let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (replacer, instr)
   | RuleI (id_rel, (mixop, exps), iterinstrs) ->
-      let exps_input_indexed, exps_output_indexed =
-        let inputs = IHEnv.find id_rel ihenv in
-        Hints.Input.split inputs exps
-      in
-      let exps_input_indexed =
-        let idxs_input, exps_input = List.split exps_input_indexed in
-        let exps_input = replace_exps replacer exps_input in
-        List.combine idxs_input exps_input
-      in
-      let frees_output =
-        let exps_output = List.map snd exps_output_indexed in
-        Ol.Free.free_exps exps_output
-      in
+      let inputs = IHEnv.find id_rel ihenv in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
+      let exps_input = replace_exps replacer exps_input in
+      let frees_output = Ol.Free.free_exps exps_output in
       let replacer =
         filter (fun id _ -> not (IdSet.mem id frees_output)) replacer
       in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
       let instr = RuleI (id_rel, (mixop, exps), iterinstrs) $ at in
       (replacer, instr)
