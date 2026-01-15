@@ -362,9 +362,9 @@ and string_of_instrs ?(level = 0) instrs =
   |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
   |> String.concat "\n\n"
 
-and string_of_iterinstr iterinstr =
-  let iter, _, _ = iterinstr in
-  string_of_iter iter
+and string_of_iterinstr iterinstr = Il.Print.string_of_iterprem iterinstr
+(* let iter, _, _ = iterinstr in *)
+(* string_of_iter iter *)
 
 and string_of_iterinstrs iterinstrs =
   iterinstrs |> List.map string_of_iterinstr |> String.concat ""

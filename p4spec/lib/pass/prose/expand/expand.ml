@@ -75,25 +75,18 @@ let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
         drop (List.length iters - List.length iterexps) iters
       in
       let iter_combined = List.combine iters_enclosing iterexps in
-      let iterexps_instr, _ =
+      let iterinstrs, _ =
         List.fold_left
-          (fun (iterexps_instr, var_new) (iter_new, iterexp) ->
-            let iter_in, itervars_in = iterexp in
-            assert (iter_in = iter_new);
-            (* itervars_out: each iteration layer of var_new *)
-            (* itervars_in: each layer of iterexp *)
-            let iterexp_instr = (iter_in, var_new :: itervars_in) in
-            (* update iterator state of var_new *)
-            let var_new =
-              let id, typ, iters = var_new in
-              (id, typ, iters @ [ iter_new ])
+          (fun (iterinstrs, var_bind) (iter_enclosing, iterexp) ->
+            let _, vars_bound = iterexp in
+            let iterinstr = (iter_enclosing, vars_bound, [ var_bind ]) in
+            let var_bind =
+              let id, typ, iters = var_bind in
+              (id, typ, iters @ [ iter_enclosing ])
             in
-            (iterexps_instr @ [ iterexp_instr ], var_new))
+            (iterinstrs @ [ iterinstr ], var_bind))
           ([], (id, typ, []))
           iter_combined
-      in
-      let iterinstrs =
-        List.map (fun (iter, vars) -> (iter, vars, [])) iterexps_instr
       in
       let instr_let =
         LetI (exp_new, exp_orig, iterinstrs) $$ (no_region, { iid = -1 })
