@@ -517,12 +517,12 @@ rulegroup Expr_eval/sliceAccessExpressionIR {
 
 rulegroup Expr_eval/callExpressionIR {
 
-  rule Expr_eval/callee-exit:
+  rule Expr_eval/callee-abort:
     p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Callee_eval:
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/callee-cont-call-abort:
     p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _

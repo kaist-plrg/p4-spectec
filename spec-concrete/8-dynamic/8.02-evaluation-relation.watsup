@@ -211,7 +211,7 @@ relation ControlBody_eval:
 
 syntax controlLocalDeclarationResult =
   | continueEmptyResult
-  | abortResult
+  | exitResult
 
 relation ControlLocalDecl_eval:
   evalContext store |- controlLocalDeclarationIR
@@ -229,7 +229,7 @@ relation ControlLocalDecls_eval:
 
 syntax declarationResult =
   | continueEmptyResult
-  | exitResult
+  | abortResult
 
 relation VarDecl_eval:
   cursor evalContext store |- variableDeclarationIR
@@ -274,7 +274,7 @@ relation Copy_in_argument:
   
 syntax copyInListResult =
   | continueResult<storageReference?*>
-  | exitResult
+  | abortResult
 
 relation Copy_in:
   store cursor evalContext parameterListIR

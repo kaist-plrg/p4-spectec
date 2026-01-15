@@ -97,12 +97,12 @@ rulegroup Stmt_eval/assignmentStatementIR {
 
 rulegroup Stmt_eval/callStatementIR {
 
-  rule Stmt_eval/callee-exit:
+  rule Stmt_eval/callee-abort:
     p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Callee_eval:
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Stmt_eval/callee-cont-call-abort:
     p EC_0 STO_0 |- callableTargetIR `< typeArgumentIR* > `( argumentIR* ) `;
@@ -357,11 +357,11 @@ rulegroup ForInitStmts_eval {
   rule ForInitStmts_eval/nil:
     EC STO |- eps : EC STO `EMPTY
 
-  rule ForInitStmts_eval/cons-head-exit:
+  rule ForInitStmts_eval/cons-head-abort:
     EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- ForInitStmt_eval: 
-        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 EXIT
+        EC_0 STO_0 |- forInitStatementIR_h : EC_1 STO_1 abortResult
 
   rule ForInitStmts_eval/cons-head-cont:
     EC_0 STO_0 |- forInitStatementIR_h :: forInitStatementIR_t*
@@ -396,13 +396,13 @@ rulegroup ForThreeClauseLoop_eval {
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B false))
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-exit:
+  rule ForThreeClauseLoop_eval/cond-true-loop-abort:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
-                : EC_2 STO_2 EXIT
+                : EC_2 STO_2 abortResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
-        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 EXIT
+        LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 abortResult
 
   rule ForThreeClauseLoop_eval/cond-true-loop-return:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
@@ -449,15 +449,15 @@ rulegroup ForThreeClauseLoop_eval {
 
 rulegroup Stmt_eval/forStatementIR-three-clause {
 
-  rule Stmt_eval/init-exit:
+  rule Stmt_eval/init-abort:
     LOCAL EC_0 STO_0 |- annotationList FOR
                           `( forInitStatementListIR `;
                              typedExpressionIR `;
                              forUpdateStatementListIR ) statementIR
-                      : EC_3 STO_1 EXIT
+                      : EC_3 STO_1 abortResult
     -- if EC_1 = $enter_e(EC_0)
     -- ForInitStmts_eval:
-        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 EXIT
+        EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 abortResult
     -- if EC_3 = $exit_e(EC_2)
 
   rule Stmt_eval/init-cont:
@@ -566,11 +566,11 @@ rulegroup ForInLoop_eval {
   rule ForInLoop_eval/nil:
     EC STO |- nameIR eps statementIR : EC STO `EMPTY
 
-  rule ForInLoop_eval/cons-loop-exit:
+  rule ForInLoop_eval/cons-loop-abort:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
-                : EC_2 STO_1 EXIT
+                : EC_2 STO_1 abortResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
-    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 EXIT
+    -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 abortResult
 
   rule ForInLoop_eval/cons-loop-return:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
@@ -889,12 +889,12 @@ rule BlockElementStmt_eval/constantDeclarationIR:
 
 rulegroup BlockElementStmt_eval/variableDeclarationIR {
 
-  rule BlockElementStmt_eval/exit:
+  rule BlockElementStmt_eval/abort:
     EC_0 STO_0 |- variableDeclarationIR
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- VarDecl_eval:
         LOCAL EC_0 STO_0 |- variableDeclarationIR
-                          : EC_1 STO_1 EXIT
+                          : EC_1 STO_1 abortResult
 
   rule BlockElementStmt_eval/cont:
     EC_0 STO_0 |- variableDeclarationIR
@@ -923,12 +923,12 @@ rulegroup BlockElementStmts_eval {
   rule BlockElementStmts_eval/nil:
     EC STO |- eps : EC STO `EMPTY
 
-  rule BlockElementStmts_eval/cons-head-exit:
+  rule BlockElementStmts_eval/cons-head-abort:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 EXIT
+                    : EC_1 STO_1 abortResult
 
   rule BlockElementStmts_eval/cons-head-return:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*

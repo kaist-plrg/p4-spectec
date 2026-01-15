@@ -3168,6 +3168,24 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Let ```B b~r~`` be ``value'``.
 . Return ```B b~l~ \/ b~r~``.
 
+<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value~target~)>>
+
+
+. Check that ``valueFieldIR^{asterisk}^`` is a non-empty list.
+. Let ``valueFieldIR~h~ {two-colons} valueFieldIR~t~^{asterisk}^`` be ``valueFieldIR^{asterisk}^``.
+. Let ``nameIR = value ;`` be ``valueFieldIR~h~``.
+. If ``<<bin_eq, bin_eq(value, value~target~)>>``:
+ .. Return ``value~target~``.
+. Else:
+ .. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR~t~^{asterisk}^, value~target~)>>``.
+
+<<cast_to_enum, cast_to_enum(enumTypeIR, value)>>
+
+
+. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
+. Let ``ENUM typeId < typeIR > { valueFieldIR^{asterisk}^ }`` be ``enumTypeIR``.
+. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value)>>``.
+
 <<cast_op, Cast ``value'`` to type ``typeIR``>>
 
 
@@ -3181,10 +3199,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Else:
   ... Let ``w S i`` be ``integerLiteral``.
   ... Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
+. Else if let ``ERROR . nameIR`` be ``value'``:
+ .. Return ``<<cast_error, cast_error(typeIR, nameIR)>>``.
 . Else if let ``STRUCT typeId { (value~field~ nameIR~field~ ;)^{asterisk}^ }`` be ``value'``:
  .. Return ``<<cast_struct, cast_struct(typeIR, typeId, ((value~field~, nameIR~field~))^{asterisk}^)>>``.
 . Else if let ``HEADER typeId { b ; (value~field~ nameIR~field~ ;)^{asterisk}^ }`` be ``value'``:
  .. Return ``<<cast_header, cast_header(typeIR, typeId, b, ((value~field~, nameIR~field~))^{asterisk}^)>>``.
+. Else if let ``HEADER_STACK [ value^{asterisk}^ ( ++_++ ; n~size~ ) ]`` be ``value'``:
+ .. Return ``<<cast_header_stack, cast_header_stack(typeIR, value^{asterisk}^, n~size~)>>``.
 . Else if let ``enumValue`` be ``value'``:
  .. Check that ``enumValue`` matches pattern ``% . % . %``.
  .. Let ``++_++ . ++_++ . value`` be ``enumValue``.
@@ -3235,6 +3257,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
   ... Return ``w . 0 V 0``.
 . Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<default, default(typeIR)>>``.
+. Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
+ .. Return ``<<default, default(typeIR)>>``.
 . Else if let ``TUPLE < typeIR^{asterisk}^ >`` be ``typeIR'``:
  .. Return ``TUPLE ( (<<default, default(typeIR)>>)^{asterisk}^ )``.
 . Else if let ``typeIR [ n~s~ ]`` be ``typeIR'``:
@@ -3278,6 +3302,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_bool, cast_bool(typeIR, b)>>``.
 . Else if let ``TYPE ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_bool, cast_bool(typeIR, b)>>``.
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
+ .. Return ``SET { <<cast_bool, cast_bool(typeIR, b)>> }``.
 
 <<cast_arbint, cast_arbint(typeIR', i)>>
 
@@ -3318,6 +3344,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_fixbit, cast_fixbit(typeIR, w, i)>>``.
 . Else if let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixbit, cast_fixbit(typeIR, w, i)>> }``.
+. Else if let ``enumTypeIR`` be ``typeIR'``:
+ .. Return ``<<cast_to_enum, cast_to_enum(enumTypeIR, w W i)>>``.
 
 <<cast_fixint, cast_fixint(typeIR', w, i)>>
 
@@ -3339,6 +3367,8 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_fixint, cast_fixint(typeIR, w, i)>>``.
 . Else if let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_fixint, cast_fixint(typeIR, w, i)>> }``.
+. Else if let ``enumTypeIR`` be ``typeIR'``:
+ .. Return ``<<cast_to_enum, cast_to_enum(enumTypeIR, w S i)>>``.
 
 <<cast_varbit, cast_varbit(typeIR', w~max'~, w, i)>>
 
@@ -3350,6 +3380,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``w~max~ . w V i``.
 . Else if let ``TYPEDEF ++_++ typeIR`` be ``typeIR'``:
  .. Return ``<<cast_varbit, cast_varbit(typeIR, w~max'~, w, i)>>``.
+
+<<cast_error, cast_error(typeIR', nameIR)>>
+
+
+. If let ``errorTypeIR`` be ``typeIR'``:
+ .. Return ``ERROR . nameIR``.
+. Else if let ``SET < typeIR >`` be ``typeIR'``:
+ .. Return ``SET { <<cast_error, cast_error(typeIR, nameIR)>> }``.
 
 <<cast_struct, cast_struct(typeIR', typeId', ((value', id'))^{asterisk}^)>>
 
@@ -3382,6 +3420,14 @@ for each ``value'`` in ``value'^{asterisk}^`` and ``id'`` in ``id'^{asterisk}^``
 . Else if let ``HEADER typeId < ++_++^{asterisk}^ > { ++_++^{asterisk}^ }`` be ``typeIR'``:
  .. Check that ``typeId`` is equal to ``typeId'``.
  .. Return ``HEADER typeId { b ; (value id ;)^{asterisk}^ }``.
+
+<<cast_header_stack, cast_header_stack(typeIR', value^{asterisk}^, n~size'~)>>
+
+
+. Check that ``typeIR'`` has type ``headerStackTypeIR``.
+. Let ``typeIR [ n~size~ ]`` be ``typeIR'``.
+. Check that ``n~size~`` is equal to ``n~size'~``.
+. Return ``HEADER_STACK [ value^{asterisk}^ ( 0 ; n~size~ ) ]``.
 
 <<cast_sequence, cast_sequence(typeIR', value^{asterisk}^)>>
 
@@ -14640,8 +14686,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult'``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionResult'``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult'``.
  .. Let ``value'`` be <<un_op, ``unop`` ``value``>>.
@@ -14654,8 +14700,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``[typedExpressionIR~l~, typedExpressionIR~r~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Check that ``value^{asterisk}^`` is a list of length 2.
@@ -14667,8 +14713,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionResult'``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult'``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. If ``expressionResult'`` is equal to ```B false``:
   ... Let ``expressionResult`` be ```B false``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
@@ -14676,8 +14722,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult''`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
-  ... If let ``exitResult`` be ``expressionResult''``:
-   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``EXIT``.
+  ... If let ``abortResult`` be ``expressionResult''``:
+   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``abortResult``.
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~r~`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -14686,8 +14732,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionResult'``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult'``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. If ``expressionResult'`` is equal to ```B true``:
   ... Let ``expressionResult`` be ```B true``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
@@ -14695,8 +14741,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult''`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
-  ... If let ``exitResult`` be ``expressionResult''``:
-   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``EXIT``.
+  ... If let ``abortResult`` be ``expressionResult''``:
+   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``abortResult``.
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~r~`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -14707,8 +14753,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . If ``expressionResult`` is equal to ```B true``:
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult~true~`` be
@@ -14725,8 +14771,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult'``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionResult'``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult'``.
  .. Let ``value'`` be <<cast_op, cast ``value`` to type ``typeIR``>>.
@@ -14744,8 +14790,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionListIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Let ``expressionResult`` be ``SEQ ( value^{asterisk}^ )``.
@@ -14754,8 +14800,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionListIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Let ``expressionResult`` be ``SEQ ( value^{asterisk}^ , ... )``.
@@ -14767,8 +14813,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Let ``expressionResult`` be ``RECORD { (value nameIR ;)^{asterisk}^ }``.
@@ -14777,8 +14823,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionIR^{asterisk}^``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Let ``expressionResult`` be ``RECORD { (value nameIR ;)^{asterisk}^ , ... }``.
@@ -14810,8 +14856,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~base~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult'``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionResult'``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . Else:
  .. Let ``value~base~`` be ``expressionResult'``.
  .. If let ``STRUCT ++_++ { (value~field~ id~field~ ;)^{asterisk}^ }`` be ``value~base~``:
@@ -14844,6 +14890,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.
  .. Let ``expressionResult`` be ``value~last~``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
+. Else if ``nameIR`` is equal to ``"lastIndex"``:
+ .. Check that ``expressionResult'`` has type ``continueResult<value>``.
+ .. Let ``value~base~`` be ``expressionResult'``.
+ .. Check that ``value~base~`` has type ``headerStackValue``.
+ .. Let ``HEADER_STACK [ value~elem~^{asterisk}^ ( n~idx~ ; ++_++ ) ]`` be ``value~base~``.
+ .. Let ``nat`` be ``<<max_nat, max_nat([n~idx~, 1])>>``.
+ .. Let ``int`` be ``nat - 1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~idx_last~`` be ``int``.
+ .. Let ``value~idx_last~`` be ``32 W n~idx_last~``.
+ .. Let ``expressionResult`` be ``value~idx_last~``.
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 . Else if ``nameIR`` is equal to ``"hit"``:
  .. Check that ``expressionResult'`` has type ``continueResult<value>``.
  .. Let ``value~base~`` be ``expressionResult'``.
@@ -14871,8 +14929,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~, typedExpressionIR~index~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionListResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . Else:
  .. Let ``value'^{asterisk}^`` be ``expressionListResult``.
  .. Check that ``value'^{asterisk}^`` is a list of length 2.
@@ -14895,11 +14953,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
  .. Check that ``value~base~`` has type ``headerStackValue``.
- .. Let ``HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; ++_++ ) ]`` be ``value~base~``.
+ .. Let ``HEADER_STACK [ value~elem~^{asterisk}^ ( ++_++ ; n~size~ ) ]`` be ``value~base~``.
  .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
  .. Check that ``int`` has type ``nat``.
  .. Let ``n~index~`` be ``int``.
- .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
+ .. Let ``int'`` be ``<<min_int, min_int([n~index~, n~size~ - 1])>>``.
+ .. Check that ``int'`` has type ``nat``.
+ .. Let ``n~idx~`` be ``int'``.
+ .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~ [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ]`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
@@ -14907,8 +14968,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~, typedExpressionIR~hi~, typedExpressionIR~lo~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionListResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
+. If let ``abortResult`` be ``expressionListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
 . Else:
  .. Let ``value^{asterisk}^`` be ``expressionListResult``.
  .. Check that ``value^{asterisk}^`` is a list of length 3.
@@ -14922,14 +14983,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let <<Callee_eval, p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult>>.
 . If let ``exitResult`` be ``calleeResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
-. Else:
- .. Let ``callee`` be ``calleeResult``.
+. Else if let ``callee`` be ``calleeResult``:
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult`` be
 * the result of <<Call_eval, calling ``callee``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``callResult``:
-  ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``EXIT``.
- .. Else if let ``RETURN value'^?^`` be ``callResult``:
+ .. If let ``abortResult`` be ``callResult``:
+  ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``abortResult``.
+ .. Else:
+  ... Let ``RETURN value'^?^`` be ``callResult``.
   ... Check that ``value'^?^`` is defined.
   ... Let ``value`` be ``value'^?^``.
   ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``value``.
@@ -14954,18 +15015,20 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~h~``, under cursor ``p``, evaluation context ``evalContext``, and store ``store``>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``abortResult``.
  .. Else:
   ... Let ``value~h~`` be ``expressionResult``.
   ... Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionIR~t~^{asterisk}^``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
-  ... If let ``exitResult`` be ``expressionListResult``:
-   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression list result ``EXIT``.
+  ... If let ``abortResult`` be ``expressionListResult``:
+   .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression list result ``abortResult``.
   ... Else:
    .... Let ``value~t~^{asterisk}^`` be ``expressionListResult``.
    .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression list result ``value~h~ {two-colons} value~t~^{asterisk}^``.
+ .. If let ``rejectTransitionResult`` be ``expressionResult``:
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``rejectTransitionResult``.
 
 <<Expr_eval_keyset, Expr_eval_keyset: ``EC~0~ STO~0~ |- keysetExpressionIR : % % %``>>
 
@@ -15022,8 +15085,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Lvalue_eval, ``p EC STO |- typedLvalueIR . nameIR # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'>>.
-. If let ``exitResult`` be ``storageReferenceResult'``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult'``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult'``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -15034,8 +15097,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR ] # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'>>.
-. If let ``exitResult`` be ``storageReferenceResult'``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult'``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult'``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -15043,8 +15106,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let ``storageReferenceResult`` be ``storageReference [ value ]``.
@@ -15053,8 +15116,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Lvalue_eval, ``p EC STO |- typedLvalueIR [ typedExpressionIR~hi~ : typedExpressionIR~lo~ ] # lvalueNoteIR : % % %``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'>>.
-. If let ``exitResult`` be ``storageReferenceResult'``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult'``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult'``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -15062,8 +15125,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``[typedExpressionIR~hi~, typedExpressionIR~lo~]``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionListResult``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Check that ``value^{asterisk}^`` is a list of length 2.
@@ -15220,11 +15283,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Stmt_eval, The compile-time evaluation of ``typedLvalueIR assignop' typedExpressionIR ;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
+. If let ``abortResult`` be ``storageReferenceResult``:
  .. Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -15234,11 +15297,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
   ... Result in 
 * the evaluation context ``EC~2~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult``.
   ... Let ``binop`` be <<option_get, *!*>> <<assignop_as_binop, the binary operator corresponding to ``assignop'``>>.
@@ -15256,11 +15319,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
   ... Result in 
 * the evaluation context ``EC~2~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let <<Lvalue_write, p EC~2~ STO~2~ |- storageReference -> value : EC~3~>>.
@@ -15277,21 +15340,15 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
 * and the instantiated statement ``EXIT``.
-. Else:
- .. Let ``callee`` be ``calleeResult``.
+. Else if let ``callee`` be ``calleeResult``:
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult`` be
 * the result of <<Call_eval, calling ``callee``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``callResult``:
+ .. If let ``abortResult`` be ``callResult``:
   ... Result in 
 * the evaluation context ``EC~2~``,
 * the updated store ``STO~2~``,
-* and the instantiated statement ``EXIT``.
- .. Else if let ``rejectTransitionResult`` be ``callResult``:
-  ... Result in 
-* the evaluation context ``EC~2~``,
-* the updated store ``STO~2~``,
-* and the instantiated statement ``rejectTransitionResult``.
+* and the instantiated statement ``abortResult``.
  .. Else:
   ... Result in 
 * the evaluation context ``EC~2~``,
@@ -15321,11 +15378,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
   ... Result in 
 * the evaluation context ``EC~cond~``,
 * the updated store ``STO~cond~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. If ``expressionResult`` is equal to ```B true``:
   ... Let 
 * the evaluation context ``EC~then~``,the updated store ``STO~then~``,and the instantiated statement ``statementResult`` be
@@ -15344,11 +15401,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
   ... Result in 
 * the evaluation context ``EC~cond~``,
 * the updated store ``STO~cond~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. If ``expressionResult`` is equal to ```B true``:
   ... Let 
 * the evaluation context ``EC~then~``,the updated store ``STO~then~``,and the instantiated statement ``statementResult`` be
@@ -15378,11 +15435,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
- .. If let ``exitResult`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
   ... Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Result in 
@@ -15413,12 +15470,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If let ``annotationList FOR ( typeIR nameIR IN forCollectionExpressionIR ) statementIR`` be ``forStatementIR``:
  .. Let ``EC~1~`` be ``<<enter_e, enter_e(EC)>>``.
  .. Let <<ForCollectionExpr_eval, EC~1~ STO |- forCollectionExpressionIR : EC~2~ STO~1~ expressionListResult>>.
- .. If let ``exitResult`` be ``expressionListResult``:
+ .. If let ``abortResult`` be ``expressionListResult``:
   ... Let ``EC~3~`` be ``<<exit_e, exit_e(EC~2~)>>``.
   ... Result in 
 * the evaluation context ``EC~3~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
   ... Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC`` from the ``LOCAL`` layer>>.
@@ -15458,11 +15515,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult``:
+. If let ``abortResult`` be ``expressionResult``:
  .. Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. Check that ``value`` has type ``tableMetadataEnumValue``.
@@ -15487,11 +15544,11 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``exitResult`` be ``expressionResult``:
+. If let ``abortResult`` be ``expressionResult``:
  .. Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. Let <<SwitchCases_general_eval, LOCAL EC~1~ STO~1~ value |- switchCaseIR^{asterisk}^ : EC~2~ STO~2~ blockStatementIR'^?^>>.
@@ -15523,8 +15580,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
-. If let ``exitResult`` be ``declarationResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``declarationResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``continueEmptyResult`` be ``declarationResult``.
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
@@ -15615,6 +15672,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~cond~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
+ .. If let ``rejectTransitionResult`` be ``expressionResult``:
+  ... Result in ``EC~cond~``, ``STO~cond~``, and ``rejectTransitionResult``.
  .. If ``expressionResult`` is equal to ```B true``:
   ... Let <<ParserStmt_eval, EC~cond~ STO~cond~ |- parserStatementIR~then~ : EC~then~ STO~then~ parserStatementResult>>.
   ... Result in ``EC~then~``, ``STO~then~``, and ``parserStatementResult``.
@@ -15665,13 +15724,17 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression list result ``expressionListResult`` be
 * the result of <<Exprs_eval, evaluating ``typedExpressionIR~key~^{asterisk}^``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
-. Check that ``expressionListResult`` has type ``continueResult<value*>``.
-. Let ``value~key~^{asterisk}^`` be ``expressionListResult``.
-. Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ nameIR^?^>>.
-. Check that ``nameIR^?^`` is defined.
-. Let ``nameIR~state~`` be ``nameIR^?^``.
-. Let <<ParserTransition_eval, EC~2~ STO~2~ |- TRANSITION nameIR~state~ ; : EC~3~ STO~3~ transitionResult>>.
-. Result in ``EC~3~``, ``STO~3~``, and ``transitionResult``.
+. If let ``rejectTransitionResult`` be ``expressionListResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+. Else if let ``value~key~^{asterisk}^`` be ``expressionListResult``:
+ .. Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ nameIR^?^>>.
+ .. If ``nameIR^?^`` is none:
+  ... Let ``rejectTransitionResult`` be ``REJECT ERROR . "NoMatch"``.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``rejectTransitionResult``.
+ .. Else:
+  ... Let ``nameIR~state~`` be ``nameIR^?^``.
+  ... Let <<ParserTransition_eval, EC~2~ STO~2~ |- TRANSITION nameIR~state~ ; : EC~3~ STO~3~ transitionResult>>.
+  ... Result in ``EC~3~``, ``STO~3~``, and ``transitionResult``.
 
 <<ParserState_eval, ParserState_eval: ``EC~0~ STO~0~ |- annotationList STATE { parserStatementListIR transitionStatementIR } : % % %``>>
 
@@ -15712,34 +15775,37 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let <<ParserState_trans, EC~1~ STO~1~ |- TRANSITION nameIR~next~ : EC~2~ STO~2~ transitionResult>>.
 . Result in ``EC~2~``, ``STO~2~``, and ``transitionResult``.
 
-<<ParserLocalDecl_eval, ParserLocalDecl_eval: ``EC~0~ STO |- parserLocalDeclarationIR : % %``>>
+<<ParserLocalDecl_eval, ParserLocalDecl_eval: ``EC~0~ STO |- parserLocalDeclarationIR : % % %``>>
 
-<<ParserLocalDecl_eval, ``EC~0~ STO |- constantDeclarationIR : % %``>>:
+<<ParserLocalDecl_eval, ``EC~0~ STO |- constantDeclarationIR : % % %``>>:
 
 . Let 
 * the updated evaluation context ``EC~1~`` be
 * the result of <<ConstDecl_eval, evaluating ``constantDeclarationIR``, under cursor ``BLOCK``, and evaluation context ``EC~0~``>>.
-. Result in ``EC~1~`` and ``STO``.
+. Result in ``EC~1~``, ``STO``, and ```EMPTY``.
 
-<<ParserLocalDecl_eval, ``EC~0~ STO |- variableDeclarationIR : % %``>>:
+<<ParserLocalDecl_eval, ``EC~0~ STO |- variableDeclarationIR : % % %``>>:
 
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``declarationResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``declarationResult``.
-. Result in ``EC~1~`` and ``STO~1~``.
+. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
-<<ParserLocalDecls_eval, ParserLocalDecls_eval: ``evalContext store |- parserLocalDeclarationIR^{asterisk}^ : % %``>>
+<<ParserLocalDecls_eval, ParserLocalDecls_eval: ``evalContext store |- parserLocalDeclarationIR^{asterisk}^ : % % %``>>
 
-<<ParserLocalDecls_eval, ``evalContext store |- parserLocalDeclarationIR^{asterisk}^ : % %``>>:
+<<ParserLocalDecls_eval, ``evalContext store |- parserLocalDeclarationIR^{asterisk}^ : % % %``>>:
 
 . If ``parserLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext`` and ``store``.
+ .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . If let ``parserLocalDeclarationIR~h~ {two-colons} parserLocalDeclarationListIR~t~`` be ``parserLocalDeclarationIR^{asterisk}^``:
- .. Let <<ParserLocalDecl_eval, evalContext store |- parserLocalDeclarationIR~h~ : EC~1~ STO~1~>>.
- .. Let <<ParserLocalDecls_eval, EC~1~ STO~1~ |- parserLocalDeclarationListIR~t~ : EC~2~ STO~2~>>.
- .. Result in ``EC~2~`` and ``STO~2~``.
+ .. Let <<ParserLocalDecl_eval, evalContext store |- parserLocalDeclarationIR~h~ : EC~1~ STO~1~ parserStatementResult'>>.
+ .. If let ``rejectTransitionResult`` be ``parserStatementResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+ .. Else:
+  ... Let <<ParserLocalDecls_eval, EC~1~ STO~1~ |- parserLocalDeclarationListIR~t~ : EC~2~ STO~2~ parserStatementResult>>.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``parserStatementResult``.
 
 <<Table_eval, Table_eval: ``EC~0~ STO~0~ |- typeId TBL : % % %``>>
 
@@ -15807,8 +15873,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
-. If let ``exitResult`` be ``declarationResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``declarationResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``continueEmptyResult`` be ``declarationResult``.
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
@@ -15821,8 +15887,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . If let ``controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR^{asterisk}^``:
  .. Let <<ControlLocalDecl_eval, evalContext store |- controlLocalDeclarationIR~h~ : EC~1~ STO~1~ declarationResult'>>.
- .. If let ``exitResult`` be ``declarationResult'``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``declarationResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
  .. Else:
   ... Let ``continueEmptyResult`` be ``declarationResult'``.
   ... Let <<ControlLocalDecls_eval, EC~1~ STO~1~ |- controlLocalDeclarationListIR~t~ : EC~2~ STO~2~ declarationResult>>.
@@ -15849,16 +15915,16 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``p``, evaluation context ``EC~0~``, and store ``store``>>.
- .. If let ``value~init~`` be ``expressionResult``:
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in 
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,
+* and the result ``abortResult``.
+ .. Else:
+  ... Let ``value~init~`` be ``expressionResult``.
   ... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``p`` layer>>.
   ... Result in 
 * the updated evaluation context ``EC~2~``, the updated store ``STO~1~``,
 * and the result ```EMPTY``.
- .. Else:
-  ... Let ``exitResult`` be ``expressionResult``.
-  ... Result in 
-* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,
-* and the result ``EXIT``.
 
 <<ConstDecl_eval, ConstDecl_eval>>:
 
@@ -15904,9 +15970,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let ``typedLvalueIR'^?^`` be ``<<typedExpressionIR_as_typedLvalueIR, typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
 . If let ``typedLvalueIR`` be ``typedLvalueIR'^?^``:
  .. Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
- .. Check that ``storageReferenceResult`` has type ``exitResult``.
- .. Let ``exitResult`` be ``storageReferenceResult``.
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . If ``nameIR'`` is equal to ``"push_front"``:
  .. Check that ``argumentListIR`` is a list of length 1.
  .. Check that ``typedLvalueIR'^?^`` is defined.
@@ -15969,8 +16035,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Let ``typedLvalueIR`` be <<option_get, *!*>> ``<<typedExpressionIR_as_typedLvalueIR, typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -15993,8 +16059,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Let ``typedLvalueIR`` be <<option_get, *!*>> ``<<typedExpressionIR_as_typedLvalueIR, typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -16016,8 +16082,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Let ``typedLvalueIR`` be <<option_get, *!*>> ``<<typedExpressionIR_as_typedLvalueIR, typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -16040,9 +16106,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let ``typedLvalueIR'^?^`` be ``<<typedExpressionIR_as_typedLvalueIR, typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
 . If let ``typedLvalueIR`` be ``typedLvalueIR'^?^``:
  .. Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
- .. Check that ``storageReferenceResult`` has type ``exitResult``.
- .. Let ``exitResult`` be ``storageReferenceResult``.
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . If ``argumentListIR`` is equal to ``·``:
  .. Check that ``typedLvalueIR'^?^`` is defined.
  .. Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
@@ -16066,16 +16132,16 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . If ``direction`` is ```EMPTY``:
  .. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
   ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``None``.
 . Else if ``direction`` is ``IN``:
  .. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
   ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
@@ -16084,8 +16150,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList INOUT typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
 . Let <<Argument_eval_lvalue, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
- .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference'^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference'^?^`` is defined.
@@ -16097,8 +16163,8 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Copy_in_argument, ``STO~0~ p~caller~ EC~caller_0~ annotationList OUT typeIR nameIR constantInitializerOptIR @ p~callee~ EC~callee_0~ argumentIR ~> % % @ % # %``>>:
 
 . Let <<Argument_eval_lvalue, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult>>.
-. If let ``exitResult`` be ``storageReferenceResult``:
- .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``EXIT``.
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
 . Else:
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
  .. Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~callee_0~`` from the ``p~callee~`` layer>>.
@@ -16119,8 +16185,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let <<Copy_in_argument, store p~caller~ evalContext parameterIR~h~ @ p~callee~ evalContext' argumentIR~h~ ~> STO~1~ EC~caller_1~ @ EC~callee_1~ # copyInResult>>.
  .. If let ``exitResult`` be ``copyInResult``:
   ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``EXIT``.
- .. Else:
-  ... Let ``storageReference~h~^?^`` be ``copyInResult``.
+ .. Else if let ``storageReference~h~^?^`` be ``copyInResult``:
   ... Let <<Copy_in, STO~1~ p~caller~ EC~caller_1~ parameterIR~t~^{asterisk}^ @ p~callee~ EC~callee_1~ argumentIR~t~^{asterisk}^ ~> STO~2~ EC~caller_2~ @ EC~callee_2~ # copyInListResult>>.
   ... If let ``exitResult`` be ``copyInListResult``:
    .... Result in ``STO~2~``, ``EC~caller_2~``, ``EC~callee_2~``, and ``EXIT``.
@@ -16287,8 +16352,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``headerStackValue`` be ``value'``.
   ... Let ``HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]`` be ``headerStackValue``.
   ... Let <<Argument_eval, p EC~0~ STO~0~ |- argumentIR : EC~1~ STO~1~ expressionResult>>.
-  ... If let ``exitResult`` be ``expressionResult``:
-   .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+  ... If let ``abortResult`` be ``expressionResult``:
+   .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
   ... Else:
    .... Let ``value''`` be ``expressionResult``.
    .... Check that ``value''`` has type ``integerValue``.
@@ -16321,8 +16386,8 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
   ... Let ``headerStackValue`` be ``value'``.
   ... Let ``HEADER_STACK [ value~element~^{asterisk}^ ( n~idx~ ; n~size~ ) ]`` be ``headerStackValue``.
   ... Let <<Argument_eval, p EC~0~ STO~0~ |- argumentIR : EC~1~ STO~1~ expressionResult>>.
-  ... If let ``exitResult`` be ``expressionResult``:
-   .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+  ... If let ``abortResult`` be ``expressionResult``:
+   .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
   ... Else:
    .... Let ``value''`` be ``expressionResult``.
    .... Check that ``value''`` has type ``integerValue``.
@@ -16424,16 +16489,21 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Check that ``copyInListResult`` has type ``continueResult<storageReference?*>``.
 . Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
 . Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
-. Let <<ParserLocalDecls_eval, EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~>>.
-. Let <<ParserState_trans, EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult>>.
-. If let ``acceptTransitionResult`` be ``transitionResult``:
- .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
- .. Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
- .. Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
-. Else if let ``rejectTransitionResult`` be ``transitionResult``:
- .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
- .. Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
- .. Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``rejectTransitionResult``.
+. Let <<ParserLocalDecls_eval, EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~ parserStatementResult>>.
+. If let ``rejectTransitionResult`` be ``parserStatementResult``:
+ .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]``.
+ .. Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+ .. Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``rejectTransitionResult``.
+. Else:
+ .. Let <<ParserState_trans, EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult>>.
+ .. If let ``rejectTransitionResult`` be ``transitionResult``:
+  ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
+  ... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+  ... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``rejectTransitionResult``.
+ .. Else if let ``acceptTransitionResult`` be ``transitionResult``:
+  ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
+  ... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+  ... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
 
 <<Call_eval, Calling ``controlApplyMethodCallee``<``typeArgumentListIR``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
@@ -16453,8 +16523,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]``.
   ... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
   ... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``EXIT``.
- .. Else:
-  ... Let ``continueEmptyResult`` be ``declarationResult``.
+ .. Else if let ``continueEmptyResult`` be ``declarationResult``:
   ... Let <<ControlBody_eval, EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult>>.
   ... If let ``exitResult`` be ``controlBodyResult``:
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
@@ -16533,8 +16602,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. Check that ``value`` has type ``setValue``.
@@ -16546,15 +16615,15 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult'``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``setValue`` be ``SET { value~l~ &&& value~r~ }``.
@@ -16565,15 +16634,15 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult'``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``setValue`` be ``SET { value~l~ .. value~r~ }``.
@@ -16596,13 +16665,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Result in ``evalContext``, ``store``, and ``·``.
 . If let ``simpleKeysetExpressionIR~h~ {two-colons} simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``:
  .. Let <<Expr_eval_keyset_simple, evalContext store |- simpleKeysetExpressionIR~h~ : EC~1~ STO~1~ simpleKeysetExpressionResult>>.
- .. If let ``exitResult`` be ``simpleKeysetExpressionResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``simpleKeysetExpressionResult``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
  .. Else:
   ... Let ``setValue~h~`` be ``simpleKeysetExpressionResult``.
   ... Let <<Exprs_eval_keyset_simple, EC~1~ STO~1~ |- simpleKeysetExpressionIR~t~^{asterisk}^ : EC~2~ STO~2~ keysetExpressionResult'>>.
-  ... If let ``exitResult`` be ``keysetExpressionResult'``:
-   .... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+  ... If let ``abortResult`` be ``keysetExpressionResult'``:
+   .... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
   ... Else:
    .... Let ``setValue~t~^{asterisk}^`` be ``keysetExpressionResult'``.
    .... Let ``keysetExpressionResult`` be ``setValue~h~ {two-colons} setValue~t~^{asterisk}^``.
@@ -16652,8 +16721,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
  .. Else:
   ... Let ``value~init~`` be ``expressionResult``.
   ... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
@@ -16685,8 +16754,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . If ``expressionResult`` is equal to ```B false``:
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 . If ``expressionResult`` is equal to ```B true``:
@@ -16717,8 +16786,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value'`` be ``expressionResult``.
  .. If let ``listValue`` be ``value'``:
@@ -16733,15 +16802,15 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``expressionResult'``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l~``>>.
@@ -16843,11 +16912,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
- .. If let ``exitResult`` be ``expressionResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
- .. Else:
-  ... Let ``value`` be ``expressionResult``.
-  ... Result in ``EC~1~``, ``STO~1~``, and ``value``.
+ .. Result in ``EC~1~``, ``STO~1~``, and ``expressionResult``.
 
 <<match_switchLabelIR_general, match_switchLabelIR_general(value, value')>>
 
@@ -16999,8 +17064,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let <<Expr_eval_keyset, EC~0~ STO~0~ |- keysetExpressionIR : EC~1~ STO~1~ keysetExpressionResult>>.
 . If let ``exitResult`` be ``keysetExpressionResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
-. Else:
- .. Let ``setValue^{asterisk}^`` be ``keysetExpressionResult``.
+. Else if let ``setValue^{asterisk}^`` be ``keysetExpressionResult``:
  .. Let ``value~key~^{asterisk}^`` be the list of ``value~key~``, obtained by repeating:
 +
 --

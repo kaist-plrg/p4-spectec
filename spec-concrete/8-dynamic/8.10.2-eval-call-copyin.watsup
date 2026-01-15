@@ -103,20 +103,20 @@ rulegroup Copy_in {
     STO p_caller EC_caller eps `@ p_callee EC_callee eps
     ~> STO EC_caller `@ EC_callee `# (`` eps)
 
-  rule Copy_in/cons-head-exit:
+  rule Copy_in/cons-head-abort:
     STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
        `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
-    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# EXIT
+    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# abortResult
     ----
     -- Copy_in_argument:
         STO_0 p_caller EC_caller_0 parameterIR_h
            `@ p_callee EC_callee_0 argumentIR_h
-        ~> STO_1 EC_caller_1 `@ EC_callee_1 `# EXIT
+        ~> STO_1 EC_caller_1 `@ EC_callee_1 `# abortResult
 
-  rule Copy_in/cons-head-cont-tail-exit:
+  rule Copy_in/cons-head-cont-tail-abort:
     STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
        `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
-    ~> STO_2 EC_caller_2 `@ EC_callee_2 `# EXIT
+    ~> STO_2 EC_caller_2 `@ EC_callee_2 `# abortResult
     ----
     -- Copy_in_argument:
         STO_0 p_caller EC_caller_0 parameterIR_h
@@ -126,7 +126,7 @@ rulegroup Copy_in {
     -- Copy_in:
         STO_1 p_caller EC_caller_1 parameterIR_t*
            `@ p_callee EC_callee_1 argumentIR_t*
-        ~> STO_2 EC_caller_2 `@ EC_callee_2 `# EXIT
+        ~> STO_2 EC_caller_2 `@ EC_callee_2 `# abortResult
 
   rule Copy_in/cons-head-cont-tail-cont:
     STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
