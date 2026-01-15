@@ -29,16 +29,6 @@ let filter (p : Id.t -> 'a -> bool) (replacer : t) : t =
 
 (* Replacement *)
 
-let replace_iterexp (replacer : t) (iterexp : iterexp) : iterexp =
-  let iter, vars = iterexp in
-  let vars =
-    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars
-  in
-  (iter, vars)
-
-let replace_iterexps (replacer : t) (iterexps : iterexp list) : iterexp list =
-  List.map (replace_iterexp replacer) iterexps
-
 let rec replace_exp (replacer : t) (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
@@ -128,6 +118,16 @@ let rec replace_exp (replacer : t) (exp : exp) : exp =
 and replace_exps (replacer : t) (exps : exp list) : exp list =
   List.map (replace_exp replacer) exps
 
+and replace_iterexp (replacer : t) (iterexp : iterexp) : iterexp =
+  let iter, vars = iterexp in
+  let vars =
+    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars
+  in
+  (iter, vars)
+
+and replace_iterexps (replacer : t) (iterexps : iterexp list) : iterexp list =
+  List.map (replace_iterexp replacer) iterexps
+
 and replace_path (replacer : t) (path : path) : path =
   let at, note = (path.at, path.note) in
   match path.it with
@@ -211,14 +211,14 @@ and replace_instr (ihenv : IHEnv.t) (replacer : t) (instr : instr) : t * instr =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
       in
       (replacer, instr)
-  | LetI (exp_l, exp_r, iterexps) ->
+  | LetI (exp_l, exp_r, iterinstrs) ->
       let frees_l = Ol.Free.free_exp exp_l in
       let replacer = filter (fun id _ -> not (IdSet.mem id frees_l)) replacer in
       let exp_r = replace_exp replacer exp_r in
-      let iterexps = replace_iterexps replacer iterexps in
-      let instr = LetI (exp_l, exp_r, iterexps) $ at in
+      let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
+      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (replacer, instr)
-  | RuleI (id_rel, (mixop, exps), iterexps) ->
+  | RuleI (id_rel, (mixop, exps), iterinstrs) ->
       let exps_input_indexed, exps_output_indexed =
         let inputs = IHEnv.find id_rel ihenv in
         Hints.Input.split inputs exps
@@ -236,8 +236,8 @@ and replace_instr (ihenv : IHEnv.t) (replacer : t) (instr : instr) : t * instr =
         filter (fun id _ -> not (IdSet.mem id frees_output)) replacer
       in
       let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
-      let iterexps = replace_iterexps replacer iterexps in
-      let instr = RuleI (id_rel, (mixop, exps), iterexps) $ at in
+      let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
+      let instr = RuleI (id_rel, (mixop, exps), iterinstrs) $ at in
       (replacer, instr)
   | ResultI (rel_signature, exps) ->
       let exps = replace_exps replacer exps in
@@ -260,3 +260,14 @@ and replace_instrs (ihenv : IHEnv.t) (replacer : t) (instrs : instr list) :
       (replacer, instrs @ [ instr ]))
     (replacer, []) instrs
   |> snd
+
+and replace_iterinstr_bound (replacer : t) (iterinstr : iterinstr) : iterinstr =
+  let iter, vars_bind, vars_bound = iterinstr in
+  let vars_bound =
+    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars_bound
+  in
+  (iter, vars_bind, vars_bound)
+
+and replace_iterinstrs_bound (replacer : t) (iterinstrs : iterinstr list) :
+    iterinstr list =
+  List.map (replace_iterinstr_bound replacer) iterinstrs

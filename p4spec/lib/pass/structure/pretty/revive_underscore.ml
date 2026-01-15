@@ -140,16 +140,18 @@ let rec downstream_instr (ihenv : IHEnv.t) (renamer_candid : Renamer.t)
         GroupI (id, rel_signature, exps_signature, instrs_group) $ at
       in
       (underscores_revive, instr)
-  | LetI (exp_l, exp_r, iterexps) ->
+  | LetI (exp_l, exp_r, iterinstrs) ->
       let underscores_used = Underscore.init_exp exp_r in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
       let exp_r = Renamer.rename_exp renamer_candid exp_r in
-      let iterexps = Renamer.rename_iterexps renamer_candid iterexps in
-      let instr = LetI (exp_l, exp_r, iterexps) $ at in
+      let iterinstrs =
+        Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
+      in
+      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (underscores_revive, instr)
-  | RuleI (id, notexp, iterexps) ->
+  | RuleI (id, notexp, iterinstrs) ->
       let mixop, exps = notexp in
       let exps_input_indexed, exps_output_indexed =
         let inputs = IHEnv.find id ihenv in
@@ -164,8 +166,10 @@ let rec downstream_instr (ihenv : IHEnv.t) (renamer_candid : Renamer.t)
       let exps_input_indexed = List.combine idxs_input exps_input in
       let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
       let notexp = (mixop, exps) in
-      let iterexps = Renamer.rename_iterexps renamer_candid iterexps in
-      let instr = RuleI (id, notexp, iterexps) $ at in
+      let iterinstrs =
+        Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
+      in
+      let instr = RuleI (id, notexp, iterinstrs) $ at in
       (underscores_revive, instr)
   | ResultI (rel_signature, exps) ->
       let underscores_used = Underscore.init_exps exps in
@@ -279,7 +283,7 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
       let instr_h = GroupI (id, rel_signature, exps_signature, instrs) $ at in
       let frees, instrs_t = upstream ihenv frees instrs_t in
       (frees, instr_h :: instrs_t)
-  | { it = LetI (exp_l, exp_r, iterexps); at; _ } :: instrs_t ->
+  | { it = LetI (exp_l, exp_r, iterinstrs); at; _ } :: instrs_t ->
       let underscores_bound =
         Ol.Free.free_exp exp_l |> IdSet.filter Id.is_underscored
       in
@@ -293,18 +297,20 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
         Underscore.include_renamer renamer_candid underscores_revive
       in
       let exp_l = Renamer.rename_exp renamer_revive exp_l in
-      let iterexps = Renamer.rename_iterexps renamer_revive iterexps in
-      let instr_h = LetI (exp_l, exp_r, iterexps) $ at in
+      let iterinstrs =
+        Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
+      in
+      let instr_h = LetI (exp_l, exp_r, iterinstrs) $ at in
       let frees, instrs_t = upstream ihenv frees instrs_t in
       (frees, instr_h :: instrs_t)
-  | { it = RuleI (id, notexp, iterexps); at; _ } :: instrs_t ->
+  | { it = RuleI (id, notexp, iterinstrs); at; _ } :: instrs_t ->
       let mixop, exps = notexp in
       let exps_input_indexed, exps_output_indexed =
         let inputs = IHEnv.find id ihenv in
         Hints.Input.split inputs exps
       in
-      let idxs_input, exps_input = List.split exps_input_indexed in
-      let underscores_bound = Underscore.init_exps exps_input in
+      let idxs_output, exps_output = List.split exps_output_indexed in
+      let underscores_bound = Underscore.init_exps exps_output in
       let frees, renamer_candid =
         Underscore.candid_renamer frees underscores_bound
       in
@@ -315,13 +321,15 @@ let rec upstream (ihenv : IHEnv.t) (frees : IdSet.t) (instrs : instr list) :
         Underscore.include_renamer renamer_candid underscores_revive
       in
       let notexp =
-        let exps_input = Renamer.rename_exps renamer_revive exps_input in
-        let exps_input_indexed = List.combine idxs_input exps_input in
+        let exps_output = Renamer.rename_exps renamer_revive exps_output in
+        let exps_output_indexed = List.combine idxs_output exps_output in
         let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
         (mixop, exps)
       in
-      let iterexps = Renamer.rename_iterexps renamer_revive iterexps in
-      let instr_h = RuleI (id, notexp, iterexps) $ at in
+      let iterinstrs =
+        Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
+      in
+      let instr_h = RuleI (id, notexp, iterinstrs) $ at in
       let frees, instrs_t = upstream ihenv frees instrs_t in
       (frees, instr_h :: instrs_t)
   | instr_h :: instrs_t ->

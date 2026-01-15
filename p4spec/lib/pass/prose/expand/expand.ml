@@ -92,8 +92,11 @@ let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
           ([], (id, typ, []))
           iter_combined
       in
+      let iterinstrs =
+        List.map (fun (iter, vars) -> (iter, vars, [])) iterexps_instr
+      in
       let instr_let =
-        LetI (exp_new, exp_orig, iterexps_instr) $$ (no_region, { iid = -1 })
+        LetI (exp_new, exp_orig, iterinstrs) $$ (no_region, { iid = -1 })
       in
       Some (instr_let, exp_new_full, ids_used)
   | None -> None

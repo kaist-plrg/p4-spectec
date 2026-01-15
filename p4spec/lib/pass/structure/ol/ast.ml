@@ -12,8 +12,8 @@ and instr' =
   | CaseI of exp * case list * bool
   | OtherwiseI of instr
   | GroupI of id * rel_signature * exp list * instr list
-  | LetI of exp * exp * iterexp list
-  | RuleI of id * notexp * iterexp list
+  | LetI of exp * exp * iterinstr list
+  | RuleI of id * notexp * iterinstr list
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   | DebugI of exp

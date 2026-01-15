@@ -32,18 +32,9 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
       when Il.Eq.eq_iter iter_template iter ->
-        let iterexp =
-          let vars =
-            List.fold_left
-              (fun vars var_template ->
-                if List.exists (Il.Eq.eq_var var_template) vars then vars
-                else var_template :: vars)
-              vars vars_template
-          in
-          (iter_template, vars)
-        in
+        let iterprem = (iter_template, vars_template, vars) in
         let prem = LetPr (exp, exp_template) $ exp.at in
-        let prem = IterPr (prem, iterexp) $ exp.at in
+        let prem = IterPr (prem, iterprem) $ exp.at in
         [ prem ]
     | _ ->
         Format.asprintf "cannot populate anti-unified expressions %s and %s"

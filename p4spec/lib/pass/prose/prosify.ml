@@ -337,9 +337,10 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
       prosify_case_instr at ctx exp cases phantom_opt
   | OtherwiseI instr -> prosify_otherwise_instr at ctx instr
   | GroupI _ -> assert false
-  | LetI (exp_l, exp_r, iterexps) ->
-      prosify_let_instr at ctx exp_l exp_r iterexps
-  | RuleI (id, notexp, iterexps) -> prosify_rule_instr at ctx id notexp iterexps
+  | LetI (exp_l, exp_r, iterinstrs) ->
+      prosify_let_instr at ctx exp_l exp_r iterinstrs
+  | RuleI (id, notexp, iterinstrs) ->
+      prosify_rule_instr at ctx id notexp iterinstrs
   | ResultI (rel_signature, exps) ->
       prosify_result_instr at ctx rel_signature exps
   | ReturnI exp -> prosify_return_instr at ctx exp
@@ -556,7 +557,12 @@ and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instr : instr) :
 (* Let instruction prosification *)
 
 and prosify_let_instr (at : region) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-    (iterexps : iterexp list) : Pl.instr list =
+    (iterinstrs : iterinstr list) : Pl.instr list =
+  let iterexps =
+    List.map
+      (fun (iter, vars_bound, vars_bind) -> (iter, vars_bound @ vars_bind))
+      iterinstrs
+  in
   match prosify_let_case_instr at ctx exp_l exp_r iterexps with
   | Some instrs_pl -> instrs_pl
   | None -> prosify_let_non_case_instr at ctx exp_l exp_r iterexps
@@ -605,7 +611,12 @@ and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
 (* Rule instruction prosification *)
 
 and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) : Pl.instr list =
+    (notexp : notexp) (iterinstrs : iterinstr list) : Pl.instr list =
+  let iterexps =
+    List.map
+      (fun (iter, vars_bound, vars_bind) -> (iter, vars_bound @ vars_bind))
+      iterinstrs
+  in
   let mixop, exps = notexp in
   let inputs = Ctx.find_inputs ctx id_rel in
   let exps_input_indexed, exps_output_indexed = Hints.Input.split inputs exps in

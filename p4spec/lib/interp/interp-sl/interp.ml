@@ -1156,8 +1156,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | OtherwiseI instr -> eval_instr ctx instr
     | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
         eval_group_instr ctx id_group rel_signature exps_group instrs_group
-    | LetI (exp_l, exp_r, iterexps) -> eval_let_instr ctx exp_l exp_r iterexps
-    | RuleI (id, notexp, iterexps) -> eval_rule_instr ctx id notexp iterexps
+    | LetI (exp_l, exp_r, iterinstrs) ->
+        eval_let_instr ctx exp_l exp_r iterinstrs
+    | RuleI (id, notexp, iterinstrs) -> eval_rule_instr ctx id notexp iterinstrs
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
@@ -1404,15 +1405,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value = eval_exp ctx exp_r in
     assign_exp ctx exp_l value
 
-  and eval_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t =
-    (* Discriminate between bound and binding variables *)
-    let vars_bound, vars_binding =
-      List.partition
-        (fun (id, _typ, iters) ->
-          Ctx.bound_value Local ctx (id, iters @ [ Il.Opt ]))
-        vars
-    in
+  and eval_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+      (vars_bound : var list) (vars_bind : var list)
+      (iterinstrs : iterinstr list) : Ctx.t =
     let ctx_sub_opt = Ctx.sub_opt ctx vars_bound in
     let ctx, values_binding =
       match ctx_sub_opt with
@@ -1439,12 +1434,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                       Dep.Edges.Iter)
                   vars_bound;
                 value_binding)
-              vars_binding
+              vars_bind
           in
           (ctx, values_binding)
       (* Otherwise, evaluate the premise for the subcontext *)
       | Some ctx_sub ->
-          let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
+          let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterinstrs in
           let values_binding =
             List.map
               (fun (id_binding, typ_binding, iters_binding) ->
@@ -1468,7 +1463,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                       Dep.Edges.Iter)
                   vars_bound;
                 value_binding)
-              vars_binding
+              vars_bind
           in
           (ctx, values_binding)
     in
@@ -1478,35 +1473,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Ctx.add_value Local ctx
           (id_binding, iters_binding @ [ Il.Opt ])
           value_binding)
-      ctx vars_binding values_binding
+      ctx vars_bind values_binding
 
-  and eval_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t =
-    (* Discriminate between bound and binding variables *)
-    let vars_bound, vars_binding =
-      List.partition
-        (fun (id, _typ, iters) ->
-          Ctx.bound_value Local ctx (id, iters @ [ Il.List ]))
-        vars
-    in
+  and eval_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+      (vars_bound : var list) (vars_bind : var list)
+      (iterinstrs : iterinstr list) : Ctx.t =
     (* Create a subcontext for each batch of bound values *)
     let ctxs_sub = Ctx.sub_list ctx vars_bound in
     let values_binding =
       match ctxs_sub with
       (* If the bound variable supposed to guide the iteration is already empty,
          then the binding variables are also empty *)
-      | [] -> List.init (List.length vars_binding) (fun _ -> [])
+      | [] -> List.init (List.length vars_bind) (fun _ -> [])
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
           let values_binding_batch =
             List.map
               (fun ctx_sub ->
-                let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterexps in
+                let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterinstrs in
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
                     Ctx.find_value Local ctx_sub (id_binding, iters_binding))
-                  vars_binding)
+                  vars_bind)
               ctxs_sub
           in
           values_binding_batch |> Ctx.transpose
@@ -1530,26 +1519,28 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Ctx.add_value Local ctx
           (id_binding, iters_binding @ [ Il.List ])
           value_binding)
-      ctx vars_binding values_binding
+      ctx vars_bind values_binding
 
   and eval_let_iter' (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : Ctx.t =
-    match iterexps with
+      (iterinstrs : iterinstr list) : Ctx.t =
+    match iterinstrs with
     | [] -> eval_let ctx exp_l exp_r
-    | iterexp_h :: iterexps_t -> (
-        let iter_h, vars_h = iterexp_h in
+    | iterinstr_h :: iterinstrs_t -> (
+        let iter_h, vars_bound_h, vars_bind_h = iterinstr_h in
         match iter_h with
-        | Opt -> eval_let_opt ctx exp_l exp_r vars_h iterexps_t
-        | List -> eval_let_list ctx exp_l exp_r vars_h iterexps_t)
+        | Opt ->
+            eval_let_opt ctx exp_l exp_r vars_bound_h vars_bind_h iterinstrs_t
+        | List ->
+            eval_let_list ctx exp_l exp_r vars_bound_h vars_bind_h iterinstrs_t)
 
   and eval_let_iter (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : Ctx.t =
-    let iterexps = List.rev iterexps in
-    eval_let_iter' ctx exp_l exp_r iterexps
+      (iterinstrs : iterinstr list) : Ctx.t =
+    let iterinstrs = List.rev iterinstrs in
+    eval_let_iter' ctx exp_l exp_r iterinstrs
 
   and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterexps : iterexp list) : Ctx.t * Sign.t =
-    let ctx = eval_let_iter ctx exp_l exp_r iterexps in
+      (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
+    let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
     (ctx, Sign.Cont)
 
   (* Rule instruction evaluation *)
@@ -1565,36 +1556,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     assign_exps ctx exps_output values_output
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
-      (_vars : var list) (_iterexps : iterexp list) : Ctx.t =
+      (_vars_bound : var list) (_vars_bind : var list)
+      (_iterinstrs : iterinstr list) : Ctx.t =
     back no_region "(TODO) eval_rule_opt"
 
-  and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp) (vars : var list)
-      (iterexps : iterexp list) : Ctx.t =
-    (* Discriminate between bound and binding variables *)
-    let vars_bound, vars_binding =
-      List.partition
-        (fun (id, _typ, iters) ->
-          Ctx.bound_value Local ctx (id, iters @ [ Il.List ]))
-        vars
-    in
+  and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (vars_bound : var list) (vars_bind : var list)
+      (iterinstrs : iterinstr list) : Ctx.t =
     (* Create a subcontext for each batch of bound values *)
     let ctxs_sub = Ctx.sub_list ctx vars_bound in
     let values_binding =
       match ctxs_sub with
       (* If the bound variable supposed to guide the iteration is already empty,
          then the binding variables are also empty *)
-      | [] -> List.init (List.length vars_binding) (fun _ -> [])
+      | [] -> List.init (List.length vars_bind) (fun _ -> [])
       (* Otherwise, evaluate the premise for each batch of bound values,
          and collect the resulting binding batches *)
       | _ ->
           let values_binding_batch =
             List.map
               (fun ctx_sub ->
-                let ctx_sub = eval_rule_iter' ctx_sub id notexp iterexps in
+                let ctx_sub = eval_rule_iter' ctx_sub id notexp iterinstrs in
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
                     Ctx.find_value Local ctx_sub (id_binding, iters_binding))
-                  vars_binding)
+                  vars_bind)
               ctxs_sub
           in
           values_binding_batch |> Ctx.transpose
@@ -1618,26 +1604,28 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Ctx.add_value Local ctx
           (id_binding, iters_binding @ [ Il.List ])
           value_binding)
-      ctx vars_binding values_binding
+      ctx vars_bind values_binding
 
   and eval_rule_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : Ctx.t =
-    match iterexps with
+      (iterinstrs : iterinstr list) : Ctx.t =
+    match iterinstrs with
     | [] -> eval_rule ctx id notexp
-    | iterexp_h :: iterexps_t -> (
-        let iter_h, vars_h = iterexp_h in
+    | iterinstr_h :: iterinstrs_t -> (
+        let iter_h, vars_bound_h, vars_bind_h = iterinstr_h in
         match iter_h with
-        | Opt -> eval_rule_opt ctx id notexp vars_h iterexps_t
-        | List -> eval_rule_list ctx id notexp vars_h iterexps_t)
+        | Opt ->
+            eval_rule_opt ctx id notexp vars_bound_h vars_bind_h iterinstrs_t
+        | List ->
+            eval_rule_list ctx id notexp vars_bound_h vars_bind_h iterinstrs_t)
 
   and eval_rule_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : Ctx.t =
-    let iterexps = List.rev iterexps in
-    eval_rule_iter' ctx id notexp iterexps
+      (iterinstrs : iterinstr list) : Ctx.t =
+    let iterinstrs = List.rev iterinstrs in
+    eval_rule_iter' ctx id notexp iterinstrs
 
   and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : Ctx.t * Sign.t =
-    let ctx = eval_rule_iter ctx id notexp iterexps in
+      (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
+    let ctx = eval_rule_iter ctx id notexp iterinstrs in
     (ctx, Sign.Cont)
 
   (* Result instruction evaluation *)

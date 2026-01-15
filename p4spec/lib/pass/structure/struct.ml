@@ -3,6 +3,7 @@ open Lang
 open Il
 open Runtime.Dynamic_Sl
 open Envs
+open Error
 open Util.Source
 
 (* Structuring parameters *)
@@ -41,50 +42,72 @@ let struct_params_from_args (params : param list) (args_input : arg list) :
 
 (* Structuring premises *)
 
-let rec internalize_iter ?(iterexps : iterexp list = []) (prem : prem) :
-    prem * iterexp list =
+let rec internalize_iter ?(iterprems : iterprem list = []) (prem : prem) :
+    prem * iterprem list =
   match prem.it with
-  | IterPr (prem, iterexp) ->
-      internalize_iter ~iterexps:(iterexp :: iterexps) prem
-  | _ -> (prem, iterexps)
+  | IterPr (prem, iterprem) ->
+      internalize_iter ~iterprems:(iterprem :: iterprems) prem
+  | _ -> (prem, iterprems)
 
 let rec struct_prems (prems : prem list) (instr_ret : Ol.Ast.instr) :
     Ol.Ast.instr list =
   let prems_internalized = List.map internalize_iter prems in
   struct_prems' prems_internalized instr_ret
 
-and struct_prems' (prems_internalized : (prem * iterexp list) list)
+and struct_prems' (prems_internalized : (prem * iterprem list) list)
     (instr_ret : Ol.Ast.instr) : Ol.Ast.instr list =
   match prems_internalized with
   | [] -> [ instr_ret ]
   | [ ({ it = ElsePr; at; _ }, []) ] ->
       let instr = Ol.Ast.OtherwiseI instr_ret $ at in
       [ instr ]
-  | (prem_h, iterexps_h) :: prems_internalized_t -> (
+  | (prem_h, iterprems_h) :: prems_internalized_t -> (
       let at = prem_h.at in
       match prem_h.it with
       | RulePr (id, notexp) ->
-          let instr_h = Ol.Ast.RuleI (id, notexp, iterexps_h) $ at in
+          let instr_h = Ol.Ast.RuleI (id, notexp, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           instr_h :: instrs_t
       | IfPr exp ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ -> error at "an if premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h = Ol.Ast.IfI (exp, iterexps_h, instrs_t) $ at in
           [ instr_h ]
       | IfHoldPr (id, notexp) ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ -> error at "an if holds premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h =
             Ol.Ast.HoldI (id, notexp, iterexps_h, instrs_t, []) $ at
           in
           [ instr_h ]
       | IfNotHoldPr (id, notexp) ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ ->
+                    error at "an if not holds premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h =
             Ol.Ast.HoldI (id, notexp, iterexps_h, [], instrs_t) $ at
           in
           [ instr_h ]
       | LetPr (exp_l, exp_r) ->
-          let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterexps_h) $ at in
+          let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           instr_h :: instrs_t
       | DebugPr exp ->

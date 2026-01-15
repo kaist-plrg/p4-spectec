@@ -57,14 +57,14 @@ and string_of_instr ?(level = 0) ?(index = 0) (instr : instr) : string =
       Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
         (string_of_relinput rel_signature exps_group)
         (string_of_instrs ~level:(level + 1) instrs_group)
-  | LetI (exp_l, exp_r, iterexps) ->
+  | LetI (exp_l, exp_r, iterinstrs) ->
       Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
         (string_of_exp exp_r)
-        (string_of_iterexps iterexps)
-  | RuleI (id_rel, notexp, iterexps) ->
+        (string_of_iterinstrs iterinstrs)
+  | RuleI (id_rel, notexp, iterinstrs) ->
       Format.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
         (string_of_notexp notexp)
-        (string_of_iterexps iterexps)
+        (string_of_iterinstrs iterinstrs)
   | ResultI (_, []) -> Format.asprintf "%sThe relation holds" order
   | ResultI (rel_signature, exps) ->
       Format.asprintf "%sResult in %s" order

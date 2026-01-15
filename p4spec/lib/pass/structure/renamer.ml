@@ -24,21 +24,6 @@ let filter (p : Id.t -> 'a -> bool) (renamer : t) : t = Rename.filter p renamer
 
 (* Renaming *)
 
-let rename_iterexp (renamer : t) (iterexp : iterexp) : iterexp =
-  let iter, vars = iterexp in
-  let vars =
-    List.map
-      (fun (id, typ, iters) ->
-        match Rename.find_opt id renamer with
-        | Some id_renamed -> (id_renamed, typ, iters)
-        | None -> (id, typ, iters))
-      vars
-  in
-  (iter, vars)
-
-let rename_iterexps (renamer : t) (iterexps : iterexp list) : iterexp list =
-  List.map (rename_iterexp renamer) iterexps
-
 let rec rename_exp (renamer : t) (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
@@ -130,6 +115,21 @@ let rec rename_exp (renamer : t) (exp : exp) : exp =
 and rename_exps (renamer : t) (exps : exp list) : exp list =
   List.map (rename_exp renamer) exps
 
+and rename_iterexp (renamer : t) (iterexp : iterexp) : iterexp =
+  let iter, vars = iterexp in
+  let vars =
+    List.map
+      (fun (id, typ, iters) ->
+        match Rename.find_opt id renamer with
+        | Some id_renamed -> (id_renamed, typ, iters)
+        | None -> (id, typ, iters))
+      vars
+  in
+  (iter, vars)
+
+and rename_iterexps (renamer : t) (iterexps : iterexp list) : iterexp list =
+  List.map (rename_iterexp renamer) iterexps
+
 and rename_path (renamer : t) (path : path) : path =
   let at, note = (path.at, path.note) in
   match path.it with
@@ -213,14 +213,14 @@ and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
       in
       (renamer, instr)
-  | LetI (exp_l, exp_r, iterexps) ->
+  | LetI (exp_l, exp_r, iterinstrs) ->
       let exp_r = rename_exp renamer exp_r in
       let frees_l = Ol.Free.free_exp exp_l in
       let renamer = filter (fun id _ -> not (IdSet.mem id frees_l)) renamer in
-      let iterexps = rename_iterexps renamer iterexps in
-      let instr = LetI (exp_l, exp_r, iterexps) $ at in
+      let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
+      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (renamer, instr)
-  | RuleI (id_rel, (mixop, exps), iterexps) ->
+  | RuleI (id_rel, (mixop, exps), iterinstrs) ->
       let exps_input_indexed, exps_output_indexed =
         let inputs = IHEnv.find id_rel ihenv in
         Hints.Input.split inputs exps
@@ -238,8 +238,8 @@ and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
         filter (fun id _ -> not (IdSet.mem id frees_output)) renamer
       in
       let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
-      let iterexps = rename_iterexps renamer iterexps in
-      let instr = RuleI (id_rel, (mixop, exps), iterexps) $ at in
+      let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
+      let instr = RuleI (id_rel, (mixop, exps), iterinstrs) $ at in
       (renamer, instr)
   | ResultI (rel_signature, exps) ->
       let exps = rename_exps renamer exps in
@@ -262,3 +262,35 @@ and rename_instrs (ihenv : IHEnv.t) (renamer : t) (instrs : instr list) :
       (renamer, instrs @ [ instr ]))
     (renamer, []) instrs
   |> snd
+
+and rename_iterinstr_bound (renamer : t) (iterinstr : iterinstr) : iterinstr =
+  let iter, vars_bound, vars_bind = iterinstr in
+  let vars_bound =
+    List.map
+      (fun (id, typ, iters) ->
+        match Rename.find_opt id renamer with
+        | Some id_renamed -> (id_renamed, typ, iters)
+        | None -> (id, typ, iters))
+      vars_bound
+  in
+  (iter, vars_bound, vars_bind)
+
+and rename_iterinstrs_bound (renamer : t) (iterinstrs : iterinstr list) :
+    iterinstr list =
+  List.map (rename_iterinstr_bound renamer) iterinstrs
+
+and rename_iterinstr_bind (renamer : t) (iterinstr : iterinstr) : iterinstr =
+  let iter, vars_bound, vars_bind = iterinstr in
+  let vars_bind =
+    List.map
+      (fun (id, typ, iters) ->
+        match Rename.find_opt id renamer with
+        | Some id_renamed -> (id_renamed, typ, iters)
+        | None -> (id, typ, iters))
+      vars_bind
+  in
+  (iter, vars_bound, vars_bind)
+
+and rename_iterinstrs_bind (renamer : t) (iterinstrs : iterinstr list) :
+    iterinstr list =
+  List.map (rename_iterinstr_bind renamer) iterinstrs

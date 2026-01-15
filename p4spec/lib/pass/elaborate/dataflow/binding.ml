@@ -154,12 +154,13 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
   | ElsePr -> (dctx, VEnv.empty, prem, [])
   | LetPr _ ->
       error prem.at "let premise should appear only after bind analysis"
-  | IterPr (_, ((_, _ :: _) as iterexp)) ->
+  | IterPr (_, ((_, vars_bound, vars_bind) as iterprem))
+    when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error prem.at
         (Format.asprintf
            "iterated premise should initially have no annotations, but got %s"
-           (Il.Print.string_of_iterexp iterexp))
-  | IterPr (prem, (iter, [])) -> analyze_iter_prem dctx prem.at prem iter
+           (Il.Print.string_of_iterprem iterprem))
+  | IterPr (prem, (iter, _, _)) -> analyze_iter_prem dctx prem.at prem iter
   | DebugPr exp -> analyze_debug_prem dctx prem.at exp
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
@@ -248,8 +249,8 @@ and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem) (iter : iter)
     : Dctx.t * VEnv.t * prem * prem list =
   let dctx, venv, prem, prems = analyze_prem dctx prem in
   let venv = VEnv.map (Typ.add_iter iter) venv in
-  let prems = List.map (fun prem -> IterPr (prem, (iter, [])) $ at) prems in
-  let prem = IterPr (prem, (iter, [])) $ at in
+  let prems = List.map (fun prem -> IterPr (prem, (iter, [], [])) $ at) prems in
+  let prem = IterPr (prem, (iter, [], [])) $ at in
   (dctx, venv, prem, prems)
 
 and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :

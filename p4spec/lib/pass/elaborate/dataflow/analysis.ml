@@ -14,7 +14,7 @@ let analyze_exps_as_bind (ctx : Ctx.t) (exps : exp list) :
   let ctx = Dctx.promote ctx dctx venv in
   let exps = Dimension.analyze_exps ctx.venv exps in
   let sideconditions =
-    Dimension.analyze_sideconditions ctx.venv sideconditions
+    Dimension.analyze_prems dctx.ihenv ctx.venv sideconditions
   in
   (ctx, exps, sideconditions)
 
@@ -37,7 +37,7 @@ let analyze_args_as_bind (ctx : Ctx.t) (args : arg list) :
   let ctx = Dctx.promote ctx dctx venv in
   let args = Dimension.analyze_args ctx.venv args in
   let sideconditions =
-    Dimension.analyze_sideconditions ctx.venv sideconditions
+    Dimension.analyze_prems dctx.ihenv ctx.venv sideconditions
   in
   (ctx, args, sideconditions)
 
@@ -50,7 +50,7 @@ let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
   let ctx = Dctx.promote ctx dctx venv in
   let args = Dimension.analyze_args ctx.venv args in
   let sideconditions =
-    Dimension.analyze_sideconditions ctx.venv sideconditions
+    Dimension.analyze_prems dctx.ihenv ctx.venv sideconditions
   in
   (ctx, args, sideconditions)
 
@@ -68,8 +68,8 @@ let analyze_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem * prem list =
   let dctx = Dctx.init ctx in
   let dctx, venv, prem, sideconditions = Binding.analyze_prem dctx prem in
   let ctx = Dctx.promote ctx dctx venv in
-  let prem = Dimension.analyze_prem venv ctx.venv prem in
+  let prem = Dimension.analyze_prem dctx.ihenv ctx.venv prem in
   let sideconditions =
-    Dimension.analyze_sideconditions ctx.venv sideconditions
+    Dimension.analyze_prems dctx.ihenv ctx.venv sideconditions
   in
   (ctx, prem, sideconditions)
