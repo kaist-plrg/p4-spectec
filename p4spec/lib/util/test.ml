@@ -1,13 +1,3 @@
-(* P4 - STF helper *)
-
-let p4_matches_stf basename_p4 filepath_stf =
-  match String.split_on_char '/' filepath_stf with
-  | [ basedir; _ ] -> basedir = basename_p4
-  | [ filename_stf ] ->
-      let basename_stf = Filesys.base ~suffix:".stf" filename_stf in
-      String.equal basename_p4 basename_stf
-  | _ -> false
-
 (* Patchers *)
 
 let patch ~(suffix : string) (filenames : string list)
@@ -44,7 +34,7 @@ let patch_with_basedir ~(suffix : string) (filenames : (string * string) list)
       | None -> (basedir, filename))
     filenames
 
-(* Collectors *)
+(* Collectors for exclusion *)
 
 let collect_exclude filename_exclude =
   let ic = open_in filename_exclude in
@@ -65,9 +55,18 @@ let collect_excludes (paths_exclude : string list) =
   in
   List.concat_map collect_exclude filenames_exclude
 
-let collect_tests_mapped (arch : string) (testdirs_p4 : string list)
-    (testdirs_stf : string list) (patchdir : string) :
-    (string * string list) list =
+(* Collector for P4-STF pairing *)
+
+let p4_matches_stf basename_p4 filepath_stf =
+  match String.split_on_char '/' filepath_stf with
+  | [ basedir; _ ] -> basedir = basename_p4
+  | [ filename_stf ] ->
+      let basename_stf = Filesys.base ~suffix:".stf" filename_stf in
+      String.equal basename_p4 basename_stf
+  | _ -> false
+
+let collect_test_pairs (arch : string) (testdirs_p4 : string list)
+    (testdirs_stf : string list) (patchdir : string) : (string * string) list =
   let filenames_p4 =
     List.concat_map
       (Filesys.collect_files_with_basedir ~suffix:".p4")
@@ -103,15 +102,19 @@ let collect_tests_mapped (arch : string) (testdirs_p4 : string list)
   in
   filenames_p4
   |> List.filter_map (fun (basedir_p4, filename_p4) ->
-      let filename_p4_base = Filesys.base ~suffix:".p4" filename_p4 in
-      let filenames_stf =
-        List.filter_map
-          (fun (basedir_stf, filename_stf) ->
-            if p4_matches_stf filename_p4_base filename_stf then
-              Some (basedir_stf ^ "/" ^ filename_stf)
-            else None)
-          filenames_stf
-      in
-      match filenames_stf with
-      | [] -> None
-      | _ -> Some (basedir_p4 ^ "/" ^ filename_p4, filenames_stf))
+         let filename_p4_base = Filesys.base ~suffix:".p4" filename_p4 in
+         let filenames_stf =
+           List.filter_map
+             (fun (basedir_stf, filename_stf) ->
+               if p4_matches_stf filename_p4_base filename_stf then
+                 Some (basedir_stf ^ "/" ^ filename_stf)
+               else None)
+             filenames_stf
+         in
+         match filenames_stf with
+         | [] -> None
+         | _ -> Some (basedir_p4 ^ "/" ^ filename_p4, filenames_stf))
+  |> List.concat_map (fun (filename_p4, filenames_stf) ->
+         List.map
+           (fun filename_stf -> (filename_p4, filename_stf))
+           filenames_stf)

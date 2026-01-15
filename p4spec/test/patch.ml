@@ -6,17 +6,17 @@ let version = "0.1"
 
 let transform_stmt_name (name : Stf.Ast.name) =
   (match String.split_on_char '.' name with
-    | [] -> failwith ("Invalid path to table " ^ name)
-    | hd :: tl ->
-        if
-          Core.String.Caseless.is_substring hd ~substring:"ingress"
-          || Core.String.Caseless.is_substring hd ~substring:"preqos"
-        then [ "main"; "ig" ] @ tl
-        else if
-          Core.String.Caseless.is_substring hd ~substring:"egress"
-          || Core.String.Caseless.is_substring hd ~substring:"postqos"
-        then [ "main"; "eg" ] @ tl
-        else failwith name)
+  | [] -> failwith ("Invalid path to table " ^ name)
+  | hd :: tl ->
+      if
+        Core.String.Caseless.is_substring hd ~substring:"ingress"
+        || Core.String.Caseless.is_substring hd ~substring:"preqos"
+      then [ "main"; "ig" ] @ tl
+      else if
+        Core.String.Caseless.is_substring hd ~substring:"egress"
+        || Core.String.Caseless.is_substring hd ~substring:"postqos"
+      then [ "main"; "eg" ] @ tl
+      else failwith name)
   |> String.concat "."
 
 let transform_stmt_action ((name, args) : Stf.Ast.action) =

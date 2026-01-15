@@ -101,8 +101,8 @@ module type DRIVER = sig
     spec -> string -> string list -> string list -> DCov_multi.t
 
   val cover_instr_stfs :
-    spec -> string list -> string list -> string list list -> ICov_multi.t
+    spec -> string list -> string list -> string list -> ICov_multi.t
 
   val cover_dangling_stfs :
-    spec -> string list -> string list -> string list list -> DCov_multi.t
+    spec -> string list -> string list -> string list -> DCov_multi.t
 end

@@ -22,6 +22,7 @@ let convert_dollar_to_brackets (s : string) : string =
 let pp_print_option pp fmt = function
   | None -> ()
   | Some x -> F.fprintf fmt " %a" pp x
+
 let print_int fmt i = F.fprintf fmt "%d" i
 let print_string fmt s = F.fprintf fmt "%s" s
 let print_quoted_string fmt s = F.fprintf fmt "\"%s\"" s
@@ -85,14 +86,12 @@ let print_stmt fmt = function
         (pp_print_option print_int)
         int_opt
         (F.pp_print_list ~pp_sep:(fun fmt () -> F.fprintf fmt " ") print_mtch)
-        mtchs print_action action
-        (pp_print_option print_id)
-        id_opt
+        mtchs print_action action (pp_print_option print_id) id_opt
   | SetDefault (name, action) ->
       F.fprintf fmt "setdefault %a %a" print_name name print_action action
   | CheckCounter (id, id_or_index, (ctr, cond, number)) ->
-      F.fprintf fmt "check_counter %a(%a)%a %a %a" print_id id
-        print_id_or_index id_or_index
+      F.fprintf fmt "check_counter %a(%a)%a %a %a" print_id id print_id_or_index
+        id_or_index
         (pp_print_option print_ctr)
         ctr print_cond cond print_number number
 

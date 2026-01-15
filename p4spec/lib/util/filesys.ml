@@ -15,20 +15,20 @@ let rec collect_files ~(suffix : string) (dir : string) =
     [] files
 
 let collect_files_with_basedir ~(suffix : string) (dir : string) =
-  let rec aux ~rel_dir dir =
-    let files = Sys_unix.readdir (dir ^ "/" ^ rel_dir) in
+  let rec collect_files_with_basedir ~reldir dir =
+    let files = Sys_unix.readdir (dir ^ "/" ^ reldir) in
     Array.sort String.compare files;
     Array.fold_left
-      (fun acc file ->
-        let abs = dir ^ "/" ^ rel_dir ^ "/" ^ file in
-        let rel = if rel_dir = "" then file else rel_dir ^ "/" ^ file in
-        if Sys_unix.is_directory_exn abs && file <> "include" then
-          acc @ aux ~rel_dir:rel dir
-        else if String.ends_with ~suffix abs then acc @ [ (dir, rel) ]
-        else acc)
+      (fun files file ->
+        let abspath = dir ^ "/" ^ reldir ^ "/" ^ file in
+        let relpath = if reldir = "" then file else reldir ^ "/" ^ file in
+        if Sys_unix.is_directory_exn abspath && file <> "include" then
+          files @ collect_files_with_basedir ~reldir:relpath dir
+        else if String.ends_with ~suffix abspath then files @ [ (dir, relpath) ]
+        else files)
       [] files
   in
-  aux ~rel_dir:"" dir
+  collect_files_with_basedir ~reldir:"" dir
 
 let base ~(suffix : string) (filename : string) : string =
   let filename_base =

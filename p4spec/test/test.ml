@@ -320,25 +320,23 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_test = Test.collect_tests_mapped arch testdirs_p4 testdirs_stf patchdir in
-  let total =
-    List.fold_left (fun acc (_, xs) -> acc + List.length xs) 0 filenames_test
+  let filename_pairs =
+    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
   in
+  let total = List.length filename_pairs in
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
   let stat =
     List.fold_left
-      (fun stat (filename_p4, filenames_stf) ->
-        List.fold_left
-          (fun stat filename_stf ->
-            Format.asprintf "\n>>> Running simulation test (%s) on %s with packet input %s" arch
-              filename_p4 filename_stf
-            |> print_endline;
-            run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
-              filename_stf)
-          stat filenames_stf)
-      stat filenames_test
+      (fun stat (filename_p4, filename_stf) ->
+        Format.asprintf
+          "\n>>> Running simulation test (%s) on %s with packet input %s" arch
+          filename_p4 filename_stf
+        |> print_endline;
+        run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
+          filename_stf)
+      stat filename_pairs
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
 
@@ -415,9 +413,9 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
   let filenames_p4, filenames_stf =
-    Test.collect_tests_mapped arch testdirs_p4 testdirs_stf patchdir
+    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
     |> List.filter (fun (filename_p4, _) ->
-        not (List.exists (String.equal filename_p4) excludes_p4))
+           not (List.exists (String.equal filename_p4) excludes_p4))
     |> List.split
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
