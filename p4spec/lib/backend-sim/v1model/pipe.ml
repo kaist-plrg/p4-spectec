@@ -281,6 +281,18 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  let table_add_default (value_sto : Value.t) (value_tableName : Value.t)
+      (value_tableActionInterface : Value.t) : Value.t =
+    (* Lookup table object *)
+    let value_tableObject = find_table value_sto value_tableName in
+    (* Add entry to table object *)
+    let value_tableObject =
+      Spec.Func.tableObject_add_default value_tableObject
+        value_tableActionInterface
+    in
+    (* Update store with modified table object *)
+    update_table value_sto value_tableName value_tableObject
+
   (* Initializer *)
 
   let init (spec_ : Sim.spec) : unit =

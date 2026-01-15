@@ -230,3 +230,24 @@ def $tableObject_add_entry(
           `= `{ tableEntryIR* ++ [ tableEntryIR_update ] }
   -- if TBL_updated
       = TBL[ .ENTRIES = tableEntriesPropertyIR_updated ]
+
+;;; Table default action creation
+
+dec $tableObject_add_default(
+    tableObject,
+    tableActionInterface)
+  : tableObject
+
+def $tableObject_add_default(
+    TABLE typeId `{ frame TBL },
+    tableActionInterface)
+  = TABLE typeId `{ frame TBL_updated }
+  ---- ;; check that the current default action is not const
+  -- if TBL.DEFAULT_ACTION = _ eps DEFAULT_ACTION `= _ `;
+  ---- ;; create default action from the interface
+  -- if tableActionReferenceIR
+      = $tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)
+  -- if tableDefaultActionPropertyIR 
+      = `EMPTY eps DEFAULT_ACTION `= tableActionReferenceIR `;
+  ---- ;; update the table
+  -- if TBL_updated = TBL[ .DEFAULT_ACTION = tableDefaultActionPropertyIR ]

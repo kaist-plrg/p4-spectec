@@ -63,6 +63,13 @@ let tableObject_add_entry (value_tableObject : Value.t)
       value_tableActionInterface;
     ]
 
+(* tableObject_add_default *)
+
+let tableObject_add_default (value_tableObject : Value.t)
+    (value_tableActionInterface : Value.t) : Value.t =
+  !call "tableObject_add_default" []
+    [ value_tableObject; value_tableActionInterface ]
+
 (* find/update_store_qualified/unqualified *)
 
 let find_store_qualified (value_sto : Value.t) (value_objectId : Value.t) :
@@ -104,7 +111,7 @@ let find_type_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string) :
   !call "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
 
 let find_type_e_local (value_ctx : Value.t) (name : string) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   find_type_e value_cursor value_ctx name |> unwrap_opt_v |> Option.get
 
 (* find_var_value_t *)
@@ -113,16 +120,16 @@ let find_var_value_t (value_cursor : Value.t) (value_ctx : Value.t)
     (name : string) : Value.t =
   let value_prefixedNameIR =
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
   in
   !call "find_var_value_t" [] [ value_cursor; value_ctx; value_prefixedNameIR ]
 
 let find_var_value_t_global (value_ctx : Value.t) (name : string) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   find_var_value_t value_cursor value_ctx name
 
 let find_var_value_t_local (value_ctx : Value.t) (name : string) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   find_var_value_t value_cursor value_ctx name
 
 (* find_var_e *)
@@ -131,16 +138,16 @@ let find_var_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string) :
     Value.t =
   let value_prefixedNameIR =
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    [ Term "`"; NT value_nameIR ]#@"prefixedNameIR"
   in
   !call "find_var_e" [] [ value_cursor; value_ctx; value_prefixedNameIR ]
 
 let find_var_e_global (value_ctx : Value.t) (name : string) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   find_var_e value_cursor value_ctx name
 
 let find_var_e_local (value_ctx : Value.t) (name : string) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   find_var_e value_cursor value_ctx name
 
 (* subst_type_e *)
@@ -150,5 +157,5 @@ let subst_type_e (value_cursor : Value.t) (value_ctx : Value.t)
   !call "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
 
 let subst_type_e_local (value_ctx : Value.t) (value_typ : Value.t) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let value_cursor = [ Term "LOCAL" ]#@"cursor" in
   subst_type_e value_cursor value_ctx value_typ
