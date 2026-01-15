@@ -13,6 +13,7 @@ type t = Rename.t
 
 let empty : t = Rename.empty
 let dom (renamer : t) : IdSet.t = Rename.dom renamer
+let values (renamer : t) : Id.t list = Rename.values renamer
 
 let singleton (id : Id.t) (id_renamed : Id.t) : t =
   Rename.singleton id id_renamed
@@ -20,6 +21,7 @@ let singleton (id : Id.t) (id_renamed : Id.t) : t =
 let add (id : Id.t) (id_renamed : Id.t) (renamer : t) : t =
   Rename.add id id_renamed renamer
 
+let of_list (pairs : (Id.t * Id.t) list) : t = Rename.of_list pairs
 let filter (p : Id.t -> 'a -> bool) (renamer : t) : t = Rename.filter p renamer
 
 (* Renaming *)
