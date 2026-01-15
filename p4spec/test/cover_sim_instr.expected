@@ -1,4 +1,4 @@
-;; Instruction coverage: 8967/12395 (72.34%)
+;; Instruction coverage: 8970/12398 (72.35%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -8426,35 +8426,7 @@ def $bin_lor(value, value')
 
 -     2. Return ((`b (b_l \/ b_r)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:521.1-521.49
-def $cast_to_enum'((valueFieldIR)*, value_target)
-
-+ 1. If (((valueFieldIR)* matches pattern _ :: _)), then
-
-+   1. (Let valueFieldIR_h :: (valueFieldIR_t)* be (valueFieldIR)*)
-
-+   2. (Let (nameIR = value ;) be valueFieldIR_h)
-
-+   3. Case analysis on $bin_eq(value, value_target)
-
-      1. Case true
-
-+       1. Return value_target
-
-      2. Case false
-
-+       1. Return $cast_to_enum'((valueFieldIR_t)*, value_target)
-
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:530.1-530.45
-def $cast_to_enum(enumTypeIR, value)
-
-+ 1. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
-
-+   1. (Let (enum typeId < typeIR >{ (valueFieldIR)* }) be enumTypeIR)
-
-+   2. Return $cast_to_enum'((valueFieldIR)*, value)
-
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:538.1-540.40
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:523.1-525.40
 def $cast_op(typeIR, value')
 
 + 1. Case analysis on value'
@@ -8589,7 +8561,7 @@ def $cast_op(typeIR, value')
 
 +     2. Return $cast_varbit(typeIR, w_max, w, i)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:542.1-543.49
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:527.1-528.49
 def $default(typeIR')
 
 + 1. Case analysis on typeIR'
@@ -8722,7 +8694,7 @@ def $default(typeIR')
 
 +           2. Return ((typeId . id_zero . value_zero) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:547.1-548.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:532.1-533.23
 def $cast_bool(typeIR', b)
 
 + 1. Case analysis on typeIR'
@@ -8769,7 +8741,7 @@ def $cast_bool(typeIR', b)
 
 +     2. Return ((set{ $cast_bool(typeIR, b) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:561.1-562.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:546.1-547.23
 def $cast_arbint(typeIR', i)
 
 + 1. Case analysis on typeIR'
@@ -8820,7 +8792,45 @@ def $cast_arbint(typeIR', i)
 
 +     2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:576.1-577.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:561.1-561.65
+def $cast_to_enum'(typeId, typeIR, (valueFieldIR)*, value_target)
+
++ 1. Case analysis on (valueFieldIR)*
+
+    1. Case (% matches pattern [])
+
++     1. (Let value_zero be $cast_arbint(typeIR, (0 as int)))
+
++     2. (Let id_zero be "__UNSPECIFIED")
+
++     3. Return ((typeId . id_zero . value_zero) as value)
+
+    2. Case (% matches pattern _ :: _)
+
++     1. (Let valueFieldIR_h :: (valueFieldIR_t)* be (valueFieldIR)*)
+
++     2. (Let (nameIR = value ;) be valueFieldIR_h)
+
++     3. Case analysis on $bin_eq(value, value_target)
+
+        1. Case true
+
++         1. Return value_target
+
+        2. Case false
+
++         1. Return $cast_to_enum'(typeId, typeIR, (valueFieldIR_t)*, value_target)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:578.1-578.45
+def $cast_to_enum(enumTypeIR, value)
+
++ 1. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
+
++   1. (Let (enum typeId < typeIR >{ (valueFieldIR)* }) be enumTypeIR)
+
++   2. Return $cast_to_enum'(typeId, typeIR, (valueFieldIR)*, value)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:585.1-586.23
 def $cast_fixbit(typeIR', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8881,7 +8891,7 @@ def $cast_fixbit(typeIR', w, i)
 
 +     2. Return $cast_to_enum(enumTypeIR, ((w w i) as value))
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:594.1-595.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:603.1-604.23
 def $cast_fixint(typeIR', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8936,7 +8946,7 @@ def $cast_fixint(typeIR', w, i)
 
 +     2. Return $cast_to_enum(enumTypeIR, ((w s i) as value))
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:611.1-612.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:620.1-621.23
 def $cast_varbit(typeIR', w_max', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8959,7 +8969,7 @@ def $cast_varbit(typeIR', w_max', w, i)
 
 -     2. Return $cast_varbit(typeIR, w_max', w, i)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:622.1-623.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:631.1-632.23
 def $cast_error(typeIR', nameIR)
 
 + 1. Case analysis on typeIR'
@@ -8976,7 +8986,7 @@ def $cast_error(typeIR', nameIR)
 
 +     2. Return ((set{ $cast_error(typeIR, nameIR) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:632.1-633.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:641.1-642.23
 def $cast_struct(typeIR', typeId', ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -8997,7 +9007,7 @@ def $cast_struct(typeIR', typeId', ((value', id'))*)
 
 +       1. Return ((struct typeId { ((value id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:645.1-646.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:654.1-655.23
 def $cast_header(typeIR', typeId', b, ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -9018,7 +9028,7 @@ def $cast_header(typeIR', typeId', b, ((value', id'))*)
 
 +       1. Return ((header typeId { b ; ((value id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:658.1-659.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:667.1-668.23
 def $cast_header_stack(typeIR', (value)*, n_size')
 
 + 1. If ((typeIR' has type headerStackTypeIR)), then
@@ -9029,7 +9039,7 @@ def $cast_header_stack(typeIR', (value)*, n_size')
 
 +     1. Return ((header_stack[ (value)* ( 0 ; n_size )]) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:674.1-675.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:683.1-684.23
 def $cast_sequence(typeIR', (value)*)
 
 + 1. Case analysis on typeIR'
@@ -9078,7 +9088,7 @@ def $cast_sequence(typeIR', (value)*)
 
 +     3. Return ((header typeId { true ; ((value_cast nameIR_field ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:705.1-706.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:714.1-715.23
 def $cast_record(typeIR', ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -9119,7 +9129,7 @@ def $cast_record(typeIR', ((value', id'))*)
 
 +       3. Return ((header typeId { true ; ((value_field_cast id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:738.1-738.34
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:747.1-747.34
 def $cast_invalid(typeIR')
 
 - 1. Case analysis on typeIR'
@@ -9142,7 +9152,7 @@ def $cast_invalid(typeIR')
 
 -     2. Return $default((headerUnionTypeIR as typeIR))
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:748.1-749.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:757.1-758.23
 def $cast_set_singleton(typeIR', value)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9151,7 +9161,7 @@ def $cast_set_singleton(typeIR', value)
 
 -   2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:754.1-755.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:763.1-764.23
 def $cast_set_mask(typeIR', value_b, value_m)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9164,7 +9174,7 @@ def $cast_set_mask(typeIR', value_b, value_m)
 
 -   4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:762.1-763.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:771.1-772.23
 def $cast_set_range(typeIR', value_l, value_u)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9177,7 +9187,7 @@ def $cast_set_range(typeIR', value_l, value_u)
 
 -   4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:827.1-828.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:836.1-837.23
 def $bitacc_op(value, value', value'')
 
 + 1. If ((value has type integerValue)), then
@@ -9208,7 +9218,7 @@ def $bitacc_op(value, value', value'')
 
 +         3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:841.1-842.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:850.1-851.23
 def $bitacc_replace_op(value, value', value'', value''')
 
 + 1. If ((value has type integerValue)), then
@@ -9251,7 +9261,7 @@ def $bitacc_replace_op(value, value', value'', value''')
 
 +                 3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:855.1-856.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:864.1-865.23
 def $sizeof(typeIR, text)
 
 - 1. Case analysis on text
@@ -9272,12 +9282,12 @@ def $sizeof(typeIR, text)
 
 -     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:858.1-859.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:867.1-868.23
 def $sizeof_minSizeInBits(typeIR)
 
 - 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:860.1-861.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:869.1-870.23
 def $sizeof_minSizeInBits'(typeIR')
 
 + 1. Case analysis on typeIR'
@@ -9362,19 +9372,19 @@ def $sizeof_minSizeInBits'(typeIR')
 
 -     2. Return $min_nat(($sizeof_minSizeInBits'(typeIR))*)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:863.1-864.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:872.1-873.23
 def $sizeof_minSizeInBytes(typeIR)
 
 - 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 - 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:866.1-867.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:875.1-876.23
 def $sizeof_maxSizeInBits(typeIR)
 
 - 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:868.1-869.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:877.1-878.23
 def $sizeof_maxSizeInBits'(typeIR')
 
 + 1. Case analysis on typeIR'
@@ -9461,7 +9471,7 @@ def $sizeof_maxSizeInBits'(typeIR')
 
 -     2. Return $max_nat(($sizeof_maxSizeInBits'(typeIR))*)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:871.1-872.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:880.1-881.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 - 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))

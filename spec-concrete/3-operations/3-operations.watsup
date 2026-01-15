@@ -516,21 +516,6 @@ dec $bin_lor(value, value) : value
 
 def $bin_lor(`B b_l, `B b_r) = `B (b_l \/ b_r)
 
-;;; Cast underlying value to enum
-
-dec $cast_to_enum'(valueFieldIR*, value) : value
-def $cast_to_enum'(valueFieldIR_h :: valueFieldIR_t*, value_target) = value_target
-  -- if nameIR `= value `; = valueFieldIR_h
-  -- if $bin_eq(value, value_target)
-def $cast_to_enum'(valueFieldIR_h :: valueFieldIR_t*, value_target)
-  = $cast_to_enum'(valueFieldIR_t*, value_target)
-  -- if nameIR `= value `; = valueFieldIR_h
-  -- if ~$bin_eq(value, value_target)
-
-dec $cast_to_enum(enumTypeIR, value) : value
-def $cast_to_enum(ENUM typeId `< typeIR > `{ valueFieldIR* }, value)
-  = $cast_to_enum'(valueFieldIR*, value)
-
 ;;
 ;; Type cast operations
 ;;
@@ -570,6 +555,30 @@ def $cast_arbint(TYPE _ typeIR, i) = $cast_arbint(typeIR, i)
 def $cast_arbint(SET `< typeIR >, i) = SET `{ $cast_arbint(typeIR, i) }
 
 def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
+
+;;; Cast underlying value to enum
+
+dec $cast_to_enum'(typeId, typeIR, valueFieldIR*, value) : value
+
+def $cast_to_enum'(typeId, typeIR, eps, value_target)
+  = typeId `. id_zero `. value_zero
+  -- if value_zero = $cast_arbint(typeIR, 0)
+  -- if id_zero = "__UNSPECIFIED"
+
+def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_target)
+  = value_target
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if $bin_eq(value, value_target)
+
+def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_target)
+  = $cast_to_enum'(typeId, typeIR, valueFieldIR_t*, value_target)
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if ~$bin_eq(value, value_target)
+
+dec $cast_to_enum(enumTypeIR, value) : value
+
+def $cast_to_enum(ENUM typeId `< typeIR > `{ valueFieldIR* }, value)
+  = $cast_to_enum'(typeId, typeIR, valueFieldIR*, value)
 
 ;;; Cast from fixed unsigned integer
 

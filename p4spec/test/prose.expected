@@ -3168,24 +3168,6 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Let ```B b~r~`` be ``value'``.
 . Return ```B b~l~ \/ b~r~``.
 
-<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value~target~)>>
-
-
-. Check that ``valueFieldIR^{asterisk}^`` is a non-empty list.
-. Let ``valueFieldIR~h~ {two-colons} valueFieldIR~t~^{asterisk}^`` be ``valueFieldIR^{asterisk}^``.
-. Let ``nameIR = value ;`` be ``valueFieldIR~h~``.
-. If ``<<bin_eq, bin_eq(value, value~target~)>>``:
- .. Return ``value~target~``.
-. Else:
- .. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR~t~^{asterisk}^, value~target~)>>``.
-
-<<cast_to_enum, cast_to_enum(enumTypeIR, value)>>
-
-
-. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
-. Let ``ENUM typeId < typeIR > { valueFieldIR^{asterisk}^ }`` be ``enumTypeIR``.
-. Return ``<<cast_to_enum', cast_to_enum'(valueFieldIR^{asterisk}^, value)>>``.
-
 <<cast_op, Cast ``value'`` to type ``typeIR``>>
 
 
@@ -3323,6 +3305,28 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Return ``<<cast_arbint, cast_arbint(typeIR, i)>>``.
 . Else if let ``SET < typeIR >`` be ``typeIR'``:
  .. Return ``SET { <<cast_arbint, cast_arbint(typeIR, i)>> }``.
+
+<<cast_to_enum', cast_to_enum'(typeId, typeIR, valueFieldIR^{asterisk}^, value~target~)>>
+
+
+. If ``valueFieldIR^{asterisk}^`` is an empty list:
+ .. Let ``value~zero~`` be ``<<cast_arbint, cast_arbint(typeIR, 0)>>``.
+ .. Let ``id~zero~`` be ``"__UNSPECIFIED"``.
+ .. Return ``typeId . id~zero~ . value~zero~``.
+. Else:
+ .. Let ``valueFieldIR~h~ {two-colons} valueFieldIR~t~^{asterisk}^`` be ``valueFieldIR^{asterisk}^``.
+ .. Let ``nameIR = value ;`` be ``valueFieldIR~h~``.
+ .. If ``<<bin_eq, bin_eq(value, value~target~)>>``:
+  ... Return ``value~target~``.
+ .. Else:
+  ... Return ``<<cast_to_enum', cast_to_enum'(typeId, typeIR, valueFieldIR~t~^{asterisk}^, value~target~)>>``.
+
+<<cast_to_enum, cast_to_enum(enumTypeIR, value)>>
+
+
+. Check that ``enumTypeIR`` matches pattern ``ENUM % < % > { % }``.
+. Let ``ENUM typeId < typeIR > { valueFieldIR^{asterisk}^ }`` be ``enumTypeIR``.
+. Return ``<<cast_to_enum', cast_to_enum'(typeId, typeIR, valueFieldIR^{asterisk}^, value)>>``.
 
 <<cast_fixbit, cast_fixbit(typeIR', w, i)>>
 
