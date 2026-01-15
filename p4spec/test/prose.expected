@@ -14981,9 +14981,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Expr_eval, Evaluating <<typedExpressionIR, ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ )`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let <<Callee_eval, p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult>>.
-. If let ``exitResult`` be ``calleeResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``EXIT``.
-. Else if let ``callee`` be ``calleeResult``:
+. If let ``abortResult`` be ``calleeResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``abortResult``.
+. Else:
+ .. Let ``callee`` be ``calleeResult``.
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult`` be
 * the result of <<Call_eval, calling ``callee``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -15335,12 +15336,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Stmt_eval, The compile-time evaluation of ``callableTargetIR < typeArgumentIR^{asterisk}^ > ( argumentIR^{asterisk}^ ) ;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let <<Callee_eval, p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult>>.
-. If let ``exitResult`` be ``calleeResult``:
+. If let ``abortResult`` be ``calleeResult``:
  .. Result in 
 * the evaluation context ``EC~1~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
-. Else if let ``callee`` be ``calleeResult``:
+* and the instantiated statement ``abortResult``.
+. Else:
+ .. Let ``callee`` be ``calleeResult``.
  .. Let 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult`` be
 * the result of <<Call_eval, calling ``callee``<``typeArgumentIR^{asterisk}^``>(``argumentIR^{asterisk}^``), under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
@@ -15451,12 +15453,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Let ``EC~1~`` be ``<<enter_e, enter_e(EC)>>``.
 . Let <<ForInitStmts_eval, EC~1~ STO |- forInitStatementListIR : EC~2~ STO~1~ statementResult'>>.
-. If let ``exitResult`` be ``statementResult'``:
+. If let ``abortResult`` be ``statementResult'``:
  .. Let ``EC~3~`` be ``<<exit_e, exit_e(EC~2~)>>``.
  .. Result in 
 * the evaluation context ``EC~3~``,
 * the updated store ``STO~1~``,
-* and the instantiated statement ``EXIT``.
+* and the instantiated statement ``abortResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult'``:
  .. Let <<ForThreeClauseLoop_eval, EC~2~ STO~1~ |- typedExpressionIR statementIR forUpdateStatementListIR : EC~3~ STO~2~ statementResult>>.
  .. Let ``EC~4~`` be ``<<exit_e, exit_e(EC~3~)>>``.
@@ -15601,15 +15603,16 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . If let ``blockElementStatementIR~h~ {two-colons} blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``:
  .. Let <<BlockElementStmt_eval, evalContext store |- blockElementStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
- .. If let ``exitResult`` be ``statementResult'``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``statementResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
  .. Else if let ``returnResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``BREAK``.
  .. Else if let ``forContinueResult`` be ``statementResult'``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``CONTINUE``.
- .. Else if let ``continueEmptyResult`` be ``statementResult'``:
+ .. Else:
+  ... Let ``continueEmptyResult`` be ``statementResult'``.
   ... Let <<BlockElementStmts_eval, EC~1~ STO~1~ |- blockElementStatementIR~t~^{asterisk}^ : EC~2~ STO~2~ statementResult>>.
   ... Result in ``EC~2~``, ``STO~2~``, and ``statementResult``.
 
@@ -15634,6 +15637,15 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
+. Check that ``declarationResult`` has type ``rejectTransitionResult``.
+. Let ``rejectTransitionResult`` be ``declarationResult``.
+. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+
+<<ParserStmt_eval, ``EC~0~ STO |- variableDeclarationIR : % % %``>>:
+
+. Let 
+* the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
+* the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``declarationResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``declarationResult``.
 . Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
@@ -15652,9 +15664,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``assignmentStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
-. Check that ``statementResult`` has type ``continueEmptyResult``.
-. Let ``continueEmptyResult`` be ``statementResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+. If let ``rejectTransitionResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+. Else if let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserStmt_eval, ``EC~0~ STO |- callStatementIR : % % %``>>:
 
@@ -15727,14 +15740,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If let ``rejectTransitionResult`` be ``expressionListResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``value~key~^{asterisk}^`` be ``expressionListResult``:
- .. Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ nameIR^?^>>.
- .. If ``nameIR^?^`` is none:
-  ... Let ``rejectTransitionResult`` be ``REJECT ERROR . "NoMatch"``.
+ .. Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseListIR : EC~2~ STO~2~ selectCaseMatchResult>>.
+ .. If let ``rejectTransitionResult`` be ``selectCaseMatchResult``:
   ... Result in ``EC~2~``, ``STO~2~``, and ``rejectTransitionResult``.
  .. Else:
+  ... Let ``nameIR^?^`` be ``selectCaseMatchResult``.
+  ... Check that ``nameIR^?^`` is defined.
   ... Let ``nameIR~state~`` be ``nameIR^?^``.
   ... Let <<ParserTransition_eval, EC~2~ STO~2~ |- TRANSITION nameIR~state~ ; : EC~3~ STO~3~ transitionResult>>.
   ... Result in ``EC~3~``, ``STO~3~``, and ``transitionResult``.
+ .. If ``selectCaseMatchResult`` is equal to ``None``:
+  ... Let ``rejectTransitionResult`` be ``REJECT ERROR . "NoMatch"``.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``rejectTransitionResult``.
 
 <<ParserState_eval, ParserState_eval: ``EC~0~ STO~0~ |- annotationList STATE { parserStatementListIR transitionStatementIR } : % % %``>>
 
@@ -15789,9 +15806,10 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
-. Check that ``declarationResult`` has type ``continueEmptyResult``.
-. Let ``continueEmptyResult`` be ``declarationResult``.
-. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+. If let ``rejectTransitionResult`` be ``declarationResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+. Else if let ``continueEmptyResult`` be ``declarationResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ParserLocalDecls_eval, ParserLocalDecls_eval: ``evalContext store |- parserLocalDeclarationIR^{asterisk}^ : % % %``>>
 
@@ -15873,10 +15891,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let 
 * the updated evaluation context ``EC~1~``, the updated store ``STO~1~``,and the result ``declarationResult`` be
 * the result of <<VarDecl_eval, evaluating ``variableDeclarationIR``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
-. If let ``abortResult`` be ``declarationResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
-. Else:
- .. Let ``continueEmptyResult`` be ``declarationResult``.
+. If let ``exitResult`` be ``declarationResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+. Else if let ``continueEmptyResult`` be ``declarationResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
 
 <<ControlLocalDecls_eval, ControlLocalDecls_eval: ``evalContext store |- controlLocalDeclarationIR^{asterisk}^ : % % %``>>
@@ -15886,13 +15903,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . If ``controlLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . If let ``controlLocalDeclarationIR~h~ {two-colons} controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR^{asterisk}^``:
- .. Let <<ControlLocalDecl_eval, evalContext store |- controlLocalDeclarationIR~h~ : EC~1~ STO~1~ declarationResult'>>.
- .. If let ``abortResult`` be ``declarationResult'``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+ .. Let <<ControlLocalDecl_eval, evalContext store |- controlLocalDeclarationIR~h~ : EC~1~ STO~1~ controlLocalDeclarationResult'>>.
+ .. If let ``exitResult`` be ``controlLocalDeclarationResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
  .. Else:
-  ... Let ``continueEmptyResult`` be ``declarationResult'``.
-  ... Let <<ControlLocalDecls_eval, EC~1~ STO~1~ |- controlLocalDeclarationListIR~t~ : EC~2~ STO~2~ declarationResult>>.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``declarationResult``.
+  ... Let ``continueEmptyResult`` be ``controlLocalDeclarationResult'``.
+  ... Let <<ControlLocalDecls_eval, EC~1~ STO~1~ |- controlLocalDeclarationListIR~t~ : EC~2~ STO~2~ controlLocalDeclarationResult>>.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``controlLocalDeclarationResult``.
 
 <<VarDecl_eval, VarDecl_eval>>:
 
@@ -16183,12 +16200,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~ {two-colons} argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Let <<Copy_in_argument, store p~caller~ evalContext parameterIR~h~ @ p~callee~ evalContext' argumentIR~h~ ~> STO~1~ EC~caller_1~ @ EC~callee_1~ # copyInResult>>.
- .. If let ``exitResult`` be ``copyInResult``:
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``EXIT``.
- .. Else if let ``storageReference~h~^?^`` be ``copyInResult``:
+ .. If let ``abortResult`` be ``copyInResult``:
+  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``abortResult``.
+ .. Else:
+  ... Let ``storageReference~h~^?^`` be ``copyInResult``.
   ... Let <<Copy_in, STO~1~ p~caller~ EC~caller_1~ parameterIR~t~^{asterisk}^ @ p~callee~ EC~callee_1~ argumentIR~t~^{asterisk}^ ~> STO~2~ EC~caller_2~ @ EC~callee_2~ # copyInListResult>>.
-  ... If let ``exitResult`` be ``copyInListResult``:
-   .... Result in ``STO~2~``, ``EC~caller_2~``, ``EC~callee_2~``, and ``EXIT``.
+  ... If let ``abortResult`` be ``copyInListResult``:
+   .... Result in ``STO~2~``, ``EC~caller_2~``, ``EC~callee_2~``, and ``abortResult``.
   ... Else:
    .... Let ``(storageReference'^?^)^{asterisk}^`` be ``copyInListResult``.
    .... Check that ``(storageReference'^?^)^{asterisk}^`` has type ``storageReference*``.
@@ -16266,8 +16284,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult>>.
  .. If let ``exitResult`` be ``copyInListResult``:
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
- .. Else:
-  ... Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
+ .. Else if let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``:
   ... Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~>>.
   ... Let <<ActionBody_eval, EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult>>.
   ... If let ``exitResult`` be ``actionResult``:
@@ -16284,8 +16301,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_1~ # copyInListResult>>.
  .. If let ``exitResult`` be ``copyInListResult``:
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
- .. Else:
-  ... Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
+ .. Else if let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``:
   ... Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> @ EC~callee_2~>>.
   ... Let <<ActionBody_eval, EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult>>.
   ... If let ``exitResult`` be ``actionResult``:
@@ -16304,8 +16320,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``EC~callee_0~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]``.
 . Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentListIR, id~default~^{asterisk}^)>>``.
 . Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult>>.
-. If let ``exitResult`` be ``copyInListResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+. If let ``abortResult`` be ``copyInListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
  .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
@@ -16321,8 +16337,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``EC~callee_0~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]``.
 . Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentIR^{asterisk}^, id~default~^{asterisk}^)>>``.
 . Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult>>.
-. If let ``exitResult`` be ``copyInListResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+. If let ``abortResult`` be ``copyInListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
  .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
@@ -16460,8 +16476,8 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
 . Let ``EC~callee_3~`` be ``EC~callee_2~[LOCAL.TYPE = { (typeParameterIR : typeArgumentIR)^{asterisk}^ }]``.
 . Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterIR^{asterisk}^, argumentIR^{asterisk}^, id~default~^{asterisk}^)>>``.
 . Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_4~ # copyInListResult>>.
-. If let ``exitResult`` be ``copyInListResult``:
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+. If let ``abortResult`` be ``copyInListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
  .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_4~ value~default~^{asterisk}^ ~> @ EC~callee_5~>>.
@@ -16486,24 +16502,25 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]``.
 . Let ``(parameterIR~aligned~^{asterisk}^, argumentIR~aligned~^{asterisk}^, parameterIR~default~^{asterisk}^, value~default~^{asterisk}^)`` be ``<<align_parameterListIR, align_parameterListIR(parameterListIR, argumentListIR, id~default~^{asterisk}^)>>``.
 . Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult>>.
-. Check that ``copyInListResult`` has type ``continueResult<storageReference?*>``.
-. Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
-. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
-. Let <<ParserLocalDecls_eval, EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~ parserStatementResult>>.
-. If let ``rejectTransitionResult`` be ``parserStatementResult``:
- .. Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]``.
- .. Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
- .. Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``rejectTransitionResult``.
-. Else:
- .. Let <<ParserState_trans, EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult>>.
- .. If let ``rejectTransitionResult`` be ``transitionResult``:
-  ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
-  ... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
-  ... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``rejectTransitionResult``.
- .. Else if let ``acceptTransitionResult`` be ``transitionResult``:
-  ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
-  ... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
-  ... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
+. If let ``rejectTransitionResult`` be ``copyInListResult``:
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``rejectTransitionResult``.
+. Else if let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``:
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
+ .. Let <<ParserLocalDecls_eval, EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~ parserStatementResult>>.
+ .. If let ``rejectTransitionResult`` be ``parserStatementResult``:
+  ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]``.
+  ... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+  ... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``rejectTransitionResult``.
+ .. Else:
+  ... Let <<ParserState_trans, EC~callee_4~ STO~2~ |- TRANSITION "start" : EC~callee_5~ STO~3~ transitionResult>>.
+  ... If let ``rejectTransitionResult`` be ``transitionResult``:
+   .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
+   .... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+   .... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``rejectTransitionResult``.
+  ... Else if let ``acceptTransitionResult`` be ``transitionResult``:
+   .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
+   .... Let <<Copy_out, STO~3~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_5~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
+   .... Result in the updated evaluation context ``EC~3~``, store ``STO~3~``, and call result ``RETURN None``.
 
 <<Call_eval, Calling ``controlApplyMethodCallee``<``typeArgumentListIR``>(``argumentListIR``), under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
@@ -16515,15 +16532,15 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let <<Copy_in, STO~0~ p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ @ EC~callee_2~ # copyInListResult>>.
 . If let ``exitResult`` be ``copyInListResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
-. Else:
- .. Let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``.
+. Else if let ``(storageReference^?^)^{asterisk}^`` be ``copyInListResult``:
  .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> @ EC~callee_3~>>.
- .. Let <<ControlLocalDecls_eval, EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ declarationResult>>.
- .. If let ``exitResult`` be ``declarationResult``:
+ .. Let <<ControlLocalDecls_eval, EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ controlLocalDeclarationResult>>.
+ .. If let ``exitResult`` be ``controlLocalDeclarationResult``:
   ... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_4~.GLOBAL.FRAME]``.
   ... Let <<Copy_out, STO~2~ p EC~2~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~3~>>.
   ... Result in the updated evaluation context ``EC~3~``, store ``STO~2~``, and call result ``EXIT``.
- .. Else if let ``continueEmptyResult`` be ``declarationResult``:
+ .. Else:
+  ... Let ``continueEmptyResult`` be ``controlLocalDeclarationResult``.
   ... Let <<ControlBody_eval, EC~callee_4~ STO~2~ |- controlBodyIR : EC~callee_5~ STO~3~ controlBodyResult>>.
   ... If let ``exitResult`` be ``controlBodyResult``:
    .... Let ``EC~2~`` be ``EC~1~[GLOBAL.FRAME = EC~callee_5~.GLOBAL.FRAME]``.
@@ -16542,17 +16559,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``typeId'^{asterisk}^`` be ``<<rev_, rev_<id>(objectId)>>``.
 . If let ``typeId {two-colons} ++_++^{asterisk}^`` be ``typeId'^{asterisk}^``:
  .. Let <<Table_eval, EC~callee_1~ STO~0~ |- typeId TBL : EC~callee_2~ STO~1~ tableResult>>.
- .. Check that ``tableResult`` has type ``returnResult``.
- .. Let ``returnResult`` be ``tableResult``.
- .. Let ``EC~1~`` be ``EC~0~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]``.
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``returnResult``.
-. Let ``EC~callee_1~`` be ``EC~callee_0~[LOCAL.FRAMES = [frame]]``.
-. If let ``typeId {two-colons} ++_++^{asterisk}^`` be ``typeId'^{asterisk}^``:
- .. Let <<Table_eval, EC~callee_1~ STO~0~ |- typeId TBL : EC~callee_2~ STO~1~ tableResult>>.
  .. Check that ``tableResult`` has type ``exitResult``.
  .. Let ``exitResult`` be ``tableResult``.
  .. Let ``EC~1~`` be ``EC~0~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]``.
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
+. Let ``EC~callee_1~`` be ``EC~callee_0~[LOCAL.FRAMES = [frame]]``.
+. If let ``typeId {two-colons} ++_++^{asterisk}^`` be ``typeId'^{asterisk}^``:
+ .. Let <<Table_eval, EC~callee_1~ STO~0~ |- typeId TBL : EC~callee_2~ STO~1~ tableResult>>.
+ .. Check that ``tableResult`` has type ``returnResult``.
+ .. Let ``returnResult`` be ``tableResult``.
+ .. Let ``EC~1~`` be ``EC~0~[BLOCK.FRAME = EC~callee_2~.BLOCK.FRAME]``.
+ .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``returnResult``.
 
 <<ExternFunctionCall_eval, ExternFunctionCall_eval>>:
 
@@ -16741,8 +16758,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Result in ``evalContext``, ``store``, and ```EMPTY``.
 . If let ``forInitStatementIR~h~ {two-colons} forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``:
  .. Let <<ForInitStmt_eval, evalContext store |- forInitStatementIR~h~ : EC~1~ STO~1~ statementResult'>>.
- .. If let ``exitResult`` be ``statementResult'``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``statementResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
  .. Else if let ``continueEmptyResult`` be ``statementResult'``:
   ... Let <<ForInitStmts_eval, EC~1~ STO~1~ |- forInitStatementIR~t~^{asterisk}^ : EC~2~ STO~2~ statementResult>>.
   ... Result in ``EC~2~``, ``STO~2~``, and ``statementResult``.
@@ -16762,8 +16779,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~2~``,and the instantiated statement ``statementResult'`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If let ``exitResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``statementResult'``:
+  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else if let ``returnResult`` be ``statementResult'``:
   ... Result in ``EC~2~``, ``STO~2~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult'``:
@@ -16842,8 +16859,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let 
 * the evaluation context ``EC~2~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult'`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. If let ``exitResult`` be ``statementResult'``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ``EXIT``.
+ .. If let ``abortResult`` be ``statementResult'``:
+  ... Result in ``EC~2~``, ``STO~1~``, and ``abortResult``.
  .. Else if let ``returnResult`` be ``statementResult'``:
   ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult'``:
@@ -16980,12 +16997,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<SelectCase_match, ``EC~0~ STO~0~ value~key~^{asterisk}^ |- keysetExpressionIR : nameIR ; : % % %``>>:
 
 . Let <<Expr_eval_keyset, EC~0~ STO~0~ |- keysetExpressionIR : EC~1~ STO~1~ keysetExpressionResult>>.
-. Check that ``keysetExpressionResult`` has type ``continueResult<setValue*>``.
-. Let ``setValue^{asterisk}^`` be ``keysetExpressionResult``.
-. If ``~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``None``.
-. Else:
- .. Result in ``EC~1~``, ``STO~1~``, and ``nameIR``.
+. If let ``rejectTransitionResult`` be ``keysetExpressionResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+. Else if let ``setValue^{asterisk}^`` be ``keysetExpressionResult``:
+ .. If ``~<<match_keysets, match_keysets(setValue^{asterisk}^, value~key~^{asterisk}^)>>``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``None``.
+ .. Else:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``nameIR``.
 
 <<SelectCases_match, SelectCases_match: ``evalContext store value~key~^{asterisk}^ |- selectCaseIR^{asterisk}^ : % % %``>>
 
@@ -16994,12 +17012,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``selectCaseIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``store``, and ``None``.
 . If let ``selectCaseIR~h~ {two-colons} selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR^{asterisk}^``:
- .. Let <<SelectCase_match, evalContext store value~key~^{asterisk}^ |- selectCaseIR~h~ : EC~1~ STO~1~ nameIR^?^>>.
- .. If let ``nameIR~state~`` be ``nameIR^?^``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``nameIR~state~``.
+ .. Let <<SelectCase_match, evalContext store value~key~^{asterisk}^ |- selectCaseIR~h~ : EC~1~ STO~1~ selectCaseMatchResult'>>.
+ .. If let ``rejectTransitionResult`` be ``selectCaseMatchResult'``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
  .. Else:
-  ... Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ nameIR~state~^?^>>.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``nameIR~state~^?^``.
+  ... Let ``nameIR^?^`` be ``selectCaseMatchResult'``.
+  ... Check that ``nameIR^?^`` is defined.
+  ... Let ``nameIR~state~`` be ``nameIR^?^``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``nameIR~state~``.
+ .. If ``selectCaseMatchResult'`` is equal to ``None``:
+  ... Let <<SelectCases_match, EC~1~ STO~1~ value~key~^{asterisk}^ |- selectCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ selectCaseMatchResult>>.
+  ... Result in ``EC~2~``, ``STO~2~``, and ``selectCaseMatchResult``.
 
 <<TableKey_eval, TableKey_eval: ``EC~0~ STO~0~ |- typedExpressionIR : nameIR annotationList ; : % % %``>>
 

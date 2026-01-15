@@ -99,8 +99,9 @@ module Make
           on_tx_output tx_output_opt tx_output_queue tx_expect_queue
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
-    | Stf.Ast.Expect (port_expect, Some packet_expect, _exact) ->
+    | Stf.Ast.Expect (port_expect, packet_expect_opt, _exact) ->
         let port_expect = int_of_string port_expect in
+        let packet_expect = Option.value packet_expect_opt ~default:"" in
         let packet_expect = String.uppercase_ascii packet_expect in
         let tx_expect = (port_expect, packet_expect) in
         let tx_output_queue, tx_expect_queue =
