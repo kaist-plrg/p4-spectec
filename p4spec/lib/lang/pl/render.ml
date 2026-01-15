@@ -17,18 +17,26 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
+(* Widths *)
+
+let adoc_width_short = 20
+let adoc_fits_in_width_short (s : string) = String.length s <= adoc_width_short
+
 (* Subscript, superscript, and ligature *)
 
-let adoc_subscript s = "~" ^ s ^ "~"
-let adoc_superscript s = "^" ^ s ^ "^"
-let adoc_bold s = "*" ^ s ^ "*"
+let adoc_subscript (s : string) = "~" ^ s ^ "~"
+let adoc_superscript (s : string) = "^" ^ s ^ "^"
+let adoc_bold (s : string) = "*" ^ s ^ "*"
 
 (* Monospaced text *)
 
-let adoc_mono s = "``" ^ s ^ "``"
+let adoc_mono (s : string) = "``" ^ s ^ "``"
+
+let adoc_mono_chopped (s : string) =
+  s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
 
 let adoc_as_code (ctx : context) (s : string) : string =
-  if ctx.in_code then s else adoc_mono s
+  if ctx.in_code then s else adoc_mono_chopped s
 
 (* Lists *)
 
@@ -50,11 +58,6 @@ let adoc_as_link (ctx : context) ~link (s : string) : string =
 
 let adoc_attach_block = "+\n"
 let adoc_open_block s = F.asprintf "--\n%s\n--" s
-
-(* Widths *)
-
-let adoc_width_short = 20
-let adoc_fits_in_width_short s = String.length s <= adoc_width_short
 
 (* Rendering utils *)
 
