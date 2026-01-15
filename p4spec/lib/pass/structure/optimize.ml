@@ -4,9 +4,10 @@ open Runtime.Dynamic_Sl.Envs
 
 (* Apply optimizations until it reaches a fixed point *)
 
-let optimize_pre (instrs : instr list) : instr list =
-  instrs |> Opt.Remove_alias_let.apply |> Opt.Parallelize_if_disjunction.apply
-  |> Opt.Matchify_if_eq_terminal.apply
+let optimize_pre (ihenv : IHEnv.t) (instrs : instr list) : instr list =
+  instrs
+  |> Opt.Remove_alias_let.apply ihenv
+  |> Opt.Parallelize_if_disjunction.apply |> Opt.Matchify_if_eq_terminal.apply
 
 let rec optimize_loop (ihenv : IHEnv.t) (tdenv : TDEnv.t) (instrs : instr list)
     : instr list =
@@ -25,4 +26,5 @@ let optimize_post (tdenv : TDEnv.t) (instrs : instr list) : instr list =
 
 let optimize (ihenv : IHEnv.t) (tdenv : TDEnv.t) (instrs : instr list) :
     instr list =
-  instrs |> optimize_pre |> optimize_loop ihenv tdenv |> optimize_post tdenv
+  instrs |> optimize_pre ihenv |> optimize_loop ihenv tdenv
+  |> optimize_post tdenv

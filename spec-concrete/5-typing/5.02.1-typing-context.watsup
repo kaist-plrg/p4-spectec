@@ -140,6 +140,7 @@ def $empty_typingContext = TC
 ;;
 
 dec $bound(cursor, typingContext) : bound
+  hint(prose_in "bound type variables from the" %0 "layer of" %1)
 
 def $bound(GLOBAL, TC) = `{ eps }
 def $bound(BLOCK, TC) = $dom_map<typeId, typeDefIR>(TC.BLOCK.TYPE)
@@ -168,9 +169,9 @@ def $exit_t(TC) = TC [ .LOCAL.FRAMES = typeFrame_t* ]
 ;;; Adder for variables
 
 dec $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext
-  hint(prose_in %1 "with a mapping from" %2 "to" %3 "added to the" %0 "layer")
+  hint(prose_in %1 "where" %2 "to" %3 "is added to the" %0 "layer")
 dec $add_vars_t(cursor, typingContext, id*, varTypeIR*) : typingContext
-  hint(prose_in %1 "with mappings from each of" %2 "to each of" %3 "added to the" %0 "layer")
+  hint(prose_in %1 "where each of" %2 "to each of" %3 "are added to the" %0 "layer")
 
 def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.GLOBAL.FRAME

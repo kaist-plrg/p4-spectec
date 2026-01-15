@@ -53,6 +53,7 @@ module Source = struct
     let name = "rulegroup-source"
     let prefix = prefix_source
     let suffix = suffix_source
+    let header = false
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
@@ -110,6 +111,7 @@ module Prose = struct
     let name = "rulegroup-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
+    let header = false
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)

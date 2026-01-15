@@ -1,4 +1,5 @@
 open Domain
+open Lib
 open Lang
 open Xl
 open Ol.Ast
@@ -92,20 +93,63 @@ let rec disjoint_exp_literal (exp_a : exp) (exp_b : exp) : bool =
 
 let overlap_typ (tdenv : TDEnv.t) (exp : exp) (typ_a : typ) (typ_b : typ) :
     overlap =
-  let guard_a = SubG typ_a in
-  let guard_b = SubG typ_b in
   match (typ_as_variant tdenv typ_a, typ_as_variant tdenv typ_b) with
   | Some mixops_a, Some mixops_b ->
-      let module Set = Set.Make (Mixop) in
-      let mixops_a = Set.of_list mixops_a in
-      let mixops_b = Set.of_list mixops_b in
-      if Set.equal mixops_a mixops_b then Identical
-      else if Set.inter mixops_a mixops_b |> Set.is_empty then
-        Disjoint (exp, guard_a, guard_b)
+      let mixops_a = MixIdSet.of_list mixops_a in
+      let mixops_b = MixIdSet.of_list mixops_b in
+      if MixIdSet.eq mixops_a mixops_b then Identical
+      else if MixIdSet.inter mixops_a mixops_b |> MixIdSet.is_empty then
+        Disjoint (exp, SubG typ_a, SubG typ_b)
       else Fuzzy
   | _ -> Fuzzy
 
-let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
+let rec overlap_pattern (exp : exp) (pattern_a : pattern) (pattern_b : pattern)
+    : overlap =
+  let guard_a = MatchG pattern_a in
+  let guard_b = MatchG pattern_b in
+  let overlap_pattern_unequal () : overlap =
+    match (pattern_a, pattern_b) with
+    | CaseP _, CaseP _ -> Disjoint (exp, guard_a, guard_b)
+    | ListP `Cons, ListP (`Fixed n) | ListP (`Fixed n), ListP `Cons ->
+        if n = 0 then Partition (exp, guard_a, guard_b)
+        else Disjoint (exp, guard_a, guard_b)
+    | ListP `Cons, ListP `Nil | ListP `Nil, ListP `Cons ->
+        Partition (exp, guard_a, guard_b)
+    | ListP (`Fixed _), ListP (`Fixed _) -> Disjoint (exp, guard_a, guard_b)
+    | ListP (`Fixed n), ListP `Nil | ListP `Nil, ListP (`Fixed n) ->
+        if n = 0 then Identical else Disjoint (exp, guard_a, guard_b)
+    | OptP `Some, OptP `None | OptP `None, OptP `Some ->
+        Partition (exp, guard_a, guard_b)
+    | _ -> Fuzzy
+  in
+  if Sl.Eq.eq_pattern pattern_a pattern_b then Identical
+  else overlap_pattern_unequal ()
+
+and overlap_typ_and_pattern (tdenv : TDEnv.t) (exp : exp) (typ : typ)
+    (pattern : pattern) : overlap =
+  match pattern with
+  | CaseP mixop -> (
+      match typ_as_variant tdenv typ with
+      | Some mixops ->
+          let mixops = MixIdSet.of_list mixops in
+          if MixIdSet.mem mixop mixops then Fuzzy
+          else Disjoint (exp, SubG typ, MatchG pattern)
+      | None -> Fuzzy)
+  | _ -> Fuzzy
+
+and overlap_pattern_and_typ (tdenv : TDEnv.t) (exp : exp) (pattern : pattern)
+    (typ : typ) : overlap =
+  match pattern with
+  | CaseP mixop -> (
+      match typ_as_variant tdenv typ with
+      | Some mixops ->
+          let mixops = MixIdSet.of_list mixops in
+          if MixIdSet.mem mixop mixops then Fuzzy
+          else Disjoint (exp, MatchG pattern, SubG typ)
+      | None -> Fuzzy)
+  | _ -> Fuzzy
+
+and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
   let overlap_exp_unequal () : overlap =
     match (exp_a.it, exp_b.it) with
     (* Negation *)
@@ -176,6 +220,13 @@ let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
     | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b)
       when Sl.Eq.eq_exp exp_a exp_b ->
         overlap_pattern exp_a pattern_a pattern_b
+    (* Subtyping and match on patterns *)
+    | SubE (exp_a, typ_a), MatchE (exp_b, pattern_b)
+      when Sl.Eq.eq_exp exp_a exp_b ->
+        overlap_typ_and_pattern tdenv exp_a typ_a pattern_b
+    | MatchE (exp_a, pattern_a), SubE (exp_b, typ_b)
+      when Sl.Eq.eq_exp exp_a exp_b ->
+        overlap_pattern_and_typ tdenv exp_a pattern_a typ_b
     (* Membership on literals *)
     | ( MemE (exp_e_a, ({ it = ListE exps_s_a; _ } as exp_s_a)),
         MemE (exp_e_b, ({ it = ListE exps_s_b; _ } as exp_s_b)) )
@@ -188,28 +239,6 @@ let rec overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
     | _ -> Fuzzy
   in
   if Sl.Eq.eq_exp exp_a exp_b then Identical else overlap_exp_unequal ()
-
-and overlap_pattern (exp : exp) (pattern_a : pattern) (pattern_b : pattern) :
-    overlap =
-  let guard_a = MatchG pattern_a in
-  let guard_b = MatchG pattern_b in
-  let overlap_pattern_unequal () : overlap =
-    match (pattern_a, pattern_b) with
-    | CaseP _, CaseP _ -> Disjoint (exp, guard_a, guard_b)
-    | ListP `Cons, ListP (`Fixed n) | ListP (`Fixed n), ListP `Cons ->
-        if n = 0 then Partition (exp, guard_a, guard_b)
-        else Disjoint (exp, guard_a, guard_b)
-    | ListP `Cons, ListP `Nil | ListP `Nil, ListP `Cons ->
-        Partition (exp, guard_a, guard_b)
-    | ListP (`Fixed _), ListP (`Fixed _) -> Disjoint (exp, guard_a, guard_b)
-    | ListP (`Fixed n), ListP `Nil | ListP `Nil, ListP (`Fixed n) ->
-        if n = 0 then Identical else Disjoint (exp, guard_a, guard_b)
-    | OptP `Some, OptP `None | OptP `None, OptP `Some ->
-        Partition (exp, guard_a, guard_b)
-    | _ -> Fuzzy
-  in
-  if Sl.Eq.eq_pattern pattern_a pattern_b then Identical
-  else overlap_pattern_unequal ()
 
 let overlap_guard (tdenv : TDEnv.t) (exp : exp) (guard_a : guard)
     (guard_b : guard) : overlap =

@@ -3,6 +3,10 @@ open Sl.Print
 open Ast
 open Util.Source
 
+(* Expressions *)
+
+let string_of_exp (exp : exp) : string = Sl.Print.string_of_exp exp
+
 (* Case analysis *)
 
 let rec string_of_case ?(level = 0) ?(index = 0) (case : case) : string =

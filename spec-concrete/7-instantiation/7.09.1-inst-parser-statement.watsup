@@ -7,20 +7,17 @@
 ;;; constantDeclarationIR
 
 rule ParserStmt_inst/constantDeclarationIR:
-  IC_0 STO_0 |- constantDeclarationIR
-              : IC_1 STO_1 constantDeclarationIR_inst
-  -- Decl_inst:
-      LOCAL IC_0 STO_0 |- constantDeclarationIR
-                        : IC_1 STO_1 constantDeclarationIR_inst
+  IC_0 STO |- constantDeclarationIR
+            : IC_1 STO constantDeclarationIR_inst
+  -- ConstDecl_inst:
+      LOCAL IC_0 |- constantDeclarationIR
+                  : IC_1 constantDeclarationIR_inst
 
 ;;; variableDeclarationIR
 
 rule ParserStmt_inst/variableDeclarationIR:
-  IC_0 STO_0 |- variableDeclarationIR
-              : IC_1 STO_1 variableDeclarationIR_inst
-  -- BlockElementStmt_inst:
-      IC_0 STO_0 |- variableDeclarationIR
-                  : IC_1 STO_1 variableDeclarationIR_inst
+  IC STO |- variableDeclarationIR
+          : IC STO variableDeclarationIR
 
 ;;; emptyStatementIR
 

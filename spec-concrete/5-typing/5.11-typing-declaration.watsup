@@ -1,4 +1,51 @@
 ;;
+;;;; syntax variableDeclaration =
+;;;;  annotationList type name initializerOpt `;
+;;
+
+rulegroup VarDecl_ok {
+
+  rule VarDecl_ok/non-initializer:
+    p TC_0 |- annotationList type name `EMPTY `;
+            : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: p TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(p, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR eps `;
+
+  rule VarDecl_ok/initializer:
+    p TC_0 |- annotationList type name (`= expression_init) `;
+            : TC_1 variableDeclarationIR
+    ---- ;; check type
+    -- Type_ok: p TC_0 |- type : typeIR `# eps
+    -- Type_wf: $bound(p, TC_0) |- typeIR
+    ---- ;; check that the type is assignable
+    -- if $is_assignable_typeIR(typeIR)
+    ---- ;; check expression
+    -- Expr_ok:
+        p TC_0 |- expression_init
+                : typedExpressionIR_init
+    ---- ;; check that the expression matches the type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $coerce_unary(typedExpressionIR_init, typeIR)
+    ---- ;; update the context
+    -- if nameIR = $name(name)
+    -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
+    ---- ;; create IR
+    -- if variableDeclarationIR
+        = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
+
+}
+
+;;
 ;;;; syntax declaration
 ;;
 
@@ -6,7 +53,7 @@
 ;;; syntax constantDeclaration =
 ;;;   annotationList CONST type name initializer `;
 
-rule Decl_ok/constantDeclaration:
+rule ConstDecl_ok:
   p TC_0 |- annotationList CONST type name (`= expression_value) `;
           : TC_1 constantDeclarationIR
   ---- ;; check type
@@ -28,14 +75,21 @@ rule Decl_ok/constantDeclaration:
   -- if constantDeclarationIR
       = annotationList CONST typeIR nameIR (`= value) `;
 
+rule Decl_ok/constantDeclaration:
+  TC_0 |- constantDeclaration
+        : TC_1 constantDeclarationIR
+  -- ConstDecl_ok:
+      GLOBAL TC_0 |- constantDeclaration
+                   : TC_1 constantDeclarationIR
+
 ;;; instantiation
 ;;; syntax instantiation
 
 ;;;; annotationList type `( argumentList ) name `;
 
-rulegroup Decl_ok/instantiation-non-objectInitializer {
+rulegroup InstDecl_ok/instantiation-non-objectInitializer {
 
-  rule Decl_ok/prefixedTypeName:
+  rule InstDecl_ok/prefixedTypeName:
     p TC_0 |- annotationList prefixedTypeName `( argumentList ) name `;
             : TC_1 instantiationIR
     ---- ;; check arguments
@@ -57,7 +111,7 @@ rulegroup Decl_ok/instantiation-non-objectInitializer {
         = annotationList typeIR_object prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR eps `;
 
-  rule Decl_ok/specializedType:
+  rule InstDecl_ok/specializedType:
     p TC_0 |- annotationList
               (prefixedTypeName `< typeArgumentList >) `( argumentList ) name `;
             : TC_1 instantiationIR
@@ -146,11 +200,12 @@ rule Decl_object_ok/functionDeclaration:
 ;;;;;; instantiation
 
 rule Decl_object_ok/instantiation:
-  p TC_0 typeFrame externMethodTypeDefEnv
-  |- instantiation
-   : typeFrame_init externMethodTypeDefEnv instantiationIR
+  p TC_0 typeFrame
+  externMethodTypeDefEnv |- instantiation
+                          : typeFrame_init externMethodTypeDefEnv instantiationIR
   ---- ;; check instantiation
-  -- Decl_ok: p TC_0 |- instantiation : TC_1 instantiationIR
+  -- InstDecl_ok: p TC_0 |- instantiation
+                          : TC_1 instantiationIR
   ---- ;; add instance
   -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
   -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
@@ -216,9 +271,9 @@ def $subst_externMethodTypeDefEnv(
           externMethodTypeDefEnv_extern,
           callableId, externMethodTypeDefIR_concrete)
 
-rulegroup Decl_ok/instantiation-objectInitializer {
+rulegroup InstDecl_ok/instantiation-objectInitializer {
 
-  rule Decl_ok/prefixedTypeName:
+  rule InstDecl_ok/prefixedTypeName:
     p TC_0 |- annotationList
                 prefixedTypeName `( argumentList ) name (`= `{ objectDeclarationList }) `;
             : TC_2 instantiationIR
@@ -261,7 +316,7 @@ rulegroup Decl_ok/instantiation-objectInitializer {
         = annotationList typeIR_object_init prefixedNameIR
             `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR (`= `{ objectDeclarationIR* }) `;
 
-  rule Decl_ok/specializedType:
+  rule InstDecl_ok/specializedType:
     p TC_0 |- annotationList
               (prefixedTypeName `< typeArgumentList >) `( argumentList )
               name (`= `{ objectDeclarationList }) `;
@@ -312,13 +367,20 @@ rulegroup Decl_ok/instantiation-objectInitializer {
 
 }
 
+rule Decl_ok/instantiation:
+  TC_0 |- instantiation
+         : TC_1 instantiationIR
+  -- InstDecl_ok:
+      GLOBAL TC_0 |- instantiation
+                   : TC_1 instantiationIR
+
 ;;; functionDeclaration
 ;;; syntax functionDeclaration =
 ;;;   annotationList functionPrototype blockStatement
 ;;;; syntax functionPrototype =
 ;;;;   typeOrVoid name typeParameterListOpt `( parameterList )
 
-rule Decl_ok/functionDeclaration:
+rule FuncDecl_ok:
   p TC_0 |- annotationList
             (typeOrVoid name typeParameterListOpt `( parameterList )) blockStatement
           : TC_4 functionDeclarationIR
@@ -350,11 +412,18 @@ rule Decl_ok/functionDeclaration:
           (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
           blockStatementIR
 
+rule Decl_ok/functionDeclaration:
+  TC_0 |- functionDeclaration
+        : TC_1 functionDeclarationIR
+  -- FuncDecl_ok:
+      GLOBAL TC_0 |- functionDeclaration
+                   : TC_1 functionDeclarationIR
+
 ;;; actionDeclaration
 ;;; syntax actionDeclaration =
 ;;;   annotationList ACTION name `( parameterList ) blockStatement
 
-rule Decl_ok/actionDeclaration:
+rule ActionDecl_ok:
   p TC_0 |- annotationList ACTION name `( parameterList ) blockStatement
           : TC_3 actionDeclarationIR
   ---- ;; set local context
@@ -376,12 +445,19 @@ rule Decl_ok/actionDeclaration:
   -- if actionDeclarationIR
       = annotationList ACTION nameIR `( parameterIR* ) blockStatementIR
 
+rule Decl_ok/actionDeclaration:
+  TC_0 |- actionDeclaration
+        : TC_1 actionDeclarationIR
+  -- ActionDecl_ok:
+      GLOBAL TC_0 |- actionDeclaration
+                   : TC_1 actionDeclarationIR
+
 ;;; errorDeclaration
 ;;; syntax errorDeclaration = ERROR `{ nameList }
 
 rule Decl_ok/errorDeclaration:
-  GLOBAL TC_0 |- ERROR `{ nameList }
-               : TC_1 (ERROR `{ nameIR* })
+  TC_0 |- ERROR `{ nameList }
+        : TC_1 (ERROR `{ nameIR* })
   ---- ;; check that error names are distinct
   -- if name* = $flatten_nameList(nameList)
   -- if (nameIR = $name(name))*
@@ -396,8 +472,8 @@ rule Decl_ok/errorDeclaration:
 ;;; syntax matchKindDeclaration = MATCH_KIND `{ nameList trailingCommaOpt }
 
 rule Decl_ok/matchKindDeclaration:
-  GLOBAL TC_0 |- MATCH_KIND `{ nameList _ }
-               : TC_1 (MATCH_KIND `{ nameIR* })
+  TC_0 |- MATCH_KIND `{ nameList _ }
+        : TC_1 (MATCH_KIND `{ nameIR* })
   ---- ;; check that match kind names are distinct
   -- if name* = $flatten_nameList(nameList)
   -- if (nameIR = $name(name))*
@@ -415,9 +491,9 @@ rule Decl_ok/matchKindDeclaration:
 ;;;;   annotationList EXTERN functionPrototype `;
 
 rule Decl_ok/externFunctionDeclaration:
-  GLOBAL TC_0 |- annotationList EXTERN
+  TC_0 |- annotationList EXTERN
                   (typeOrVoid name typeParameterListOpt `( parameterList )) `;
-               : TC_4 externFunctionDeclarationIR
+        : TC_4 externFunctionDeclarationIR
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
@@ -460,24 +536,21 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype) = false
   -- otherwise
 
 rule Decl_ok/externObjectDeclaration:
-  GLOBAL TC_0 |- annotationList EXTERN nonTypeName
-                  typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
-               : TC_8 externObjectDeclarationIR
+  TC_0 |- annotationList EXTERN nonTypeName
+            typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+        : TC_8 externObjectDeclarationIR
   ---- ;; split methods and constructors
   -- if externConstructorOrMethodPrototype*
       = $flatten_externConstructorOrMethodPrototypeList(
-          externConstructorOrMethodPrototypeList
-        )
+          externConstructorOrMethodPrototypeList)
   -- if externConstructorPrototype*
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
-          def $is_externConstructorPrototype
-        )
+          def $is_externConstructorPrototype)
   -- if externMethodPrototype*
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
-          def $is_externMethodPrototype
-        )
+          def $is_externMethodPrototype)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = EXTERN ]
   ---- ;; check type parameters and add to context
@@ -513,10 +586,10 @@ rule Decl_ok/externObjectDeclaration:
 ;;;     `{ parserLocalDeclarationList parserStateList }
 
 rule Decl_ok/parserDeclaration:
-  GLOBAL TC_0 |- annotationList PARSER name `EMPTY
-                 `( parameterList ) constructorParameterListOpt
-                 `{ parserLocalDeclarationList parserStateList }
-               : TC_6 parserDeclarationIR
+  TC_0 |- annotationList PARSER name `EMPTY
+           `( parameterList ) constructorParameterListOpt
+           `{ parserLocalDeclarationList parserStateList }
+        : TC_6 parserDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; check constructor parameters
@@ -564,10 +637,10 @@ rule Decl_ok/parserDeclaration:
 ;;;     `{ controlLocalDeclarationList APPLY controlBody }
 
 rule Decl_ok/controlDeclaration:
-  GLOBAL TC_0 |- annotationList CONTROL name `EMPTY
-                 `( parameterList ) constructorParameterListOpt
-                 `{ controlLocalDeclarationList APPLY controlBody }
-               : TC_6 controlDeclarationIR
+  TC_0 |- annotationList CONTROL name `EMPTY
+           `( parameterList ) constructorParameterListOpt
+           `{ controlLocalDeclarationList APPLY controlBody }
+        : TC_6 controlDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; check constructor parameters
@@ -619,8 +692,8 @@ rule Decl_ok/controlDeclaration:
 ;;;;;; annotationList ENUM name `{ nameList trailingCommaOpt }
 
 rule Decl_ok/enumTypeDeclaration-non-serializable:
-  GLOBAL TC_0 |- annotationList ENUM name `{ nameList_field _ }
-               : TC_2 enumTypeDeclarationIR
+  TC_0 |- annotationList ENUM name `{ nameList_field _ }
+        : TC_2 enumTypeDeclarationIR
   ---- ;; create enum type and add to context
   -- if nameIR = $name(name)
   -- if name_field* = $flatten_nameList(nameList_field)
@@ -683,8 +756,8 @@ rule Enum_serializable_fields_ok/cons:
   -- if value_field* = value_field_h :: value_field_t*
 
 rule Decl_ok/enumTypeDeclaration-serializable:
-  GLOBAL TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
-               : TC_3 enumTypeDeclarationIR
+  TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
+        : TC_3 enumTypeDeclarationIR
   ---- ;; check underlying type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
   -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
@@ -715,8 +788,8 @@ rule Decl_ok/enumTypeDeclaration-serializable:
 ;;;;;   annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
 
 rule Decl_ok/structTypeDeclaration:
-  GLOBAL TC_0 |- annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
-               : TC_2 structTypeDeclarationIR
+  TC_0 |- annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
+        : TC_2 structTypeDeclarationIR
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
@@ -743,8 +816,8 @@ rule Decl_ok/structTypeDeclaration:
 ;;;;;   annotationList HEADER name typeParameterListOpt `{ typeFieldList }
 
 rule Decl_ok/headerTypeDeclaration:
-  GLOBAL TC_0 |- annotationList HEADER name typeParameterListOpt `{ typeFieldList }
-               : TC_2 headerTypeDeclarationIR
+  TC_0 |- annotationList HEADER name typeParameterListOpt `{ typeFieldList }
+        : TC_2 headerTypeDeclarationIR
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
@@ -771,8 +844,8 @@ rule Decl_ok/headerTypeDeclaration:
 ;;;;;   annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }
 
 rule Decl_ok/headerUnionTypeDeclaration:
-  GLOBAL TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }
-               : TC_2 headerUnionTypeDeclarationIR
+  TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }
+        : TC_2 headerUnionTypeDeclarationIR
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
@@ -806,8 +879,8 @@ rule Decl_ok/headerUnionTypeDeclaration:
 rulegroup Decl_ok/typedefDeclaration-typedef {
 
   rule Decl_ok/type:
-    GLOBAL TC_0 |- annotationList TYPEDEF type name `;
-                 : TC_1 typedefDeclarationIR
+    TC_0 |- annotationList TYPEDEF type name `;
+          : TC_1 typedefDeclarationIR
     ---- ;; check type
     -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
     -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
@@ -821,11 +894,11 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
         = annotationList TYPEDEF typeIR nameIR `;
 
   rule Decl_ok/derivedTypeDeclaration-mono:
-    GLOBAL TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name `;
-                 : TC_1 typedefDeclarationIR
+    TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name `;
+          : TC_1 typedefDeclarationIR
     ---- ;; check type
-    -- Decl_ok: GLOBAL TC_0 |- derivedTypeDeclaration
-                             : TC_1 derivedTypeDeclarationIR
+    -- Decl_ok: TC_0 |- derivedTypeDeclaration
+                      : TC_1 derivedTypeDeclarationIR
     ---- ;; find the created type
     -- if `{ typeId }
         = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE),
@@ -844,11 +917,11 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
         = annotationList TYPEDEF derivedTypeDeclarationIR nameIR `;
 
   rule Decl_ok/derivedTypeDeclaration-poly:
-    GLOBAL TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name `;
-                 : TC_1 typedefDeclarationIR
+    TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name `;
+          : TC_1 typedefDeclarationIR
     ---- ;; check type
-    -- Decl_ok: GLOBAL TC_0 |- derivedTypeDeclaration
-                             : TC_1 derivedTypeDeclarationIR
+    -- Decl_ok: TC_0 |- derivedTypeDeclaration
+                      : TC_1 derivedTypeDeclarationIR
     ---- ;; find the created type
     -- if `{ typeId }
         = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE),
@@ -872,8 +945,8 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
 ;;;;; annotationList TYPE type name `;
 
 rule Decl_ok/typedefDeclaration-newtype:
-  GLOBAL TC_0 |- annotationList TYPE type name `;
-               : TC_1 typedefDeclarationIR
+  TC_0 |- annotationList TYPE type name `;
+        : TC_1 typedefDeclarationIR
   ---- ;; check type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
   -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
@@ -891,8 +964,8 @@ rule Decl_ok/typedefDeclaration-newtype:
 ;;;;   annotationList PARSER name typeParameterListOpt `( parameterList ) `;
 
 rule Decl_ok/parserTypeDeclaration:
-  GLOBAL TC_0 |- annotationList PARSER name typeParameterListOpt `( parameterList ) `;
-               : TC_3 parserTypeDeclarationIR
+  TC_0 |- annotationList PARSER name typeParameterListOpt `( parameterList ) `;
+        : TC_3 parserTypeDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; add type parameters to the context
@@ -917,8 +990,8 @@ rule Decl_ok/parserTypeDeclaration:
 ;;;;   annotationList CONTROL name typeParameterListOpt `( parameterList ) `;
 
 rule Decl_ok/controlTypeDeclaration:
-  GLOBAL TC_0 |- annotationList CONTROL name typeParameterListOpt `( parameterList ) `;
-               : TC_3 controlTypeDeclarationIR
+  TC_0 |- annotationList CONTROL name typeParameterListOpt `( parameterList ) `;
+        : TC_3 controlTypeDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; add type parameters to the context
@@ -943,8 +1016,8 @@ rule Decl_ok/controlTypeDeclaration:
 ;;;;   annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;
 
 rule Decl_ok/packageTypeDeclaration:
-  GLOBAL TC_0 |- annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;
-               : TC_4 packageTypeDeclarationIR
+  TC_0 |- annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;
+        : TC_4 packageTypeDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PACKAGE ]
   ---- ;; add type parameters to the context
@@ -980,13 +1053,15 @@ rule Decl_ok/packageTypeDeclaration:
 ;;
 
 rule Decls_ok/nil:
-  p TC |- eps : TC eps
+  TC |- eps : TC eps
 
 rule Decls_ok/cons:
-  p TC_0 |- declaration_h :: declaration_t*
-          : TC_2 (declarationIR_h :: declarationIR_t*)
-  -- Decl_ok: p TC_0 |- declaration_h : TC_1 declarationIR_h
-  -- Decls_ok: p TC_1 |- declaration_t* : TC_2 declarationIR_t*
+  TC_0 |- declaration_h :: declaration_t*
+        : TC_2 (declarationIR_h :: declarationIR_t*)
+  -- Decl_ok:
+      TC_0 |- declaration_h : TC_1 declarationIR_h
+  -- Decls_ok:
+      TC_1 |- declaration_t* : TC_2 declarationIR_t*
 
 ;;
 ;;;; syntax p4program
@@ -996,4 +1071,4 @@ rule Program_ok:
   |- p4program : (declarationIR* `;)
   -- if declaration* = $flatten_p4program(p4program)
   -- if TC_0 = $empty_typingContext
-  -- Decls_ok: GLOBAL TC_0 |- declaration* : TC_1 declarationIR*
+  -- Decls_ok: TC_0 |- declaration* : TC_1 declarationIR*

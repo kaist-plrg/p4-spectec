@@ -46,6 +46,7 @@ module Source = struct
     let name = "table-source"
     let prefix = ""
     let suffix = "\n"
+    let header = false
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
@@ -91,6 +92,7 @@ module Prose = struct
     let name = "table-prose"
     let prefix = ""
     let suffix = "\n"
+    let header = false
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
