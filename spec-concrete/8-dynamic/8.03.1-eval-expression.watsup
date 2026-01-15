@@ -534,6 +534,16 @@ rulegroup Expr_eval/callExpressionIR {
         p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
                       : EC_2 STO_2 EXIT
 
+  rule Expr_eval/callee-cont-call-reject:
+    p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
+                  : EC_2 STO_2 rejectTransitionResult
+    -- Callee_eval:
+        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
+                      : EC_1 STO_1 (`` callee)
+    -- Call_eval:
+        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
+                      : EC_2 STO_2 rejectTransitionResult
+
   rule Expr_eval/callee-cont-call-return:
     p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
                   : EC_2 STO_2 (`` value)
@@ -573,6 +583,12 @@ rulegroup Exprs_eval {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 EXIT
 
+  rule Exprs_eval/cons-head-reject:
+    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                  : EC_1 STO_1 rejectTransitionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 rejectTransitionResult
+
   rule Exprs_eval/cons-head-cont-tail-exit:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
                   : EC_2 STO_2 EXIT
@@ -580,6 +596,14 @@ rulegroup Exprs_eval {
         p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (`` value_h)
     -- Exprs_eval:
         p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 EXIT
+
+  rule Exprs_eval/cons-head-cont-tail-reject:
+    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                  : EC_2 STO_2 rejectTransitionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (`` value_h)
+    -- Exprs_eval:
+        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 rejectTransitionResult
 
   rule Exprs_eval/cons-head-cont-tail-cont:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*

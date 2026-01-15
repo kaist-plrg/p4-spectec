@@ -1,4 +1,4 @@
-;; Instruction coverage: 9152/12586 (72.72%)
+;; Instruction coverage: 9158/12594 (72.72%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -29613,12 +29613,13 @@ syntax rejectTransitionResult =
 syntax stateTransitionResult = 
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:29.1-30.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:29.1-31.15
 syntax expressionResult = 
    | ` value
+   | reject errorValue
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:32.1-37.95
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:33.1-38.95
 rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 + 1. Case analysis on expressionIR
@@ -30343,7 +30344,13 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                 2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
 
-                2. Case (% has type returnResult)
+                2. Case (% has type rejectTransitionResult)
+
++                 1. (Let rejectTransitionResult be (callResult as rejectTransitionResult))
+
++                 2. Result in: % % % |- % : EC_2 STO_2 (rejectTransitionResult as expressionResult)
+
+                3. Case (% has type returnResult)
 
 +                 1. (Let (return (value')?) be (callResult as returnResult))
 
@@ -30363,12 +30370,13 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:40.1-41.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:41.1-43.15
 syntax expressionListResult = 
    | ` value*
+   | reject errorValue
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.100
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:45.1-50.100
 rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 + 1. Group : p evalContext store |- (typedExpressionIR)* : % % %
@@ -30377,11 +30385,11 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +     1. Result in: % % % |- % : evalContext store ((` []) as expressionListResult)
 
-+   2. (Let (typedExpressionIR''')* be (typedExpressionIR)*)
++   2. (Let (typedExpressionIR''''')* be (typedExpressionIR)*)
 
-+   3. If (((typedExpressionIR''')* matches pattern _ :: _)), then
++   3. If (((typedExpressionIR''''')* matches pattern _ :: _)), then
 
-+     1. (Let typedExpressionIR_h :: (typedExpressionIR_t)* be (typedExpressionIR''')*)
++     1. (Let typedExpressionIR_h :: (typedExpressionIR_t)* be (typedExpressionIR''''')*)
 
 +     2. (Expr_eval: p evalContext store |- typedExpressionIR_h : EC_1 STO_1 expressionResult)
 
@@ -30393,7 +30401,13 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +         2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionListResult)
 
-        2. Case (% has type continueResult<value>)
+        2. Case (% has type rejectTransitionResult)
+
++         1. (Let rejectTransitionResult be (expressionResult as rejectTransitionResult))
+
++         2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as expressionListResult)
+
+        3. Case (% has type continueResult<value>)
 
 +         1. (Let (` value_h) be (expressionResult as continueResult<value>))
 
@@ -30407,18 +30421,24 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +             2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionListResult)
 
-            2. Case (% has type continueResult<value*>)
+            2. Case (% has type rejectTransitionResult)
+
+-             1. (Let rejectTransitionResult be (expressionListResult as rejectTransitionResult))
+
+-             2. Result in: % % % |- % : EC_2 STO_2 (rejectTransitionResult as expressionListResult)
+
+            3. Case (% has type continueResult<value*>)
 
 +             1. (Let (` (value_t)*) be (expressionListResult as continueResult<value*>))
 
 +             2. Result in: % % % |- % : EC_2 STO_2 ((` value_h :: (value_t)*) as expressionListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:51.1-52.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:53.1-54.15
 syntax keysetExpressionResult = 
    | ` setValue*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:54.1-57.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:56.1-59.23
 rel Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : % % %
 
 + 1. Group : EC_0 STO_0 |- keysetExpressionIR : % % %
@@ -30429,7 +30449,7 @@ rel Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : % % %
 
 +   3. Result in: % % |- % : EC_1 STO_1 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:63.1-66.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:65.1-68.26
 rel Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
 + 1. If ((argumentIR has type typedExpressionIR)), then
@@ -30452,12 +30472,12 @@ rel Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
 -     2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:69.1-70.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:71.1-72.15
 syntax storageReferenceResult = 
    | ` storageReference?
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:72.1-75.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:74.1-77.26
 rel Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
 + 1. If ((argumentIR has type typedExpressionIR)), then
@@ -30508,7 +30528,7 @@ rel Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
 +       1. Result in: % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:81.1-84.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:83.1-86.26
 rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 + 1. If ((lvalueIR has type referenceExpressionIR)), then
@@ -30647,7 +30667,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 -       2. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:88.1-90.26
 rel Lvalue_read: p EC STO |- storageReference' : %
 
 + 1. If ((storageReference' has type prefixedNameIR)), then
@@ -30794,7 +30814,7 @@ rel Lvalue_read: p EC STO |- storageReference' : %
 
 +       3. Result in: % % % |- % : value
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:90.1-93.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:92.1-95.29
 rel Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
 + 1. If ((storageReference' has type prefixedNameIR)), then
@@ -30953,21 +30973,21 @@ rel Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
 +       4. Result in: % % % |- % -> % : EC_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:100.1-102.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:102.1-104.17
 syntax callResult = 
    | exit
    | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:104.25-104.30
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:106.25-106.30
 syntax forBreakResult = 
    | break
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:106.28-106.36
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:108.28-108.36
 syntax forContinueResult = 
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:111.1-114.22
 syntax statementResult = 
    | `
    | exit
@@ -30976,7 +30996,7 @@ syntax statementResult =
    | break
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-121.55
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:116.1-123.55
 rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 + 1. Case analysis on statementIR'
@@ -31391,7 +31411,7 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 -                 1. Result in: % % % |- % : EC_2 STO_2 ((`) as statementResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:125.1-128.23
 rel BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
 + 1. Case analysis on blockElementStatementIR
@@ -31466,7 +31486,7 @@ rel BlockElementStmt_eval: EC_0 STO_0 |- blockElementStatementIR : % % %
 
 +       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:128.1-131.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:130.1-133.23
 rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (blockElementStatementIR)* : % % %
@@ -31517,7 +31537,7 @@ rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % 
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:133.1-136.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:135.1-138.23
 rel Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
 + 1. Group : EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
@@ -31526,12 +31546,12 @@ rel Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) :
 
 +   2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:145.1-146.27
 syntax parserStatementResult = 
    | `
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:148.1-151.23
 rel ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
 + 1. Case analysis on parserStatementIR
@@ -31672,7 +31692,7 @@ rel ParserStmt_eval: EC_0 STO_0 |- parserStatementIR : % % %
 
 -             2. Result in: % % |- % : EC_else STO_else parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-154.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:153.1-156.23
 rel ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (parserStatementIR)* : % % %
@@ -31705,13 +31725,13 @@ rel ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:157.1-159.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:159.1-161.26
 syntax transitionResult = 
    | accept
    | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:161.1-164.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:163.1-166.23
 rel ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
 + 1. If ((stateExpressionIR matches pattern `%;`)), then
@@ -31746,29 +31766,37 @@ rel ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
 +     2. (Exprs_eval: (local) EC STO |- (typedExpressionIR_key)* : EC_1 STO_1 expressionListResult)
 
-+     3. If ((expressionListResult has type continueResult<value*>)), then
++     3. Case analysis on expressionListResult
 
-+       1. (Let (` (value_key)*) be (expressionListResult as continueResult<value*>))
+        1. Case (% has type rejectTransitionResult)
 
-+       2. (SelectCases_match: EC_1 STO_1 (value_key)* |- selectCaseListIR : EC_2 STO_2 (nameIR)?)
++         1. (Let rejectTransitionResult be (expressionListResult as rejectTransitionResult))
 
-+       3. Case analysis on (nameIR)?
++         2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
-          1. Case (% matches pattern ())
+        2. Case (% has type continueResult<value*>)
 
-+           1. (Let rejectTransitionResult be (reject (error. "NoMatch")))
++         1. (Let (` (value_key)*) be (expressionListResult as continueResult<value*>))
 
-+           2. Result in: % % |- % : EC_2 STO_2 (rejectTransitionResult as transitionResult)
++         2. (SelectCases_match: EC_1 STO_1 (value_key)* |- selectCaseListIR : EC_2 STO_2 (nameIR)?)
 
-          2. Case (% matches pattern (_))
++         3. Case analysis on (nameIR)?
 
-+           1. (Let ?(nameIR_state) be (nameIR)?)
+            1. Case (% matches pattern ())
 
-+           2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
++             1. (Let rejectTransitionResult be (reject (error. "NoMatch")))
 
-+           3. Result in: % % |- % : EC_3 STO_3 transitionResult
++             2. Result in: % % |- % : EC_2 STO_2 (rejectTransitionResult as transitionResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:166.1-169.23
+            2. Case (% matches pattern (_))
+
++             1. (Let ?(nameIR_state) be (nameIR)?)
+
++             2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
+
++             3. Result in: % % |- % : EC_3 STO_3 transitionResult
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:168.1-171.23
 rel ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
 
 + 1. Group : EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
@@ -31791,7 +31819,7 @@ rel ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR
 
 +       3. Result in: % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:171.1-174.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:173.1-176.23
 rel ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 + 1. Group accept: EC_0 STO_0 |-transition nameIR : % % %
@@ -31844,7 +31872,7 @@ rel ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 +       3. Result in: % % |-transition % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:176.1-179.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:178.1-181.23
 rel ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
 + 1. Case analysis on parserLocalDeclarationIR
@@ -31895,7 +31923,7 @@ rel ParserLocalDecl_eval: EC_0 STO_0 |- parserLocalDeclarationIR : % %
 
 +           3. Result in: % % |- % : EC_2 STO_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:181.1-184.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:183.1-186.23
 rel ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % %
 
 + 1. Group : evalContext store |- (parserLocalDeclarationIR)* : % %
@@ -31916,12 +31944,12 @@ rel ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % 
 
 +     4. Result in: % % |- % : EC_2 STO_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:191.1-192.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:193.1-194.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-197.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:196.1-199.26
 rel Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
 + 1. Group : EC_0 STO_0 |- typeId TBL : % % %
@@ -31984,12 +32012,12 @@ rel Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
 +               6. Result in: % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:200.1-201.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:202.1-203.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-206.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:205.1-208.23
 rel ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 + 1. Group cont: EC_0 STO_0 |- controlBodyIR : % % %
@@ -32020,12 +32048,12 @@ rel ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 +     1. Result in: % % |- % : EC_1 STO_1 ((return ?()) as controlBodyResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:211.1-212.15
 syntax declarationResult = 
    | `
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:214.1-217.23
 rel ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
 + 1. Case analysis on controlLocalDeclarationIR
@@ -32078,7 +32106,7 @@ rel ControlLocalDecl_eval: EC_0 STO_0 |- controlLocalDeclarationIR : % % %
 
 +             3. Result in: % % |- % : EC_2 STO_1 ((`) as declarationResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.1-220.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:219.1-222.23
 rel ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR)* : % % %
 
 + 1. Group : evalContext store |- (controlLocalDeclarationIR)* : % % %
@@ -32111,7 +32139,7 @@ rel ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR)* : 
 
 +         3. Result in: % % |- % : EC_2 STO_2 declarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:226.1-229.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:228.1-231.26
 rel Decl_eval: p EC_0 STO |- declarationIR : % % %
 
 + 1. If ((declarationIR has type constantDeclarationIR)), then
@@ -32124,12 +32152,12 @@ rel Decl_eval: p EC_0 STO |- declarationIR : % % %
 
 +     2. Result in: % % % |- % : EC_1 STO ((`) as declarationResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:236.1-237.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:238.1-239.15
 syntax calleeResult = 
    | ` callee
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:239.1-242.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:241.1-244.29
 rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 + 1. If ((callableTargetIR has type referenceExpressionIR)), then
@@ -32556,12 +32584,12 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +                     3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (tableApplyMethodCallee as callee)) as calleeResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:245.1-246.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:247.1-248.15
 syntax copyInResult = 
    | ` storageReference?
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:248.1-252.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:250.1-254.35
 rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 + 1. Group directionless-in: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
@@ -32664,12 +32692,12 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +           5. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` (storageReference)?) as copyInResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:255.1-256.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:257.1-258.15
 syntax copyInListResult = 
    | ` storageReference?*
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-262.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:260.1-264.35
 rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
 
 + 1. Group : store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
@@ -32728,7 +32756,7 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
 +                 3. Result in: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ((` ((storageReference)?)*) as copyInListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:264.1-267.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:266.1-269.26
 rel Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 + 1. Group : (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
@@ -32739,7 +32767,7 @@ rel Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 +   3. Result in: % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:271.1-275.35
 rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
 + 1. If (((storageReference')? matches pattern ())), then
@@ -32794,7 +32822,7 @@ rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR
 
 +         3. Result in: % % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-279.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:277.1-281.35
 rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
 
 + 1. Group : STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
@@ -32823,7 +32851,7 @@ rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((sto
 
 +       4. Result in: % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:281.1-287.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-289.90
 rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ): % % %
 
 + 1. (Let (typeArgumentIR)* be typeArgumentListIR)
@@ -33434,10 +33462,10 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:289.1-294.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:291.1-296.90
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( (nameIR')* ): % % %
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:296.1-302.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:298.1-304.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( (nameIR')* ): % % %
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
@@ -33687,7 +33715,7 @@ rel Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* :
 
 +             3. Result in: % % |- % : EC_2 STO_2 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:261.1-264.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:260.1-263.23
 rel ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : % % %
 
 + 1. Case analysis on forUpdateStatementIR
@@ -33712,7 +33740,7 @@ rel ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : % % %
 
 +       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:285.1-288.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:284.1-287.23
 rel ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (forUpdateStatementIR)* : % % %
@@ -33745,7 +33773,7 @@ rel ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:313.1-316.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:312.1-315.23
 rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 + 1. If ((forInitStatementIR matches pattern `%%%%`)), then
@@ -33798,7 +33826,7 @@ rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 +     2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:361.1-364.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:360.1-363.23
 rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (forInitStatementIR)* : % % %
@@ -33831,7 +33859,7 @@ rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:391.1-394.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:390.1-393.29
 rel ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
 + 1. Group : EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
@@ -33894,7 +33922,7 @@ rel ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpda
 
 +           3. Result in: % % |- % % % : EC_4 STO_4 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:499.1-502.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:498.1-501.23
 rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 + 1. If ((forCollectionExpressionIR has type typedExpressionIR)), then
@@ -33975,7 +34003,7 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 +             4. Result in: % % |- % : EC_2 STO_2 ((` (value)*) as expressionListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:528.1-528.54
 def $values_of_setValue((set< typeIR >), setValue)
 
 + 1. If ((setValue matches pattern `SET{%..%}`)), then
@@ -33998,7 +34026,7 @@ def $values_of_setValue((set< typeIR >), setValue)
 
 -     1. Return []
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:570.1-573.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:569.1-572.29
 rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 + 1. Group : evalContext store |- nameIR (value)* statementIR : % % %
@@ -34045,7 +34073,7 @@ rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 +       2. Result in: % % |- % % % : EC_3 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:673.1-673.57
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:672.1-672.57
 def $match_switchLabelIR_table(id, switchLabelIR)
 
 + 1. If ((switchLabelIR matches pattern `DEFAULT`)), then
@@ -34072,7 +34100,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
 +   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:683.1-685.20
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:682.1-684.20
 rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 + 1. Group : id |- (switchCaseIR)* : %
@@ -34131,7 +34159,7 @@ rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 +             2. Result in: % |- % : (blockStatementIR)?
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:687.1-687.58
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:686.1-686.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 - 1. Case analysis on switchCaseIR
@@ -34144,7 +34172,7 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 -     1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:733.1-735.26
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:732.1-734.26
 rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then
@@ -34175,7 +34203,7 @@ rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 +           2. Result in: % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:754.1-754.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:753.1-753.54
 def $match_switchLabelIR_general(value, value')
 
 + 1. If ((value' has type defaultValue)), then
@@ -34244,7 +34272,7 @@ def $match_switchLabelIR_general(value, value')
 
 -   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:763.1-765.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:762.1-764.29
 rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then
