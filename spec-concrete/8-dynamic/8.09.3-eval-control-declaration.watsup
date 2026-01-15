@@ -7,11 +7,10 @@
 ;;; constantDeclarationIR
 
 rule ControlLocalDecl_eval/constantDeclarationIR:
-  EC_0 STO_0 |- constantDeclarationIR
-              : EC_1 STO_1 declarationResult
-  -- Decl_eval:
-      BLOCK EC_0 STO_0 |- constantDeclarationIR
-                        : EC_1 STO_1 declarationResult
+  EC_0 STO |- constantDeclarationIR
+            : EC_1 STO `EMPTY
+  -- ConstDecl_eval:
+      BLOCK EC_0 |- constantDeclarationIR : EC_1
 
 ;;; instantiationIR
 ;;; should have been handled during instantiation
@@ -20,32 +19,19 @@ rule ControlLocalDecl_eval/constantDeclarationIR:
 
 rulegroup ControlLocalDecl_eval/variableDeclarationIR {
 
-  rule ControlLocalDecl_eval/non-initializer:
-    EC_0 STO |- annotationList typeIR nameIR eps `;
-              : EC_1 STO ``
-    ---- ;; get initial value
-    -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
-    -- if value_init = $default(typeIR)
-    ---- ;; update evaluation context
-    -- if EC_1 = $add_var_e(BLOCK, EC_0, `` nameIR, value_init)
+  rule ControlLocalDecl_eval/exit:
+    EC_0 STO_0 |- variableDeclarationIR
+                : EC_1 STO_1 EXIT
+    -- VarDecl_eval:
+        BLOCK EC_0 STO_0 |- variableDeclarationIR
+                          : EC_1 STO_1 EXIT
 
-  rule ControlLocalDecl_eval/initializer-exit:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_1 STO_1 abortResult
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        BLOCK EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 abortResult
-
-  rule ControlLocalDecl_eval/initializer-cont:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_2 STO_1 ``
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        BLOCK EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 (`` value_init)
-    ---- ;; update evaluation context
-    -- if EC_2 = $add_var_e(BLOCK, EC_1, `` nameIR, value_init)
+  rule ControlLocalDecl_eval/cont:
+    EC_0 STO_0 |- variableDeclarationIR
+                : EC_1 STO_1 `EMPTY
+    -- VarDecl_eval:
+        BLOCK EC_0 STO_0 |- variableDeclarationIR
+                          : EC_1 STO_1 `EMPTY
 
 }
 
@@ -64,7 +50,7 @@ rulegroup ControlLocalDecl_eval/variableDeclarationIR {
 rulegroup ControlLocalDecls_eval {
 
   rule ControlLocalDecls_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
    rule ControlLocalDecls_eval/cons-head-exit:
     EC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t
@@ -78,7 +64,7 @@ rulegroup ControlLocalDecls_eval {
                 : EC_2 STO_2 declarationResult
     -- ControlLocalDecl_eval:
         EC_0 STO_0 |- controlLocalDeclarationIR_h
-                    : EC_1 STO_1 ``
+                    : EC_1 STO_1 `EMPTY
     -- ControlLocalDecls_eval:
         EC_1 STO_1 |- controlLocalDeclarationListIR_t
                     : EC_2 STO_2 declarationResult

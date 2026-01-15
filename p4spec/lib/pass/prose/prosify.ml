@@ -347,7 +347,9 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
 
 and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   (* Expand nested calls *)
-  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
+  let instrs =
+    Expand.expand (ctx.ihenv, ctx.frees) Expand.expand_nested_calls instrs
+  in
   (* Prosify instructions *)
   let instrs_pl = prosify_instrs' ctx instrs in
   (* Apply shorthands *)
@@ -360,27 +362,23 @@ and prosify_instrs' (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   let num_branch_instrs =
     instrs |> List.filter is_branch_instr |> List.length
   in
+  let rec trailing_instrs instrs =
+    match instrs with
+    | [] -> []
+    | instr_h :: instrs_t ->
+        if is_branch_instr instr_h then instrs_t else trailing_instrs instrs_t
+  in
   if num_branch_instrs = 1 then
-    let ctx = Ctx.set_branch ctx Check in
+    let instrs_trailing = trailing_instrs instrs in
+    let ctx =
+      match instrs_trailing with
+      | [] -> Ctx.set_branch ctx Check
+      | _ -> Ctx.set_branch ctx If
+    in
     instrs |> List.concat_map (prosify_instr ctx)
   else
-    instrs
-    |> List.fold_left
-         (fun (is_first_branch, instrs_pl) instr ->
-           let ctx, is_first_branch =
-             if is_first_branch && is_branch_instr instr then
-               let ctx = Ctx.set_branch ctx If in
-               (ctx, false)
-             else if is_branch_instr instr then
-               let ctx = Ctx.set_branch ctx ElseIf in
-               (ctx, false)
-             else
-               let ctx = Ctx.set_branch ctx Check in
-               (ctx, is_first_branch)
-           in
-           (is_first_branch, instrs_pl @ prosify_instr ctx instr))
-         (true, [])
-    |> snd
+    let ctx = Ctx.set_branch ctx If in
+    instrs |> List.concat_map (prosify_instr ctx)
 
 (* If instruction prosification *)
 
@@ -544,7 +542,7 @@ and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
 
 and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
     (cases : case list) (phantom_opt : phantom option) : Pl.instr list =
-  let total = Option.is_some phantom_opt in
+  let total = Option.is_none phantom_opt in
   prosify_cases ~total at ctx exp cases
 
 (* Otherwise instruction prosification *)
@@ -617,15 +615,20 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
   let exps_output_pl_indexed =
     List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_output_indexed
   in
+  let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
+  let prose_out_opt = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
   let rel_call_pl =
-    match Ctx.find_hint_prose_in ctx (`Rel id_rel) with
-    | Some prose_in ->
+    match (prose_in_opt, prose_out_opt) with
+    | Some prose_in, Some prose_out ->
         let exps_input_pl = List.map snd exps_input_pl_indexed in
         Ctx.validate_hint_alter at prose_in exps_input_pl;
         let exps_output_pl = List.map snd exps_output_pl_indexed in
+        let prose_out_aligned = Hints.Alter.realign prose_out inputs in
+        Ctx.validate_hint_alter at prose_out_aligned exps_output_pl;
         Pl.ProseRelCall
-          (`Yield (id_rel, prose_in, exps_input_pl, exps_output_pl))
-    | None ->
+          (`Yield
+            (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
+    | _ ->
         let exps_pl_indexed =
           exps_input_pl_indexed @ exps_output_pl_indexed
           |> List.sort (fun (idx_a, _) (idx_b, _) -> Int.compare idx_a idx_b)

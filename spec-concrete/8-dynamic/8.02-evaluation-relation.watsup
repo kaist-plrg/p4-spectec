@@ -4,7 +4,7 @@
 
 ;;; Continue evaluation
 
-syntax continueEmptyResult = ``
+syntax continueEmptyResult = `EMPTY
 syntax continueResult<X> = `` X
 
 ;;; Exit from evaluation
@@ -231,10 +231,23 @@ syntax declarationResult =
   | continueEmptyResult
   | exitResult
 
-relation Decl_eval:
-  cursor evalContext store |- declarationIR
+relation VarDecl_eval:
+  cursor evalContext store |- variableDeclarationIR
                             : evalContext store declarationResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#
+                ", evaluation context" %1#", and store" %2)
+  hint(prose_out "\nthe updated evaluation context" %4#
+                 ", the updated store" %5#
+                 ",\nand the result" %6)
+
+relation ConstDecl_eval:
+  cursor evalContext |- constantDeclarationIR
+                      : evalContext
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#", under cursor" %0#
+                ", and evaluation context" %1)
+  hint(prose_out "the updated evaluation context" %3)
 
 ;;
 ;;;; Call evaluation

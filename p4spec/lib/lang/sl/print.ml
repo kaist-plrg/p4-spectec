@@ -221,78 +221,141 @@ and string_of_guard guard =
 
 (* Instructions *)
 
-and string_of_instr ?(level = 0) ?(index = 0) instr =
+and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then, None) ->
-      Format.asprintf "%sIf (%s)%s, then\n\n%s" order (string_of_exp exp_cond)
-        (string_of_iterexps iterexps)
-        (string_of_instrs ~level:(level + 1) instrs_then)
+      let s_short =
+        Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
+          (string_of_iterexps iterexps)
+      in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_instrs ~level:(level + 1) instrs_then)
   | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
-      Format.asprintf "%sIf (%s)%s, then\n\n%s%s" order (string_of_exp exp_cond)
-        (string_of_iterexps iterexps)
-        (string_of_instrs ~level:(level + 1) instrs_then)
-        ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
+      let s_short =
+        Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
+          (string_of_iterexps iterexps)
+      in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s%s" order s_short
+          (string_of_instrs ~level:(level + 1) instrs_then)
+          ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
       | BothH (instrs_hold, instrs_nothold) ->
-          Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s"
-            order (string_of_relid id) (string_of_notexp notexp)
-            (string_of_iterexps iterexps)
-            (string_of_instrs ~level:(level + 1) instrs_hold)
-            order
-            (string_of_instrs ~level:(level + 1) instrs_nothold)
+          let s_short =
+            Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
+              (string_of_notexp notexp)
+              (string_of_iterexps iterexps)
+          in
+          if short then s_short
+          else
+            Format.asprintf "%s%s\n\n%s\n\n%sElse,\n\n%s" order s_short
+              (string_of_instrs ~level:(level + 1) instrs_hold)
+              order
+              (string_of_instrs ~level:(level + 1) instrs_nothold)
       | HoldH (instrs_hold, None) ->
-          Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" order
-            (string_of_relid id) (string_of_notexp notexp)
-            (string_of_iterexps iterexps)
-            (string_of_instrs ~level:(level + 1) instrs_hold)
+          let s_short =
+            Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
+              (string_of_notexp notexp)
+              (string_of_iterexps iterexps)
+          in
+          if short then s_short
+          else
+            Format.asprintf "%s%s\n\n%s" order s_short
+              (string_of_instrs ~level:(level + 1) instrs_hold)
       | HoldH (instrs_hold, Some phantom) ->
-          Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s%s" order
-            (string_of_relid id) (string_of_notexp notexp)
-            (string_of_iterexps iterexps)
-            (string_of_instrs ~level:(level + 1) instrs_hold)
-            ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
+          let s_short =
+            Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
+              (string_of_notexp notexp)
+              (string_of_iterexps iterexps)
+          in
+          if short then s_short
+          else
+            Format.asprintf "%s%s\n\n%s%s" order s_short
+              (string_of_instrs ~level:(level + 1) instrs_hold)
+              ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
       | NotHoldH (instrs_nothold, None) ->
-          Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" order
-            (string_of_relid id) (string_of_notexp notexp)
-            (string_of_iterexps iterexps)
-            (string_of_instrs ~level:(level + 1) instrs_nothold)
+          let s_short =
+            Format.asprintf "If (%s: %s)%s does not hold, then"
+              (string_of_relid id) (string_of_notexp notexp)
+              (string_of_iterexps iterexps)
+          in
+          if short then s_short
+          else
+            Format.asprintf "%s%s\n\n%s" order s_short
+              (string_of_instrs ~level:(level + 1) instrs_nothold)
       | NotHoldH (instrs_nothold, Some phantom) ->
-          Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s%s" order
-            (string_of_relid id) (string_of_notexp notexp)
-            (string_of_iterexps iterexps)
-            (string_of_instrs ~level:(level + 1) instrs_nothold)
-            ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
+          let s_short =
+            Format.asprintf "If (%s: %s)%s does not hold, then"
+              (string_of_relid id) (string_of_notexp notexp)
+              (string_of_iterexps iterexps)
+          in
+          if short then s_short
+          else
+            Format.asprintf "%s%s\n\n%s%s" order s_short
+              (string_of_instrs ~level:(level + 1) instrs_nothold)
+              ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
   | CaseI (exp, cases, None) ->
-      Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) cases)
+      let s_short = Format.asprintf "Case analysis on %s" (string_of_exp exp) in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_cases ~level:(level + 1) cases)
   | CaseI (exp, cases, Some phantom) ->
-      Format.asprintf "%sCase analysis on %s\n\n%s%s" order (string_of_exp exp)
-        (string_of_cases ~level:(level + 1) cases)
-        ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
+      let s_short = Format.asprintf "Case analysis on %s" (string_of_exp exp) in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s%s" order s_short
+          (string_of_cases ~level:(level + 1) cases)
+          ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | OtherwiseI instr ->
-      Format.asprintf "%sOtherwise\n\n%s" order
-        (string_of_instr ~level:(level + 1) ~index:1 instr)
+      let s_short = "Otherwise" in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_instr ~level:(level + 1) ~index:1 instr)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-      Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
-        (string_of_relinput rel_signature exps_group)
-        (string_of_instrs ~level:(level + 1) instrs_group)
+      let s_short =
+        Format.asprintf "Group %s: %s" (string_of_relid id_group)
+          (string_of_relinput rel_signature exps_group)
+      in
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_instrs ~level:(level + 1) instrs_group)
   | LetI (exp_l, exp_r, iterexps) ->
-      Format.asprintf "%s(Let %s be %s)%s" order (string_of_exp exp_l)
-        (string_of_exp exp_r)
-        (string_of_iterexps iterexps)
+      let s_short =
+        Format.asprintf "(Let %s be %s)%s" (string_of_exp exp_l)
+          (string_of_exp exp_r)
+          (string_of_iterexps iterexps)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
   | RuleI (id_rel, notexp, iterexps) ->
-      Format.asprintf "%s(%s: %s)%s" order (string_of_relid id_rel)
-        (string_of_notexp notexp)
-        (string_of_iterexps iterexps)
-  | ResultI (_, []) -> Format.asprintf "%sThe relation holds" order
+      let s_short =
+        Format.asprintf "(%s: %s)%s" (string_of_relid id_rel)
+          (string_of_notexp notexp)
+          (string_of_iterexps iterexps)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
+  | ResultI (_, []) ->
+      let s_short = "The relation holds" in
+      if short then s_short else Format.asprintf "%s%s" order s_short
   | ResultI (rel_signature, exps) ->
-      Format.asprintf "%sResult in: %s" order
-        (string_of_reloutput rel_signature exps)
-  | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
+      let s_short =
+        Format.asprintf "Result in: %s" (string_of_reloutput rel_signature exps)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
+  | ReturnI exp ->
+      let s_short = Format.asprintf "Return %s" (string_of_exp exp) in
+      if short then s_short else Format.asprintf "%s%s" order s_short
+  | DebugI exp ->
+      let s_short = Format.asprintf "Debug: %s" (string_of_exp exp) in
+      if short then s_short else Format.asprintf "%s%s" order s_short
 
 and string_of_instrs ?(level = 0) instrs =
   instrs

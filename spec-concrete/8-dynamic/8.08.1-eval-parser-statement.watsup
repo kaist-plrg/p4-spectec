@@ -145,62 +145,37 @@ rulegroup ParserTransition_eval/selectExpressionIR {
 ;;; constantDeclarationIR
 
 rule ParserStmt_eval/constantDeclarationIR:
-  EC_0 STO_0 |- constantDeclarationIR
-              : EC_1 STO_1 ``
-  -- Decl_eval:
-      LOCAL EC_0 STO_0 |- constantDeclarationIR
-                        : EC_1 STO_1 ``
+  EC_0 STO |- constantDeclarationIR
+            : EC_1 STO `EMPTY
+  -- ConstDecl_eval:
+      LOCAL EC_0 |- constantDeclarationIR : EC_1
 
 ;;; variableDeclarationIR
 
-rulegroup ParserStmt_eval/variableDeclarationIR {
-
-  rule ParserStmt_eval/non-initializer:
-    EC_0 STO |- annotationList typeIR nameIR eps `;
-              : EC_1 STO ``
-    ---- ;; get initial value
-    -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
-    -- if value_init = $default(typeIR)
-    ---- ;; update evaluation context
-    -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
-
-  rule ParserStmt_eval/initializer-reject:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_1 STO_1 rejectTransitionResult
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 rejectTransitionResult
-
-  rule ParserStmt_eval/initializer-cont:
-    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_2 STO_1 ``
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 (`` value_init)
-    ---- ;; update evaluation context
-    -- if EC_2 = $add_var_e(LOCAL, EC_1, `` nameIR, value_init)
-
-}
+rule ParserStmt_eval/cont:
+  EC_0 STO_0 |- variableDeclarationIR
+              : EC_1 STO_1 `EMPTY
+  -- VarDecl_eval:
+      LOCAL EC_0 STO_0 |- variableDeclarationIR
+                        : EC_1 STO_1 `EMPTY
 
 ;;; emptyStatementIR
 
 rule ParserStmt_eval/emptyStatementIR:
   EC_0 STO_0 |- emptyStatementIR
-              : EC_1 STO_1 ``
+              : EC_1 STO_1 `EMPTY
   -- Stmt_eval:
       LOCAL EC_0 STO_0 |- emptyStatementIR
-                        : EC_1 STO_1 ``
+                        : EC_1 STO_1 `EMPTY
 
 ;;; assignmentStatementIR
 
 rule ParserStmt_eval/assignmentStatementIR:
   EC_0 STO_0 |- assignmentStatementIR
-              : EC_1 STO_1 ``
+              : EC_1 STO_1 `EMPTY
   -- Stmt_eval:
       LOCAL EC_0 STO_0 |- assignmentStatementIR
-                        : EC_1 STO_1 ``
+                        : EC_1 STO_1 `EMPTY
 
 ;;; callStatementIR
 
@@ -215,10 +190,10 @@ rulegroup ParserStmt_eval/callStatementIR {
 
   rule ParserStmt_eval/cont:
     EC_0 STO_0 |- callStatementIR
-                : EC_1 STO_1 ``
+                : EC_1 STO_1 `EMPTY
     -- Stmt_eval:
         LOCAL EC_0 STO_0 |- callStatementIR
-                          : EC_1 STO_1 ``
+                          : EC_1 STO_1 `EMPTY
 
 }
 
@@ -255,7 +230,7 @@ rulegroup ParserStmt_eval/parserConditionalStatementIR {
 
   rule ParserStmt_eval/non-else-cont-false:
     EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
-            : EC_cond STO_cond ``
+            : EC_cond STO_cond `EMPTY
     -- Expr_eval:
         LOCAL EC STO |- typedExpressionIR_cond
                       : EC_cond STO_cond (`` (`B false))
@@ -294,7 +269,7 @@ rulegroup ParserStmt_eval/parserConditionalStatementIR {
 rulegroup ParserStmts_eval {
 
   rule ParserStmts_eval/nil:
-    EC STO |- eps : EC STO ``
+    EC STO |- eps : EC STO `EMPTY
 
   rule ParserStmts_eval/cons-head-reject:
     EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
@@ -306,7 +281,7 @@ rulegroup ParserStmts_eval {
     EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
                 : EC_2 STO_2 parserStatementResult
     -- ParserStmt_eval:
-        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 ``
+        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 `EMPTY
     -- ParserStmts_eval:
         EC_1 STO_1 |- parserStatementIR_t* : EC_2 STO_2 parserStatementResult
 

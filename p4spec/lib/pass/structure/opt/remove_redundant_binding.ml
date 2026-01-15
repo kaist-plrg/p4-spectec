@@ -199,7 +199,9 @@ let rec downstream (ihenv : IHEnv.t) (bind : Bind.t) (instrs : instr list) :
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t |> Renamer.rename_instrs renamer |> downstream ihenv bind
+          instrs_t
+          |> Renamer.rename_instrs ihenv renamer
+          |> downstream ihenv bind
       | None ->
           let instrs_t = downstream ihenv bind instrs_t in
           instr_h :: instrs_t)
@@ -208,7 +210,9 @@ let rec downstream (ihenv : IHEnv.t) (bind : Bind.t) (instrs : instr list) :
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t |> Renamer.rename_instrs renamer |> downstream ihenv bind
+          instrs_t
+          |> Renamer.rename_instrs ihenv renamer
+          |> downstream ihenv bind
       | None ->
           let instrs_t = downstream ihenv bind instrs_t in
           instr_h :: instrs_t)

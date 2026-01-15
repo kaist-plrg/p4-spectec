@@ -120,27 +120,65 @@ relation ControlLocalDecls_inst:
 ;;;; Declaration instantiation
 ;;
 
-relation Decl_inst:
-  cursor instContext store |- declarationIR
-                            : instContext store declarationIR?
-  hint(input %0 %1 %2 %3)
+relation ConstDecl_inst:
+  cursor instContext |- constantDeclarationIR
+                      : instContext constantDeclarationIR
+  hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2#", under cursor" %0#
+                ", and instantiation context" %1)
+  hint(prose_out "the updated instantiation context" %3
+                 "and" %4)
 
-relation Decls_inst:
-  cursor instContext store |- declarationIR*
-                            : instContext store declarationIR*
+relation InstDecl_inst:
+  cursor instContext store |- instantiationIR
+                            : instContext store constantDeclarationIR
   hint(input %0 %1 %2 %3)
   hint(prose_in "instantiating" %3#", under cursor" %0#
                 ", instantiation context" %1#", and store" %2)
-  hint(prose_out "\nthe modified instantiation context" %4#
+  hint(prose_out "\nthe updated instantiation context" %4#
                  ",\nthe updated store" %5#
-                 ", and the instantiated declarations" %6)
+                 ",\nand the reference to the object" %6)
+
+relation FuncDecl_inst:
+  cursor instContext |- functionDeclarationIR
+                      : instContext
+  hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2#", under cursor" %0#
+                ", and instantiation context" %1)
+  hint(prose_out "the updated instantiation context" %3)
+
+relation ActionDecl_inst:
+  cursor instContext |- actionDeclarationIR
+                      : instContext
+  hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2#", under cursor" %0#
+                ", and instantiation context" %1)
+  hint(prose_out "the updated instantiation context" %3)
+
+relation Decl_inst:
+  instContext store |- declarationIR
+                     : instContext store
+  hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2#", under instantiation context"
+                %0#", and store" %1)
+  hint(prose_out "the updated instantiation context" %4
+                 "and the updated store" %5)
+
+relation Decls_inst:
+  instContext store |- declarationIR*
+                     : instContext store
+  hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2#", under instantiation context"
+                %0#", and store" %1)
+  hint(prose_out "the updated instantiation context" %4
+                 "and the updated store" %5)
 
 relation Program_inst:
   |- p4program : globalInstLayer store
   hint(input %0)
   hint(prose_in "instantiating" %0)
-  hint(prose_out "\nthe global instantiation layer" %1#
-               ", and the store" %2)
+  hint(prose_out "the global instantiation layer" %1
+                 "and the store" %2)
 
 ;;
 ;;;; Argument Binding

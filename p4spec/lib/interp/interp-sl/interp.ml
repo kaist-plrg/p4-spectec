@@ -1142,7 +1142,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (ctx, sign)
     with Backtrace traces ->
       back_nest instr.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_instr instr))
+        (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
         traces
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =

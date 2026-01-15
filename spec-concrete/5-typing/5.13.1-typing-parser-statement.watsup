@@ -324,52 +324,17 @@ rule ParserTransition_ok/select:
 rule ParserStmt_ok/constantDeclaration:
   TC_0 |- constantDeclaration
         : TC_1 constantDeclarationIR
-  -- Decl_ok: LOCAL TC_0 |- constantDeclaration
-                          : TC_1 constantDeclarationIR
+  -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration
+                               : TC_1 constantDeclarationIR
 
 ;;; variableDeclaration
-;;; syntax variableDeclaration =
-;;;   annotationList type name initializerOpt `;
 
-rulegroup ParserStmt_ok/variableDeclaration {
-
-  rule ParserStmt_ok/empty:
-    TC_0 |- annotationList type name `EMPTY `;
-          : TC_1 variableDeclarationIR
-    ---- ;; check type
-    -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
-    -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
-    ---- ;; check that the type is assignable
-    -- if $is_assignable_typeIR(typeIR)
-    ---- ;; update the context
-    -- if nameIR = $name(name)
-    -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
-    ---- ;; create IR
-    -- if variableDeclarationIR
-        = annotationList typeIR nameIR eps `;
-
-  rule ParserStmt_ok/initializer:
-    TC_0 |- annotationList type name (`= expression_init) `;
-          : TC_1 variableDeclarationIR
-    ---- ;; check type
-    -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
-    -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
-    ---- ;; check that the type is assignable
-    -- if $is_assignable_typeIR(typeIR)
-    ---- ;; check expression
-    -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
-    ---- ;; check that the expression matches the type
-    ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_init_cast
-        = $coerce_unary(typedExpressionIR_init, typeIR)
-    ---- ;; update the context
-    -- if nameIR = $name(name)
-    -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
-    ---- ;; create IR
-    -- if variableDeclarationIR
-        = annotationList typeIR nameIR (`= typedExpressionIR_init_cast) `;
-
-}
+rule ParserStmt_ok/variableDeclaration:
+  TC_0 |- variableDeclaration
+        : TC_1 variableDeclarationIR
+  -- VarDecl_ok:
+      LOCAL TC_0 |- variableDeclaration
+                  : TC_1 variableDeclarationIR
 
 ;;; emptyStatement
 

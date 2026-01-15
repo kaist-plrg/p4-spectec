@@ -54,7 +54,7 @@ and func_call =
 and rel_call = 
   | ProseRelCall of
     [ `Hold of id * Hints.Alter.t * exp list
-    | `Yield of id * Hints.Alter.t * exp list * exp list ]
+    | `Yield of id * Hints.Alter.t * exp list * Hints.Alter.t * exp list ]
   | MathRelCall of id * mixop * exp list
 
 (* Expressions *)

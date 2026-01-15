@@ -35,7 +35,8 @@ module type STORE = sig
   val cardinal : t -> int
   val add : key -> value -> t -> t
   val find_opt : t -> key -> value option
-  val use_opt : t -> key -> value option
+  val use : t -> key -> unit
+  val used : t -> key -> bool
   val unused : t -> key list
   val empty : t
   val init : El.spec -> Pl.spec -> t
@@ -61,12 +62,13 @@ module Make_store
   let find_opt (sto : t) (key : K.t) : V.t option =
     match M.find_opt key sto with Some entry -> Some entry.data | None -> None
 
-  let use_opt (sto : t) (key : K.t) : V.t option =
-    match M.find_opt key sto with
-    | Some entry ->
-        entry.used <- true;
-        Some entry.data
-    | None -> None
+  let use (sto : t) (key : K.t) : unit =
+    let entry = M.find key sto in
+    entry.used <- true
+
+  let used (sto : t) (key : K.t) : bool =
+    let entry = M.find key sto in
+    entry.used
 
   let unused (sto : t) : K.t list =
     M.fold
@@ -98,6 +100,7 @@ module type ANCHOR = sig
   val name : string
   val prefix : string
   val suffix : string
+  val header : bool
 end
 
 (* Splicer *)
@@ -136,17 +139,36 @@ module Make
 
   let parse (source : Source.t) : K.t list = K.parse source
 
-  let use (keys : K.t list) : unit =
-    List.iter (fun key -> ignore (S.use_opt !sto key)) keys
-
   let render (keys : K.t list) : string =
-    let values = List.filter_map (S.find_opt !sto) keys in
-    V.render values
+    let keys, values =
+      keys
+      |> List.filter_map (fun key ->
+             let value_opt = S.find_opt !sto key in
+             match value_opt with
+             | Some value -> Some (key, value)
+             | None ->
+                 warn no_region
+                   (Format.asprintf "%s splice key not found: %s" name
+                      (K.to_string key));
+                 None)
+      |> List.split
+    in
+    let headers =
+      if header then
+        (keys
+        |> List.filter_map (fun key ->
+               if not (S.used !sto key) then Some ("[[" ^ K.to_string key ^ "]]")
+               else None)
+        |> String.concat "\n")
+        ^ "\n"
+      else ""
+    in
+    List.iter (S.use !sto) keys;
+    headers ^ prefix ^ V.render values ^ suffix
 
   let splice (source : Source.t) : string =
     let keys = parse source in
-    use keys;
-    prefix ^ render keys ^ suffix
+    render keys
 
   let warn_unused () : unit =
     let keys_unused = S.unused !sto in

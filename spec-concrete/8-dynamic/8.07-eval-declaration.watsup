@@ -1,14 +1,49 @@
 ;;
-;; Declaration evaluation
+;; Variable declaration evaluation
 ;;
-;; syntax declarationIR
+;; syntax variableDeclarationIR =
+;;   annotationList typeIR nameIR initializerOptIR `;
 ;;
 
-;;; constantDeclarationIR
-;;; syntax constantDeclarationIR =
-;;;   annotationList CONST typeIR nameIR initializerIR `;
+rulegroup VarDecl_eval {
 
-rule Decl_eval/constantDeclarationIR:
-  p EC_0 STO |- annotationList CONST typeIR nameIR (`= value) `;
-              : EC_1 STO ``
+  rule VarDecl_eval/non-initializer:
+    p EC_0 STO |- annotationList typeIR nameIR eps `;
+                : EC_1 STO `EMPTY
+    ---- ;; get initial value
+    -- if typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR)
+    -- if value_init = $default(typeIR_subst)
+    ---- ;; update evaluation context
+    -- if EC_1 = $add_var_e(p, EC_0, `` nameIR, value_init)
+
+  rule VarDecl_eval/initializer-cont:
+    p EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                  : EC_2 STO_1 `EMPTY
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 (`` value_init)
+    ---- ;; update evaluation context
+    -- if EC_2 = $add_var_e(p, EC_1, `` nameIR, value_init)
+
+  rule VarDecl_eval/initializer-exit:
+    p EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                  : EC_1 STO_1 EXIT
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 EXIT
+
+}
+
+;;
+;; Constant declaration evaluation
+;;
+;; syntax constantDeclarationIR =
+;;   annotationList CONST typeIR nameIR initializerIR `;
+;;
+
+rule ConstDecl_eval:
+  p EC_0 |- annotationList CONST typeIR nameIR (`= value) `;
+          : EC_1
   -- if EC_1 = $add_var_e(p, EC_0, `` nameIR, value)

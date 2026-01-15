@@ -55,6 +55,7 @@ module Source = struct
     let name = "syntax"
     let prefix = "[source,bison]\n----\n"
     let suffix = "\n----"
+    let header = true
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)

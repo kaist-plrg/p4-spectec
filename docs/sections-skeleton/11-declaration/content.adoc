@@ -1,24 +1,61 @@
 [#sec-declaration]
 == Declarations
 
-${syntax: declaration declarationIR}
+The syntax of top-level declarations is defined as follows:
 
-include::01-constant-declaration.adoc[]
+${syntax: declaration}
 
-include::02-instantiation.adoc[]
+As described in <<sec-p4-abstract-machine>>, declarations are type checked,
+instantiated at compile time, and evaluated at runtime.
 
-include::03-function-declaration.adoc[]
+[discrete]
+===== Type checking declarations
 
-include::04-action-declaration.adoc[]
+${relation-title-source: Decl_ok}
+${relation-title-prose: Decl_ok}
 
-include::05-error-declaration.adoc[]
+After type checking, declarations are represented in P4~IR~ as follows:
 
-include::06-match-kind-declaration.adoc[]
+${syntax: declarationIR}
 
-include::07-extern-declaration.adoc[]
+[discrete]
+===== Compile-time evaluation of declarations
 
-include::08-parser-declaration.adoc[]
+${relation-title-source: Decl_inst}
+${relation-title-prose: Decl_inst}
 
-include::09-control-declaration.adoc[]
+Instantiation statically allocates instantiated objects in the global
+`store`. <<sec-instantiation-declaration>> describes how objects are
+instantiated from a declaration.
 
-include::10-type-declaration.adoc[]
+[discrete]
+===== Runtime evaluation of declarations
+
+All declarations except constant and variable declarations are evaluated at
+compile-time. See <<sec-variable-declaration>> for the runtime evaluation of
+variable declarations and <<sec-constant-declaration>> for the runtime
+evaluation of constant declarations.
+
+The subsequent sections describe each kind of declaration in detail.
+
+include::01-variable-declaration.adoc[]
+
+include::02-constant-declaration.adoc[]
+
+include::03-instantiation.adoc[]
+
+include::04-function-declaration.adoc[]
+
+include::05-action-declaration.adoc[]
+
+include::06-error-declaration.adoc[]
+
+include::07-match-kind-declaration.adoc[]
+
+include::08-extern-declaration.adoc[]
+
+include::09-parser-declaration.adoc[]
+
+include::10-control-declaration.adoc[]
+
+include::11-type-declaration.adoc[]

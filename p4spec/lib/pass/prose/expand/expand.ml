@@ -3,6 +3,7 @@ module VarSet = Free.VarSet
 open Domain.Lib
 open Lang
 open Sl
+open Runtime.Prose.Envs
 open Transform
 open Util.Source
 
@@ -62,9 +63,10 @@ let drop (n : int) (l : 'a list) : 'a list =
   if n < 0 then invalid_arg "List.drop";
   drop' 0 l
 
-let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
+let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
+    (exp : exp) : (instr * exp * IdSet.t) option =
   (* Builds the new assignment instruction with the returned state *)
-  match transformer_call_e ids_used No exp with
+  match transformer_call_e ids_used call_e_count exp with
   | Some (exp_new_full, iter_state) ->
       let { var_new; iterexps; exp_orig; exp_new; ids_used; _ } = iter_state in
       let id, typ, iters = var_new in
@@ -96,12 +98,54 @@ let replace_call_exp (ids_used : IdSet.t) exp : (instr * exp * IdSet.t) option =
       Some (instr_let, exp_new_full, ids_used)
   | None -> None
 
-let expand_nested_calls ids_used instrs =
+let rec replace_call_exps ~(call_e_count : call_e_count) (ids_used : IdSet.t)
+    (exps : exp list) : (instr list * exp list * IdSet.t) option =
+  match exps with
+  | [] -> None
+  | exp_h :: exps_t -> (
+      match replace_call_exp ~call_e_count ids_used exp_h with
+      | Some (instr_h_new, exp_h, ids) -> (
+          match replace_call_exps ~call_e_count ids exps_t with
+          | Some (instrs_t_new, exps_t, ids) ->
+              Some (instr_h_new :: instrs_t_new, exp_h :: exps_t, ids)
+          | None -> Some ([ instr_h_new ], exp_h :: exps_t, ids))
+      | None -> (
+          match replace_call_exps ~call_e_count ids_used exps_t with
+          | Some (instrs_t_new, exps_t, ids) ->
+              Some (instrs_t_new, exp_h :: exps_t, ids)
+          | None -> None))
+
+let expand_nested_calls (ihenv, ids_used) instrs =
   match instrs with
   | { it = LetI (exp_l, exp_r, iterexps); at; note } :: instrs_rest ->
-      let* instr_new, exp_r, ids = replace_call_exp ids_used exp_r in
+      let* instr_new, exp_r, ids =
+        replace_call_exp ~call_e_count:No ids_used exp_r
+      in
       let instr_let = LetI (exp_l, exp_r, iterexps) $$ (at, note) in
-      Some (ids, [ instr_new; instr_let ], instrs_rest)
+      Some ((ihenv, ids), [ instr_new; instr_let ], instrs_rest)
+  | { it = HoldI (id, notexp, iterexps, holdcase); at; note } :: instrs_rest ->
+      let mixop, exps = notexp in
+      let* instrs_new, exps, ids =
+        replace_call_exps ~call_e_count:SkipOne ids_used exps
+      in
+      let notexp = (mixop, exps) in
+      let instr_rule = HoldI (id, notexp, iterexps, holdcase) $$ (at, note) in
+      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
+  | { it = RuleI (id, notexp, iterexps); at; note } :: instrs_rest ->
+      let mixop, exps = notexp in
+      let inputs = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
+      let exps_input_indexed, exps_output_indexed =
+        Hints.Input.split inputs exps
+      in
+      let idxs_input, exps_input = List.split exps_input_indexed in
+      let* instrs_new, exps_input, ids =
+        replace_call_exps ~call_e_count:SkipOne ids_used exps_input
+      in
+      let exps_input_indexed = List.combine idxs_input exps_input in
+      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let notexp = (mixop, exps) in
+      let instr_rule = RuleI (id, notexp, iterexps) $$ (at, note) in
+      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
   | _ -> None
 
 type 'ctx expansion =
