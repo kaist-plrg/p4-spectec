@@ -21,14 +21,17 @@ syntax acceptTransitionResult = ACCEPT
 syntax rejectTransitionResult = REJECT errorValue
 syntax stateTransitionResult = STATE id
 
+syntax abortResult =
+  | exitResult
+  | rejectTransitionResult
+
 ;;
 ;;;; Expression evaluation
 ;;
 
 syntax expressionResult =
   | continueResult<value>
-  | rejectTransitionResult
-  | exitResult
+  | abortResult
 
 relation Expr_eval:
   cursor evalContext store |- typedExpressionIR
@@ -51,7 +54,7 @@ relation Exprs_eval:
 
 syntax keysetExpressionResult =
   | continueResult<setValue*>
-  | exitResult
+  | abortResult
 
 relation Expr_eval_keyset:
   evalContext store |- keysetExpressionIR
@@ -69,7 +72,7 @@ relation Argument_eval:
 
 syntax storageReferenceResult =
   | continueResult<storageReference?>
-  | exitResult
+  | abortResult
 
 relation Argument_eval_lvalue:
   cursor evalContext store |- argumentIR
@@ -99,8 +102,7 @@ relation Lvalue_write:
 ;;
 
 syntax callResult =
-  | exitResult
-  | rejectTransitionResult
+  | abortResult
   | returnResult
 
 syntax forBreakResult = BREAK
@@ -177,12 +179,12 @@ relation ParserState_trans:
 
 relation ParserLocalDecl_eval:
   evalContext store |- parserLocalDeclarationIR
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
 
 relation ParserLocalDecls_eval:
   evalContext store |- parserLocalDeclarationIR*
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
 
 ;;
@@ -207,23 +209,27 @@ relation ControlBody_eval:
                      : evalContext store controlBodyResult
   hint(input %0 %1 %2)
 
-syntax declarationResult =
+syntax controlLocalDeclarationResult =
   | continueEmptyResult
-  | exitResult
+  | abortResult
 
 relation ControlLocalDecl_eval:
   evalContext store |- controlLocalDeclarationIR
-                     : evalContext store declarationResult
+                     : evalContext store controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 relation ControlLocalDecls_eval:
   evalContext store |- controlLocalDeclarationIR*
-                     : evalContext store declarationResult
+                     : evalContext store controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 ;;
 ;;;; Declaration evaluation
 ;;
+
+syntax declarationResult =
+  | continueEmptyResult
+  | exitResult
 
 relation Decl_eval:
   cursor evalContext store |- declarationIR
@@ -236,7 +242,7 @@ relation Decl_eval:
 
 syntax calleeResult =
   | continueResult<callee>
-  | exitResult
+  | abortResult
 
 relation Callee_eval:
   cursor evalContext store |- callableTargetIR `< `_ > `( argumentListIR )
@@ -245,7 +251,7 @@ relation Callee_eval:
 
 syntax copyInResult =
   | continueResult<storageReference?>
-  | exitResult
+  | abortResult
 
 relation Copy_in_argument:
   store cursor evalContext parameterIR

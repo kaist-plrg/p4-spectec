@@ -164,7 +164,15 @@ rulegroup ParserStmt_eval/variableDeclarationIR {
     ---- ;; update evaluation context
     -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
 
-  rule ParserStmt_eval/initializer:
+  rule ParserStmt_eval/initializer-reject:
+    EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                : EC_1 STO_1 rejectTransitionResult
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 rejectTransitionResult
+
+  rule ParserStmt_eval/initializer-cont:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
                 : EC_2 STO_1 ``
     ---- ;; evaluate initializer
@@ -227,6 +235,13 @@ rulegroup ParserStmt_eval/callStatementIR {
 ;;;; IF `( typedExpressionIR ) parserStatementIR ELSE parserStatementIR
 
 rulegroup ParserStmt_eval/parserConditionalStatementIR {
+
+  rule ParserStmt_eval/non-else-reject:
+    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+            : EC_cond STO_cond rejectTransitionResult
+    -- Expr_eval:
+        LOCAL EC STO |- typedExpressionIR_cond
+                      : EC_cond STO_cond rejectTransitionResult
 
   rule ParserStmt_eval/non-else-cont-true:
     EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then

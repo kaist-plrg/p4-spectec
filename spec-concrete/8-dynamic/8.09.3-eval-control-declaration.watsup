@@ -31,11 +31,11 @@ rulegroup ControlLocalDecl_eval/variableDeclarationIR {
 
   rule ControlLocalDecl_eval/initializer-exit:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     ---- ;; evaluate initializer
     -- Expr_eval:
         BLOCK EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 EXIT
+                          : EC_1 STO_1 abortResult
 
   rule ControlLocalDecl_eval/initializer-cont:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;

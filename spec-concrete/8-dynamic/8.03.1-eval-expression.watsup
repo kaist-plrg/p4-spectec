@@ -67,11 +67,11 @@ rule Expr_eval/defaultExpressionIR:
 
 rulegroup Expr_eval/unaryExpressionIR {
 
-  rule Expr_eval/exit:
+  rule Expr_eval/abort:
     p EC_0 STO_0 |- (unop typedExpressionIR) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR
-                                : EC_1 STO_1 EXIT
+                                : EC_1 STO_1 abortResult
 
   rule Expr_eval/cont:
     p EC_0 STO_0 |- (unop typedExpressionIR) `# _
@@ -88,13 +88,13 @@ rulegroup Expr_eval/unaryExpressionIR {
 
 rulegroup Expr_eval/binaryExpressionIR {
 
-  rule Expr_eval/non-short-circuit-exit:
+  rule Expr_eval/non-short-circuit-abort:
     p EC_0 STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- if ~(binop <- [ `&&, `|| ])
     -- Exprs_eval:
         p EC_0 STO_0 |- [ typedExpressionIR_l, typedExpressionIR_r ]
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/non-short-circuit-cont:
     p EC_0 STO_0 |- (typedExpressionIR_l binop typedExpressionIR_r) `# _
@@ -105,10 +105,10 @@ rulegroup Expr_eval/binaryExpressionIR {
                       : EC_1 STO_1 (`` ([ value_l, value_r]))
     -- if expressionResult = `` $bin_op(binop, value_l, value_r)
 
-  rule Expr_eval/land-exit:
+  rule Expr_eval/land-abort:
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
-                  : EC_1 STO_1 EXIT
-    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 abortResult
 
   rule Expr_eval/land-false:
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
@@ -117,13 +117,13 @@ rulegroup Expr_eval/binaryExpressionIR {
                                 : EC_1 STO_1 (`` (`B false))
     -- if expressionResult = `` (`B false)
 
-  rule Expr_eval/land-true-exit:
+  rule Expr_eval/land-true-abort:
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
-                  : EC_2 STO_2 EXIT
+                  : EC_2 STO_2 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
                                 : EC_1 STO_1 (`` (`B true))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
-                                : EC_2 STO_2 EXIT
+                                : EC_2 STO_2 abortResult
 
   rule Expr_eval/land-true:
     p EC_0 STO_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
@@ -133,11 +133,11 @@ rulegroup Expr_eval/binaryExpressionIR {
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
                                 : EC_2 STO_2 expressionResult_r
 
-  rule Expr_eval/lor-exit:
+  rule Expr_eval/lor-abort:
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
-                                : EC_1 STO_1 EXIT
+                                : EC_1 STO_1 abortResult
 
   rule Expr_eval/lor-true:
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
@@ -146,13 +146,13 @@ rulegroup Expr_eval/binaryExpressionIR {
                                 : EC_1 STO_1 (`` (`B true))
     -- if expressionResult = `` (`B true)
 
-  rule Expr_eval/lor-false-exit:
+  rule Expr_eval/lor-false-abort:
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
-                  : EC_2 STO_2 EXIT
+                  : EC_2 STO_2 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_l
                                 : EC_1 STO_1 (`` (`B false))
     -- Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r
-                                : EC_2 STO_2 EXIT
+                                : EC_2 STO_2 abortResult
 
   rule Expr_eval/lor-false:
     p EC_0 STO_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
@@ -170,12 +170,12 @@ rulegroup Expr_eval/binaryExpressionIR {
 
 rulegroup Expr_eval/ternaryExpressionIR {
 
-  rule Expr_eval/cond-exit:
+  rule Expr_eval/cond-abort:
     p EC_0 STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true
                                             `: typedExpressionIR_false) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_cond
-                                : EC_1 STO_1 EXIT
+                                : EC_1 STO_1 abortResult
 
   rule Expr_eval/cond-true:
     p EC_0 STO_0 |- (typedExpressionIR_cond `? typedExpressionIR_true
@@ -202,11 +202,11 @@ rulegroup Expr_eval/ternaryExpressionIR {
 
 rulegroup Expr_eval/castExpressionIR {
 
-  rule Expr_eval/exit:
+  rule Expr_eval/abort:
     p EC_0 STO_0 |- (`( typeIR ) typedExpressionIR) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR
-                                : EC_1 STO_1 EXIT
+                                : EC_1 STO_1 abortResult
 
   rule Expr_eval/cont:
     p EC_0 STO_0 |- (`( typeIR ) typedExpressionIR) `# _
@@ -231,12 +231,12 @@ rule Expr_eval/dataExpressionIR-invalid:
 
 rulegroup Expr_eval/dataExpressionIR-sequence {
 
-  rule Expr_eval/non-default-exit:
+  rule Expr_eval/non-default-abort:
     p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- typedExpressionListIR
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/non-default-cont:
     p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
@@ -246,12 +246,12 @@ rulegroup Expr_eval/dataExpressionIR-sequence {
                       : EC_1 STO_1 (`` value*)
     -- if expressionResult = `` (SEQ `( value* ))
 
-  rule Expr_eval/default-exit:
+  rule Expr_eval/default-abort:
     p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR `, `... }) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- typedExpressionListIR
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/default-cont:
     p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR `, `... }) `# _
@@ -268,12 +268,12 @@ rulegroup Expr_eval/dataExpressionIR-sequence {
 
 rulegroup Expr_eval/dataExpressionIR-record {
 
-   rule Expr_eval/non-default-exit:
+   rule Expr_eval/non-default-abort:
     p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- typedExpressionIR*
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/non-default-cont:
     p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
@@ -283,12 +283,12 @@ rulegroup Expr_eval/dataExpressionIR-record {
                       : EC_1 STO_1 (`` value*)
     -- if expressionResult = `` (RECORD `{ (value nameIR `;)* })
 
-  rule Expr_eval/default-exit:
+  rule Expr_eval/default-abort:
     p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* `, `... }) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- typedExpressionIR*
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/default-cont:
     p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* `, `... }) `# _
@@ -340,12 +340,12 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
 
 rulegroup Expr_eval/memberAccessExpressionIR-expression {
 
-  rule Expr_eval/exit:
+  rule Expr_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/stack-size:
     p EC_0 STO_0 |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
@@ -450,12 +450,12 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
 
 rulegroup Expr_eval/indexAccessExpressionIR {
   
-  rule Expr_eval/exit:
+  rule Expr_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/tuple:
     p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
@@ -486,14 +486,14 @@ rulegroup Expr_eval/indexAccessExpressionIR {
 
 rulegroup Expr_eval/sliceAccessExpressionIR {
 
-  rule Expr_eval/exit:
+  rule Expr_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
                                             `: typedExpressionIR_lo ]) `# _
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Exprs_eval:
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_hi,
                           typedExpressionIR_lo ]
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Expr_eval/cont:
     p EC_0 STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
@@ -524,25 +524,15 @@ rulegroup Expr_eval/callExpressionIR {
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
                       : EC_1 STO_1 EXIT
 
-  rule Expr_eval/callee-cont-call-exit:
+  rule Expr_eval/callee-cont-call-abort:
     p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
-                  : EC_2 STO_2 EXIT
+                  : EC_2 STO_2 abortResult
     -- Callee_eval:
         p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
                       : EC_1 STO_1 (`` callee)
     -- Call_eval:
         p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
-                      : EC_2 STO_2 EXIT
-
-  rule Expr_eval/callee-cont-call-reject:
-    p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
-                  : EC_2 STO_2 rejectTransitionResult
-    -- Callee_eval:
-        p EC_0 STO_0 |- callableTargetIR `< `_ > `( argumentIR* )
-                      : EC_1 STO_1 (`` callee)
-    -- Call_eval:
-        p EC_1 STO_1 |- callee `@ `< typeArgumentIR* > `( argumentIR* )
-                      : EC_2 STO_2 rejectTransitionResult
+                      : EC_2 STO_2 abortResult
 
   rule Expr_eval/callee-cont-call-return:
     p EC_0 STO_0 |- (callableTargetIR `< typeArgumentIR* > `( argumentIR* )) `# _
@@ -577,11 +567,11 @@ rulegroup Exprs_eval {
   rule Exprs_eval/nil:
     p EC STO |- eps : EC STO (`` eps)
 
-  rule Exprs_eval/cons-head-exit:
+  rule Exprs_eval/cons-head-abort:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     -- Expr_eval:
-        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 EXIT
+        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 abortResult
 
   rule Exprs_eval/cons-head-reject:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
@@ -589,21 +579,13 @@ rulegroup Exprs_eval {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 rejectTransitionResult
 
-  rule Exprs_eval/cons-head-cont-tail-exit:
+  rule Exprs_eval/cons-head-cont-tail-abort:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-                  : EC_2 STO_2 EXIT
+                  : EC_2 STO_2 abortResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (`` value_h)
     -- Exprs_eval:
-        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 EXIT
-
-  rule Exprs_eval/cons-head-cont-tail-reject:
-    p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-                  : EC_2 STO_2 rejectTransitionResult
-    -- Expr_eval:
-        p EC_0 STO_0 |- typedExpressionIR_h : EC_1 STO_1 (`` value_h)
-    -- Exprs_eval:
-        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 rejectTransitionResult
+        p EC_1 STO_1 |- typedExpressionIR_t* : EC_2 STO_2 abortResult
 
   rule Exprs_eval/cons-head-cont-tail-cont:
     p EC_0 STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*

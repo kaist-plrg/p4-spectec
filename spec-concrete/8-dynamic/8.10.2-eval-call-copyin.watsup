@@ -6,16 +6,16 @@
 
 rulegroup Copy_in_argument/directionless-in {
 
-  rule Copy_in_argument/exit:
+  rule Copy_in_argument/abort:
     STO_0 p_caller EC_caller_0 (_ direction typeIR nameIR _)
        `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# EXIT
+    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
     ---- ;; check parameter direction
     -- if direction = `EMPTY \/ direction = IN
     ---- ;; evaluate argument
     -- Argument_eval:
         p_caller EC_caller_0 STO_0 |- argumentIR
-                                  : EC_caller_1 STO_1 EXIT
+                                  : EC_caller_1 STO_1 abortResult
 
   rule Copy_in_argument/cont:
     STO_0 p_caller EC_caller_0 (_ direction typeIR nameIR _)
@@ -37,16 +37,16 @@ rulegroup Copy_in_argument/directionless-in {
 
 rulegroup Copy_in_argument/inout {
  
-  rule Copy_in_argument/exit:
+  rule Copy_in_argument/abort:
     STO_0 p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
        `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# EXIT
+    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
-                                    : EC_caller_1 STO_1 EXIT
+                                    : EC_caller_1 STO_1 abortResult
  
-  rule Copy_in_argument/exit:
+  rule Copy_in_argument/cont:
     STO_0 p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
        `@ p_callee EC_callee_0 argumentIR
     ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` storageReference)
@@ -67,14 +67,14 @@ rulegroup Copy_in_argument/inout {
 
 rulegroup Copy_in_argument/out {
  
-  rule Copy_in_argument/exit:
+  rule Copy_in_argument/abort:
     STO_0 p_caller EC_caller_0 (_  OUT typeIR nameIR _)
        `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# EXIT
+    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
-                                    : EC_caller_1 STO_1 EXIT
+                                    : EC_caller_1 STO_1 abortResult
  
   rule Copy_in_argument/cont:
     STO_0 p_caller EC_caller_0 (_  OUT typeIR nameIR _)
