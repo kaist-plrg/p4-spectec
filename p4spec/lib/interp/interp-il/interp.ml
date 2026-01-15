@@ -1044,7 +1044,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt_reason =
     match prem.it with
-    | RulePr (id, notexp) -> eval_rule_prem ctx id notexp
+    | RulePr (id, notexp, inputs) -> eval_rule_prem ctx id notexp inputs
     | IfPr exp_cond -> eval_if_prem ctx exp_cond
     | IfHoldPr (id, notexp) -> eval_if_hold_prem ctx id notexp
     | IfNotHoldPr (id, notexp) -> eval_if_not_hold_prem ctx id notexp
@@ -1062,13 +1062,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Rule premise evaluation *)
 
-  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt_reason =
-    let exps_input, exps_output =
-      let inputs = Ctx.find_rel_inputs Local ctx id in
-      let _, exps = notexp in
-      Hints.Input.split inputs exps
-    in
+  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (inputs : Hints.Input.t) : Ctx.t attempt_reason =
+    let _, exps = notexp in
+    let exps_input, exps_output = Hints.Input.split inputs exps in
     let ctx, values_input = eval_exps ctx exps_input in
     let* ctx, values_output = invoke_rel ctx id values_input in
     let ctx = assign_exps ctx exps_output values_output in
@@ -1217,8 +1214,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (Ctx.t * value list) attempt_reason =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
-    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, rulegroups) ->
+    | Rel.Extern -> invoke_extern_rel ctx id values_input
+    | Rel.Defined rulegroups ->
         invoke_defined_rel ctx id rulegroups values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1510,11 +1507,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TypD (id, tparams, deftyp, _) ->
         let td = Typdef.Defined (tparams, deftyp) in
         Ctx.add_typdef Global ctx id td
-    | ExternRelD (id, _, inputs, _) ->
-        let rel = Rel.Extern inputs in
+    | ExternRelD (id, _, _, _) ->
+        let rel = Rel.Extern in
         Ctx.add_rel Global ctx id rel
-    | RelD (id, _, inputs, rulegroups, _) ->
-        let rel = Rel.Defined (inputs, rulegroups) in
+    | RelD (id, _, _, rulegroups, _) ->
+        let rel = Rel.Defined rulegroups in
         Ctx.add_rel Global ctx id rel
     | ExternDecD (id, _, _, _, _) ->
         let func = Func.Extern in

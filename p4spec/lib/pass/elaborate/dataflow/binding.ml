@@ -147,7 +147,8 @@ let analyze_args_as_bound_shallow (dctx : Dctx.t) (args : arg list) : unit =
 let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
     Dctx.t * VEnv.t * prem * prem list =
   match prem.it with
-  | RulePr (id, notexp) -> analyze_rule_prem dctx prem.at id notexp
+  | RulePr (id, notexp, inputs) ->
+      analyze_rule_prem dctx prem.at id notexp inputs
   | IfPr exp -> analyze_if_prem dctx prem.at exp
   | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx prem.at id notexp
   | IfNotHoldPr (id, notexp) -> analyze_if_not_hold_prem dctx prem.at id notexp
@@ -164,10 +165,9 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
   | DebugPr exp -> analyze_debug_prem dctx prem.at exp
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
-    : Dctx.t * VEnv.t * prem * prem list =
+    (inputs : Hints.Input.t) : Dctx.t * VEnv.t * prem * prem list =
   let mixop, exps = notexp in
-  let hint = Dctx.find_hint dctx id in
-  let exps_input, exps_output = Hints.Input.split hint exps in
+  let exps_input, exps_output = Hints.Input.split inputs exps in
   analyze_exps_as_bound dctx exps_input;
   let dctx, venv, exps_output, sideconditions =
     let dctx, venv, exps_output, sideconditions =
@@ -175,9 +175,9 @@ and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     in
     (dctx, venv, exps_output, sideconditions)
   in
-  let exps = Hints.Input.combine hint exps_input exps_output in
+  let exps = Hints.Input.combine inputs exps_input exps_output in
   let notexp = (mixop, exps) in
-  let prem = RulePr (id, notexp) $ at in
+  let prem = RulePr (id, notexp, inputs) $ at in
   (dctx, venv, prem, sideconditions)
 
 and analyze_if_eq_prem (dctx : Dctx.t) (at : region) (note : typ')

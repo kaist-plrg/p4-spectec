@@ -3,7 +3,6 @@ module VarSet = Free.VarSet
 open Domain.Lib
 open Lang
 open Sl
-open Runtime.Prose.Envs
 open Transform
 open Util.Source
 
@@ -111,14 +110,14 @@ let rec replace_call_exps ~(call_e_count : call_e_count) (ids_used : IdSet.t)
               Some (instrs_t_new, exp_h :: exps_t, ids)
           | None -> None))
 
-let expand_nested_calls (ihenv, ids_used) instrs =
+let expand_nested_calls ids_used instrs =
   match instrs with
   | { it = LetI (exp_l, exp_r, iterexps); at; note } :: instrs_rest ->
       let* instr_new, exp_r, ids =
         replace_call_exp ~call_e_count:No ids_used exp_r
       in
       let instr_let = LetI (exp_l, exp_r, iterexps) $$ (at, note) in
-      Some ((ihenv, ids), [ instr_new; instr_let ], instrs_rest)
+      Some (ids, [ instr_new; instr_let ], instrs_rest)
   | { it = HoldI (id, notexp, iterexps, holdcase); at; note } :: instrs_rest ->
       let mixop, exps = notexp in
       let* instrs_new, exps, ids =
@@ -126,9 +125,8 @@ let expand_nested_calls (ihenv, ids_used) instrs =
       in
       let notexp = (mixop, exps) in
       let instr_rule = HoldI (id, notexp, iterexps, holdcase) $$ (at, note) in
-      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
-  | { it = RuleI (id, notexp, iterexps); at; note } :: instrs_rest ->
-      let inputs = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
+      Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
+  | { it = RuleI (id, notexp, inputs, iterexps); at; note } :: instrs_rest ->
       let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let* instrs_new, exps_input, ids =
@@ -136,8 +134,8 @@ let expand_nested_calls (ihenv, ids_used) instrs =
       in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
-      let instr_rule = RuleI (id, notexp, iterexps) $$ (at, note) in
-      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
+      let instr_rule = RuleI (id, notexp, inputs, iterexps) $$ (at, note) in
+      Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
   | _ -> None
 
 type 'ctx expansion =

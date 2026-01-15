@@ -332,8 +332,8 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
   | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterinstrs) ->
       prosify_let_instr at ctx exp_l exp_r iterinstrs
-  | RuleI (id, notexp, iterinstrs) ->
-      prosify_rule_instr at ctx id notexp iterinstrs
+  | RuleI (id, notexp, inputs, iterinstrs) ->
+      prosify_rule_instr at ctx id notexp inputs iterinstrs
   | ResultI (rel_signature, exps) ->
       prosify_result_instr at ctx rel_signature exps
   | ReturnI exp -> prosify_return_instr at ctx exp
@@ -341,9 +341,7 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
 
 and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   (* Expand nested calls *)
-  let instrs =
-    Expand.expand (ctx.ihenv, ctx.frees) Expand.expand_nested_calls instrs
-  in
+  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
   (* Prosify instructions *)
   let instrs_pl = prosify_instrs' ctx instrs in
   (* Apply shorthands *)
@@ -599,9 +597,9 @@ and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
 (* Rule instruction prosification *)
 
 and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterinstrs : iterinstr list) : Pl.instr list =
+    (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs : iterinstr list) :
+    Pl.instr list =
   let mixop, exps = notexp in
-  let inputs = Ctx.find_inputs ctx id_rel in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   let exps_input_pl = prosify_exps ctx exps_input in
   let exps_output_pl = prosify_exps ctx exps_output in
@@ -637,7 +635,6 @@ and prosify_result_instr (at : region) (ctx : Ctx.t)
       let id_rel = Ctx.get_namespace ctx in
       match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
       | Some prose_out ->
-          let inputs = Ctx.find_inputs ctx id_rel in
           let prose_out_aligned = Hints.Alter.realign prose_out inputs in
           Ctx.validate_hint_alter at prose_out_aligned exps_pl;
           Pl.ProseResult (`Yield (prose_out_aligned, exps_pl))

@@ -299,7 +299,8 @@ and string_of_targs targs =
 
 and string_of_prem prem =
   match prem.it with
-  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
+  | RulePr (id, notexp, _inputs) ->
+      string_of_relid id ^ ": " ^ string_of_notexp notexp
   | IfPr exp -> "if " ^ string_of_exp exp
   | IfHoldPr (id, notexp) ->
       "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"

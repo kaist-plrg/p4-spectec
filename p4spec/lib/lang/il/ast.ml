@@ -176,14 +176,14 @@ and targ' = typ' [@@deriving yojson]
 
 and prem = prem' phrase
 and prem' =
-  | RulePr of id * notexp              (* id `:` notexp *)
-  | IfPr of exp                        (* `if` exp *)
-  | IfHoldPr of id * notexp            (* `if` id `:` notexp `holds` *)
-  | IfNotHoldPr of id * notexp         (* `if` id `:` notexp `does not hold` *)
-  | ElsePr                             (* `otherwise` *)
-  | LetPr of exp * exp                 (* `let` exp `=` exp *)
-  | IterPr of prem * iterprem          (* prem iterprem *)
-  | DebugPr of exp                     (* `debug` exp *)
+  | RulePr of id * notexp * Hints.Input.t (* id `:` notexp *)
+  | IfPr of exp                           (* `if` exp *)
+  | IfHoldPr of id * notexp               (* `if` id `:` notexp `holds` *)
+  | IfNotHoldPr of id * notexp            (* `if` id `:` notexp `does not hold` *)
+  | ElsePr                                (* `otherwise` *)
+  | LetPr of exp * exp                    (* `let` exp `=` exp *)
+  | IterPr of prem * iterprem             (* prem iterprem *)
+  | DebugPr of exp                        (* `debug` exp *)
 
 and iterprem = iter * var list * var list
 

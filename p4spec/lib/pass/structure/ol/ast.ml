@@ -1,4 +1,5 @@
-include Lang.Sl
+open Lang
+include Sl
 open Util.Source
 
 (* Intermediate representation of SL instructions,
@@ -13,7 +14,7 @@ and instr' =
   | OtherwiseI of instr
   | GroupI of id * rel_signature * exp list * instr list
   | LetI of exp * exp * iterinstr list
-  | RuleI of id * notexp * iterinstr list
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   | DebugI of exp

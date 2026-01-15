@@ -1288,7 +1288,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
     let prem_il = Il.IfHoldPr (id, notexp_il) in
     (ctx, prem_il)
   else
-    let prem_il = Il.RulePr (id, notexp_il) in
+    let prem_il = Il.RulePr (id, notexp_il, inputs) in
     (ctx, prem_il)
 
 (* Elaboration of negated rule premises *)

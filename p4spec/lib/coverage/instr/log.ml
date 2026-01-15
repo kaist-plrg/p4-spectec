@@ -66,7 +66,7 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
       Format.asprintf "%s(Let %s be %s)%s" header (string_of_exp exp_l)
         (string_of_exp exp_r)
         (string_of_iterinstrs iterinstrs)
-  | RuleI (id_rel, notexp, iterinstrs) ->
+  | RuleI (id_rel, notexp, _inputs, iterinstrs) ->
       Format.asprintf "%s(%s: %s)%s" header (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterinstrs iterinstrs)

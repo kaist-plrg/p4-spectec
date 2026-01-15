@@ -3425,7 +3425,7 @@ def $invalidate_header((header typeId { _bool ; (fieldValue)* }))
 ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:77.1-77.65
 def $invalidate_headerUnion((header_union typeId { ((value_field nameIR_field ;))* }))
 
-1. (Let value_field_invalidated be $invalidate_value(value_field))*{value_field <- value_field*, value_field_invalidated -> value_field_invalidated*}
+1. (Let value_field_invalidated be $invalidate_value(value_field))*
 
 2. Return (header_union typeId { ((value_field_invalidated nameIR_field ;))* })
 
@@ -5636,11 +5636,11 @@ def $capture_avoiding_(theta, (typeParameterIR)*, B)
 
 1. (Let ({ (typeId_free)* }) be $diff_set<typeId>(B, ({ (typeParameterIR)* })))
 
-2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, typeId_free))*{typeId_free <- typeId_free*, typeIR? -> typeIR?*}
+2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, typeId_free))*
 
 3. If (((typeIR)? matches pattern (_)))*, then
 
-  1. (Let ?(typeIR_free) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_free -> typeIR_free*}
+  1. (Let ?(typeIR_free) be (typeIR)?)*
 
   2. (Let B_capture be $unions_set<typeId>(($free_typeIR(typeIR_free))*))
 
@@ -5661,11 +5661,11 @@ def $capture_avoiding(theta, (typeParameterIR_expl)*, (typeParameterIR_impl)*, B
 
 1. (Let ({ (typeId_free)* }) be $diff_set<typeId>(B, ({ (typeParameterIR_expl)* ++ (typeParameterIR_impl)* })))
 
-2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, typeId_free))*{typeId_free <- typeId_free*, typeIR? -> typeIR?*}
+2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, typeId_free))*
 
 3. If (((typeIR)? matches pattern (_)))*, then
 
-  1. (Let ?(typeIR_free) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_free -> typeIR_free*}
+  1. (Let ?(typeIR_free) be (typeIR)?)*
 
   2. (Let B_capture be $unions_set<typeId>(($free_typeIR(typeIR_free))*))
 
@@ -5749,7 +5749,7 @@ def $subst_typeIR'(theta, typeIR)
 
     1. (Let (tuple< (typeIR')* >) be (typeIR as tupleTypeIR))
 
-    2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*{typeIR' <- typeIR'*, typeIR_subst -> typeIR_subst*}
+    2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*
 
     3. Return ((tuple< (typeIR_subst)* >) as typeIR)
 
@@ -5767,9 +5767,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (struct typeId < (typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be structTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
+    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*
 
     5. (Let structTypeIR_subst be (struct typeId < (typeArgumentIR_subst)* >{ ((typeIR_field_subst nameIR_field ;))* }))
 
@@ -5781,9 +5781,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (header typeId < (typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be headerTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
+    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*
 
     5. (Let headerTypeIR_subst be (header typeId < (typeArgumentIR_subst)* >{ ((typeIR_field_subst nameIR_field ;))* }))
 
@@ -5795,9 +5795,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (header_union typeId < (typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be headerUnionTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
+    4. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*
 
     5. (Let headerUnionTypeIR_subst be (header_union typeId < (typeArgumentIR_subst)* >{ ((typeIR_field_subst nameIR_field ;))* }))
 
@@ -5829,13 +5829,13 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (extern typeId < (typeArgumentIR)* > ({ ((callableId : externMethodTypeDefIR))* })) be externObjectTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let callableTypeDefIR be $subst_callableTypeDefIR(theta, (externMethodTypeDefIR as callableTypeDefIR)))*{externMethodTypeDefIR <- externMethodTypeDefIR*, callableTypeDefIR -> callableTypeDefIR*}
+    4. (Let callableTypeDefIR be $subst_callableTypeDefIR(theta, (externMethodTypeDefIR as callableTypeDefIR)))*
 
     5. If ((callableTypeDefIR has type externMethodTypeDefIR))*, then
 
-      1. (Let externMethodTypeDefIR_subst be (callableTypeDefIR as externMethodTypeDefIR))*{callableTypeDefIR <- callableTypeDefIR*, externMethodTypeDefIR_subst -> externMethodTypeDefIR_subst*}
+      1. (Let externMethodTypeDefIR_subst be (callableTypeDefIR as externMethodTypeDefIR))*
 
       2. (Let externObjectTypeIR_subst be (extern typeId < (typeArgumentIR_subst)* > ({ ((callableId : externMethodTypeDefIR_subst))* })))
 
@@ -5849,9 +5849,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (parser typeId < (typeArgumentIR)* >( (parameterIR)* )) be parserObjectTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    4. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     5. (Let parserObjectTypeIR_subst be (parser typeId < (typeArgumentIR_subst)* >( (parameterIR_subst)* )))
 
@@ -5863,9 +5863,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (control typeId < (typeArgumentIR)* >( (parameterIR)* )) be controlObjectTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    4. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     5. (Let controlObjectTypeIR_subst be (control typeId < (typeArgumentIR_subst)* >( (parameterIR_subst)* )))
 
@@ -5877,9 +5877,9 @@ def $subst_typeIR'(theta, typeIR)
 
     2. (Let (package typeId < (typeArgumentIR)* >{ (typeIR')* }) be packageObjectTypeIR)
 
-    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
+    3. (Let typeArgumentIR_subst be $subst_typeIR'(theta, typeArgumentIR))*
 
-    4. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*{typeIR' <- typeIR'*, typeIR_subst -> typeIR_subst*}
+    4. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*
 
     5. (Let packageObjectTypeIR_subst be (package typeId < (typeArgumentIR_subst)* >{ (typeIR_subst)* }))
 
@@ -5913,7 +5913,7 @@ def $subst_typeIR'(theta, typeIR)
 
         1. (Let (seq< (typeIR')* >) be sequenceTypeIR)
 
-        2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*{typeIR' <- typeIR'*, typeIR_subst -> typeIR_subst*}
+        2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*
 
         3. Return ((seq< (typeIR_subst)* >) as typeIR)
 
@@ -5921,7 +5921,7 @@ def $subst_typeIR'(theta, typeIR)
 
         1. (Let (seq< (typeIR')* ,...>) be sequenceTypeIR)
 
-        2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*{typeIR' <- typeIR'*, typeIR_subst -> typeIR_subst*}
+        2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR'))*
 
         3. Return ((seq< (typeIR_subst)* ,...>) as typeIR)
 
@@ -5935,7 +5935,7 @@ def $subst_typeIR'(theta, typeIR)
 
         1. (Let (record{ ((typeIR_field id_field ;))* }) be recordTypeIR)
 
-        2. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
+        2. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*
 
         3. Return ((record{ ((typeIR_field_subst id_field ;))* }) as typeIR)
 
@@ -5943,7 +5943,7 @@ def $subst_typeIR'(theta, typeIR)
 
         1. (Let (record{ ((typeIR_field id_field ;))* ,...}) be recordTypeIR)
 
-        2. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
+        2. (Let typeIR_field_subst be $subst_typeIR'(theta, typeIR_field))*
 
         3. Return ((record{ ((typeIR_field_subst id_field ;))* ,...}) as typeIR)
 
@@ -5999,7 +5999,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (action( (parameterIR)* )) be (callableTypeIR as actionTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. Return ((action( (parameterIR_subst)* )) as callableTypeIR)
 
@@ -6007,7 +6007,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (function( (parameterIR)* ): typeIR) be (callableTypeIR as definedFunctionTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6017,7 +6017,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (extern_function( (parameterIR)* ): typeIR) be (callableTypeIR as externFunctionTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6027,7 +6027,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (builtin_method( (parameterIR)* ): typeIR) be (callableTypeIR as builtinMethodTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6043,7 +6043,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
         1. (Let (extern_method( (parameterIR)* ): typeIR) be externMethodTypeIR)
 
-        2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+        2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
         3. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6053,7 +6053,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
         1. (Let (extern_methodabstract( (parameterIR)* ): typeIR) be externMethodTypeIR)
 
-        2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+        2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
         3. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6063,7 +6063,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (parser_apply( (parameterIR)* )) be (callableTypeIR as parserApplyMethodTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. Return ((parser_apply( (parameterIR_subst)* )) as callableTypeIR)
 
@@ -6071,7 +6071,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let (control_apply( (parameterIR)* )) be (callableTypeIR as controlApplyMethodTypeIR))
 
-    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    2. (Let parameterIR_subst be $subst_parameterIR'(theta, parameterIR))*
 
     3. Return ((control_apply( (parameterIR_subst)* )) as callableTypeIR)
 
@@ -6133,7 +6133,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR)
 
     3. (Let (theta_fresh, (typeParameterIR_expl_fresh)*, (typeParameterIR_impl_fresh)*) be $capture_avoiding(theta, (typeParameterIR_expl)*, (typeParameterIR_impl)*, B))
 
-    4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*
 
     5. (Let typeIR_subst be $subst_typeIR(theta_fresh, typeIR))
 
@@ -6147,7 +6147,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR)
 
     3. (Let (theta_fresh, (typeParameterIR_expl_fresh)*, (typeParameterIR_impl_fresh)*) be $capture_avoiding(theta, (typeParameterIR_expl)*, (typeParameterIR_impl)*, B))
 
-    4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+    4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*
 
     5. (Let typeIR_subst be $subst_typeIR(theta_fresh, typeIR))
 
@@ -6167,7 +6167,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR)
 
         3. (Let (theta_fresh, (typeParameterIR_expl_fresh)*, (typeParameterIR_impl_fresh)*) be $capture_avoiding(theta, (typeParameterIR_expl)*, (typeParameterIR_impl)*, B))
 
-        4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+        4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*
 
         5. (Let typeIR_subst be $subst_typeIR(theta_fresh, typeIR))
 
@@ -6181,7 +6181,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR)
 
         3. (Let (theta_fresh, (typeParameterIR_expl_fresh)*, (typeParameterIR_impl_fresh)*) be $capture_avoiding(theta, (typeParameterIR_expl)*, (typeParameterIR_impl)*, B))
 
-        4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
+        4. (Let parameterIR_subst be $subst_parameterIR(theta_fresh, parameterIR))*
 
         5. (Let typeIR_subst be $subst_typeIR(theta_fresh, typeIR))
 
@@ -6231,7 +6231,7 @@ def $subst_constructorTypeIR(set<pair<typeId, typeIR>>, constructorTypeIR)
 ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:37.1-38.52
 def $subst_constructorTypeIR'(theta, (constructor( (constructorParameterIR)* ): typeIR))
 
-1. (Let constructorParameterIR_subst be $subst_parameterIR'(theta, constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameterIR_subst -> constructorParameterIR_subst*}
+1. (Let constructorParameterIR_subst be $subst_parameterIR'(theta, constructorParameterIR))*
 
 2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
@@ -6267,7 +6267,7 @@ def $specialize_callableTypeDefIR(callableTypeDefIR_base, (typeArgumentIR)*)
 
   1. (Let (typeId_fresh)* be $fresh_typeIds(|(typeParameterIR_impl)*|))
 
-  2. (Let typeArgumentIR_impl be ((` typeId_fresh) as typeArgumentIR))*{typeId_fresh <- typeId_fresh*, typeArgumentIR_impl -> typeArgumentIR_impl*}
+  2. (Let typeArgumentIR_impl be ((` typeId_fresh) as typeArgumentIR))*
 
   3. (Let theta be ({ ((typeParameterIR_expl : typeArgumentIR))* ++ ((typeParameterIR_impl : typeArgumentIR_impl))* }))
 
@@ -6283,7 +6283,7 @@ def $specialize_callableTypeDefIR(callableTypeDefIR_base, (typeArgumentIR)*)
 
   1. (Let (typeId_fresh')* be $fresh_typeIds(|(typeParameterIR)*|))
 
-  2. (Let typeArgumentIR_fresh be ((` typeId_fresh') as typeArgumentIR))*{typeId_fresh' <- typeId_fresh'*, typeArgumentIR_fresh -> typeArgumentIR_fresh*}
+  2. (Let typeArgumentIR_fresh be ((` typeId_fresh') as typeArgumentIR))*
 
   3. (Let theta' be ({ ((typeParameterIR : typeArgumentIR_fresh))* }))
 
@@ -6304,7 +6304,7 @@ def $specialize_constructorTypeDefIR((constructor< (typeParameterIR_expl)* , (ty
 
   1. (Let (typeId_fresh)* be $fresh_typeIds(|(typeParameterIR_impl)*|))
 
-  2. (Let typeArgumentIR_impl be ((` typeId_fresh) as typeArgumentIR))*{typeId_fresh <- typeId_fresh*, typeArgumentIR_impl -> typeArgumentIR_impl*}
+  2. (Let typeArgumentIR_impl be ((` typeId_fresh) as typeArgumentIR))*
 
   3. (Let theta be ({ ((typeParameterIR_expl : typeArgumentIR))* ++ ((typeParameterIR_impl : typeArgumentIR_impl))* }))
 
@@ -6318,7 +6318,7 @@ def $specialize_constructorTypeDefIR((constructor< (typeParameterIR_expl)* , (ty
 
   1. (Let (typeId_fresh')* be $fresh_typeIds(|(typeParameterIR)*|))
 
-  2. (Let typeArgumentIR_fresh be ((` typeId_fresh') as typeArgumentIR))*{typeId_fresh' <- typeId_fresh'*, typeArgumentIR_fresh -> typeArgumentIR_fresh*}
+  2. (Let typeArgumentIR_fresh be ((` typeId_fresh') as typeArgumentIR))*
 
   3. (Let theta' be ({ ((typeParameterIR : typeArgumentIR_fresh))* }))
 
@@ -9727,7 +9727,7 @@ def $cast_varbit(typeIR, w_max, w, i)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:604.1-605.23
 def $cast_struct(typeIR, typeId, ((value, id))*)
 
-1. (Let (value', id') be (value, id))*{id <- id*, value <- value*, id' -> id'*, value' -> value'*}
+1. (Let (value', id') be (value, id))*
 
 2. Case analysis on typeIR
 
@@ -9752,7 +9752,7 @@ def $cast_struct(typeIR, typeId, ((value, id))*)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:617.1-618.23
 def $cast_header(typeIR, typeId, b, ((value, id))*)
 
-1. (Let (value', id') be (value, id))*{id <- id*, value <- value*, id' -> id'*, value' -> value'*}
+1. (Let (value', id') be (value, id))*
 
 2. Case analysis on typeIR
 
@@ -9801,7 +9801,7 @@ def $cast_sequence(typeIR, (value)*)
 
     1. (Let (typeIR' [ n_size ]) be (typeIR as headerStackTypeIR))
 
-    2. (Let value_cast be $cast_op(typeIR', value))*{value <- value*, value_cast -> value_cast*}
+    2. (Let value_cast be $cast_op(typeIR', value))*
 
     3. (Let n_idx be |(value)*|)
 
@@ -9811,7 +9811,7 @@ def $cast_sequence(typeIR, (value)*)
 
     1. (Let (struct typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR as structTypeIR))
 
-    2. (Let value_cast be $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
+    2. (Let value_cast be $cast_op(typeIR_field, value))*
 
     3. Return ((struct typeId { ((value_cast nameIR_field ;))* }) as value)
 
@@ -9819,7 +9819,7 @@ def $cast_sequence(typeIR, (value)*)
 
     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_field nameIR_field ;))* }) be (typeIR as headerTypeIR))
 
-    2. (Let value_cast be $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
+    2. (Let value_cast be $cast_op(typeIR_field, value))*
 
     3. Return ((header typeId { true ; ((value_cast nameIR_field ;))* }) as value)
 
@@ -9828,7 +9828,7 @@ def $cast_sequence(typeIR, (value)*)
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:665.1-666.23
 def $cast_record(typeIR, ((value, id))*)
 
-1. (Let (value', id') be (value, id))*{id <- id*, value <- value*, id' -> id'*, value' -> value'*}
+1. (Let (value', id') be (value, id))*
 
 2. Case analysis on typeIR
 
@@ -9842,13 +9842,13 @@ def $cast_record(typeIR, ((value, id))*)
 
     1. (Let (struct typeId < (_typeArgumentIR)* >{ ((typeIR_t_field id_t_field ;))* }) be (typeIR as structTypeIR))
 
-    2. (Let (value'')? be $find_map<id, value>(({ ((id' : value'))* }), id_t_field))*{id_t_field <- id_t_field*, value''? -> value''?*}
+    2. (Let (value'')? be $find_map<id, value>(({ ((id' : value'))* }), id_t_field))*
 
     3. If (((value'')? matches pattern (_)))*, then
 
-      1. (Let ?(value_field) be (value'')?)*{value''? <- value''?*, value_field -> value_field*}
+      1. (Let ?(value_field) be (value'')?)*
 
-      2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field))*{typeIR_t_field <- typeIR_t_field*, value_field <- value_field*, value_field_cast -> value_field_cast*}
+      2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field))*
 
       3. Return ((struct typeId { ((value_field_cast id' ;))* }) as value)
 
@@ -9858,13 +9858,13 @@ def $cast_record(typeIR, ((value, id))*)
 
     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_t_field id_t_field ;))* }) be (typeIR as headerTypeIR))
 
-    2. (Let (value'')? be $find_map<id, value>(({ ((id' : value'))* }), id_t_field))*{id_t_field <- id_t_field*, value''? -> value''?*}
+    2. (Let (value'')? be $find_map<id, value>(({ ((id' : value'))* }), id_t_field))*
 
     3. If (((value'')? matches pattern (_)))*, then
 
-      1. (Let ?(value_field) be (value'')?)*{value''? <- value''?*, value_field -> value_field*}
+      1. (Let ?(value_field) be (value'')?)*
 
-      2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field))*{typeIR_t_field <- typeIR_t_field*, value_field <- value_field*, value_field_cast -> value_field_cast*}
+      2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field))*
 
       3. Return ((header typeId { true ; ((value_field_cast id' ;))* }) as value)
 
@@ -11232,15 +11232,15 @@ def $align_parameterListIR((parameterIR)*, (argumentIR)*, (nameIR_default)*)
 
 1. (Let ((parameterIR_non_default)*, (parameterIR_default)*) be $partition_parameterListIR_default((parameterIR)*, (nameIR_default)*))
 
-2. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR_non_default)*{parameterIR_non_default <- parameterIR_non_default*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+2. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR_non_default)*
 
 3. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((nameIR_param : parameterIR_non_default))* }), (parameterIR_non_default)*, (argumentIR)*))
 
-4. (Let (_annotationList' _direction' _typeIR' _id constantInitializerOptIR) be parameterIR_default)*{parameterIR_default <- parameterIR_default*, _annotationList' -> _annotationList'*, _direction' -> _direction'*, _id -> _id*, _typeIR' -> _typeIR'*, constantInitializerOptIR -> constantInitializerOptIR*}
+4. (Let (_annotationList' _direction' _typeIR' _id constantInitializerOptIR) be parameterIR_default)*
 
 5. If ((constantInitializerOptIR matches pattern (_)))*, then
 
-  1. (Let ?((= value_default)) be constantInitializerOptIR)*{constantInitializerOptIR <- constantInitializerOptIR*, value_default -> value_default*}
+  1. (Let ?((= value_default)) be constantInitializerOptIR)*
 
   2. Return ((parameterIR_aligned)*, (argumentIR_aligned)*, (parameterIR_default)*, (value_default)*)
 
@@ -11335,7 +11335,7 @@ syntax callTargetMatch =
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:13.1-13.59
 def $callTargetKey(nameIR_f, (argumentIR)*)
 
-1. (Let (id_arg)? be $callTargetKey'(argumentIR))*{argumentIR <- argumentIR*, id_arg? -> id_arg?*}
+1. (Let (id_arg)? be $callTargetKey'(argumentIR))*
 
 2. Return (nameIR_f ( ((id_arg)?)* ))
 
@@ -11385,7 +11385,7 @@ def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $ge
 
     2. If ((id_param = $id_of_parameterIR(parameterIR')))*, then
 
-      1. (Let b_default_param be $default_of_parameterIR(parameterIR'))*{parameterIR' <- parameterIR'*, b_default_param -> b_default_param*}
+      1. (Let b_default_param be $default_of_parameterIR(parameterIR'))*
 
       2. (Let ({ (id_param_default)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
 
@@ -11416,7 +11416,7 @@ def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_
 
     3. If ($default_of_parameterIR(parameterIR_default))*, then
 
-      1. (Let id_param_default be $id_of_parameterIR(parameterIR_default))*{parameterIR_default <- parameterIR_default*, id_param_default -> id_param_default*}
+      1. (Let id_param_default be $id_of_parameterIR(parameterIR_default))*
 
       2. Return (match (id_param_default)*)
 
@@ -11497,7 +11497,7 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
   1. If (((id_arg)? matches pattern (_)))*, then
 
-    1. (Let ?(id_arg_inner) be (id_arg)?)*{id_arg? <- id_arg?*, id_arg_inner -> id_arg_inner*}
+    1. (Let ?(id_arg_inner) be (id_arg)?)*
 
     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
 
@@ -13356,7 +13356,7 @@ relation CallableType_wf: B |- callableTypeIR
 
       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-        1. (Let (_annotationList direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _id -> _id*, direction -> direction*, typeIR -> typeIR*}
+        1. (Let (_annotationList direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($directionless_trailing((direction)*)), then
 
@@ -13378,7 +13378,7 @@ relation CallableType_wf: B |- callableTypeIR
 
       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($nestable_definedFunction(typeIR))*, then
 
@@ -13400,7 +13400,7 @@ relation CallableType_wf: B |- callableTypeIR
 
       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($nestable_externFunction(typeIR))*, then
 
@@ -13444,7 +13444,7 @@ relation CallableType_wf: B |- callableTypeIR
 
           2. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-            1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+            1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
             2. If ($nestable_externMethod(typeIR))*, then
 
@@ -13464,7 +13464,7 @@ relation CallableType_wf: B |- callableTypeIR
 
           2. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-            1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+            1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
             2. If ($nestable_externMethod(typeIR))*, then
 
@@ -13486,7 +13486,7 @@ relation CallableType_wf: B |- callableTypeIR
 
       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($nestable_parserApplyMethod(typeIR))*, then
 
@@ -13504,7 +13504,7 @@ relation CallableType_wf: B |- callableTypeIR
 
       1. If (ParameterType_wf: B |- parameterIR)* holds, then
 
-        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+        1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($nestable_controlApplyMethod(typeIR))*, then
 
@@ -13575,7 +13575,7 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
       2. If ((typeIR has type externObjectTypeIR)), then
 
-        1. (Let (_annotationList _direction typeIR' _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR' -> typeIR'*}
+        1. (Let (_annotationList _direction typeIR' _id _constantInitializerOptIR) be parameterIR)*
 
         2. If ($nestable_constructor_extern(typeIR'))*, then
 
@@ -13599,7 +13599,7 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
       2. If ((typeIR'' has type parserObjectTypeIR)), then
 
-        1. (Let (_annotationList' _direction' typeIR' _id' _constantInitializerOptIR') be parameterIR)*{parameterIR <- parameterIR*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _id' -> _id'*, typeIR' -> typeIR'*}
+        1. (Let (_annotationList' _direction' typeIR' _id' _constantInitializerOptIR') be parameterIR)*
 
         2. If ($nestable_constructor_parser(typeIR'))*, then
 
@@ -13623,7 +13623,7 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
       2. If ((typeIR''' has type controlObjectTypeIR)), then
 
-        1. (Let (_annotationList'' _direction'' typeIR' _id'' _constantInitializerOptIR'') be parameterIR)*{parameterIR <- parameterIR*, _annotationList'' -> _annotationList''*, _constantInitializerOptIR'' -> _constantInitializerOptIR''*, _direction'' -> _direction''*, _id'' -> _id''*, typeIR' -> typeIR'*}
+        1. (Let (_annotationList'' _direction'' typeIR' _id'' _constantInitializerOptIR'') be parameterIR)*
 
         2. If ($nestable_constructor_control(typeIR'))*, then
 
@@ -13665,7 +13665,7 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
       2. If ((typeIR''''' has type packageObjectTypeIR)), then
 
-        1. (Let (_annotationList''' _direction''' typeIR' _id''' _constantInitializerOptIR''') be parameterIR)*{parameterIR <- parameterIR*, _annotationList''' -> _annotationList'''*, _constantInitializerOptIR''' -> _constantInitializerOptIR'''*, _direction''' -> _direction'''*, _id''' -> _id'''*, typeIR' -> typeIR'*}
+        1. (Let (_annotationList''' _direction''' typeIR' _id''' _constantInitializerOptIR''') be parameterIR)*
 
         2. If ($nestable_constructor_package(typeIR'))*, then
 
@@ -15595,7 +15595,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Let (seq{ (typedExpressionIR')* }) be dataExpressionIR)
 
-          2. (Expr_eval_lctk: p TC |- typedExpressionIR' ~> value')*{typedExpressionIR' <- typedExpressionIR'*, value' -> value'*}
+          2. (Expr_eval_lctk: p TC |- typedExpressionIR' ~> value')*
 
           3. Result in: % % |- % ~> ((seq( (value')* )) as value)
 
@@ -15603,7 +15603,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Let (seq{ (typedExpressionIR')* ,...}) be dataExpressionIR)
 
-          2. (Expr_eval_lctk: p TC |- typedExpressionIR' ~> value')*{typedExpressionIR' <- typedExpressionIR'*, value' -> value'*}
+          2. (Expr_eval_lctk: p TC |- typedExpressionIR' ~> value')*
 
           3. Result in: % % |- % ~> ((seq( (value')* ,...)) as value)
 
@@ -15617,7 +15617,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Let (record{ ((nameIR = typedExpressionIR''))* }) be dataExpressionIR)
 
-          2. (Expr_eval_lctk: p TC |- typedExpressionIR'' ~> value'')*{typedExpressionIR'' <- typedExpressionIR''*, value'' -> value''*}
+          2. (Expr_eval_lctk: p TC |- typedExpressionIR'' ~> value'')*
 
           3. Result in: % % |- % ~> ((record{ ((value'' nameIR ;))* }) as value)
 
@@ -15625,7 +15625,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
           1. (Let (record{ ((nameIR = typedExpressionIR''))* ,...}) be dataExpressionIR)
 
-          2. (Expr_eval_lctk: p TC |- typedExpressionIR'' ~> value'')*{typedExpressionIR'' <- typedExpressionIR''*, value'' -> value''*}
+          2. (Expr_eval_lctk: p TC |- typedExpressionIR'' ~> value'')*
 
           3. Result in: % % |- % ~> ((record{ ((value'' nameIR ;))* ,...}) as value)
 
@@ -15889,7 +15889,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                         1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
-                        2. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+                        2. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR)*
 
                         3. (Let TC_callee_0 be $empty_typingContext)
 
@@ -15899,11 +15899,11 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                           1. If (((value')* matches pattern [])), then
 
-                            1. (Argument_eval_lctk: p TC |- argumentIR_aligned ~> value_argument)*{argumentIR_aligned <- argumentIR_aligned*, value_argument -> value_argument*}
+                            1. (Argument_eval_lctk: p TC |- argumentIR_aligned ~> value_argument)*
 
-                            2. (Let (_annotationList' direction_param_aligned typeIR_param_aligned nameIR_param_aligned _constantInitializerOptIR') be parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, direction_param_aligned -> direction_param_aligned*, nameIR_param_aligned -> nameIR_param_aligned*, typeIR_param_aligned -> typeIR_param_aligned*}
+                            2. (Let (_annotationList' direction_param_aligned typeIR_param_aligned nameIR_param_aligned _constantInitializerOptIR') be parameterIR_aligned)*
 
-                            3. (Let varTypeIR be (direction_param_aligned typeIR_param_aligned (lctk) ?(value_argument)))*{direction_param_aligned <- direction_param_aligned*, typeIR_param_aligned <- typeIR_param_aligned*, value_argument <- value_argument*, varTypeIR -> varTypeIR*}
+                            3. (Let varTypeIR be (direction_param_aligned typeIR_param_aligned (lctk) ?(value_argument)))*
 
                             4. (Let TC_callee_1 be $add_vars_t((local), TC_callee_0, (nameIR_param_aligned)*, (varTypeIR)*))
 
@@ -15953,7 +15953,7 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                         1. (Let boolTypeIR' be (typeIR''' as boolTypeIR))
 
-                        2. (Let (_annotationList'' _direction' _typeIR' nameIR_param' _constantInitializerOptIR'') be parameterIR'')*{parameterIR'' <- parameterIR''*, _annotationList'' -> _annotationList''*, _constantInitializerOptIR'' -> _constantInitializerOptIR''*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, nameIR_param' -> nameIR_param'*}
+                        2. (Let (_annotationList'' _direction' _typeIR' nameIR_param' _constantInitializerOptIR'') be parameterIR'')*
 
                         3. (Let TC_callee_0' be $empty_typingContext)
 
@@ -15963,11 +15963,11 @@ relation Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
                           1. If (((value'')* matches pattern [])), then
 
-                            1. (Argument_eval_lctk: p TC |- argumentIR_aligned' ~> value_argument')*{argumentIR_aligned' <- argumentIR_aligned'*, value_argument' -> value_argument'*}
+                            1. (Argument_eval_lctk: p TC |- argumentIR_aligned' ~> value_argument')*
 
-                            2. (Let (_annotationList direction_param_aligned' typeIR_param_aligned' nameIR_param_aligned' _constantInitializerOptIR) be parameterIR_aligned')*{parameterIR_aligned' <- parameterIR_aligned'*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, direction_param_aligned' -> direction_param_aligned'*, nameIR_param_aligned' -> nameIR_param_aligned'*, typeIR_param_aligned' -> typeIR_param_aligned'*}
+                            2. (Let (_annotationList direction_param_aligned' typeIR_param_aligned' nameIR_param_aligned' _constantInitializerOptIR) be parameterIR_aligned')*
 
-                            3. (Let varTypeIR' be (direction_param_aligned' typeIR_param_aligned' (lctk) ?(value_argument')))*{direction_param_aligned' <- direction_param_aligned'*, typeIR_param_aligned' <- typeIR_param_aligned'*, value_argument' <- value_argument'*, varTypeIR' -> varTypeIR'*}
+                            3. (Let varTypeIR' be (direction_param_aligned' typeIR_param_aligned' (lctk) ?(value_argument')))*
 
                             4. (Let TC_callee_1' be $add_vars_t((local), TC_callee_0', (nameIR_param_aligned')*, (varTypeIR')*))
 
@@ -16940,17 +16940,17 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ($eq_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
+                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
                     2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
 
@@ -16970,17 +16970,17 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ($eq_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
+                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
                     2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
 
@@ -17010,27 +17010,27 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ($sub_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
+                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
                     2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
-                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*{id_default <- id_default*, typeIR''''? -> typeIR''''?*}
+                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*
 
                       3. If (((typeIR'''')? matches pattern (_)))*, then
 
-                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*{typeIR''''? <- typeIR''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
+                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*
 
                         2. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17054,27 +17054,27 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ($sub_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
+                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
                     2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
-                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*{id_default <- id_default*, typeIR''''? -> typeIR''''?*}
+                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*
 
                       3. If (((typeIR'''')? matches pattern (_)))*, then
 
-                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*{typeIR''''? <- typeIR''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
+                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*
 
                         2. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17439,17 +17439,17 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ($eq_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
+                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
                     2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
 
@@ -17469,17 +17469,17 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ($eq_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
+                    1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
                     2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
 
@@ -17509,27 +17509,27 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ($sub_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
+                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
                     2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
-                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*{id_default <- id_default*, typeIR''''? -> typeIR''''?*}
+                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*
 
                       3. If (((typeIR'''')? matches pattern (_)))*, then
 
-                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*{typeIR''''? <- typeIR''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
+                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*
 
                         2. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17553,27 +17553,27 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ($sub_set<id>(({ (id_field_a)* }), ({ (id_field_b)* }))), then
 
-                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR''? -> typeIR''?*}
+                1. (Let (typeIR'')? be $find_map<id, typeIR>(({ ((id_field_a : typeIR_field_a))* }), id_field_a))*
 
                 2. If (((typeIR'')? matches pattern (_)))*, then
 
-                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+                  1. (Let ?(typeIR_field_a_aligned) be (typeIR'')?)*
 
-                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
+                  2. (Let (typeIR''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_field_a))*
 
                   3. If (((typeIR''')? matches pattern (_)))*, then
 
-                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*{typeIR'''? <- typeIR'''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
+                    1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
                     2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
-                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*{id_default <- id_default*, typeIR''''? -> typeIR''''?*}
+                      2. (Let (typeIR'''')? be $find_map<id, typeIR>(({ ((id_field_b : typeIR_field_b))* }), id_default))*
 
                       3. If (((typeIR'''')? matches pattern (_)))*, then
 
-                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*{typeIR''''? <- typeIR''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
+                        1. (Let ?(typeIR_field_b_default) be (typeIR'''')?)*
 
                         2. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -18320,11 +18320,11 @@ relation Expr_ok: p TC |- expression : %
 
                   1. If (((expression_e)* = $flatten_expressionList(expressionList))), then
 
-                    1. (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*{expression_e <- expression_e*, typedExpressionIR_e -> typedExpressionIR_e*}
+                    1. (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
 
-                    2. (Let typeIR_e be $type_of_typedExpressionIR(typedExpressionIR_e))*{typedExpressionIR_e <- typedExpressionIR_e*, typeIR_e -> typeIR_e*}
+                    2. (Let typeIR_e be $type_of_typedExpressionIR(typedExpressionIR_e))*
 
-                    3. (Let ctk_e be $ctk_of_typedExpressionIR(typedExpressionIR_e))*{typedExpressionIR_e <- typedExpressionIR_e*, ctk_e -> ctk_e*}
+                    3. (Let ctk_e be $ctk_of_typedExpressionIR(typedExpressionIR_e))*
 
                     4. (Let typeIR'' be ((seq< (typeIR_e)* >) as typeIR))
 
@@ -18352,11 +18352,11 @@ relation Expr_ok: p TC |- expression : %
 
                       3. If (~((...) as expression) is in (expression_e_h)*), then
 
-                        1. (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*{expression_e_h <- expression_e_h*, typedExpressionIR_e_h -> typedExpressionIR_e_h*}
+                        1. (Expr_ok: p TC |- expression_e_h : typedExpressionIR_e_h)*
 
-                        2. (Let typeIR_e_h be $type_of_typedExpressionIR(typedExpressionIR_e_h))*{typedExpressionIR_e_h <- typedExpressionIR_e_h*, typeIR_e_h -> typeIR_e_h*}
+                        2. (Let typeIR_e_h be $type_of_typedExpressionIR(typedExpressionIR_e_h))*
 
-                        3. (Let ctk_e_h be $ctk_of_typedExpressionIR(typedExpressionIR_e_h))*{typedExpressionIR_e_h <- typedExpressionIR_e_h*, ctk_e_h -> ctk_e_h*}
+                        3. (Let ctk_e_h be $ctk_of_typedExpressionIR(typedExpressionIR_e_h))*
 
                         4. (Let typeIR'' be ((seq< (typeIR_e_h)* ,...>) as typeIR))
 
@@ -18424,15 +18424,15 @@ relation Expr_ok: p TC |- expression : %
 
                   3. (Let (name_f)* be name_f_h :: (name_f_t)*)
 
-                  4. (Let nameIR_f be $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
+                  4. (Let nameIR_f be $name(name_f))*
 
                   5. (Let (expression_f)* be expression_f_h :: (expression_f_t)*)
 
-                  6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f -> typedExpressionIR_f*}
+                  6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
 
-                  7. (Let typeIR_f be $type_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, typeIR_f -> typeIR_f*}
+                  7. (Let typeIR_f be $type_of_typedExpressionIR(typedExpressionIR_f))*
 
-                  8. (Let ctk_f be $ctk_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, ctk_f -> ctk_f*}
+                  8. (Let ctk_f be $ctk_of_typedExpressionIR(typedExpressionIR_f))*
 
                   9. (Let typeIR'' be ((record{ ((typeIR_f nameIR_f ;))* }) as typeIR))
 
@@ -18450,15 +18450,15 @@ relation Expr_ok: p TC |- expression : %
 
                   3. (Let (name_f)* be name_f_h :: (name_f_t)*)
 
-                  4. (Let nameIR_f be $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
+                  4. (Let nameIR_f be $name(name_f))*
 
                   5. (Let (expression_f)* be expression_f_h :: (expression_f_t)*)
 
-                  6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f -> typedExpressionIR_f*}
+                  6. (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
 
-                  7. (Let typeIR_f be $type_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, typeIR_f -> typeIR_f*}
+                  7. (Let typeIR_f be $type_of_typedExpressionIR(typedExpressionIR_f))*
 
-                  8. (Let ctk_f be $ctk_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, ctk_f -> ctk_f*}
+                  8. (Let ctk_f be $ctk_of_typedExpressionIR(typedExpressionIR_f))*
 
                   9. (Let typeIR'' be ((record{ ((typeIR_f nameIR_f ;))* ,...}) as typeIR))
 
@@ -19022,7 +19022,7 @@ relation Expr_ok: p TC |- expression : %
 
             3. (Let (argument)* be $flatten_argumentList(argumentList))
 
-            4. (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+            4. (Argument_ok: p TC |- argument : argumentIR)*
 
             5. (CallableType_ok: p TC |- callableTargetIR < [] >( (argumentIR)* ): callableTypeIR <# (typeId_infer)* >(# (id_default)* ))
 
@@ -19054,7 +19054,7 @@ relation Expr_ok: p TC |- expression : %
 
           5. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          6. (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          6. (Argument_ok: p TC |- argument : argumentIR)*
 
           7. (CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argumentIR)* ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* ))
 
@@ -19088,7 +19088,7 @@ relation Expr_ok: p TC |- expression : %
 
             2. (Let (argument')* be $flatten_argumentList(argumentList'))
 
-            3. (Argument_ok: p TC |- argument' : argumentIR')*{argument' <- argument'*, argumentIR' -> argumentIR'*}
+            3. (Argument_ok: p TC |- argument' : argumentIR')*
 
             4. (Let prefixedNameIR'' be $prefixedTypeName(prefixedTypeName))
 
@@ -19116,7 +19116,7 @@ relation Expr_ok: p TC |- expression : %
 
             4. (Let (argument')* be $flatten_argumentList(argumentList'))
 
-            5. (Argument_ok: p TC |- argument' : argumentIR')*{argument' <- argument'*, argumentIR' -> argumentIR'*}
+            5. (Argument_ok: p TC |- argument' : argumentIR')*
 
             6. (Let prefixedNameIR'' be $prefixedTypeName(prefixedTypeName))
 
@@ -19634,7 +19634,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
           3. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          4. (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          4. (Argument_ok: p TC |- argument : argumentIR)*
 
           5. (CallableType_ok: p TC |- callableTargetIR < [] >( (argumentIR)* ): callableTypeIR <# (typeId_impl)* >(# (id_default)* ))
 
@@ -19656,7 +19656,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
           5. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          6. (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          6. (Argument_ok: p TC |- argument : argumentIR)*
 
           7. (CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argumentIR)* ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* ))
 
@@ -19864,7 +19864,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             1. (Let (forUpdateStatement)* be $flatten_forUpdateStatementList(forUpdateStatementList))
 
-            2. (ForUpdateStmt_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*{forUpdateStatement <- forUpdateStatement*, forUpdateStatementIR -> forUpdateStatementIR*}
+            2. (ForUpdateStmt_ok: TC_2 |- forUpdateStatement : forUpdateStatementIR)*
 
             3. (Stmt_ok: (local) TC_2 f (loop) |- statement' : TC_3 f_post' statementIR')
 
@@ -20192,7 +20192,7 @@ relation ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : % %
 
         1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-        2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+        2. (Let typeId_expl be $name(typeParameter))*
 
         3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -20236,7 +20236,7 @@ relation ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : % %
 
         1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-        2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+        2. (Let typeId_expl be $name(typeParameter))*
 
         3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -20406,17 +20406,17 @@ relation ParserTransition_ok: TC_0 (nameIR_state)* |- transitionStatement : %
 
           1. (Let (expression_key)* be $flatten_expressionList(expressionList_key))
 
-          2. (Expr_ok: (local) TC_0 |- expression_key : typedExpressionIR_key)*{expression_key <- expression_key*, typedExpressionIR_key -> typedExpressionIR_key*}
+          2. (Expr_ok: (local) TC_0 |- expression_key : typedExpressionIR_key)*
 
-          3. (Let typedExpressionIR_key_reduced be $reduce_serenum(typedExpressionIR_key))*{typedExpressionIR_key <- typedExpressionIR_key*, typedExpressionIR_key_reduced -> typedExpressionIR_key_reduced*}
+          3. (Let typedExpressionIR_key_reduced be $reduce_serenum(typedExpressionIR_key))*
 
-          4. (Let typeIR_key_reduced be $type_of_typedExpressionIR(typedExpressionIR_key_reduced))*{typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*, typeIR_key_reduced -> typeIR_key_reduced*}
+          4. (Let typeIR_key_reduced be $type_of_typedExpressionIR(typedExpressionIR_key_reduced))*
 
           5. If (Type_wf: $bound((local), TC_0) |- ((set< typeIR_key_reduced >) as typeIR))* holds, then
 
             1. (Let (selectCase)* be $flatten_selectCaseList(selectCaseList))
 
-            2. (SelectCase_ok: TC_0 (nameIR_state)* (typeIR_key_reduced)* |- selectCase : selectCaseIR)*{selectCase <- selectCase*, selectCaseIR -> selectCaseIR*}
+            2. (SelectCase_ok: TC_0 (nameIR_state)* (typeIR_key_reduced)* |- selectCase : selectCaseIR)*
 
             3. (Let transitionStatementIR be (transition ((select( (typedExpressionIR_key_reduced)* ){ (selectCaseIR)* }) as stateExpressionIR)))
 
@@ -20638,9 +20638,9 @@ relation ParserStates_ok: TC |- (parserState)* : %
 
 1. Group : TC |- (parserState)* : %
 
-  1. (Let (_annotationList state name_state { _parserStatementList _transitionStatement }) be parserState)*{parserState <- parserState*, _annotationList -> _annotationList*, _parserStatementList -> _parserStatementList*, _transitionStatement -> _transitionStatement*, name_state -> name_state*}
+  1. (Let (_annotationList state name_state { _parserStatementList _transitionStatement }) be parserState)*
 
-  2. (Let nameIR_state be $name(name_state))*{name_state <- name_state*, nameIR_state -> nameIR_state*}
+  2. (Let nameIR_state be $name(name_state))*
 
   3. If ($distinct_<nameIR>((nameIR_state)*)), then
 
@@ -20650,7 +20650,7 @@ relation ParserStates_ok: TC |- (parserState)* : %
 
         1. (Let (nameIR_state_impl)* be "accept" :: "reject" :: (nameIR_state)*)
 
-        2. (ParserState_ok: TC (nameIR_state_impl)* |- parserState : parserStateIR)*{parserState <- parserState*, parserStateIR -> parserStateIR*}
+        2. (ParserState_ok: TC (nameIR_state_impl)* |- parserState : parserStateIR)*
 
         3. Result in: % |- % : (parserStateIR)*
 
@@ -20884,7 +20884,7 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
           2. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          3. (Argument_ok: (local) TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          3. (Argument_ok: (local) TC |- argument : argumentIR)*
 
           4. (Call_action_partial_ok: TC |- (parameterIR)* @ (argumentIR)* : (parameterIR_data)* , (parameterIR_control)* @ (argumentIR_cast)*)
 
@@ -20979,7 +20979,7 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
             2. (Let (argument)* be $flatten_argumentList(argumentList))
 
-            3. (Argument_ok: (local) TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+            3. (Argument_ok: (local) TC |- argument : argumentIR)*
 
             4. (Call_action_default_ok: TC |- (parameterIR_action)* @ (argumentIR)* : (parameterIR_action_data)* , (parameterIR_action_control)* @ (argumentIR_cast)*)
 
@@ -21325,7 +21325,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
         2. (Let (argument)* be $flatten_argumentList(argumentList))
 
-        3. (Argument_ok: (local) TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+        3. (Argument_ok: (local) TC |- argument : argumentIR)*
 
         4. (Call_action_default_ok: TC |- (parameterIR_action)* @ (argumentIR)* : (parameterIR_action_data)* , (parameterIR_action_control)* @ (argumentIR_cast)*)
 
@@ -22156,13 +22156,13 @@ relation TableType_ok: TC_0 TBLC |- name : % %
 
   3. (Let ((prefixedNameIR_action, (_parameterIR)*, _argumentListIR))* be TBLC.actions)
 
-  4. (Let nameIR_enum_field be $flatten_prefixedNameIR(prefixedNameIR_action))*{prefixedNameIR_action <- prefixedNameIR_action*, nameIR_enum_field -> nameIR_enum_field*}
+  4. (Let nameIR_enum_field be $flatten_prefixedNameIR(prefixedNameIR_action))*
 
   5. (Let tableMetadataEnumTypeIR be (table_enum typeId_enum { (nameIR_enum_field)* }))
 
-  6. (Let value_enum_field be ((table_enum typeId_enum . nameIR_enum_field) as value))*{nameIR_enum_field <- nameIR_enum_field*, value_enum_field -> value_enum_field*}
+  6. (Let value_enum_field be ((table_enum typeId_enum . nameIR_enum_field) as value))*
 
-  7. (Let varTypeIR_enum_field be ((`empty) (tableMetadataEnumTypeIR as typeIR) (lctk) ?(value_enum_field)))*{value_enum_field <- value_enum_field*, varTypeIR_enum_field -> varTypeIR_enum_field*}
+  7. (Let varTypeIR_enum_field be ((`empty) (tableMetadataEnumTypeIR as typeIR) (lctk) ?(value_enum_field)))*
 
   8. (Let TC_1 be $add_vars_t((block), TC_0, (typeId_enum ++ "." ++ nameIR_enum_field)*, (varTypeIR_enum_field)*))
 
@@ -22391,7 +22391,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           2. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          3. (Argument_ok: p TC_0 |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          3. (Argument_ok: p TC_0 |- argument : argumentIR)*
 
           4. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -22417,7 +22417,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           4. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          5. (Argument_ok: p TC_0 |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          5. (Argument_ok: p TC_0 |- argument : argumentIR)*
 
           6. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -22451,7 +22451,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           2. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          3. (Argument_ok: p TC_0 |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          3. (Argument_ok: p TC_0 |- argument : argumentIR)*
 
           4. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -22501,7 +22501,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
           4. (Let (argument)* be $flatten_argumentList(argumentList))
 
-          5. (Argument_ok: p TC_0 |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+          5. (Argument_ok: p TC_0 |- argument : argumentIR)*
 
           6. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
@@ -22550,7 +22550,7 @@ relation FuncDecl_ok: p TC_0 |- (annotationList (typeOrVoid name typeParameterLi
 
   1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-  2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+  2. (Let typeId_expl be $name(typeParameter))*
 
   3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -22698,15 +22698,15 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
-      2. (Let nameIR be $name(name))*{name <- name*, nameIR -> nameIR*}
+      2. (Let nameIR be $name(name))*
 
       3. If ($distinct_<nameIR>((nameIR)*)), then
 
-        1. (Let nameIR_error be "error." ++ nameIR)*{nameIR <- nameIR*, nameIR_error -> nameIR_error*}
+        1. (Let nameIR_error be "error." ++ nameIR)*
 
-        2. (Let value_error be ((error. nameIR) as value))*{nameIR <- nameIR*, value_error -> value_error*}
+        2. (Let value_error be ((error. nameIR) as value))*
 
-        3. (Let varTypeIR be ((`empty) ((error) as typeIR) (lctk) ?(value_error)))*{value_error <- value_error*, varTypeIR -> varTypeIR*}
+        3. (Let varTypeIR be ((`empty) ((error) as typeIR) (lctk) ?(value_error)))*
 
         4. (Let TC_1 be $add_vars_t((global), TC_0, (nameIR_error)*, (varTypeIR)*))
 
@@ -22722,13 +22722,13 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (name)* be $flatten_nameList(nameList))
 
-      2. (Let nameIR be $name(name))*{name <- name*, nameIR -> nameIR*}
+      2. (Let nameIR be $name(name))*
 
       3. If ($distinct_<nameIR>((nameIR)*)), then
 
-        1. (Let value_match_kind be ((match_kind. nameIR) as value))*{nameIR <- nameIR*, value_match_kind -> value_match_kind*}
+        1. (Let value_match_kind be ((match_kind. nameIR) as value))*
 
-        2. (Let varTypeIR be ((`empty) ((match_kind) as typeIR) (lctk) ?(value_match_kind)))*{value_match_kind <- value_match_kind*, varTypeIR -> varTypeIR*}
+        2. (Let varTypeIR be ((`empty) ((match_kind) as typeIR) (lctk) ?(value_match_kind)))*
 
         3. (Let TC_1 be $add_vars_t((global), TC_0, (nameIR)*, (varTypeIR)*))
 
@@ -22744,7 +22744,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      2. (Let typeId_expl be $name(typeParameter))*
 
       3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -22800,7 +22800,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
           3. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-          4. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+          4. (Let typeId_expl be $name(typeParameter))*
 
           5. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -22812,7 +22812,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
           9. If ((callableTypeDefIR has type externMethodTypeDefIR))*, then
 
-            1. (Let externMethodTypeDefIR be (callableTypeDefIR as externMethodTypeDefIR))*{callableTypeDefIR <- callableTypeDefIR*, externMethodTypeDefIR -> externMethodTypeDefIR*}
+            1. (Let externMethodTypeDefIR be (callableTypeDefIR as externMethodTypeDefIR))*
 
             2. (Let typeDefIR_extern be ((extern nameIR < (typeId_expl)* , [] > ({ ((callableId : externMethodTypeDefIR))* })) as typeDefIR))
 
@@ -22982,7 +22982,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
           2. (Let (name_field)* be $flatten_nameList(nameList_field))
 
-          3. (Let nameIR_field be $name(name_field))*{name_field <- name_field*, nameIR_field -> nameIR_field*}
+          3. (Let nameIR_field be $name(name_field))*
 
           4. (Let enumTypeDefIR be (enum nameIR { (nameIR_field)* }))
 
@@ -22990,11 +22990,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
             1. (Let TC_1 be $add_typeDef_t((global), TC_0, nameIR, (enumTypeDefIR as typeDefIR)))
 
-            2. (Let id_field be nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, id_field -> id_field*}
+            2. (Let id_field be nameIR ++ "." ++ nameIR_field)*
 
-            3. (Let value_field be ((nameIR . nameIR_field) as value))*{nameIR_field <- nameIR_field*, value_field -> value_field*}
+            3. (Let value_field be ((nameIR . nameIR_field) as value))*
 
-            4. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*{value_field <- value_field*, varTypeIR -> varTypeIR*}
+            4. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
 
             5. (Let TC_2 be $add_vars_t((global), TC_1, (id_field)*, (varTypeIR)*))
 
@@ -23022,13 +23022,13 @@ relation Decl_ok: TC_0 |- declaration : % %
 
               3. (Enum_serializable_fields_ok: TC_0 nameIR typeIR |- (namedExpression_field)* : TC_1 (namedExpressionIR_field)* # (value_field)*)
 
-              4. (Let (nameIR_field = _typedExpressionIR) be namedExpressionIR_field)*{namedExpressionIR_field <- namedExpressionIR_field*, _typedExpressionIR -> _typedExpressionIR*, nameIR_field -> nameIR_field*}
+              4. (Let (nameIR_field = _typedExpressionIR) be namedExpressionIR_field)*
 
-              5. (Let id_field be nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, id_field -> id_field*}
+              5. (Let id_field be nameIR ++ "." ++ nameIR_field)*
 
               6. (Let enumTypeDefIR be (enum nameIR < typeIR >{ ((nameIR_field = value_field ;))* }))
 
-              7. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*{value_field <- value_field*, varTypeIR -> varTypeIR*}
+              7. (Let varTypeIR be ((`empty) (enumTypeDefIR as typeIR) (lctk) ?(value_field)))*
 
               8. (Let TC_2 be $add_vars_t((global), TC_0, (id_field)*, (varTypeIR)*))
 
@@ -23054,19 +23054,19 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      2. (Let typeId_expl be $name(typeParameter))*
 
       3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
       4. (Let ((annotationList_field type_field name_field ;))* be $flatten_typeFieldList(typeFieldList))
 
-      5. (Type_ok: (block) TC_1 |- (type_field as typeOrVoid) : typeIR_field # (typeId_impl_field)*)*{type_field <- type_field*, typeIR_field -> typeIR_field*, typeId_impl_field* -> typeId_impl_field**}
+      5. (Type_ok: (block) TC_1 |- (type_field as typeOrVoid) : typeIR_field # (typeId_impl_field)*)*
 
       6. (Let (typeId_impl)* be $concat_<typeId>(((typeId_impl_field)*)*))
 
       7. (Let nameIR be $name(name))
 
-      8. (Let nameIR_field be $name(name_field))*{name_field <- name_field*, nameIR_field -> nameIR_field*}
+      8. (Let nameIR_field be $name(name_field))*
 
       9. (Let structTypeDefIR be (struct nameIR < (typeId_expl)* , (typeId_impl)* >{ ((typeIR_field nameIR_field ;))* }))
 
@@ -23088,19 +23088,19 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      2. (Let typeId_expl be $name(typeParameter))*
 
       3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
       4. (Let ((annotationList_f type_f name_f ;))* be $flatten_typeFieldList(typeFieldList))
 
-      5. (Type_ok: (block) TC_1 |- (type_f as typeOrVoid) : typeIR_f # (typeId_impl_f)*)*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId_impl_f* -> typeId_impl_f**}
+      5. (Type_ok: (block) TC_1 |- (type_f as typeOrVoid) : typeIR_f # (typeId_impl_f)*)*
 
       6. (Let (typeId_impl)* be $concat_<typeId>(((typeId_impl_f)*)*))
 
       7. (Let nameIR be $name(name))
 
-      8. (Let nameIR_f be $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
+      8. (Let nameIR_f be $name(name_f))*
 
       9. (Let headerTypeDefIR be (header nameIR < (typeId_expl)* , (typeId_impl)* >{ ((typeIR_f nameIR_f ;))* }))
 
@@ -23122,19 +23122,19 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       1. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      2. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      2. (Let typeId_expl be $name(typeParameter))*
 
       3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
       4. (Let ((annotationList_f type_f name_f ;))* be $flatten_typeFieldList(typeFieldList))
 
-      5. (Type_ok: (block) TC_1 |- (type_f as typeOrVoid) : typeIR_f # (typeId_impl_f)*)*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId_impl_f* -> typeId_impl_f**}
+      5. (Type_ok: (block) TC_1 |- (type_f as typeOrVoid) : typeIR_f # (typeId_impl_f)*)*
 
       6. (Let (typeId_impl)* be $concat_<typeId>(((typeId_impl_f)*)*))
 
       7. (Let nameIR be $name(name))
 
-      8. (Let nameIR_f be $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
+      8. (Let nameIR_f be $name(name_f))*
 
       9. (Let headerUnionTypeDefIR be (header_union nameIR < (typeId_expl)* , (typeId_impl)* >{ ((typeIR_f nameIR_f ;))* }))
 
@@ -23296,7 +23296,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      3. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      3. (Let typeId_expl be $name(typeParameter))*
 
       4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -23328,7 +23328,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      3. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      3. (Let typeId_expl be $name(typeParameter))*
 
       4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -23360,7 +23360,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      3. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      3. (Let typeId_expl be $name(typeParameter))*
 
       4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -23370,7 +23370,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       7. (Let nameIR be $name(name))
 
-      8. (Let (_annotationList _direction typeIR_package_inner _id _constantInitializerOptIR) be constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR_package_inner -> typeIR_package_inner*}
+      8. (Let (_annotationList _direction typeIR_package_inner _id _constantInitializerOptIR) be constructorParameterIR)*
 
       9. (Let packageObjectTypeDefIR be (package nameIR < (typeId_expl)* , (typeId_impl)* >{ (typeIR_package_inner)* }))
 
@@ -23942,7 +23942,7 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
             2. (Let parserApplyMethodTypeIR be (parser_apply( (parameterIR')* )))
 
-            3. (Let (_annotationList _direction _typeIR id_param _constantInitializerOptIR) be parameterIR')*{parameterIR' <- parameterIR'*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, id_param -> id_param*}
+            3. (Let (_annotationList _direction _typeIR id_param _constantInitializerOptIR) be parameterIR')*
 
             4. (Let callableId be ("apply" ( (id_param)* )))
 
@@ -23976,7 +23976,7 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
             2. (Let controlApplyMethodTypeIR be (control_apply( (parameterIR'')* )))
 
-            3. (Let (_annotationList' _direction' _typeIR' id_param' _constantInitializerOptIR') be parameterIR'')*{parameterIR'' <- parameterIR''*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, id_param' -> id_param'*}
+            3. (Let (_annotationList' _direction' _typeIR' id_param' _constantInitializerOptIR') be parameterIR'')*
 
             4. (Let callableId' be ("apply" ( (id_param')* )))
 
@@ -24073,15 +24073,15 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
       2. (Let inference be $infer((typeId)*, (parameterIR_aligned)*, (argumentIR)*))
 
-      3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*{typeId <- typeId*, typeIR? -> typeIR?*}
+      3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*
 
       4. If (((typeIR)? matches pattern (_)))*, then
 
-        1. (Let ?(typeIR_inferred) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
+        1. (Let ?(typeIR_inferred) be (typeIR)?)*
 
         2. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
         4. (Let typeIR_ret_inferred be $subst_typeIR(inference, typeIR_ret))
 
@@ -24111,15 +24111,15 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
       2. (Let inference be $infer((typeId)*, (parameterIR_aligned)*, (argumentIR)*))
 
-      3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*{typeId <- typeId*, typeIR? -> typeIR?*}
+      3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*
 
       4. If (((typeIR)? matches pattern (_)))*, then
 
-        1. (Let ?(typeIR_inferred) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
+        1. (Let ?(typeIR_inferred) be (typeIR)?)*
 
         2. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
         4. (Let typeIR_ret_inferred be $subst_typeIR(inference, typeIR_ret))
 
@@ -24175,15 +24175,15 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
           2. (Let inference be $infer((typeId)*, (parameterIR_aligned)*, (argumentIR)*))
 
-          3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*{typeId <- typeId*, typeIR? -> typeIR?*}
+          3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*
 
           4. If (((typeIR)? matches pattern (_)))*, then
 
-            1. (Let ?(typeIR_inferred) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
+            1. (Let ?(typeIR_inferred) be (typeIR)?)*
 
             2. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-            3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+            3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
             4. (Let typeIR_ret_inferred be $subst_typeIR(inference, typeIR_ret))
 
@@ -24213,15 +24213,15 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
           2. (Let inference be $infer((typeId)*, (parameterIR_aligned)*, (argumentIR)*))
 
-          3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*{typeId <- typeId*, typeIR? -> typeIR?*}
+          3. (Let (typeIR)? be $find_map<typeId, typeIR>(inference, typeId))*
 
           4. If (((typeIR)? matches pattern (_)))*, then
 
-            1. (Let ?(typeIR_inferred) be (typeIR)?)*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
+            1. (Let ?(typeIR_inferred) be (typeIR)?)*
 
             2. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-            3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+            3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
             4. (Let typeIR_ret_inferred be $subst_typeIR(inference, typeIR_ret))
 
@@ -24438,15 +24438,15 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # 
 
       2. (Let inference be $infer((typeId_infer)*, (parameterIR_aligned)*, (argumentIR)*))
 
-      3. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR'? -> typeIR'?*}
+      3. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*
 
       4. If (((typeIR')? matches pattern (_)))*, then
 
-        1. (Let ?(typeIR_inferred) be (typeIR')?)*{typeIR'? <- typeIR'?*, typeIR_inferred -> typeIR_inferred*}
+        1. (Let ?(typeIR_inferred) be (typeIR')?)*
 
         2. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+        3. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
         4. (Let typeIR_object_inferred be $subst_typeIR(inference, typeIR_object))
 
@@ -24480,15 +24480,15 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # 
 
     2. (Let inference' be $infer((typeId_infer)*, (parameterIR_aligned')*, (argumentIR)*))
 
-    3. (Let (typeIR'')? be $find_map<typeId, typeIR>(inference', typeId_infer))*{typeId_infer <- typeId_infer*, typeIR''? -> typeIR''?*}
+    3. (Let (typeIR'')? be $find_map<typeId, typeIR>(inference', typeId_infer))*
 
     4. If (((typeIR'')? matches pattern (_)))*, then
 
-      1. (Let ?(typeIR_inferred') be (typeIR'')?)*{typeIR''? <- typeIR''?*, typeIR_inferred' -> typeIR_inferred'*}
+      1. (Let ?(typeIR_inferred') be (typeIR'')?)*
 
       2. (Let (typeArgumentIR_inferred')* be (typeArgumentIR)* ++ (typeIR_inferred')*)
 
-      3. (Let parameterIR_aligned_inferred' be $subst_parameterIR(inference', parameterIR_aligned'))*{parameterIR_aligned' <- parameterIR_aligned'*, parameterIR_aligned_inferred' -> parameterIR_aligned_inferred'*}
+      3. (Let parameterIR_aligned_inferred' be $subst_parameterIR(inference', parameterIR_aligned'))*
 
       4. (Let typeIR_object_inferred' be $subst_typeIR(inference', typeIR_object'))
 
@@ -26744,7 +26744,7 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
       3. (Let (typeParameter)* be $flatten_typeParameterListOpt(typeParameterListOpt))
 
-      4. (Let typeId_expl be $name(typeParameter))*{typeParameter <- typeParameter*, typeId_expl -> typeId_expl*}
+      4. (Let typeId_expl be $name(typeParameter))*
 
       5. (Let TC_3 be $add_typeDefs_t((local), TC_2, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
 
@@ -27477,7 +27477,7 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
           3. If ((|(typeIR)*| = |(simpleKeysetExpression')*|)), then
 
-            1. (SelectCase_keyset_simple_ok: TC typeIR |- simpleKeysetExpression' : simpleKeysetExpressionIR'')*{simpleKeysetExpression' <- simpleKeysetExpression'*, typeIR <- typeIR*, simpleKeysetExpressionIR'' -> simpleKeysetExpressionIR''*}
+            1. (SelectCase_keyset_simple_ok: TC typeIR |- simpleKeysetExpression' : simpleKeysetExpressionIR'')*
 
             2. Result in: % % |- % : ((( (simpleKeysetExpressionIR'')* )) as keysetExpressionIR)
 
@@ -28269,7 +28269,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, (tablePropertyIR)*)
 
       1. (Let (actions={ (tableActionIR)* }) be (tablePropertyIR_h as tableActionsPropertyIR))
 
-      2. (Let (_annotationList tableActionReferenceIR #( _parameterListIR , _parameterListIR' );) be tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, _parameterListIR' -> _parameterListIR'*, tableActionReferenceIR -> tableActionReferenceIR*}
+      2. (Let (_annotationList tableActionReferenceIR #( _parameterListIR , _parameterListIR' );) be tableActionIR)*
 
       3. (Let tableActionReferenceIR_NoAction be ((. "NoAction") ( [] )))
 
@@ -28439,7 +28439,7 @@ def $infer((typeId_infer)*, (parameterIR)*, (argumentIR)*)
 
 1. (Let constraint_init be $empty_constraint((typeId_infer)*))
 
-2. (Let constraint_pair be $infer'(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
+2. (Let constraint_pair be $infer'(constraint_init, parameterIR, argumentIR))*
 
 3. (Let constraint_inferred be $merge_constraints(constraint_init, (constraint_pair)*))
 
@@ -28485,7 +28485,7 @@ def $infer'(constraint, parameterIR, argumentIR)
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:23.1-23.46
 def $resolve_inference(({ ((typeId : typeIR))* }))
 
-1. (Let typeIR_resolved be $resolve_inference'(typeIR))*{typeIR <- typeIR*, typeIR_resolved -> typeIR_resolved*}
+1. (Let typeIR_resolved be $resolve_inference'(typeIR))*
 
 2. Return ({ ((typeId : typeIR_resolved))* })
 
@@ -28629,9 +28629,9 @@ def $gen_constraint(constraint, typeIR, typeIR_arg)
 
       1. (Let (parser _typeId' < (_typeArgumentIR')* >( (parameterIR_arg)* )) be (typeIR_arg as parserObjectTypeIR))
 
-      2. (Let (_annotationList direction typeIR_param _id _constantInitializerOptIR) be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _id -> _id*, direction -> direction*, typeIR_param -> typeIR_param*}
+      2. (Let (_annotationList direction typeIR_param _id _constantInitializerOptIR) be parameterIR_param)*
 
-      3. (Let (_annotationList' direction' typeIR_arg' _id' _constantInitializerOptIR') be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _id' -> _id'*, direction' -> direction'*, typeIR_arg' -> typeIR_arg'*}
+      3. (Let (_annotationList' direction' typeIR_arg' _id' _constantInitializerOptIR') be parameterIR_arg)*
 
       4. If ((direction' = direction))*, then
 
@@ -28645,9 +28645,9 @@ def $gen_constraint(constraint, typeIR, typeIR_arg)
 
       1. (Let (control _typeId' < (_typeArgumentIR')* >( (parameterIR_arg)* )) be (typeIR_arg as controlObjectTypeIR))
 
-      2. (Let (_annotationList direction typeIR_param _id _constantInitializerOptIR) be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _id -> _id*, direction -> direction*, typeIR_param -> typeIR_param*}
+      2. (Let (_annotationList direction typeIR_param _id _constantInitializerOptIR) be parameterIR_param)*
 
-      3. (Let (_annotationList' direction' typeIR_arg' _id' _constantInitializerOptIR') be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _id' -> _id'*, direction' -> direction'*, typeIR_arg' -> typeIR_arg'*}
+      3. (Let (_annotationList' direction' typeIR_arg' _id' _constantInitializerOptIR') be parameterIR_arg)*
 
       4. If ((direction' = direction))*, then
 
@@ -28676,7 +28676,7 @@ def $gen_constraint(constraint, typeIR, typeIR_arg)
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:27.1-27.64
 def $gen_constraints(constraint, (typeIR_param)*, (typeIR_arg)*)
 
-1. (Let constraint_pair be $gen_constraint(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
+1. (Let constraint_pair be $gen_constraint(constraint, typeIR_param, typeIR_arg))*
 
 2. Return $merge_constraints(constraint, (constraint_pair)*)
 
@@ -28812,7 +28812,7 @@ def $resolve_constraint(({ ((typeId : infer))* }))
 
 1. If ((infer matches pattern `KNOWNAS%`))*, then
 
-  1. (Let (knownas typeIR) be infer)*{infer <- infer*, typeIR -> typeIR*}
+  1. (Let (knownas typeIR) be infer)*
 
   2. Return ({ ((typeId : typeIR))* })
 
@@ -29515,7 +29515,7 @@ def $name_annotation_of_tableKeyIR(annotationList)
 
 1. (Let (annotation)* be $flatten_annotationList(annotationList))
 
-2. (Let (nameIR_name)? be $name_annotation_of_tableKeyIR'(annotation))*{annotation <- annotation*, nameIR_name? -> nameIR_name?*}
+2. (Let (nameIR_name)? be $name_annotation_of_tableKeyIR'(annotation))*
 
 3. (Let ((nameIR)?)* be ((nameIR_name)?)*)
 
@@ -29682,9 +29682,9 @@ def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInter
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:131.1-134.23
 def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface)*)
 
-1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
+1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*
 
-2. (Let (nameIR_key_update, text_key_value_update) be tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, text_key_value_update -> text_key_value_update*}
+2. (Let (nameIR_key_update, text_key_value_update) be tableKeyInterface)*
 
 3. If ($eq_set<nameIR>(({ (nameIR_key)* }), ({ (nameIR_key_update)* }))), then
 
@@ -29697,11 +29697,11 @@ def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:152.1-154.9
 def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
-1. (Let (int)? be $align_tableActionArgumentInterfaces'(({ ((nameIR_arg : i_arg))* }), parameterIR))*{parameterIR <- parameterIR*, int? -> int?*}
+1. (Let (int)? be $align_tableActionArgumentInterfaces'(({ ((nameIR_arg : i_arg))* }), parameterIR))*
 
 2. If (((int)? matches pattern (_)))*, then
 
-  1. (Let ?(i_aligned) be (int)?)*{int? <- int?*, i_aligned -> i_aligned*}
+  1. (Let ?(i_aligned) be (int)?)*
 
   2. Return (i_aligned)*
 
@@ -29715,9 +29715,9 @@ def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotatio
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:170.1-173.27
 def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
 
-1. (Let (_annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, argumentIR_data* -> argumentIR_data**, parameterIR_control* -> parameterIR_control**, prefixedNameIR -> prefixedNameIR*}
+1. (Let (_annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR)*
 
-2. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))*{prefixedNameIR <- prefixedNameIR*, nameIR_action -> nameIR_action*}
+2. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))*
 
 3. (Let ((argumentIR*, parameterIR*))? be $assoc_<nameIR, (argumentIR*, parameterIR*)>(nameIR_action_update, ((nameIR_action, ((argumentIR_data)*, (parameterIR_control)*)))*))
 
@@ -29727,15 +29727,15 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
   2. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control_update)*, (tableActionArgumentInterface_update)*))
 
-  3. (Let (_annotationList' _direction typeIR_param nameIR_param _constantInitializerOptIR) be parameterIR_control_update)*{parameterIR_control_update <- parameterIR_control_update*, _annotationList' -> _annotationList'*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
+  3. (Let (_annotationList' _direction typeIR_param nameIR_param _constantInitializerOptIR) be parameterIR_control_update)*
 
-  4. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
+  4. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
 
-  5. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+  5. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))*
 
   6. If (((typedExpressionIR)? matches pattern (_)))*, then
 
-    1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
+    1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
 
     2. (Let (argumentIR)* be (argumentIR_data_update)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
 
@@ -29812,7 +29812,7 @@ def $find_store_qualified(store, objectId)
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:19.1-19.49
 def $find_store_unqualified(({ ((objectId : object))* }), id)
 
-1. (Let (object_id)? be $ite<object?>($objectId_ends_with(objectId, id), ?(object), ?()))*{object <- object*, objectId <- objectId*, object_id? -> object_id?*}
+1. (Let (object_id)? be $ite<object?>($objectId_ends_with(objectId, id), ?(object), ?()))*
 
 2. (Let ((object')?)* be $filter_<object?>(((object_id)?)*, $is_some_object))
 
@@ -29872,7 +29872,7 @@ def $update_store_unqualified(STO_0, id, object)
 
 1. (Let ({ ((objectId : _object))* }) be STO_0)
 
-2. (Let (objectId_id)? be $ite<objectId?>($objectId_ends_with(objectId, id), ?(objectId), ?()))*{objectId <- objectId*, objectId_id? -> objectId_id?*}
+2. (Let (objectId_id)? be $ite<objectId?>($objectId_ends_with(objectId, id), ?(objectId), ?()))*
 
 3. (Let ((objectId')?)* be $filter_<objectId?>(((objectId_id)?)*, $is_some_objectId))
 
@@ -31906,9 +31906,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group errorDeclarationIR: IC_0 STO |- ((error{ (nameIR)* }) as declarationIR) : % %
 
-      1. (Let nameIR_error be $concat_text(["error.", nameIR]))*{nameIR <- nameIR*, nameIR_error -> nameIR_error*}
+      1. (Let nameIR_error be $concat_text(["error.", nameIR]))*
 
-      2. (Let value_error be ((error. nameIR) as value))*{nameIR <- nameIR*, value_error -> value_error*}
+      2. (Let value_error be ((error. nameIR) as value))*
 
       3. (Let IC_1 be $add_vars_i((global), IC_0, (nameIR_error)*, (value_error)*))
 
@@ -31920,7 +31920,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group matchKindDeclarationIR: IC_0 STO |- ((match_kind{ (nameIR)* }) as declarationIR) : % %
 
-      1. (Let value_match_kind be ((match_kind. nameIR) as value))*{nameIR <- nameIR*, value_match_kind -> value_match_kind*}
+      1. (Let value_match_kind be ((match_kind. nameIR) as value))*
 
       2. (Let IC_1 be $add_vars_i((global), IC_0, (nameIR)*, (value_match_kind)*))
 
@@ -31948,9 +31948,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
       1. If (((externConstructorPrototypeIR)* = [])), then
 
-        1. (Let callableId_method be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, callableId_method -> callableId_method*}
+        1. (Let callableId_method be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
-        2. (Let externMethodTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, externMethodTypeDefIR -> externMethodTypeDefIR*}
+        2. (Let externMethodTypeDefIR be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
         3. (Let externMethodTypeDefEnv be ({ ((callableId_method : externMethodTypeDefIR))* }))
 
@@ -31968,9 +31968,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
       1. Else Phantom#1988
 
-      2. (Let callableId_method' be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, callableId_method' -> callableId_method'*}
+      2. (Let callableId_method' be $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
-      3. (Let externMethodTypeDefIR' be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, externMethodTypeDefIR' -> externMethodTypeDefIR'*}
+      3. (Let externMethodTypeDefIR' be $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
 
       4. (Let externMethodTypeDefEnv' be ({ ((callableId_method' : externMethodTypeDefIR'))* }))
 
@@ -31978,9 +31978,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
       6. (Let IC_1' be $add_typeDef_i((global), IC_0, nameIR, (externObjectTypeDefIR' as typeDefIR)))
 
-      7. (Let callableId_constructor' be $callableId_of_externConstructorPrototypeIR(externConstructorPrototypeIR))*{externConstructorPrototypeIR <- externConstructorPrototypeIR*, callableId_constructor' -> callableId_constructor'*}
+      7. (Let callableId_constructor' be $callableId_of_externConstructorPrototypeIR(externConstructorPrototypeIR))*
 
-      8. (Let constructorDef' be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, (externMethodPrototypeIR)*, externConstructorPrototypeIR))*{externConstructorPrototypeIR <- externConstructorPrototypeIR*, constructorDef' -> constructorDef'*}
+      8. (Let constructorDef' be $constructor_of_externConstructorPrototypeIR(typeParameterListIR, (externMethodPrototypeIR)*, externConstructorPrototypeIR))*
 
       9. (Let IC_2' be $add_constructorDefs_i(IC_1', (callableId_constructor')*, (constructorDef')*))
 
@@ -32034,9 +32034,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
         2. Group enumTypeDeclarationIR-non-serializable: IC_0 STO |- ((annotationList enum nameIR { (nameIR_field)* }) as declarationIR) : % %
 
-          1. (Let nameIR_enum_field be nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, nameIR_enum_field -> nameIR_enum_field*}
+          1. (Let nameIR_enum_field be nameIR ++ "." ++ nameIR_field)*
 
-          2. (Let value_enum_field be ((nameIR . nameIR_field) as value))*{nameIR_field <- nameIR_field*, value_enum_field -> value_enum_field*}
+          2. (Let value_enum_field be ((nameIR . nameIR_field) as value))*
 
           3. (Let IC_1 be $add_vars_i((global), IC_0, (nameIR_enum_field)*, (value_enum_field)*))
 
@@ -32054,9 +32054,9 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
           1. (Exprs_inst: (global) IC_0 STO |- (typedExpressionIR_field)* : STO_1 (value_field)*)
 
-          2. (Let nameIR_serenum_field be nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, nameIR_serenum_field -> nameIR_serenum_field*}
+          2. (Let nameIR_serenum_field be nameIR ++ "." ++ nameIR_field)*
 
-          3. (Let value_serenum_field be ((nameIR . nameIR_field . value_field) as value))*{nameIR_field <- nameIR_field*, value_field <- value_field*, value_serenum_field -> value_serenum_field*}
+          3. (Let value_serenum_field be ((nameIR . nameIR_field . value_field) as value))*
 
           4. (Let IC_1 be $add_vars_i((global), IC_0, (nameIR_serenum_field)*, (value_serenum_field)*))
 
@@ -32072,7 +32072,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group structTypeDeclarationIR: IC_0 STO |- ((annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ (typeFieldIR)* }) as declarationIR) : % %
 
-      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
+      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*
 
       2. (Let structTypeDefIR be (struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ ((typeIR_field nameIR_field ;))* }))
 
@@ -32086,7 +32086,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group headerTypeDeclarationIR: IC_0 STO |- ((annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ (typeFieldIR)* }) as declarationIR) : % %
 
-      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
+      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*
 
       2. (Let headerTypeDefIR be (header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ ((typeIR_field nameIR_field ;))* }))
 
@@ -32100,7 +32100,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group headerUnionTypeDeclarationIR: IC_0 STO |- ((annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ (typeFieldIR)* }) as declarationIR) : % %
 
-      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
+      1. (Let (annotationList_field typeIR_field nameIR_field ;) be typeFieldIR)*
 
       2. (Let headerUnionTypeDefIR be (header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ ((typeIR_field nameIR_field ;))* }))
 
@@ -32222,7 +32222,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     2. Group packageTypeDeclarationIR: IC_0 STO |- ((annotationList package nameIR < typeParameterListIR , typeParameterListIR_inferred >( (parameterIR)* );) as declarationIR) : % %
 
-      1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _id -> _id*, typeIR -> typeIR*}
+      1. (Let (_annotationList _direction typeIR _id _constantInitializerOptIR) be parameterIR)*
 
       2. (Let packageObjectTypeDefIR be (package nameIR < typeParameterListIR , typeParameterListIR_inferred >{ (typeIR)* }))
 
@@ -32414,11 +32414,11 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
       4. (Let ((constructorParameterIR_aligned)*, (argumentIR_aligned)*, (constructorParameterIR_default)*, (value_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*))
 
-      5. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
+      5. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*
 
       6. (Bind_args: p IC | p_callee IC_callee_1 STO_0 |- (id_aligned)* (argumentIR_aligned)* : IC_callee_2 STO_1)
 
-      7. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, id_cparam_default -> id_cparam_default*}
+      7. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*
 
       8. (Let IC_callee_3 be $add_vars_i(p_callee, IC_callee_2, (id_cparam_default)*, (value_default)*))
 
@@ -32428,15 +32428,15 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
       11. If ((callableDef has type externMethodDef))*, then
 
-        1. (Let externMethodDef be (callableDef as externMethodDef))*{callableDef <- callableDef*, externMethodDef -> externMethodDef*}
+        1. (Let externMethodDef be (callableDef as externMethodDef))*
 
-        2. (Let (_annotationList'' _direction'' _typeIR'' id_cparam _constantInitializerOptIR'') be constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*, _annotationList'' -> _annotationList''*, _constantInitializerOptIR'' -> _constantInitializerOptIR''*, _direction'' -> _direction''*, _typeIR'' -> _typeIR''*, id_cparam -> id_cparam*}
+        2. (Let (_annotationList'' _direction'' _typeIR'' id_cparam _constantInitializerOptIR'') be constructorParameterIR)*
 
-        3. (Let (value)? be $find_map<id, value>(IC_callee_4.block.frame, id_cparam))*{id_cparam <- id_cparam*, value? -> value?*}
+        3. (Let (value)? be $find_map<id, value>(IC_callee_4.block.frame, id_cparam))*
 
         4. If (((value)? matches pattern (_)))*, then
 
-          1. (Let ?(value_cparam) be (value)?)*{value? <- value?*, value_cparam -> value_cparam*}
+          1. (Let ?(value_cparam) be (value)?)*
 
           2. (Let externState be $init_externState(nameIR, (typeArgumentIR)*, (value_cparam)*))
 
@@ -32462,11 +32462,11 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
         3. (Let ((constructorParameterIR_aligned)*, (argumentIR_aligned)*, (constructorParameterIR_default)*, (value_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*))
 
-        4. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
+        4. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*
 
         5. (Bind_args: p IC | p_callee IC_callee_0 STO_0 |- (id_aligned)* (argumentIR_aligned)* : IC_callee_1 STO_1)
 
-        6. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, id_cparam_default -> id_cparam_default*}
+        6. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*
 
         7. (Let IC_callee_2 be $add_vars_i(p_callee, IC_callee_1, (id_cparam_default)*, (value_default)*))
 
@@ -32494,11 +32494,11 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
         3. (Let ((constructorParameterIR_aligned)*, (argumentIR_aligned)*, (constructorParameterIR_default)*, (value_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*))
 
-        4. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
+        4. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*
 
         5. (Bind_args: p IC | p_callee IC_callee_0 STO_0 |- (id_aligned)* (argumentIR_aligned)* : IC_callee_1 STO_1)
 
-        6. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, id_cparam_default -> id_cparam_default*}
+        6. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*
 
         7. (Let IC_callee_2 be $add_vars_i(p_callee, IC_callee_1, (id_cparam_default)*, (value_default)*))
 
@@ -32510,7 +32510,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
         11. If ((callableDef has type actionDef))*, then
 
-          1. (Let actionDef be (callableDef as actionDef))*{callableDef <- callableDef*, actionDef -> actionDef*}
+          1. (Let actionDef be (callableDef as actionDef))*
 
           2. (Let object_control be ((control( (parameterIR)* ){ IC_callee_2.block.frame (controlLocalDeclarationIR')* ({ ((callableId : actionDef))* }) controlBodyIR' }) as object))
 
@@ -32534,11 +32534,11 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
       4. (Let ((constructorParameterIR_aligned)*, (argumentIR_aligned)*, (constructorParameterIR_default)*, (value_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*))
 
-      5. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
+      5. (Let (_annotationList _direction _typeIR id_aligned _constantInitializerOptIR) be constructorParameterIR_aligned)*
 
       6. (Bind_args: p IC | p_callee IC_callee_1 STO_0 |- (id_aligned)* (argumentIR_aligned)* : IC_callee_2 STO_1)
 
-      7. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*{constructorParameterIR_default <- constructorParameterIR_default*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _direction' -> _direction'*, _typeIR' -> _typeIR'*, id_cparam_default -> id_cparam_default*}
+      7. (Let (_annotationList' _direction' _typeIR' id_cparam_default _constantInitializerOptIR') be constructorParameterIR_default)*
 
       8. (Let IC_callee_3 be $add_vars_i(p_callee, IC_callee_2, (id_cparam_default)*, (value_default)*))
 
@@ -36985,7 +36985,7 @@ relation Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 1. Group : (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
-  1. (Let (_annotationList _direction _typeIR nameIR _constantInitializerOptIR) be parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR -> nameIR*}
+  1. (Let (_annotationList _direction _typeIR nameIR _constantInitializerOptIR) be parameterIR)*
 
   2. (Let EC_callee_1 be $add_vars_e(p_callee, EC_callee_0, ((` nameIR))*, (value)*))
 
@@ -37278,7 +37278,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
           2. (Copy_in_default: (parameterIR_default')* @ (local) EC_callee_2' (value_default')* ~>@ EC_callee_3')
 
-          3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR')*{parameterIR' <- parameterIR'*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+          3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR')*
 
           4. (ExternFunctionCall_eval: EC_callee_3' STO_1' |- nameIR' ( (nameIR_param)* ): EC_callee_4' STO_2' callResult)
 
@@ -37344,7 +37344,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                             2. (Let (value_front)* be (value_element)*[0 : n_count])
 
-                            3. (Let value_front_invalidated be $invalidate_value(value_front))*{value_front <- value_front*, value_front_invalidated -> value_front_invalidated*}
+                            3. (Let value_front_invalidated be $invalidate_value(value_front))*
 
                             4. (Let int' be $max_int([(0 as int), (n_size - n_count)]))
 
@@ -37424,7 +37424,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
                               3. (Let (value_back)* be (value_element)*[0 : n_count])
 
-                              4. (Let value_back_invalidated be $invalidate_value(value_back))*{value_back <- value_back*, value_back_invalidated -> value_back_invalidated*}
+                              4. (Let value_back_invalidated be $invalidate_value(value_back))*
 
                               5. (Let (value_element_updated)* be (value_front)* ++ (value_back_invalidated)*)
 
@@ -37594,7 +37594,7 @@ relation Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentList
 
             2. (Copy_in_default: (parameterIR_default')* @ (local) EC_callee_4' (value_default')* ~>@ EC_callee_5)
 
-            3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR')*{parameterIR' <- parameterIR'*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+            3. (Let (_annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) be parameterIR')*
 
             4. (ExternMethodCall_eval: EC_callee_5 STO_1' |- objectId . nameIR' ( (nameIR_param)* ): EC_callee_6 STO_2' callResult)
 
@@ -38966,7 +38966,7 @@ relation TableMatch_eval: EC_0 STO_0 |- (tableKeyValue)* @ tableEntryIR : % % %
 
       1. (Let (` (setValue)*) be (keysetExpressionResult as continueResult<setValue*>))
 
-      2. (Let (value_key : _nameIR) be tableKeyValue)*{tableKeyValue <- tableKeyValue*, _nameIR -> _nameIR*, value_key -> value_key*}
+      2. (Let (value_key : _nameIR) be tableKeyValue)*
 
       3. Case analysis on $match_keysets((setValue)*, (value_key)*)
 
@@ -39105,11 +39105,11 @@ def $select_action(TBL, (tableMatch)*)
 
 2. If ((|(tableMatch)*| > 1)), then
 
-  1. (Let ((nat)? : tableActionReferenceIR') be tableMatch)*{tableMatch <- tableMatch*, nat? -> nat?*, tableActionReferenceIR' -> tableActionReferenceIR'*}
+  1. (Let ((nat)? : tableActionReferenceIR') be tableMatch)*
 
   2. If (((nat)? matches pattern (_)))*, then
 
-    1. (Let ?(n_priority) be (nat)?)*{nat? <- nat?*, n_priority -> n_priority*}
+    1. (Let ?(n_priority) be (nat)?)*
 
     2. (Let ((n_priority_sorted, tableActionReferenceIR_sorted))* be $sort_<tableActionReferenceIR>(((n_priority, tableActionReferenceIR'))*))
 

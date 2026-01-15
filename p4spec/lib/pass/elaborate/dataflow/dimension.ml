@@ -256,20 +256,19 @@ and annotate_args (bounds : VEnv.t) (args : arg list) : VEnv.t * arg list =
 
 (* Premise *)
 
-and annotate_prem_inner (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) :
-    VEnv.t * VEnv.t * prem =
+and annotate_prem_inner (bounds : VEnv.t) (prem : prem) : VEnv.t * VEnv.t * prem
+    =
   let at = prem.at in
   match prem.it with
-  | RulePr (id, notexp) ->
+  | RulePr (id, notexp, inputs) ->
       let mixop, exps = notexp in
-      let input = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
-      let exps_input, exps_output = Hints.Input.split input exps in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let occurs_input, exps_input = annotate_exps bounds exps_input in
       let occurs_output, exps_output = annotate_exps bounds exps_output in
       let occurs = union occurs_input occurs_output in
-      let exps = Hints.Input.combine input exps_input exps_output in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
-      let prem = RulePr (id, notexp) $ at in
+      let prem = RulePr (id, notexp, inputs) $ at in
       (occurs_output, occurs, prem)
   | IfPr exp ->
       let occurs, exp = annotate_exp bounds exp in
@@ -298,7 +297,7 @@ and annotate_prem_inner (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) :
     when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error at "iterated premise should initially have no annotations"
   | IterPr (prem, (iter, _, _)) -> (
-      let occurs_bind, occurs, prem = annotate_prem_inner ihenv bounds prem in
+      let occurs_bind, occurs, prem = annotate_prem_inner bounds prem in
       let itervars = collect_itervars bounds occurs iter in
       let occurs_bound = diff occurs occurs_bind in
       let itervars_bound = collect_itervars bounds occurs_bound iter in
@@ -328,31 +327,25 @@ and annotate_prem_inner (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) :
       let prem = DebugPr exp $ at in
       (empty, occurs, prem)
 
-and annotate_prems_inner (ihenv : IHEnv.t) (bounds : VEnv.t) (prems : prem list)
-    : VEnv.t * VEnv.t * prem list =
+and annotate_prems_inner (bounds : VEnv.t) (prems : prem list) :
+    VEnv.t * VEnv.t * prem list =
   match prems with
   | [] -> (empty, empty, [])
   | prem :: prems ->
-      let occurs_bind_h, occurs_h, prem_h =
-        annotate_prem_inner ihenv bounds prem
-      in
+      let occurs_bind_h, occurs_h, prem_h = annotate_prem_inner bounds prem in
       let occurs_bind_t, occurs_t, prems_t =
-        annotate_prems_inner ihenv bounds prems
+        annotate_prems_inner bounds prems
       in
       let occurs_bind = union occurs_bind_h occurs_bind_t in
       let occurs = union occurs_h occurs_t in
       let prems = prem_h :: prems_t in
       (occurs_bind, occurs, prems)
 
-and annotate_prem (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) :
-    VEnv.t * prem =
-  annotate_prem_inner ihenv bounds prem |> fun (_, occurs, prem) ->
-  (occurs, prem)
+and annotate_prem (bounds : VEnv.t) (prem : prem) : VEnv.t * prem =
+  annotate_prem_inner bounds prem |> fun (_, occurs, prem) -> (occurs, prem)
 
-and annotate_prems (ihenv : IHEnv.t) (bounds : VEnv.t) (prems : prem list) :
-    VEnv.t * prem list =
-  annotate_prems_inner ihenv bounds prems |> fun (_, occurs, prems) ->
-  (occurs, prems)
+and annotate_prems (bounds : VEnv.t) (prems : prem list) : VEnv.t * prem list =
+  annotate_prems_inner bounds prems |> fun (_, occurs, prems) -> (occurs, prems)
 
 (* Analysis *)
 
@@ -383,9 +376,8 @@ let analyze_arg (bounds : VEnv.t) (arg : arg) : arg =
 let analyze_args (bounds : VEnv.t) (args : arg list) : arg list =
   analyze annotate_args bounds args
 
-let analyze_prem (ihenv : IHEnv.t) (bounds : VEnv.t) (prem : prem) : prem =
-  analyze (annotate_prem ihenv) bounds prem
+let analyze_prem (bounds : VEnv.t) (prem : prem) : prem =
+  analyze annotate_prem bounds prem
 
-let analyze_prems (ihenv : IHEnv.t) (bounds : VEnv.t) (prems : prem list) :
-    prem list =
-  analyze (annotate_prems ihenv) bounds prems
+let analyze_prems (bounds : VEnv.t) (prems : prem list) : prem list =
+  analyze annotate_prems bounds prems

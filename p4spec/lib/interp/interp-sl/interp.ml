@@ -1158,7 +1158,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         eval_group_instr ctx id_group rel_signature exps_group instrs_group
     | LetI (exp_l, exp_r, iterinstrs) ->
         eval_let_instr ctx exp_l exp_r iterinstrs
-    | RuleI (id, notexp, iterinstrs) -> eval_rule_instr ctx id notexp iterinstrs
+    | RuleI (id, notexp, inputs, iterinstrs) ->
+        eval_rule_instr ctx id notexp inputs iterinstrs
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | DebugI exp -> eval_debug_instr ctx exp
@@ -1545,23 +1546,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Rule instruction evaluation *)
 
-  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp) : Ctx.t =
-    let exps_input, exps_output =
-      let inputs = Ctx.find_rel_inputs Local ctx id in
-      let _, exps = notexp in
-      Hints.Input.split inputs exps
-    in
+  and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (inputs : Hints.Input.t) : Ctx.t =
+    let _, exps = notexp in
+    let exps_input, exps_output = Hints.Input.split inputs exps in
     let values_input = eval_exps ctx exps_input in
     let values_output = invoke_rel ctx id values_input in
     assign_exps ctx exps_output values_output
 
   and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
-      (_vars_bound : var list) (_vars_bind : var list)
+      (_inputs : Hints.Input.t) (_vars_bound : var list) (_vars_bind : var list)
       (_iterinstrs : iterinstr list) : Ctx.t =
     back no_region "(TODO) eval_rule_opt"
 
   and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (vars_bound : var list) (vars_bind : var list)
+      (inputs : Hints.Input.t) (vars_bound : var list) (vars_bind : var list)
       (iterinstrs : iterinstr list) : Ctx.t =
     (* Create a subcontext for each batch of bound values *)
     let ctxs_sub = Ctx.sub_list ctx vars_bound in
@@ -1576,7 +1575,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           let values_binding_batch =
             List.map
               (fun ctx_sub ->
-                let ctx_sub = eval_rule_iter' ctx_sub id notexp iterinstrs in
+                let ctx_sub =
+                  eval_rule_iter' ctx_sub id notexp inputs iterinstrs
+                in
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
                     Ctx.find_value Local ctx_sub (id_binding, iters_binding))
@@ -1607,25 +1608,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       ctx vars_bind values_binding
 
   and eval_rule_iter' (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterinstrs : iterinstr list) : Ctx.t =
+      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) : Ctx.t =
     match iterinstrs with
-    | [] -> eval_rule ctx id notexp
+    | [] -> eval_rule ctx id notexp inputs
     | iterinstr_h :: iterinstrs_t -> (
         let iter_h, vars_bound_h, vars_bind_h = iterinstr_h in
         match iter_h with
         | Opt ->
-            eval_rule_opt ctx id notexp vars_bound_h vars_bind_h iterinstrs_t
+            eval_rule_opt ctx id notexp inputs vars_bound_h vars_bind_h
+              iterinstrs_t
         | List ->
-            eval_rule_list ctx id notexp vars_bound_h vars_bind_h iterinstrs_t)
+            eval_rule_list ctx id notexp inputs vars_bound_h vars_bind_h
+              iterinstrs_t)
 
   and eval_rule_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterinstrs : iterinstr list) : Ctx.t =
+      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) : Ctx.t =
     let iterinstrs = List.rev iterinstrs in
-    eval_rule_iter' ctx id notexp iterinstrs
+    eval_rule_iter' ctx id notexp inputs iterinstrs
 
   and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
-    let ctx = eval_rule_iter ctx id notexp iterinstrs in
+      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
+    let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
     (ctx, Sign.Cont)
 
   (* Result instruction evaluation *)
@@ -1667,8 +1670,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       value list =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
-    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, exps_input, instrs) ->
+    | Rel.Extern -> invoke_extern_rel ctx id values_input
+    | Rel.Defined (exps_input, instrs) ->
         invoke_defined_rel ctx id exps_input instrs values_input
 
   and invoke_extern_rel (_ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1860,11 +1863,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | TypD (id, tparams, deftyp, _) ->
         let td = Typdef.Defined (tparams, deftyp) in
         Ctx.add_typdef Global ctx id td
-    | ExternRelD (id, (_, inputs), _, _) ->
-        let rel = Rel.Extern inputs in
+    | ExternRelD (id, _, _, _) ->
+        let rel = Rel.Extern in
         Ctx.add_rel Global ctx id rel
-    | RelD (id, (_, inputs), relmatch, relpaths, _) ->
-        let rel = Rel.Defined (inputs, relmatch, relpaths) in
+    | RelD (id, _, relmatch, relpaths, _) ->
+        let rel = Rel.Defined (relmatch, relpaths) in
         Ctx.add_rel Global ctx id rel
     | ExternDecD (id, _, _, _, _) ->
         let func = Func.Extern in

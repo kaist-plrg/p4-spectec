@@ -54,9 +54,10 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
     ->
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
-  | ( RuleI (id_a, (mixop_a, exps_a), iterinstrs_a),
-      RuleI (id_b, (mixop_b, exps_b), iterinstrs_b) ) ->
+  | ( RuleI (id_a, (mixop_a, exps_a), inputs_a, iterinstrs_a),
+      RuleI (id_b, (mixop_b, exps_b), inputs_b, iterinstrs_b) ) ->
       eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+      && Hints.Input.eq inputs_a inputs_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
   | ResultI (rel_signature_a, exps_a), ResultI (rel_signature_b, exps_b) ->
       eq_rel_signature rel_signature_a rel_signature_b && eq_exps exps_a exps_b

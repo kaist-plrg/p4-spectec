@@ -1,8 +1,6 @@
 open Domain.Lib
 open Lang
 open Ol.Ast
-open Runtime.Dynamic_Sl
-open Envs
 open Util.Source
 
 (* Helper for renaming identifiers in expressions and instructions. *)
@@ -160,15 +158,14 @@ and rename_arg (renamer : t) (arg : arg) : arg =
 and rename_args (renamer : t) (args : arg list) : arg list =
   List.map (rename_arg renamer) args
 
-and rename_case (ihenv : IHEnv.t) (renamer : t) (case : case) : case =
+and rename_case (renamer : t) (case : case) : case =
   let guard, instrs = case in
   let guard = rename_guard renamer guard in
-  let instrs = rename_instrs ihenv renamer instrs in
+  let instrs = rename_instrs renamer instrs in
   (guard, instrs)
 
-and rename_cases (ihenv : IHEnv.t) (renamer : t) (cases : case list) : case list
-    =
-  List.map (rename_case ihenv renamer) cases
+and rename_cases (renamer : t) (cases : case list) : case list =
+  List.map (rename_case renamer) cases
 
 and rename_guard (renamer : t) (guard : guard) : guard =
   match guard with
@@ -181,36 +178,36 @@ and rename_guard (renamer : t) (guard : guard) : guard =
       let exp = rename_exp renamer exp in
       MemG exp
 
-and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
+and rename_instr (renamer : t) (instr : instr) : t * instr =
   let at = instr.at in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then) ->
       let exp_cond = rename_exp renamer exp_cond in
       let iterexps = rename_iterexps renamer iterexps in
-      let instrs_then = rename_instrs ihenv renamer instrs_then in
+      let instrs_then = rename_instrs renamer instrs_then in
       let instr = IfI (exp_cond, iterexps, instrs_then) $ at in
       (renamer, instr)
   | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
       let exps = rename_exps renamer exps in
       let iterexps = rename_iterexps renamer iterexps in
-      let instrs_hold = rename_instrs ihenv renamer instrs_hold in
-      let instrs_nothold = rename_instrs ihenv renamer instrs_nothold in
+      let instrs_hold = rename_instrs renamer instrs_hold in
+      let instrs_nothold = rename_instrs renamer instrs_nothold in
       let instr =
         HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
       in
       (renamer, instr)
   | CaseI (exp, cases, total) ->
       let exp = rename_exp renamer exp in
-      let cases = rename_cases ihenv renamer cases in
+      let cases = rename_cases renamer cases in
       let instr = CaseI (exp, cases, total) $ at in
       (renamer, instr)
   | OtherwiseI instr ->
-      let _, instr = rename_instr ihenv renamer instr in
+      let _, instr = rename_instr renamer instr in
       let instr = OtherwiseI instr $ at in
       (renamer, instr)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let exps_group = rename_exps renamer exps_group in
-      let instrs_group = rename_instrs ihenv renamer instrs_group in
+      let instrs_group = rename_instrs renamer instrs_group in
       let instr =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
       in
@@ -222,8 +219,7 @@ and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
       let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (renamer, instr)
-  | RuleI (id_rel, (mixop, exps), iterinstrs) ->
-      let inputs = IHEnv.find id_rel ihenv in
+  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs) ->
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let exps_input = rename_exps renamer exps_input in
       let frees_output = Ol.Free.free_exps exps_output in
@@ -232,7 +228,7 @@ and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
       in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
-      let instr = RuleI (id_rel, (mixop, exps), iterinstrs) $ at in
+      let instr = RuleI (id_rel, (mixop, exps), inputs, iterinstrs) $ at in
       (renamer, instr)
   | ResultI (rel_signature, exps) ->
       let exps = rename_exps renamer exps in
@@ -247,11 +243,10 @@ and rename_instr (ihenv : IHEnv.t) (renamer : t) (instr : instr) : t * instr =
       let instr = DebugI exp $ at in
       (renamer, instr)
 
-and rename_instrs (ihenv : IHEnv.t) (renamer : t) (instrs : instr list) :
-    instr list =
+and rename_instrs (renamer : t) (instrs : instr list) : instr list =
   List.fold_left
     (fun (renamer, instrs) instr ->
-      let renamer, instr = rename_instr ihenv renamer instr in
+      let renamer, instr = rename_instr renamer instr in
       (renamer, instrs @ [ instr ]))
     (renamer, []) instrs
   |> snd

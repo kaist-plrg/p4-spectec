@@ -148,7 +148,7 @@ and instr' =
   | GroupI of id * rel_signature * exp list * instr list
   (* Binding instructions *)
   | LetI of exp * exp * iterinstr list
-  | RuleI of id * notexp * iterinstr list
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list
   (* Result/Return instructions *)
   | ResultI of rel_signature * exp list
   | ReturnI of exp
