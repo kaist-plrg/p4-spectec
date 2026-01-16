@@ -3,6 +3,7 @@ open Source
 exception ParseError of region * string
 exception UnparseError of string
 exception ElabError of region * string
+exception StructError of region * string
 exception ProseError of region * string
 exception BuiltinError of region * string
 exception InterpError of region * string
@@ -31,6 +32,11 @@ let error_unparse (msg : string) = raise (UnparseError msg)
 
 let error_elab (at : region) (msg : string) = raise (ElabError (at, msg))
 let warn_elab (at : region) (msg : string) = warn at "elab" msg
+
+(* Structuring errors *)
+
+let error_struct (at : region) (msg : string) = raise (StructError (at, msg))
+let warn_struct (at : region) (msg : string) = warn at "struct" msg
 
 (* Prosification errors *)
 

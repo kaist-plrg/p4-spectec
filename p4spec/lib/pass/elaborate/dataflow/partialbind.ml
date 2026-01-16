@@ -81,7 +81,8 @@ let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
   in
   let sidecondition = IfPr exp_cond $ exp_from.at in
   List.fold_left
-    (fun sidecondition iter -> IterPr (sidecondition, (iter, [])) $ exp_from.at)
+    (fun sidecondition iter ->
+      IterPr (sidecondition, (iter, [], [])) $ exp_from.at)
     sidecondition iters
 
 let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
@@ -96,7 +97,7 @@ let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
   List.map
     (fun prem ->
       List.fold_left
-        (fun prem iter -> IterPr (prem, (iter, [])) $ exp_from.at)
+        (fun prem iter -> IterPr (prem, (iter, [], [])) $ exp_from.at)
         prem iters)
     prems
 
@@ -115,7 +116,7 @@ let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
   List.map
     (fun prem ->
       List.fold_left
-        (fun prem iter -> IterPr (prem, (iter, [])) $ exp_from.at)
+        (fun prem iter -> IterPr (prem, (iter, [], [])) $ exp_from.at)
         prem iters)
     prems
 

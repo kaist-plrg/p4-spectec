@@ -147,38 +147,37 @@ let analyze_args_as_bound_shallow (dctx : Dctx.t) (args : arg list) : unit =
 let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
     Dctx.t * VEnv.t * prem * prem list =
   match prem.it with
-  | RulePr (id, notexp) -> analyze_rule_prem dctx prem.at id notexp
+  | RulePr (id, notexp, inputs) ->
+      analyze_rule_prem dctx prem.at id notexp inputs
   | IfPr exp -> analyze_if_prem dctx prem.at exp
   | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx prem.at id notexp
   | IfNotHoldPr (id, notexp) -> analyze_if_not_hold_prem dctx prem.at id notexp
   | ElsePr -> (dctx, VEnv.empty, prem, [])
   | LetPr _ ->
       error prem.at "let premise should appear only after bind analysis"
-  | IterPr (_, ((_, _ :: _) as iterexp)) ->
+  | IterPr (_, ((_, vars_bound, vars_bind) as iterprem))
+    when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error prem.at
         (Format.asprintf
            "iterated premise should initially have no annotations, but got %s"
-           (Il.Print.string_of_iterexp iterexp))
-  | IterPr (prem, (iter, [])) -> analyze_iter_prem dctx prem.at prem iter
+           (Il.Print.string_of_iterprem iterprem))
+  | IterPr (prem, (iter, _, _)) -> analyze_iter_prem dctx prem.at prem iter
   | DebugPr exp -> analyze_debug_prem dctx prem.at exp
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
-    : Dctx.t * VEnv.t * prem * prem list =
+    (inputs : Hints.Input.t) : Dctx.t * VEnv.t * prem * prem list =
   let mixop, exps = notexp in
-  let hint = Dctx.find_hint dctx id in
-  let exps_input, exps_output = Hints.Input.split hint exps in
-  List.map snd exps_input |> analyze_exps_as_bound dctx;
+  let exps_input, exps_output = Hints.Input.split inputs exps in
+  analyze_exps_as_bound dctx exps_input;
   let dctx, venv, exps_output, sideconditions =
-    let idxs, exps_output = List.split exps_output in
     let dctx, venv, exps_output, sideconditions =
       analyze_exps_as_bind dctx exps_output
     in
-    let exps_output = List.combine idxs exps_output in
     (dctx, venv, exps_output, sideconditions)
   in
-  let exps = Hints.Input.combine exps_input exps_output in
+  let exps = Hints.Input.combine inputs exps_input exps_output in
   let notexp = (mixop, exps) in
-  let prem = RulePr (id, notexp) $ at in
+  let prem = RulePr (id, notexp, inputs) $ at in
   (dctx, venv, prem, sideconditions)
 
 and analyze_if_eq_prem (dctx : Dctx.t) (at : region) (note : typ')
@@ -248,8 +247,8 @@ and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem) (iter : iter)
     : Dctx.t * VEnv.t * prem * prem list =
   let dctx, venv, prem, prems = analyze_prem dctx prem in
   let venv = VEnv.map (Typ.add_iter iter) venv in
-  let prems = List.map (fun prem -> IterPr (prem, (iter, [])) $ at) prems in
-  let prem = IterPr (prem, (iter, [])) $ at in
+  let prems = List.map (fun prem -> IterPr (prem, (iter, [], [])) $ at) prems in
+  let prem = IterPr (prem, (iter, [], [])) $ at in
   (dctx, venv, prem, prems)
 
 and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :

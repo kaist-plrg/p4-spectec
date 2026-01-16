@@ -3,7 +3,6 @@ module VarSet = Free.VarSet
 open Domain.Lib
 open Lang
 open Sl
-open Runtime.Prose.Envs
 open Transform
 open Util.Source
 
@@ -75,25 +74,21 @@ let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
         drop (List.length iters - List.length iterexps) iters
       in
       let iter_combined = List.combine iters_enclosing iterexps in
-      let iterexps_instr, _ =
+      let iterinstrs, _ =
         List.fold_left
-          (fun (iterexps_instr, var_new) (iter_new, iterexp) ->
-            let iter_in, itervars_in = iterexp in
-            assert (iter_in = iter_new);
-            (* itervars_out: each iteration layer of var_new *)
-            (* itervars_in: each layer of iterexp *)
-            let iterexp_instr = (iter_in, var_new :: itervars_in) in
-            (* update iterator state of var_new *)
-            let var_new =
-              let id, typ, iters = var_new in
-              (id, typ, iters @ [ iter_new ])
+          (fun (iterinstrs, var_bind) (iter_enclosing, iterexp) ->
+            let _, vars_bound = iterexp in
+            let iterinstr = (iter_enclosing, vars_bound, [ var_bind ]) in
+            let var_bind =
+              let id, typ, iters = var_bind in
+              (id, typ, iters @ [ iter_enclosing ])
             in
-            (iterexps_instr @ [ iterexp_instr ], var_new))
+            (iterinstrs @ [ iterinstr ], var_bind))
           ([], (id, typ, []))
           iter_combined
       in
       let instr_let =
-        LetI (exp_new, exp_orig, iterexps_instr) $$ (no_region, { iid = -1 })
+        LetI (exp_new, exp_orig, iterinstrs) $$ (no_region, { iid = -1 })
       in
       Some (instr_let, exp_new_full, ids_used)
   | None -> None
@@ -115,14 +110,14 @@ let rec replace_call_exps ~(call_e_count : call_e_count) (ids_used : IdSet.t)
               Some (instrs_t_new, exp_h :: exps_t, ids)
           | None -> None))
 
-let expand_nested_calls (ihenv, ids_used) instrs =
+let expand_nested_calls ids_used instrs =
   match instrs with
   | { it = LetI (exp_l, exp_r, iterexps); at; note } :: instrs_rest ->
       let* instr_new, exp_r, ids =
         replace_call_exp ~call_e_count:No ids_used exp_r
       in
       let instr_let = LetI (exp_l, exp_r, iterexps) $$ (at, note) in
-      Some ((ihenv, ids), [ instr_new; instr_let ], instrs_rest)
+      Some (ids, [ instr_new; instr_let ], instrs_rest)
   | { it = HoldI (id, notexp, iterexps, holdcase); at; note } :: instrs_rest ->
       let mixop, exps = notexp in
       let* instrs_new, exps, ids =
@@ -130,22 +125,17 @@ let expand_nested_calls (ihenv, ids_used) instrs =
       in
       let notexp = (mixop, exps) in
       let instr_rule = HoldI (id, notexp, iterexps, holdcase) $$ (at, note) in
-      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
-  | { it = RuleI (id, notexp, iterexps); at; note } :: instrs_rest ->
+      Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
+  | { it = RuleI (id, notexp, inputs, iterexps); at; note } :: instrs_rest ->
       let mixop, exps = notexp in
-      let inputs = IHEnv.find_opt id ihenv |> Option.value ~default:[] in
-      let exps_input_indexed, exps_output_indexed =
-        Hints.Input.split inputs exps
-      in
-      let idxs_input, exps_input = List.split exps_input_indexed in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
       let* instrs_new, exps_input, ids =
         replace_call_exps ~call_e_count:SkipOne ids_used exps_input
       in
-      let exps_input_indexed = List.combine idxs_input exps_input in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
-      let instr_rule = RuleI (id, notexp, iterexps) $$ (at, note) in
-      Some ((ihenv, ids), instrs_new @ [ instr_rule ], instrs_rest)
+      let instr_rule = RuleI (id, notexp, inputs, iterexps) $$ (at, note) in
+      Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
   | _ -> None
 
 type 'ctx expansion =

@@ -5,8 +5,6 @@ open Envs
 (* Context for dataflow analysis *)
 
 type t = {
-  (* Input hints for rules *)
-  ihenv : IHEnv.t;
   (* Free identifiers over the entire definition *)
   frees : IdSet.t;
   (* Bound variables so far *)
@@ -18,16 +16,10 @@ type t = {
 (* Constructors *)
 
 let init (ctx : Ctx.t) : t =
-  let ihenv =
-    REnv.map
-      (function
-        | Rel.Extern (_, _, inputs) | Rel.Defined (_, _, inputs, _) -> inputs)
-      ctx.renv
-  in
   let frees = ctx.frees in
   let bounds = ctx.venv in
   let tdenv = ctx.tdenv in
-  { ihenv; frees; bounds; tdenv }
+  { frees; bounds; tdenv }
 
 (* Promoter *)
 
@@ -50,5 +42,4 @@ let add_free (dctx : t) (id : Id.t) =
 
 (* Finders *)
 
-let find_hint (dctx : t) (id : Id.t) = IHEnv.find id dctx.ihenv
 let find_typdef (dctx : t) (tid : TId.t) = TDEnv.find tid dctx.tdenv

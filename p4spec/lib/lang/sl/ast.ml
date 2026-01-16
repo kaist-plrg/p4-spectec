@@ -147,13 +147,16 @@ and instr' =
   (* Aggregate instructions *)
   | GroupI of id * rel_signature * exp list * instr list
   (* Binding instructions *)
-  | LetI of exp * exp * iterexp list
-  | RuleI of id * notexp * iterexp list
+  | LetI of exp * exp * iterinstr list
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list
   (* Result/Return instructions *)
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   (* Debugging instructions *)
   | DebugI of exp
+[@@deriving yojson]
+
+and iterinstr = Il.iterprem
 [@@deriving yojson]
 
 (* Hints *)

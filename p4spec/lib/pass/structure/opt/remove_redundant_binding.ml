@@ -3,7 +3,6 @@ open Lib
 open Lang
 open Ol.Ast
 module Typ = Runtime.Dynamic_Sl.Typ
-open Runtime.Dynamic_Sl.Envs
 open Util.Source
 
 (* Remove redundant let and rule bindings from the code,
@@ -64,23 +63,35 @@ module Bind = struct
     in
     (exp, iterexps)
 
-  let init_let_bind (exp_l : exp) (exp_r : exp) (iterexps : iterexp list) : t =
-    let expunit_l = init_expunit exp_l iterexps in
-    let expunit_r = init_expunit exp_r iterexps in
+  let init_let_bind (exp_l : exp) (exp_r : exp) (iterinstrs : iterinstr list) :
+      t =
+    let iterexps_bound, iterexps_bind =
+      iterinstrs
+      |> List.map (fun (iter, vars_bound, vars_bind) ->
+             ((iter, vars_bound), (iter, vars_bind)))
+      |> List.split
+    in
+    let expunit_l = init_expunit exp_l iterexps_bound in
+    let expunit_r = init_expunit exp_r iterexps_bind in
     LetBind (expunit_l, expunit_r)
 
-  let init_rule_bind (ihenv : IHEnv.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) : t =
+  let init_rule_bind (id : id) (notexp : notexp) (inputs : Hints.Input.t)
+      (iterinstrs : iterinstr list) : t =
     let exps_l, exps_r =
       let _, exps = notexp in
-      let inputs = IHEnv.find id ihenv in
-      Hints.Input.split_without_idx inputs exps
+      Hints.Input.split inputs exps
+    in
+    let iterexps_bound, iterexps_bind =
+      iterinstrs
+      |> List.map (fun (iter, vars_bound, vars_bind) ->
+             ((iter, vars_bound), (iter, vars_bind)))
+      |> List.split
     in
     let expunits_l =
-      List.map (fun exp_l -> init_expunit exp_l iterexps) exps_l
+      List.map (fun exp_l -> init_expunit exp_l iterexps_bound) exps_l
     in
     let expunits_r =
-      List.map (fun exp_r -> init_expunit exp_r iterexps) exps_r
+      List.map (fun exp_r -> init_expunit exp_r iterexps_bind) exps_r
     in
     RuleBind (id, expunits_l, expunits_r)
 
@@ -167,114 +178,110 @@ module Bind = struct
     | _ -> None
 end
 
-let rec downstream (ihenv : IHEnv.t) (bind : Bind.t) (instrs : instr list) :
-    instr list =
+let rec downstream (bind : Bind.t) (instrs : instr list) : instr list =
   match instrs with
   | [] -> []
   | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
-      let instrs_then = instrs_then |> downstream ihenv bind in
+      let instrs_then = instrs_then |> downstream bind in
       let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let instrs_t = downstream ihenv bind instrs_t in
+      let instrs_t = downstream bind instrs_t in
       instr_h :: instrs_t
   | { it = HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold); at; _ }
     :: instrs_t ->
-      let instrs_hold = instrs_hold |> downstream ihenv bind in
-      let instrs_nothold = instrs_nothold |> downstream ihenv bind in
+      let instrs_hold = instrs_hold |> downstream bind in
+      let instrs_nothold = instrs_nothold |> downstream bind in
       let instr_h =
         HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
       in
-      let instrs_t = downstream ihenv bind instrs_t in
+      let instrs_t = downstream bind instrs_t in
       instr_h :: instrs_t
   | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
       let cases =
         let guards, blocks = List.split cases in
-        let blocks = List.map (downstream ihenv bind) blocks in
+        let blocks = List.map (downstream bind) blocks in
         List.combine guards blocks
       in
       let instr_h = CaseI (exp, cases, total) $ at in
-      let instrs_t = downstream ihenv bind instrs_t in
+      let instrs_t = downstream bind instrs_t in
       instr_h :: instrs_t
-  | ({ it = LetI (exp_l, exp_r, iterexps); _ } as instr_h) :: instrs_t -> (
-      let bind_target = Bind.init_let_bind exp_l exp_r iterexps in
+  | ({ it = LetI (exp_l, exp_r, iterinstrs); _ } as instr_h) :: instrs_t -> (
+      let bind_target = Bind.init_let_bind exp_l exp_r iterinstrs in
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t
-          |> Renamer.rename_instrs ihenv renamer
-          |> downstream ihenv bind
+          instrs_t |> Renamer.rename_instrs renamer |> downstream bind
       | None ->
-          let instrs_t = downstream ihenv bind instrs_t in
+          let instrs_t = downstream bind instrs_t in
           instr_h :: instrs_t)
-  | ({ it = RuleI (id, notexp, iterexps); _ } as instr_h) :: instrs_t -> (
-      let bind_target = Bind.init_rule_bind ihenv id notexp iterexps in
+  | ({ it = RuleI (id, notexp, inputs, iterinstrs); _ } as instr_h) :: instrs_t
+    -> (
+      let bind_target = Bind.init_rule_bind id notexp inputs iterinstrs in
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t
-          |> Renamer.rename_instrs ihenv renamer
-          |> downstream ihenv bind
+          instrs_t |> Renamer.rename_instrs renamer |> downstream bind
       | None ->
-          let instrs_t = downstream ihenv bind instrs_t in
+          let instrs_t = downstream bind instrs_t in
           instr_h :: instrs_t)
   | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
      instr_h)
     :: instrs_t ->
-      let instrs_group = instrs_group |> downstream ihenv bind in
+      let instrs_group = instrs_group |> downstream bind in
       let instr_h =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
       in
-      let instrs_t = downstream ihenv bind instrs_t in
+      let instrs_t = downstream bind instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
-      let instrs_t = downstream ihenv bind instrs_t in
+      let instrs_t = downstream bind instrs_t in
       instr_h :: instrs_t
 
-let rec upstream (ihenv : IHEnv.t) (instrs : instr list) : instr list =
+let rec upstream (instrs : instr list) : instr list =
   match instrs with
   | [] -> []
   | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
-      let instrs_then = instrs_then |> upstream ihenv in
+      let instrs_then = instrs_then |> upstream in
       let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let instrs_t = upstream ihenv instrs_t in
+      let instrs_t = upstream instrs_t in
       instr_h :: instrs_t
   | { it = HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold); at; _ }
     :: instrs_t ->
-      let instrs_hold = instrs_hold |> upstream ihenv in
-      let instrs_nothold = instrs_nothold |> upstream ihenv in
+      let instrs_hold = instrs_hold |> upstream in
+      let instrs_nothold = instrs_nothold |> upstream in
       let instr_h =
         HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
       in
-      let instrs_t = upstream ihenv instrs_t in
+      let instrs_t = upstream instrs_t in
       instr_h :: instrs_t
   | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
       let cases =
         let guards, blocks = List.split cases in
-        let blocks = List.map (upstream ihenv) blocks in
+        let blocks = List.map upstream blocks in
         List.combine guards blocks
       in
       let instr_h = CaseI (exp, cases, total) $ at in
-      let instrs_t = upstream ihenv instrs_t in
+      let instrs_t = upstream instrs_t in
       instr_h :: instrs_t
-  | ({ it = LetI (exp_l, exp_r, iterexps); _ } as instr_h) :: instrs_t ->
-      let bind = Bind.init_let_bind exp_l exp_r iterexps in
-      let instrs_t = instrs_t |> downstream ihenv bind |> upstream ihenv in
+  | ({ it = LetI (exp_l, exp_r, iterinstrs); _ } as instr_h) :: instrs_t ->
+      let bind = Bind.init_let_bind exp_l exp_r iterinstrs in
+      let instrs_t = instrs_t |> downstream bind |> upstream in
       instr_h :: instrs_t
-  | ({ it = RuleI (id, notexp, iterexps); _ } as instr_h) :: instrs_t ->
-      let bind = Bind.init_rule_bind ihenv id notexp iterexps in
-      let instrs_t = instrs_t |> downstream ihenv bind |> upstream ihenv in
+  | ({ it = RuleI (id, notexp, inputs, iterinstrs); _ } as instr_h) :: instrs_t
+    ->
+      let bind = Bind.init_rule_bind id notexp inputs iterinstrs in
+      let instrs_t = instrs_t |> downstream bind |> upstream in
       instr_h :: instrs_t
   | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
      instr_h)
     :: instrs_t ->
-      let instrs_group = instrs_group |> upstream ihenv in
+      let instrs_group = instrs_group |> upstream in
       let instr_h =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
       in
-      let instrs_t = upstream ihenv instrs_t in
+      let instrs_t = upstream instrs_t in
       instr_h :: instrs_t
   | instr_h :: instrs_t ->
-      let instrs_t = instrs_t |> upstream ihenv in
+      let instrs_t = instrs_t |> upstream in
       instr_h :: instrs_t
 
-let apply (ihenv : IHEnv.t) (instrs : instr list) : instr list =
-  upstream ihenv instrs
+let apply (instrs : instr list) : instr list = upstream instrs
