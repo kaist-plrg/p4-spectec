@@ -824,6 +824,9 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Let ``typeId`` ``.`` ``nameIR`` ``.`` ``value`` be ``enumValue``.
  .. Let ``(value~updated~,`` ``b~rest~^{asterisk}^)`` be ``<<write_value_from_bits',`` ``write_value_from_bits'(value,`` ``n~var~,`` ``bool^{asterisk}^)>>``.
  .. Return ``(typeId`` ``.`` ``"__UNSPECIFIED"`` ``.`` ``value~updated~,`` ``b~rest~^{asterisk}^)``.
+. Else if let ``HEADER_STACK`` ``[`` ``value^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value'``:
+ .. Let ``(value~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)`` be ``<<write_values_from_bits',`` ``write_values_from_bits'(value^{asterisk}^,`` ``n~var~,`` ``bool^{asterisk}^)>>``.
+ .. Return ``(HEADER_STACK`` ``[`` ``value~updated~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``],`` ``b~rest~^{asterisk}^)``.
 . If let ``integerValue`` be ``value'``:
  .. Check that ``integerValue`` matches pattern ``%`` ``.`` ``%`` ``V`` ``%``.
  .. Let ``n~max~`` ``.`` ``++_++`` ``V`` ``i`` be ``integerValue``.
@@ -838,6 +841,17 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
   ... Let ``int'`` be ``<<bits_to_int_signed,`` ``bits_to_int_signed(b~h~^{asterisk}^)>>``.
   ... Let ``i`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n~var~,`` ``int')>>``.
   ... Return ``(n~max~`` ``.`` ``n~var~`` ``V`` ``i,`` ``b~t~^{asterisk}^)``.
+
+<<write_values_from_bits', write_values_from_bits'(value^{asterisk}^, n~var~, b^{asterisk}^)>>
+
+
+. If ``value^{asterisk}^`` is an empty list:
+ .. Return ``(·,`` ``b^{asterisk}^)``.
+. Else:
+ .. Let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``.
+ .. Let ``(value~h_updated~,`` ``b~t~^{asterisk}^)`` be ``<<write_value_from_bits',`` ``write_value_from_bits'(value~h~,`` ``n~var~,`` ``b^{asterisk}^)>>``.
+ .. Let ``(value~t_updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)`` be ``<<write_values_from_bits',`` ``write_values_from_bits'(value~t~^{asterisk}^,`` ``n~var~,`` ``b~t~^{asterisk}^)>>``.
+ .. Return ``(value~h_updated~`` ``{two-colons}`` ``value~t_updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)``.
 
 <<write_value_fields_from_bits', write_value_fields_from_bits'(fieldValue^{asterisk}^, n~var~, b^{asterisk}^)>>
 

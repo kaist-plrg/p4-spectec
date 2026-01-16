@@ -1,4 +1,4 @@
-;; Instruction coverage: 9006/12430 (72.45%)
+;; Instruction coverage: 9015/12439 (72.47%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -3515,6 +3515,14 @@ def $write_value_from_bits'(value', n_var, (bool)*)
 
 +       3. Return (((typeId . "__UNSPECIFIED" . value_updated) as value), (b_rest)*)
 
+    6. Case (% has type headerStackValue)
+
++     1. (Let (header_stack[ (value)* ( n_idx ; n_size )]) be (value' as headerStackValue))
+
++     2. (Let ((value_updated)*, (b_rest)*) be $write_values_from_bits'((value)*, n_var, (bool)*))
+
++     3. Return (((header_stack[ (value_updated)* ( n_idx ; n_size )]) as value), (b_rest)*)
+
 + 2. If ((value' has type integerValue)), then
 
 +   1. (Let integerValue be (value' as integerValue))
@@ -3543,7 +3551,26 @@ def $write_value_from_bits'(value', n_var, (bool)*)
 
 +         4. Return (((n_max . n_var v i) as value), (b_t)*)
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:144.1-144.83
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:144.1-144.67
+def $write_values_from_bits'((value)*, n_var, (b)*)
+
++ 1. Case analysis on (value)*
+
+    1. Case (% matches pattern [])
+
++     1. Return ([], (b)*)
+
+    2. Case (% matches pattern _ :: _)
+
++     1. (Let value_h :: (value_t)* be (value)*)
+
++     2. (Let (value_h_updated, (b_t)*) be $write_value_from_bits'(value_h, n_var, (b)*))
+
++     3. (Let ((value_t_updated)*, (b_rest)*) be $write_values_from_bits'((value_t)*, n_var, (b_t)*))
+
++     4. Return (value_h_updated :: (value_t_updated)*, (b_rest)*)
+
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:145.1-145.83
 def $write_value_fields_from_bits'((fieldValue)*, n_var, (b)*)
 
 + 1. Case analysis on (fieldValue)*
@@ -3562,14 +3589,14 @@ def $write_value_fields_from_bits'((fieldValue)*, n_var, (b)*)
 
 +     4. Return (fieldValue_h_updated :: (fieldValue_t_updated)*, (b_rest)*)
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:145.1-145.80
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:146.1-146.80
 def $write_value_field_from_bits'((value id ;), n_var, (b)*)
 
 + 1. (Let (value_updated, (b_rest)*) be $write_value_from_bits'(value, n_var, (b)*))
 
 + 2. Return ((value_updated id ;), (b_rest)*)
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:207.1-207.42
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:222.1-222.42
 def $write_bits_from_value(value')
 
 + 1. Case analysis on value'
