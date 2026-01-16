@@ -3,6 +3,7 @@ open Pass
 module Sim = Runtime.Sim.Simulator
 module Strings = Util.Strings
 module Filesys = Util.Filesys
+module Test = Util.Test
 open Util.Error
 open Util.Source
 
@@ -190,7 +191,7 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
         (Sim.SL spec_sl : Sim.spec)
   in
   let excludes_p4 =
-    excludes_p4 |> Filesys.collect_excludes
+    excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
   let filenames_p4 =
@@ -258,7 +259,7 @@ let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
 let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     filename_stf =
   if List.exists (String.equal filename_p4) excludes_p4 then (
-    let log = Format.asprintf "Excluding file: %s" filename_p4 in
+    let log = Format.asprintf "Excluding file: %s" filename_stf in
     log |> print_endline;
     {
       stat with
@@ -272,7 +273,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
         run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
-      let log = Format.asprintf "Run success: %s" filename_p4 in
+      let log = Format.asprintf "Run success: %s" filename_stf in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -281,7 +282,7 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
         let log =
-          Format.asprintf "Error on run: %s\n%s" filename_p4
+          Format.asprintf "Error on run: %s\n%s" filename_stf
             (string_of_error at msg)
         in
         log |> print_endline;
@@ -316,65 +317,26 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
         (Sim.SL spec_sl : Sim.spec)
   in
   let excludes_p4 =
-    excludes_p4 |> Filesys.collect_excludes
+    excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
-    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
+  let filename_pairs =
+    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
   in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 ->
-        let contents = Filesys.read_file filename_p4 in
-        match arch with
-        | "v1model" ->
-            Strings.contains_substring "#include <v1model.p4>" contents
-            || Strings.contains_substring "#include \"v1model.p4\"" contents
-        | _ -> false)
-      filenames_p4
-  in
-  let filenames_p4_patch = Filesys.collect_files ~suffix:".p4" patchdir in
-  let filenames_p4 =
-    Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
-  in
-  let filenames_stf =
-    List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf
-  in
-  let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
-  let filenames_stf =
-    Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
-  in
-  let filenames_test =
-    List.filter_map
-      (fun filename_p4 ->
-        let filename_base = Filesys.base ~suffix:".p4" filename_p4 in
-        let filename_stf_opt =
-          List.find_opt
-            (fun filename_stf ->
-              let filename_stf_base =
-                Filesys.base ~suffix:".stf" filename_stf
-              in
-              String.equal filename_base filename_stf_base)
-            filenames_stf
-        in
-        match filename_stf_opt with
-        | Some filename_stf -> Some (filename_p4, filename_stf)
-        | None -> None)
-      filenames_p4
-  in
-  let total = List.length filenames_test in
+  let total = List.length filename_pairs in
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->
-        Format.asprintf "\n>>> Running simulation test (%s) on %s" arch
-          filename_p4
+        Format.asprintf
+          "\n>>> Running simulation test (%s) on %s with packet input %s" arch
+          filename_p4 filename_stf
         |> print_endline;
         run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
           filename_stf)
-      stat filenames_test
+      stat filename_pairs
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
 
@@ -409,7 +371,7 @@ let sim_command =
 let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
   let spec_sl = structure specdir in
   let excludes_p4 =
-    excludes_p4 |> Filesys.collect_excludes
+    excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
   let filenames_p4 =
@@ -447,56 +409,13 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
     testdirs_stf patchdir =
   let spec_sl = structure specdir in
   let excludes_p4 =
-    excludes_p4 |> Filesys.collect_excludes
+    excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
-    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
-  in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 ->
-        not (List.exists (String.equal filename_p4) excludes_p4))
-      filenames_p4
-  in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 ->
-        let contents = Filesys.read_file filename_p4 in
-        match arch with
-        | "v1model" ->
-            Strings.contains_substring "#include <v1model.p4>" contents
-            || Strings.contains_substring "#include \"v1model.p4\"" contents
-        | _ -> false)
-      filenames_p4
-  in
-  let filenames_p4_patch = Filesys.collect_files ~suffix:".p4" patchdir in
-  let filenames_p4 =
-    Filesys.patch ~suffix:".p4" filenames_p4 filenames_p4_patch
-  in
-  let filenames_stf =
-    List.concat_map (Filesys.collect_files ~suffix:".stf") testdirs_stf
-  in
-  let filenames_stf_patch = Filesys.collect_files ~suffix:".stf" patchdir in
-  let filenames_stf =
-    Filesys.patch ~suffix:".stf" filenames_stf filenames_stf_patch
-  in
   let filenames_p4, filenames_stf =
-    filenames_p4
-    |> List.filter_map (fun filename_p4 ->
-           let filename_base = Filesys.base ~suffix:".p4" filename_p4 in
-           let filename_stf_opt =
-             List.find_opt
-               (fun filename_stf ->
-                 let filename_stf_base =
-                   Filesys.base ~suffix:".stf" filename_stf
-                 in
-                 String.equal filename_base filename_stf_base)
-               filenames_stf
-           in
-           match filename_stf_opt with
-           | Some filename_stf -> Some (filename_p4, filename_stf)
-           | None -> None)
+    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+    |> List.filter (fun (filename_p4, _) ->
+           not (List.exists (String.equal filename_p4) excludes_p4))
     |> List.split
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
@@ -626,7 +545,7 @@ let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
 
 let run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
   let excludes_p4 =
-    excludes_p4 |> Filesys.collect_excludes
+    excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
   let filenames_p4 =

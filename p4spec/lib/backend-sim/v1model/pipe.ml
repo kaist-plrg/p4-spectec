@@ -100,9 +100,31 @@ struct
         register |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
 
-  let eval_extern_func_lctk_call (_values_input : Value.t list) : Value.t list =
-    error_no_region
-      "eval_extern_func_lctk_call not implemented for the placeholder simulator"
+  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_name_func, value_names_param =
+      match values_input with
+      | [ value_ctx; value_name_func; value_names_param ] ->
+          (value_ctx, value_name_func, value_names_param)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to local compile-time known extern \
+             function call"
+    in
+    let name_func = unwrap_text_v value_name_func in
+    let names_param =
+      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+    in
+    match (name_func, names_param) with
+    | "static_assert", [ "check"; "message" ] ->
+        [ Core.Func.static_assert ~message:true value_ctx ]
+    | "static_assert", [ "check" ] ->
+        [ Core.Func.static_assert ~message:false value_ctx ]
+    | _ ->
+        error_no_region
+          ("unsupported local compile-time known extern function call: "
+         ^ name_func ^ "("
+          ^ String.concat ", " names_param
+          ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_name_func, value_names_param =
@@ -185,6 +207,12 @@ struct
       | PacketIn packet_in, "advance", [ "sizeInBits" ] ->
           let packet_in, value_ctx, value_sto, value_callResult =
             Core.Object.PacketIn.advance value_ctx value_sto packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_sto, value_callResult)
+      | PacketIn packet_in, "length", [] ->
+          let packet_in, value_ctx, value_sto, value_callResult =
+            Core.Object.PacketIn.length value_ctx value_sto packet_in
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
@@ -275,6 +303,18 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  let table_add_default_action (value_sto : Value.t) (value_tableName : Value.t)
+      (value_tableActionInterface : Value.t) : Value.t =
+    (* Lookup table object *)
+    let value_tableObject = find_table value_sto value_tableName in
+    (* Add entry to table object *)
+    let value_tableObject =
+      Spec.Func.tableObject_add_default_action value_tableObject
+        value_tableActionInterface
+    in
+    (* Update store with modified table object *)
+    update_table value_sto value_tableName value_tableObject
+
   (* Initializer *)
 
   let init (spec_ : Sim.spec) : unit =
@@ -360,24 +400,30 @@ struct
 
   let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
-    (* Get egress port *)
-    let port =
+    let value_egress_spec =
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
-      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
-    (* Get output packet *)
-    let header =
-      get_packet_out value_sto |> Format.asprintf "%a" Core.Object.PacketOut.pp
+    let width_egress_spec, int_egress_spec =
+      unpack_p4_fixedBit value_egress_spec
     in
-    let payload =
-      get_packet_in value_sto
-      |> Format.asprintf "%a" Core.Object.PacketIn.pp_payload
+    let drop =
+      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
     in
-    let packet = header ^ payload in
-    (* Return port and packet *)
-    let tx = (port, packet) in
-    Some tx
+    if drop then None
+    else
+      (* Get egress port *)
+      let port = Bigint.to_int_exn int_egress_spec in
+      (* Get input packet *)
+      let packet_in = get_packet_in value_sto in
+      (* Get output packet *)
+      let packet_out = get_packet_out value_sto in
+      let packet =
+        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+      in
+      (* Return port and packet *)
+      let tx = (port, packet) in
+      Some tx
 
   let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * bool =

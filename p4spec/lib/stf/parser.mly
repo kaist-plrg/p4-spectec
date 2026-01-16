@@ -18,7 +18,7 @@ open Ast
 %}
 
 %token END
-%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS REMOVE SETDEFAULT WAIT PACKET_WILDCARD
+%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT PACKET_WILDCARD
 %token<string> ID
 %token COLON COMMA DATA_TERN DOT
 %token<string> INT_CONST_DEC TERN_CONST_HEX INT_CONST_HEX INT_CONST_BIN DATA_DEC DATA_HEX
@@ -45,14 +45,20 @@ stmt:
     { CheckCounter($2, $4, (None, Eq, "0")) }
   | CHECK_COUNTER ID LPAREN id_or_index RPAREN count_type logical_cond number
     { CheckCounter($2, $4, (Some($6), $7, $8)) }
+  | EXPECT port expect_data EXACT
+    { Expect($2, $3, true) }
   | EXPECT port expect_data
-    { Expect($2, $3) }
+    { Expect($2, $3, false) }
+  | EXPECT port EXACT
+    { Expect($2, None, true) }
   | EXPECT port
-    { Expect($2, None) }
+    { Expect($2, None, false) }
   | NO_PACKET
     { NoPacket }
+  | PACKET port packet_data EXACT
+    { Packet($2, $3, true) }
   | PACKET port packet_data
-    { Packet($2, $3) }
+    { Packet($2, $3, false) }
   | SETDEFAULT qualified_name action
     { SetDefault($2, $3) }
   | REMOVE ALL
@@ -133,6 +139,8 @@ args:
     { $1 :: $3 }
 
 arg:
+  | ADD COLON number
+    { "add", $3 }
   | ID COLON number
     { $1, $3 }
 

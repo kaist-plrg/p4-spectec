@@ -537,6 +537,7 @@ def $cast_bool(BIT `< w >, true) = w W 1
 def $cast_bool(BIT `< w >, false) = w W 0
 def $cast_bool(TYPEDEF _ typeIR, b) = $cast_bool(typeIR, b)
 def $cast_bool(TYPE _ typeIR, b) = $cast_bool(typeIR, b)
+def $cast_bool(SET `< typeIR >, b) = SET `{ $cast_bool(typeIR, b) }
 
 def $cast_op(typeIR, `B b) = $cast_bool(typeIR, b)
 
@@ -555,6 +556,30 @@ def $cast_arbint(SET `< typeIR >, i) = SET `{ $cast_arbint(typeIR, i) }
 
 def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
 
+;;; Cast underlying value to enum
+
+dec $cast_to_enum'(typeId, typeIR, valueFieldIR*, value) : value
+
+def $cast_to_enum'(typeId, typeIR, eps, value_target)
+  = typeId `. id_zero `. value_zero
+  -- if value_zero = $cast_arbint(typeIR, 0)
+  -- if id_zero = "__UNSPECIFIED"
+
+def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_target)
+  = value_target
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if $bin_eq(value, value_target)
+
+def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_target)
+  = $cast_to_enum'(typeId, typeIR, valueFieldIR_t*, value_target)
+  -- if nameIR `= value `; = valueFieldIR_h
+  -- if ~$bin_eq(value, value_target)
+
+dec $cast_to_enum(enumTypeIR, value) : value
+
+def $cast_to_enum(ENUM typeId `< typeIR > `{ valueFieldIR* }, value)
+  = $cast_to_enum'(typeId, typeIR, valueFieldIR*, value)
+
 ;;; Cast from fixed unsigned integer
 
 dec $cast_fixbit(typeIR, nat, int) : value
@@ -569,6 +594,7 @@ def $cast_fixbit(INT `< w_to >, _, i) = w_to S i'
 def $cast_fixbit(TYPEDEF _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
 def $cast_fixbit(TYPE _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
 def $cast_fixbit(SET `< typeIR >, w, i) = SET `{ $cast_fixbit(typeIR, w, i) }
+def $cast_fixbit(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w W i)
 
 def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
 
@@ -585,6 +611,7 @@ def $cast_fixint(INT `< w_to >, w_from, i) = w_to S i'
 def $cast_fixint(TYPEDEF _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
 def $cast_fixint(TYPE _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
 def $cast_fixint(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
+def $cast_fixint(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w S i)
 
 def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
 
@@ -598,6 +625,16 @@ def $cast_varbit(TYPEDEF _ typeIR, w_max, w, i)
   = $cast_varbit(typeIR, w_max, w, i)
 
 def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
+
+;;; Cast from error
+
+dec $cast_error(typeIR, nameIR) : value
+  hint(testgen_ignore)
+
+def $cast_error(ERROR, nameIR) = ERROR `. nameIR
+def $cast_error(SET `< typeIR >, nameIR) = SET `{ $cast_error(typeIR, nameIR) }
+
+def $cast_op(typeIR, ERROR `. nameIR) = $cast_error(typeIR, nameIR)
 
 ;;; Cast from struct
 
@@ -624,6 +661,18 @@ def $cast_header(HEADER typeId `< _ > `{ _ }, typeId, b, (value_field, nameIR_fi
 
 def $cast_op(typeIR, HEADER typeId `{ b `; (value_field nameIR_field `;)* })
   = $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
+
+;;; Cast from header stack
+
+dec $cast_header_stack(typeIR, value*, nat) : value
+  hint(testgen_ignore)
+
+def $cast_header_stack(typeIR `[ n_size ], value*, n_size')
+  = HEADER_STACK `[ value* `( 0; n_size )]
+  -- if n_size = n_size'
+
+def $cast_op(typeIR, HEADER_STACK `[ value* `( _; n_size ) ])
+  = $cast_header_stack(typeIR, value*, n_size)
 
 ;;; Cast from serializable enum field
 
@@ -750,6 +799,8 @@ def $default(INT `< w >) = w S 0
 def $default(VARBIT `< w >) = w `. 0 V 0
 
 def $default(TYPEDEF _ typeIR) = $default(typeIR)
+
+def $default(TYPE _ typeIR) = $default(typeIR)
 
 def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 

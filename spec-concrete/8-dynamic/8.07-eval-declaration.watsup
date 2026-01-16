@@ -16,6 +16,14 @@ rulegroup VarDecl_eval {
     ---- ;; update evaluation context
     -- if EC_1 = $add_var_e(p, EC_0, `` nameIR, value_init)
 
+  rule VarDecl_eval/initializer-abort:
+    p EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
+                  : EC_1 STO_1 abortResult
+    ---- ;; evaluate initializer
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_init
+                          : EC_1 STO_1 abortResult
+
   rule VarDecl_eval/initializer-cont:
     p EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
                   : EC_2 STO_1 `EMPTY
@@ -25,14 +33,6 @@ rulegroup VarDecl_eval {
                           : EC_1 STO_1 (`` value_init)
     ---- ;; update evaluation context
     -- if EC_2 = $add_var_e(p, EC_1, `` nameIR, value_init)
-
-  rule VarDecl_eval/initializer-exit:
-    p EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init) `;
-                  : EC_1 STO_1 EXIT
-    ---- ;; evaluate initializer
-    -- Expr_eval:
-        p EC_0 STO_0 |- typedExpressionIR_init
-                          : EC_1 STO_1 EXIT
 
 }
 

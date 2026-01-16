@@ -88,7 +88,7 @@ module Make
       =
     match stmt_stf with
     (* Packet I/O *)
-    | Stf.Ast.Packet (port_in, packet_in) ->
+    | Stf.Ast.Packet (port_in, packet_in, _exact) ->
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
         let rx = (port_in, packet_in) in
@@ -99,8 +99,9 @@ module Make
           on_tx_output tx_output_opt tx_output_queue tx_expect_queue
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
-    | Stf.Ast.Expect (port_expect, Some packet_expect) ->
+    | Stf.Ast.Expect (port_expect, packet_expect_opt, _exact) ->
         let port_expect = int_of_string port_expect in
+        let packet_expect = Option.value packet_expect_opt ~default:"" in
         let packet_expect = String.uppercase_ascii packet_expect in
         let tx_expect = (port_expect, packet_expect) in
         let tx_output_queue, tx_expect_queue =
@@ -163,6 +164,32 @@ module Make
         let value_sto =
           Arch.table_add_entry value_sto value_tableName
             value_tableEntryPriorityInterface value_tableKeysetInterface
+            value_tableActionInterface
+        in
+        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+    | Stf.Ast.SetDefault (table_name, table_entry_action) ->
+        (* Encode name *)
+        let value_tableName = wrap_text_v table_name in
+        (* Encode action *)
+        let value_tableActionInterface =
+          let table_action_name, table_action_args = table_entry_action in
+          let value_table_action_name = wrap_text_v table_action_name in
+          let value_tableActionArgumentInterfaces =
+            table_action_args
+            |> List.map (fun (name, number) ->
+                   let value_name = wrap_text_v name in
+                   let value_number =
+                     number |> int_of_string |> Bigint.of_int |> wrap_num_v_int
+                   in
+                   wrap_tuple_v "tableActionArgumentInterface"
+                     [ value_name; value_number ])
+            |> wrap_list_v "tableActionArgumentInterface"
+          in
+          wrap_tuple_v "tableActionInterface"
+            [ value_table_action_name; value_tableActionArgumentInterfaces ]
+        in
+        let value_sto =
+          Arch.table_add_default_action value_sto value_tableName
             value_tableActionInterface
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
