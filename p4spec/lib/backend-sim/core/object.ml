@@ -139,7 +139,7 @@ module PacketIn = struct
             [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
           |> with_typ (wrap_var_t "errorValue")
         in
-        [ Term "REJECT"; NT value_err ]#@"rejectTransitionResult"
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
     else
@@ -156,7 +156,7 @@ module PacketIn = struct
       (* Create call result *)
       let value_callResult =
         let value_eps = wrap_opt_v "value" None in
-        [ Term "RETURN"; NT value_eps ]#@"returnResult"
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
 
@@ -202,7 +202,7 @@ module PacketIn = struct
             [ Term "ERROR"; Term "."; NT (wrap_text_v "ParserInvalidArgument") ]
           |> with_typ (wrap_var_t "errorValue")
         in
-        [ Term "REJECT"; NT value_err ]#@"rejectTransitionResult"
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
     else if pkt.idx + size > pkt.len then
@@ -212,7 +212,7 @@ module PacketIn = struct
             [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
           |> with_typ (wrap_var_t "errorValue")
         in
-        [ Term "REJECT"; NT value_err ]#@"rejectTransitionResult"
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
     else if size > size_max then
@@ -222,7 +222,7 @@ module PacketIn = struct
             [ Term "ERROR"; Term "."; NT (wrap_text_v "HeaderTooShort") ]
           |> with_typ (wrap_var_t "errorValue")
         in
-        [ Term "REJECT"; NT value_err ]#@"rejectTransitionResult"
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
     else
@@ -245,7 +245,7 @@ module PacketIn = struct
       (* Create call result *)
       let value_callResult =
         let value_eps = wrap_opt_v "value" None in
-        [ Term "RETURN"; NT value_eps ]#@"returnResult"
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
 
@@ -273,7 +273,7 @@ module PacketIn = struct
             [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
           |> with_typ (wrap_var_t "errorValue")
         in
-        [ Term "REJECT"; NT value_err ]#@"rejectTransitionResult"
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
     else
@@ -284,7 +284,7 @@ module PacketIn = struct
       (* Create call result *)
       let value_callResult =
         let value_hdr = wrap_opt_v "value" (Some value_hdr) in
-        [ Term "RETURN"; NT value_hdr ]#@"returnResult"
+        [ Term "RETURN"; NT value_hdr ] #@ "returnResult"
       in
       (pkt, value_ctx, value_sto, value_callResult)
 
@@ -303,7 +303,7 @@ module PacketIn = struct
     let pkt = { pkt with idx = pkt.idx + size } in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ]#@"returnResult"
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
     (pkt, value_ctx, value_sto, value_callResult)
 
@@ -320,7 +320,7 @@ module PacketIn = struct
     in
     let value_callResult =
       let value_length_opt = wrap_opt_v "value" (Some value_length) in
-      [ Term "RETURN"; NT value_length_opt ]#@"returnResult"
+      [ Term "RETURN"; NT value_length_opt ] #@ "returnResult"
     in
     (pkt, value_ctx, value_sto, value_callResult)
 end
@@ -357,7 +357,16 @@ module PacketOut = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ]#@"returnResult"
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
     (pkt, value_ctx, value_sto, value_callResult)
+end
+
+module Packet = struct
+  let pp fmt ((pkt_in, pkt_out) : PacketIn.t * PacketOut.t) =
+    let payload_bits =
+      Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx)
+    in
+    let packet = Array.append pkt_out.bits payload_bits in
+    Format.fprintf fmt "%s" (bits_to_string packet)
 end

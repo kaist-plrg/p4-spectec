@@ -1,4 +1,4 @@
-;; Instruction coverage: 8783/12434 (70.64%)
+;; Instruction coverage: 8971/12518 (71.66%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -130,17 +130,17 @@ def $opt_as_seq_<X>((X')?)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:107.1-108.66
 def $exists_((bool)*)
 
-- 1. Case analysis on (bool)*
++ 1. Case analysis on (bool)*
 
     1. Case (% matches pattern [])
 
--     1. Return false
++     1. Return false
 
     2. Case (% matches pattern _ :: _)
 
--     1. (Let b_h :: (b_t)* be (bool)*)
++     1. (Let b_h :: (b_t)* be (bool)*)
 
--     2. Return (b_h \/ $exists_((b_t)*))
++     2. Return (b_h \/ $exists_((b_t)*))
 
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:112.1-113.40
 def $forall_((bool)*)
@@ -5136,7 +5136,7 @@ syntax constructorTypeDefIR =
 ;; ../../../../spec-concrete/2-static-runtime/2.4.3-type-constructor-def-aux.watsup:5.1-7.40
 def $parameterListIR_of_constructorTypeDefIR((constructor< (_typeParameterIR)* , (_typeParameterIR)* >( (constructorParameterIR)* ): _typeIR))
 
-- 1. Return (constructorParameterIR)*
++ 1. Return (constructorParameterIR)*
 
 ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:5.16-5.27
 syntax bound = set<typeId>
@@ -5524,11 +5524,11 @@ def $subst_typeIR'(theta, typeIR')
 
     4. Case (% has type newTypeIR)
 
--     1. (Let (type typeId typeIR) be (typeIR' as newTypeIR))
++     1. (Let (type typeId typeIR) be (typeIR' as newTypeIR))
 
--     2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
++     2. (Let typeIR_subst be $subst_typeIR'(theta, typeIR))
 
--     3. Return ((type typeId typeIR_subst) as typeIR)
++     3. Return ((type typeId typeIR_subst) as typeIR)
 
     5. Case (% has type listTypeIR)
 
@@ -8461,19 +8461,31 @@ def $cast_op(typeIR, value')
 
 +         2. Return $cast_fixint(typeIR, w, i)
 
-    3. Case (% has type structValue)
+    3. Case (% has type errorValue)
+
++     1. (Let (error. nameIR) be (value' as errorValue))
+
++     2. Return $cast_error(typeIR, nameIR)
+
+    4. Case (% has type structValue)
 
 +     1. (Let (struct typeId { ((value_field nameIR_field ;))* }) be (value' as structValue))
 
 +     2. Return $cast_struct(typeIR, typeId, ((value_field, nameIR_field))*)
 
-    4. Case (% has type headerValue)
+    5. Case (% has type headerValue)
 
 +     1. (Let (header typeId { b ; ((value_field nameIR_field ;))* }) be (value' as headerValue))
 
 +     2. Return $cast_header(typeIR, typeId, b, ((value_field, nameIR_field))*)
 
-    5. Case (% has type enumValue)
+    6. Case (% has type headerStackValue)
+
++     1. (Let (header_stack[ (value)* ( _nat ; n_size )]) be (value' as headerStackValue))
+
++     2. Return $cast_header_stack(typeIR, (value)*, n_size)
+
+    7. Case (% has type enumValue)
 
 +     1. (Let enumValue be (value' as enumValue))
 
@@ -8483,7 +8495,7 @@ def $cast_op(typeIR, value')
 
 +       2. Return $cast_op(typeIR, value)
 
-    6. Case (% has type sequenceValue)
+    8. Case (% has type sequenceValue)
 
 +     1. (Let sequenceValue be (value' as sequenceValue))
 
@@ -8493,7 +8505,7 @@ def $cast_op(typeIR, value')
 
 +       2. Return $cast_sequence(typeIR, (value)*)
 
-    7. Case (% has type recordValue)
+    9. Case (% has type recordValue)
 
 +     1. (Let recordValue be (value' as recordValue))
 
@@ -8503,19 +8515,19 @@ def $cast_op(typeIR, value')
 
 +       2. Return $cast_record(typeIR, ((value, id))*)
 
-    8. Case (% has type defaultValue)
+    10. Case (% has type defaultValue)
 
 -     1. (Let defaultValue be (value' as defaultValue))
 
 -     2. Return $default(typeIR)
 
-    9. Case (% has type invalidHeaderValue)
+    11. Case (% has type invalidHeaderValue)
 
 -     1. (Let invalidHeaderValue be (value' as invalidHeaderValue))
 
 -     2. Return $cast_invalid(typeIR)
 
-    10. Case (% has type setValue)
+    12. Case (% has type setValue)
 
 -     1. (Let setValue be (value' as setValue))
 
@@ -8608,13 +8620,19 @@ def $default(typeIR')
 
 +     2. Return $default(typeIR)
 
-    6. Case (% has type tupleTypeIR)
+    6. Case (% has type newTypeIR)
+
++     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
+
++     2. Return $default(typeIR)
+
+    7. Case (% has type tupleTypeIR)
 
 -     1. (Let (tuple< (typeIR)* >) be (typeIR' as tupleTypeIR))
 
 -     2. Return ((tuple( ($default(typeIR))* )) as value)
 
-    7. Case (% has type headerStackTypeIR)
+    8. Case (% has type headerStackTypeIR)
 
 +     1. (Let (typeIR [ n_s ]) be (typeIR' as headerStackTypeIR))
 
@@ -8622,25 +8640,25 @@ def $default(typeIR')
 
 +     3. Return ((header_stack[ (value)* ( 0 ; n_s )]) as value)
 
-    8. Case (% has type structTypeIR)
+    9. Case (% has type structTypeIR)
 
 +     1. (Let (struct typeId < (_typeArgumentIR)* >{ ((typeIR_f id_f ;))* }) be (typeIR' as structTypeIR))
 
 +     2. Return ((struct typeId { (($default(typeIR_f) id_f ;))* }) as value)
 
-    9. Case (% has type headerTypeIR)
+    10. Case (% has type headerTypeIR)
 
 +     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_f id_f ;))* }) be (typeIR' as headerTypeIR))
 
 +     2. Return ((header typeId { false ; (($default(typeIR_f) id_f ;))* }) as value)
 
-    10. Case (% has type headerUnionTypeIR)
+    11. Case (% has type headerUnionTypeIR)
 
 +     1. (Let (header_union typeId < (_typeArgumentIR)* >{ ((typeIR_f id_f ;))* }) be (typeIR' as headerUnionTypeIR))
 
 +     2. Return ((header_union typeId { (($default(typeIR_f) id_f ;))* }) as value)
 
-    11. Case (% has type enumTypeIR)
+    12. Case (% has type enumTypeIR)
 
 +     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
 
@@ -8717,7 +8735,13 @@ def $cast_bool(typeIR', b)
 
 -     2. Return $cast_bool(typeIR, b)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:545.1-546.23
+    5. Case (% has type setTypeIR)
+
++     1. (Let (set< typeIR >) be (typeIR' as setTypeIR))
+
++     2. Return ((set{ $cast_bool(typeIR, b) }) as value)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:546.1-547.23
 def $cast_arbint(typeIR', i)
 
 + 1. Case analysis on typeIR'
@@ -8758,9 +8782,9 @@ def $cast_arbint(typeIR', i)
 
     4. Case (% has type newTypeIR)
 
--     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
++     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
 
--     2. Return $cast_arbint(typeIR, i)
++     2. Return $cast_arbint(typeIR, i)
 
     5. Case (% has type setTypeIR)
 
@@ -8768,7 +8792,45 @@ def $cast_arbint(typeIR', i)
 
 +     2. Return ((set{ $cast_arbint(typeIR, i) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:560.1-561.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:561.1-561.65
+def $cast_to_enum'(typeId, typeIR, (valueFieldIR)*, value_target)
+
++ 1. Case analysis on (valueFieldIR)*
+
+    1. Case (% matches pattern [])
+
++     1. (Let value_zero be $cast_arbint(typeIR, (0 as int)))
+
++     2. (Let id_zero be "__UNSPECIFIED")
+
++     3. Return ((typeId . id_zero . value_zero) as value)
+
+    2. Case (% matches pattern _ :: _)
+
++     1. (Let valueFieldIR_h :: (valueFieldIR_t)* be (valueFieldIR)*)
+
++     2. (Let (nameIR = value ;) be valueFieldIR_h)
+
++     3. Case analysis on $bin_eq(value, value_target)
+
+        1. Case true
+
++         1. Return value_target
+
+        2. Case false
+
++         1. Return $cast_to_enum'(typeId, typeIR, (valueFieldIR_t)*, value_target)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:578.1-578.45
+def $cast_to_enum(enumTypeIR, value)
+
++ 1. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
+
++   1. (Let (enum typeId < typeIR >{ (valueFieldIR)* }) be enumTypeIR)
+
++   2. Return $cast_to_enum'(typeId, typeIR, (valueFieldIR)*, value)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:585.1-586.23
 def $cast_fixbit(typeIR', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8823,7 +8885,13 @@ def $cast_fixbit(typeIR', w, i)
 
 +     2. Return ((set{ $cast_fixbit(typeIR, w, i) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:577.1-578.23
+    6. Case (% has type enumTypeIR)
+
++     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
++     2. Return $cast_to_enum(enumTypeIR, ((w w i) as value))
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:603.1-604.23
 def $cast_fixint(typeIR', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8872,7 +8940,13 @@ def $cast_fixint(typeIR', w, i)
 
 -     2. Return ((set{ $cast_fixint(typeIR, w, i) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:593.1-594.23
+    5. Case (% has type enumTypeIR)
+
++     1. (Let enumTypeIR be (typeIR' as enumTypeIR))
+
++     2. Return $cast_to_enum(enumTypeIR, ((w s i) as value))
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:620.1-621.23
 def $cast_varbit(typeIR', w_max', w, i)
 
 + 1. Case analysis on typeIR'
@@ -8895,7 +8969,24 @@ def $cast_varbit(typeIR', w_max', w, i)
 
 -     2. Return $cast_varbit(typeIR, w_max', w, i)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:604.1-605.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:631.1-632.23
+def $cast_error(typeIR', nameIR)
+
++ 1. Case analysis on typeIR'
+
+    1. Case (% has type errorTypeIR)
+
++     1. (Let errorTypeIR be (typeIR' as errorTypeIR))
+
++     2. Return ((error. nameIR) as value)
+
+    2. Case (% has type setTypeIR)
+
++     1. (Let (set< typeIR >) be (typeIR' as setTypeIR))
+
++     2. Return ((set{ $cast_error(typeIR, nameIR) }) as value)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:641.1-642.23
 def $cast_struct(typeIR', typeId', ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -8916,7 +9007,7 @@ def $cast_struct(typeIR', typeId', ((value', id'))*)
 
 +       1. Return ((struct typeId { ((value id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:617.1-618.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:654.1-655.23
 def $cast_header(typeIR', typeId', b, ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -8937,7 +9028,18 @@ def $cast_header(typeIR', typeId', b, ((value', id'))*)
 
 +       1. Return ((header typeId { b ; ((value id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:634.1-635.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:667.1-668.23
+def $cast_header_stack(typeIR', (value)*, n_size')
+
++ 1. If ((typeIR' has type headerStackTypeIR)), then
+
++   1. (Let (typeIR [ n_size ]) be (typeIR' as headerStackTypeIR))
+
++   2. If ((n_size = n_size')), then
+
++     1. Return ((header_stack[ (value)* ( 0 ; n_size )]) as value)
+
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:683.1-684.23
 def $cast_sequence(typeIR', (value)*)
 
 + 1. Case analysis on typeIR'
@@ -8986,7 +9088,7 @@ def $cast_sequence(typeIR', (value)*)
 
 +     3. Return ((header typeId { true ; ((value_cast nameIR_field ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:665.1-666.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:714.1-715.23
 def $cast_record(typeIR', ((value', id'))*)
 
 + 1. (Let (value, id) be (value', id'))*
@@ -9015,19 +9117,19 @@ def $cast_record(typeIR', ((value', id'))*)
 
     3. Case (% has type headerTypeIR)
 
--     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_t_field id_t_field ;))* }) be (typeIR' as headerTypeIR))
++     1. (Let (header typeId < (_typeArgumentIR)* >{ ((typeIR_t_field id_t_field ;))* }) be (typeIR' as headerTypeIR))
 
--     2. (Let (value)? be $find_map<id, value>(({ ((id : value))* }), id_t_field))*
++     2. (Let (value)? be $find_map<id, value>(({ ((id : value))* }), id_t_field))*
 
--     3. If (((value)? matches pattern (_)))*, then
++     3. If (((value)? matches pattern (_)))*, then
 
--       1. (Let ?(value_field') be (value)?)*
++       1. (Let ?(value_field') be (value)?)*
 
--       2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field'))*
++       2. (Let value_field_cast be $cast_op(typeIR_t_field, value_field'))*
 
--       3. Return ((header typeId { true ; ((value_field_cast id ;))* }) as value)
++       3. Return ((header typeId { true ; ((value_field_cast id ;))* }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:698.1-698.34
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:747.1-747.34
 def $cast_invalid(typeIR')
 
 - 1. Case analysis on typeIR'
@@ -9050,7 +9152,7 @@ def $cast_invalid(typeIR')
 
 -     2. Return $default((headerUnionTypeIR as typeIR))
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:708.1-709.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:757.1-758.23
 def $cast_set_singleton(typeIR', value)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9059,7 +9161,7 @@ def $cast_set_singleton(typeIR', value)
 
 -   2. Return ((set{ $cast_op(typeIR, value) }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:714.1-715.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:763.1-764.23
 def $cast_set_mask(typeIR', value_b, value_m)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9072,7 +9174,7 @@ def $cast_set_mask(typeIR', value_b, value_m)
 
 -   4. Return ((set{ value_b_cast &&& value_m_cast }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:722.1-723.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:771.1-772.23
 def $cast_set_range(typeIR', value_l, value_u)
 
 - 1. If ((typeIR' has type setTypeIR)), then
@@ -9085,7 +9187,7 @@ def $cast_set_range(typeIR', value_l, value_u)
 
 -   4. Return ((set{ value_l_cast .. value_u_cast }) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:785.1-786.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:836.1-837.23
 def $bitacc_op(value, value', value'')
 
 + 1. If ((value has type integerValue)), then
@@ -9116,7 +9218,7 @@ def $bitacc_op(value, value', value'')
 
 +         3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:799.1-800.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:850.1-851.23
 def $bitacc_replace_op(value, value', value'', value''')
 
 + 1. If ((value has type integerValue)), then
@@ -9159,7 +9261,7 @@ def $bitacc_replace_op(value, value', value'', value''')
 
 +                 3. Return ((w w i) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:813.1-814.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:864.1-865.23
 def $sizeof(typeIR, text)
 
 - 1. Case analysis on text
@@ -9180,12 +9282,12 @@ def $sizeof(typeIR, text)
 
 -     1. Return $sizeof_maxSizeInBytes(typeIR)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:816.1-817.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:867.1-868.23
 def $sizeof_minSizeInBits(typeIR)
 
 - 1. Return ((d ($sizeof_minSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:818.1-819.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:869.1-870.23
 def $sizeof_minSizeInBits'(typeIR')
 
 + 1. Case analysis on typeIR'
@@ -9270,19 +9372,19 @@ def $sizeof_minSizeInBits'(typeIR')
 
 -     2. Return $min_nat(($sizeof_minSizeInBits'(typeIR))*)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:821.1-822.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:872.1-873.23
 def $sizeof_minSizeInBytes(typeIR)
 
 - 1. (Let n_size be $sizeof_minSizeInBits'(typeIR))
 
 - 2. Return ((d ((n_size / 8) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:824.1-825.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:875.1-876.23
 def $sizeof_maxSizeInBits(typeIR)
 
 - 1. Return ((d ($sizeof_maxSizeInBits'(typeIR) as int)) as value)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:826.1-827.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:877.1-878.23
 def $sizeof_maxSizeInBits'(typeIR')
 
 + 1. Case analysis on typeIR'
@@ -9325,9 +9427,9 @@ def $sizeof_maxSizeInBits'(typeIR')
 
     4. Case (% has type newTypeIR)
 
--     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
++     1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
 
--     2. Return $sizeof_maxSizeInBits'(typeIR)
++     2. Return $sizeof_maxSizeInBits'(typeIR)
 
     5. Case (% has type enumTypeIR)
 
@@ -9369,7 +9471,7 @@ def $sizeof_maxSizeInBits'(typeIR')
 
 -     2. Return $max_nat(($sizeof_maxSizeInBits'(typeIR))*)
 
-;; ../../../../spec-concrete/3-operations/3-operations.watsup:829.1-830.23
+;; ../../../../spec-concrete/3-operations/3-operations.watsup:880.1-881.23
 def $sizeof_maxSizeInBytes(typeIR)
 
 - 1. (Let n_size be $sizeof_maxSizeInBits'(typeIR))
@@ -10364,17 +10466,17 @@ def $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR')*, (argum
 
           3. Case (% matches pattern `%=%`)
 
--           1. (Let (nameIR = _typedExpressionIR) be argumentIR_h)
++           1. (Let (nameIR = _typedExpressionIR) be argumentIR_h)
 
--           2. (Let (parameterIR'')? be $find_map<id, parameterIR>(({ ((id : parameterIR))* }), nameIR))
++           2. (Let (parameterIR'')? be $find_map<id, parameterIR>(({ ((id : parameterIR))* }), nameIR))
 
--           3. If (((parameterIR'')? matches pattern (_))), then
++           3. If (((parameterIR'')? matches pattern (_))), then
 
--             1. (Let ?(parameterIR_match) be (parameterIR'')?)
++             1. (Let ?(parameterIR_match) be (parameterIR'')?)
 
--             2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
++             2. (Let ((parameterIR_aligned)*, (argumentIR_aligned)*) be $align_parameterListIR'(({ ((id : parameterIR))* }), (parameterIR_t)*, (argumentIR_t)*))
 
--             3. Return (parameterIR_match :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
++             3. Return (parameterIR_match :: (parameterIR_aligned)*, argumentIR_h :: (argumentIR_aligned)*)
 
           4. Case (% matches pattern `%=_`)
 
@@ -10425,9 +10527,9 @@ def $callTargetKey'(argumentIR)
 
     2. Case (% matches pattern `%=%`)
 
--     1. (Let (id_arg = _typedExpressionIR) be argumentIR)
++     1. (Let (id_arg = _typedExpressionIR) be argumentIR)
 
--     2. Return ?(id_arg)
++     2. Return ?(id_arg)
 
     3. Case (% matches pattern `%=_`)
 
@@ -10442,35 +10544,35 @@ def $callTargetKey'(argumentIR)
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:29.1-33.20
 def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
-- 1. (Let (nameIR ( (id_param)* )) be callTargetId)
++ 1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
-- 2. If ((nameIR = nameIR_f)), then
++ 2. If ((nameIR = nameIR_f)), then
 
--   1. If ((|(id_param)*| = |(id_arg)*|)), then
++   1. If ((|(id_param)*| = |(id_arg)*|)), then
 
--     1. (Let (parameterIR)* be $get_parameterListIR(V))
++     1. (Let (parameterIR)* be $get_parameterListIR(V))
 
--     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
++     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
 
--       1. Return $ite<callTargetMatch>($eq_set<id>(({ (id_param)* }), ({ (id_arg)* })), (match []), (nomatch))
++       1. Return $ite<callTargetMatch>($eq_set<id>(({ (id_param)* }), ({ (id_arg)* })), (match []), (nomatch))
 
--   2. If ((|(id_param)*| > |(id_arg)*|)), then
++   2. If ((|(id_param)*| > |(id_arg)*|)), then
 
--     1. (Let (parameterIR)* be $get_parameterListIR(V))
++     1. (Let (parameterIR)* be $get_parameterListIR(V))
 
--     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
++     2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
 
--       1. (Let b_default_param be $default_of_parameterIR(parameterIR))*
++       1. (Let b_default_param be $default_of_parameterIR(parameterIR))*
 
--       2. (Let ({ (id_param_default)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
++       2. (Let ({ (id_param_default)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
 
--       3. If ((?(true) = $find_map<id, bool>(({ ((id_param : b_default_param))* }), id_param_default)))*, then
++       3. If ((?(true) = $find_map<id, bool>(({ ((id_param : b_default_param))* }), id_param_default)))*, then
 
 -         1. Return (match (id_param_default)*)
 
-- 3. Otherwise
++ 3. Otherwise
 
--   1. Return (nomatch)
++   1. Return (nomatch)
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:84.1-88.20
 def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR)
@@ -10502,27 +10604,27 @@ def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:130.1-134.30
 def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
-- 1. If ((set<pair<callableId, V>> = ({ [] }))), then
++ 1. If ((set<pair<callableId, V>> = ({ [] }))), then
 
--   1. Return []
++   1. Return []
 
-- 2. (Let ({ (pair<callableId, V>)* }) be set<pair<callableId, V>>)
++ 2. (Let ({ (pair<callableId, V>)* }) be set<pair<callableId, V>>)
 
-- 3. If (((pair<callableId, V>)* matches pattern _ :: _)), then
++ 3. If (((pair<callableId, V>)* matches pattern _ :: _)), then
 
--   1. (Let (callTargetId_h : V_h) :: ((callTargetId_t : V_t))* be (pair<callableId, V>)*)
++   1. (Let (callTargetId_h : V_h) :: ((callTargetId_t : V_t))* be (pair<callableId, V>)*)
 
--   2. If (($match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR) matches pattern `NOMATCH`)), then
++   2. If (($match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR) matches pattern `NOMATCH`)), then
 
--     1. Return $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
++     1. Return $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
--   3. (Let callTargetMatch be $match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR))
++   3. (Let callTargetMatch be $match_overloaded_named<V>((callTargetId_h : V_h), (nameIR_f ( (id_arg)* )), $get_parameterListIR))
 
--   4. If ((callTargetMatch matches pattern `MATCH%`)), then
++   4. If ((callTargetMatch matches pattern `MATCH%`)), then
 
--     1. (Let (match (id_default)*) be callTargetMatch)
++     1. (Let (match (id_default)*) be callTargetMatch)
 
--     2. Return (callTargetId_h, V_h, (id_default)*) :: $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
++     2. Return (callTargetId_h, V_h, (id_default)*) :: $find_overloadeds_named<V>(({ ((callTargetId_t : V_t))* }), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:173.1-177.30
 def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR)
@@ -10556,19 +10658,19 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 +   1. If (((id_arg)? matches pattern (_)))*, then
 
--     1. (Let ?(id_arg_inner) be (id_arg)?)*
++     1. (Let ?(id_arg_inner) be (id_arg)?)*
 
--     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
++     2. If (([] = $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))), then
 
--       1. Return ?()
++       1. Return ?()
 
--     3. (Let ((callableId, V, nameIR*))* be $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))
++     3. (Let ((callableId, V, nameIR*))* be $find_overloadeds_named<V>(({ ((callableId : V))* }), (nameIR_f ( (id_arg_inner)* )), $get_parameterListIR))
 
--     4. If ((((callableId, V, nameIR*))* matches pattern [ _/1 ])), then
++     4. If ((((callableId, V, nameIR*))* matches pattern [ _/1 ])), then
 
--       1. (Let [(callableId_found, V_found, (id_default)*)] be ((callableId, V, nameIR*))*)
++       1. (Let [(callableId_found, V_found, (id_default)*)] be ((callableId, V, nameIR*))*)
 
--       2. Return ?((callableId_found, V_found, (id_default)*))
++       2. Return ?((callableId_found, V_found, (id_default)*))
 
 + 2. If (((id_arg)? matches pattern ()))*, then
 
@@ -10640,7 +10742,7 @@ def $join_flow(flow, flow')
 
 +   1. If ((flow' matches pattern `RET`)), then
 
--     1. Return (ret)
++     1. Return (ret)
 
 + 2. Otherwise
 
@@ -11592,13 +11694,13 @@ def $update_mode(TBLC, text, typeIR')
 
         3. Case (% has type newTypeIR)
 
--         1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
++         1. (Let (type _typeId typeIR) be (typeIR' as newTypeIR))
 
--         2. Return $update_mode(TBLC, "lpm", typeIR)
++         2. Return $update_mode(TBLC, "lpm", typeIR)
 
--     2. If ((TBLC.mode matches pattern `PRI`)), then
++     2. If ((TBLC.mode matches pattern `PRI`)), then
 
--       1. Return TBLC[mode = (prilpm)]
++       1. Return TBLC[mode = (prilpm)]
 
     2. Case (% = "range")
 
@@ -12547,9 +12649,9 @@ tbl def $nestable_new(typeIR'')
 
  Row : (newTypeIR as typeIR) -> true
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. Return true
++       1. Return true
 
  Row : _typeIR -> false
 
@@ -12868,9 +12970,9 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +     1. If ((typeIR'' has type boolTypeIR)), then
 
--       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
++       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
--       2. Return true
++       2. Return true
 
  Row : ((int< _nat >) as typeIR) -> true
 
@@ -12880,7 +12982,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +       2. If ((integerTypeIR matches pattern `INT<%>`)), then
 
--         1. Return true
++         1. Return true
 
  Row : ((bit< _nat >) as typeIR) -> true
 
@@ -12916,11 +13018,11 @@ tbl def $nestable_struct_in_header(typeIR'')
 
 +     1. If ((typeIR'' has type enumTypeIR)), then
 
--       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
++       1. (Let enumTypeIR be (typeIR'' as enumTypeIR))
 
--       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
++       2. If ((enumTypeIR matches pattern `ENUM%<%>{%}`)), then
 
--         1. Return true
++         1. Return true
 
  Row : ((struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field _nameIR ;))* }) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*)
 
@@ -14809,19 +14911,19 @@ rel Sub_expl_unroll_neq: typeIR <: typeIR'
 
 +   1. If ((typeIR has type newTypeIR)), then
 
--     1. (Let (type _typeId typeIR_a) be (typeIR as newTypeIR))
++     1. (Let (type _typeId typeIR_a) be (typeIR as newTypeIR))
 
--     2. If (Sub_impl: typeIR_a <: typeIR') holds, then
++     2. If (Sub_impl: typeIR_a <: typeIR') holds, then
 
 -       1. The relation holds
 
 +   2. If ((typeIR' has type newTypeIR)), then
 
--     1. (Let (type _typeId typeIR_b) be (typeIR' as newTypeIR))
++     1. (Let (type _typeId typeIR_b) be (typeIR' as newTypeIR))
 
--     2. If (Sub_impl: typeIR <: typeIR_b) holds, then
++     2. If (Sub_impl: typeIR <: typeIR_b) holds, then
 
--       1. The relation holds
++       1. The relation holds
 
 + 3. Group enumTypeIR-serializable: typeIR <: typeIR'
 
@@ -16860,15 +16962,15 @@ rel Argument_ok: p TC |- argument : %
 
     2. Case (% matches pattern `%=%`)
 
--     1. (Let (name = expression) be argument)
++     1. (Let (name = expression) be argument)
 
--     2. Group name-expression: p TC |- (name = expression) : %
++     2. Group name-expression: p TC |- (name = expression) : %
 
--       1. (Let nameIR be $name(name))
++       1. (Let nameIR be $name(name))
 
--       2. (Expr_ok: p TC |- expression : typedExpressionIR)
++       2. (Expr_ok: p TC |- expression : typedExpressionIR)
 
--       3. Result in: % % |- % : (nameIR = typedExpressionIR)
++       3. Result in: % % |- % : (nameIR = typedExpressionIR)
 
     3. Case (% matches pattern `%=_`)
 
@@ -19282,35 +19384,35 @@ rel TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
 +       3. If (("priority_delta" = $tableCustomName(tableCustomName))), then
 
--         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
++         1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
--         2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
++         2. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
 
--         3. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
++         3. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
 
--           1. If ($is_arbitraryIntTypeIR($unroll_typeIR(typeIR))), then
++           1. If ($is_arbitraryIntTypeIR($unroll_typeIR(typeIR))), then
 
--             1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
++             1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
 
--             2. If ((value has type integerValue)), then
++             2. If ((value has type integerValue)), then
 
--               1. (Let integerValue be (value as integerValue))
++               1. (Let integerValue be (value as integerValue))
 
--               2. (Let int be $int_of_integerValue(integerValue))
++               2. (Let int be $int_of_integerValue(integerValue))
 
--               3. If ((int has type nat)), then
++               3. If ((int has type nat)), then
 
--                 1. (Let n_delta be (int as nat))
++                 1. (Let n_delta be (int as nat))
 
--                 2. If ((n_delta > 0)), then
++                 2. If ((n_delta > 0)), then
 
--                   1. (Let TBLC_1 be TBLC_0[priorities.delta = n_delta])
++                   1. (Let TBLC_1 be TBLC_0[priorities.delta = n_delta])
 
--                   2. (Let constOptIR be $flatten_constOpt(constOpt))
++                   2. (Let constOptIR be $flatten_constOpt(constOpt))
 
--                   3. (Let tablePropertyIR be ((annotationList constOptIR custom_const "priority_delta" (= ((d (n_delta as int)) as value)) ;) as tablePropertyIR))
++                   3. (Let tablePropertyIR be ((annotationList constOptIR custom_const "priority_delta" (= ((d (n_delta as int)) as value)) ;) as tablePropertyIR))
 
--                   4. Result in: % % |- % : TBLC_1 tablePropertyIR
++                   4. Result in: % % |- % : TBLC_1 tablePropertyIR
 
 -           2. If ($is_fixedIntTypeIR($unroll_typeIR(typeIR))), then
 
@@ -19640,7 +19742,7 @@ rel InstDecl_ok: p TC_0 |- instantiation : % %
 
 +     1. (Let (annotationList type ( argumentList ) name ;) be instantiation)
 
-+     2. Group instantiation-non-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name ;) : % %
++     2. Group non-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name ;) : % %
 
 +       1. Case analysis on type
 
@@ -19698,7 +19800,7 @@ rel InstDecl_ok: p TC_0 |- instantiation : % %
 
 -     1. (Let (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) be instantiation)
 
--     2. Group instantiation-objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) : % %
+-     2. Group objectInitializer: p TC_0 |- (annotationList type ( argumentList ) name (={ objectDeclarationList }) ;) : % %
 
 -       1. Case analysis on type
 
@@ -19726,7 +19828,7 @@ rel InstDecl_ok: p TC_0 |- instantiation : % %
 
 -               3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
--               4. (Decls_object_ok: p TC_1 ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
+-               4. (ObjectDecls_ok: p TC_1 |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
 
 -               5. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
@@ -19772,7 +19874,7 @@ rel InstDecl_ok: p TC_0 |- instantiation : % %
 
 -             3. (Let (objectDeclaration)* be $flatten_objectDeclarationList(objectDeclarationList))
 
--             4. (Decls_object_ok: p TC_1 ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
+-             4. (ObjectDecls_ok: p TC_1 |- (objectDeclaration)* : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*)
 
 -             5. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
@@ -20672,13 +20774,13 @@ rel Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
 
     2. Case (% matches pattern `%=%`)
 
--     1. (Let (nameIR = typedExpressionIR) be argumentIR)
++     1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--     2. Group nameIR-typedExpression: p TC actctxt |- parameterIR @ (nameIR = typedExpressionIR) : %
++     2. Group nameIR-typedExpression: p TC actctxt |- parameterIR @ (nameIR = typedExpressionIR) : %
 
--       1. (Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast)
++       1. (Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast)
 
--       2. Result in: % % % |- % @ % : (nameIR = typedExpressionIR_cast)
++       2. Result in: % % % |- % @ % : (nameIR = typedExpressionIR_cast)
 
     3. Case (% matches pattern `%=_`)
 
@@ -21306,7 +21408,7 @@ rel Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (argument
 
 +                 1. Result in: % % |- % < % # % >( % # % ): (tableMetadataStructTypeIR as typeIR) < [] >( [] )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:544.1-551.45
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:544.1-551.49
 rel ConstructorType_ok: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
 
 + 1. Group non-aliased-none-type: p TC |- prefixedNameIR < (typeArgumentIR')* >( (argumentIR)* ): % <# % >(# % )
@@ -21386,7 +21488,7 @@ syntax instctxt =
    | named
    | anon
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:560.1-571.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:560.1-571.42
 rel Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # (typeId_infer)* >( (argumentIR)* # (id_default)* ): % < % >( % )
 
 + 1. If ((cursor matches pattern `GLOBAL`)), then
@@ -22628,12 +22730,12 @@ def $is_valid_bitslice(typeIR', n_lo, n_hi)
 
 -   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1218.1-1218.46
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1218.1-1220.79
 def $is_concrete_extern_object(typeIR)
 
 + 1. Return $is_concrete_extern_object'($unroll_typeIR(typeIR))
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1219.1-1219.47
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1221.1-1221.47
 def $is_concrete_extern_object'(typeIR)
 
 + 1. If (~$is_externObjectTypeIR(typeIR)), then
@@ -22652,7 +22754,7 @@ def $is_concrete_extern_object'(typeIR)
 
 -   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1220.1-1220.63
+;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:1222.1-1222.63
 def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 - 1. If ((externMethodTypeDefIR matches pattern `EXTERN_METHOD<%,%>(%):%`)), then
@@ -23245,7 +23347,7 @@ tbl def $compat_switch(typeIR'')
 -     1. Return false
 
 ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:146.1-150.29
-rel Decl_object_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
+rel ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
 - 1. Case analysis on objectDeclaration
 
@@ -23332,7 +23434,7 @@ rel Decl_object_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration
 -         3. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
 
 ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:215.1-219.29
-rel Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)* : % % %
+rel ObjectDecls_ok_inner: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)* : % % %
 
 - 1. Case analysis on (objectDeclaration)*
 
@@ -23348,13 +23450,22 @@ rel Decls_object_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration
 
 -     2. Group cons: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h :: (objectDeclaration_t)* : % % %
 
--       1. (Decl_object_ok: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h)
+-       1. (ObjectDecl_ok: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration_h : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h)
 
--       2. (Decls_object_ok: p TC typeFrame_1 externMethodTypeDefEnv_1 |- (objectDeclaration_t)* : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_t)*)
+-       2. (ObjectDecls_ok_inner: p TC typeFrame_1 externMethodTypeDefEnv_1 |- (objectDeclaration_t)* : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_t)*)
 
 -       3. Result in: % % % % |- % : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_h :: (objectDeclarationIR_t)*
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:238.1-240.27
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:238.1-245.72
+rel ObjectDecls_ok: p TC |- (objectDeclaration)* : % % %
+
+- 1. Group : p TC |- (objectDeclaration)* : % % %
+
+-   1. (ObjectDecls_ok_inner: p TC ({ [] }) ({ [] }) |- (objectDeclaration)* : typeFrame externMethodTypeDefEnv objectDeclarationListIR)
+
+-   2. Result in: % % |- % : typeFrame externMethodTypeDefEnv objectDeclarationListIR
+
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:255.1-258.85
 def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callableId, externMethodTypeDefIR>>)
 
 - 1. If ((set<pair<callableId, externMethodTypeDefIR>> = ({ [] }))), then
@@ -23387,7 +23498,7 @@ def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callab
 
 -         2. Return $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern_subst, ({ ((callableId_init_t : externMethodTypeDefIR_init_t))* }))
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:526.1-526.78
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:542.1-542.78
 def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 + 1. If ((externConstructorOrMethodPrototype has type externConstructorPrototype)), then
@@ -23398,7 +23509,7 @@ def $is_externConstructorPrototype(externConstructorOrMethodPrototype)
 
 +   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:532.1-532.73
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:548.1-548.73
 def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 + 1. If ((externConstructorOrMethodPrototype has type externMethodPrototype)), then
@@ -23409,7 +23520,7 @@ def $is_externMethodPrototype(externConstructorOrMethodPrototype)
 
 +   1. Return false
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:716.1-719.26
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:732.1-735.26
 rel Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
 
 + 1. Group : TC_0 nameIR_enum typeIR |- (name = expression) : % % # %
@@ -23438,7 +23549,7 @@ rel Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expression) :
 
 +       7. Result in: % % % |- % : TC_1 (nameIR = typedExpressionIR_cast) # value
 
-;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:738.1-741.26
+;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:754.1-757.26
 rel Enum_serializable_fields_ok: TC nameIR_enum typeIR |- (namedExpression)* : % % # %
 
 + 1. Case analysis on (namedExpression)*
@@ -23998,11 +24109,11 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
  Row : ((type _typeId typeIR) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
 
--     1. If ((typeIR'' has type newTypeIR)), then
++     1. If ((typeIR'' has type newTypeIR)), then
 
--       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
++       1. (Let (type _typeId typeIR) be (typeIR'' as newTypeIR))
 
--       2. Return $compat_table_lpm_ternary_range_key(typeIR)
++       2. Return $compat_table_lpm_ternary_range_key(typeIR)
 
  Row : ((enum _typeId < typeIR >{ (_valueFieldIR)* }) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
 
@@ -24235,9 +24346,9 @@ def $has_table_apply_expr'(expressionIR)
 
     13. Case (% has type callExpressionIR)
 
--     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
++     1. (Let callExpressionIR be (expressionIR as callExpressionIR))
 
--     2. Case analysis on callExpressionIR
++     2. Case analysis on callExpressionIR
 
         1. Case (% matches pattern `%(%)`)
 
@@ -24247,13 +24358,13 @@ def $has_table_apply_expr'(expressionIR)
 
         2. Case (% matches pattern `%<%>(%)`)
 
--         1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) be callExpressionIR)
++         1. (Let (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* )) be callExpressionIR)
 
--         2. Case analysis on callableTargetIR
++         2. Case analysis on callableTargetIR
 
             1. Case (% has type referenceExpressionIR)
 
--             1. Return $exists_(($has_table_apply_arg(argumentIR))*)
++             1. Return $exists_(($has_table_apply_arg(argumentIR))*)
 
             2. Case (% matches pattern `%.%`)
 
@@ -24732,13 +24843,13 @@ def $infer'(constraint, parameterIR, argumentIR)
 
     2. Case (% matches pattern `%=%`)
 
--     1. (Let (nameIR = typedExpressionIR) be argumentIR)
++     1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--     2. (Let (_annotationList _direction typeIR_param _id _constantInitializerOptIR) be parameterIR)
++     2. (Let (_annotationList _direction typeIR_param _id _constantInitializerOptIR) be parameterIR)
 
--     3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
++     3. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
 
--     4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
++     4. Return $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
     3. Case (% matches pattern `%=_`)
 
@@ -25610,7 +25721,7 @@ syntax constructorDef =
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.3.2-constructor-def-aux.watsup:5.1-6.17
 def $parameterListIR_of_constructorDef(constructorDef)
 
-- 1. Case analysis on constructorDef
++ 1. Case analysis on constructorDef
 
     1. Case (% has type externObjectConstructorDef)
 
@@ -25632,9 +25743,9 @@ def $parameterListIR_of_constructorDef(constructorDef)
 
     4. Case (% has type packageObjectConstructorDef)
 
--     1. (Let (package< _typeParameterListIR >( constructorParameterListIR )) be (constructorDef as packageObjectConstructorDef))
++     1. (Let (package< _typeParameterListIR >( constructorParameterListIR )) be (constructorDef as packageObjectConstructorDef))
 
--     2. Return constructorParameterListIR
++     2. Return constructorParameterListIR
 
     5. Case (% has type tableObjectConstructorDef)
 
@@ -25774,9 +25885,9 @@ def $name_annotation_of_tableKeyIR'(annotation)
 
 +         2. Return ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
 
-- 2. Otherwise
++ 2. Otherwise
 
--   1. Return ?()
++   1. Return ?()
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:47.1-47.68
 def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationList ;))
@@ -26016,7 +26127,7 @@ def $empty_store
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:18.1-18.53
 def $find_store_qualified(store, objectId)
 
-- 1. Return $find_map<objectId, object>(store, objectId)
++ 1. Return $find_map<objectId, object>(store, objectId)
 
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:19.1-19.49
 def $find_store_unqualified(({ ((objectId : object))* }), id)
@@ -26068,11 +26179,11 @@ def $find_store_externState(STO, objectId)
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:48.1-48.61
 def $update_store_qualified(STO_0, objectId, object)
 
-- 1. If ((?() =/= $find_store_qualified(STO_0, objectId))), then
++ 1. If ((?() =/= $find_store_qualified(STO_0, objectId))), then
 
--   1. (Let STO_1 be $add_map<objectId, object>(STO_0, objectId, object))
++   1. (Let STO_1 be $add_map<objectId, object>(STO_0, objectId, object))
 
--   2. Return STO_1
++   2. Return STO_1
 
 ;; ../../../../spec-concrete/7-instantiation/7.01.2-dynamic-store.watsup:49.1-49.57
 def $update_store_unqualified(STO_0, id, object)
@@ -27026,13 +27137,13 @@ rel Argument_inst: p IC STO_0 |- argumentIR : % %
 
     2. Case (% matches pattern `%=%`)
 
--     1. (Let (nameIR = typedExpressionIR) be argumentIR)
++     1. (Let (nameIR = typedExpressionIR) be argumentIR)
 
--     2. Group nameIR-typedExpressionIR: p IC STO_0 |- (nameIR = typedExpressionIR) : % %
++     2. Group nameIR-typedExpressionIR: p IC STO_0 |- (nameIR = typedExpressionIR) : % %
 
--       1. (Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value)
++       1. (Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value)
 
--       2. Result in: % % % |- % : STO_1 value
++       2. Result in: % % % |- % : STO_1 value
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:25.1-32.55
 rel Stmt_inst: p IC STO |- statementIR' : % % %
@@ -27828,7 +27939,7 @@ rel InstDecl_inst: p IC_0 STO_0 |- (annotationList typeIR prefixedNameIR < typeA
 
 +     3. (Let objectDeclarationListIR be $flatten_objectInitializerOptIR(objectInitializerOptIR))
 
-+     4. (Decls_object_inst: IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2)
++     4. (ObjectDecls_inst: IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2)
 
 +     5. (Let frame_merged be $merge_frames(frame, IC_decl_post.block.frame))
 
@@ -28640,7 +28751,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 -     4. Return $merge_externMethodDefEnvs(externMethodDefEnv_post, ({ ((callableId_t : callableDef_t))* }))
 
 ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:60.1-62.23
-rel Decl_object_inst: IC_0 STO |- objectDeclarationIR : % %
+rel ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
 - 1. Case analysis on objectDeclarationIR
 
@@ -28665,7 +28776,7 @@ rel Decl_object_inst: IC_0 STO |- objectDeclarationIR : % %
 -       2. Result in: % % |- % : IC_1 STO_1
 
 ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:76.1-78.23
-rel Decls_object_inst: IC STO |- (objectDeclarationIR)* : % %
+rel ObjectDecls_inst: IC STO |- (objectDeclarationIR)* : % %
 
 + 1. Case analysis on (objectDeclarationIR)*
 
@@ -28681,9 +28792,9 @@ rel Decls_object_inst: IC STO |- (objectDeclarationIR)* : % %
 
 -     2. Group cons: IC STO |- objectDeclarationIR_h :: (objectDeclarationIR_t)* : % %
 
--       1. (Decl_object_inst: IC STO |- objectDeclarationIR_h : IC_1 STO_1)
+-       1. (ObjectDecl_inst: IC STO |- objectDeclarationIR_h : IC_1 STO_1)
 
--       2. (Decls_object_inst: IC_1 STO_1 |- (objectDeclarationIR_t)* : IC_2 STO_2)
+-       2. (ObjectDecls_inst: IC_1 STO_1 |- (objectDeclarationIR_t)* : IC_2 STO_2)
 
 -       3. Result in: % % |- % : IC_2 STO_2
 
@@ -29407,12 +29518,18 @@ syntax rejectTransitionResult =
 syntax stateTransitionResult = 
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:29.1-30.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:25.1-26.27
+syntax abortResult = 
+   | exit
+   | reject errorValue
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:33.1-34.16
 syntax expressionResult = 
    | ` value
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:32.1-37.95
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:36.1-41.95
 rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 + 1. Case analysis on expressionIR
@@ -29511,11 +29628,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Case analysis on expressionResult'
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult' as exitResult))
+-           1. (Let abortResult be (expressionResult' as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -29537,11 +29654,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +         2. Case analysis on expressionListResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
-+             1. (Let exitResult be (expressionListResult as exitResult))
++             1. (Let abortResult be (expressionListResult as abortResult))
 
-+             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
++             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
             2. Case (% has type continueResult<value*>)
 
@@ -29561,11 +29678,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +           1. (Expr_eval: p EC STO |- typedExpressionIR_l : EC_1 STO_1 expressionResult')
 
-+           2. If ((expressionResult' has type exitResult)), then
++           2. If ((expressionResult' has type abortResult)), then
 
--             1. (Let exitResult be (expressionResult' as exitResult))
+-             1. (Let abortResult be (expressionResult' as abortResult))
 
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
 +           3. If ((expressionResult' = ((` ((`b false) as value)) as expressionResult))), then
 
@@ -29577,11 +29694,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +             1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'')
 
-+             2. If ((expressionResult'' has type exitResult)), then
++             2. If ((expressionResult'' has type abortResult)), then
 
--               1. (Let exitResult be (expressionResult'' as exitResult))
+-               1. (Let abortResult be (expressionResult'' as abortResult))
 
--               2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_2 STO_2 (abortResult as expressionResult)
 
 +             3. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r)
 
@@ -29591,11 +29708,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +           1. (Expr_eval: p EC STO |- typedExpressionIR_l : EC_1 STO_1 expressionResult')
 
-+           2. If ((expressionResult' has type exitResult)), then
++           2. If ((expressionResult' has type abortResult)), then
 
--             1. (Let exitResult be (expressionResult' as exitResult))
+-             1. (Let abortResult be (expressionResult' as abortResult))
 
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
 +           3. If ((expressionResult' = ((` ((`b true) as value)) as expressionResult))), then
 
@@ -29607,11 +29724,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +             1. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult'')
 
-+             2. If ((expressionResult'' has type exitResult)), then
++             2. If ((expressionResult'' has type abortResult)), then
 
--               1. (Let exitResult be (expressionResult'' as exitResult))
+-               1. (Let abortResult be (expressionResult'' as abortResult))
 
--               2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_2 STO_2 (abortResult as expressionResult)
 
 +             3. (Expr_eval: p EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 expressionResult_r)
 
@@ -29625,11 +29742,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       1. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_1 STO_1 expressionResult)
 
-+       2. If ((expressionResult has type exitResult)), then
++       2. If ((expressionResult has type abortResult)), then
 
-+         1. (Let exitResult be (expressionResult as exitResult))
++         1. (Let abortResult be (expressionResult as abortResult))
 
-+         2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
++         2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
 +       3. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
@@ -29653,11 +29770,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Case analysis on expressionResult'
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult' as exitResult))
+-           1. (Let abortResult be (expressionResult' as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -29691,11 +29808,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +           3. Case analysis on expressionListResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionListResult as exitResult))
+-               1. (Let abortResult be (expressionListResult as abortResult))
 
--               2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
               2. Case (% has type continueResult<value*>)
 
@@ -29713,11 +29830,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 -           3. Case analysis on expressionListResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionListResult as exitResult))
+-               1. (Let abortResult be (expressionListResult as abortResult))
 
--               2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
               2. Case (% has type continueResult<value*>)
 
@@ -29739,11 +29856,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +           3. Case analysis on expressionListResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionListResult as exitResult))
+-               1. (Let abortResult be (expressionListResult as abortResult))
 
--               2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
               2. Case (% has type continueResult<value*>)
 
@@ -29761,11 +29878,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 -           3. Case analysis on expressionListResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionListResult as exitResult))
+-               1. (Let abortResult be (expressionListResult as abortResult))
 
--               2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-               2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
               2. Case (% has type continueResult<value*>)
 
@@ -29845,11 +29962,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +           2. Case analysis on expressionResult'
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
-+               1. (Let exitResult be (expressionResult' as exitResult))
++               1. (Let abortResult be (expressionResult' as abortResult))
 
-+               2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
++               2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
               2. Case (% has type continueResult<value>)
 
@@ -29937,7 +30054,29 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                     4. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              3. Case (% = "hit")
+              3. Case (% = "lastIndex")
+
++               1. If ((expressionResult' has type continueResult<value>)), then
+
++                 1. (Let (` value_base) be (expressionResult' as continueResult<value>))
+
++                 2. If ((value_base has type headerStackValue)), then
+
++                   1. (Let (header_stack[ (value_elem)* ( n_idx ; _nat )]) be (value_base as headerStackValue))
+
++                   2. (Let int be ($max_nat([n_idx, 1]) - 1))
+
++                   3. If ((int has type nat)), then
+
++                     1. (Let n_idx_last be (int as nat))
+
++                     2. (Let value_idx_last be ((32 w (n_idx_last as int)) as value))
+
++                     3. (Let expressionResult be ((` value_idx_last) as expressionResult))
+
++                     4. Result in: % % % |- % : EC_1 STO_1 expressionResult
+
+              4. Case (% = "hit")
 
 +               1. If ((expressionResult' has type continueResult<value>)), then
 
@@ -29951,7 +30090,7 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              4. Case (% = "miss")
+              5. Case (% = "miss")
 
 +               1. If ((expressionResult' has type continueResult<value>)), then
 
@@ -29965,7 +30104,7 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-              5. Case (% = "action_run")
+              6. Case (% = "action_run")
 
 +               1. If ((expressionResult' has type continueResult<value>)), then
 
@@ -29989,11 +30128,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Case analysis on expressionListResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionListResult as exitResult))
+-           1. (Let abortResult be (expressionListResult as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
           2. Case (% has type continueResult<value*>)
 
@@ -30037,7 +30176,7 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +             2. If ((value_base has type headerStackValue)), then
 
-+               1. (Let (header_stack[ (value_elem)* ( _nat ; _nat' )]) be (value_base as headerStackValue))
++               1. (Let (header_stack[ (value_elem)* ( _nat ; n_size )]) be (value_base as headerStackValue))
 
 +               2. (Let int be $int_of_integerValue(integerValue_index))
 
@@ -30045,9 +30184,15 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                 1. (Let n_index be (int as nat))
 
-+                 2. (Let expressionResult be ((` (value_elem)*[n_index]) as expressionResult))
++                 2. (Let int' be $min_int([(n_index as int), (n_size - 1)]))
 
-+                 3. Result in: % % % |- % : EC_1 STO_1 expressionResult
++                 3. If ((int' has type nat)), then
+
++                   1. (Let n_idx be (int' as nat))
+
++                   2. (Let expressionResult be ((` (value_elem)*[n_idx]) as expressionResult))
+
++                   3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
     14. Case (% has type sliceAccessExpressionIR)
 
@@ -30059,11 +30204,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Case analysis on expressionListResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionListResult as exitResult))
++           1. (Let abortResult be (expressionListResult as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
++           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
           2. Case (% has type continueResult<value*>)
 
@@ -30091,11 +30236,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +         2. Case analysis on calleeResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (calleeResult as exitResult))
+-             1. (Let abortResult be (calleeResult as abortResult))
 
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionResult)
 
             2. Case (% has type continueResult<callee>)
 
@@ -30105,11 +30250,11 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +             3. Case analysis on callResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
-+                 1. (Let exitResult be (callResult as exitResult))
++                 1. (Let abortResult be (callResult as abortResult))
 
-+                 2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionResult)
++                 2. Result in: % % % |- % : EC_2 STO_2 (abortResult as expressionResult)
 
                 2. Case (% has type returnResult)
 
@@ -30131,12 +30276,13 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +       2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:40.1-41.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:44.1-46.15
 syntax expressionListResult = 
    | ` value*
+   | reject errorValue
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:43.1-48.100
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:48.1-53.100
 rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 + 1. Group : p evalContext store |- (typedExpressionIR)* : % % %
@@ -30153,11 +30299,11 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +     3. Case analysis on expressionResult
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
-+         1. (Let exitResult be (expressionResult as exitResult))
++         1. (Let abortResult be (expressionResult as abortResult))
 
-+         2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionListResult)
++         2. Result in: % % % |- % : EC_1 STO_1 (abortResult as expressionListResult)
 
         2. Case (% has type continueResult<value>)
 
@@ -30167,11 +30313,11 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +         3. Case analysis on expressionListResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
-+             1. (Let exitResult be (expressionListResult as exitResult))
++             1. (Let abortResult be (expressionListResult as abortResult))
 
-+             2. Result in: % % % |- % : EC_2 STO_2 ((exit) as expressionListResult)
++             2. Result in: % % % |- % : EC_2 STO_2 (abortResult as expressionListResult)
 
             2. Case (% has type continueResult<value*>)
 
@@ -30179,12 +30325,19 @@ rel Exprs_eval: p evalContext store |- (typedExpressionIR)* : % % %
 
 +             2. Result in: % % % |- % : EC_2 STO_2 ((` value_h :: (value_t)*) as expressionListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:51.1-52.15
+-     4. If ((expressionResult has type rejectTransitionResult)), then
+
+-       1. (Let rejectTransitionResult be (expressionResult as rejectTransitionResult))
+
+-       2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as expressionListResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:56.1-57.16
 syntax keysetExpressionResult = 
    | ` setValue*
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:54.1-57.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:59.1-62.23
 rel Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : % % %
 
 + 1. Group : EC_0 STO_0 |- keysetExpressionIR : % % %
@@ -30195,7 +30348,7 @@ rel Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : % % %
 
 +   3. Result in: % % |- % : EC_1 STO_1 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:63.1-66.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:68.1-71.26
 rel Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
 + 1. Case analysis on argumentIR
@@ -30220,12 +30373,13 @@ rel Argument_eval: p EC_0 STO_0 |- argumentIR : % % %
 
 -       2. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:69.1-70.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:74.1-75.16
 syntax storageReferenceResult = 
    | ` storageReference?
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:72.1-75.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:77.1-80.26
 rel Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
 + 1. Case analysis on argumentIR
@@ -30276,7 +30430,7 @@ rel Argument_eval_lvalue: p EC_0 STO_0 |- argumentIR : % % %
 
 +       1. Result in: % % % |- % : EC_0 STO_0 ((` ?()) as storageReferenceResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:81.1-84.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-89.26
 rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 + 1. Case analysis on lvalueIR
@@ -30299,11 +30453,11 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +       2. Case analysis on storageReferenceResult'
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult' as exitResult))
+-           1. (Let abortResult be (storageReferenceResult' as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as storageReferenceResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -30327,11 +30481,11 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +       2. Case analysis on storageReferenceResult'
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult' as exitResult))
+-           1. (Let abortResult be (storageReferenceResult' as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as storageReferenceResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -30345,11 +30499,11 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +             3. Case analysis on expressionResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
--                 1. (Let exitResult be (expressionResult as exitResult))
+-                 1. (Let abortResult be (expressionResult as abortResult))
 
--                 2. Result in: % % % |- % : EC_2 STO_2 ((exit) as storageReferenceResult)
+-                 2. Result in: % % % |- % : EC_2 STO_2 (abortResult as storageReferenceResult)
 
                 2. Case (% has type continueResult<value>)
 
@@ -30369,11 +30523,11 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +       2. Case analysis on storageReferenceResult'
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult' as exitResult))
+-           1. (Let abortResult be (storageReferenceResult' as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as storageReferenceResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as storageReferenceResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -30387,11 +30541,11 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +             3. Case analysis on expressionListResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
--                 1. (Let exitResult be (expressionListResult as exitResult))
+-                 1. (Let abortResult be (expressionListResult as abortResult))
 
--                 2. Result in: % % % |- % : EC_2 STO_2 ((exit) as storageReferenceResult)
+-                 2. Result in: % % % |- % : EC_2 STO_2 (abortResult as storageReferenceResult)
 
                 2. Case (% has type continueResult<value*>)
 
@@ -30415,7 +30569,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 -       2. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-88.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:91.1-93.26
 rel Lvalue_read: p EC STO |- storageReference' : %
 
 + 1. Case analysis on storageReference'
@@ -30562,7 +30716,7 @@ rel Lvalue_read: p EC STO |- storageReference' : %
 
 +       3. Result in: % % % |- % : value
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:90.1-93.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:95.1-98.29
 rel Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
 + 1. Case analysis on storageReference'
@@ -30721,21 +30875,21 @@ rel Lvalue_write: p EC_0 STO |- storageReference' -> value : %
 
 +       4. Result in: % % % |- % -> % : EC_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:100.1-102.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:105.1-106.17
 syntax callResult = 
    | exit
    | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:104.25-104.30
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:108.25-108.30
 syntax forBreakResult = 
    | break
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:106.28-106.36
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:110.28-110.36
 syntax forContinueResult = 
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:109.1-112.22
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:113.1-116.22
 syntax statementResult = 
    | `empty
    | exit
@@ -30744,7 +30898,7 @@ syntax statementResult =
    | break
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-121.55
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:118.1-125.55
 rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 + 1. Case analysis on statementIR'
@@ -30767,11 +30921,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +       2. Case analysis on storageReferenceResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult as exitResult))
+-           1. (Let abortResult be (storageReferenceResult as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -30789,11 +30943,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +               3. Case analysis on expressionResult
 
-                  1. Case (% has type exitResult)
+                  1. Case (% has type abortResult)
 
--                   1. (Let exitResult be (expressionResult as exitResult))
+-                   1. (Let abortResult be (expressionResult as abortResult))
 
--                   2. Result in: % % % |- % : EC_2 STO_2 ((exit) as statementResult)
+-                   2. Result in: % % % |- % : EC_2 STO_2 (abortResult as statementResult)
 
                   2. Case (% has type continueResult<value>)
 
@@ -30825,11 +30979,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +             3. Case analysis on expressionResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
-+                 1. (Let exitResult be (expressionResult as exitResult))
++                 1. (Let abortResult be (expressionResult as abortResult))
 
-+                 2. Result in: % % % |- % : EC_2 STO_2 ((exit) as statementResult)
++                 2. Result in: % % % |- % : EC_2 STO_2 (abortResult as statementResult)
 
                 2. Case (% has type continueResult<value>)
 
@@ -30849,11 +31003,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +       2. Case analysis on calleeResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (calleeResult as exitResult))
+-           1. (Let abortResult be (calleeResult as abortResult))
 
--           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
           2. Case (% has type continueResult<callee>)
 
@@ -30863,19 +31017,13 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +           3. Case analysis on callResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
-+               1. (Let exitResult be (callResult as exitResult))
++               1. (Let abortResult be (callResult as abortResult))
 
-+               2. Result in: % % % |- % : EC_2 STO_2 ((exit) as statementResult)
++               2. Result in: % % % |- % : EC_2 STO_2 (abortResult as statementResult)
 
-              2. Case (% has type rejectTransitionResult)
-
-+               1. (Let rejectTransitionResult be (callResult as rejectTransitionResult))
-
-+               2. Result in: % % % |- % : EC_2 STO_2 (rejectTransitionResult as statementResult)
-
-              3. Case (% has type returnResult)
+              2. Case (% has type returnResult)
 
 +               1. Result in: % % % |- % : EC_2 STO_2 ((`empty) as statementResult)
 
@@ -30915,11 +31063,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +           2. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
-+           3. If ((expressionResult has type exitResult)), then
++           3. If ((expressionResult has type abortResult)), then
 
--             1. (Let exitResult be (expressionResult as exitResult))
+-             1. (Let abortResult be (expressionResult as abortResult))
 
--             2. Result in: % % % |- % : EC_cond STO_cond ((exit) as statementResult)
+-             2. Result in: % % % |- % : EC_cond STO_cond (abortResult as statementResult)
 
 +           4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
@@ -30937,11 +31085,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +           2. (Expr_eval: p EC STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
-+           3. If ((expressionResult has type exitResult)), then
++           3. If ((expressionResult has type abortResult)), then
 
--             1. (Let exitResult be (expressionResult as exitResult))
+-             1. (Let abortResult be (expressionResult as abortResult))
 
--             2. Result in: % % % |- % : EC_cond STO_cond ((exit) as statementResult)
+-             2. Result in: % % % |- % : EC_cond STO_cond (abortResult as statementResult)
 
 +           4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
@@ -30979,11 +31127,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +             3. Case analysis on expressionResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
--                 1. (Let exitResult be (expressionResult as exitResult))
+-                 1. (Let abortResult be (expressionResult as abortResult))
 
--                 2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-                 2. Result in: % % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
                 2. Case (% has type continueResult<value>)
 
@@ -31007,13 +31155,13 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +           3. Case analysis on statementResult'
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (statementResult' as exitResult))
+-               1. (Let abortResult be (statementResult' as abortResult))
 
 -               2. (Let EC_3 be $exit_e(EC_2))
 
--               3. Result in: % % % |- % : EC_3 STO_1 ((exit) as statementResult)
+-               3. Result in: % % % |- % : EC_3 STO_1 (abortResult as statementResult)
 
               2. Case (% has type continueEmptyResult)
 
@@ -31039,13 +31187,13 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +             4. Case analysis on expressionListResult
 
-                1. Case (% has type exitResult)
+                1. Case (% has type abortResult)
 
--                 1. (Let exitResult be (expressionListResult as exitResult))
+-                 1. (Let abortResult be (expressionListResult as abortResult))
 
 -                 2. (Let EC_3 be $exit_e(EC_2))
 
--                 3. Result in: % % % |- % : EC_3 STO_1 ((exit) as statementResult)
+-                 3. Result in: % % % |- % : EC_3 STO_1 (abortResult as statementResult)
 
                 2. Case (% has type continueResult<value*>)
 
@@ -31097,11 +31245,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +         2. Case analysis on expressionResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (expressionResult as exitResult))
+-             1. (Let abortResult be (expressionResult as abortResult))
 
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
             2. Case (% has type continueResult<value>)
 
@@ -31133,11 +31281,11 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
 +         2. Case analysis on expressionResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (expressionResult as exitResult))
+-             1. (Let abortResult be (expressionResult as abortResult))
 
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
             2. Case (% has type continueResult<value>)
 
@@ -31157,9 +31305,9 @@ rel Stmt_eval: p EC STO |- statementIR' : % % %
 
                 2. Case (% matches pattern ())
 
--                 1. Result in: % % % |- % : EC_2 STO_2 ((`empty) as statementResult)
++                 1. Result in: % % % |- % : EC_2 STO_2 ((`empty) as statementResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-126.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:127.1-130.23
 rel BlockElementStmt_eval: EC_0 STO |- blockElementStatementIR : % % %
 
 + 1. Case analysis on blockElementStatementIR
@@ -31184,11 +31332,11 @@ rel BlockElementStmt_eval: EC_0 STO |- blockElementStatementIR : % % %
 
 +       2. Case analysis on declarationResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
-+           1. (Let exitResult be (declarationResult as exitResult))
++           1. (Let abortResult be (declarationResult as abortResult))
 
-+           2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
++           2. Result in: % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
           2. Case (% has type continueEmptyResult)
 
@@ -31206,7 +31354,7 @@ rel BlockElementStmt_eval: EC_0 STO |- blockElementStatementIR : % % %
 
 +       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:128.1-131.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:132.1-135.23
 rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (blockElementStatementIR)* : % % %
@@ -31223,11 +31371,11 @@ rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % 
 
 +     3. Case analysis on statementResult'
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
-+         1. (Let exitResult be (statementResult' as exitResult))
++         1. (Let abortResult be (statementResult' as abortResult))
 
-+         2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
++         2. Result in: % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
         2. Case (% has type returnResult)
 
@@ -31255,7 +31403,7 @@ rel BlockElementStmts_eval: evalContext store |- (blockElementStatementIR)* : % 
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:133.1-136.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:137.1-140.23
 rel Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
 + 1. Group : EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
@@ -31264,12 +31412,12 @@ rel Block_eval: EC_0 STO_0 |- (annotationList { blockElementStatementListIR }) :
 
 +   2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:143.1-144.27
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:147.1-148.27
 syntax parserStatementResult = 
    | `empty
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:146.1-149.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:150.1-153.23
 rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 + 1. Case analysis on parserStatementIR
@@ -31288,7 +31436,17 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 +     1. (Let variableDeclarationIR be (parserStatementIR as variableDeclarationIR))
 
-+     2. Group cont: EC_0 STO |- (variableDeclarationIR as parserStatementIR) : % % %
++     2. Group reject: EC_0 STO |- (variableDeclarationIR as parserStatementIR) : % % %
+
++       1. (VarDecl_eval: (local) EC_0 STO |- variableDeclarationIR : EC_1 STO_1 declarationResult)
+
++       2. If ((declarationResult has type rejectTransitionResult)), then
+
+-         1. (Let rejectTransitionResult be (declarationResult as rejectTransitionResult))
+
+-         2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
+
++     3. Group cont: EC_0 STO |- (variableDeclarationIR as parserStatementIR) : % % %
 
 +       1. (VarDecl_eval: (local) EC_0 STO |- variableDeclarationIR : EC_1 STO_1 declarationResult)
 
@@ -31320,11 +31478,19 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 +       1. (Stmt_eval: (local) EC_0 STO |- (assignmentStatementIR as statementIR) : EC_1 STO_1 statementResult)
 
-+       2. If ((statementResult has type continueEmptyResult)), then
++       2. Case analysis on statementResult
 
-+         1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+          1. Case (% has type rejectTransitionResult)
 
-+         2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
+-           1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
+
+-           2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
+
+          2. Case (% has type continueEmptyResult)
+
++           1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
++           2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
     5. Case (% has type callStatementIR)
 
@@ -31362,13 +31528,19 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 +           2. (Expr_eval: (local) EC_0 STO |- typedExpressionIR_cond : EC_cond STO_cond expressionResult)
 
-+           3. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
++           3. If ((expressionResult has type rejectTransitionResult)), then
+
+-             1. (Let rejectTransitionResult be (expressionResult as rejectTransitionResult))
+
+-             2. Result in: % % |- % : EC_cond STO_cond (rejectTransitionResult as parserStatementResult)
+
++           4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
 -             1. (ParserStmt_eval: EC_cond STO_cond |- parserStatementIR_then : EC_then STO_then parserStatementResult)
 
 -             2. Result in: % % |- % : EC_then STO_then parserStatementResult
 
-+           4. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
++           5. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
 +             1. Result in: % % |- % : EC_cond STO_cond ((`empty) as parserStatementResult)
 
@@ -31390,7 +31562,7 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 -             2. Result in: % % |- % : EC_else STO_else parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:151.1-154.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:155.1-158.23
 rel ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (parserStatementIR)* : % % %
@@ -31421,13 +31593,13 @@ rel ParserStmts_eval: evalContext store |- (parserStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:157.1-159.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:161.1-163.26
 syntax transitionResult = 
    | accept
    | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:161.1-164.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:165.1-168.23
 rel ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
 + 1. Case analysis on stateExpressionIR
@@ -31464,21 +31636,47 @@ rel ParserTransition_eval: EC STO |- (transition stateExpressionIR) : % % %
 
 +       2. (Exprs_eval: (local) EC STO |- (typedExpressionIR_key)* : EC_1 STO_1 expressionListResult)
 
-+       3. If ((expressionListResult has type continueResult<value*>)), then
++       3. Case analysis on expressionListResult
 
-+         1. (Let (` (value_key)*) be (expressionListResult as continueResult<value*>))
+          1. Case (% has type rejectTransitionResult)
 
-+         2. (SelectCases_match: EC_1 STO_1 (value_key)* |- selectCaseListIR : EC_2 STO_2 (nameIR)?)
++           1. (Let rejectTransitionResult be (expressionListResult as rejectTransitionResult))
 
-+         3. If (((nameIR)? matches pattern (_))), then
++           2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as transitionResult)
 
-+           1. (Let ?(nameIR_state) be (nameIR)?)
+          2. Case (% has type continueResult<value*>)
 
-+           2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
++           1. (Let (` (value_key)*) be (expressionListResult as continueResult<value*>))
 
-+           3. Result in: % % |- % : EC_3 STO_3 transitionResult
++           2. (SelectCases_match: EC_1 STO_1 (value_key)* |- selectCaseListIR : EC_2 STO_2 selectCaseMatchResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:166.1-169.23
++           3. Case analysis on selectCaseMatchResult
+
+              1. Case (% has type rejectTransitionResult)
+
+-               1. (Let rejectTransitionResult be (selectCaseMatchResult as rejectTransitionResult))
+
+-               2. Result in: % % |- % : EC_2 STO_2 (rejectTransitionResult as transitionResult)
+
+              2. Case (% has type continueResult<nameIR?>)
+
++               1. (Let (` (nameIR)?) be (selectCaseMatchResult as continueResult<nameIR?>))
+
++               2. If (((nameIR)? matches pattern (_))), then
+
++                 1. (Let ?(nameIR_state) be (nameIR)?)
+
++                 2. (ParserTransition_eval: EC_2 STO_2 |- (transition (nameIR_state ;)) : EC_3 STO_3 transitionResult)
+
++                 3. Result in: % % |- % : EC_3 STO_3 transitionResult
+
++           4. If ((selectCaseMatchResult = ((` ?()) as selectCaseMatchResult))), then
+
++             1. (Let rejectTransitionResult be (reject (error. "NoMatch")))
+
++             2. Result in: % % |- % : EC_2 STO_2 (rejectTransitionResult as transitionResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:170.1-173.23
 rel ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
 
 + 1. Group : EC_0 STO_0 |- (annotationList state{ parserStatementListIR transitionStatementIR }) : % % %
@@ -31501,7 +31699,7 @@ rel ParserState_eval: EC_0 STO_0 |- (annotationList state{ parserStatementListIR
 
 +       3. Result in: % % |- % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:171.1-174.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:175.1-178.23
 rel ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 + 1. Group accept: EC_0 STO_0 |-transition nameIR : % % %
@@ -31554,8 +31752,8 @@ rel ParserState_trans: EC_0 STO_0 |-transition nameIR : % % %
 
 +       3. Result in: % % |-transition % : EC_2 STO_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:176.1-179.23
-rel ParserLocalDecl_eval: EC_0 STO |- parserLocalDeclarationIR : % %
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:180.1-183.23
+rel ParserLocalDecl_eval: EC_0 STO |- parserLocalDeclarationIR : % % %
 
 + 1. Case analysis on parserLocalDeclarationIR
 
@@ -31563,51 +31761,69 @@ rel ParserLocalDecl_eval: EC_0 STO |- parserLocalDeclarationIR : % %
 
 +     1. (Let constantDeclarationIR be (parserLocalDeclarationIR as constantDeclarationIR))
 
-+     2. Group constantDeclarationIR: EC_0 STO |- (constantDeclarationIR as parserLocalDeclarationIR) : % %
++     2. Group constantDeclarationIR: EC_0 STO |- (constantDeclarationIR as parserLocalDeclarationIR) : % % %
 
 +       1. (ConstDecl_eval: (block) EC_0 |- constantDeclarationIR : EC_1)
 
-+       2. Result in: % % |- % : EC_1 STO
++       2. Result in: % % |- % : EC_1 STO ((`empty) as parserStatementResult)
 
     2. Case (% has type variableDeclarationIR)
 
 +     1. (Let variableDeclarationIR be (parserLocalDeclarationIR as variableDeclarationIR))
 
-+     2. Group cont: EC_0 STO |- (variableDeclarationIR as parserLocalDeclarationIR) : % %
++     2. Group variableDeclarationIR: EC_0 STO |- (variableDeclarationIR as parserLocalDeclarationIR) : % % %
 
 +       1. (VarDecl_eval: (block) EC_0 STO |- variableDeclarationIR : EC_1 STO_1 declarationResult)
 
-+       2. If ((declarationResult has type continueEmptyResult)), then
++       2. Case analysis on declarationResult
 
-+         1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+          1. Case (% has type rejectTransitionResult)
 
-+         2. Result in: % % |- % : EC_1 STO_1
+-           1. (Let rejectTransitionResult be (declarationResult as rejectTransitionResult))
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:181.1-184.23
-rel ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % %
+-           2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
 
-+ 1. Group : evalContext store |- (parserLocalDeclarationIR)* : % %
+          2. Case (% has type continueEmptyResult)
+
++           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
+
++           2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:185.1-188.23
+rel ParserLocalDecls_eval: evalContext store |- (parserLocalDeclarationIR)* : % % %
+
++ 1. Group : evalContext store |- (parserLocalDeclarationIR)* : % % %
 
 +   1. If (((parserLocalDeclarationIR)* = [])), then
 
-+     1. Result in: % % |- % : evalContext store
++     1. Result in: % % |- % : evalContext store ((`empty) as parserStatementResult)
 
 +   2. If (((parserLocalDeclarationIR)* matches pattern _ :: _)), then
 
 +     1. (Let parserLocalDeclarationIR_h :: parserLocalDeclarationListIR_t be (parserLocalDeclarationIR)*)
 
-+     2. (ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR_h : EC_1 STO_1)
++     2. (ParserLocalDecl_eval: evalContext store |- parserLocalDeclarationIR_h : EC_1 STO_1 parserStatementResult')
 
-+     3. (ParserLocalDecls_eval: EC_1 STO_1 |- parserLocalDeclarationListIR_t : EC_2 STO_2)
++     3. Case analysis on parserStatementResult'
 
-+     4. Result in: % % |- % : EC_2 STO_2
+        1. Case (% has type rejectTransitionResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:191.1-192.17
+-         1. (Let rejectTransitionResult be (parserStatementResult' as rejectTransitionResult))
+
+-         2. Result in: % % |- % : EC_1 STO_1 (rejectTransitionResult as parserStatementResult)
+
+        2. Case (% has type continueEmptyResult)
+
++         1. (ParserLocalDecls_eval: EC_1 STO_1 |- parserLocalDeclarationListIR_t : EC_2 STO_2 parserStatementResult)
+
++         2. Result in: % % |- % : EC_2 STO_2 parserStatementResult
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:195.1-196.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-197.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:198.1-201.26
 rel Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
 + 1. Group : EC_0 STO_0 |- typeId TBL : % % %
@@ -31670,12 +31886,12 @@ rel Table_eval: EC_0 STO_0 |- typeId TBL : % % %
 
 +               6. Result in: % % |- % % : EC_3 STO_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:200.1-201.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:204.1-205.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-206.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:207.1-210.23
 rel ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 + 1. Group cont: EC_0 STO_0 |- controlBodyIR : % % %
@@ -31706,12 +31922,12 @@ rel ControlBody_eval: EC_0 STO_0 |- controlBodyIR : % % %
 
 +     1. Result in: % % |- % : EC_1 STO_1 ((return ?()) as controlBodyResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:209.1-210.15
-syntax declarationResult = 
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:213.1-214.15
+syntax controlLocalDeclarationResult = 
    | `empty
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:216.1-219.23
 rel ControlLocalDecl_eval: EC_0 STO |- controlLocalDeclarationIR : % % %
 
 + 1. Case analysis on controlLocalDeclarationIR
@@ -31724,7 +31940,7 @@ rel ControlLocalDecl_eval: EC_0 STO |- controlLocalDeclarationIR : % % %
 
 +       1. (ConstDecl_eval: (block) EC_0 |- constantDeclarationIR : EC_1)
 
-+       2. Result in: % % |- % : EC_1 STO ((`empty) as declarationResult)
++       2. Result in: % % |- % : EC_1 STO ((`empty) as controlLocalDeclarationResult)
 
     2. Case (% has type variableDeclarationIR)
 
@@ -31740,46 +31956,52 @@ rel ControlLocalDecl_eval: EC_0 STO |- controlLocalDeclarationIR : % % %
 
 -           1. (Let exitResult be (declarationResult as exitResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as declarationResult)
+-           2. Result in: % % |- % : EC_1 STO_1 ((exit) as controlLocalDeclarationResult)
 
           2. Case (% has type continueEmptyResult)
 
 +           1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
 
-+           2. Result in: % % |- % : EC_1 STO_1 ((`empty) as declarationResult)
++           2. Result in: % % |- % : EC_1 STO_1 ((`empty) as controlLocalDeclarationResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.1-220.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:221.1-224.23
 rel ControlLocalDecls_eval: evalContext store |- (controlLocalDeclarationIR)* : % % %
 
 + 1. Group : evalContext store |- (controlLocalDeclarationIR)* : % % %
 
 +   1. If (((controlLocalDeclarationIR)* = [])), then
 
-+     1. Result in: % % |- % : evalContext store ((`empty) as declarationResult)
++     1. Result in: % % |- % : evalContext store ((`empty) as controlLocalDeclarationResult)
 
 +   2. If (((controlLocalDeclarationIR)* matches pattern _ :: _)), then
 
 +     1. (Let controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t be (controlLocalDeclarationIR)*)
 
-+     2. (ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR_h : EC_1 STO_1 declarationResult')
++     2. (ControlLocalDecl_eval: evalContext store |- controlLocalDeclarationIR_h : EC_1 STO_1 controlLocalDeclarationResult')
 
-+     3. Case analysis on declarationResult'
++     3. Case analysis on controlLocalDeclarationResult'
 
         1. Case (% has type exitResult)
 
--         1. (Let exitResult be (declarationResult' as exitResult))
+-         1. (Let exitResult be (controlLocalDeclarationResult' as exitResult))
 
--         2. Result in: % % |- % : EC_1 STO_1 ((exit) as declarationResult)
+-         2. Result in: % % |- % : EC_1 STO_1 ((exit) as controlLocalDeclarationResult)
 
         2. Case (% has type continueEmptyResult)
 
-+         1. (Let continueEmptyResult be (declarationResult' as continueEmptyResult))
++         1. (Let continueEmptyResult be (controlLocalDeclarationResult' as continueEmptyResult))
 
-+         2. (ControlLocalDecls_eval: EC_1 STO_1 |- controlLocalDeclarationListIR_t : EC_2 STO_2 declarationResult)
++         2. (ControlLocalDecls_eval: EC_1 STO_1 |- controlLocalDeclarationListIR_t : EC_2 STO_2 controlLocalDeclarationResult)
 
-+         3. Result in: % % |- % : EC_2 STO_2 declarationResult
++         3. Result in: % % |- % : EC_2 STO_2 controlLocalDeclarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:226.1-234.41
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:231.1-232.16
+syntax declarationResult = 
+   | `empty
+   | exit
+   | reject errorValue
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:234.1-242.41
 rel VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initializerIR)? ;) : % % %
 
 + 1. Group : p EC_0 store |- (annotationList typeIR nameIR (initializerIR)? ;) : % % %
@@ -31804,7 +32026,13 @@ rel VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initializerIR)?
 
 +       3. Case analysis on expressionResult
 
-          1. Case (% has type continueResult<value>)
+          1. Case (% has type abortResult)
+
++           1. (Let abortResult be (expressionResult as abortResult))
+
++           2. Result in: % % % |- % : EC_1 STO_1 (abortResult as declarationResult)
+
+          2. Case (% has type continueResult<value>)
 
 +           1. (Let (` value_init) be (expressionResult as continueResult<value>))
 
@@ -31812,13 +32040,7 @@ rel VarDecl_eval: p EC_0 store |- (annotationList typeIR nameIR (initializerIR)?
 
 +           3. Result in: % % % |- % : EC_2 STO_1 ((`empty) as declarationResult)
 
-          2. Case (% has type exitResult)
-
-+           1. (Let exitResult be (expressionResult as exitResult))
-
-+           2. Result in: % % % |- % : EC_1 STO_1 ((exit) as declarationResult)
-
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:236.1-242.54
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:244.1-250.54
 rel ConstDecl_eval: p EC_0 |- (annotationList const typeIR nameIR (= value) ;) : %
 
 + 1. Group : p EC_0 |- (annotationList const typeIR nameIR (= value) ;) : %
@@ -31827,12 +32049,13 @@ rel ConstDecl_eval: p EC_0 |- (annotationList const typeIR nameIR (= value) ;) :
 
 +   2. Result in: % % |- % : EC_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:249.1-250.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:257.1-258.16
 syntax calleeResult = 
    | ` callee
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:252.1-255.29
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:260.1-263.29
 rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 + 1. Case analysis on callableTargetIR
@@ -31909,11 +32132,11 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +         2. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
 
-+         3. If ((storageReferenceResult has type exitResult)), then
++         3. If ((storageReferenceResult has type abortResult)), then
 
--           1. (Let exitResult be (storageReferenceResult as exitResult))
+-           1. (Let abortResult be (storageReferenceResult as abortResult))
 
--           2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+-           2. Result in: % % % |- % <_>( % ): EC_1 STO_1 (abortResult as calleeResult)
 
 +       3. Case analysis on nameIR'
 
@@ -32043,11 +32266,11 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +         3. Case analysis on storageReferenceResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (storageReferenceResult as exitResult))
+-             1. (Let abortResult be (storageReferenceResult as abortResult))
 
--             2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+-             2. Result in: % % % |- % <_>( % ): EC_1 STO_1 (abortResult as calleeResult)
 
             2. Case (% has type continueResult<storageReference?>)
 
@@ -32105,11 +32328,11 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +           3. Case analysis on storageReferenceResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (storageReferenceResult as exitResult))
+-               1. (Let abortResult be (storageReferenceResult as abortResult))
 
--               2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+-               2. Result in: % % % |- % <_>( % ): EC_1 STO_1 (abortResult as calleeResult)
 
               2. Case (% has type continueResult<storageReference?>)
 
@@ -32163,11 +32386,11 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +           3. Case analysis on storageReferenceResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (storageReferenceResult as exitResult))
+-               1. (Let abortResult be (storageReferenceResult as abortResult))
 
--               2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+-               2. Result in: % % % |- % <_>( % ): EC_1 STO_1 (abortResult as calleeResult)
 
               2. Case (% has type continueResult<storageReference?>)
 
@@ -32219,11 +32442,11 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +           2. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult)
 
-+           3. If ((storageReferenceResult has type exitResult)), then
++           3. If ((storageReferenceResult has type abortResult)), then
 
--             1. (Let exitResult be (storageReferenceResult as exitResult))
+-             1. (Let abortResult be (storageReferenceResult as abortResult))
 
--             2. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((exit) as calleeResult)
+-             2. Result in: % % % |- % <_>( % ): EC_1 STO_1 (abortResult as calleeResult)
 
 +         3. If ((argumentListIR = [])), then
 
@@ -32261,12 +32484,13 @@ rel Callee_eval: p EC STO |- callableTargetIR <_>( argumentListIR ): % % %
 
 +                       3. Result in: % % % |- % <_>( % ): EC_1 STO_1 ((` (tableApplyMethodCallee as callee)) as calleeResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:258.1-259.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:266.1-267.16
 syntax copyInResult = 
    | ` storageReference?
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:261.1-265.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-273.35
 rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
 
 + 1. Group directionless-in: STO_0 p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee_0 argumentIR ~> % % @ % # %
@@ -32279,11 +32503,11 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # ((exit) as copyInResult)
+-           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -32299,11 +32523,11 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # ((exit) as copyInResult)
+-           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -32323,11 +32547,11 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +       2. Case analysis on storageReferenceResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult as exitResult))
+-           1. (Let abortResult be (storageReferenceResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # ((exit) as copyInResult)
+-           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -32351,11 +32575,11 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +       2. Case analysis on storageReferenceResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (storageReferenceResult as exitResult))
+-           1. (Let abortResult be (storageReferenceResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # ((exit) as copyInResult)
+-           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -32369,12 +32593,13 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
 +           5. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((` (storageReference)?) as copyInResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:268.1-269.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:276.1-277.16
 syntax copyInListResult = 
    | ` storageReference?*
    | exit
+   | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:271.1-275.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:279.1-283.35
 rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
 
 + 1. Group : store p_caller evalContext (parameterIR)* @ p_callee evalContext' (argumentIR)* ~> % % @ % # %
@@ -32397,11 +32622,11 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
 +       3. Case analysis on copyInResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (copyInResult as exitResult))
+-           1. (Let abortResult be (copyInResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # ((exit) as copyInListResult)
+-           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # (abortResult as copyInListResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -32411,11 +32636,11 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
 +           3. Case analysis on copyInListResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (copyInListResult as exitResult))
+-               1. (Let abortResult be (copyInListResult as abortResult))
 
--               2. Result in: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ((exit) as copyInListResult)
+-               2. Result in: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # (abortResult as copyInListResult)
 
               2. Case (% has type continueResult<storageReference?*>)
 
@@ -32429,7 +32654,7 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
 +                 3. Result in: % % % % @ % % % ~> STO_2 EC_caller_2 @ EC_callee_2 # ((` ((storageReference)?)*) as copyInListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:277.1-280.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:285.1-288.26
 rel Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 + 1. Group : (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
@@ -32440,7 +32665,7 @@ rel Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 (value)* ~>@ %
 
 +   3. Result in: % @ % % % ~>@ EC_callee_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:282.1-286.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:290.1-294.35
 rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR nameIR constantInitializerOptIR) @ p_callee EC_callee (storageReference')? ~> %
 
 + 1. If (((storageReference')? matches pattern ())), then
@@ -32495,7 +32720,7 @@ rel Copy_out_argument: STO p_caller EC_caller_0 (annotationList direction typeIR
 
 +           3. Result in: % % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:288.1-292.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:296.1-300.35
 rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
 
 + 1. Group : STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
@@ -32522,7 +32747,7 @@ rel Copy_out: STO p_caller evalContext (parameterIR)* @ p_callee EC_callee ((sto
 
 +       4. Result in: % % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:294.1-300.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:302.1-308.90
 rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ): % % %
 
 + 1. (Let (typeArgumentIR)* be typeArgumentListIR)
@@ -32643,11 +32868,11 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       6. Case analysis on copyInListResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (copyInListResult as exitResult))
+-           1. (Let abortResult be (copyInListResult as abortResult))
 
--           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
           2. Case (% has type continueResult<storageReference?*>)
 
@@ -32685,11 +32910,11 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       6. Case analysis on copyInListResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (copyInListResult as exitResult))
+-           1. (Let abortResult be (copyInListResult as abortResult))
 
--           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
           2. Case (% has type continueResult<storageReference?*>)
 
@@ -32741,11 +32966,11 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +                     4. Case analysis on expressionResult
 
-                        1. Case (% has type exitResult)
+                        1. Case (% has type abortResult)
 
--                         1. (Let exitResult be (expressionResult as exitResult))
+-                         1. (Let abortResult be (expressionResult as abortResult))
 
--                         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-                         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
                         2. Case (% has type continueResult<value>)
 
@@ -32801,11 +33026,11 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +                     4. Case analysis on expressionResult
 
-                        1. Case (% has type exitResult)
+                        1. Case (% has type abortResult)
 
--                         1. (Let exitResult be (expressionResult as exitResult))
+-                         1. (Let abortResult be (expressionResult as abortResult))
 
--                         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-                         2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
                         2. Case (% has type continueResult<value>)
 
@@ -32949,11 +33174,11 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +         7. Case analysis on copyInListResult
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (copyInListResult as exitResult))
+-             1. (Let abortResult be (copyInListResult as abortResult))
 
--             2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
+-             2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
             2. Case (% has type continueResult<storageReference?*>)
 
@@ -32987,37 +33212,59 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +       5. (Copy_in: STO_0 p EC_0 (parameterIR_aligned)* @ (block) EC_callee_1 (argumentIR_aligned)* ~> STO_1 EC_1 @ EC_callee_2 # copyInListResult)
 
-+       6. If ((copyInListResult has type continueResult<storageReference?*>)), then
++       6. Case analysis on copyInListResult
 
-+         1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
+          1. Case (% has type rejectTransitionResult)
 
-+         2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
+-           1. (Let rejectTransitionResult be (copyInListResult as rejectTransitionResult))
 
-+         3. (ParserLocalDecls_eval: EC_callee_3 STO_1 |- parserLocalDeclarationListIR : EC_callee_4 STO_2)
+-           2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (rejectTransitionResult as callResult)
 
-+         4. (ParserState_trans: EC_callee_4 STO_2 |-transition "start" : EC_callee_5 STO_3 transitionResult)
+          2. Case (% has type continueResult<storageReference?*>)
 
-+         5. Case analysis on transitionResult
++           1. (Let (` ((storageReference)?)*) be (copyInListResult as continueResult<storageReference?*>))
 
-            1. Case (% has type acceptTransitionResult)
++           2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
 
-+             1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
++           3. (ParserLocalDecls_eval: EC_callee_3 STO_1 |- parserLocalDeclarationListIR : EC_callee_4 STO_2 parserStatementResult)
 
-+             2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
++           4. Case analysis on parserStatementResult
 
-+             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
+              1. Case (% has type rejectTransitionResult)
 
-+             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
+-               1. (Let rejectTransitionResult be (parserStatementResult as rejectTransitionResult))
 
-            2. Case (% has type rejectTransitionResult)
+-               2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
 
-+             1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
+-               3. (Copy_out: STO_2 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_4 ((storageReference)?)* ~> EC_3)
 
-+             2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
+-               4. Result in: % % % |- % @< % >( % ): EC_3 STO_2 (rejectTransitionResult as callResult)
 
-+             3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
+              2. Case (% has type continueEmptyResult)
 
-+             4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 (rejectTransitionResult as callResult)
++               1. (ParserState_trans: EC_callee_4 STO_2 |-transition "start" : EC_callee_5 STO_3 transitionResult)
+
++               2. Case analysis on transitionResult
+
+                  1. Case (% has type rejectTransitionResult)
+
++                   1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
+
++                   2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
+
++                   3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
+
++                   4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 (rejectTransitionResult as callResult)
+
+                  2. Case (% has type acceptTransitionResult)
+
++                   1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
+
++                   2. (Let EC_2 be EC_1[global.frame = EC_callee_5.global.frame])
+
++                   3. (Copy_out: STO_3 p EC_2 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_3)
+
++                   4. Result in: % % % |- % @< % >( % ): EC_3 STO_3 ((return ?()) as callResult)
 
     5. Case (% has type controlApplyMethodCallee)
 
@@ -33051,13 +33298,13 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +           2. (Copy_in_default: (parameterIR_default)* @ (block) EC_callee_2 (value_default)* ~>@ EC_callee_3)
 
-+           3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 declarationResult)
++           3. (ControlLocalDecls_eval: EC_callee_3 STO_1 |- controlLocalDeclarationListIR : EC_callee_4 STO_2 controlLocalDeclarationResult)
 
-+           4. Case analysis on declarationResult
++           4. Case analysis on controlLocalDeclarationResult
 
               1. Case (% has type exitResult)
 
--               1. (Let exitResult be (declarationResult as exitResult))
+-               1. (Let exitResult be (controlLocalDeclarationResult as exitResult))
 
 -               2. (Let EC_2 be EC_1[global.frame = EC_callee_4.global.frame])
 
@@ -33067,7 +33314,7 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
               2. Case (% has type continueEmptyResult)
 
-+               1. (Let continueEmptyResult be (declarationResult as continueEmptyResult))
++               1. (Let continueEmptyResult be (controlLocalDeclarationResult as continueEmptyResult))
 
 +               2. (ControlBody_eval: EC_callee_4 STO_2 |- controlBodyIR : EC_callee_5 STO_3 controlBodyResult)
 
@@ -33109,13 +33356,13 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +         2. (Table_eval: EC_callee_1 STO_0 |- typeId TBL : EC_callee_2 STO_1 tableResult)
 
-+         3. If ((tableResult has type returnResult)), then
++         3. If ((tableResult has type exitResult)), then
 
-+           1. (Let returnResult be (tableResult as returnResult))
++           1. (Let exitResult be (tableResult as exitResult))
 
 +           2. (Let EC_1 be EC_0[block.frame = EC_callee_2.block.frame])
 
-+           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (returnResult as callResult)
++           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
 
 +       6. (Let EC_callee_1 be EC_callee_0[local.frames = [frame]])
 
@@ -33125,18 +33372,18 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
 +         2. (Table_eval: EC_callee_1 STO_0 |- typeId TBL : EC_callee_2 STO_1 tableResult)
 
-+         3. If ((tableResult has type exitResult)), then
++         3. If ((tableResult has type returnResult)), then
 
-+           1. (Let exitResult be (tableResult as exitResult))
++           1. (Let returnResult be (tableResult as returnResult))
 
 +           2. (Let EC_1 be EC_0[block.frame = EC_callee_2.block.frame])
 
-+           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 ((exit) as callResult)
++           3. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (returnResult as callResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:302.1-307.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:310.1-315.90
 extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( (nameIR')* ): % % %
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:309.1-315.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:317.1-323.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( (nameIR')* ): % % %
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
@@ -33211,10 +33458,11 @@ def $match_keyset(setValue, value_key)
 
 +     2. Return ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:37.1-38.15
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:37.1-38.16
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
+   | reject errorValue
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:40.1-43.23
 rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
@@ -33231,11 +33479,11 @@ rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+-           2. Result in: % % |- % : EC_1 STO_1 (abortResult as simpleKeysetExpressionResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -33257,11 +33505,11 @@ rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+-           2. Result in: % % |- % : EC_1 STO_1 (abortResult as simpleKeysetExpressionResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -33271,11 +33519,11 @@ rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 +           3. Case analysis on expressionResult'
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionResult' as exitResult))
+-               1. (Let abortResult be (expressionResult' as abortResult))
 
--               2. Result in: % % |- % : EC_2 STO_2 ((exit) as simpleKeysetExpressionResult)
+-               2. Result in: % % |- % : EC_2 STO_2 (abortResult as simpleKeysetExpressionResult)
 
               2. Case (% has type continueResult<value>)
 
@@ -33295,11 +33543,11 @@ rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as simpleKeysetExpressionResult)
+-           2. Result in: % % |- % : EC_1 STO_1 (abortResult as simpleKeysetExpressionResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -33309,11 +33557,11 @@ rel Expr_eval_keyset_simple: EC_0 STO_0 |- simpleKeysetExpressionIR : % % %
 
 +           3. Case analysis on expressionResult'
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionResult' as exitResult))
+-               1. (Let abortResult be (expressionResult' as abortResult))
 
--               2. Result in: % % |- % : EC_2 STO_2 ((exit) as simpleKeysetExpressionResult)
+-               2. Result in: % % |- % : EC_2 STO_2 (abortResult as simpleKeysetExpressionResult)
 
               2. Case (% has type continueResult<value>)
 
@@ -33356,11 +33604,11 @@ rel Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* :
 
 +     3. Case analysis on simpleKeysetExpressionResult
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
--         1. (Let exitResult be (simpleKeysetExpressionResult as exitResult))
+-         1. (Let abortResult be (simpleKeysetExpressionResult as abortResult))
 
--         2. Result in: % % |- % : EC_1 STO_1 ((exit) as keysetExpressionResult)
+-         2. Result in: % % |- % : EC_1 STO_1 (abortResult as keysetExpressionResult)
 
         2. Case (% has type continueResult<setValue>)
 
@@ -33370,11 +33618,11 @@ rel Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* :
 
 +         3. Case analysis on keysetExpressionResult'
 
-            1. Case (% has type exitResult)
+            1. Case (% has type abortResult)
 
--             1. (Let exitResult be (keysetExpressionResult' as exitResult))
+-             1. (Let abortResult be (keysetExpressionResult' as abortResult))
 
--             2. Result in: % % |- % : EC_2 STO_2 ((exit) as keysetExpressionResult)
+-             2. Result in: % % |- % : EC_2 STO_2 (abortResult as keysetExpressionResult)
 
             2. Case (% has type continueResult<setValue*>)
 
@@ -33384,7 +33632,7 @@ rel Exprs_eval_keyset_simple: evalContext store |- (simpleKeysetExpressionIR)* :
 
 +             3. Result in: % % |- % : EC_2 STO_2 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:261.1-264.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:250.1-253.23
 rel ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : % % %
 
 + 1. Case analysis on forUpdateStatementIR
@@ -33409,7 +33657,7 @@ rel ForUpdateStmt_eval: EC_0 STO_0 |- forUpdateStatementIR : % % %
 
 +       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:285.1-288.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:274.1-277.23
 rel ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (forUpdateStatementIR)* : % % %
@@ -33440,7 +33688,7 @@ rel ForUpdateStmts_eval: evalContext store |- (forUpdateStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:313.1-316.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:302.1-305.23
 rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 + 1. Case analysis on forInitStatementIR
@@ -33471,11 +33719,11 @@ rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 -           3. Case analysis on expressionResult
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionResult as exitResult))
+-               1. (Let abortResult be (expressionResult as abortResult))
 
--               2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-               2. Result in: % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
               2. Case (% has type continueResult<value>)
 
@@ -33495,7 +33743,7 @@ rel ForInitStmt_eval: EC_0 store |- forInitStatementIR : % % %
 
 +       2. Result in: % % |- % : EC_1 STO_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:361.1-364.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:350.1-353.23
 rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 + 1. Group : evalContext store |- (forInitStatementIR)* : % % %
@@ -33512,11 +33760,11 @@ rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 +     3. Case analysis on statementResult'
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
--         1. (Let exitResult be (statementResult' as exitResult))
+-         1. (Let abortResult be (statementResult' as abortResult))
 
--         2. Result in: % % |- % : EC_1 STO_1 ((exit) as statementResult)
+-         2. Result in: % % |- % : EC_1 STO_1 (abortResult as statementResult)
 
         2. Case (% has type continueEmptyResult)
 
@@ -33526,18 +33774,18 @@ rel ForInitStmts_eval: evalContext store |- (forInitStatementIR)* : % % %
 
 +         3. Result in: % % |- % : EC_2 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:391.1-394.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:380.1-383.29
 rel ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
 + 1. Group : EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
 +   1. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
-+   2. If ((expressionResult has type exitResult)), then
++   2. If ((expressionResult has type abortResult)), then
 
--     1. (Let exitResult be (expressionResult as exitResult))
+-     1. (Let abortResult be (expressionResult as abortResult))
 
--     2. Result in: % % |- % % % : EC_1 STO_1 ((exit) as statementResult)
+-     2. Result in: % % |- % % % : EC_1 STO_1 (abortResult as statementResult)
 
 +   3. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
@@ -33549,11 +33797,11 @@ rel ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpda
 
 +     2. Case analysis on statementResult'
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
-+         1. (Let exitResult be (statementResult' as exitResult))
++         1. (Let abortResult be (statementResult' as abortResult))
 
-+         2. Result in: % % |- % % % : EC_2 STO_2 ((exit) as statementResult)
++         2. Result in: % % |- % % % : EC_2 STO_2 (abortResult as statementResult)
 
         2. Case (% has type returnResult)
 
@@ -33589,7 +33837,7 @@ rel ForThreeClauseLoop_eval: EC_0 STO_0 |- typedExpressionIR statementIR forUpda
 
 +           3. Result in: % % |- % % % : EC_4 STO_4 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:499.1-502.23
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:488.1-491.23
 rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 + 1. Case analysis on forCollectionExpressionIR
@@ -33604,11 +33852,11 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 -       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as expressionListResult)
+-           2. Result in: % % |- % : EC_1 STO_1 (abortResult as expressionListResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -33642,11 +33890,11 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 +       2. Case analysis on expressionResult
 
-          1. Case (% has type exitResult)
+          1. Case (% has type abortResult)
 
--           1. (Let exitResult be (expressionResult as exitResult))
+-           1. (Let abortResult be (expressionResult as abortResult))
 
--           2. Result in: % % |- % : EC_1 STO_1 ((exit) as expressionListResult)
+-           2. Result in: % % |- % : EC_1 STO_1 (abortResult as expressionListResult)
 
           2. Case (% has type continueResult<value>)
 
@@ -33656,11 +33904,11 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 +           3. Case analysis on expressionResult'
 
-              1. Case (% has type exitResult)
+              1. Case (% has type abortResult)
 
--               1. (Let exitResult be (expressionResult' as exitResult))
+-               1. (Let abortResult be (expressionResult' as abortResult))
 
--               2. Result in: % % |- % : EC_2 STO_2 ((exit) as expressionListResult)
+-               2. Result in: % % |- % : EC_2 STO_2 (abortResult as expressionListResult)
 
               2. Case (% has type continueResult<value>)
 
@@ -33672,7 +33920,7 @@ rel ForCollectionExpr_eval: EC_0 STO_0 |- forCollectionExpressionIR : % % %
 
 +               4. Result in: % % |- % : EC_2 STO_2 ((` (value)*) as expressionListResult)
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:529.1-529.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:518.1-518.54
 def $values_of_setValue((set< typeIR >), setValue)
 
 + 1. If ((setValue matches pattern `SET{%..%}`)), then
@@ -33695,7 +33943,7 @@ def $values_of_setValue((set< typeIR >), setValue)
 
 -     1. Return []
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:570.1-573.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:559.1-562.29
 rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 + 1. Group : evalContext store |- nameIR (value)* statementIR : % % %
@@ -33714,11 +33962,11 @@ rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 +     4. Case analysis on statementResult'
 
-        1. Case (% has type exitResult)
+        1. Case (% has type abortResult)
 
--         1. (Let exitResult be (statementResult' as exitResult))
+-         1. (Let abortResult be (statementResult' as abortResult))
 
--         2. Result in: % % |- % % % : EC_2 STO_1 ((exit) as statementResult)
+-         2. Result in: % % |- % % % : EC_2 STO_1 (abortResult as statementResult)
 
         2. Case (% has type returnResult)
 
@@ -33740,7 +33988,7 @@ rel ForInLoop_eval: evalContext store |- nameIR (value)* statementIR : % % %
 
 +       2. Result in: % % |- % % % : EC_3 STO_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:673.1-673.57
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:662.1-662.57
 def $match_switchLabelIR_table(id, switchLabelIR)
 
 + 1. Case analysis on switchLabelIR
@@ -33769,7 +34017,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
 +   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:683.1-685.20
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:672.1-674.20
 rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 + 1. Group : id |- (switchCaseIR)* : %
@@ -33826,7 +34074,7 @@ rel SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
 +             2. Result in: % |- % : (blockStatementIR)?
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:687.1-687.58
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:676.1-676.58
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 - 1. Case analysis on switchCaseIR
@@ -33839,7 +34087,7 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
 -     1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:733.1-735.26
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:722.1-724.26
 rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then
@@ -33858,21 +34106,9 @@ rel SwitchLabelIR_general_eval: cursor EC_0 STO_0 |- switchLabelIR : % % %
 
 +         2. (Expr_eval: (local) EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult)
 
-+         3. Case analysis on expressionResult
++         3. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
-            1. Case (% has type exitResult)
-
--             1. (Let exitResult be (expressionResult as exitResult))
-
--             2. Result in: % % % |- % : EC_1 STO_1 ((exit) as expressionResult)
-
-            2. Case (% has type continueResult<value>)
-
-+             1. (Let (` value) be (expressionResult as continueResult<value>))
-
-+             2. Result in: % % % |- % : EC_1 STO_1 ((` value) as expressionResult)
-
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:754.1-754.54
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:738.1-738.54
 def $match_switchLabelIR_general(value, value')
 
 + 1. If ((value' has type defaultValue)), then
@@ -33941,7 +34177,7 @@ def $match_switchLabelIR_general(value, value')
 
 -   1. Return false
 
-;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:763.1-765.29
+;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:747.1-749.29
 rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 + 1. If ((cursor matches pattern `LOCAL`)), then
@@ -33950,7 +34186,7 @@ rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 +     1. If (((switchCaseIR)* = [])), then
 
--       1. Result in: % % % % |- % : EC_0 STO_0 ?()
++       1. Result in: % % % % |- % : EC_0 STO_0 ?()
 
 +     2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -33978,7 +34214,7 @@ rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 +                 1. (SwitchCases_general_eval: (local) EC_1 STO_1 value |- (switchCaseIR_t)* : EC_2 STO_2 (blockStatementIR)?)
 
-+                 2. Result in: % % % % |- % : EC_2 STO_2 ?(blockStatementIR_h)
++                 2. Result in: % % % % |- % : EC_2 STO_2 (blockStatementIR)?
 
           2. Case (% matches pattern `%:`)
 
@@ -34012,55 +34248,78 @@ rel SwitchCases_general_eval: cursor EC_0 STO_0 value |- (switchCaseIR)* : % % %
 
 -                 2. Result in: % % % % |- % : EC_2 STO_2 (blockStatementIR)?
 
-;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:31.1-34.26
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:32.1-33.27
+syntax selectCaseMatchResult = 
+   | ` nameIR?
+   | reject errorValue
+
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:35.1-38.26
 rel SelectCase_match: EC_0 STO_0 (value_key)* |- (keysetExpressionIR : nameIR ;) : % % %
 
 + 1. Group : EC_0 STO_0 (value_key)* |- (keysetExpressionIR : nameIR ;) : % % %
 
 +   1. (Expr_eval_keyset: EC_0 STO_0 |- keysetExpressionIR : EC_1 STO_1 keysetExpressionResult)
 
-+   2. If ((keysetExpressionResult has type continueResult<setValue*>)), then
++   2. Case analysis on keysetExpressionResult
 
-+     1. (Let (` (setValue)*) be (keysetExpressionResult as continueResult<setValue*>))
+      1. Case (% has type rejectTransitionResult)
 
-+     2. Case analysis on $match_keysets((setValue)*, (value_key)*)
+-       1. (Let rejectTransitionResult be (keysetExpressionResult as rejectTransitionResult))
 
-        1. Case false
+-       2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as selectCaseMatchResult)
 
-+         1. Result in: % % % |- % : EC_1 STO_1 ?()
+      2. Case (% has type continueResult<setValue*>)
 
-        2. Case true
++       1. (Let (` (setValue)*) be (keysetExpressionResult as continueResult<setValue*>))
 
-+         1. Result in: % % % |- % : EC_1 STO_1 ?(nameIR)
++       2. Case analysis on $match_keysets((setValue)*, (value_key)*)
 
-;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:60.1-63.26
+          1. Case false
+
++           1. Result in: % % % |- % : EC_1 STO_1 ((` ?()) as selectCaseMatchResult)
+
+          2. Case true
+
++           1. Result in: % % % |- % : EC_1 STO_1 ((` ?(nameIR)) as selectCaseMatchResult)
+
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:72.1-75.26
 rel SelectCases_match: evalContext store (value_key)* |- (selectCaseIR)* : % % %
 
 + 1. Group : evalContext store (value_key)* |- (selectCaseIR)* : % % %
 
 +   1. If (((selectCaseIR)* = [])), then
 
--     1. Result in: % % % |- % : evalContext store ?()
++     1. Result in: % % % |- % : evalContext store ((` ?()) as selectCaseMatchResult)
 
 +   2. If (((selectCaseIR)* matches pattern _ :: _)), then
 
 +     1. (Let selectCaseIR_h :: (selectCaseIR_t)* be (selectCaseIR)*)
 
-+     2. (SelectCase_match: evalContext store (value_key)* |- selectCaseIR_h : EC_1 STO_1 (nameIR)?)
++     2. (SelectCase_match: evalContext store (value_key)* |- selectCaseIR_h : EC_1 STO_1 selectCaseMatchResult')
 
-+     3. Case analysis on (nameIR)?
++     3. Case analysis on selectCaseMatchResult'
 
-        1. Case (% matches pattern (_))
+        1. Case (% has type rejectTransitionResult)
 
-+         1. (Let ?(nameIR_state) be (nameIR)?)
+-         1. (Let rejectTransitionResult be (selectCaseMatchResult' as rejectTransitionResult))
 
-+         2. Result in: % % % |- % : EC_1 STO_1 ?(nameIR_state)
+-         2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as selectCaseMatchResult)
 
-        2. Case (% matches pattern ())
+        2. Case (% has type continueResult<nameIR?>)
 
-+         1. (SelectCases_match: EC_1 STO_1 (value_key)* |- (selectCaseIR_t)* : EC_2 STO_2 (nameIR_state)?)
++         1. (Let (` (nameIR)?) be (selectCaseMatchResult' as continueResult<nameIR?>))
 
-+         2. Result in: % % % |- % : EC_2 STO_2 (nameIR_state)?
++         2. If (((nameIR)? matches pattern (_))), then
+
++           1. (Let ?(nameIR_state) be (nameIR)?)
+
++           2. Result in: % % % |- % : EC_1 STO_1 ((` ?(nameIR_state)) as selectCaseMatchResult)
+
++     4. If ((selectCaseMatchResult' = ((` ?()) as selectCaseMatchResult))), then
+
++       1. (SelectCases_match: EC_1 STO_1 (value_key)* |- (selectCaseIR_t)* : EC_2 STO_2 selectCaseMatchResult)
+
++       2. Result in: % % % |- % : EC_2 STO_2 selectCaseMatchResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:5.24-5.39
 syntax tableKeyValue = 

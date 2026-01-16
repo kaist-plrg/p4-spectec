@@ -19,6 +19,7 @@ type number = string
 type port = string
 type packet = string
 type expect = string
+type exact = bool
 type arg = id * number
 type action = name * arg list
 type mtchkind = Num of number | Slash of number * number
@@ -30,8 +31,8 @@ type ctr = Bytes | Packets
 type stmt =
   | Wait
   | RemoveAll
-  | Expect of port * expect option
-  | Packet of port * packet
+  | Expect of port * expect option * exact
+  | Packet of port * packet * exact
   | NoPacket
   | Add of name * int option * mtch list * action * id option
   | SetDefault of name * action

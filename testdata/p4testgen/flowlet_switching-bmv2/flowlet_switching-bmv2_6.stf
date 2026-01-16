@@ -1,0 +1,6 @@
+setdefault "ingress.flowlet" "ingress.lookup_flowlet_map"()
+add "main.ig.ecmp_group" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "_drop"()
+add "main.ig.ecmp_nhop" "meta.ingress_metadata.ecmp_offset":0x0000 "_drop"()
+add "main.ig.forward" "meta.ingress_metadata.nhop_ipv4":0x00000000 "NoAction"()
+add "main.eg.send_frame" "standard_metadata.egress_port":0x1FF "NoAction"()
+packet 0 000000000000000000000000080000000000000000000006FEFA0000000000FFFFFF0000000000000000000000000000000000000000

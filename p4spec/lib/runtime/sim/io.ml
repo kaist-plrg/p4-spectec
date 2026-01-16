@@ -9,7 +9,7 @@ let string_of_rx ((port, packet) : rx) : string =
   Printf.sprintf "(%d) %s" port packet
 
 let string_of_tx ((port, packet) : tx) : string =
-  Printf.sprintf "(%d) %s" port packet
+  Printf.sprintf "(%d)%s" port (if packet = "" then "" else " " ^ packet)
 
 let compare_packet packet_out packet_expect : bool =
   let to_list s = List.init (String.length s) (String.get s) in

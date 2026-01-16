@@ -87,7 +87,7 @@ rule Decl_ok/constantDeclaration:
 
 ;;;; annotationList type `( argumentList ) name `;
 
-rulegroup InstDecl_ok/instantiation-non-objectInitializer {
+rulegroup InstDecl_ok/non-objectInitializer {
 
   rule InstDecl_ok/prefixedTypeName:
     p TC_0 |- annotationList prefixedTypeName `( argumentList ) name `;
@@ -143,7 +143,7 @@ rulegroup InstDecl_ok/instantiation-non-objectInitializer {
 
 ;;;; annotationList type `( argumentList ) name objectInitializer `;
 
-relation Decl_object_ok:
+relation ObjectDecl_ok:
   cursor typingContext typeFrame externMethodTypeDefEnv
   |- objectDeclaration
    : typeFrame externMethodTypeDefEnv objectDeclarationIR
@@ -157,7 +157,7 @@ relation Decl_object_ok:
 ;;;;;;; syntax functionPrototype =
 ;;;;;;;   typeOrVoid name typeParameterListOpt `( parameterList )
 
-rule Decl_object_ok/functionDeclaration:
+rule ObjectDecl_ok/functionDeclaration:
   p TC_0 typeFrame externMethodTypeDefEnv
   |- annotationList
       (typeOrVoid name typeParameterListOpt `( parameterList ))
@@ -199,7 +199,7 @@ rule Decl_object_ok/functionDeclaration:
 
 ;;;;;; instantiation
 
-rule Decl_object_ok/instantiation:
+rule ObjectDecl_ok/instantiation:
   p TC_0 typeFrame
   externMethodTypeDefEnv |- instantiation
                           : typeFrame_init externMethodTypeDefEnv instantiationIR
@@ -212,32 +212,50 @@ rule Decl_object_ok/instantiation:
   -- if typeFrame_init
       = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
 
-relation Decls_object_ok:
+relation ObjectDecls_ok_inner:
   cursor typingContext typeFrame externMethodTypeDefEnv
   |- objectDeclaration*
    : typeFrame externMethodTypeDefEnv objectDeclarationListIR
   hint(input %0 %1 %2 %3 %4)
 
-rule Decls_object_ok/nil:
+rule ObjectDecls_ok_inner/nil:
   p TC typeFrame externMethodTypeDefEnv
   |- eps : typeFrame externMethodTypeDefEnv eps
 
-rule Decls_object_ok/cons:
+rule ObjectDecls_ok_inner/cons:
   p TC typeFrame_0 externMethodTypeDefEnv_0
   |- objectDeclaration_h :: objectDeclaration_t*
    : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_h :: objectDeclarationIR_t*)
-  -- Decl_object_ok:
+  -- ObjectDecl_ok:
       p TC typeFrame_0 externMethodTypeDefEnv_0
       |- objectDeclaration_h
        : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h
-  -- Decls_object_ok:
+  -- ObjectDecls_ok_inner:
       p TC typeFrame_1 externMethodTypeDefEnv_1
       |- objectDeclaration_t*
        : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
 
+relation ObjectDecls_ok:
+  cursor typingContext |- objectDeclaration*
+                        : typeFrame externMethodTypeDefEnv
+                          objectDeclarationListIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2 "under cursor" %0 "and typing context" %1)
+  hint(prose_out %3 "and" %4
+                 "local to the object declaration block, and typed" %5)
+
+rule ObjectDecls_ok:
+  p TC |- objectDeclaration*
+        : typeFrame externMethodTypeDefEnv objectDeclarationListIR
+  -- ObjectDecls_ok_inner:
+      p TC `{ eps } `{ eps }
+      |- objectDeclaration*
+       : typeFrame externMethodTypeDefEnv objectDeclarationListIR
+
 dec $subst_externMethodTypeDefEnv(
     externMethodTypeDefEnv, externMethodTypeDefEnv)
   : externMethodTypeDefEnv
+  hint(prose_in "substitution of abstract methods in" %0 "by implementations in" %1)
 
 def $subst_externMethodTypeDefEnv(
     externMethodTypeDefEnv_extern, `{ eps })
@@ -271,7 +289,7 @@ def $subst_externMethodTypeDefEnv(
           externMethodTypeDefEnv_extern,
           callableId, externMethodTypeDefIR_concrete)
 
-rulegroup InstDecl_ok/instantiation-objectInitializer {
+rulegroup InstDecl_ok/objectInitializer {
 
   rule InstDecl_ok/prefixedTypeName:
     p TC_0 |- annotationList
@@ -296,10 +314,9 @@ rulegroup InstDecl_ok/instantiation-objectInitializer {
     -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
     ---- ;; check object initializer
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- Decls_object_ok:
-        p TC_1 (`{ eps }) (`{ eps })
-        |- objectDeclaration*
-         : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
+    -- ObjectDecls_ok:
+        p TC_1 |- objectDeclaration*
+                : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
     ---- ;; create updated extern type
     -- if externMethodTypeDefEnv_init_subst
         = $subst_externMethodTypeDefEnv(
@@ -344,10 +361,9 @@ rulegroup InstDecl_ok/instantiation-objectInitializer {
     -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
     ---- ;; check object initializer
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- Decls_object_ok:
-        p TC_1 `{ eps } `{ eps }
-        |- objectDeclaration*
-         : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
+    -- ObjectDecls_ok:
+        p TC_1 |- objectDeclaration*
+                : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
     ---- ;; create updated extern type
     -- if externMethodTypeDefEnv_init_subst
         = $subst_externMethodTypeDefEnv(

@@ -32,12 +32,11 @@ let white = [' ' '\t' '\r']
 let whitespace = white+
 let opt_whitespace = white*
 
-
-let identifier = ['$' '_' 'A'-'Z' 'a'-'z']['$' '_' 'A'-'Z' '.' 'a'-'z' '0'-'9']*
-
 let q_chars = [^ '"' '\n']+
 let h_chars = [^ '>' '\n']+
 let digits = ['0'-'9']+
+
+let identifier = ['$' '_' 'A'-'Z' 'a'-'z']['$' '_' 'A'-'Z' '.' 'a'-'z' '0'-'9']*
 
 let binary_constant = '0'['b' 'B']['*' '0' '1']+
 
@@ -86,6 +85,8 @@ and keyword = parse
       { GE }
   | '/'
       { SLASH }
+  | binary_constant as n
+    { INT_CONST_BIN n }
   | hex_constant as n
     { INT_CONST_HEX n }
   | "add"
@@ -118,6 +119,8 @@ and keyword = parse
     { lexer := Keyword; keyword lexbuf }
   | identifier
     { ID(lexeme lexbuf) }
+  | '"' (q_chars as s) '"'
+    { ID(s) }
   | digits
     { INT_CONST_DEC(lexeme lexbuf) }
   | eof
@@ -134,10 +137,12 @@ and packet_data = parse
     { PACKET_WILDCARD }
   | '\n'+
     { lexer:= Keyword; keyword lexbuf }
-  | whitespace | '$'
+  | whitespace
     { packet_data lexbuf }
+  | '$'
+    { lexer := Keyword; EXACT }
   | eof
-    { lexer:= Keyword; END }
+    { lexer := Keyword; END }
   | _
     { print_endline (lexeme lexbuf); failwith "empty token thing alt" }
 
