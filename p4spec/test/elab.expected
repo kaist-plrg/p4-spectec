@@ -24947,7 +24947,7 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
     -- let typeIR = ` typeId as typeIR
     -- let constantDeclarationIR = `empty const typeIR nameIR = ! objectId as value ;
-    -- let callableTargetIR = ` typeId as expressionIR # ( typeIR ctk ) . "apply"
+    -- let callableTargetIR = ` nameIR as expressionIR # ( typeIR ctk ) . "apply"
     -- let callStatementIR = callableTargetIR < [] >( argumentListIR );
     -- let parserBlockStatementIR = `empty { [constantDeclarationIR as parserStatementIR, callStatementIR as parserStatementIR] }
     -- output: % % |- % : IC STO_2 parserBlockStatementIR as parserStatementIR
@@ -29299,7 +29299,25 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 STO_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:264.1-312.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:258.1-265.29
+  rulegroup parserBlockStatementIR
+
+   match
+
+    (signature) EC_0 STO_0 |- annotationList { parserStatementListIR } as parserStatementIR : % % %
+    EC_0 STO_0 |- parserStatementIR : % % %
+    -- if parserStatementIR <: parserBlockStatementIR
+    -- let annotationList { parserStatementListIR } = parserStatementIR as parserBlockStatementIR
+
+   paths
+
+    rulepath parserBlockStatementIR
+    -- let EC_1 = $enter_e(EC_0)
+    -- ParserStmts_eval: EC_1 STO_0 |- parserStatementListIR : EC_2 STO_1 parserStatementResult
+    -- let EC_3 = $exit_e(EC_2)
+    -- output: % % |- % : EC_3 STO_1 parserStatementResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:273.1-321.2
   rulegroup parserConditionalStatementIR
 
    match
@@ -29358,7 +29376,7 @@ relation ParserStmt_eval: evalContext store |- parserStatementIR : evalContext s
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:155.1-158.23
 relation ParserStmts_eval: evalContext store |- parserStatementListIR : evalContext store parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:321.1-340.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:330.1-349.2
   rulegroup 
 
    match

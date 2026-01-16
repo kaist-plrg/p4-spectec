@@ -31510,7 +31510,7 @@ relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
           8. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
-          9. (Let callableTargetIR be ((((` typeId) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
+          9. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
           10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
@@ -35944,7 +35944,21 @@ relation ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
       2. Else Phantom#2195
 
-  6. Case (% has type parserConditionalStatementIR)
+  6. Case (% has type parserBlockStatementIR)
+
+    1. (Let (annotationList { parserStatementListIR }) be (parserStatementIR as parserBlockStatementIR))
+
+    2. Group parserBlockStatementIR: EC_0 STO |- ((annotationList { parserStatementListIR }) as parserStatementIR) : % % %
+
+      1. (Let EC_1 be $enter_e(EC_0))
+
+      2. (ParserStmts_eval: EC_1 STO |- parserStatementListIR : EC_2 STO_1 parserStatementResult)
+
+      3. (Let EC_3 be $exit_e(EC_2))
+
+      4. Result in: % % |- % : EC_3 STO_1 parserStatementResult
+
+  7. Case (% has type parserConditionalStatementIR)
 
     1. (Let parserConditionalStatementIR be (parserStatementIR as parserConditionalStatementIR))
 

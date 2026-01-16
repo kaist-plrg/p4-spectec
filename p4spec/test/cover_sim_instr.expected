@@ -1,4 +1,4 @@
-;; Instruction coverage: 8995/12424 (72.40%)
+;; Instruction coverage: 9006/12430 (72.45%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -25622,7 +25622,7 @@ def $parameterListIR_of_externMethodDef(externMethodDef)
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.2.2-callable-def-aux.watsup:54.1-55.17
 def $parameterListIR_of_parserApplyMethodDef((parser_apply( parameterListIR ){ _parserLocalDeclarationListIR ; _stateEnv }))
 
-- 1. Return parameterListIR
++ 1. Return parameterListIR
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.2.2-callable-def-aux.watsup:60.1-61.17
 def $parameterListIR_of_controlApplyMethodDef((control_apply( parameterListIR ){ _controlLocalDeclarationListIR ; _actionDefEnv ; _controlBodyIR }))
@@ -27541,7 +27541,7 @@ rel ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
 +           8. (Let constantDeclarationIR be ((`empty) const typeIR nameIR (= ((! objectId) as value)) ;))
 
-+           9. (Let callableTargetIR be ((((` typeId) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
++           9. (Let callableTargetIR be ((((` nameIR) as expressionIR) # (( typeIR (ctk) ))) . "apply"))
 
 +           10. (Let callStatementIR be (callableTargetIR < [] >( argumentListIR );))
 
@@ -31463,13 +31463,13 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
     1. Case (% has type constantDeclarationIR)
 
--     1. (Let constantDeclarationIR be (parserStatementIR as constantDeclarationIR))
++     1. (Let constantDeclarationIR be (parserStatementIR as constantDeclarationIR))
 
--     2. Group constantDeclarationIR: EC_0 STO |- (constantDeclarationIR as parserStatementIR) : % % %
++     2. Group constantDeclarationIR: EC_0 STO |- (constantDeclarationIR as parserStatementIR) : % % %
 
--       1. (ConstDecl_eval: (local) EC_0 |- constantDeclarationIR : EC_1)
++       1. (ConstDecl_eval: (local) EC_0 |- constantDeclarationIR : EC_1)
 
--       2. Result in: % % |- % : EC_1 STO ((`empty) as parserStatementResult)
++       2. Result in: % % |- % : EC_1 STO ((`empty) as parserStatementResult)
 
     2. Case (% has type variableDeclarationIR)
 
@@ -31553,7 +31553,21 @@ rel ParserStmt_eval: EC_0 STO |- parserStatementIR : % % %
 
 +           2. Result in: % % |- % : EC_1 STO_1 ((`empty) as parserStatementResult)
 
-    6. Case (% has type parserConditionalStatementIR)
+    6. Case (% has type parserBlockStatementIR)
+
++     1. (Let (annotationList { parserStatementListIR }) be (parserStatementIR as parserBlockStatementIR))
+
++     2. Group parserBlockStatementIR: EC_0 STO |- ((annotationList { parserStatementListIR }) as parserStatementIR) : % % %
+
++       1. (Let EC_1 be $enter_e(EC_0))
+
++       2. (ParserStmts_eval: EC_1 STO |- parserStatementListIR : EC_2 STO_1 parserStatementResult)
+
++       3. (Let EC_3 be $exit_e(EC_2))
+
++       4. Result in: % % |- % : EC_3 STO_1 parserStatementResult
+
+    7. Case (% has type parserConditionalStatementIR)
 
 +     1. (Let parserConditionalStatementIR be (parserStatementIR as parserConditionalStatementIR))
 

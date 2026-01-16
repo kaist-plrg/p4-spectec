@@ -13439,7 +13439,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``typeIR`` be ``typeId``.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
-. Let ``callableTargetIR`` be ``typeId`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
+. Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
 . Let ``parserBlockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
 . Result in ``IC~0~``, ``STO~2~``, and ``parserBlockStatementIR``.
@@ -15721,6 +15721,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+
+<<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``annotationList`` ``{`` ``parserStatementListIR`` ``}`` ``:`` ``%`` ``%`` ``%``>>:
+
+. Let ``EC~1~`` be ``<<enter_e,`` ``enter_e(EC~0~)>>``.
+. Let <<ParserStmts_eval, EC~1~ STO |- parserStatementListIR : EC~2~ STO~1~ parserStatementResult>>.
+. Let ``EC~3~`` be ``<<exit_e,`` ``exit_e(EC~2~)>>``.
+. Result in ``EC~3~``, ``STO~1~``, and ``parserStatementResult``.
 
 <<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``parserConditionalStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
