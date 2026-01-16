@@ -1,4 +1,4 @@
-;; Instruction coverage: 8971/12401 (72.34%)
+;; Instruction coverage: 8995/12424 (72.40%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -3370,7 +3370,7 @@ def $update_headerStack'((value)*, value', nat, nat', nat'')
 
     1. Case (% matches pattern [])
 
-+     1. Return []
+-     1. Return []
 
     2. Case (% matches pattern _ :: _)
 
@@ -30025,19 +30025,31 @@ rel Expr_eval: p EC STO |- (expressionIR # expressionNoteIR) : % % %
 
 +                 2. If ((value_base has type headerStackValue)), then
 
-+                   1. (Let (header_stack[ (value_elem)* ( n_idx ; _nat )]) be (value_base as headerStackValue))
++                   1. (Let (header_stack[ (value_elem)* ( n_idx ; n_size )]) be (value_base as headerStackValue))
 
-+                   2. (Let int be (n_idx - 1))
++                   2. (Let b_out_of_bounds be ((n_idx < 1) \/ (n_idx > n_size)))
 
-+                   3. If ((int has type nat)), then
++                   3. Case analysis on b_out_of_bounds
 
-+                     1. (Let n_idx_last be (int as nat))
+                      1. Case true
 
-+                     2. (Let value_last be (value_elem)*[n_idx_last])
+-                       1. (Let rejectTransitionResult be (reject (error. "StackOutOfBounds")))
 
-+                     3. (Let expressionResult be ((` value_last) as expressionResult))
+-                       2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as expressionResult)
 
-+                     4. Result in: % % % |- % : EC_1 STO_1 expressionResult
+                      2. Case false
+
++                       1. (Let int be (n_idx - 1))
+
++                       2. If ((int has type nat)), then
+
++                         1. (Let n_idx_last be (int as nat))
+
++                         2. (Let value_last be (value_elem)*[n_idx_last])
+
++                         3. (Let expressionResult be ((` value_last) as expressionResult))
+
++                         4. Result in: % % % |- % : EC_1 STO_1 expressionResult
 
               3. Case (% = "lastIndex")
 
@@ -30430,9 +30442,51 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
     2. Case (% matches pattern `%.%`)
 
-+     1. (Let (typedLvalueIR . nameIR) be lvalueIR)
++     1. (Let (typedLvalueIR . text) be lvalueIR)
 
-+     2. Group typedLvalueIR-nameIR: p EC STO |- ((typedLvalueIR . nameIR) # lvalueNoteIR) : % % %
++     2. If ((text = "next")), then
+
++       1. Group typedLvalueIR-next: p EC STO |- ((typedLvalueIR . "next") # lvalueNoteIR) : % % %
+
++         1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
+
++         2. Case analysis on storageReferenceResult'
+
+            1. Case (% has type abortResult)
+
+-             1. (Let abortResult be (storageReferenceResult' as abortResult))
+
+-             2. Result in: % % % |- % : EC_1 STO_1 (abortResult as storageReferenceResult)
+
+            2. Case (% has type continueResult<storageReference?>)
+
++             1. (Let (` (storageReference')?) be (storageReferenceResult' as continueResult<storageReference?>))
+
++             2. If (((storageReference')? matches pattern (_))), then
+
++               1. (Let ?(storageReference) be (storageReference')?)
+
++               2. (Lvalue_read: p EC_1 STO_1 |- storageReference : value)
+
++               3. If ((value has type headerStackValue)), then
+
++                 1. (Let headerStackValue be (value as headerStackValue))
+
++                 2. (Let (header_stack[ (value_element)* ( n_idx ; n_size )]) be headerStackValue)
+
++                 3. If ((n_idx >= n_size)), then
+
++                   1. (Let rejectTransitionResult be (reject (error. "StackOutOfBounds")))
+
++                   2. Result in: % % % |- % : EC_1 STO_1 (rejectTransitionResult as storageReferenceResult)
+
++                 4. If ((n_idx < n_size)), then
+
++                   1. (Let storageReferenceResult be ((` ?((storageReference . "next"))) as storageReferenceResult))
+
++                   2. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
+
++     3. Group typedLvalueIR-nameIR: p EC STO |- ((typedLvalueIR . text) # lvalueNoteIR) : % % %
 
 +       1. (Lvalue_eval: p EC STO |- typedLvalueIR : EC_1 STO_1 storageReferenceResult')
 
@@ -30452,7 +30506,7 @@ rel Lvalue_eval: p EC STO |- (lvalueIR # lvalueNoteIR) : % % %
 
 +             1. (Let ?(storageReference) be (storageReference')?)
 
-+             2. (Let storageReferenceResult be ((` ?((storageReference . nameIR))) as storageReferenceResult))
++             2. (Let storageReferenceResult be ((` ?((storageReference . text))) as storageReferenceResult))
 
 +             3. Result in: % % % |- % : EC_1 STO_1 storageReferenceResult
 
@@ -32562,9 +32616,9 @@ rel Copy_in_argument: STO_0 p_caller EC_caller_0 (annotationList direction typeI
 
           1. Case (% has type abortResult)
 
--           1. (Let abortResult be (storageReferenceResult as abortResult))
++           1. (Let abortResult be (storageReferenceResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
++           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_0 # (abortResult as copyInResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -32609,9 +32663,9 @@ rel Copy_in: store p_caller evalContext (parameterIR)* @ p_callee evalContext' (
 
           1. Case (% has type abortResult)
 
--           1. (Let abortResult be (copyInResult as abortResult))
++           1. (Let abortResult be (copyInResult as abortResult))
 
--           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # (abortResult as copyInListResult)
++           2. Result in: % % % % @ % % % ~> STO_1 EC_caller_1 @ EC_callee_1 # (abortResult as copyInListResult)
 
           2. Case (% has type continueResult<storageReference?>)
 
@@ -33161,9 +33215,9 @@ rel Call_eval: p EC_0 STO_0 |- callee @< typeArgumentListIR >( argumentListIR ):
 
             1. Case (% has type abortResult)
 
--             1. (Let abortResult be (copyInListResult as abortResult))
++             1. (Let abortResult be (copyInListResult as abortResult))
 
--             2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
++             2. Result in: % % % |- % @< % >( % ): EC_1 STO_1 (abortResult as callResult)
 
             2. Case (% has type continueResult<storageReference?*>)
 

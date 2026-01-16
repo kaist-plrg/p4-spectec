@@ -27507,7 +27507,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` typeId . nameIR . value as value as expressionResult
     -- output: % % % |- % : EC STO expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:341.1-445.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:341.1-458.2
   rulegroup memberAccessExpressionIR-expression
 
    match
@@ -27541,7 +27541,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` d n_size as int as value as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-    rulepath stack-last
+    rulepath stack-last-out-of-bounds
     -- if (nameIR' = "last")
     -- let ( typeIR_base _ctk ) = expressionNoteIR
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 expressionResult'
@@ -27549,7 +27549,23 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let ` value_base = expressionResult' as continueResult<value>
     -- let value = value_base
     -- if value <: headerStackValue
-    -- let header_stack[ value_elem*{value_elem <- value_elem*} ( n_idx ; _nat )] = value as headerStackValue
+    -- let header_stack[ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size )] = value as headerStackValue
+    -- let b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size))
+    -- if b_out_of_bounds
+    -- let rejectTransitionResult = reject error. "StackOutOfBounds"
+    -- output: % % % |- % : EC_1 STO_1 rejectTransitionResult as expressionResult
+
+    rulepath stack-last-in-bounds
+    -- if (nameIR' = "last")
+    -- let ( typeIR_base _ctk ) = expressionNoteIR
+    -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR_base : EC_1 STO_1 expressionResult'
+    -- if expressionResult' <: continueResult<value>
+    -- let ` value_base = expressionResult' as continueResult<value>
+    -- let value = value_base
+    -- if value <: headerStackValue
+    -- let header_stack[ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size )] = value as headerStackValue
+    -- let b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size))
+    -- if ~b_out_of_bounds
     -- let int = (n_idx - 1)
     -- if int <: nat
     -- let n_idx_last = int as nat
@@ -27654,7 +27670,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` tableMetadataEnumValue as value as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:451.1-481.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:464.1-494.2
   rulegroup indexAccessExpressionIR
 
    match
@@ -27709,7 +27725,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:487.1-508.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:500.1-521.2
   rulegroup sliceAccessExpressionIR
 
    match
@@ -27736,7 +27752,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let expressionResult = ` $bitacc_op(value_base, value_hi, value_lo) as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:518.1-547.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:531.1-560.2
   rulegroup callExpressionIR
 
    match
@@ -27776,7 +27792,7 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let ?(value) = value'?{value' <- value'?}
     -- output: % % % |- % : EC_2 STO_2 ` value as expressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:552.1-557.50
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:565.1-570.50
   rulegroup parenthesizedExpressionIR
 
    match
@@ -27801,7 +27817,7 @@ syntax expressionListResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:48.1-53.100
 relation Exprs_eval: cursor evalContext store |- typedExpressionIR* : evalContext store expressionListResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:565.1-598.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:578.1-611.2
   rulegroup 
 
    match
@@ -28020,7 +28036,54 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     rulepath referenceExpressionIR
     -- output: % % % |- % : EC STO ` ?(referenceExpressionIR as storageReference) as storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:17.1-35.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:17.1-51.2
+  rulegroup typedLvalueIR-next
+
+   match
+
+    (signature) p EC_0 STO_0 |- typedLvalueIR . "next" # _lvalueNoteIR : % % %
+    p EC_0 STO_0 |- lvalueIR # _lvalueNoteIR : % % %
+    -- if lvalueIR matches `%.%`
+    -- let typedLvalueIR . text = lvalueIR
+    -- if (text = "next")
+
+   paths
+
+    rulepath stack-next-abort
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: abortResult
+    -- let abortResult = storageReferenceResult' as abortResult
+    -- output: % % % |- % : EC_1 STO_1 abortResult as storageReferenceResult
+
+    rulepath stack-next-out-of-bounds
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = headerStackValue
+    -- if (n_idx >= n_size)
+    -- let rejectTransitionResult = reject error. "StackOutOfBounds"
+    -- output: % % % |- % : EC_1 STO_1 rejectTransitionResult as storageReferenceResult
+
+    rulepath stack-next-in-bounds
+    -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = headerStackValue
+    -- if (n_idx < n_size)
+    -- let storageReferenceResult = ` ?(storageReference . "next") as storageReferenceResult
+    -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:53.1-71.2
   rulegroup typedLvalueIR-nameIR
 
    match
@@ -28047,7 +28110,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference . nameIR) as storageReferenceResult
     -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:39.1-70.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-106.2
   rulegroup typedLvalueIR-indexAccess
 
    match
@@ -28088,7 +28151,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value ]) as storageReferenceResult
     -- output: % % % |- % : EC_2 STO_2 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:75.1-106.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:111.1-142.2
   rulegroup typedLvalueIR-sliceAccess
 
    match
@@ -28131,7 +28194,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
     -- let storageReferenceResult = ` ?(storageReference [ value_hi : value_lo ]) as storageReferenceResult
     -- output: % % % |- % : EC_1 STO_1 storageReferenceResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:108.1-113.56
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:144.1-149.56
   rulegroup parenthesized
 
    match
@@ -28150,7 +28213,7 @@ relation Lvalue_eval: cursor evalContext store |- typedLvalueIR : evalContext st
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:91.1-93.26
 relation Lvalue_read: cursor evalContext store |- storageReference : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:126.1-128.51
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:162.1-164.51
   rulegroup referenceExpressionIR
 
    match
@@ -28166,7 +28229,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = $find_var_e(p, EC, prefixedNameIR)
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:132.1-189.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:168.1-225.2
   rulegroup storageReference-nameIR
 
    match
@@ -28237,7 +28300,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let ?(value) = value''?{value'' <- value''?}
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:193.1-215.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:229.1-251.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28278,7 +28341,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
     -- output: % % % |- % : value
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:219.1-223.59
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:255.1-259.59
   rulegroup sliceAccess
 
    match
@@ -28298,7 +28361,7 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:95.1-98.29
 relation Lvalue_write: cursor evalContext store |- storageReference -> value : evalContext
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:234.1-236.61
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:270.1-272.61
   rulegroup referenceExpressionIR
 
    match
@@ -28314,7 +28377,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:240.1-333.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:276.1-369.2
   rulegroup storageReference-nameIR
 
    match
@@ -28406,7 +28469,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- Lvalue_write: p EC_0 STO |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:335.1-358.2
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:371.1-394.2
   rulegroup storageReference-indexAccess
 
    match
@@ -28445,7 +28508,7 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- if (n_idx >= n_size)
     -- output: % % % |- % -> % : EC_0
 
-  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:360.1-366.65
+  ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:396.1-402.65
   rulegroup sliceAccess
 
    match

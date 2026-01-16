@@ -14901,13 +14901,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``expressionResult'`` has type ``continueResult<value>``.
  .. Let ``value~base~`` be ``expressionResult'``.
  .. Check that ``value~base~`` has type ``headerStackValue``.
- .. Let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base~``.
- .. Let ``int`` be ``n~idx~`` ``-`` ``1``.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~idx_last~`` be ``int``.
- .. Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.
- .. Let ``expressionResult`` be ``value~last~``.
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
+ .. Let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
+ .. Let ``b~out_of_bounds~`` be ``n~idx~`` ``<`` ``1`` *or* ``n~idx~`` ``>`` ``n~size~``.
+ .. If ``b~out_of_bounds~``:
+  ... Let ``rejectTransitionResult`` be ``REJECT`` ``ERROR`` ``.`` ``"StackOutOfBounds"``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``rejectTransitionResult``.
+ .. Else:
+  ... Let ``int`` be ``n~idx~`` ``-`` ``1``.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~idx_last~`` be ``int``.
+  ... Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.
+  ... Let ``expressionResult`` be ``value~last~``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 . Else if ``nameIR`` is equal to ``"lastIndex"``:
  .. Check that ``expressionResult'`` has type ``continueResult<value>``.
  .. Let ``value~base~`` be ``expressionResult'``.
@@ -15101,7 +15106,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Result in ``EC``, ``STO``, and ``referenceExpressionIR``.
 
-<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``nameIR`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
+<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``"next"`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'>>.
 . If let ``abortResult`` be ``storageReferenceResult'``:
@@ -15110,7 +15115,27 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'^?^`` be ``storageReferenceResult'``.
  .. Check that ``storageReference'^?^`` is defined.
  .. Let ``storageReference`` be ``storageReference'^?^``.
- .. Let ``storageReferenceResult`` be ``storageReference`` ``.`` ``nameIR``.
+ .. Let <<Lvalue_read, p EC~1~ STO~1~ |- storageReference : value>>.
+ .. Check that ``value`` has type ``headerStackValue``.
+ .. Let ``headerStackValue`` be ``value``.
+ .. Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``headerStackValue``.
+ .. If ``n~idx~`` is greater than or equal to ``n~size~``:
+  ... Let ``rejectTransitionResult`` be ``REJECT`` ``ERROR`` ``.`` ``"StackOutOfBounds"``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+ .. If ``n~idx~`` is less than ``n~size~``:
+  ... Let ``storageReferenceResult`` be ``storageReference`` ``.`` ``"next"``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult``.
+
+<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``text`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
+
+. Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult'>>.
+. If let ``abortResult`` be ``storageReferenceResult'``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+. Else:
+ .. Let ``storageReference'^?^`` be ``storageReferenceResult'``.
+ .. Check that ``storageReference'^?^`` is defined.
+ .. Let ``storageReference`` be ``storageReference'^?^``.
+ .. Let ``storageReferenceResult`` be ``storageReference`` ``.`` ``text``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult``.
 
 <<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``[`` ``typedExpressionIR`` ``]`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
