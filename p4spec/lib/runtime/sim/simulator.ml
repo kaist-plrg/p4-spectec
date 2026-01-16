@@ -49,7 +49,7 @@ module type ARCH = sig
     (* table entry action *)
     Value.t (* store *)
 
-  val table_add_default :
+  val table_add_default_action :
     Value.t ->
     (* store *)
     Value.t ->

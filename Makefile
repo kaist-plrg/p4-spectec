@@ -87,12 +87,12 @@ test-p4sim:
 	cd p4spec && opam exec -- dune build @p4sim --profile=release && echo OK || (echo "####>" Failure running dune build @p4sim. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4sim-v1model:
-	echo "#### Running (dune build @p4sim)"
+	echo "#### Running (dune build @p4sim-v1model)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4sim-v1model --profile=release && echo OK || (echo "####>" Failure running dune build @p4sim. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4sim-ebpf:
-	echo "#### Running (dune build @p4sim)"
+	echo "#### Running (dune build @p4sim-ebpf)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4sim-ebpf --profile=release && echo OK || (echo "####>" Failure running dune build @p4sim. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 

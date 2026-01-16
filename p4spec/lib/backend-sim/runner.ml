@@ -189,7 +189,7 @@ module Make
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_sto =
-          Arch.table_add_default value_sto value_tableName
+          Arch.table_add_default_action value_sto value_tableName
             value_tableActionInterface
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
