@@ -904,7 +904,8 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-parser-object">10.4. Parser objects</a></li>
 <li><a href="#sec-control-object">10.5. Control objects</a></li>
 <li><a href="#sec-table-object">10.6. Table objects</a></li>
-<li><a href="#sec-package-object">10.7. Package objects</a></li>
+<li><a href="#sec-value-set-object">10.7. Parser value set objects</a></li>
+<li><a href="#sec-package-object">10.8. Package objects</a></li>
 </ul>
 </li>
 <li><a href="#sec-declaration">11. Declarations</a>
@@ -10945,10 +10946,10 @@ Refine builtin methods to concretely show which builtins are offered.
 <div class="sect2">
 <h3 id="sec-object">10.1. Objects</h3>
 <div class="paragraph">
-<p><code>table</code>s and <code>extern</code> objects are stateful entities in P4 programs. These
-objects should be instantiated statically prior to program execution.
-<code>parser</code>s, <code>control</code>s, and <code>package</code>s may contain stateful objects,
-thus they must also be instantiated.</p>
+<p><code>table</code>s, <code>value_set</code>s, and <code>extern</code> objects are stateful entities in P4
+programs. These objects should be instantiated statically prior to program
+execution. <code>parser</code>s, <code>control</code>s, and <code>package</code>s may contain stateful
+objects, thus they must also be instantiated.</p>
 </div>
 <div class="paragraph">
 <p>The runtime representation of these objects is defined as follows:</p>
@@ -11880,7 +11881,75 @@ syntax tableObject =
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-package-object">10.7. Package objects</h3>
+<h3 id="sec-value-set-object">10.7. Parser value set objects</h3>
+<div class="paragraph">
+<p>In some cases, the values that determine the transition from one parser state
+to another need to be determined at runtime. MPLS is one example where the
+value of the MPLS label field is used to determine what headers follow the MPLS
+tag and this mapping may change dynamically at runtime. To support this
+functionality, P4 supports the notion of a Parser Value Set. This is a named
+set of values with a runtime API to add and remove values from the set.</p>
+</div>
+<div class="paragraph">
+<p>Value sets are declared locally within a parser. They should be declared before
+being referenced in parser <code>keysetExpression</code> and can be used as a label in a
+select expression.</p>
+</div>
+<div class="paragraph">
+<p>The syntax for declaring value sets is:</p>
+</div>
+<div id="valueSetDeclaration" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueSetType =
+   | baseType
+   | tupleType
+   | prefixedTypeName
+
+syntax valueSetDeclaration =
+   | annotationList VALUE_SET `&lt;valueSetType&gt; `(expression) name ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Parser Value Sets support a <code>size</code> argument to provide hints to the compiler to
+reserve hardware resources to implement the value set. Thus, the <code>size</code>
+argument must be a compile-time known value. For example, this parser value
+set:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">value_set</span><span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">)</span> pvs<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>creates a value_set of size 4 with entries of type <code>bit&lt;16&gt;</code>.</p>
+</div>
+<div class="paragraph">
+<p>The semantics of the <code>size</code> argument is similar to the <code>size</code> property of a
+table. If a value set has a <code>size</code> argument with value <code>N</code>, it is recommended
+that a compiler should choose a data plane implementation that is capable of
+storing <code>N</code> value set entries. See "Size property of P4 tables and parser value
+sets"
+<sup class="footnote" id="_footnote_P4SizeProperty">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup>
+for further discussion on the implementation of parser value set size.</p>
+</div>
+<div class="paragraph">
+<p>The value set is populated by the control plane by methods specified in the
+P4Runtime specification.<sup class="footnote" id="_footnote_P4RuntimeAPI">[<a id="_footnoteref_2" class="footnote" href="#_footnotedef_2" title="View footnote.">2</a>]</sup></p>
+</div>
+<div class="paragraph">
+<p>A <code>value_set</code> declaration creates a new parser value set object. As value set
+objects are simple objects without fields or methods, no constructor is defined
+for them. The object is represented as:</p>
+</div>
+<div id="valueSetObject" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueSetObject =
+   | VALUE_SET `{value* `(nat)}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="sec-package-object">10.8. Package objects</h3>
 <div class="paragraph">
 <p>A package type declaration introduces a package object constructor.</p>
 </div>
@@ -21220,7 +21289,7 @@ expression).</p>
 <div class="paragraph">
 <p>See "Implementing generalized P4_16 switch statements" for possible techniques
 that one might use to implement generalized switch
-statements.<sup class="footnote" id="_footnote_GeneralizedSwitchStatements">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup></p>
+statements.<sup class="footnote" id="_footnote_GeneralizedSwitchStatements">[<a id="_footnoteref_3" class="footnote" href="#_footnotedef_3" title="View footnote.">3</a>]</sup></p>
 </div>
 </div>
 <div class="sect3">
@@ -30202,7 +30271,13 @@ in parsers and deparsers to access packet data.</p>
 <div id="footnotes">
 <hr>
 <div class="footnote" id="_footnotedef_1">
-<a href="#_footnoteref_1">1</a>. <a href="https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md" class="bare">https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md</a>
+<a href="#_footnoteref_1">1</a>. <a href="https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/p4-table-and-parser-value-set-sizes.md" class="bare">https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/p4-table-and-parser-value-set-sizes.md</a>
+</div>
+<div class="footnote" id="_footnotedef_2">
+<a href="#_footnoteref_2">2</a>. The P4Runtime API is defined as a Google Protocol Buffer <code>.proto</code> file and an accompanying English specification document here: <a href="https://github.com/p4lang/p4runtime" class="bare">https://github.com/p4lang/p4runtime</a>
+</div>
+<div class="footnote" id="_footnotedef_3">
+<a href="#_footnoteref_3">3</a>. <a href="https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md" class="bare">https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md</a>
 </div>
 </div>
 <div id="footer">
