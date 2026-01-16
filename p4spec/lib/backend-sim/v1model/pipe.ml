@@ -100,9 +100,31 @@ struct
         register |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
 
-  let eval_extern_func_lctk_call (_values_input : Value.t list) : Value.t list =
-    error_no_region
-      "eval_extern_func_lctk_call not implemented for the placeholder simulator"
+  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_name_func, value_names_param =
+      match values_input with
+      | [ value_ctx; value_name_func; value_names_param ] ->
+          (value_ctx, value_name_func, value_names_param)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to local compile-time known extern \
+             function call"
+    in
+    let name_func = unwrap_text_v value_name_func in
+    let names_param =
+      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+    in
+    match (name_func, names_param) with
+    | "static_assert", [ "check"; "message" ] ->
+        [ Core.Func.static_assert ~message:true value_ctx ]
+    | "static_assert", [ "check" ] ->
+        [ Core.Func.static_assert ~message:false value_ctx ]
+    | _ ->
+        error_no_region
+          ("unsupported local compile-time known extern function call: "
+         ^ name_func ^ "("
+          ^ String.concat ", " names_param
+          ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_name_func, value_names_param =
@@ -281,13 +303,13 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
-  let table_add_default (value_sto : Value.t) (value_tableName : Value.t)
+  let table_add_default_action (value_sto : Value.t) (value_tableName : Value.t)
       (value_tableActionInterface : Value.t) : Value.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_sto value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
-      Spec.Func.tableObject_add_default value_tableObject
+      Spec.Func.tableObject_add_default_action value_tableObject
         value_tableActionInterface
     in
     (* Update store with modified table object *)
@@ -396,7 +418,9 @@ struct
       let packet_in = get_packet_in value_sto in
       (* Get output packet *)
       let packet_out = get_packet_out value_sto in
-      let packet = Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out) in
+      let packet =
+        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+      in
       (* Return port and packet *)
       let tx = (port, packet) in
       Some tx

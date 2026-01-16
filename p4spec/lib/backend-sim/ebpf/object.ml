@@ -20,7 +20,7 @@ module CounterArray = struct
      Each counter is addressed by a 32-bit index.
      Counters can only be incremented by the data-plane, but they can be read or
      reset by the control-plane.
-   
+
      Allocate an array of counters.
      @param max_index  Maximum counter index supported.
      @param sparse     The counter array is supposed to be sparse.
@@ -63,7 +63,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ]#@"returnResult"
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -90,7 +90,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ]#@"returnResult"
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 end
