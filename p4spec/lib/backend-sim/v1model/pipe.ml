@@ -360,24 +360,28 @@ struct
 
   let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
       IO.tx option =
-    (* Get egress port *)
-    let port =
+    let value_egress_spec =
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
-      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
-    (* Get output packet *)
-    let header =
-      get_packet_out value_sto |> Format.asprintf "%a" Core.Object.PacketOut.pp
+    let width_egress_spec, int_egress_spec =
+      unpack_p4_fixedBit value_egress_spec
     in
-    let payload =
-      get_packet_in value_sto
-      |> Format.asprintf "%a" Core.Object.PacketIn.pp_payload
+    let drop =
+      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
     in
-    let packet = header ^ payload in
-    (* Return port and packet *)
-    let tx = (port, packet) in
-    Some tx
+    if drop then None
+    else
+      (* Get egress port *)
+      let port = Bigint.to_int_exn int_egress_spec in
+      (* Get input packet *)
+      let packet_in = get_packet_in value_sto in
+      (* Get output packet *)
+      let packet_out = get_packet_out value_sto in
+      let packet = Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out) in
+      (* Return port and packet *)
+      let tx = (port, packet) in
+      Some tx
 
   let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * bool =
