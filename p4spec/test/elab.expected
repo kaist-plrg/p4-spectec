@@ -2954,27 +2954,28 @@ syntax recordValue =
    | record{ fieldValue* }
    | record{ fieldValue* ,...}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:77.1-80.18
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:77.1-81.18
 syntax setValue = 
    | set{ value }
+   | set{ value* ( nat )}
    | set{ value &&& value }
    | set{ value .. value }
    | set{...}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:82.33-82.60
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:83.33-83.60
 syntax tableMetadataEnumValue = 
    | table_enum typeId . nameIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:85.3-87.64
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:86.3-88.64
 syntax tableMetadataStructValue = 
    | table_struct typeId {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:90.1-91.29
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:91.1-92.29
 syntax tableMetadataValue = 
    | table_enum typeId . nameIR
    | table_struct typeId {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:94.1-99.23
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:95.1-100.23
 syntax synthesizedValue = 
    | default
    | {#}
@@ -2983,13 +2984,14 @@ syntax synthesizedValue =
    | record{ fieldValue* }
    | record{ fieldValue* ,...}
    | set{ value }
+   | set{ value* ( nat )}
    | set{ value &&& value }
    | set{ value .. value }
    | set{...}
    | table_enum typeId . nameIR
    | table_struct typeId {hit boolValue ;miss boolValue ;action_run tableMetadataEnumValue ;}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:106.1-109.21
+;; ../../../../spec-concrete/2-static-runtime/2.1.1-value.watsup:107.1-110.21
 syntax value = 
    | `b bool
    | error. nameIR
@@ -3015,6 +3017,7 @@ syntax value =
    | record{ fieldValue* }
    | record{ fieldValue* ,...}
    | set{ value }
+   | set{ value* ( nat )}
    | set{ value &&& value }
    | set{ value .. value }
    | set{...}
@@ -23166,13 +23169,18 @@ syntax tableObjectProperty = {keys tableKeysPropertyIR, actions tableActionsProp
 syntax tableObject = 
    | table typeId { frame tableObjectProperty }
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.1-object.watsup:75.1-79.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.1-object.watsup:80.3-80.33
+syntax valueSetObject = 
+   | value_set{ value* ( nat )}
+
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.1-object.watsup:83.1-88.19
 syntax object = 
    | extern typeId < theta >{ externState frame externMethodDefEnv }
    | parser( parameterListIR ){ frame parserLocalDeclarationListIR stateEnv }
    | control( parameterListIR ){ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    | package< theta >{ frame }
    | table typeId { frame tableObjectProperty }
+   | value_set{ value* ( nat )}
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.2-object-aux.watsup:9.1-9.36
 def $is_externObject(object) : bool =
@@ -23803,6 +23811,27 @@ def $find_constructorDef_i(instContext, prefixedNameIR, argumentIR*) : (callable
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:273.1-274.86
+def $subst_type_i(cursor, instContext, typeIR) : typeIR =
+
+  ;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:276.1-276.47
+  clause 0 : (cursor, IC, typeIR) = typeIR
+  -- if cursor matches `GLOBAL`
+
+  ;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:277.1-279.52
+  clause 1 : (cursor, IC, typeIR) = typeIR_subst
+  -- if cursor matches `BLOCK`
+  -- let theta = IC.block.type
+  -- let typeIR_subst = $subst_typeIR(theta, typeIR)
+
+  ;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:280.1-284.52
+  clause 2 : (cursor, IC, typeIR) = typeIR_subst
+  -- if cursor matches `LOCAL`
+  -- let theta_block = IC.block.type
+  -- let theta_local = IC.local.type
+  -- let theta = $extend_map<typeId, typeIR>(theta_block, theta_local)
+  -- let typeIR_subst = $subst_typeIR(theta, typeIR)
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:5.1-7.26
 relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
@@ -25144,25 +25173,38 @@ relation ParserLocalDecl_inst: instContext store |- parserLocalDeclarationIR : i
     rulepath variableDeclarationIR
     -- output: % % |- % : IC STO variableDeclarationIR as parserLocalDeclarationIR
 
-  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:33.1-35.41
+  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:35.1-55.61
   rulegroup valueSetDeclarationIR
 
    match
 
-    (signature) IC STO |- valueSetDeclarationIR as parserLocalDeclarationIR : % % %
-    IC STO |- parserLocalDeclarationIR : % % %
+    (signature) IC STO_0 |- annotationList value_set< typeIR >( typedExpressionIR_size ) nameIR ; as parserLocalDeclarationIR : % % %
+    IC STO_0 |- parserLocalDeclarationIR : % % %
     -- if parserLocalDeclarationIR <: valueSetDeclarationIR
-    -- let valueSetDeclarationIR = parserLocalDeclarationIR as valueSetDeclarationIR
+    -- let annotationList value_set< typeIR >( typedExpressionIR_size ) nameIR ; = parserLocalDeclarationIR as valueSetDeclarationIR
 
    paths
 
     rulepath valueSetDeclarationIR
-    -- output: % % |- % : IC STO valueSetDeclarationIR as parserLocalDeclarationIR
+    -- Expr_inst: block IC STO_0 |- typedExpressionIR_size : STO_1 value'
+    -- if value' <: integerValue
+    -- let integerValue_size = value' as integerValue
+    -- let int = $int_of_integerValue(integerValue_size)
+    -- if int <: nat
+    -- let n_size = int as nat
+    -- let typeIR_subst = $subst_type_i(block, IC, typeIR)
+    -- let value*{value <- value*} = $repeat_<value>($default(typeIR_subst), n_size)
+    -- let valueSetObject = value_set{ value*{value <- value*} ( n_size )}
+    -- let objectId = IC.path ++ [nameIR]
+    -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, valueSetObject as object)
+    -- let typeIR_set = set< typeIR > as typeIR
+    -- let constantDeclarationIR = `empty const typeIR_set nameIR = ! objectId as value ;
+    -- output: % % |- % : IC STO_2 constantDeclarationIR as parserLocalDeclarationIR
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:90.1-93.23
 relation ParserLocalDecls_inst: instContext store |- parserLocalDeclarationIR* : instContext store parserLocalDeclarationIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:43.1-44.29
+  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:63.1-64.29
   rulegroup nil
 
    match
@@ -25176,7 +25218,7 @@ relation ParserLocalDecls_inst: instContext store |- parserLocalDeclarationIR* :
     rulepath nil
     -- output: % % |- % : IC STO []
 
-  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:46.1-55.64
+  ;; ../../../../spec-concrete/7-instantiation/7.09.3-parser-declaration.watsup:66.1-75.64
   rulegroup cons
 
    match
@@ -27887,7 +27929,7 @@ syntax keysetExpressionResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:59.1-62.23
 relation Expr_eval_keyset: evalContext store |- keysetExpressionIR : evalContext store keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:180.1-189.54
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:190.1-199.54
   rulegroup 
 
    match
@@ -31183,26 +31225,31 @@ def $match_keyset(setValue, value) : bool =
   -- if setValue matches `SET{%}`
   -- let set{ value } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:21.1-25.6
-  clause 2 : (setValue, value_key) = $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:21.1-22.41
+  clause 2 : (setValue, value_key) = $exists_($bin_eq(value, value_key)*{value <- value*})
+  -- if setValue matches `SET{%(%)}`
+  -- let set{ value*{value <- value*} ( _nat )} = setValue
+
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:23.1-26.40
+  clause 3 : (setValue, value_key) = $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
   -- if setValue matches `SET{%&&&%}`
   -- let set{ value_base &&& value_mask } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:26.1-28.39
-  clause 3 : (setValue, value_key) = ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:27.1-29.39
+  clause 4 : (setValue, value_key) = ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
   -- if setValue matches `SET{%..%}`
   -- let set{ value_base .. value_limit } = setValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:37.1-38.16
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:38.1-39.16
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:40.1-43.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:41.1-44.23
 relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR : evalContext store simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:47.1-61.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:48.1-71.2
   rulegroup typedExpressionIR
 
    match
@@ -31220,15 +31267,29 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let abortResult = expressionResult as abortResult
     -- output: % % |- % : EC_1 STO_1 abortResult as simpleKeysetExpressionResult
 
-    rulepath cont
+    rulepath cont-setValue
     -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
     -- if expressionResult <: continueResult<value>
-    -- let ` value = expressionResult as continueResult<value>
-    -- if value <: setValue
-    -- let setValue = value as setValue
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: setValue
+    -- let setValue = value' as setValue
     -- output: % % |- % : EC_1 STO_1 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:65.1-90.2
+    rulepath cont-objectReferenceValue
+    -- Expr_eval: local EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: objectReferenceValue
+    -- let ! objectId = value' as objectReferenceValue
+    -- let object'?{object' <- object'?} = $find_map<objectId, object>(STO_1, objectId)
+    -- if object'?{object' <- object'?} matches (_)
+    -- let ?(object) = object'?{object' <- object'?}
+    -- if object <: valueSetObject
+    -- let value_set{ value*{value <- value*} ( n_size )} = object as valueSetObject
+    -- let setValue = set{ value*{value <- value*} ( n_size )}
+    -- output: % % |- % : EC_1 STO_1 ` setValue as simpleKeysetExpressionResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:75.1-100.2
   rulegroup mask
 
    match
@@ -31265,7 +31326,7 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{ value_l &&& value_r }
     -- output: % % |- % : EC_2 STO_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:94.1-119.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:104.1-129.2
   rulegroup range
 
    match
@@ -31302,7 +31363,7 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{ value_l .. value_r }
     -- output: % % |- % : EC_2 STO_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:123.1-126.33
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:133.1-136.33
   rulegroup default-any
 
    match
@@ -31317,10 +31378,10 @@ relation Expr_eval_keyset_simple: evalContext store |- simpleKeysetExpressionIR 
     -- let setValue = set{...}
     -- output: % % |- % : EC STO ` setValue as simpleKeysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:134.1-137.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:144.1-147.23
 relation Exprs_eval_keyset_simple: evalContext store |- simpleKeysetExpressionListIR : evalContext store keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:139.1-172.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:149.1-182.2
   rulegroup 
 
    match

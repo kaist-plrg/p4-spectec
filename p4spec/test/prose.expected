@@ -12951,6 +12951,22 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``callTargetKey`` be ``<<callTargetKey,`` ``callTargetKey(nameIR,`` ``argumentIR^{asterisk}^)>>``.
  .. Return ``<<find_overloaded,`` ``find_overloaded<constructorDef>(IC.GLOBAL.CONSTRUCTOR,`` ``callTargetKey,`` ``parameterListIR_of_constructorDef)>>``.
 
+<<subst_type_i, ``typeIR`` substituted by bound type variables in ``IC`` from the ``cursor`` layer>>
+
+
+. If ``cursor`` is ``GLOBAL``:
+ .. Return ``typeIR``.
+. Else if ``cursor`` is ``BLOCK``:
+ .. Let ``theta`` be ``IC.BLOCK.TYPE``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta``>>.
+ .. Return ``typeIR~subst~``.
+. Else:
+ .. Let ``theta~block~`` be ``IC.BLOCK.TYPE``.
+ .. Let ``theta~local~`` be ``IC.LOCAL.TYPE``.
+ .. Let ``theta`` be ``<<extend_map,`` ``extend_map<typeId,`` ``typeIR>(theta~block~,`` ``theta~local~)>>``.
+ .. Let ``typeIR~subst~`` be <<subst_typeIR, ``typeIR`` substituted by ``theta``>>.
+ .. Return ``typeIR~subst~``.
+
 <<Expr_inst, Expr_inst: ``p`` ``IC`` ``STO`` ``|-`` ``expressionIR`` ``#`` ``expressionNoteIR`` ``:`` ``%`` ``%``>>
 
 <<Expr_inst, ``p`` ``IC`` ``STO`` ``|-`` ``booleanLiteral`` ``#`` ``expressionNoteIR`` ``:`` ``%`` ``%``>>:
@@ -13524,9 +13540,23 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 . Result in ``IC~0~``, ``STO``, and ``variableDeclarationIR``.
 
-<<ParserLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``valueSetDeclarationIR`` ``:`` ``%`` ``%`` ``%``>>:
+<<ParserLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``annotationList`` ``VALUE_SET`` ``<`` ``typeIR`` ``>`` ``(`` ``typedExpressionIR~size~`` ``)`` ``nameIR`` ``;`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Result in ``IC~0~``, ``STO``, and ``valueSetDeclarationIR``.
+. Let <<Expr_inst, BLOCK IC~0~ STO |- typedExpressionIR~size~ : STO~1~ value>>.
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~size~`` be ``value``.
+. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
+. Check that ``int`` has type ``nat``.
+. Let ``n~size~`` be ``int``.
+. Let ``typeIR~subst~`` be <<subst_type_i, ``typeIR`` substituted by bound type variables in ``IC~0~`` from the ``BLOCK`` layer>>.
+. Let ``value''`` be <<default, the default value for type ``typeIR~subst~``>>.
+. Let ``value'^{asterisk}^`` be <<repeat_, a list of ``n~size~`` copies of ``value''``>>.
+. Let ``valueSetObject`` be ``VALUE_SET`` ``{`` ``value'^{asterisk}^`` ``(`` ``n~size~`` ``)`` ``}``.
+. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
+. Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``valueSetObject``]>>.
+. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR`` ``>``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR~set~`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+. Result in ``IC~0~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ParserLocalDecls_inst, ParserLocalDecls_inst: ``IC`` ``STO`` ``|-`` ``parserLocalDeclarationIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
 
@@ -16634,6 +16664,8 @@ for each ``parameterIR'`` in ``parameterIR'^{asterisk}^``
 . If ``setValue`` is ``SET`` ``{`` ``...`` ``}``: return ``true``.
 . Else if let ``SET`` ``{`` ``value`` ``}`` be ``setValue``:
  .. Return ``<<bin_eq,`` ``bin_eq(value,`` ``value~key~)>>``.
+. Else if let ``SET`` ``{`` ``value^{asterisk}^`` ``(`` ``++_++`` ``)`` ``}`` be ``setValue``:
+ .. Return ``<<exists_,`` ``exists_((bin_eq(value,`` ``value~key~))^{asterisk}^)>>``.
 . Else if let ``SET`` ``{`` ``value~base~`` ``&&&`` ``value~mask~`` ``}`` be ``setValue``:
  .. Return ``<<bin_eq,`` ``bin_eq(bin_band(value~base~,`` ``value~mask~),`` ``bin_band(value~key~,`` ``value~mask~))>>``.
 . Else:
@@ -16651,9 +16683,14 @@ for each ``parameterIR'`` in ``parameterIR'^{asterisk}^``
  .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
- .. Check that ``value`` has type ``setValue``.
- .. Let ``setValue`` be ``value``.
- .. Result in ``EC~1~``, ``STO~1~``, and ``setValue``.
+ .. If let ``setValue`` be ``value``:
+  ... Result in ``EC~1~``, ``STO~1~``, and ``setValue``.
+ .. Else if let ``!`` ``objectId`` be ``value``:
+  ... Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``objectId``]>>.
+  ... Check that ``object'`` has type ``valueSetObject``.
+  ... Let ``VALUE_SET`` ``{`` ``value'^{asterisk}^`` ``(`` ``n~size~`` ``)`` ``}`` be ``object'``.
+  ... Let ``setValue`` be ``SET`` ``{`` ``value'^{asterisk}^`` ``(`` ``n~size~`` ``)`` ``}``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``setValue``.
 
 <<Expr_eval_keyset_simple, ``EC~0~`` ``STO~0~`` ``|-`` ``typedExpressionIR~l~`` ``&&&`` ``typedExpressionIR~r~`` ``:`` ``%`` ``%`` ``%``>>:
 
