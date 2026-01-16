@@ -18,11 +18,12 @@ def $match_keysets(setValue_h :: setValue_t*, value_key_h :: value_key_t*)
 
 def $match_keyset(SET `{ `... }, value_key) = true
 def $match_keyset(SET `{ value }, value_key) = $bin_eq(value, value_key)
+def $match_keyset(SET `{ value* `( _ ) }, value_key)
+  = $exists_($bin_eq(value, value_key)*)
 def $match_keyset(SET `{ value_base `&&& value_mask }, value_key)
   = $bin_eq(
       $bin_band(value_base, value_mask),
-      $bin_band(value_key, value_mask)
-    )
+      $bin_band(value_key, value_mask))
 def $match_keyset(SET `{ value_base `.. value_limit }, value_key)
   = $bin_le(value_base, value_key)
     /\ $bin_le(value_key, value_limit)
@@ -52,11 +53,20 @@ rulegroup Expr_eval_keyset_simple/typedExpressionIR {
         LOCAL EC_0 STO_0 |- typedExpressionIR
                           : EC_1 STO_1 abortResult
 
-  rule Expr_eval_keyset_simple/cont:
+  rule Expr_eval_keyset_simple/cont-setValue:
     EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` setValue)
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR
                           : EC_1 STO_1 (`` setValue)
+
+  rule Expr_eval_keyset_simple/cont-objectReferenceValue:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` setValue)
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR
+                          : EC_1 STO_1 (`` (`! objectId))
+    -- if VALUE_SET `{ value* `( n_size ) }
+        = $find_map<objectId, object>(STO_1, objectId)
+    -- if setValue = SET `{ value* `( n_size ) }
 
 }
 
