@@ -14,6 +14,22 @@ let rec collect_files ~(suffix : string) (dir : string) =
       else files)
     [] files
 
+let collect_files_with_basedir ~(suffix : string) (dir : string) =
+  let rec collect_files_with_basedir ~reldir dir =
+    let files = Sys_unix.readdir (dir ^ "/" ^ reldir) in
+    Array.sort String.compare files;
+    Array.fold_left
+      (fun files file ->
+        let abspath = dir ^ "/" ^ reldir ^ "/" ^ file in
+        let relpath = if reldir = "" then file else reldir ^ "/" ^ file in
+        if Sys_unix.is_directory_exn abspath && file <> "include" then
+          files @ collect_files_with_basedir ~reldir:relpath dir
+        else if String.ends_with ~suffix abspath then files @ [ (dir, relpath) ]
+        else files)
+      [] files
+  in
+  collect_files_with_basedir ~reldir:"" dir
+
 let base ~(suffix : string) (filename : string) : string =
   let filename_base =
     String.split_on_char '/' filename |> List.rev |> List.hd
@@ -45,46 +61,6 @@ let rmdir (dirname : string) : unit =
   Unix.rmdir dirname
 
 let mkdir (dirname : string) : unit = Unix.mkdir dirname 0o755
-
-(* Collectors *)
-
-let collect_exclude filename_exclude =
-  let ic = open_in filename_exclude in
-  let rec parse_lines excludes =
-    try
-      let exclude = input_line ic in
-      if String.starts_with ~prefix:"#" exclude then parse_lines excludes
-      else parse_lines (exclude :: excludes)
-    with End_of_file -> excludes
-  in
-  let excludes = parse_lines [] in
-  close_in ic;
-  excludes
-
-let collect_excludes (paths_exclude : string list) =
-  let filenames_exclude =
-    List.concat_map (collect_files ~suffix:".exclude") paths_exclude
-  in
-  List.concat_map collect_exclude filenames_exclude
-
-(* Patchers *)
-
-let patch ~(suffix : string) (filenames : string list)
-    (filenames_patch : string list) : string list =
-  List.map
-    (fun filename ->
-      let filename_base = base ~suffix filename in
-      let filename_patch_opt =
-        List.find_opt
-          (fun filename_patch ->
-            let filename_patch_base = base ~suffix filename_patch in
-            String.equal filename_base filename_patch_base)
-          filenames_patch
-      in
-      match filename_patch_opt with
-      | Some filename_patch -> filename_patch
-      | None -> filename)
-    filenames
 
 (* Readers *)
 

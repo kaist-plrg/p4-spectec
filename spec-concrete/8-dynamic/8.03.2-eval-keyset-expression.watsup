@@ -35,7 +35,7 @@ def $match_keyset(SET `{ value_base `.. value_limit }, value_key)
 
 syntax simpleKeysetExpressionResult =
   | continueResult<setValue>
-  | exitResult
+  | abortResult
 
 relation Expr_eval_keyset_simple:
   evalContext store |- simpleKeysetExpressionIR
@@ -46,11 +46,11 @@ relation Expr_eval_keyset_simple:
 
 rulegroup Expr_eval_keyset_simple/typedExpressionIR {
 
-  rule Expr_eval_keyset_simple/exit:
-    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 EXIT
+  rule Expr_eval_keyset_simple/abort:
+    EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 abortResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR
-                          : EC_1 STO_1 EXIT
+                          : EC_1 STO_1 abortResult
 
   rule Expr_eval_keyset_simple/cont:
     EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` setValue)
@@ -64,19 +64,19 @@ rulegroup Expr_eval_keyset_simple/typedExpressionIR {
 
 rulegroup Expr_eval_keyset_simple/mask {
 
-  rule Expr_eval_keyset_simple/left-exit:
+  rule Expr_eval_keyset_simple/left-abort:
     EC_0 STO_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
+        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-exit:
+  rule Expr_eval_keyset_simple/left-cont-right-abort:
     EC_0 STO_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
-                : EC_2 STO_2 EXIT
+                : EC_2 STO_2 abortResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
     -- Expr_eval:
-        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 EXIT
+        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 abortResult
 
   rule Expr_eval_keyset_simple/left-cont-right-cont:
     EC_0 STO_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
@@ -93,19 +93,19 @@ rulegroup Expr_eval_keyset_simple/mask {
 
 rulegroup Expr_eval_keyset_simple/range {
 
-  rule Expr_eval_keyset_simple/left-exit:
+  rule Expr_eval_keyset_simple/left-abort:
     EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 EXIT
+        LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-exit:
+  rule Expr_eval_keyset_simple/left-cont-right-abort:
     EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r
-                : EC_2 STO_2 EXIT
+                : EC_2 STO_2 abortResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR_l : EC_1 STO_1 (`` value_l)
     -- Expr_eval:
-        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 EXIT
+        LOCAL EC_1 STO_1 |- typedExpressionIR_r : EC_2 STO_2 abortResult
 
   rule Expr_eval_keyset_simple/left-cont-right-cont:
     EC_0 STO_0 |- typedExpressionIR_l `.. typedExpressionIR_r
@@ -141,22 +141,22 @@ rulegroup Exprs_eval_keyset_simple {
   rule Exprs_eval_keyset_simple/nil:
     EC STO |- eps : EC STO (`` eps)
 
-  rule Exprs_eval_keyset_simple/cons-head-exit:
+  rule Exprs_eval_keyset_simple/cons-head-abort:
     EC_0 STO_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
-                : EC_1 STO_1 EXIT
+                : EC_1 STO_1 abortResult
     -- Expr_eval_keyset_simple:
         EC_0 STO_0 |- simpleKeysetExpressionIR_h
-                    : EC_1 STO_1 EXIT
+                    : EC_1 STO_1 abortResult
 
-  rule Exprs_eval_keyset_simple/cons-head-cont-tail-exit:
+  rule Exprs_eval_keyset_simple/cons-head-cont-tail-abort:
     EC_0 STO_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
-                : EC_2 STO_2 EXIT
+                : EC_2 STO_2 abortResult
     -- Expr_eval_keyset_simple:
         EC_0 STO_0 |- simpleKeysetExpressionIR_h
                     : EC_1 STO_1 (`` setValue_h)
     -- Exprs_eval_keyset_simple:
         EC_1 STO_1 |- simpleKeysetExpressionIR_t*
-                    : EC_2 STO_2 EXIT
+                    : EC_2 STO_2 abortResult
 
   rule Exprs_eval_keyset_simple/cons-head-cont-tail-cont:
     EC_0 STO_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*

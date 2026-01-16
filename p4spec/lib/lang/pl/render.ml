@@ -17,18 +17,26 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
+(* Widths *)
+
+let adoc_width_short = 20
+let adoc_fits_in_width_short (s : string) = String.length s <= adoc_width_short
+
 (* Subscript, superscript, and ligature *)
 
-let adoc_subscript s = "~" ^ s ^ "~"
-let adoc_superscript s = "^" ^ s ^ "^"
-let adoc_bold s = "*" ^ s ^ "*"
+let adoc_subscript (s : string) = "~" ^ s ^ "~"
+let adoc_superscript (s : string) = "^" ^ s ^ "^"
+let adoc_bold (s : string) = "*" ^ s ^ "*"
 
 (* Monospaced text *)
 
-let adoc_mono s = "``" ^ s ^ "``"
+let adoc_mono (s : string) = "``" ^ s ^ "``"
+
+let adoc_mono_chopped (s : string) =
+  s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
 
 let adoc_as_code (ctx : context) (s : string) : string =
-  if ctx.in_code then s else adoc_mono s
+  if ctx.in_code then s else adoc_mono_chopped s
 
 (* Lists *)
 
@@ -50,11 +58,6 @@ let adoc_as_link (ctx : context) ~link (s : string) : string =
 
 let adoc_attach_block = "+\n"
 let adoc_open_block s = F.asprintf "--\n%s\n--" s
-
-(* Widths *)
-
-let adoc_width_short = 20
-let adoc_fits_in_width_short s = String.length s <= adoc_width_short
 
 (* Rendering utils *)
 
@@ -197,8 +200,15 @@ let render_cmpop ctx cmpop =
 let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
     (render_base : string -> string) (render : context -> 'a -> string)
     (items : 'a list) : string =
+  let render_atom (atom : atom) : string =
+    match atom.it with
+    | LAngle | RAngle | LParen | RParen | LBrack | RBrack | LBrace | RBrace ->
+        atom |> Sl.Print.string_of_atom |> adoc_as_code ctx
+    | _ -> atom |> Sl.Print.string_of_atom
+  in
   items
-  |> Hints.Alter.alternate ~base_text:render_base hint (fun a -> render ctx a)
+  |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hint
+       (fun a -> render ctx a)
   |> fun s -> if caps then capitalize_first s else s
 
 (* Call prose *)
@@ -300,7 +310,7 @@ and render_exp ctx exp : string =
              expfields)
       ^ "}"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
-  | OptE None -> "None" |> adoc_as_code ctx
+  | OptE None -> "·" |> adoc_as_code ctx
   | ListE [] -> "·" |> adoc_as_code ctx
   | ListE exps ->
       "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> adoc_as_code ctx

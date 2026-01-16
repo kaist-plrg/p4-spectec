@@ -1,18 +1,26 @@
 [#sec-instantiation-declaration]
 === Instantiation
 
+// Section 11.3 of the P4-16 Language Specification
 Instantiations are similar to variable declarations, but are reserved for the
-types with constructors (`extern` objects, `control` blocks, ``parser``s, and
-``package``s):
+types with constructors (``extern`` objects, ``control`` blocks, ``parser``s,
+and ``package``s):
 
-${syntax: instantiation
-          instantiationIR}
+// Added
+${syntax: instantiation}
 
-An instantiation is written as a constructor invocation followed by a name.
+// Modified section 11.3 of the P4-16 Language Specification
+An instantiation is written as a constructor invocation followed by a name. In
+P4~IR~, instantiations have the syntax:
+
+// Added
+${syntax: instantiationIR}
+
+// Modified section 11.3 of the P4-16 Language Specification
 Instantiations are always executed at compilation time (Section
-<<#sec-compile-time-known>>). The effect is to allocate an object with the
-specified name, and to bind it to the result of the constructor invocation.
-Note that instantiation arguments can be specified by name.
+<<#sec-instantiation>>). The effect is to allocate an object with the specified
+name, and to bind it to the result of the constructor invocation. Note that
+instantiation arguments can be specified by name.
 
 For example, a hypothetical bank of counter objects can be instantiated as
 follows:
@@ -36,10 +44,11 @@ control c(/* parameters omitted */) {
 }
 ----
 
-A P4 program may not instantiate controls and parsers in the top-level package.
-This restriction is designed to ensure that most state resides in the
-architecture itself, or is local to a `parser` or `control`. For example, the
-following program is not valid:
+// Modified section 11.3 of the P4-16 Language Specification
+A P4 program may not instantiate controls and parsers at the top-level. This
+restriction is designed to ensure that most state resides in the architecture
+itself, or is local to a ``parser`` or ``control``. For example, the following
+program is not valid:
 
 [source,p4]
 ----
@@ -51,32 +60,38 @@ c() c1;  // illegal top-level instantiation
 because control `c1` is instantiated at the top-level. Note that top-level
 declarations of constants and instantiations of extern objects are permitted.
 
-==== Instantiating objects without abstract methods
-
-===== Type checking
-
-${rulegroup-source: Decl_ok/instantiation-non-objectInitializer}
-${rulegroup-prose: Decl_ok/instantiation-non-objectInitializer}
-
+[#sec-instantiation-abstract-methods]
 ==== Instantiating objects with abstract methods
 
-When instantiating an extern type that has `abstract` methods users have to
-supply implementations for all such methods.  This is done using object
+// Section 11.3.1 of the P4-16 Language Specification
+When instantiating an extern type that has ``abstract`` methods users have to
+supply implementations for all such methods. This is done using object
 initializers:
 
-${syntax: objectInitializer
-          objectInitializerIR}
+// Added
+${syntax: objectDeclaration
+          objectDeclarationList
+          objectInitializer}
 
+// Added
+In P4~IR~, object initializers have the syntax:
+
+// Added
+${syntax: objectInitializerIR}
+
+// Section 11.3.1 of the P4-16 Language Specification
 Abstract method implementations must use the same number of parameters, and the
 same parameter directions as those declared in the extern object declaration.
 Note that overloading of abstract methods is not allowed, thus an
 implementation could be matched to a declaration only with the method name.
 
-The abstract methods can only use the supplied arguments or refer to values
-that are in the same initializer block or the top-level scope. When calling
-another method of the same instance the `this` keyword is used to indicate the
-current object instance:
+// Modified section 11.3.1 of the P4-16 Language Specification
+Abstract method implementations can only use the supplied arguments or refer to
+values that are in the same initializer block or the top-level scope. When
+calling another method of the same instance the `this` keyword is used to
+indicate the current object instance:
 
+// Section 11.3.1 of the P4-16 Language Specification
 [source,p4]
 ----
 // Instantiate a balancer
@@ -89,26 +104,35 @@ Balancer() b = {  // provide an implementation for the abstract methods
 }
 ----
 
+// Section 11.3.1 of the P4-16 Language Specification
 Abstract methods may be invoked by users explicitly, or they may be invoked by
-the target architecture.  The architectural description has to specify when the
+the target architecture. The architectural description has to specify when the
 abstract methods are invoked and what the meaning of their arguments and return
 values is; target architectures may impose additional constraints on abstract
 methods.
 
 [discrete]
-===== Type checking
+====== Type checking instantiations
 
-${rulegroup-source: Decl_object_ok/functionDeclaration}
-${rulegroup-prose: Decl_object_ok/functionDeclaration}
+Instantiations are type checked with the relation:
 
-${rulegroup-source: Decl_object_ok/instantiation}
-${rulegroup-prose: Decl_object_ok/instantiation}
+${relation-title-source: InstDecl_ok}
+${relation-title-prose: InstDecl_ok}
 
-${rulegroup-source: Decl_ok/instantiation-objectInitializer}
-${rulegroup-prose: Decl_ok/instantiation-objectInitializer}
+There are two rules for this relation, depending on whether object initializers
+were provided or not.
 
-[discrete]
-==== Compile-time evaluation
+* **When object initializers are absent:**
 
-${rulegroup-source: Decl_inst/instantiationIR}
-${rulegroup-prose: Decl_inst/instantiationIR}
+${rulegroup-source: InstDecl_ok/non-objectInitializer}
+${rulegroup-prose: InstDecl_ok/non-objectInitializer}
+
+* **When object initializers are present:**
+
+${rulegroup-source: InstDecl_ok/objectInitializer}
+${rulegroup-prose: InstDecl_ok/objectInitializer}
+
+When used as a top-level declarations, instantiations are typed with:
+
+${rulegroup-source: Decl_ok/instantiation}
+${rulegroup-prose: Decl_ok/instantiation}

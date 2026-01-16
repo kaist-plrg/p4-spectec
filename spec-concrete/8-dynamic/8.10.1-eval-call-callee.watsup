@@ -55,14 +55,14 @@ rule Callee_eval/referenceExpressionIR-definedFunctionCallee:
 
 rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
 
-  rule Callee_eval/exit:
+  rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- Lvalue_eval:
-        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 abortResult
 
   rule Callee_eval/header-stack-push_front:
     p EC_0 STO_0 |- (typedExpressionIR `. "push_front") `< `_ > `( argumentIR )
@@ -137,14 +137,14 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
 
 rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
 
-  rule Callee_eval/exit:
+  rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- Lvalue_eval:
-        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 abortResult
 
   rule Callee_eval/cont:
     p EC_0 STO_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
@@ -182,15 +182,15 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
 
 rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
 
-  rule Callee_eval/exit:
+  rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- Lvalue_eval:
         p EC_0 STO_0 |- typedLvalueIR
-                      : EC_1 STO_1 EXIT
+                      : EC_1 STO_1 abortResult
 
   rule Callee_eval/cont:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
@@ -230,14 +230,14 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
 
 rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
 
-  rule Callee_eval/exit:
+  rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- Lvalue_eval:
-        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 abortResult
 
   rule Callee_eval/cont:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
@@ -279,14 +279,14 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
 
 rulegroup Callee_eval/typedExpressionIR-nameIR-table-apply-method {
 
-  rule Callee_eval/exit:
+  rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
-                  : EC_1 STO_1 EXIT
+                  : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- Lvalue_eval:
-        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 EXIT
+        p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 abortResult
 
   rule Callee_eval/cont:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( eps )

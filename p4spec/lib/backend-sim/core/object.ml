@@ -361,3 +361,10 @@ module PacketOut = struct
     in
     (pkt, value_ctx, value_sto, value_callResult)
 end
+
+module Packet = struct
+  let pp fmt ((pkt_in, pkt_out): PacketIn.t * PacketOut.t) =
+    let payload_bits = Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx) in
+    let packet = Array.append pkt_out.bits payload_bits in
+    Format.fprintf fmt "%s" (bits_to_string packet)
+end

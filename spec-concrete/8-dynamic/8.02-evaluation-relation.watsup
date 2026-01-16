@@ -21,13 +21,17 @@ syntax acceptTransitionResult = ACCEPT
 syntax rejectTransitionResult = REJECT errorValue
 syntax stateTransitionResult = STATE id
 
+syntax abortResult =
+  | exitResult
+  | rejectTransitionResult
+
 ;;
 ;;;; Expression evaluation
 ;;
 
 syntax expressionResult =
   | continueResult<value>
-  | exitResult
+  | abortResult
 
 relation Expr_eval:
   cursor evalContext store |- typedExpressionIR
@@ -38,6 +42,7 @@ relation Expr_eval:
 
 syntax expressionListResult =
   | continueResult<value*>
+  | rejectTransitionResult
   | exitResult
 
 relation Exprs_eval:
@@ -49,7 +54,7 @@ relation Exprs_eval:
 
 syntax keysetExpressionResult =
   | continueResult<setValue*>
-  | exitResult
+  | abortResult
 
 relation Expr_eval_keyset:
   evalContext store |- keysetExpressionIR
@@ -67,7 +72,7 @@ relation Argument_eval:
 
 syntax storageReferenceResult =
   | continueResult<storageReference?>
-  | exitResult
+  | abortResult
 
 relation Argument_eval_lvalue:
   cursor evalContext store |- argumentIR
@@ -97,8 +102,7 @@ relation Lvalue_write:
 ;;
 
 syntax callResult =
-  | exitResult
-  | rejectTransitionResult
+  | abortResult
   | returnResult
 
 syntax forBreakResult = BREAK
@@ -175,12 +179,12 @@ relation ParserState_trans:
 
 relation ParserLocalDecl_eval:
   evalContext store |- parserLocalDeclarationIR
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
 
 relation ParserLocalDecls_eval:
   evalContext store |- parserLocalDeclarationIR*
-                     : evalContext store
+                     : evalContext store parserStatementResult
   hint(input %0 %1 %2)
 
 ;;
@@ -205,23 +209,27 @@ relation ControlBody_eval:
                      : evalContext store controlBodyResult
   hint(input %0 %1 %2)
 
-syntax declarationResult =
+syntax controlLocalDeclarationResult =
   | continueEmptyResult
   | exitResult
 
 relation ControlLocalDecl_eval:
   evalContext store |- controlLocalDeclarationIR
-                     : evalContext store declarationResult
+                     : evalContext store controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 relation ControlLocalDecls_eval:
   evalContext store |- controlLocalDeclarationIR*
-                     : evalContext store declarationResult
+                     : evalContext store controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 ;;
 ;;;; Declaration evaluation
 ;;
+
+syntax declarationResult =
+  | continueEmptyResult
+  | abortResult
 
 relation VarDecl_eval:
   cursor evalContext store |- variableDeclarationIR
@@ -247,7 +255,7 @@ relation ConstDecl_eval:
 
 syntax calleeResult =
   | continueResult<callee>
-  | exitResult
+  | abortResult
 
 relation Callee_eval:
   cursor evalContext store |- callableTargetIR `< `_ > `( argumentListIR )
@@ -256,7 +264,7 @@ relation Callee_eval:
 
 syntax copyInResult =
   | continueResult<storageReference?>
-  | exitResult
+  | abortResult
 
 relation Copy_in_argument:
   store cursor evalContext parameterIR
@@ -266,7 +274,7 @@ relation Copy_in_argument:
   
 syntax copyInListResult =
   | continueResult<storageReference?*>
-  | exitResult
+  | abortResult
 
 relation Copy_in:
   store cursor evalContext parameterListIR
@@ -296,20 +304,20 @@ relation Call_eval:
                                         `( argumentListIR )
                             : evalContext store callResult
   hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "calling" %3#"<"#%4#">"#"("#%5#"), under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under cursor" %0#", evaluation context" %1#", and store" %2)
   hint(prose_out "the updated evaluation context" %6#", store" %7#", and call result" %8)
 
 extern relation ExternFunctionCall_eval:
   evalContext store |- nameIR `( nameIR* )
                      : evalContext store callResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "calling an extern function" %2#"("#%3#"), under evaluation context" %0#", and store" %1)
+  hint(prose_in "calling an extern function" %2 `( %3 ) #", under evaluation context" %0#", and store" %1)
   hint(prose_out "the updated evaluation context" %4#", store" %5#", and call result" %6)
 
 extern relation ExternMethodCall_eval:
   evalContext store |- objectId `. nameIR `( nameIR* )
                      : evalContext store callResult
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "calling an extern method" %3#"("#%4#") on object"
+  hint(prose_in "calling an extern method" %3 `( %4 ) "on object"
                 %2#", under evaluation context" %0#", and store" %1)
   hint(prose_out "the updated evaluation context" %5#", store" %6#", and call result" %7)
