@@ -12622,6 +12622,16 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 . Let ``TBL~updated~`` be ``TBL[ENTRIES`` ``=`` ``tableEntriesPropertyIR~updated~]``.
 . Return ``TABLE`` ``typeId`` ``{`` ``frame`` ``TBL~updated~`` ``}``.
 
+<<tableObject_add_default_action, tableObject_add_default_action(TABLE typeId { frame TBL }, tableActionInterface)>>
+
+
+. Let ``++_++`` ``constIR^?^`` ``DEFAULT_ACTION`` ``=`` ``++_++`` ``;`` be ``TBL.DEFAULT_ACTION``.
+. Check that ``constIR^?^`` is none.
+. Let ``tableActionReferenceIR`` be ``<<tableObject_create_entry_action,`` ``tableObject_create_entry_action(TBL.ACTIONS,`` ``tableActionInterface)>>``.
+. Let ``tableDefaultActionPropertyIR`` be ```EMPTY`` ``·`` ``DEFAULT_ACTION`` ``=`` ``tableActionReferenceIR`` ``;``.
+. Let ``TBL~updated~`` be ``TBL[DEFAULT_ACTION`` ``=`` ``tableDefaultActionPropertyIR]``.
+. Return ``TABLE`` ``typeId`` ``{`` ``frame`` ``TBL~updated~`` ``}``.
+
 <<empty_frame, empty_frame>>
 
 
@@ -17575,6 +17585,140 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~main~`` be ``<<V1Model_setup_main_callee,`` ``V1Model_setup_main_callee(EC~0~,`` ``STO~0~)>>``.
 . Let ``typedExpressionIR~dep~`` be ``<<V1Model_setup_deparse_callee,`` ``V1Model_setup_deparse_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~dep~`` ``.`` ``"apply"``.
+. Let 
+* the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
+* the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
+. Else if let ``exitResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+
+<<EBPF_init, EBPF_init>>:
+
+* Initializing the evaluation context and store for ``p4program`` in the eBPF architecture:
+* Results in the resulting evaluation context ``evalContext`` and store ``store``.
+
+<<EBPF_init, Initializing the evaluation context and store for ``p4program`` in the eBPF architecture>>:
+
+. Let 
+* the resulting evaluation context ``EC~0~`` and store ``STO~0~`` be
+* the result of <<Program_init, initializing the evaluation context and store for ``p4program``>>.
+. Result in the resulting evaluation context ``EC~0~`` and store ``STO~0~``.
+
+<<EBPF_init_packet_in, EBPF_init_packet_in: ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>
+
+<<EBPF_init_packet_in, ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>:
+
+. Let 
+* the resulting store ``STO~1~`` be
+* the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_in"``>>.
+. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_in"`` to ``!`` ``["packet_in"]`` is added to the ``GLOBAL`` layer>>.
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``["packet_in"]``]>>.
+. Check that ``object`` has type ``externObject``.
+. Let ``externObject~packet_in~`` be ``object``.
+. Let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``externObject~packet_in~``.
+. Let ``externObject~packet_in_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``}``.
+. Let ``STO~2~`` be <<add_map, ``STO~1~``[``["packet_in"]`` := ``externObject~packet_in_init~``]>>.
+. Result in ``EC~1~`` and ``STO~2~``.
+
+<<EBPF_init_globals, EBPF_init_globals: ``EC~0~`` ``STO`` ``|-`` ``%``>>
+
+<<EBPF_init_globals, ``EC~0~`` ``STO`` ``|-`` ``%``>>:
+
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO``[``["main"]``]>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
+. Let ``typeIR~headers~`` be <<option_get, *!*>> <<find_map, ``theta``[``"H"``]>>.
+. Let 
+* the resulting evaluation context ``EC~1~`` be
+* the result of <<Var_init, instantiating global variable ``"headers"`` of type ``typeIR~headers~`` in the evaluation context ``EC~0~``>>.
+. Let 
+* the resulting evaluation context ``EC~2~`` be
+* the result of <<Var_init, instantiating global variable ``"accept"`` of type ``BOOL`` in the evaluation context ``EC~1~``>>.
+. Result in ``EC~2~``.
+
+<<eBPF_setup_packet_in_argument, eBPF_setup_packet_in_argument(EC)>>
+
+
+. Let ``typeDefIR~packet_in~`` be <<option_get, *!*>> ``<<find_typeDef_e,`` ``find_typeDef_e(GLOBAL,`` ``EC,`` ``"packet_in")>>``.
+. Let ``typeIR~packet_in~`` be <<specialize_typeDefIR, ``typeDefIR~packet_in~`` specialized by ``·``>>.
+. Let ``argumentIR~packet_in~`` be ``.`` ``"packet_in"`` ``#`` ``(`` ``typeIR~packet_in~`` ``CTK`` ``)``.
+. Return ``argumentIR~packet_in~``.
+
+<<eBPF_setup_headers_argument, eBPF_setup_headers_argument(STO)>>
+
+
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO``[``["main"]``]>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
+. Let ``typeIR~headers~`` be <<option_get, *!*>> <<find_map, ``theta``[``"H"``]>>.
+. Let ``argumentIR~headers~`` be ``.`` ``"headers"`` ``#`` ``(`` ``typeIR~headers~`` ``DYN`` ``)``.
+. Return ``argumentIR~headers~``.
+
+<<eBPF_setup_main_callee, eBPF_setup_main_callee(EC, STO)>>
+
+
+. Let ``typeDefIR~package~`` be <<option_get, *!*>> ``<<find_typeDef_e,`` ``find_typeDef_e(GLOBAL,`` ``EC,`` ``"ebpfFilter")>>``.
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO``[``["main"]``]>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
+. Let ``typeIR~headers~`` be <<option_get, *!*>> <<find_map, ``theta``[``"H"``]>>.
+. Let ``typeIR~package~`` be <<specialize_typeDefIR, ``typeDefIR~package~`` specialized by ``[typeIR~headers~]``>>.
+. Let ``typedExpressionIR~main~`` be <<typedExpressionIR, ``"main"`` annotated with type ``typeIR~package~`` and compile-time known-ness ``CTK``>>.
+. Return ``typedExpressionIR~main~``.
+
+<<eBPF_setup_parse_callee, eBPF_setup_parse_callee(EC, STO, typedExpressionIR~main~)>>
+
+
+. Let ``typeDefIR~parse~`` be <<option_get, *!*>> ``<<find_typeDef_e,`` ``find_typeDef_e(GLOBAL,`` ``EC,`` ``"parse")>>``.
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO``[``["main"]``]>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
+. Let ``typeIR~headers~`` be <<option_get, *!*>> <<find_map, ``theta``[``"H"``]>>.
+. Let ``typeIR~parse~`` be <<specialize_typeDefIR, ``typeDefIR~parse~`` specialized by ``[typeIR~headers~]``>>.
+. Let ``typedExpressionIR~parse~`` be <<typedExpressionIR, ``typedExpressionIR~main~`` ``.`` ``"prs"`` annotated with type ``typeIR~parse~`` and compile-time known-ness ``CTK``>>.
+. Return ``typedExpressionIR~parse~``.
+
+<<eBPF_setup_filter_callee, eBPF_setup_filter_callee(EC, STO, typedExpressionIR~main~)>>
+
+
+. Let ``typeDefIR~filter~`` be <<option_get, *!*>> ``<<find_typeDef_e,`` ``find_typeDef_e(GLOBAL,`` ``EC,`` ``"filter")>>``.
+. Let ``object`` be <<option_get, *!*>> <<find_map, ``STO``[``["main"]``]>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
+. Let ``typeIR~headers~`` be <<option_get, *!*>> <<find_map, ``theta``[``"H"``]>>.
+. Let ``typeIR~filter~`` be <<specialize_typeDefIR, ``typeDefIR~filter~`` specialized by ``[typeIR~headers~]``>>.
+. Let ``typedExpressionIR~filter~`` be <<typedExpressionIR, ``typedExpressionIR~main~`` ``.`` ``"filt"`` annotated with type ``typeIR~filter~`` and compile-time known-ness ``CTK``>>.
+. Return ``typedExpressionIR~filter~``.
+
+<<EBPF_parse, EBPF_parse: ``EC~0~`` ``STO~0~`` ``|-`` ``%`` ``%`` ``%``>>
+
+<<EBPF_parse, ``EC~0~`` ``STO~0~`` ``|-`` ``%`` ``%`` ``%``>>:
+
+. Let ``argumentIR~packet_in~`` be ``<<eBPF_setup_packet_in_argument,`` ``eBPF_setup_packet_in_argument(EC~0~)>>``.
+. Let ``argumentIR~headers~`` be ``<<eBPF_setup_headers_argument,`` ``eBPF_setup_headers_argument(STO~0~)>>``.
+. Let ``argumentIR^{asterisk}^`` be ``[argumentIR~packet_in~,`` ``argumentIR~headers~]``.
+. Let ``typedExpressionIR~main~`` be ``<<eBPF_setup_main_callee,`` ``eBPF_setup_main_callee(EC~0~,`` ``STO~0~)>>``.
+. Let ``typedExpressionIR~prs~`` be ``<<eBPF_setup_parse_callee,`` ``eBPF_setup_parse_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~prs~`` ``.`` ``"apply"``.
+. Let 
+* the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
+* the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``ACCEPT``.
+. Else if let ``rejectTransitionResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+
+<<EBPF_filter, EBPF_filter: ``EC~0~`` ``STO~0~`` ``|-`` ``%`` ``%`` ``%``>>
+
+<<EBPF_filter, ``EC~0~`` ``STO~0~`` ``|-`` ``%`` ``%`` ``%``>>:
+
+. Let ``argumentIR~headers~`` be ``<<eBPF_setup_headers_argument,`` ``eBPF_setup_headers_argument(STO~0~)>>``.
+. Let ``argumentIR~accept~`` be ``.`` ``"accept"`` ``#`` ``(`` ``BOOL`` ``DYN`` ``)``.
+. Let ``argumentIR^{asterisk}^`` be ``[argumentIR~headers~,`` ``argumentIR~accept~]``.
+. Let ``typedExpressionIR~main~`` be ``<<eBPF_setup_main_callee,`` ``eBPF_setup_main_callee(EC~0~,`` ``STO~0~)>>``.
+. Let ``typedExpressionIR~filt~`` be ``<<eBPF_setup_filter_callee,`` ``eBPF_setup_filter_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~filt~`` ``.`` ``"apply"``.
 . Let 
 * the evaluation context ``EC~1~``,the updated store ``STO~1~``,and the instantiated statement ``statementResult`` be
 * the result of <<Stmt_eval, the compile-time evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.

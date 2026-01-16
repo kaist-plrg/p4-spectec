@@ -311,7 +311,18 @@ module PacketIn = struct
      some target architectures.
 
      bit<32> length(); *)
-  (* let length pkt = *)
+  let length (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+      t * Value.t * Value.t * Value.t =
+    (* Get packet length in bytes *)
+    let length = if pkt.len mod 8 = 0 then pkt.len / 8 else (pkt.len / 8) + 1 in
+    let value_length =
+      pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int length)
+    in
+    let value_callResult =
+      let value_length_opt = wrap_opt_v "value" (Some value_length) in
+      [ Term "RETURN"; NT value_length_opt ] #@ "returnResult"
+    in
+    (pkt, value_ctx, value_sto, value_callResult)
 end
 
 (* Output packet *)
@@ -352,8 +363,10 @@ module PacketOut = struct
 end
 
 module Packet = struct
-  let pp fmt ((pkt_in, pkt_out): PacketIn.t * PacketOut.t) =
-    let payload_bits = Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx) in
+  let pp fmt ((pkt_in, pkt_out) : PacketIn.t * PacketOut.t) =
+    let payload_bits =
+      Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx)
+    in
     let packet = Array.append pkt_out.bits payload_bits in
     Format.fprintf fmt "%s" (bits_to_string packet)
 end

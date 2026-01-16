@@ -1,4 +1,4 @@
-;; Instruction coverage: 8971/12401 (72.34%)
+;; Instruction coverage: 8975/12518 (71.70%)
 ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:18.1-19.30
 builtin def $print_<X>(X)
 
@@ -14350,13 +14350,13 @@ rel Expr_eval_lctk: p TC |- (expressionIR # expressionNoteIR) ~> %
 
 +                             5. (ExternFunctionCall_eval_lctk: TC_callee_1 |- "static_assert" ( (nameIR_param)* )~> value')
 
--                             6. If ((value' has type boolValue)), then
++                             6. If ((value' has type boolValue)), then
 
--                               1. (Let boolValue be (value' as boolValue))
++                               1. (Let boolValue be (value' as boolValue))
 
--                               2. If (((`b true) = boolValue)), then
++                               2. If (((`b true) = boolValue)), then
 
--                                 1. Result in: % % |- % ~> (boolValue as value)
++                                 1. Result in: % % |- % ~> (boolValue as value)
 
           2. Case (% matches pattern `(%)`)
 
@@ -26069,6 +26069,21 @@ def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInter
 
 + 8. Return (table typeId { frame TBL_updated })
 
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:236.1-239.16
+def $tableObject_add_default_action((table typeId { frame TBL }), tableActionInterface)
+
+- 1. (Let (_annotationList (constIR)? default_action= _tableActionReferenceIR ;) be TBL.default_action)
+
+- 2. If (((constIR)? matches pattern ())), then
+
+-   1. (Let tableActionReferenceIR be $tableObject_create_entry_action(TBL.actions, tableActionInterface))
+
+-   2. (Let tableDefaultActionPropertyIR be ((`empty) ?() default_action= tableActionReferenceIR ;))
+
+-   3. (Let TBL_updated be TBL[default_action = tableDefaultActionPropertyIR])
+
+-   4. Return (table typeId { frame TBL_updated })
+
 ;; ../../../../spec-concrete/7-instantiation/7.01.1-dynamic-env.watsup:6.16-6.30
 syntax frame = map<id, value>
 
@@ -35373,6 +35388,266 @@ rel V1Model_deparse: EC_0 STO_0 |- % % %
 +       1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
 +       2. Result in: % % |- EC_1 STO_1 ((return ?()) as callResult)
+
+      2. Case (% has type exitResult)
+
+-       1. (Let exitResult be (statementResult as exitResult))
+
+-       2. Result in: % % |- EC_1 STO_1 ((exit) as callResult)
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:5.1-10.72
+rel EBPF_init: |- p4program : % %
+
+- 1. Group : |- p4program : % %
+
+-   1. (Program_init: |- p4program : EC_0 STO_0)
+
+-   2. Result in: |- % : EC_0 STO_0
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:22.1-24.23
+rel EBPF_init_packet_in: EC_0 STO_0 |- externState_packet_in : % %
+
+- 1. Group : EC_0 STO_0 |- externState_packet_in : % %
+
+-   1. (Extern_init: EC_0 STO_0 |- "packet_in" : STO_1)
+
+-   2. (Let EC_1 be $add_var_e((global), EC_0, (` "packet_in"), ((! ["packet_in"]) as value)))
+
+-   3. (Let (object')? be $find_map<objectId, object>(STO_1, ["packet_in"]))
+
+-   4. If (((object')? matches pattern (_))), then
+
+-     1. (Let ?(object) be (object')?)
+
+-     2. If ((object has type externObject)), then
+
+-       1. (Let externObject_packet_in be (object as externObject))
+
+-       2. (Let (extern typeId < theta >{ _externState frame externMethodDefEnv }) be externObject_packet_in)
+
+-       3. (Let externObject_packet_in_init be (extern typeId < theta >{ externState_packet_in frame externMethodDefEnv }))
+
+-       4. (Let STO_2 be $add_map<objectId, object>(STO_1, ["packet_in"], (externObject_packet_in_init as object)))
+
+-       5. Result in: % % |- % : EC_1 STO_2
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:40.1-42.20
+rel EBPF_init_globals: EC_0 STO |- %
+
+- 1. Group : EC_0 STO |- %
+
+-   1. (Let (object')? be $find_map<objectId, object>(STO, ["main"]))
+
+-   2. If (((object')? matches pattern (_))), then
+
+-     1. (Let ?(object) be (object')?)
+
+-     2. If ((object has type packageObject)), then
+
+-       1. (Let (package< theta >{ _frame }) be (object as packageObject))
+
+-       2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, "H"))
+
+-       3. If (((typeIR)? matches pattern (_))), then
+
+-         1. (Let ?(typeIR_headers) be (typeIR)?)
+
+-         2. (Var_init: EC_0 |- typeIR_headers "headers" : EC_1)
+
+-         3. (Var_init: EC_1 |- ((bool) as typeIR) "accept" : EC_2)
+
+-         4. Result in: % % |- EC_2
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:58.1-58.61
+def $eBPF_setup_packet_in_argument(EC)
+
+- 1. (Let (typeDefIR)? be $find_typeDef_e((global), EC, (` "packet_in")))
+
+- 2. If (((typeDefIR)? matches pattern (_))), then
+
+-   1. (Let ?(typeDefIR_packet_in) be (typeDefIR)?)
+
+-   2. (Let typeIR_packet_in be $specialize_typeDefIR(typeDefIR_packet_in, []))
+
+-   3. (Let argumentIR_packet_in be ((((. "packet_in") as expressionIR) # (( typeIR_packet_in (ctk) ))) as argumentIR))
+
+-   4. Return argumentIR_packet_in
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:67.1-67.53
+def $eBPF_setup_headers_argument(STO)
+
+- 1. (Let (object')? be $find_map<objectId, object>(STO, ["main"]))
+
+- 2. If (((object')? matches pattern (_))), then
+
+-   1. (Let ?(object) be (object')?)
+
+-   2. If ((object has type packageObject)), then
+
+-     1. (Let (package< theta >{ _frame }) be (object as packageObject))
+
+-     2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, "H"))
+
+-     3. If (((typeIR)? matches pattern (_))), then
+
+-       1. (Let ?(typeIR_headers) be (typeIR)?)
+
+-       2. (Let argumentIR_headers be ((((. "headers") as expressionIR) # (( typeIR_headers (dyn) ))) as argumentIR))
+
+-       3. Return argumentIR_headers
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:75.1-75.68
+def $eBPF_setup_main_callee(EC, STO)
+
+- 1. (Let (typeDefIR)? be $find_typeDef_e((global), EC, (` "ebpfFilter")))
+
+- 2. If (((typeDefIR)? matches pattern (_))), then
+
+-   1. (Let ?(typeDefIR_package) be (typeDefIR)?)
+
+-   2. (Let (object')? be $find_map<objectId, object>(STO, ["main"]))
+
+-   3. If (((object')? matches pattern (_))), then
+
+-     1. (Let ?(object) be (object')?)
+
+-     2. If ((object has type packageObject)), then
+
+-       1. (Let (package< theta >{ _frame }) be (object as packageObject))
+
+-       2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, "H"))
+
+-       3. If (((typeIR)? matches pattern (_))), then
+
+-         1. (Let ?(typeIR_headers) be (typeIR)?)
+
+-         2. (Let typeIR_package be $specialize_typeDefIR(typeDefIR_package, [typeIR_headers]))
+
+-         3. (Let typedExpressionIR_main be (((` "main") as expressionIR) # (( typeIR_package (ctk) ))))
+
+-         4. Return typedExpressionIR_main
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:90.1-93.22
+def $eBPF_setup_parse_callee(EC, STO, typedExpressionIR_main)
+
+- 1. (Let (typeDefIR)? be $find_typeDef_e((global), EC, (` "parse")))
+
+- 2. If (((typeDefIR)? matches pattern (_))), then
+
+-   1. (Let ?(typeDefIR_parse) be (typeDefIR)?)
+
+-   2. (Let (object')? be $find_map<objectId, object>(STO, ["main"]))
+
+-   3. If (((object')? matches pattern (_))), then
+
+-     1. (Let ?(object) be (object')?)
+
+-     2. If ((object has type packageObject)), then
+
+-       1. (Let (package< theta >{ _frame }) be (object as packageObject))
+
+-       2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, "H"))
+
+-       3. If (((typeIR)? matches pattern (_))), then
+
+-         1. (Let ?(typeIR_headers) be (typeIR)?)
+
+-         2. (Let typeIR_parse be $specialize_typeDefIR(typeDefIR_parse, [typeIR_headers]))
+
+-         3. (Let typedExpressionIR_parse be ((((typedExpressionIR_main as memberAccessBaseIR) . "prs") as expressionIR) # (( typeIR_parse (ctk) ))))
+
+-         4. Return typedExpressionIR_parse
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:110.1-113.22
+def $eBPF_setup_filter_callee(EC, STO, typedExpressionIR_main)
+
+- 1. (Let (typeDefIR)? be $find_typeDef_e((global), EC, (` "filter")))
+
+- 2. If (((typeDefIR)? matches pattern (_))), then
+
+-   1. (Let ?(typeDefIR_filter) be (typeDefIR)?)
+
+-   2. (Let (object')? be $find_map<objectId, object>(STO, ["main"]))
+
+-   3. If (((object')? matches pattern (_))), then
+
+-     1. (Let ?(object) be (object')?)
+
+-     2. If ((object has type packageObject)), then
+
+-       1. (Let (package< theta >{ _frame }) be (object as packageObject))
+
+-       2. (Let (typeIR)? be $find_map<typeId, typeIR>(theta, "H"))
+
+-       3. If (((typeIR)? matches pattern (_))), then
+
+-         1. (Let ?(typeIR_headers) be (typeIR)?)
+
+-         2. (Let typeIR_filter be $specialize_typeDefIR(typeDefIR_filter, [typeIR_headers]))
+
+-         3. (Let typedExpressionIR_filter be ((((typedExpressionIR_main as memberAccessBaseIR) . "filt") as expressionIR) # (( typeIR_filter (ctk) ))))
+
+-         4. Return typedExpressionIR_filter
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:135.1-137.20
+rel EBPF_parse: EC_0 STO_0 |- % % %
+
+- 1. Group : EC_0 STO_0 |- % % %
+
+-   1. (Let argumentIR_packet_in be $eBPF_setup_packet_in_argument(EC_0))
+
+-   2. (Let argumentIR_headers be $eBPF_setup_headers_argument(STO_0))
+
+-   3. (Let (argumentIR)* be [argumentIR_packet_in, argumentIR_headers])
+
+-   4. (Let typedExpressionIR_main be $eBPF_setup_main_callee(EC_0, STO_0))
+
+-   5. (Let typedExpressionIR_prs be $eBPF_setup_parse_callee(EC_0, STO_0, typedExpressionIR_main))
+
+-   6. (Let callableTargetIR be (typedExpressionIR_prs . "apply"))
+
+-   7. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( (argumentIR)* );) as statementIR) : EC_1 STO_1 statementResult)
+
+-   8. Case analysis on statementResult
+
+      1. Case (% has type continueEmptyResult)
+
+-       1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
+-       2. Result in: % % |- EC_1 STO_1 ((accept) as transitionResult)
+
+      2. Case (% has type rejectTransitionResult)
+
+-       1. (Let rejectTransitionResult be (statementResult as rejectTransitionResult))
+
+-       2. Result in: % % |- EC_1 STO_1 (rejectTransitionResult as transitionResult)
+
+;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:183.1-185.20
+rel EBPF_filter: EC_0 STO_0 |- % % %
+
+- 1. Group : EC_0 STO_0 |- % % %
+
+-   1. (Let argumentIR_headers be $eBPF_setup_headers_argument(STO_0))
+
+-   2. (Let argumentIR_accept be ((((. "accept") as expressionIR) # (( ((bool) as typeIR) (dyn) ))) as argumentIR))
+
+-   3. (Let (argumentIR)* be [argumentIR_headers, argumentIR_accept])
+
+-   4. (Let typedExpressionIR_main be $eBPF_setup_main_callee(EC_0, STO_0))
+
+-   5. (Let typedExpressionIR_filt be $eBPF_setup_filter_callee(EC_0, STO_0, typedExpressionIR_main))
+
+-   6. (Let callableTargetIR be (typedExpressionIR_filt . "apply"))
+
+-   7. (Stmt_eval: (global) EC_0 STO_0 |- ((callableTargetIR < [] >( (argumentIR)* );) as statementIR) : EC_1 STO_1 statementResult)
+
+-   8. Case analysis on statementResult
+
+      1. Case (% has type continueEmptyResult)
+
+-       1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
+
+-       2. Result in: % % |- EC_1 STO_1 ((return ?()) as callResult)
 
       2. Case (% has type exitResult)
 

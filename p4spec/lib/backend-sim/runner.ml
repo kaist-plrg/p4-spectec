@@ -167,6 +167,32 @@ module Make
             value_tableActionInterface
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+    | Stf.Ast.SetDefault (table_name, table_entry_action) ->
+        (* Encode name *)
+        let value_tableName = wrap_text_v table_name in
+        (* Encode action *)
+        let value_tableActionInterface =
+          let table_action_name, table_action_args = table_entry_action in
+          let value_table_action_name = wrap_text_v table_action_name in
+          let value_tableActionArgumentInterfaces =
+            table_action_args
+            |> List.map (fun (name, number) ->
+                   let value_name = wrap_text_v name in
+                   let value_number =
+                     number |> int_of_string |> Bigint.of_int |> wrap_num_v_int
+                   in
+                   wrap_tuple_v "tableActionArgumentInterface"
+                     [ value_name; value_number ])
+            |> wrap_list_v "tableActionArgumentInterface"
+          in
+          wrap_tuple_v "tableActionInterface"
+            [ value_table_action_name; value_tableActionArgumentInterfaces ]
+        in
+        let value_sto =
+          Arch.table_add_default_action value_sto value_tableName
+            value_tableActionInterface
+        in
+        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
     (* Async *)
     | Stf.Ast.Wait -> (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
     | _ ->

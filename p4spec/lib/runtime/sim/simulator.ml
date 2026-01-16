@@ -49,6 +49,15 @@ module type ARCH = sig
     (* table entry action *)
     Value.t (* store *)
 
+  val table_add_default_action :
+    Value.t ->
+    (* store *)
+    Value.t ->
+    (* table name *)
+    Value.t ->
+    (* table entry action *)
+    Value.t (* store *)
+
   (* Pipeline evaluation *)
 
   val init : spec -> unit

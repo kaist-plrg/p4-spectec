@@ -58,26 +58,12 @@ struct
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
-    | PacketOut of Core.Object.PacketOut.t
-    | Counter of Object.Counter.t
-    | Register of Object.Register.t
+    | CounterArray of Object.CounterArray.t
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
     Spec.Func.find_store_externState value_sto value_oid
     |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
-
-  let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
-    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-    match get_extern value_sto value_oid with
-    | PacketIn packet_in -> packet_in
-    | _ -> error_no_region "packet_in extern not found"
-
-  let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
-    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
-    match get_extern value_sto value_oid with
-    | PacketOut packet_out -> packet_out
-    | _ -> error_no_region "packet_out extern not found"
 
   (* Extern calls *)
 
@@ -90,14 +76,12 @@ struct
     in
     let name_extern = unwrap_text_v value_name_extern in
     match name_extern with
-    | "counter" ->
-        let counter = Object.Counter.init value_type_args value_args in
-        let counter = Counter counter in
-        counter |> extern_to_yojson |> wrap_extern_v "externState"
-    | "register" ->
-        let register = Object.Register.init value_type_args value_args in
-        let register = Register register in
-        register |> extern_to_yojson |> wrap_extern_v "externState"
+    | "CounterArray" ->
+        let counter_array =
+          Object.CounterArray.init value_type_args value_args
+        in
+        let counter_array = CounterArray counter_array in
+        counter_array |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -143,22 +127,6 @@ struct
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
           Core.Func.verify value_ctx value_sto
-      | "mark_to_drop", [ "standard_metadata" ] ->
-          Func.mark_to_drop value_ctx value_sto
-      | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
-          Func.verify_checksum value_ctx value_sto
-      | ( "verify_checksum_with_payload",
-          [ "condition"; "data"; "checksum"; "algo" ] ) ->
-          let packet_in = get_packet_in value_sto in
-          Func.verify_checksum_with_payload value_ctx value_sto packet_in
-      | "update_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
-          Func.update_checksum value_ctx value_sto
-      | ( "update_checksum_with_payload",
-          [ "condition"; "data"; "checksum"; "algo" ] ) ->
-          let packet_in = get_packet_in value_sto in
-          Func.update_checksum_with_payload value_ctx value_sto packet_in
-      | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
-          Func.hash value_ctx value_sto
       | _ ->
           error_no_region
             ("unsupported extern function call: " ^ name_func ^ "("
@@ -216,31 +184,18 @@ struct
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
-      | PacketOut packet_out, "emit", [ "hdr" ] ->
-          let packet_out, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketOut.emit value_ctx value_sto packet_out
+      | CounterArray counter_array, "increment", [ "index" ] ->
+          let counter_array, value_ctx, value_sto, value_callResult =
+            Object.CounterArray.increment value_ctx value_sto counter_array
           in
-          let packet_out = PacketOut packet_out in
-          (packet_out, value_ctx, value_sto, value_callResult)
-      | Counter counter, "count", [ "index" ] ->
-          let packet_in = get_packet_in value_sto in
-          let counter, value_ctx, value_sto, value_callResult =
-            Object.Counter.count value_ctx value_sto packet_in counter
+          let counter_array = CounterArray counter_array in
+          (counter_array, value_ctx, value_sto, value_callResult)
+      | CounterArray counter_array, "add", [ "index"; "value" ] ->
+          let counter_array, value_ctx, value_sto, value_callResult =
+            Object.CounterArray.add value_ctx value_sto counter_array
           in
-          let counter = Counter counter in
-          (counter, value_ctx, value_sto, value_callResult)
-      | Register register, "read", [ "result"; "index" ] ->
-          let register, value_ctx, value_sto, value_callResult =
-            Object.Register.read value_ctx value_sto register
-          in
-          let register = Register register in
-          (register, value_ctx, value_sto, value_callResult)
-      | Register register, "write", [ "index"; "value" ] ->
-          let register, value_ctx, value_sto, value_callResult =
-            Object.Register.write value_ctx value_sto register
-          in
-          let register = Register register in
-          (register, value_ctx, value_sto, value_callResult)
+          let counter_array = CounterArray counter_array in
+          (counter_array, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
             value_oid |> unwrap_list_v |> List.map unwrap_text_v
@@ -330,149 +285,66 @@ struct
     let program_result =
       match !spec with
       | IL spec_il ->
-          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
+          Interp_IL.eval_program spec_il "EBPF_init" includes_p4 filename_p4
       | SL spec_sl ->
-          Interp_SL.eval_program spec_sl "V1Model_init" includes_p4 filename_p4
+          Interp_SL.eval_program spec_sl "EBPF_init" includes_p4 filename_p4
       | Empty -> assert false
     in
     match program_result with
     | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
-    | Pass _ -> error_no_region "unexpected return from V1Model_init"
+    | Pass _ -> error_no_region "unexpected return from EBPF_init"
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
 
   (* Pipeline driver *)
 
   let setup_rx (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t =
-    let port_in, packet_in = rx in
+    let _, packet_in = rx in
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
     let value_ctx, value_sto =
-      Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
-    in
-    (* Setup packet_out extern *)
-    let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
-    let packet_out_state = extern_to_yojson packet_out in
-    let value_packet_out_state = wrap_extern_v "externState" packet_out_state in
-    let value_ctx, value_sto =
-      Spec.Rel.v1model_init_packet_out value_ctx value_sto
-        value_packet_out_state
+      Spec.Rel.ebpf_init_packet_in value_ctx value_sto value_packet_in_state
     in
     (* Setup global variables *)
-    let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
+    let value_ctx = Spec.Rel.ebpf_init_globals value_ctx value_sto in
     (value_ctx, value_sto)
 
-  let drive_p (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t =
-    let value_ctx, value_sto, value_parser_result =
-      Spec.Rel.v1model_parser value_ctx value_sto
-    in
-    let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_sto
-            "standard_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
-    in
-    (value_ctx, value_sto)
-
-  let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_verify value_ctx value_sto
-
-  let drive_ig (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_ingress value_ctx value_sto
-
-  let drive_eg (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_egress value_ctx value_sto
-
-  let drive_ck (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_check value_ctx value_sto
-
-  let drive_dep (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_deparse value_ctx value_sto
-
-  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
-      IO.tx option =
-    let value_egress_spec =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-        "egress_spec"
-    in
-    let width_egress_spec, int_egress_spec =
-      unpack_p4_fixedBit value_egress_spec
-    in
-    let drop =
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-    in
-    if drop then None
-    else
-      (* Get egress port *)
-      let port = Bigint.to_int_exn int_egress_spec in
-      (* Get input packet *)
-      let packet_in = get_packet_in value_sto in
-      (* Get output packet *)
-      let packet_out = get_packet_out value_sto in
-      let packet =
-        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
-      in
-      (* Return port and packet *)
-      let tx = (port, packet) in
-      Some tx
-
-  let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+  let drive_prs (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * bool =
-    (* Setup port and packet *)
-    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
-    (* Parser block *)
-    let value_ctx, value_sto = drive_p value_ctx value_sto in
-    (* Verify block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_vr value_ctx value_sto
+    let value_ctx, value_sto, value_parse_result =
+      Spec.Rel.ebpf_parse value_ctx value_sto
     in
-    (* Ingress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_ig value_ctx value_sto
-    in
-    (* Check if packet should be dropped *)
     let drop =
-      let value_egress_spec =
-        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-          "egress_spec"
-      in
-      let width_egress_spec, int_egress_spec =
-        unpack_p4_fixedBit value_egress_spec
-      in
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
+      match flatten_case_v_opt value_parse_result with
+      | Some (_, [ [ "REJECT" ]; [] ], [ _ ]) -> true
+      | Some _ -> false
+      | None -> assert false
     in
     (value_ctx, value_sto, drop)
 
-  let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * IO.tx option =
-    (* Egress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_eg value_ctx value_sto
-    in
-    (* Check block *)
-    let value_ctx, value_sto, _value_check_result =
-      drive_ck value_ctx value_sto
-    in
-    (* Deparser block *)
-    let value_ctx, value_sto, _value_deparse_result =
-      drive_dep value_ctx value_sto
-    in
-    (* Get resulting port and packet *)
-    let result_opt = resulting_port_packet value_ctx value_sto in
-    (value_ctx, value_sto, result_opt)
+  let drive_filt (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * Value.t =
+    Spec.Rel.ebpf_filter value_ctx value_sto
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * IO.tx option =
-    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto rx in
+    (* Setup packet *)
+    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
+    (* Parse block *)
+    let value_ctx, value_sto, drop = drive_prs value_ctx value_sto in
     if drop then (value_ctx, value_sto, None)
-    else drive_pipe_post value_ctx value_sto
+    else
+      (* Filter block *)
+      let value_ctx, value_sto, _value_filter_result =
+        drive_filt value_ctx value_sto
+      in
+      (* Check if packet is accepted *)
+      let value_accept =
+        Spec.Rel.lvalue_read_var_global value_ctx value_sto "accept"
+      in
+      let accept = unpack_p4_bool value_accept in
+      if accept then (value_ctx, value_sto, Some rx)
+      else (value_ctx, value_sto, None)
 end
