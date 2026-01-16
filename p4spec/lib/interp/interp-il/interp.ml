@@ -1044,13 +1044,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt_reason =
     match prem.it with
-    | RulePr (id, notexp) -> eval_rule_prem ctx id notexp
+    | RulePr (id, notexp, inputs) -> eval_rule_prem ctx id notexp inputs
     | IfPr exp_cond -> eval_if_prem ctx exp_cond
     | IfHoldPr (id, notexp) -> eval_if_hold_prem ctx id notexp
     | IfNotHoldPr (id, notexp) -> eval_if_not_hold_prem ctx id notexp
     | ElsePr -> Ok ctx
     | LetPr (exp_l, exp_r) -> eval_let_prem ctx exp_l exp_r
-    | IterPr (prem, iterexp) -> eval_iter_prem ctx prem iterexp
+    | IterPr (prem, iterprem) -> eval_iter_prem ctx prem iterprem
     | DebugPr exp -> eval_debug_prem ctx exp
 
   and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt_reason =
@@ -1062,13 +1062,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Rule premise evaluation *)
 
-  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt_reason =
-    let exps_input, exps_output =
-      let inputs = Ctx.find_rel_inputs Local ctx id in
-      let _, exps = notexp in
-      Hints.Input.split_without_idx inputs exps
-    in
+  and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (inputs : Hints.Input.t) : Ctx.t attempt_reason =
+    let _, exps = notexp in
+    let exps_input, exps_output = Hints.Input.split inputs exps in
     let ctx, values_input = eval_exps ctx exps_input in
     let* ctx, values_output = invoke_rel ctx id values_input in
     let ctx = assign_exps ctx exps_output values_output in
@@ -1121,15 +1118,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Iterated premise evaluation *)
 
-  and eval_iter_prem_list (ctx : Ctx.t) (prem : prem) (vars : var list) :
-      Ctx.t attempt_reason =
-    (* Discriminate between bound and binding variables *)
-    let vars_bound, vars_binding =
-      List.partition
-        (fun (id, _typ, iters) ->
-          Ctx.bound_value Local ctx (id, iters @ [ List ]))
-        vars
-    in
+  and eval_iter_prem_list (ctx : Ctx.t) (prem : prem) (vars_bound : var list)
+      (vars_bind : var list) : Ctx.t attempt_reason =
     (* Create a subcontext for each batch of bound values *)
     let* ctxs_sub = Ctx.sub_list ctx vars_bound in
     let* ctx, values_binding =
@@ -1138,7 +1128,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
          then the binding variables are also empty *)
       | [] ->
           let values_binding =
-            List.init (List.length vars_binding) (fun _ -> [])
+            List.init (List.length vars_bind) (fun _ -> [])
           in
           Ok (ctx, values_binding)
       (* Otherwise, evaluate the premise for each batch of bound values,
@@ -1158,7 +1148,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                   List.map
                     (fun (id_binding, _typ_binding, iters_binding) ->
                       Ctx.find_value Local ctx_sub (id_binding, iters_binding))
-                    vars_binding
+                    vars_bind
                 in
                 let values_binding_batch =
                   values_binding_batch @ [ value_binding_batch ]
@@ -1182,16 +1172,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Ctx.add_value Local ctx
             (id_binding, iters_binding @ [ List ])
             value_binding)
-        ctx vars_binding values_binding
+        ctx vars_bind values_binding
     in
     Ok ctx
 
-  and eval_iter_prem (ctx : Ctx.t) (prem : prem) (iterexp : iterexp) :
+  and eval_iter_prem (ctx : Ctx.t) (prem : prem) (iterprem : iterprem) :
       Ctx.t attempt_reason =
-    let iter, vars = iterexp in
+    let iter, vars_bound, vars_bind = iterprem in
     match iter with
     | Opt -> error prem.at "(TODO) eval_iter_prem"
-    | List -> eval_iter_prem_list ctx prem vars
+    | List -> eval_iter_prem_list ctx prem vars_bound vars_bind
 
   (* Debug premise evaluation *)
 
@@ -1224,8 +1214,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (Ctx.t * value list) attempt_reason =
     let rel = Ctx.find_rel Local ctx id in
     match rel with
-    | Rel.Extern _ -> invoke_extern_rel ctx id values_input
-    | Rel.Defined (_, rulegroups) ->
+    | Rel.Extern -> invoke_extern_rel ctx id values_input
+    | Rel.Defined rulegroups ->
         invoke_defined_rel ctx id rulegroups values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
@@ -1517,11 +1507,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | TypD (id, tparams, deftyp, _) ->
         let td = Typdef.Defined (tparams, deftyp) in
         Ctx.add_typdef Global ctx id td
-    | ExternRelD (id, _, inputs, _) ->
-        let rel = Rel.Extern inputs in
+    | ExternRelD (id, _, _, _) ->
+        let rel = Rel.Extern in
         Ctx.add_rel Global ctx id rel
-    | RelD (id, _, inputs, rulegroups, _) ->
-        let rel = Rel.Defined (inputs, rulegroups) in
+    | RelD (id, _, _, rulegroups, _) ->
+        let rel = Rel.Defined rulegroups in
         Ctx.add_rel Global ctx id rel
     | ExternDecD (id, _, _, _, _) ->
         let func = Func.Extern in

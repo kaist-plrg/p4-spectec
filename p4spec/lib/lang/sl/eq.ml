@@ -150,13 +150,15 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       && eq_rel_signature rel_signature_a rel_signature_b
       && eq_exps exps_group_a exps_group_b
       && eq_instrs instrs_group_a instrs_group_b
-  | LetI (exp_l_a, exp_r_a, iterexps_a), LetI (exp_l_b, exp_r_b, iterexps_b) ->
+  | LetI (exp_l_a, exp_r_a, iterinstrs_a), LetI (exp_l_b, exp_r_b, iterinstrs_b)
+    ->
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
-      && eq_iterexps iterexps_a iterexps_b
-  | ( RuleI (id_a, (mixop_a, exps_a), iterexps_a),
-      RuleI (id_b, (mixop_b, exps_b), iterexps_b) ) ->
+      && eq_iterinstrs iterinstrs_a iterinstrs_b
+  | ( RuleI (id_a, (mixop_a, exps_a), inputs_a, iterinstrs_a),
+      RuleI (id_b, (mixop_b, exps_b), inputs_b, iterinstrs_b) ) ->
       eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
-      && eq_iterexps iterexps_a iterexps_b
+      && Hints.Input.eq inputs_a inputs_b
+      && eq_iterinstrs iterinstrs_a iterinstrs_b
   | ResultI (rel_signature_a, exps_a), ResultI (rel_signature_b, exps_b) ->
       eq_rel_signature rel_signature_a rel_signature_b && eq_exps exps_a exps_b
   | ReturnI exp_a, ReturnI exp_b -> eq_exp exp_a exp_b
@@ -166,6 +168,13 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
 and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
   List.length instrs_a = List.length instrs_b
   && List.for_all2 eq_instr instrs_a instrs_b
+
+and eq_iterinstr (iterinstr_a : iterinstr) (iterinstr_b : iterinstr) : bool =
+  Il.Eq.eq_iterprem iterinstr_a iterinstr_b
+
+and eq_iterinstrs (iterinstrs_a : iterinstr list)
+    (iterinstrs_b : iterinstr list) : bool =
+  Il.Eq.eq_iterprems iterinstrs_a iterinstrs_b
 
 (* Relations *)
 

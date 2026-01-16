@@ -3,8 +3,8 @@ open Il
 
 (* Relation *)
 
-type t = Extern of Hints.Input.t | Defined of Hints.Input.t * rulegroup list
+type t = Extern | Defined of rulegroup list
 
 let to_string = function
-  | Extern _ -> "extern relation"
+  | Extern -> "extern relation"
   | Defined _ -> "defined relation"

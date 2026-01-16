@@ -299,7 +299,8 @@ and string_of_targs targs =
 
 and string_of_prem prem =
   match prem.it with
-  | RulePr (id, notexp) -> string_of_relid id ^ ": " ^ string_of_notexp notexp
+  | RulePr (id, notexp, _inputs) ->
+      string_of_relid id ^ ": " ^ string_of_notexp notexp
   | IfPr exp -> "if " ^ string_of_exp exp
   | IfHoldPr (id, notexp) ->
       "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp ^ " holds"
@@ -309,16 +310,36 @@ and string_of_prem prem =
   | ElsePr -> "otherwise"
   | LetPr (exp_l, exp_r) ->
       "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
-  | IterPr (({ it = IterPr _; _ } as prem), iterexp) ->
-      string_of_prem prem ^ string_of_iterexp iterexp
-  | IterPr (prem, iterexp) ->
-      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterexp iterexp
+  | IterPr (({ it = IterPr _; _ } as prem), iterprem) ->
+      string_of_prem prem ^ string_of_iterprem iterprem
+  | IterPr (prem, iterprem) ->
+      "(" ^ string_of_prem prem ^ ")" ^ string_of_iterprem iterprem
   | DebugPr exp -> "debug " ^ string_of_exp exp
 
 and string_of_prems ?(level = 0) prems =
   let indent = indent level in
   String.concat ""
     (List.map (fun prem -> "\n" ^ indent ^ "-- " ^ string_of_prem prem) prems)
+
+and string_of_iterprem iterprem =
+  let iter, vars_bound, vars_bind = iterprem in
+  string_of_iter iter ^ "{"
+  ^ String.concat ", "
+      (List.map
+         (fun var ->
+           let id, typ, iters = var in
+           string_of_var var ^ " <- " ^ string_of_var (id, typ, iters @ [ iter ]))
+         vars_bound
+      @ List.map
+          (fun var ->
+            let id, typ, iters = var in
+            string_of_var var ^ " -> "
+            ^ string_of_var (id, typ, iters @ [ iter ]))
+          vars_bind)
+  ^ "}"
+
+and string_of_iterprems iterprems =
+  iterprems |> List.map string_of_iterprem |> String.concat ""
 
 (* Rules *)
 

@@ -69,7 +69,7 @@ and free_args (args : arg list) : t =
 
 let rec free_prem (prem : prem) : t =
   match prem.it with
-  | RulePr (_, (_, exps)) -> free_exps exps
+  | RulePr (_, (_, exps), _) -> free_exps exps
   | IfPr exp -> free_exp exp
   | IfHoldPr (_, (_, exps)) -> free_exps exps
   | IfNotHoldPr (_, (_, exps)) -> free_exps exps

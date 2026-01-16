@@ -228,3 +228,17 @@ and eq_targ (targ_a : targ) (targ_b : targ) : bool = eq_typ targ_a targ_b
 and eq_targs (targs_a : targ list) (targs_b : targ list) : bool =
   List.length targs_a = List.length targs_b
   && List.for_all2 eq_targ targs_a targs_b
+
+(* Premises *)
+
+and eq_iterprem (iterprem_a : iterprem) (iterprem_b : iterprem) : bool =
+  let iter_a, vars_bound_a, vars_bind_a = iterprem_a in
+  let iter_b, vars_bound_b, vars_bind_b = iterprem_b in
+  eq_iter iter_a iter_b
+  && eq_vars vars_bound_a vars_bound_b
+  && eq_vars vars_bind_a vars_bind_b
+
+and eq_iterprems (iterprems_a : iterprem list) (iterprems_b : iterprem list) :
+    bool =
+  List.length iterprems_a = List.length iterprems_b
+  && List.for_all2 eq_iterprem iterprems_a iterprems_b

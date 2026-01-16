@@ -92,7 +92,7 @@ and free_instr (instr : instr) : t =
   | OtherwiseI instr -> free_instr instr
   | GroupI (_, _, exps, instrs) -> free_exps exps + free_instrs instrs
   | LetI (exp_l, exp_r, _) -> free_exp exp_l + free_exp exp_r
-  | RuleI (_, (_, exps), _) -> free_exps exps
+  | RuleI (_, (_, exps), _, _) -> free_exps exps
   | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
   | DebugI exp -> free_exp exp

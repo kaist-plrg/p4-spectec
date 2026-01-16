@@ -4,20 +4,6 @@ open Xl
 open Sl
 open Util.Source
 
-(* Iteration helpers *)
-
-let split_iters (exps_out : exp list) (iterexps : iterexp list) :
-    var list * var list =
-  let out_ids = Il.Free.free_exps exps_out in
-  List.fold_left
-    (fun (out_vars_acc, in_vars_acc) (iter, vars) ->
-      assert (iter = Il.List);
-      let out_vars, in_vars =
-        List.partition (fun (id, _, _) -> IdSet.mem id out_ids) vars
-      in
-      (out_vars_acc @ out_vars, in_vars_acc @ in_vars))
-    ([], []) iterexps
-
 (* Expression prosification *)
 
 let prosify_hole_exp () : Pl.exp =
@@ -315,16 +301,23 @@ and iterate_cond (cond : Pl.cond) (iterexps : iterexp list) : Pl.cond =
   match iterexps with
   | [] -> cond
   | _ ->
-      let _vars_out, vars_in = split_iters [] iterexps in
-      Pl.ForAllCond (cond, vars_in)
+      let vars_bound =
+        iterexps |> List.map (fun (_, vars) -> vars) |> List.concat
+      in
+      Pl.ForAllCond (cond, vars_bound)
 
-and iterate_bind (instr : Pl.instr) (exps_bind : exp list)
-    (iterexps : iterexp list) =
-  match iterexps with
+and iterate_bind (instr : Pl.instr) (iterinstrs : iterinstr list) =
+  match iterinstrs with
   | [] -> instr
   | _ ->
-      let vars_out, vars_in = split_iters exps_bind iterexps in
-      Pl.ForEachI (vars_out, instr, vars_in) $ no_region
+      let vars_bound, vars_bind =
+        iterinstrs
+        |> List.map (fun (_, vars_bound, vars_bind) -> (vars_bound, vars_bind))
+        |> List.split
+        |> fun (vars_bound_group, vars_bind_group) ->
+        (List.concat vars_bound_group, List.concat vars_bind_group)
+      in
+      Pl.ForEachI (vars_bind, instr, vars_bound) $ no_region
 
 and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
   let at = instr.at in
@@ -337,9 +330,10 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
       prosify_case_instr at ctx exp cases phantom_opt
   | OtherwiseI instr -> prosify_otherwise_instr at ctx instr
   | GroupI _ -> assert false
-  | LetI (exp_l, exp_r, iterexps) ->
-      prosify_let_instr at ctx exp_l exp_r iterexps
-  | RuleI (id, notexp, iterexps) -> prosify_rule_instr at ctx id notexp iterexps
+  | LetI (exp_l, exp_r, iterinstrs) ->
+      prosify_let_instr at ctx exp_l exp_r iterinstrs
+  | RuleI (id, notexp, inputs, iterinstrs) ->
+      prosify_rule_instr at ctx id notexp inputs iterinstrs
   | ResultI (rel_signature, exps) ->
       prosify_result_instr at ctx rel_signature exps
   | ReturnI exp -> prosify_return_instr at ctx exp
@@ -347,9 +341,7 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
 
 and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
   (* Expand nested calls *)
-  let instrs =
-    Expand.expand (ctx.ihenv, ctx.frees) Expand.expand_nested_calls instrs
-  in
+  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
   (* Prosify instructions *)
   let instrs_pl = prosify_instrs' ctx instrs in
   (* Apply shorthands *)
@@ -556,13 +548,13 @@ and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instr : instr) :
 (* Let instruction prosification *)
 
 and prosify_let_instr (at : region) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-    (iterexps : iterexp list) : Pl.instr list =
-  match prosify_let_case_instr at ctx exp_l exp_r iterexps with
+    (iterinstrs : iterinstr list) : Pl.instr list =
+  match prosify_let_case_instr at ctx exp_l exp_r iterinstrs with
   | Some instrs_pl -> instrs_pl
-  | None -> prosify_let_non_case_instr at ctx exp_l exp_r iterexps
+  | None -> prosify_let_non_case_instr at ctx exp_l exp_r iterinstrs
 
 and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
-    (exp_r : exp) (iterexps : iterexp list) : Pl.instr list option =
+    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.instr list option =
   match exp_l.it with
   | CaseE (mixop, exps_l) -> (
       let tid =
@@ -589,58 +581,45 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
           in
           let exp_r_pl = prosify_exp ctx exp_r in
           let instr_pl = Pl.DestructI (exps_bind_pl, exp_r_pl) $ at in
-          let instr_pl = iterate_bind instr_pl exps_l iterexps in
+          let instr_pl = iterate_bind instr_pl iterinstrs in
           Some [ instr_pl ]
       | _ -> None)
   | _ -> None
 
 and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
-    (exp_r : exp) (iterexps : iterexp list) : Pl.instr list =
+    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.instr list =
   let exp_l_pl = prosify_exp ctx exp_l in
   let exp_r_pl = prosify_exp ctx exp_r in
   let instr_pl = Pl.LetI (exp_l_pl, exp_r_pl) $ at in
-  let instr_pl = iterate_bind instr_pl [ exp_l ] iterexps in
+  let instr_pl = iterate_bind instr_pl iterinstrs in
   [ instr_pl ]
 
 (* Rule instruction prosification *)
 
 and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) : Pl.instr list =
+    (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs : iterinstr list) :
+    Pl.instr list =
   let mixop, exps = notexp in
-  let inputs = Ctx.find_inputs ctx id_rel in
-  let exps_input_indexed, exps_output_indexed = Hints.Input.split inputs exps in
-  let exps_input_pl_indexed =
-    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_input_indexed
-  in
-  let exps_output_pl_indexed =
-    List.map (fun (idx, exp) -> (idx, prosify_exp ctx exp)) exps_output_indexed
-  in
+  let exps_input, exps_output = Hints.Input.split inputs exps in
+  let exps_input_pl = prosify_exps ctx exps_input in
+  let exps_output_pl = prosify_exps ctx exps_output in
   let prose_in_opt = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
   let prose_out_opt = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
   let rel_call_pl =
     match (prose_in_opt, prose_out_opt) with
     | Some prose_in, Some prose_out ->
-        let exps_input_pl = List.map snd exps_input_pl_indexed in
         Ctx.validate_hint_alter at prose_in exps_input_pl;
-        let exps_output_pl = List.map snd exps_output_pl_indexed in
         let prose_out_aligned = Hints.Alter.realign prose_out inputs in
         Ctx.validate_hint_alter at prose_out_aligned exps_output_pl;
         Pl.ProseRelCall
           (`Yield
             (id_rel, prose_in, exps_input_pl, prose_out_aligned, exps_output_pl))
     | _ ->
-        let exps_pl_indexed =
-          exps_input_pl_indexed @ exps_output_pl_indexed
-          |> List.sort (fun (idx_a, _) (idx_b, _) -> Int.compare idx_a idx_b)
-        in
-        let exps_pl = List.map snd exps_pl_indexed in
+        let exps_pl = Hints.Input.combine inputs exps_input_pl exps_output_pl in
         Pl.MathRelCall (id_rel, mixop, exps_pl)
   in
   let instr_pl = Pl.RuleI rel_call_pl $ at in
-  let instr_pl =
-    let exps_output = List.map snd exps_output_indexed in
-    iterate_bind instr_pl exps_output iterexps
-  in
+  let instr_pl = iterate_bind instr_pl iterinstrs in
   [ instr_pl ]
 
 (* Result instruction prosification *)
@@ -656,7 +635,6 @@ and prosify_result_instr (at : region) (ctx : Ctx.t)
       let id_rel = Ctx.get_namespace ctx in
       match Ctx.find_hint_prose_out ctx (`Rel id_rel) with
       | Some prose_out ->
-          let inputs = Ctx.find_inputs ctx id_rel in
           let prose_out_aligned = Hints.Alter.realign prose_out inputs in
           Ctx.validate_hint_alter at prose_out_aligned exps_pl;
           Pl.ProseResult (`Yield (prose_out_aligned, exps_pl))
