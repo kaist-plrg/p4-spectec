@@ -136,7 +136,9 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     specenv =
-  let runner = Backend_sim.Gen.gen_placeholder () in
+  let (module Runner : Sim.DRIVER) = Backend_sim.Gen.gen_placeholder () in
+  Runner.init (Sim.SL spec);
+  let runner = (module Runner : Sim.DRIVER) in
   let printer value_program =
     Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
   in

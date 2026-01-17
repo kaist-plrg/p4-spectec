@@ -35,6 +35,7 @@ let runner ?(arch : string option) mode filenames_spec =
     | Some arch -> Backend_sim.Gen.gen arch
     | None -> Backend_sim.Gen.gen_placeholder ()
   in
+  Runner.init spec_sim;
   (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
 
 let run_with_dangling ?(arch : string option) mode filenames_spec relname
@@ -45,7 +46,7 @@ let run_with_dangling ?(arch : string option) mode filenames_spec relname
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Runner.run_program spec_sim relname includes_p4 filename_p4 in
+  let result = Runner.run_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)
@@ -132,9 +133,7 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result =
-           Runner.run_program spec_sim relname includes_p4 filename_p4
-         in
+         let result = Runner.run_program relname includes_p4 filename_p4 in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -168,10 +167,8 @@ let sim_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner ~arch mode filenames_spec in
-         match
-           Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
-         with
+         let _spec_sim, (module Runner) = runner ~arch mode filenames_spec in
+         match Runner.run_stf_test includes_p4 filename_p4 filename_stf with
          | Pass -> Format.printf "passed\n"
          | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
@@ -216,8 +213,7 @@ let cover_run_command =
          match mode with
          | `Instr ->
              let cover_instr =
-               Runner.cover_instr_programs spec_sim relname includes_p4
-                 filenames_p4
+               Runner.cover_instr_programs relname includes_p4 filenames_p4
              in
              let spec_sl =
                match spec_sim with
@@ -228,8 +224,7 @@ let cover_run_command =
                cover_instr spec_sl
          | `Dangling ->
              let cover_dangling =
-               Runner.cover_dangling_programs spec_sim relname includes_p4
-                 filenames_p4
+               Runner.cover_dangling_programs relname includes_p4 filenames_p4
              in
              Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
                cover_dangling
@@ -279,8 +274,7 @@ let cover_sim_command =
          match mode with
          | `Instr ->
              let cover_instr =
-               Runner.cover_instr_stfs spec_sim includes_p4 filenames_p4
-                 filenames_stf
+               Runner.cover_instr_stfs includes_p4 filenames_p4 filenames_stf
              in
              let spec_sl =
                match spec_sim with
@@ -291,8 +285,7 @@ let cover_sim_command =
                cover_instr spec_sl
          | `Dangling ->
              let cover_dangling =
-               Runner.cover_dangling_stfs spec_sim includes_p4 filenames_p4
-                 filenames_stf
+               Runner.cover_dangling_stfs includes_p4 filenames_p4 filenames_stf
              in
              Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
                cover_dangling

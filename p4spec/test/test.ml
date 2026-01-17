@@ -109,11 +109,10 @@ let prose_command =
 
 (* Interpreter test *)
 
-let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
-    filename_p4 =
+let run (module Runner : Sim.DRIVER) negative relname includes_p4 filename_p4 =
   let time_start = start () in
   try
-    (match Runner.run_program spec_sim relname includes_p4 filename_p4 with
+    (match Runner.run_program relname includes_p4 filename_p4 with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -123,8 +122,8 @@ let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
-    =
+let run_test (module Runner : Sim.DRIVER) negative stat relname includes_p4
+    excludes_p4 filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -135,9 +134,8 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Backend_sim.Gen.gen_placeholder () in
       let time_start =
-        run (module Runner) negative spec_sim relname includes_p4 filename_p4
+        run (module Runner) negative relname includes_p4 filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in
@@ -201,14 +199,17 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
+  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
+  Runner.init spec_sim;
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
         Format.asprintf "\n>>> Running interpreter test (%s) on %s" relname
           filename_p4
         |> print_endline;
-        run_test negative stat spec_sim relname includes_p4 excludes_p4
-          filename_p4)
+        run_test
+          (module Runner)
+          negative stat relname includes_p4 excludes_p4 filename_p4)
       stat filenames_p4
   in
   log_stat
@@ -241,13 +242,10 @@ let run_command =
 
 (* Simulator test *)
 
-let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
-    filename_stf =
+let run_sim (module Runner : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
   let time_start = start () in
   try
-    (match
-       Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
-     with
+    (match Runner.run_stf_test includes_p4 filename_p4 filename_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -256,8 +254,8 @@ let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
   | TestRunErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
-    filename_stf =
+let run_sim_test (module Runner : Sim.DRIVER) stat includes_p4 excludes_p4
+    filename_p4 filename_stf =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_stf in
     log |> print_endline;
@@ -268,9 +266,8 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Backend_sim.Gen.gen arch in
       let time_start =
-        run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
+        run_sim (module Runner) includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_stf in
@@ -327,6 +324,8 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
+  let (module Runner) = Backend_sim.Gen.gen arch in
+  Runner.init spec_sim;
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->
@@ -334,8 +333,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
           "\n>>> Running simulation test (%s) on %s with packet input %s" arch
           filename_p4 filename_stf
         |> print_endline;
-        run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
-          filename_stf)
+        run_sim_test
+          (module Runner : Sim.DRIVER)
+          stat includes_p4 excludes_p4 filename_p4 filename_stf)
       stat filename_pairs
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
@@ -383,10 +383,8 @@ let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
       filenames_p4
   in
   let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-  let cover =
-    Runner.cover_dangling_programs (Sim.SL spec_sl) relname includes_p4
-      filenames_p4
-  in
+  Runner.init (Sim.SL spec_sl);
+  let cover = Runner.cover_dangling_programs relname includes_p4 filenames_p4 in
   Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
 
 let cover_dangling_command =
@@ -419,9 +417,9 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
     |> List.split
   in
   let (module Runner) = Backend_sim.Gen.gen arch in
+  Runner.init (Sim.SL spec_sl);
   let cover_instr =
-    Runner.cover_instr_stfs (Sim.SL spec_sl) includes_p4 filenames_p4
-      filenames_stf
+    Runner.cover_instr_stfs includes_p4 filenames_p4 filenames_stf
   in
   Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_instr spec_sl
 

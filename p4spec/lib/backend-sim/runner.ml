@@ -17,6 +17,22 @@ module Make
   and Interp_IL : INTERP_IL = MakeInterp_IL (Arch)
   and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
 
+  (* Initialization *)
+
+  let spec : spec ref = ref Empty
+
+  let init (spec_ : spec) : unit =
+    match spec_ with
+    | IL spec_il ->
+        spec := IL spec_il;
+        Arch.init IL_mode;
+        Interp_IL.init spec_il
+    | SL spec_sl ->
+        spec := SL spec_sl;
+        Arch.init SL_mode;
+        Interp_SL.init spec_sl
+    | Empty -> assert false
+
   (* Logger *)
 
   let verbose = ref true
@@ -24,22 +40,18 @@ module Make
 
   (* Relation runner *)
 
-  let run_program (spec : spec) (relname : string) (includes_p4 : string list)
+  let run_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : program_result =
-    Arch.init spec;
-    match spec with
-    | IL spec_il ->
-        Interp_IL.eval_program spec_il relname includes_p4 filename_p4
-    | SL spec_sl ->
-        Interp_SL.eval_program spec_sl relname includes_p4 filename_p4
+    match !spec with
+    | IL _ -> Interp_IL.eval_program relname includes_p4 filename_p4
+    | SL _ -> Interp_SL.eval_program relname includes_p4 filename_p4
     | Empty -> assert false
 
-  let run_program_internal (spec : spec) (relname : string)
-      (value_program : Il.value) : rel_result =
-    Arch.init spec;
-    match spec with
-    | IL spec_il -> Interp_IL.eval_rel spec_il relname [ value_program ]
-    | SL spec_sl -> Interp_SL.eval_rel spec_sl relname [ value_program ]
+  let run_program_internal (relname : string) (value_program : Il.value) :
+      rel_result =
+    match !spec with
+    | IL _ -> Interp_IL.eval_rel relname [ value_program ]
+    | SL _ -> Interp_SL.eval_rel relname [ value_program ]
     | Empty -> assert false
 
   (* STF test runner *)
@@ -226,10 +238,10 @@ module Make
         in
         error_stf (msg_output ^ msg_expect)
 
-  let run_stf_test (spec : spec) (includes_p4 : string list)
-      (filename_p4 : string) (filename_stf : string) : stf_result =
+  let run_stf_test (includes_p4 : string list) (filename_p4 : string)
+      (filename_stf : string) : stf_result =
     try
-      let value_ctx, value_sto = Arch.init_pipe spec includes_p4 filename_p4 in
+      let value_ctx, value_sto = Arch.init_pipe includes_p4 filename_p4 in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
       run_stf_stmts value_ctx value_sto stf_stmts;
       Pass
@@ -241,11 +253,10 @@ module Make
 
   (* Coverage runner *)
 
-  let cover_instr_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : ICov_multi.t =
-    Arch.init spec;
+  let cover_instr_programs (relname : string) (includes_p4 : string list)
+      (filenames_p4 : string list) : ICov_multi.t =
     let cover_multi =
-      match spec with
+      match !spec with
       | SL spec -> ICov_multi.init spec
       | _ -> error_no_region "instruction coverage is only supported for SL"
     in
@@ -255,18 +266,17 @@ module Make
           Inst.Coverage_instr.make ()
         in
         Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
-        Inst.Hook.init_spec spec;
-        let _ = run_program spec relname includes_p4 filename_p4 in
+        Inst.Hook.init_spec !spec;
+        let _ = run_program relname includes_p4 filename_p4 in
         Inst.Hook.finish ();
         let cover_single = read_coverage_instr () in
         ICov_multi.extend cover_multi filename_p4 cover_single)
       cover_multi filenames_p4
 
-  let cover_dangling_programs (spec : spec) (relname : string)
-      (includes_p4 : string list) (filenames_p4 : string list) : DCov_multi.t =
-    Arch.init spec;
+  let cover_dangling_programs (relname : string) (includes_p4 : string list)
+      (filenames_p4 : string list) : DCov_multi.t =
     let cover_multi =
-      match spec with
+      match !spec with
       | SL spec -> DCov_multi.init spec
       | _ -> error_no_region "dangling coverage is only supported for SL"
     in
@@ -276,8 +286,8 @@ module Make
           Inst.Coverage_dangling.make ()
         in
         Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-        Inst.Hook.init_spec spec;
-        let program_result = run_program spec relname includes_p4 filename_p4 in
+        Inst.Hook.init_spec !spec;
+        let program_result = run_program relname includes_p4 filename_p4 in
         Inst.Hook.finish ();
         let cover_single = read_coverage_dangling () in
         let wellformed, welltyped =
@@ -290,13 +300,11 @@ module Make
           cover_single)
       cover_multi filenames_p4
 
-  let cover_instr_stfs (spec : spec) (includes_p4 : string list)
-      (filenames_p4 : string list) (filenames_stf : string list) : ICov_multi.t
-      =
+  let cover_instr_stfs (includes_p4 : string list) (filenames_p4 : string list)
+      (filenames_stf : string list) : ICov_multi.t =
     verbose := false;
-    Arch.init spec;
     let cover_multi =
-      match spec with
+      match !spec with
       | SL spec -> ICov_multi.init spec
       | _ -> error_no_region "instruction coverage is only supported for SL"
     in
@@ -307,20 +315,19 @@ module Make
              Inst.Coverage_instr.make ()
            in
            Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
-           Inst.Hook.init_spec spec;
-           let _ = run_stf_test spec includes_p4 filename_p4 filename_stf in
+           Inst.Hook.init_spec !spec;
+           let _ = run_stf_test includes_p4 filename_p4 filename_stf in
            Inst.Hook.finish ();
            let cover_single = read_coverage_instr () in
            ICov_multi.extend cover_multi filename_p4 cover_single)
          cover_multi
 
-  let cover_dangling_stfs (spec : spec) (includes_p4 : string list)
+  let cover_dangling_stfs (includes_p4 : string list)
       (filenames_p4 : string list) (filenames_stf : string list) : DCov_multi.t
       =
     verbose := false;
-    Arch.init spec;
     let cover_multi =
-      match spec with
+      match !spec with
       | SL spec -> DCov_multi.init spec
       | _ -> error_no_region "dangling coverage is only supported for SL"
     in
@@ -331,9 +338,9 @@ module Make
              Inst.Coverage_dangling.make ()
            in
            Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
-           Inst.Hook.init_spec spec;
+           Inst.Hook.init_spec !spec;
            let program_result =
-             run_stf_test spec includes_p4 filename_p4 filename_stf
+             run_stf_test includes_p4 filename_p4 filename_stf
            in
            Inst.Hook.finish ();
            let cover_single = read_coverage_instr () in

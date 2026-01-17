@@ -607,7 +607,7 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
-          Boot.boot_cold specenv.runner spec relname includes_p4 excludes_p4
+          Boot.boot_cold specenv.runner relname includes_p4 excludes_p4
             dirname_seed_p4
         in
         (* Log the initial coverage for later use in warm boot *)
