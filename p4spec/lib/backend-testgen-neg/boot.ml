@@ -5,7 +5,7 @@ module Sim = Runtime.Sim.Simulator
 
 (* On cold boot, first measure the coverage of the seed *)
 
-let boot_cold (module Runner : Sim.DRIVER) (relname : string)
+let boot_cold (module Driver : Sim.DRIVER) (spec : Sim.spec) (relname : string)
     (includes_p4 : string list) (excludes_p4 : string list)
     (dirname_p4 : string) : DCov_multi.t =
   let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
@@ -16,7 +16,9 @@ let boot_cold (module Runner : Sim.DRIVER) (relname : string)
         not (List.exists (String.equal filename_p4) excludes_p4))
       filenames_p4
   in
-  Runner.cover_dangling_programs relname includes_p4 filenames_p4
+  Runner.run_programs_with_dangling
+    (module Driver)
+    spec relname includes_p4 filenames_p4
 
 (* On warm boot, load the coverage from a file *)
 

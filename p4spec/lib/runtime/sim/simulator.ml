@@ -101,20 +101,6 @@ module type DRIVER = sig
 
   val run_stf_test : string list -> string -> string -> stf_result
 
-  (* Coverage *)
-
-  val cover_instr_programs :
-    string -> string list -> string list -> ICov_multi.t
-
-  val cover_dangling_programs :
-    string -> string list -> string list -> DCov_multi.t
-
-  val cover_instr_stfs :
-    string list -> string list -> string list -> ICov_multi.t
-
-  val cover_dangling_stfs :
-    string list -> string list -> string list -> DCov_multi.t
-
   (* Initialization *)
 
   val init : spec -> unit
