@@ -3183,6 +3183,8 @@ for each ``typeId~fresh'~`` in ``typeId~fresh'~^{asterisk}^``
   ... Return ``<<cast_fixint,`` ``cast_fixint(typeIR,`` ``w,`` ``i)>>``.
 . Else if let ``ERROR`` ``.`` ``nameIR`` be ``value``:
  .. Return ``<<cast_error,`` ``cast_error(typeIR,`` ``nameIR)>>``.
+. Else if let ``LIST`` ``[`` ``value'^{asterisk}^`` ``]`` be ``value``:
+ .. Return ``<<cast_list,`` ``cast_list(typeIR,`` ``value'^{asterisk}^)>>``.
 . Else if let ``STRUCT`` ``typeId`` ``{`` ``(value~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``value``:
  .. Return ``<<cast_struct,`` ``cast_struct(typeIR,`` ``typeId,`` ``((value~field~,`` ``nameIR~field~))^{asterisk}^)>>``.
 . Else if let ``HEADER`` ``typeId`` ``{`` ``b`` ``;`` ``(value~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``value``:
@@ -3392,6 +3394,14 @@ for each ``typeId~fresh'~`` in ``typeId~fresh'~^{asterisk}^``
  .. Return ``ERROR`` ``.`` ``nameIR``.
 . Else if let ``SET`` ``<`` ``typeIR'`` ``>`` be ``typeIR``:
  .. Return ``SET`` ``{`` ``<<cast_error,`` ``cast_error(typeIR',`` ``nameIR)>>`` ``}``.
+
+<<cast_list, cast_list(typeIR, value^{asterisk}^)>>
+
+
+. If let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
+ .. Return ``<<cast_list,`` ``cast_list(typeIR',`` ``value^{asterisk}^)>>``.
+. Else if let ``LIST`` ``<`` ``typeIR'`` ``>`` be ``typeIR``:
+ .. Return ``LIST`` ``[`` ``(<<cast_op,`` ``cast_op(typeIR',`` ``value)>>)^{asterisk}^`` ``]``.
 
 <<cast_struct, cast_struct(typeIR, typeId, ((value, id))^{asterisk}^)>>
 
@@ -11404,25 +11414,22 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~cast~``>> is ``LCTK``.
 . Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~cast~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
-. Let ``enumTypeDefIR`` be ``ENUM`` ``nameIR~enum~`` ``<`` ``typeIR`` ``>`` ``{`` ``·`` ``}``.
-. Let ``value~enum~`` be ``nameIR~enum~`` ``.`` ``nameIR`` ``.`` ``value``.
-. Let ``varTypeIR`` be ```EMPTY`` ``enumTypeDefIR`` ``LCTK`` ``value~enum~``.
+. Let ``varTypeIR`` be ```EMPTY`` ``typeIR`` ``LCTK`` ``value``.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
 . Result in ``TC~1~``, ``nameIR`` ``=`` ``typedExpressionIR~cast~``, and ``value``.
 
-<<Enum_serializable_fields_ok, Enum_serializable_fields_ok: ``TC`` ``nameIR~enum~`` ``typeIR`` ``|-`` ``namedExpression^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+<<Enum_serializable_fields_ok, Enum_serializable_fields_ok: ``typingContext`` ``nameIR~enum~`` ``typeIR`` ``|-`` ``namedExpression^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-<<Enum_serializable_fields_ok, ``TC`` ``nameIR~enum~`` ``typeIR`` ``|-`` ``·`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+<<Enum_serializable_fields_ok, ``typingContext`` ``nameIR~enum~`` ``typeIR`` ``|-`` ``namedExpression^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
 
-. Result in ``TC``, ``·``, and ``·``.
-
-<<Enum_serializable_fields_ok, ``TC`` ``nameIR~enum~`` ``typeIR`` ``|-`` ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
-
-. Let <<Enum_serializable_field_ok, TC nameIR~enum~ typeIR |- namedExpression~h~ : TC~1~ namedExpressionIR~h~ # value~field_h~>>.
-. Let <<Enum_serializable_fields_ok, TC~1~ nameIR~enum~ typeIR |- namedExpression~t~^{asterisk}^ : TC~2~ namedExpressionIR~t~^{asterisk}^ # value~field_t~^{asterisk}^>>.
-. Let ``namedExpressionIR^{asterisk}^`` be ``namedExpressionIR~h~`` ``{two-colons}`` ``namedExpressionIR~t~^{asterisk}^``.
-. Let ``value~field~^{asterisk}^`` be ``value~field_h~`` ``{two-colons}`` ``value~field_t~^{asterisk}^``.
-. Result in ``TC~2~``, ``namedExpressionIR^{asterisk}^``, and ``value~field~^{asterisk}^``.
+. If ``namedExpression^{asterisk}^`` is equal to ``·``:
+ .. Result in ``typingContext``, ``·``, and ``·``.
+. If let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
+ .. Let <<Enum_serializable_field_ok, typingContext nameIR~enum~ typeIR |- namedExpression~h~ : TC~1~ namedExpressionIR~h~ # value~field_h~>>.
+ .. Let <<Enum_serializable_fields_ok, TC~1~ nameIR~enum~ typeIR |- namedExpression~t~^{asterisk}^ : TC~2~ namedExpressionIR~t~^{asterisk}^ # value~field_t~^{asterisk}^>>.
+ .. Let ``namedExpressionIR^{asterisk}^`` be ``namedExpressionIR~h~`` ``{two-colons}`` ``namedExpressionIR~t~^{asterisk}^``.
+ .. Let ``value~field~^{asterisk}^`` be ``value~field_h~`` ``{two-colons}`` ``value~field_t~^{asterisk}^``.
+ .. Result in ``TC~2~``, ``namedExpressionIR^{asterisk}^``, and ``value~field~^{asterisk}^``.
 
 <<SelectCase_keyset_simple_ok, SelectCase_keyset_simple_ok: ``TC`` ``typeIR~key~`` ``|-`` ``simpleKeysetExpression`` ``:`` ``%``>>
 
@@ -13965,7 +13972,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 
 <<Decl_inst, Instantiating ``annotationList`` ``ENUM`` ``typeIR`` ``nameIR`` ``{`` ``(nameIR~field~`` ``=`` ``typedExpressionIR~field~)^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
-. Let <<Exprs_inst, GLOBAL IC~0~ STO |- typedExpressionIR~field~^{asterisk}^ : STO~1~ value~field~^{asterisk}^>>.
+. Let <<Enum_serializable_fields_inst, IC~0~ STO |- (nameIR~field~ = typedExpressionIR~field~)^{asterisk}^ : IC~1~ STO~1~ # value~field~^{asterisk}^>>.
 . Let ``nameIR~serenum_field~^{asterisk}^`` be the list of ``nameIR~serenum_field~``, obtained by repeating:
 +
 --
@@ -13980,10 +13987,10 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 --
 +
 for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~`` in ``value~field~^{asterisk}^``
-. Let ``IC~1~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR~serenum_field~^{asterisk}^`` to each of ``value~serenum_field~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
+. Let ``IC~2~`` be <<add_vars_i, ``IC~0~`` where each of ``nameIR~serenum_field~^{asterisk}^`` to each of ``value~serenum_field~^{asterisk}^`` are added to the ``GLOBAL`` layer>>.
 . Let ``enumTypeDefIR`` be ``ENUM`` ``nameIR`` ``<`` ``typeIR`` ``>`` ``{`` ``(nameIR~field~`` ``=`` ``value~field~`` ``;)^{asterisk}^`` ``}``.
-. Let ``IC~2~`` be ``<<add_typeDef_i,`` ``add_typeDef_i(GLOBAL,`` ``IC~1~,`` ``nameIR,`` ``enumTypeDefIR)>>``.
-. Result in the updated instantiation context ``IC~2~`` and the updated store ``STO~1~``.
+. Let ``IC~3~`` be ``<<add_typeDef_i,`` ``add_typeDef_i(GLOBAL,`` ``IC~2~,`` ``nameIR,`` ``enumTypeDefIR)>>``.
+. Result in the updated instantiation context ``IC~3~`` and the updated store ``STO~1~``.
 
 <<Decl_inst, Instantiating ``annotationList`` ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
@@ -14457,6 +14464,26 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let ``typeParameterListIR`` be ``typeParameterListIR~expl~`` ``{pp}`` ``typeParameterListIR~impl~``.
 . Let ``constructorDef`` be ``EXTERN`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``externMethodPrototypeListIR`` ``}``.
 . Return ``constructorDef``.
+
+<<Enum_serializable_field_inst, Enum_serializable_field_inst: ``IC~0~`` ``STO~0~`` ``|-`` ``nameIR`` ``=`` ``typedExpressionIR`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+
+<<Enum_serializable_field_inst, ``IC~0~`` ``STO~0~`` ``|-`` ``nameIR`` ``=`` ``typedExpressionIR`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+
+. Let <<Expr_inst, BLOCK IC~0~ STO~0~ |- typedExpressionIR : STO~1~ value>>.
+. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``value`` is added to the ``BLOCK`` layer>>.
+. Result in ``IC~1~``, ``STO~1~``, and ``value``.
+
+<<Enum_serializable_fields_inst, Enum_serializable_fields_inst: ``instContext`` ``store`` ``|-`` ``namedExpressionIR^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+
+<<Enum_serializable_fields_inst, ``instContext`` ``store`` ``|-`` ``namedExpressionIR^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+
+. If ``namedExpressionIR^{asterisk}^`` is equal to ``·``:
+ .. Result in ``instContext``, ``store``, and ``·``.
+. If let ``namedExpressionIR~h~`` ``{two-colons}`` ``namedExpressionIR~t~^{asterisk}^`` be ``namedExpressionIR^{asterisk}^``:
+ .. Let <<Enum_serializable_field_inst, instContext store |- namedExpressionIR~h~ : IC~1~ STO~1~ # value~field_h~>>.
+ .. Let <<Enum_serializable_fields_inst, IC~1~ STO~1~ |- namedExpressionIR~t~^{asterisk}^ : IC~2~ STO~2~ # value~field_t~^{asterisk}^>>.
+ .. Let ``value~field~^{asterisk}^`` be ``value~field_h~`` ``{two-colons}`` ``value~field_t~^{asterisk}^``.
+ .. Result in ``IC~2~``, ``STO~2~``, and ``value~field~^{asterisk}^``.
 
 <<is_tableKeysPropertyIR, is_tableKeysPropertyIR(tablePropertyIR)>>
 

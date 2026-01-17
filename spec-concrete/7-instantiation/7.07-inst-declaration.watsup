@@ -414,23 +414,62 @@ rule Decl_inst/enumTypeDeclarationIR-non-serializable:
 
 ;;;;;; annotationList ENUM typeIR nameIR `{ namedExpressionListIR }
 
+relation Enum_serializable_field_inst:
+  instContext store |- namedExpressionIR
+                     : instContext store `# value
+  hint(input %0 %1 %2)
+
+rule Enum_serializable_field_inst:
+  IC_0 STO_0 |- nameIR `= typedExpressionIR
+              : IC_1 STO_1 `# value
+  ---- ;; evaluate expression
+  -- Expr_inst:
+      BLOCK IC_0 STO_0 |- typedExpressionIR
+                        : STO_1 value
+  ---- ;; add value to block context
+  -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value)
+
+relation Enum_serializable_fields_inst:
+  instContext store |- namedExpressionIR*
+                     : instContext store `# value*
+  hint(input %0 %1 %2)
+
+rulegroup Enum_serializable_fields_inst {
+
+  rule Enum_serializable_fields_inst/nil:
+    IC STO |- eps : IC STO `# eps
+
+  rule Enum_serializable_fields_inst/cons:
+    IC_0 STO_0 |- namedExpressionIR_h :: namedExpressionIR_t*
+                : IC_2 STO_2 `# value_field*
+    -- Enum_serializable_field_inst:
+        IC_0 STO_0 |- namedExpressionIR_h
+                    : IC_1 STO_1 `# value_field_h
+    -- Enum_serializable_fields_inst:
+        IC_1 STO_1 |- namedExpressionIR_t*
+                    : IC_2 STO_2 `# value_field_t*
+    -- if value_field* = value_field_h :: value_field_t*
+
+}
+
 rule Decl_inst/enumTypeDeclarationIR-serializable:
   IC_0 STO_0 |- annotationList ENUM typeIR nameIR
                   `{ (nameIR_field `= typedExpressionIR_field)* }
-              : IC_2 STO_1
+              : IC_3 STO_1
   ---- ;; instantiate fields
-  -- Exprs_inst: GLOBAL IC_0 STO_0 |- typedExpressionIR_field*
-                                    : STO_1 value_field*
+  -- Enum_serializable_fields_inst:
+      IC_0 STO_0 |- (nameIR_field `= typedExpressionIR_field)*
+                  : IC_1 STO_1 `# value_field*
   ---- ;; bind fields to value environment
   -- if (nameIR_serenum_field = nameIR ++ "." ++ nameIR_field)*
   -- if (value_serenum_field = nameIR `. nameIR_field `. value_field)*
-  -- if IC_1
+  -- if IC_2
       = $add_vars_i(GLOBAL, IC_0, nameIR_serenum_field*, value_serenum_field*)
   ---- ;; bind enum type to typedef environment
   -- if enumTypeDefIR
       = ENUM nameIR `< typeIR > `{ (nameIR_field `= value_field `;)* }
-  -- if IC_2
-      = $add_typeDef_i(GLOBAL, IC_1, nameIR, enumTypeDefIR)
+  -- if IC_3
+      = $add_typeDef_i(GLOBAL, IC_2, nameIR, enumTypeDefIR)
 
 ;;;;; structTypeDeclarationIR
 ;;;;; syntax structTypeDeclarationIR =

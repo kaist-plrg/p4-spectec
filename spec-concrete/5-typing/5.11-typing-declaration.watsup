@@ -746,9 +746,7 @@ rule Enum_serializable_field_ok:
   -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~> value
   ---- ;; temporarily add value to block context
   -- if nameIR = $name(name)
-  -- if enumTypeDefIR = ENUM nameIR_enum `< typeIR > `{ eps }
-  -- if value_enum = nameIR_enum `. nameIR `. value
-  -- if varTypeIR = `EMPTY enumTypeDefIR LCTK value_enum
+  -- if varTypeIR = `EMPTY typeIR LCTK value
   -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
 
 relation Enum_serializable_fields_ok:
@@ -756,20 +754,24 @@ relation Enum_serializable_fields_ok:
                                : typingContext namedExpressionIR* `# value*
   hint(input %0 %1 %2 %3)
 
-rule Enum_serializable_fields_ok/nil:
-  TC nameIR_enum typeIR |- eps : TC eps `# eps
+rulegroup Enum_serializable_fields_ok {
 
-rule Enum_serializable_fields_ok/cons:
-  TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*
-                           : TC_2 namedExpressionIR* `# value_field*
-  -- Enum_serializable_field_ok:
-      TC_0 nameIR_enum typeIR |- namedExpression_h
-                               : TC_1 namedExpressionIR_h `# value_field_h
-  -- Enum_serializable_fields_ok:
-      TC_1 nameIR_enum typeIR |- namedExpression_t*
-                               : TC_2 namedExpressionIR_t* `# value_field_t*
-  -- if namedExpressionIR* = namedExpressionIR_h :: namedExpressionIR_t*
-  -- if value_field* = value_field_h :: value_field_t*
+  rule Enum_serializable_fields_ok/nil:
+    TC nameIR_enum typeIR |- eps : TC eps `# eps
+
+  rule Enum_serializable_fields_ok/cons:
+    TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*
+                             : TC_2 namedExpressionIR* `# value_field*
+    -- Enum_serializable_field_ok:
+        TC_0 nameIR_enum typeIR |- namedExpression_h
+                                 : TC_1 namedExpressionIR_h `# value_field_h
+    -- Enum_serializable_fields_ok:
+        TC_1 nameIR_enum typeIR |- namedExpression_t*
+                                 : TC_2 namedExpressionIR_t* `# value_field_t*
+    -- if namedExpressionIR* = namedExpressionIR_h :: namedExpressionIR_t*
+    -- if value_field* = value_field_h :: value_field_t*
+
+}
 
 rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
