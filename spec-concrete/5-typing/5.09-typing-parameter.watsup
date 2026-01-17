@@ -49,14 +49,18 @@ rulegroup Parameter_ok {
 ;; syntax parameterList
 ;;
 
-rule Parameters_ok/nil:
-  p TC |- eps : eps `# eps
+rulegroup Parameters_ok {
 
-rule Parameters_ok/cons:
-  p TC |- parameter_h :: parameter_t*
-        : (parameterIR_h :: parameterIR_t*) `# (typeId_fresh_h* ++ typeId_fresh_t*)
-  -- Parameter_ok: p TC |- parameter_h : parameterIR_h `# typeId_fresh_h*
-  -- Parameters_ok: p TC |- parameter_t* : parameterIR_t* `# typeId_fresh_t*
+  rule Parameters_ok/nil:
+    p TC |- eps : eps `# eps
+
+  rule Parameters_ok/cons:
+    p TC |- parameter_h :: parameter_t*
+          : (parameterIR_h :: parameterIR_t*) `# (typeId_fresh_h* ++ typeId_fresh_t*)
+    -- Parameter_ok: p TC |- parameter_h : parameterIR_h `# typeId_fresh_h*
+    -- Parameters_ok: p TC |- parameter_t* : parameterIR_t* `# typeId_fresh_t*
+
+}
 
 ;;
 ;; Constructor typing

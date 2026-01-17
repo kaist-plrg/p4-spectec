@@ -248,19 +248,23 @@ rule BlockElementStmt_inst/statementIR:
 ;; syntax blockElementStatementListIR
 ;;
 
-rule BlockElementStmts_inst/nil:
-  IC STO |- eps : IC STO eps
+rulegroup BlockElementStmts_inst {
 
-rule BlockElementStmts_inst/cons:
-  IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-            : IC_2 STO_2 (blockElementStatementIR_h_inst
-                          :: blockElementStatementIR_t_inst*)
-  -- BlockElementStmt_inst:
-      IC_0 STO_0 |- blockElementStatementIR_h
-                  : IC_1 STO_1 blockElementStatementIR_h_inst
-  -- BlockElementStmts_inst:
-      IC_1 STO_1 |- blockElementStatementIR_t*
-                  : IC_2 STO_2 blockElementStatementIR_t_inst*
+  rule BlockElementStmts_inst/nil:
+    IC STO |- eps : IC STO eps
+
+  rule BlockElementStmts_inst/cons:
+    IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
+              : IC_2 STO_2 (blockElementStatementIR_h_inst
+                            :: blockElementStatementIR_t_inst*)
+    -- BlockElementStmt_inst:
+        IC_0 STO_0 |- blockElementStatementIR_h
+                    : IC_1 STO_1 blockElementStatementIR_h_inst
+    -- BlockElementStmts_inst:
+        IC_1 STO_1 |- blockElementStatementIR_t*
+                    : IC_2 STO_2 blockElementStatementIR_t_inst*
+
+}
 
 ;;
 ;; syntax blockStatmentIR

@@ -26,10 +26,10 @@ relation Stmt_inst:
   cursor instContext store |- statementIR
                             : instContext store statementIR
   hint(input %0 %1 %2 %3)
-  hint(prose_in "the compile-time evaluation of" %3#
+  hint(prose_in "compile-time evaluation of" %3#
               ", under cursor" %0#", instantiation context" %1#", and store" %2)
   hint(prose_out "\nthe instantiation context" %4#",\nthe updated store" %5#
-               ",\nand the instantiated statement" %6)
+               ",\nand" %6)
 
 relation BlockElementStmt_inst:
   instContext store |- blockElementStatementIR
@@ -45,6 +45,11 @@ relation Block_inst:
   instContext store |- blockStatementIR
                      : instContext store blockStatementIR
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#
+              ", under instantiation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+               ",\nthe updated store" %4#
+               ",\nand" %5)
 
 ;;
 ;;;; Extern method/constructor instantiation
@@ -57,6 +62,8 @@ relation ExternMethod_inst:
 relation ExternMethods_inst:
   instContext |- externMethodPrototypeIR* : instContext
   hint(input %0 %1)
+  hint(prose_in "compile-time evaluation of" %1#", under instantiation context" %0)
+  hint(prose_out "the updated instantiation context" %2)
 
 ;;
 ;;;; Parser instantiation
@@ -81,6 +88,10 @@ relation ParserStates_inst:
   instContext store |- parserStateIR*
                      : instContext store
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under instantiation context" %0#
+                "and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+                 "\nand the updated store" %4)
 
 relation ParserLocalDecl_inst:
   instContext store |- parserLocalDeclarationIR
@@ -91,6 +102,11 @@ relation ParserLocalDecls_inst:
   instContext store |- parserLocalDeclarationIR*
                      : instContext store parserLocalDeclarationIR*
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under instantiation context" %0#
+                "and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+                 ",\nthe updated store" %4#
+                 ",\nand" %5)
 
 ;;
 ;;;; Control instantiation
@@ -115,6 +131,11 @@ relation ControlLocalDecls_inst:
   instContext store |- controlLocalDeclarationIR*
                      : instContext store controlLocalDeclarationIR*
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under instantiation context" %0#
+                "and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+                 ",\nthe updated store" %4#
+                 ",\nand" %5)
 
 ;;
 ;;;; Declaration instantiation
@@ -181,22 +202,25 @@ relation Program_inst:
                  "and the store" %2)
 
 ;;
-;;;; Argument Binding
 ;;;; Instantiate constructor arguments using caller context,
 ;;;; and bind them to callee context
 ;;
 
-relation Bind_arg:
-  cursor instContext `|
-  cursor instContext store
-  |- id argumentIR : instContext store
+relation Copy_in_argument_inst:
+  store cursor instContext argumentIR
+     `@ cursor instContext id
+  ~> store instContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
-relation Bind_args:
-  cursor instContext `|
-  cursor instContext store
-  |- id* argumentIR* : instContext store
+relation Copy_in_inst:
+  store cursor instContext argumentIR*
+     `@ cursor instContext id*
+  ~> store instContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "copy-in from" %1 "layer of" %2 "with" %3
+                "to" %4 "layer of" %5 "with" %6#", under store" %0)
+  hint(prose_out "the updated store" %7
+                 "and the updated instantiation context" %8)
 
 ;;
 ;;;; Constructor instantiation
@@ -216,3 +240,8 @@ relation Constructor_call:
                                 `( argumentListIR `# id* )
                              : store object
   hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "instantiating" %3 `< %4 > `( %5 )
+                "with default parameters" %6#", under cursor" %0#
+                ", instantiation context" %1#", and store" %2)
+  hint(prose_out "\nthe updated store" %7#
+               ",\nand the constructed" %8)

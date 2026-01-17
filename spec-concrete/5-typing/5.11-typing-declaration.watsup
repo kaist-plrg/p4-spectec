@@ -1068,16 +1068,20 @@ rule Decl_ok/packageTypeDeclaration:
 ;;;; syntax declarationList (doesn't exist in the grammar)
 ;;
 
-rule Decls_ok/nil:
-  TC |- eps : TC eps
+rulegroup Decls_ok {
 
-rule Decls_ok/cons:
-  TC_0 |- declaration_h :: declaration_t*
-        : TC_2 (declarationIR_h :: declarationIR_t*)
-  -- Decl_ok:
-      TC_0 |- declaration_h : TC_1 declarationIR_h
-  -- Decls_ok:
-      TC_1 |- declaration_t* : TC_2 declarationIR_t*
+  rule Decls_ok/nil:
+    TC |- eps : TC eps
+
+  rule Decls_ok/cons:
+    TC_0 |- declaration_h :: declaration_t*
+          : TC_2 (declarationIR_h :: declarationIR_t*)
+    -- Decl_ok:
+        TC_0 |- declaration_h : TC_1 declarationIR_h
+    -- Decls_ok:
+        TC_1 |- declaration_t* : TC_2 declarationIR_t*
+
+}
 
 ;;
 ;;;; syntax p4program

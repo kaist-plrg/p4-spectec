@@ -429,13 +429,17 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
 ;; syntax parserStatementList
 ;;
 
-rule ParserStmts_ok/nil:
-  TC |- eps : TC eps
+rulegroup ParserStmts_ok {
 
-rule ParserStmts_ok/cons:
-  TC_0 |- parserStatement_h :: parserStatement_t*
-        : TC_2 (parserStatementIR_h :: parserStatementIR_t*)
-  -- ParserStmt_ok: TC_0 |- parserStatement_h
-                          : TC_1 parserStatementIR_h
-  -- ParserStmts_ok: TC_1 |- parserStatement_t*
-                           : TC_2 parserStatementIR_t*
+  rule ParserStmts_ok/nil:
+    TC |- eps : TC eps
+
+  rule ParserStmts_ok/cons:
+    TC_0 |- parserStatement_h :: parserStatement_t*
+          : TC_2 (parserStatementIR_h :: parserStatementIR_t*)
+    -- ParserStmt_ok: TC_0 |- parserStatement_h
+                            : TC_1 parserStatementIR_h
+    -- ParserStmts_ok: TC_1 |- parserStatement_t*
+                             : TC_2 parserStatementIR_t*
+
+}
