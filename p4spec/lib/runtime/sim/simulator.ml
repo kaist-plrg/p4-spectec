@@ -10,6 +10,7 @@ open Util.Source
 
 (* Module signatures for interpreter-architecture interaction *)
 
+type mode = IL_mode | SL_mode | Empty_mode
 type spec = IL of Il.spec | SL of Sl.spec | Empty
 type rel_result = Pass of Value.t list | Fail of region * string
 type func_result = Pass of Value.t | Fail of region * string
@@ -23,10 +24,6 @@ type stf_result =
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
 module type ARCH = sig
-  (* Coverage *)
-
-  val spec : spec ref
-
   (* Extern evaluation *)
 
   val eval_extern_init : Value.t list -> Value.t
@@ -60,58 +57,51 @@ module type ARCH = sig
 
   (* Pipeline evaluation *)
 
-  val init : spec -> unit
-  val init_pipe : spec -> string list -> string -> Value.t * Value.t
+  val init_pipe : string list -> string -> Value.t * Value.t
 
   val drive_pipe :
     Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx option
+
+  (* Initialization *)
+
+  val init : mode -> unit
 end
 
 module type INTERP_IL = sig
   (* Relation and meta-function evaluation *)
 
-  val eval_program :
-    Il.spec -> string -> string list -> string -> program_result
+  val eval_program : string -> string list -> string -> program_result
+  val eval_rel : string -> Value.t list -> rel_result
+  val eval_func : string -> Il.typ list -> Value.t list -> func_result
 
-  val eval_rel : Il.spec -> string -> Value.t list -> rel_result
+  (* Initialization *)
 
-  val eval_func :
-    Il.spec -> string -> Il.typ list -> Value.t list -> func_result
+  val init : Il.spec -> unit
 end
 
 module type INTERP_SL = sig
   (* Relation and meta-function evaluation *)
 
-  val eval_program :
-    Sl.spec -> string -> string list -> string -> program_result
+  val eval_program : string -> string list -> string -> program_result
+  val eval_rel : string -> Value.t list -> rel_result
+  val eval_func : string -> Sl.typ list -> Value.t list -> func_result
 
-  val eval_rel : Sl.spec -> string -> Value.t list -> rel_result
+  (* Initialization *)
 
-  val eval_func :
-    Sl.spec -> string -> Sl.typ list -> Value.t list -> func_result
+  val init : Sl.spec -> unit
 end
 
 module type DRIVER = sig
   (* Run a P4 program against the spec *)
 
-  val run_program : spec -> string -> string list -> string -> program_result
-  val run_program_internal : spec -> string -> Value.t -> rel_result
+  val run_program : string -> string list -> string -> program_result
+  val run_program_internal : string -> Value.t -> rel_result
 
   (* Run a P4 program against the spec and a STF test *)
 
-  val run_stf_test : spec -> string list -> string -> string -> stf_result
+  val run_stf_test : string list -> string -> string -> stf_result
 
-  (* Coverage *)
+  (* Initialization *)
 
-  val cover_instr_programs :
-    spec -> string -> string list -> string list -> ICov_multi.t
-
-  val cover_dangling_programs :
-    spec -> string -> string list -> string list -> DCov_multi.t
-
-  val cover_instr_stfs :
-    spec -> string list -> string list -> string list -> ICov_multi.t
-
-  val cover_dangling_stfs :
-    spec -> string list -> string list -> string list -> DCov_multi.t
+  val init : spec -> unit
 end

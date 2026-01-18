@@ -7,7 +7,7 @@ let version = "0.1"
 
 exception CommandError of string
 
-(* Transformations *)
+(* Operations *)
 
 let frontend filenames_spec =
   filenames_spec |> List.concat_map Frontend.Parse.parse_file
@@ -30,25 +30,165 @@ let runner ?(arch : string option) mode filenames_spec =
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
   in
-  let (module Runner) =
+  let (module Driver) =
     match arch with
     | Some arch -> Backend_sim.Gen.gen arch
     | None -> Backend_sim.Gen.gen_placeholder ()
   in
-  (spec_sim, (module Runner : Runtime.Sim.Simulator.DRIVER))
+  Driver.init spec_sim;
+  (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
 
-let run_with_dangling ?(arch : string option) mode filenames_spec relname
-    includes_p4 filename_p4 =
-  let spec_sim, (module Runner) = runner ?arch mode filenames_spec in
+let run_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    relname includes_p4 filename_p4 =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
+  in
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_program relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
+
+let run_with_dangling (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    relname includes_p4 filename_p4 =
   let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
     Inst.Coverage_dangling.make ()
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Runner.run_program spec_sim relname includes_p4 filename_p4 in
+  let result = Driver.run_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)
+
+let sim_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    includes_p4 filename_p4 filename_stf =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
+  in
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
+
+let sim_with_dangling (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    includes_p4 filename_p4 filename_stf =
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
+let cover_run_instr ?(arch : string option) mode filenames_spec relname
+    includes_p4 filenames_p4 filename_cov =
+  let spec_sim, (module Driver) = runner ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let _, cover_single =
+          run_with_instr
+            (module Driver)
+            spec_sim relname includes_p4 filename_p4
+        in
+        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
+      cover_multi filenames_p4
+  in
+  Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov) cover_multi
+    spec_sl
+
+let cover_run_dangling ?(arch : string option) mode filenames_spec relname
+    includes_p4 filenames_p4 filename_cov =
+  let spec_sim, (module Driver) = runner ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let program_result, cover_single =
+          run_with_dangling
+            (module Driver)
+            spec_sim relname includes_p4 filename_p4
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass _ -> (true, true)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
+          welltyped cover_single)
+      cover_multi filenames_p4
+  in
+  Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov) cover_multi
+
+let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
+    filenames_p4 filenames_stf filename_cov =
+  let spec_sim, (module Driver) = runner ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi filename_p4 filename_stf ->
+        let _, cover_single =
+          sim_with_instr
+            (module Driver)
+            spec_sim includes_p4 filename_p4 filename_stf
+        in
+        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
+      cover_multi filenames_p4 filenames_stf
+  in
+  Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov) cover_multi
+    spec_sl
+
+let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
+    filenames_p4 filenames_stf filename_cov =
+  let spec_sim, (module Driver) = runner ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "dangling coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi filename_p4 filename_stf ->
+        let program_result, cover_single =
+          sim_with_dangling
+            (module Driver)
+            spec_sim includes_p4 filename_p4 filename_stf
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass -> (true, true)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
+          welltyped cover_single)
+      cover_multi filenames_p4 filenames_stf
+  in
+  Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov) cover_multi
 
 (* Commands *)
 
@@ -123,7 +263,7 @@ let run_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner mode filenames_spec in
+         let spec_sim, (module Driver) = runner mode filenames_spec in
          let handlers =
            if profile then
              let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
@@ -132,9 +272,7 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result =
-           Runner.run_program spec_sim relname includes_p4 filename_p4
-         in
+         let result = Driver.run_program relname includes_p4 filename_p4 in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -168,10 +306,8 @@ let sim_command =
      in
      fun () ->
        try
-         let spec_sim, (module Runner) = runner ~arch mode filenames_spec in
-         match
-           Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
-         with
+         let _spec_sim, (module Driver) = runner ~arch mode filenames_spec in
+         match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
          | Pass -> Format.printf "passed\n"
          | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
@@ -212,27 +348,13 @@ let cover_run_command =
            |> List.filter (fun filename_p4 ->
                   not (List.exists (String.equal filename_p4) excludes_p4))
          in
-         let spec_sim, (module Runner) = runner `SL filenames_spec in
          match mode with
          | `Instr ->
-             let cover_instr =
-               Runner.cover_instr_programs spec_sim relname includes_p4
-                 filenames_p4
-             in
-             let spec_sl =
-               match spec_sim with
-               | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
-               | _ -> assert false
-             in
-             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
-               cover_instr spec_sl
+             cover_run_instr `SL filenames_spec relname includes_p4 filenames_p4
+               filename_cov
          | `Dangling ->
-             let cover_dangling =
-               Runner.cover_dangling_programs spec_sim relname includes_p4
-                 filenames_p4
-             in
-             Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
-               cover_dangling
+             cover_run_dangling `SL filenames_spec relname includes_p4
+               filenames_p4 filename_cov
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -274,28 +396,13 @@ let cover_sim_command =
                   not (List.exists (String.equal filename_p4) excludes_p4))
            |> List.split
          in
-         let (module Runner) = Backend_sim.Gen.gen arch in
-         let spec_sim, (module Runner) = runner ~arch `SL filenames_spec in
          match mode with
          | `Instr ->
-             let cover_instr =
-               Runner.cover_instr_stfs spec_sim includes_p4 filenames_p4
-                 filenames_stf
-             in
-             let spec_sl =
-               match spec_sim with
-               | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
-               | _ -> assert false
-             in
-             Coverage.Instr.Log.log_spec ~filename_cov_opt:(Some filename_cov)
-               cover_instr spec_sl
+             cover_sim_instr ~arch `SL filenames_spec includes_p4 filenames_p4
+               filenames_stf filename_cov
          | `Dangling ->
-             let cover_dangling =
-               Runner.cover_dangling_stfs spec_sim includes_p4 filenames_p4
-                 filenames_stf
-             in
-             Coverage.Dangling.Multi.log ~filename_cov_opt:(Some filename_cov)
-               cover_dangling
+             cover_sim_dangling ~arch `SL filenames_spec includes_p4
+               filenames_p4 filenames_stf filename_cov
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -410,8 +517,11 @@ let interesting_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
+         let spec_sim, (module Driver) = runner `SL filenames_spec in
          let result, cover =
-           run_with_dangling `SL filenames_spec relname includes_p4 filename_p4
+           run_with_dangling
+             (module Driver)
+             spec_sim relname includes_p4 filename_p4
          in
          match result with
          | Pass _ ->
