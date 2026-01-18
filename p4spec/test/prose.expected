@@ -3801,7 +3801,7 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
  .. Let ``typedLvalueIR'`` be <<option_get, *!*>> ``<<typedExpressionIR_as_typedLvalueIR,`` ``typedExpressionIR_as_typedLvalueIR(typedExpressionIR)>>``.
  .. Return ``(`` ``typedLvalueIR'`` ``)`` ``#`` ``(`` ``typeIR`` ``)``.
 
-<<flatten_objectInitializerOptIR, flatten_objectInitializerOptIR(objectInitializerOptIR)>>
+<<flatten_objectInitializerOptIR, The list of object declarations in ``objectInitializerOptIR``>>
 
 
 . Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.
@@ -9307,123 +9307,39 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 * Typing ``instantiation``, under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and ``instantiationIR``.
 
-<<InstDecl_ok, Typing ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``;``, under cursor ``p`` and typing context ``TC~0~``>>:
+<<InstDecl_ok, Typing ``instantiation``, under cursor ``p`` and typing context ``TC~0~``>>:
 
-. If let ``prefixedTypeName`` be ``type``:
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
- .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
- .. Let 
-* ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let 
-* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``nameIR`` ``·`` ``;``.
- .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
-. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
- .. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
- .. Let 
-* ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
- .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
- .. Let 
-* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` ``{pp}`` ``typeId~inserted~^{asterisk}^``.
- .. Let 
-* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``nameIR`` ``·`` ``;``.
- .. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
-
-<<InstDecl_ok, Typing ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``=`` ``{`` ``objectDeclarationList`` ``}`` ``;``, under cursor ``p`` and typing context ``TC~0~``>>:
-
-. If let ``prefixedTypeName`` be ``type``:
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
- .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
- .. Let 
-* ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let 
-* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
- .. Check that <<is_externObjectTypeIR, ``typeIR~object~`` with typedefs unrolled is extern object type>>.
- .. Check that ``typeIR~object~`` has type ``externObjectTypeIR``.
- .. Let ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~extern~`` be ``typeIR~object~``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``LOCAL`` layer>>.
- .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
- .. Let 
-* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
-* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
- .. Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
- .. Let ``typeIR~object_init~`` be ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~init_subst~``.
- .. Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object_init~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object_init~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``nameIR`` ``=`` ``{`` ``objectDeclarationIR^{asterisk}^`` ``}`` ``;``.
- .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
-. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
- .. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
- .. Let 
-* ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
- .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
- .. Let 
-* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
-* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` ``{pp}`` ``typeId~inserted~^{asterisk}^``.
- .. Let 
-* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
-* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
- .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
- .. Check that ``typeIR`` has type ``externObjectTypeIR``.
- .. Let ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~extern~`` be ``typeIR``.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``LOCAL`` layer>>.
- .. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
- .. Let 
-* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
-* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
- .. Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
- .. Let ``typeIR~object_init~`` be ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~init_subst~``.
- .. Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object_init~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
- .. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object_init~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``nameIR`` ``=`` ``{`` ``objectDeclarationIR^{asterisk}^`` ``}`` ``;``.
- .. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
+. If let ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``;`` be ``instantiation``:
+ .. If let ``prefixedTypeName`` be ``type``:
+  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
+  ... Let 
+* the updated typing context ``TC~1~`` and ``instantiationIR`` be
+* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``·`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
+ .. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
+  ... Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
+  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
+  ... Let 
+* the updated typing context ``TC~1~`` and ``instantiationIR`` be
+* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
+. Else:
+ .. Let ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``=`` ``{`` ``objectDeclarationList`` ``}`` ``;`` be ``instantiation``.
+ .. If let ``prefixedTypeName`` be ``type``:
+  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
+  ... Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
+  ... Let 
+* the updated typing context ``TC~1~`` and ``instantiationIR`` be
+* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``·`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
+ .. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
+  ... Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
+  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
+  ... Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
+  ... Let 
+* the updated typing context ``TC~1~`` and ``instantiationIR`` be
+* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 
 <<FuncDecl_ok, FuncDecl_ok>>:
 
@@ -11296,6 +11212,36 @@ for each ``parameterIR~aligned'~`` in ``parameterIR~aligned'~^{asterisk}^``
 
 |===
 
+<<InstDecl_non_objectInitializer_ok, InstDecl_non_objectInitializer_ok>>:
+
+* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``cursor`` and typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and ``instantiationIR``.
+
+<<InstDecl_non_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>:
+
+. Let 
+* ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
++
+--
+ ** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
+--
++
+for each ``argument`` in ``argument^{asterisk}^``
+. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
+. Let 
+* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` ``{pp}`` ``typeId~inserted~^{asterisk}^``.
+. Let 
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
+. Let ``nameIR`` be <<name, the name of ``name``>>.
+. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
+. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``nameIR`` ``·`` ``;``.
+. Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
+
 <<ObjectDecl_ok, ObjectDecl_ok: ``p`` ``TC~0~`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``objectDeclaration`` ``:`` ``%`` ``%`` ``%``>>
 
 <<ObjectDecl_ok, ``p`` ``TC~0~`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``annotationList`` ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``blockStatement`` ``:`` ``%`` ``%`` ``%``>>:
@@ -11390,6 +11336,46 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Check that <<CallableTypeDef_alpha, ``externMethodTypeDefIR~concrete~`` and ``externMethodTypeDefIR~init_h~`` are the same type>>.
  .. Let ``externMethodTypeDefEnv~extern_subst~`` be <<update_map, the map ``externMethodTypeDefEnv~extern~`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR~concrete~``>>.
  .. Return ``<<subst_externMethodTypeDefEnv,`` ``subst_externMethodTypeDefEnv(externMethodTypeDefEnv~extern_subst~,`` ``{`` ``(callableId~init_t~`` ``:`` ``externMethodTypeDefIR~init_t~)^{asterisk}^`` ``})>>``.
+
+<<InstDecl_objectInitializer_ok, InstDecl_objectInitializer_ok>>:
+
+* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``cursor`` and typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and ``instantiationIR``.
+
+<<InstDecl_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>:
+
+. Let 
+* ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
++
+--
+ ** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
+--
++
+for each ``argument`` in ``argument^{asterisk}^``
+. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
+. Let 
+* ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
+* the result of <<ConstructorType_ok, type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` ``{pp}`` ``typeId~inserted~^{asterisk}^``.
+. Let 
+* constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^`` be
+* the result of <<Inst_ok, typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p``, typing context ``TC~0~``, and ``NAMED`` instantiation site context>>.
+. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
+. Check that ``typeIR`` has type ``externObjectTypeIR``.
+. Let ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~extern~`` be ``typeIR``.
+. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``LOCAL`` layer>>.
+. Let 
+* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
+* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
+. Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
+. Let ``typeIR~object_init~`` be ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~init_subst~``.
+. Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
+. Let ``nameIR`` be <<name, the name of ``name``>>.
+. Let ``TC~2~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR~object_init~`` ``CTK`` ``·`` is added to the ``p`` layer>>.
+. Let ``instantiationIR`` be ``annotationList`` ``typeIR~object_init~`` ``prefixedNameIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``nameIR`` ``=`` ``{`` ``objectDeclarationIR^{asterisk}^`` ``}`` ``;``.
+. Result in the updated typing context ``TC~2~`` and ``instantiationIR``.
 
 <<is_externConstructorPrototype, is_externConstructorPrototype(externConstructorOrMethodPrototype)>>
 
@@ -12415,7 +12401,7 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 <<init_externState, init_externState(nameIR, typeIR^{asterisk}^, value^{asterisk}^)>>
 
-<<is_externObject, is_externObject(object)>>
+<<is_externObject, ``object`` is an extern object>>
 
 
 . If ``object`` has type ``externObject``: return ``true``.
@@ -12766,7 +12752,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``frame~h~`` ``{two-colons}`` ``frame~t~^{asterisk}^`` be ``frame^{asterisk}^``.
 . Return ``IC[LOCAL.FRAMES`` ``=`` ``frame~t~^{asterisk}^]``.
 
-<<enter_path_i, enter_path_i(IC, id)>>
+<<enter_path_i, ``IC`` with ``id`` added to the path>>
 
 
 . Return ``IC[PATH`` ``=`` ``IC.PATH`` ``{pp}`` ``[id]]``.
@@ -13133,12 +13119,14 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<Expr_inst, ``p`` ``IC`` ``STO`` ``|-`` ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``#`` ``expressionNoteIR`` ``:`` ``%`` ``%``>>:
 
-. Let <<Constructor_inst, p IC |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )>>.
+. Let 
+* the constructor ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` with default parameters ``id~default~^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
 . Let 
 * the updated store ``STO~1~``,and the constructed ``object`` be
 * the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``IC.PATH`` := ``object``]>>.
-. Let ``value~ref~`` be ``!`` ``IC.PATH``.
+. Let ``value~ref~`` be ``REF`` ``IC.PATH``.
 . Result in ``STO~2~`` and ``value~ref~``.
 
 <<Expr_inst, ``p`` ``IC`` ``STO`` ``|-`` ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` ``#`` ``expressionNoteIR`` ``:`` ``%`` ``%``>>:
@@ -13224,7 +13212,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<Stmt_inst, Compile-time evaluation of ``prefixedNameIR`` ``.`` ``APPLY`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
-. Let <<Constructor_inst, p IC |- prefixedNameIR < · > ( · ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )>>.
+. Let 
+* the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
 . Let 
@@ -13236,7 +13226,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
 . Let ``objectId`` be ``IC.PATH`` ``{pp}`` ``[nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
 . Let ``blockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
@@ -13472,7 +13462,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``prefixedNameIR`` ``.`` ``APPLY`` ``(`` ``argumentListIR`` ``)`` ``;`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Let <<Constructor_inst, LOCAL IC~0~ |- prefixedNameIR < · > ( · ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )>>.
+. Let 
+* the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` under cursor ``LOCAL``, and instantiation context ``IC~0~``>>.
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
 . Let 
@@ -13484,7 +13476,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``typeIR`` be ``typeId``.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Let ``callableTargetIR`` be ``typeId`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
 . Let ``parserBlockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
@@ -13584,7 +13576,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``valueSetObject``]>>.
 . Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR`` ``>``.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR~set~`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR~set~`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Result in ``IC~0~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ParserLocalDecls_inst, ParserLocalDecls_inst>>:
@@ -13632,7 +13624,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<TableProperty_inst, ``IC`` ``STO`` ``|-`` ``annotationList`` ``constOptIR`` ``CUSTOM`` ``nameIR`` ``=`` ``typedExpressionIR`` ``;`` ``:`` ``%`` ``%``>>:
 
-. Let ``IC~inner~`` be ``<<enter_path_i,`` ``enter_path_i(IC,`` ``nameIR)>>``.
+. Let ``IC~inner~`` be <<enter_path_i, ``IC`` with ``nameIR`` added to the path>>.
 . Let <<Expr_inst, LOCAL IC~inner~ STO |- typedExpressionIR : STO~1~ value>>.
 . Result in ``STO~1~`` and ``annotationList`` ``constOptIR`` ``CUSTOM_CONST`` ``nameIR`` ``=`` ``value`` ``;``.
 
@@ -13691,8 +13683,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``object~table~`` be ``TABLE`` ``nameIR`` ``{`` ``frame'`` ``TBL`` ``}``.
 . Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object~table~``]>>.
-. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``!`` ``objectId`` is added to the ``BLOCK`` layer>>.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``BLOCK`` layer>>.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ControlLocalDecls_inst, ControlLocalDecls_inst>>:
@@ -13751,22 +13743,26 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<InstDecl_inst, Instantiating ``annotationList`` ``typeIR`` ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``nameIR`` ``objectInitializerOptIR`` ``;``, under cursor ``p``, instantiation context ``IC~0~``, and store ``STO~0~``>>:
 
-. Let <<Constructor_inst, p IC~0~ |- prefixedNameIR < typeArgumentListIR > ( argumentListIR ) : constructorDef < typeArgumentListIR~inst~ > ( # id~default~^{asterisk}^ )>>.
-. Let ``IC~inner~`` be ``<<enter_path_i,`` ``enter_path_i(IC~0~,`` ``nameIR)>>``.
+. Let 
+* the constructor ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` with default parameters ``id~default~^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` under cursor ``p``, and instantiation context ``IC~0~``>>.
+. Let ``IC~inner~`` be <<enter_path_i, ``IC~0~`` with ``nameIR`` added to the path>>.
 . Let 
 * the updated store ``STO~1~``,and the constructed ``object`` be
 * the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC~inner~``, and store ``STO~0~``>>.
 . If let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState`` ``frame`` ``externMethodDefEnv`` ``}`` be ``object``:
  .. Let ``IC~decl~`` be ``<<empty_instContext,`` ``empty_instContext>>[PATH`` ``=`` ``IC~0~.PATH][GLOBAL`` ``=`` ``IC~0~.GLOBAL]``.
- .. Let ``objectDeclarationListIR`` be ``<<flatten_objectInitializerOptIR,`` ``flatten_objectInitializerOptIR(objectInitializerOptIR)>>``.
- .. Let <<ObjectDecls_inst, IC~decl~ STO~1~ |- objectDeclarationListIR : IC~decl_post~ STO~2~>>.
- .. Let ``frame~merged~`` be ``<<merge_frames,`` ``merge_frames(frame,`` ``IC~decl_post~.BLOCK.FRAME)>>``.
- .. Let ``externMethodDefEnv~merged~`` be ``<<merge_externMethodDefEnvs,`` ``merge_externMethodDefEnvs(externMethodDefEnv,`` ``IC~decl_post~.BLOCK.CALLABLE)>>``.
+ .. Let ``objectDeclarationListIR`` be <<flatten_objectInitializerOptIR, the list of object declarations in ``objectInitializerOptIR``>>.
+ .. Let 
+* the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be
+* the result of <<ObjectDecls_inst, instantiating ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``>>.
+ .. Let ``frame~merged~`` be <<merge_frames, the merged frame of ``frame`` and ``IC~decl_post~.BLOCK.FRAME``>>.
+ .. Let ``externMethodDefEnv~merged~`` be <<merge_externMethodDefEnvs, the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.BLOCK.CALLABLE``>>.
  .. Let ``object~merged~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``}``.
  .. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
  .. Let ``STO~3~`` be <<add_map, ``STO~2~``[``objectId`` := ``object~merged~``]>>.
- .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``!`` ``objectId`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId`` ``;``.
+ .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
+ .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
  .. Result in 
 * the updated instantiation context ``IC~1~``,
 * the updated store ``STO~3~``,
@@ -13774,8 +13770,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . If ``~<<is_externObject,`` ``is_externObject(object)>>``:
  .. Let ``objectId'`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
  .. Let ``STO~2'~`` be <<add_map, ``STO~1~``[``objectId'`` := ``object``]>>.
- .. Let ``IC~1'~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``!`` ``objectId'`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR'`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``!`` ``objectId'`` ``;``.
+ .. Let ``IC~1'~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId'`` is added to the ``p`` layer>>.
+ .. Let ``constantDeclarationIR'`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId'`` ``;``.
  .. Result in 
 * the updated instantiation context ``IC~1'~``,
 * the updated store ``STO~2'~``,
@@ -14133,7 +14129,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Copy_in_argument_inst, ``STO~0~`` ``p~caller~`` ``IC~caller~`` ``argumentIR`` ``@`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``~>`` ``%`` ``%``>>:
 
-. Let ``IC~caller_inner~`` be ``<<enter_path_i,`` ``enter_path_i(IC~caller~,`` ``id)>>``.
+. Let ``IC~caller_inner~`` be <<enter_path_i, ``IC~caller~`` with ``id`` added to the path>>.
 . Let <<Argument_inst, p~caller~ IC~caller_inner~ STO~0~ |- argumentIR : STO~1~ value>>.
 . Let ``IC~callee_1~`` be <<add_var_i, ``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer>>.
 . Result in ``STO~1~`` and ``IC~callee_1~``.
@@ -14157,18 +14153,21 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 * the result of <<Copy_in_inst, copy-in from ``p~caller~`` layer of ``IC~caller~`` with ``argumentIR~t~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~t~^{asterisk}^``, under store ``STO~1~``>>.
  .. Result in the updated store ``STO~2~`` and the updated instantiation context ``IC~callee_2~``.
 
-<<Constructor_inst, Constructor_inst: ``p`` ``IC`` ``|-`` ``prefixedNameIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``:`` ``%`` ``<`` ``%`` ``>`` ``(`` ``#`` ``%`` ``)``>>
+<<Constructor_inst, Constructor_inst>>:
 
-<<Constructor_inst, ``p`` ``IC`` ``|-`` ``prefixedNameIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``:`` ``%`` ``<`` ``%`` ``>`` ``(`` ``#`` ``%`` ``)``>>:
+* Finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` under cursor ``cursor``, and instantiation context ``instContext``:
+* Results in the constructor ``constructorDef`` ``<`` ``typeArgumentListIR'`` ``>`` with default parameters ``id^{asterisk}^``.
+
+<<Constructor_inst, Finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` under cursor ``p``, and instantiation context ``IC``>>:
 
 . If ``·`` is equal to ``<<find_typeDef_i,`` ``find_typeDef_i(p,`` ``IC,`` ``prefixedNameIR)>>``:
  .. Let ``(++_++,`` ``constructorDef,`` ``id~default~^{asterisk}^)`` be <<option_get, *!*>> ``<<find_constructorDef_i,`` ``find_constructorDef_i(IC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
- .. Result in ``constructorDef``, ``typeArgumentIR^{asterisk}^``, and ``id~default~^{asterisk}^``.
+ .. Result in the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default~^{asterisk}^``.
 . Let ``typeDefIR^?^`` be ``<<find_typeDef_i,`` ``find_typeDef_i(p,`` ``IC,`` ``prefixedNameIR)>>``.
 . If let ``typeDefIR'`` be ``typeDefIR^?^``:
  .. Check that ``~<<is_typedefTypeDefIR,`` ``is_typedefTypeDefIR(typeDefIR')>>``.
  .. Let ``(++_++,`` ``constructorDef',`` ``id~default'~^{asterisk}^)`` be <<option_get, *!*>> ``<<find_constructorDef_i,`` ``find_constructorDef_i(IC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
- .. Result in ``constructorDef'``, ``typeArgumentIR^{asterisk}^``, and ``id~default'~^{asterisk}^``.
+ .. Result in the constructor ``constructorDef'`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default'~^{asterisk}^``.
 . If ``typeArgumentIR^{asterisk}^`` is equal to ``·``:
  .. Check that ``typeDefIR^?^`` is defined.
  .. Let ``typeDefIR''`` be ``typeDefIR^?^``.
@@ -14176,7 +14175,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``TYPEDEF`` ``nameIR~alias~`` ``typeIR~alias~`` be ``typeDefIR''``.
  .. Let ``(nameIR,`` ``typeArgumentIR'^{asterisk}^)`` be ``<<resolve_type_alias,`` ``resolve_type_alias(typeIR~alias~)>>``.
  .. Let ``(++_++,`` ``constructorDef'',`` ``id~default''~^{asterisk}^)`` be <<option_get, *!*>> ``<<find_constructorDef_i,`` ``find_constructorDef_i(IC,`` ``nameIR,`` ``argumentIR^{asterisk}^)>>``.
- .. Result in ``constructorDef''``, ``typeArgumentIR'^{asterisk}^``, and ``id~default''~^{asterisk}^``.
+ .. Result in the constructor ``constructorDef''`` ``<`` ``typeArgumentIR'^{asterisk}^`` ``>`` with default parameters ``id~default''~^{asterisk}^``.
 
 <<Constructor_call, Constructor_call>>:
 
@@ -14387,12 +14386,12 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let <<SwitchCases_inst, p IC STO~1~ |- switchCaseIR~t~^{asterisk}^ : STO~2~ switchCaseIR~t'~^{asterisk}^>>.
 . Result in ``STO~2~`` and ``switchCaseIR~h'~`` ``{two-colons}`` ``switchCaseIR~t'~^{asterisk}^``.
 
-<<merge_frames, merge_frames(frame, { (id : value)^{asterisk}^ })>>
+<<merge_frames, The merged frame of ``frame`` and ``{`` ``(id`` ``:`` ``value)^{asterisk}^`` ``}``>>
 
 
 . Return ``<<adds_map,`` ``adds_map<id,`` ``value>(frame,`` ``id^{asterisk}^,`` ``value^{asterisk}^)>>``.
 
-<<merge_externMethodDefEnvs, merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callableDef>>)>>
+<<merge_externMethodDefEnvs, The merged extern method definition environment of ``externMethodDefEnv`` and ``set<pair<callableId,`` ``callableDef>>``>>
 
 
 . If ``set<pair<callableId,`` ``callableDef>>`` is equal to ``{`` ``·`` ``}``:
@@ -14421,17 +14420,21 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<InstDecl_inst, instantiating ``instantiationIR``, under cursor ``GLOBAL``, instantiation context ``IC~0~``, and store ``STO``>>.
 . Result in ``IC~1~`` and ``STO~1~``.
 
-<<ObjectDecls_inst, ObjectDecls_inst: ``IC`` ``STO`` ``|-`` ``objectDeclarationIR^{asterisk}^`` ``:`` ``%`` ``%``>>
+<<ObjectDecls_inst, ObjectDecls_inst>>:
 
-<<ObjectDecls_inst, ``IC`` ``STO`` ``|-`` ``·`` ``:`` ``%`` ``%``>>:
+* Instantiating ``objectDeclarationListIR`` under instantiation context ``instContext`` and store ``store``:
+* Results in the updated instantiation context ``instContext'`` and store ``store'``.
 
-. Result in ``IC`` and ``STO``.
+<<ObjectDecls_inst, Instantiating ``objectDeclarationIR^{asterisk}^`` under instantiation context ``instContext`` and store ``store``>>:
 
-<<ObjectDecls_inst, ``IC`` ``STO`` ``|-`` ``objectDeclarationIR~h~`` ``{two-colons}`` ``objectDeclarationIR~t~^{asterisk}^`` ``:`` ``%`` ``%``>>:
-
-. Let <<ObjectDecl_inst, IC STO |- objectDeclarationIR~h~ : IC~1~ STO~1~>>.
-. Let <<ObjectDecls_inst, IC~1~ STO~1~ |- objectDeclarationIR~t~^{asterisk}^ : IC~2~ STO~2~>>.
-. Result in ``IC~2~`` and ``STO~2~``.
+. If ``objectDeclarationIR^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated instantiation context ``instContext`` and store ``store``.
+. If let ``objectDeclarationIR~h~`` ``{two-colons}`` ``objectDeclarationIR~t~^{asterisk}^`` be ``objectDeclarationIR^{asterisk}^``:
+ .. Let <<ObjectDecl_inst, instContext store |- objectDeclarationIR~h~ : IC~1~ STO~1~>>.
+ .. Let 
+* the updated instantiation context ``IC~2~`` and store ``STO~2~`` be
+* the result of <<ObjectDecls_inst, instantiating ``objectDeclarationIR~t~^{asterisk}^`` under instantiation context ``IC~1~`` and store ``STO~1~``>>.
+ .. Result in the updated instantiation context ``IC~2~`` and store ``STO~2~``.
 
 <<callableId_of_externMethodPrototypeIR, The callable id of  ``externMethodPrototypeIR``>>
 
@@ -15320,7 +15323,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 <<Lvalue_read, ``p`` ``EC`` ``STO`` ``|-`` ``storageReference'`` ``.`` ``nameIR`` ``:`` ``%``>>:
 
 . Let <<Lvalue_read, p EC STO |- storageReference' : value~base~>>.
-. If let ``!`` ``objectId`` be ``value~base~``:
+. If let ``REF`` ``objectId`` be ``value~base~``:
  .. Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO``[``objectId``]>>.
  .. Check that ``object'`` has type ``packageObject``.
  .. Let ``PACKAGE`` ``<`` ``++_++`` ``>`` ``{`` ``frame`` ``}`` be ``object'``.
@@ -16230,7 +16233,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'`` be ``storageReference''^?^``.
  .. Let <<Lvalue_read, p EC~1''~ STO~1''~ |- storageReference' : value>>.
  .. Check that ``value`` has type ``objectReferenceValue``.
- .. Let ``!`` ``objectId`` be ``value``.
+ .. Let ``REF`` ``objectId`` be ``value``.
  .. Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1''~``[``objectId``]>>.
  .. Check that ``object'`` has type ``externObject``.
  .. Let ``EXTERN`` ``++_++`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``object'``.
@@ -16254,7 +16257,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'`` be ``storageReference'''^?^``.
  .. Let <<Lvalue_read, p EC~1'''~ STO~1'''~ |- storageReference' : value'>>.
  .. Check that ``value'`` has type ``objectReferenceValue``.
- .. Let ``!`` ``objectId'`` be ``value'``.
+ .. Let ``REF`` ``objectId'`` be ``value'``.
  .. Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1'''~``[``objectId'``]>>.
  .. Check that ``object'`` has type ``parserObject``.
  .. Let ``PARSER`` ``(`` ``parameterListIR'`` ``)`` ``{`` ``frame'`` ``parserLocalDeclarationListIR`` ``stateEnv`` ``}`` be ``object'``.
@@ -16277,7 +16280,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'`` be ``storageReference''''^?^``.
  .. Let <<Lvalue_read, p EC~1''''~ STO~1''''~ |- storageReference' : value''>>.
  .. Check that ``value''`` has type ``objectReferenceValue``.
- .. Let ``!`` ``objectId''`` be ``value''``.
+ .. Let ``REF`` ``objectId''`` be ``value''``.
  .. Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1''''~``[``objectId''``]>>.
  .. Check that ``object'`` has type ``controlObject``.
  .. Let ``CONTROL`` ``(`` ``parameterListIR''`` ``)`` ``{`` ``frame''`` ``controlLocalDeclarationListIR`` ``actionDefEnv`` ``controlBodyIR`` ``}`` be ``object'``.
@@ -16306,7 +16309,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference'`` be ``storageReference'''''^?^``.
  .. Let <<Lvalue_read, p EC~1''''''~ STO~1''''''~ |- storageReference' : value'''>>.
  .. Check that ``value'''`` has type ``objectReferenceValue``.
- .. Let ``!`` ``objectId'''`` be ``value'''``.
+ .. Let ``REF`` ``objectId'''`` be ``value'''``.
  .. Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1''''''~``[``objectId'''``]>>.
  .. Check that ``object'`` has type ``tableObject``.
  .. Let ``TABLE`` ``typeId`` ``{`` ``frame'''`` ``TBL`` ``}`` be ``object'``.
@@ -16797,7 +16800,7 @@ for each ``parameterIR'`` in ``parameterIR'^{asterisk}^``
  .. Let ``value`` be ``expressionResult``.
  .. If let ``setValue`` be ``value``:
   ... Result in ``EC~1~``, ``STO~1~``, and ``setValue``.
- .. Else if let ``!`` ``objectId`` be ``value``:
+ .. Else if let ``REF`` ``objectId`` be ``value``:
   ... Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``objectId``]>>.
   ... Check that ``object'`` has type ``valueSetObject``.
   ... Let ``VALUE_SET`` ``{`` ``value'^{asterisk}^`` ``(`` ``n~size~`` ``)`` ``}`` be ``object'``.
@@ -17404,7 +17407,9 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 <<Extern_init, Instantiating extern ``EC`` in the evaluation context ``STO~0~`` and store ``nameIR``>>:
 
 . Let ``IC`` be {PATH ``·``, GLOBAL ``EC.GLOBAL``, BLOCK ``EC.BLOCK``, LOCAL ``EC.LOCAL``}.
-. Let <<Constructor_inst, GLOBAL IC |- nameIR < · > ( · ) : constructorDef < typeArgumentIR^{asterisk}^ > ( # id^{asterisk}^ )>>.
+. Let 
+* the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` under cursor ``GLOBAL``, and instantiation context ``IC``>>.
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
 . Let 
@@ -17448,7 +17453,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let 
 * the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_in"``>>.
-. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_in"`` to ``!`` ``["packet_in"]`` is added to the ``GLOBAL`` layer>>.
+. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_in"`` to ``REF`` ``["packet_in"]`` is added to the ``GLOBAL`` layer>>.
 . Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``["packet_in"]``]>>.
 . Check that ``object'`` has type ``externObject``.
 . Let ``externObject~packet_in~`` be ``object'``.
@@ -17464,7 +17469,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let 
 * the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_out"``>>.
-. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_out"`` to ``!`` ``["packet_out"]`` is added to the ``GLOBAL`` layer>>.
+. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_out"`` to ``REF`` ``["packet_out"]`` is added to the ``GLOBAL`` layer>>.
 . Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``["packet_out"]``]>>.
 . Check that ``object'`` has type ``externObject``.
 . Let ``externObject~packet_out~`` be ``object'``.
@@ -17763,7 +17768,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let 
 * the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_in"``>>.
-. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_in"`` to ``!`` ``["packet_in"]`` is added to the ``GLOBAL`` layer>>.
+. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``"packet_in"`` to ``REF`` ``["packet_in"]`` is added to the ``GLOBAL`` layer>>.
 . Let ``object'`` be <<option_get, *!*>> <<find_map, ``STO~1~``[``["packet_in"]``]>>.
 . Check that ``object'`` has type ``externObject``.
 . Let ``externObject~packet_in~`` be ``object'``.

@@ -30,6 +30,7 @@ rule Decl_inst/constantDeclarationIR:
 ;; Merge value environments
 
 dec $merge_frames(frame, frame) : frame
+  hint(prose_in "the merged frame of" %0 "and" %1)
 
 def $merge_frames(frame, `{ (id `: value)* })
   = $adds_map<id, value>(frame, id*, value*)
@@ -38,13 +39,14 @@ def $merge_frames(frame, `{ (id `: value)* })
 
 dec $merge_externMethodDefEnvs(externMethodDefEnv, callableDefEnv)
   : externMethodDefEnv
+  hint(prose_in "the merged extern method definition environment of"
+                %0 "and" %1)
 
 def $merge_externMethodDefEnvs(externMethodDefEnv, `{ eps })
   = externMethodDefEnv
 def $merge_externMethodDefEnvs(
     externMethodDefEnv,
-    `{ (callableId_h `: callableDef_h) :: (callableId_t `: callableDef_t)* }
-  )
+    `{ (callableId_h `: callableDef_h) :: (callableId_t `: callableDef_t)* })
   = $merge_externMethodDefEnvs(
       externMethodDefEnv_post, `{ (callableId_t `: callableDef_t)* }
     )
@@ -55,7 +57,8 @@ def $merge_externMethodDefEnvs(
       = EXTERN_METHOD nameIR `< typeParameterListIR >
           `( parameterListIR ) blockStatementIR
   -- if externMethodDefEnv_post
-      = $update_map<callableId, externMethodDef>(externMethodDefEnv, callableId_h, externMethodDef_h)
+      = $update_map<callableId, externMethodDef>(
+          externMethodDefEnv, callableId_h, externMethodDef_h)
 
 relation ObjectDecl_inst:
   instContext store |- objectDeclarationIR : instContext store
@@ -76,19 +79,25 @@ rule ObjectDecl_inst/instantiationIR:
 relation ObjectDecls_inst:
   instContext store |- objectDeclarationListIR : instContext store
   hint(input %0 %1 %2)
+  hint(prose_in "instantiating" %2 "under instantiation context" %0 "and store" %1)
+  hint(prose_out "the updated instantiation context" %3 "and store" %4)
 
-rule ObjectDecls_inst/nil:
-  IC STO |- eps : IC STO
+rulegroup ObjectDecls_inst {
 
-rule ObjectDecls_inst/cons:
-  IC_0 STO_0 |- objectDeclarationIR_h :: objectDeclarationIR_t*
-              : IC_2 STO_2
-  -- ObjectDecl_inst:
-      IC_0 STO_0 |- objectDeclarationIR_h : IC_1 STO_1
-  -- ObjectDecls_inst:
-      IC_1 STO_1 |- objectDeclarationIR_t* : IC_2 STO_2
+  rule ObjectDecls_inst/nil:
+    IC STO |- eps : IC STO
 
-rulegroup InstDecl_inst/instantiationIR {
+  rule ObjectDecls_inst/cons:
+    IC_0 STO_0 |- objectDeclarationIR_h :: objectDeclarationIR_t*
+                : IC_2 STO_2
+    -- ObjectDecl_inst:
+        IC_0 STO_0 |- objectDeclarationIR_h : IC_1 STO_1
+    -- ObjectDecls_inst:
+        IC_1 STO_1 |- objectDeclarationIR_t* : IC_2 STO_2
+
+}
+
+rulegroup InstDecl_inst {
 
   rule InstDecl_inst/extern:
     p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
@@ -125,10 +134,10 @@ rulegroup InstDecl_inst/instantiationIR {
     -- if objectId = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_map<objectId, object>(STO_2, objectId, object_merged)
     ---- ;; add reference to object in value environment
-    -- if IC_1 = $add_var_i(p, IC_0, nameIR, `! objectId)
+    -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (`! objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
 
   rule InstDecl_inst/non-extern:
     p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
@@ -149,10 +158,10 @@ rulegroup InstDecl_inst/instantiationIR {
     -- if objectId = IC_0.PATH ++ nameIR
     -- if STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
     ---- ;; add reference to object in value environment
-    -- if IC_1 = $add_var_i(p, IC_0, nameIR, `! objectId)
+    -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (`! objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
 
 }
 

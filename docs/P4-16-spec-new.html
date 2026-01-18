@@ -912,7 +912,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel2">
 <li><a href="#sec-variable-declaration">11.1. Variable declarations</a></li>
 <li><a href="#sec-constant-declaration">11.2. Constant declarations</a></li>
-<li><a href="#sec-instantiation-declaration">11.3. Instantiation</a>
+<li><a href="#sec-instantiation-declaration">11.3. Instantiations</a>
 <ul class="sectlevel3">
 <li><a href="#sec-instantiation-abstract-methods">11.3.1. Instantiating objects with abstract methods</a></li>
 </ul>
@@ -7958,7 +7958,7 @@ names. Thus enum types can be obtained from named types, as illustrated in
    | tableObjectTypeIR
 
 syntax objectReferenceValue =
-   | ! objectId</code></pre>
+   | REF objectId</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8395,7 +8395,7 @@ allocated in the global store.</p>
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectId = nameIR*
 
 syntax objectReferenceValue =
-   | ! objectId</code></pre>
+   | REF objectId</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13760,7 +13760,7 @@ evaluated with:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-instantiation-declaration">11.3. Instantiation</h3>
+<h3 id="sec-instantiation-declaration">11.3. Instantiations</h3>
 <div class="paragraph">
 <p>Instantiations are similar to variable declarations, but are reserved for the
 types with constructors (<code>extern</code> objects, <code>control</code> blocks, <code>parser</code>s,
@@ -13926,9 +13926,188 @@ methods.</p>
 </div>
 </div>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup InstDecl_ok:
+  rule InstDecl_ok/non-objectInitializer-prefixedTypeName:
+  p TC_0 |- annotationList prefixedTypeName `(argumentList) name ; : TC_1 instantiationIR
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;eps&gt; `(argument*) name ; : TC_1 instantiationIR
+  rule InstDecl_ok/non-objectInitializer-specializedType:
+  p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name ; : TC_1 instantiationIR
+ -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : TC_1 instantiationIR
+  rule InstDecl_ok/objectInitializer-prefixedTypeName:
+  p TC_0 |- annotationList prefixedTypeName `(argumentList) name (= `{objectDeclarationList}) ; : TC_1 instantiationIR
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
+ -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;eps&gt; `(argument*) name = `{objectDeclaration*} ; : TC_1 instantiationIR
+  rule InstDecl_ok/objectInitializer-specializedType:
+  p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name (= `{objectDeclarationList}) ; : TC_1 instantiationIR
+ -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
+ -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : TC_1 instantiationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
 <div class="paragraph">
-<p>There are two rules for this relation, depending on whether object initializers
-were provided or not.</p>
+<p><a href="#InstDecl_ok">Typing <code>instantiation</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>annotationList</code> <code>type</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> <code>;</code> be <code>instantiation</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If let <code>prefixedTypeName</code> be <code>type</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> be <code>type</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>annotationList</code> <code>type</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> <code>=</code> <code>{</code> <code>objectDeclarationList</code> <code>}</code> <code>;</code> be <code>instantiation</code>.</p>
+</li>
+<li>
+<p>If let <code>prefixedTypeName</code> be <code>type</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> be <code>type</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>There are two sub-relations, depending on whether object initializers were
+provided or not.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -13942,22 +14121,42 @@ were provided or not.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup InstDecl_ok/non-objectInitializer:
-  rule InstDecl_ok/prefixedTypeName:
-  p TC_0 |- annotationList prefixedTypeName `(argumentList) name ; : TC_1 instantiationIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC_0 |- argument : argumentIR)*
- -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
- -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
- -- if nameIR = $name(name)
- -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
- -- if instantiationIR = annotationList typeIR_object prefixedNameIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR*) nameIR eps ;
-  rule InstDecl_ok/specializedType:
-  p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name ; : TC_1 instantiationIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+<pre>relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : typingContext instantiationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="InstDecl_non_objectInitializer_ok" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#InstDecl_non_objectInitializer_ok">InstDecl_non_objectInitializer_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated typing context <code>typingContext'</code> and <code>instantiationIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup InstDecl_non_objectInitializer_ok:
+  rule InstDecl_non_objectInitializer_ok:
+  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : TC_1 instantiationIR
  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
@@ -13978,85 +14177,10 @@ were provided or not.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#InstDecl_ok">Typing <code>annotationList</code> <code>type</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> <code>;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#InstDecl_non_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
-<li>
-<p>If let <code>prefixedTypeName</code> be <code>type</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
-<div class="ulist">
-<ul>
-<li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
-</li>
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameter ids <code>id<sub>default</sub><sup>*</sup></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#ConstructorType_ok">type checking constructor <code>prefixedNameIR</code><code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p>constructed type <code>typeIR<sub>object</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and cast-inserted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>`EMPTY</code> <code>typeIR<sub>object</sub></code> <code>CTK</code> <code>·</code> is added to the <code>p</code> layer</a>.</p>
-</li>
-<li>
-<p>Let <code>instantiationIR</code> be <code>annotationList</code> <code>typeIR<sub>object</sub></code> <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> <code>nameIR</code> <code>·</code> <code>;</code>.</p>
-</li>
-<li>
-<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> be <code>type</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -14069,9 +14193,6 @@ were provided or not.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
 </li>
 <li>
 <p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
@@ -14136,9 +14257,6 @@ were provided or not.</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
-</div>
 </div>
 </div>
 <div class="ulist">
@@ -14153,30 +14271,42 @@ were provided or not.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup InstDecl_ok/objectInitializer:
-  rule InstDecl_ok/prefixedTypeName:
-  p TC_0 |- annotationList prefixedTypeName `(argumentList) name (= `{objectDeclarationList}) ; : TC_2 instantiationIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC_0 |- argument : argumentIR)*
- -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
- -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
- -- if $is_externObjectTypeIR($unroll_typeIR(typeIR_object))
- -- if EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_extern = typeIR_object
- -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
- -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
- -- ObjectDecls_ok: p TC_1 |- objectDeclaration* : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
- -- if externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
- -- if typeIR_object_init = EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_init_subst
- -- if $is_concrete_extern_object(typeIR_object_init)
- -- if nameIR = $name(name)
- -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
- -- if instantiationIR = annotationList typeIR_object_init prefixedNameIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) nameIR (= `{objectDeclarationIR*}) ;
-  rule InstDecl_ok/specializedType:
-  p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name (= `{objectDeclarationList}) ; : TC_2 instantiationIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+<pre>relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : typingContext instantiationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="InstDecl_objectInitializer_ok" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#InstDecl_objectInitializer_ok">InstDecl_objectInitializer_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated typing context <code>typingContext'</code> and <code>instantiationIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup InstDecl_objectInitializer_ok:
+  rule InstDecl_objectInitializer_ok:
+  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : TC_2 instantiationIR
  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
@@ -14184,7 +14314,6 @@ were provided or not.</p>
  -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_extern = $unroll_typeIR(typeIR_object)
  -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
- -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
  -- ObjectDecls_ok: p TC_1 |- objectDeclaration* : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
  -- if externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
  -- if typeIR_object_init = EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_init_subst
@@ -14204,122 +14333,10 @@ were provided or not.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#InstDecl_ok">Typing <code>annotationList</code> <code>type</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> <code>=</code> <code>{</code> <code>objectDeclarationList</code> <code>}</code> <code>;</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#InstDecl_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
-<li>
-<p>If let <code>prefixedTypeName</code> be <code>type</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
-<div class="ulist">
-<ul>
-<li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>prefixedNameIR</code> be <a href="#prefixedTypeName">the prefixed name of  <code>prefixedTypeName</code></a>.</p>
-</li>
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameter ids <code>id<sub>default</sub><sup>*</sup></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#ConstructorType_ok">type checking constructor <code>prefixedNameIR</code><code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p>constructed type <code>typeIR<sub>object</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and cast-inserted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Check that <a href="#is_externObjectTypeIR"><code>typeIR<sub>object</sub></code> with typedefs unrolled is extern object type</a>.</p>
-</li>
-<li>
-<p>Check that <code>typeIR<sub>object</sub></code> has type <code>externObjectTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>EXTERN</code> <code>typeId<sub>extern</sub></code> <code>&lt;</code> <code>typeIR<sub>arg</sub><sup>*</sup></code> <code>&gt;</code> <code>externMethodTypeDefEnv<sub>extern</sub></code> be <code>typeIR<sub>object</sub></code>.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>"this"</code> to <code>`EMPTY</code> <code>typeIR<sub>object</sub></code> <code>CTK</code> <code>·</code> is added to the <code>LOCAL</code> layer</a>.</p>
-</li>
-<li>
-<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
-</li>
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>typeFrame<sub>init</sub></code> and <code>externMethodTypeDefEnv<sub>init</sub></code> local to the object declaration block, and typed <code>objectDeclarationIR<sup>*</sup></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#ObjectDecls_ok">typing <code>objectDeclaration<sup>*</sup></code> under cursor <code>p</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>externMethodTypeDefEnv<sub>init_subst</sub></code> be <a href="#subst_externMethodTypeDefEnv">substitution of abstract methods in <code>externMethodTypeDefEnv<sub>extern</sub></code> by implementations in <code>externMethodTypeDefEnv<sub>init</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>object_init</sub></code> be <code>EXTERN</code> <code>typeId<sub>extern</sub></code> <code>&lt;</code> <code>typeIR<sub>arg</sub><sup>*</sup></code> <code>&gt;</code> <code>externMethodTypeDefEnv<sub>init_subst</sub></code>.</p>
-</li>
-<li>
-<p>Check that <a href="#is_concrete_extern_object"><code>typeIR<sub>object_init</sub></code> is an extern object type without abstract methods</a>.</p>
-</li>
-<li>
-<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>`EMPTY</code> <code>typeIR<sub>object_init</sub></code> <code>CTK</code> <code>·</code> is added to the <code>p</code> layer</a>.</p>
-</li>
-<li>
-<p>Let <code>instantiationIR</code> be <code>annotationList</code> <code>typeIR<sub>object_init</sub></code> <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>nameIR</code> <code>=</code> <code>{</code> <code>objectDeclarationIR<sup>*</sup></code> <code>}</code> <code>;</code>.</p>
-</li>
-<li>
-<p>Result in the updated typing context <code>TC<sub>2</sub></code> and <code>instantiationIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if let <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> be <code>type</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -14332,9 +14349,6 @@ were provided or not.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
 </li>
 <li>
 <p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
@@ -14398,9 +14412,6 @@ were provided or not.</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>"this"</code> to <code>`EMPTY</code> <code>typeIR<sub>object</sub></code> <code>CTK</code> <code>·</code> is added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -14436,13 +14447,10 @@ were provided or not.</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
-</div>
 </div>
 </div>
 <div class="paragraph">
-<p>When used as a top-level declarations, instantiations are typed with:</p>
+<p>When used as a top-level declaration, instantiations are typed with:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14484,6 +14492,282 @@ were provided or not.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<h6 id="_compile_time_evaluation_of_instantiations" class="discrete">Compile-time evaluation of instantiations</h6>
+<div class="paragraph">
+<p>Instantiations are evaluated at compile-time with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation InstDecl_inst: cursor instContext store |- instantiationIR : instContext store constantDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="InstDecl_inst" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#InstDecl_inst">InstDecl_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Instantiating <code>instantiationIR</code>, under cursor <code>cursor</code>, instantiation context <code>instContext</code>, and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>instContext'</code>,</p>
+</li>
+<li>
+<p>the updated store <code>store'</code>,</p>
+</li>
+<li>
+<p>and the reference to the object <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup InstDecl_inst:
+  rule InstDecl_inst/extern:
+  p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_3 constantDeclarationIR
+ -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
+ -- if IC_inner = $enter_path_i(IC_0, nameIR)
+ -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
+ -- if EXTERN typeId `&lt;theta&gt; `{externState frame externMethodDefEnv} = object
+ -- if IC_decl = $empty_instContext[PATH = IC_0.PATH][GLOBAL = IC_0.GLOBAL]
+ -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
+ -- ObjectDecls_inst: IC_decl STO_1 |- objectDeclarationListIR : IC_decl_post STO_2
+ -- if frame_merged = $merge_frames(frame, IC_decl_post.BLOCK.FRAME)
+ -- if externMethodDefEnv_merged = $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.BLOCK.CALLABLE)
+ -- if object_merged = EXTERN typeId `&lt;theta&gt; `{externState frame_merged externMethodDefEnv_merged}
+ -- if objectId = IC_0.PATH ++ nameIR
+ -- if STO_3 = $add_map&lt;objectId, object&gt;(STO_2, objectId, object_merged)
+ -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;
+  rule InstDecl_inst/non-extern:
+  p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_2 constantDeclarationIR
+ -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
+ -- if IC_inner = $enter_path_i(IC_0, nameIR)
+ -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
+ -- if ~$is_externObject(object)
+ -- if objectId = IC_0.PATH ++ nameIR
+ -- if STO_2 = $add_map&lt;objectId, object&gt;(STO_1, objectId, object)
+ -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#InstDecl_inst">Instantiating <code>annotationList</code> <code>typeIR</code> <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> <code>nameIR</code> <code>objectInitializerOptIR</code> <code>;</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Constructor_inst">finding constructor for <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> under cursor <code>p</code>, and instantiation context <code>IC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>IC<sub>inner</sub></code> be <a href="#enter_path_i"><code>IC<sub>0</sub></code> with <code>nameIR</code> added to the path</a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO<sub>1</sub></code>,and the constructed <code>object</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Constructor_call">instantiating <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC<sub>inner</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>EXTERN</code> <code>typeId</code> <code>&lt;</code> <code>theta</code> <code>&gt;</code> <code>{</code> <code>externState</code> <code>frame</code> <code>externMethodDefEnv</code> <code>}</code> be <code>object</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>IC<sub>decl</sub></code> be <code><a href="#empty_instContext"></code> <code>empty_instContext</a>[PATH</code> <code>=</code> <code>IC<sub>0</sub>.PATH][GLOBAL</code> <code>=</code> <code>IC<sub>0</sub>.GLOBAL]</code>.</p>
+</li>
+<li>
+<p>Let <code>objectDeclarationListIR</code> be <a href="#flatten_objectInitializerOptIR">the list of object declarations in <code>objectInitializerOptIR</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>IC<sub>decl_post</sub></code> and store <code>STO<sub>2</sub></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ObjectDecls_inst">instantiating <code>objectDeclarationListIR</code> under instantiation context <code>IC<sub>decl</sub></code> and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>frame<sub>merged</sub></code> be <a href="#merge_frames">the merged frame of <code>frame</code> and <code>IC<sub>decl_post</sub>.BLOCK.FRAME</code></a>.</p>
+</li>
+<li>
+<p>Let <code>externMethodDefEnv<sub>merged</sub></code> be <a href="#merge_externMethodDefEnvs">the merged extern method definition environment of <code>externMethodDefEnv</code> and <code>IC<sub>decl_post</sub>.BLOCK.CALLABLE</code></a>.</p>
+</li>
+<li>
+<p>Let <code>object<sub>merged</sub></code> be <code>EXTERN</code> <code>typeId</code> <code>&lt;</code> <code>theta</code> <code>&gt;</code> <code>{</code> <code>externState</code> <code>frame<sub>merged</sub></code> <code>externMethodDefEnv<sub>merged</sub></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>objectId</code> be <code>IC<sub>0</sub>.PATH</code> <code>&#43;&#43;</code> <code>[nameIR]</code>.</p>
+</li>
+<li>
+<p>Let <code>STO<sub>3</sub></code> be <a href="#add_map"><code>STO<sub>2</sub></code>[<code>objectId</code> := <code>object<sub>merged</sub></code>]</a>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>REF</code> <code>objectId</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>3</sub></code>,</p>
+</li>
+<li>
+<p>and the reference to the object <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>~<a href="#is_externObject"></code> <code>is_externObject(object)</a></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>objectId'</code> be <code>IC<sub>0</sub>.PATH</code> <code>&#43;&#43;</code> <code>[nameIR]</code>.</p>
+</li>
+<li>
+<p>Let <code>STO<sub>2'</sub></code> be <a href="#add_map"><code>STO<sub>1</sub></code>[<code>objectId'</code> := <code>object</code>]</a>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>1'</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>REF</code> <code>objectId'</code> is added to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>constantDeclarationIR'</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId'</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>IC<sub>1'</sub></code>,</p>
+</li>
+<li>
+<p>the updated store <code>STO<sub>2'</sub></code>,</p>
+</li>
+<li>
+<p>and the reference to the object <code>constantDeclarationIR'</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, instantiations are evaluated with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Decl_inst/instantiationIR:
+  rule Decl_inst/instantiationIR:
+  IC_0 STO_0 |- instantiationIR : IC_1 STO_1
+ -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decl_inst">Instantiating <code>instantiationIR</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>,the updated store <code>STO<sub>1</sub></code>,and the reference to the object <code>_</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#InstDecl_inst">instantiating <code>instantiationIR</code>, under cursor <code>GLOBAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and the updated store <code>STO<sub>1</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -16402,9 +16686,7 @@ syntax enumTypeDeclarationIR =
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
  -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~&gt; value
  -- if nameIR = $name(name)
- -- if enumTypeDefIR = ENUM nameIR_enum `&lt;typeIR&gt; `{eps}
- -- if value_enum = nameIR_enum . nameIR . value
- -- if varTypeIR = `EMPTY enumTypeDefIR LCTK value_enum
+ -- if varTypeIR = `EMPTY typeIR LCTK value
  -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)</pre>
 </div>
 </div>
@@ -16448,13 +16730,7 @@ syntax enumTypeDeclarationIR =
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>enumTypeDefIR</code> be <code>ENUM</code> <code>nameIR<sub>enum</sub></code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> <code>{</code> <code>·</code> <code>}</code>.</p>
-</li>
-<li>
-<p>Let <code>value<sub>enum</sub></code> be <code>nameIR<sub>enum</sub></code> <code>.</code> <code>nameIR</code> <code>.</code> <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>varTypeIR</code> be <code>`EMPTY</code> <code>enumTypeDefIR</code> <code>LCTK</code> <code>value<sub>enum</sub></code>.</p>
+<p>Let <code>varTypeIR</code> be <code>`EMPTY</code> <code>typeIR</code> <code>LCTK</code> <code>value</code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>varTypeIR</code> is added to the <code>BLOCK</code> layer</a>.</p>
@@ -16618,13 +16894,13 @@ syntax enumTypeDeclarationIR =
 <div class="content">
 <pre>rulegroup Decl_inst/enumTypeDeclarationIR-serializable:
   rule Decl_inst/enumTypeDeclarationIR-serializable:
-  IC_0 STO_0 |- annotationList ENUM typeIR nameIR `{(nameIR_field = typedExpressionIR_field)*} : IC_2 STO_1
- -- Exprs_inst: GLOBAL IC_0 STO_0 |- typedExpressionIR_field* : STO_1 value_field*
+  IC_0 STO_0 |- annotationList ENUM typeIR nameIR `{(nameIR_field = typedExpressionIR_field)*} : IC_3 STO_1
+ -- Enum_serializable_fields_inst: IC_0 STO_0 |- (nameIR_field = typedExpressionIR_field)* : IC_1 STO_1 # value_field*
  -- (if (nameIR_serenum_field = nameIR ++ "." ++ nameIR_field))*
  -- (if (value_serenum_field = nameIR . nameIR_field . value_field))*
- -- if IC_1 = $add_vars_i(GLOBAL, IC_0, nameIR_serenum_field*, value_serenum_field*)
+ -- if IC_2 = $add_vars_i(GLOBAL, IC_0, nameIR_serenum_field*, value_serenum_field*)
  -- if enumTypeDefIR = ENUM nameIR `&lt;typeIR&gt; `{(nameIR_field = value_field ;)*}
- -- if IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, enumTypeDefIR)</pre>
+ -- if IC_3 = $add_typeDef_i(GLOBAL, IC_2, nameIR, enumTypeDefIR)</pre>
 </div>
 </div>
 </div>
@@ -16642,7 +16918,7 @@ syntax enumTypeDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <a href="#Exprs_inst">GLOBAL IC<sub>0</sub> STO |- typedExpressionIR<sub>field</sub><sup>*</sup> : STO<sub>1</sub> value<sub>field</sub><sup>*</sup></a>.</p>
+<p>Let <a href="#Enum_serializable_fields_inst">IC<sub>0</sub> STO |- (nameIR<sub>field</sub> = typedExpressionIR<sub>field</sub>)<sup>*</sup> : IC<sub>1</sub> STO<sub>1</sub> # value<sub>field</sub><sup>*</sup></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>serenum_field</sub></code>, obtained by repeating:</p>
@@ -16679,16 +16955,16 @@ syntax enumTypeDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>IC<sub>1</sub></code> be <a href="#add_vars_i"><code>IC<sub>0</sub></code> where each of <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> to each of <code>value<sub>serenum_field</sub><sup>*</sup></code> are added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>IC<sub>2</sub></code> be <a href="#add_vars_i"><code>IC<sub>0</sub></code> where each of <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> to each of <code>value<sub>serenum_field</sub><sup>*</sup></code> are added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>enumTypeDefIR</code> be <code>ENUM</code> <code>nameIR</code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> <code>{</code> <code>(nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>2</sub></code> be <code><a href="#add_typeDef_i"></code> <code>add_typeDef_i(GLOBAL,</code> <code>IC<sub>1</sub>,</code> <code>nameIR,</code> <code>enumTypeDefIR)</a></code>.</p>
+<p>Let <code>IC<sub>3</sub></code> be <code><a href="#add_typeDef_i"></code> <code>add_typeDef_i(GLOBAL,</code> <code>IC<sub>2</sub>,</code> <code>nameIR,</code> <code>enumTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in the updated instantiation context <code>IC<sub>2</sub></code> and the updated store <code>STO<sub>1</sub></code>.</p>
+<p>Result in the updated instantiation context <code>IC<sub>3</sub></code> and the updated store <code>STO<sub>1</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -20261,7 +20537,7 @@ invoked.</p>
  -- if nameIR = $concat_text([typeId, "_", typeId_fresh])
  -- if objectId = IC.PATH ++ nameIR
  -- if STO_2 = $add_map&lt;objectId, object&gt;(STO_1, objectId, object)
- -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (! objectId)) ;
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;
  -- if callableTargetIR = ((` nameIR) # `(typeIR CTK)) . "apply"
  -- if callStatementIR = callableTargetIR `&lt;eps&gt; `(argumentListIR) ;
  -- if blockStatementIR = `EMPTY `{[constantDeclarationIR, callStatementIR]}</pre>
@@ -20282,7 +20558,17 @@ invoked.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <a href="#Constructor_inst">p IC |- prefixedNameIR &lt; · &gt; ( · ) : constructorDef &lt; typeArgumentIR<sup>*</sup> &gt; ( # id<sup>*</sup> )</a>.</p>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> with default parameters <code>id<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Constructor_inst">finding constructor for <code>prefixedNameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> under cursor <code>p</code>, and instantiation context <code>IC</code></a>.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Check that <code>typeArgumentIR<sup>*</sup></code> is an empty list.</p>
@@ -20322,7 +20608,7 @@ invoked.</p>
 <p>Let <code>STO<sub>2</sub></code> be <a href="#add_map"><code>STO<sub>1</sub></code>[<code>objectId</code> := <code>object</code>]</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>!</code> <code>objectId</code> <code>;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Let <code>callableTargetIR</code> be <code>nameIR</code> <code>#</code> <code>(</code> <code>typeIR</code> <code>CTK</code> <code>)</code> <code>.</code> <code>"apply"</code>.</p>
