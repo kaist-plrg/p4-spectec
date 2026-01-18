@@ -57,13 +57,17 @@ rule ParserLocalDecl_ok/valueSetDeclaration:
 ;; syntax parserLocalDeclarationList
 ;;
 
-rule ParserLocalDecls_ok/nil:
-  TC |- eps : TC eps
+rulegroup ParserLocalDecls_ok {
 
-rule ParserLocalDecls_ok/cons:
-  TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t*
-       : TC_2 (parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*)
-  -- ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration_h
-                               : TC_1 parserLocalDeclarationIR_h
-  -- ParserLocalDecls_ok: TC_1 |- parserLocalDeclaration_t*
-                                : TC_2 parserLocalDeclarationIR_t*
+  rule ParserLocalDecls_ok/nil:
+    TC |- eps : TC eps
+
+  rule ParserLocalDecls_ok/cons:
+    TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t*
+         : TC_2 (parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*)
+    -- ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration_h
+                                 : TC_1 parserLocalDeclarationIR_h
+    -- ParserLocalDecls_ok: TC_1 |- parserLocalDeclaration_t*
+                                  : TC_2 parserLocalDeclarationIR_t*
+
+}

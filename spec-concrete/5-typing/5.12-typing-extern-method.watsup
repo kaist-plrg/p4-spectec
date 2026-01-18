@@ -78,16 +78,20 @@ rule ExternMethod_ok/abstract:
 ;; syntax externMethodPrototypeList
 ;;
 
-rule ExternMethods_ok/nil:
-  TC typeId_extern |- eps : TC eps
+rulegroup ExternMethods_ok {
 
-rule ExternMethods_ok/cons:
-  TC_0 typeId_extern |- externMethodPrototype_h :: externMethodPrototype_t*
-                      : TC_2 (externMethodPrototypeIR_h :: externMethodPrototypeIR_t*)
-  -- ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype_h
-                                          : TC_1 externMethodPrototypeIR_h
-  -- ExternMethods_ok: TC_1 typeId_extern |- externMethodPrototype_t*
-                                            : TC_2 externMethodPrototypeIR_t*
+  rule ExternMethods_ok/nil:
+    TC typeId_extern |- eps : TC eps
+
+  rule ExternMethods_ok/cons:
+    TC_0 typeId_extern |- externMethodPrototype_h :: externMethodPrototype_t*
+                        : TC_2 (externMethodPrototypeIR_h :: externMethodPrototypeIR_t*)
+    -- ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype_h
+                                            : TC_1 externMethodPrototypeIR_h
+    -- ExternMethods_ok: TC_1 typeId_extern |- externMethodPrototype_t*
+                                              : TC_2 externMethodPrototypeIR_t*
+
+}
 
 ;;
 ;; Extern constructor typing
@@ -131,15 +135,19 @@ rule ExternConstructor_ok:
 ;; syntax externConstructorPrototypeList
 ;;
 
-rule ExternConstructors_ok/nil:
-  TC typeId_extern |- eps : TC eps
+rulegroup ExternConstructors_ok {
 
-rule ExternConstructors_ok/cons:
-  TC_0 typeId_extern |- externConstructorPrototype_h :: externConstructorPrototype_t*
-                      : TC_2 (externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*)
-  -- ExternConstructor_ok:
-      TC_0 typeId_extern |- externConstructorPrototype_h
-                          : TC_1 externConstructorPrototypeIR_h
-  -- ExternConstructors_ok:
-      TC_1 typeId_extern |- externConstructorPrototype_t*
-                          : TC_2 externConstructorPrototypeIR_t*
+  rule ExternConstructors_ok/nil:
+    TC typeId_extern |- eps : TC eps
+
+  rule ExternConstructors_ok/cons:
+    TC_0 typeId_extern |- externConstructorPrototype_h :: externConstructorPrototype_t*
+                        : TC_2 (externConstructorPrototypeIR_h :: externConstructorPrototypeIR_t*)
+    -- ExternConstructor_ok:
+        TC_0 typeId_extern |- externConstructorPrototype_h
+                            : TC_1 externConstructorPrototypeIR_h
+    -- ExternConstructors_ok:
+        TC_1 typeId_extern |- externConstructorPrototype_t*
+                            : TC_2 externConstructorPrototypeIR_t*
+
+}
