@@ -55,6 +55,14 @@ let collect_excludes (paths_exclude : string list) =
   in
   List.concat_map collect_exclude filenames_exclude
 
+(* Exclusion policy *)
+
+let should_exclude_pair (filename_p4 : string) (filename_stf : string)
+    (excludes : string list) =
+  excludes
+  |> List.exists (fun exclude ->
+      String.equal filename_p4 exclude || String.equal filename_stf exclude)
+
 (* Collector for P4-STF pairing *)
 
 let p4_matches_stf basename_p4 filepath_stf =
