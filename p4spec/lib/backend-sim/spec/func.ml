@@ -63,6 +63,13 @@ let tableObject_add_entry (value_tableObject : Value.t)
       value_tableActionInterface;
     ]
 
+(* tableObject_add_default_action *)
+
+let tableObject_add_default_action (value_tableObject : Value.t)
+    (value_tableActionInterface : Value.t) : Value.t =
+  !call "tableObject_add_default_action" []
+    [ value_tableObject; value_tableActionInterface ]
+
 (* find/update_store_qualified/unqualified *)
 
 let find_store_qualified (value_sto : Value.t) (value_objectId : Value.t) :

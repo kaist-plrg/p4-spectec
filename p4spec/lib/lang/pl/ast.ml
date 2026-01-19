@@ -89,7 +89,7 @@ and exp' =
   | IterE of exp * iterexp                                  (* exp iterexp *)
 
 and notexp = mixop * exp list
-and iterexp = iter * var list
+and iterexp = Sl.iterexp
 
 (* Patterns *)
 

@@ -80,6 +80,9 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
         | "v1model" ->
             Strings.contains_substring "#include <v1model.p4>" contents
             || Strings.contains_substring "#include \"v1model.p4\"" contents
+        | "ebpf" ->
+            Strings.contains_substring "#include <ebpf_model.p4>" contents
+            || Strings.contains_substring "#include \"ebpf_model.p4\"" contents
         | _ -> false)
       filenames_p4
   in

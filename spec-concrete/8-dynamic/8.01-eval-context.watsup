@@ -42,8 +42,7 @@ def $exit_e(EC) = EC[ .LOCAL.FRAMES = frame_t* ]
 ;; Context inheritance
 ;;
 
-dec $inherit_e(cursor, evalContext)
-  : evalContext
+dec $inherit_e(cursor, evalContext) : evalContext
 
 def $inherit_e(GLOBAL, EC)
   = EC[ .BLOCK = blockEvalLayer ][ .LOCAL = localEvalLayer ]
@@ -57,6 +56,22 @@ def $inherit_e(BLOCK, EC) = EC[ .LOCAL = localEvalLayer ]
   -- if localEvalLayer = { TYPE $empty_theta,
                            FRAMES ([ $empty_frame ]) }
 def $inherit_e(LOCAL, EC) = EC
+
+;;
+;; Context copy
+;;
+
+dec $copy_e(cursor, evalContext, evalContext) : evalContext
+
+def $copy_e(GLOBAL, EC_from, EC_to)
+  = EC_to[ .GLOBAL = EC_from.GLOBAL ]
+def $copy_e(BLOCK, EC_from, EC_to)
+  = EC_to[ .GLOBAL = EC_from.GLOBAL ]
+         [ .BLOCK = EC_from.BLOCK ]
+def $copy_e(LOCAL, EC_from, EC_to)
+  = EC_to[ .GLOBAL = EC_from.GLOBAL ]
+         [ .BLOCK = EC_from.BLOCK ]
+         [ .LOCAL = EC_from.LOCAL ]
 
 ;;
 ;; Adders

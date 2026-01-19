@@ -7,9 +7,10 @@
 rulegroup Copy_in_argument/directionless-in {
 
   rule Copy_in_argument/abort:
-    STO_0 p_caller EC_caller_0 (_ direction typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
+    STO_0 |-
+      p_caller EC_caller_0 (_ direction typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_0 `# abortResult
     ---- ;; check parameter direction
     -- if direction = `EMPTY \/ direction = IN
     ---- ;; evaluate argument
@@ -18,9 +19,10 @@ rulegroup Copy_in_argument/directionless-in {
                                   : EC_caller_1 STO_1 abortResult
 
   rule Copy_in_argument/cont:
-    STO_0 p_caller EC_caller_0 (_ direction typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` eps)
+    STO_0 |-
+      p_caller EC_caller_0 (_ direction typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_1 `# (`` eps)
     ---- ;; check parameter direction
     -- if direction = `EMPTY \/ direction = IN
     ---- ;; evaluate argument
@@ -38,18 +40,20 @@ rulegroup Copy_in_argument/directionless-in {
 rulegroup Copy_in_argument/inout {
  
   rule Copy_in_argument/abort:
-    STO_0 p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
+    STO_0 |-
+      p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_0 `# abortResult
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
                                     : EC_caller_1 STO_1 abortResult
  
   rule Copy_in_argument/cont:
-    STO_0 p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` storageReference)
+    STO_0 |-
+      p_caller EC_caller_0 (_  INOUT typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_1 `# (`` storageReference)
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
@@ -68,18 +72,20 @@ rulegroup Copy_in_argument/inout {
 rulegroup Copy_in_argument/out {
  
   rule Copy_in_argument/abort:
-    STO_0 p_caller EC_caller_0 (_  OUT typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_0 `# abortResult
+    STO_0 |-
+      p_caller EC_caller_0 (_  OUT typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_0 `# abortResult
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
                                     : EC_caller_1 STO_1 abortResult
  
   rule Copy_in_argument/cont:
-    STO_0 p_caller EC_caller_0 (_  OUT typeIR nameIR _)
-       `@ p_callee EC_callee_0 argumentIR
-    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` storageReference?)
+    STO_0 |-
+      p_caller EC_caller_0 (_  OUT typeIR nameIR _)
+      `@ p_callee EC_callee_0 argumentIR
+    ~> STO_1 EC_caller_1 EC_callee_1 `# (`` storageReference?)
     ---- ;; get storage reference of argument
     -- Argument_eval_lvalue:
         p_caller EC_caller_0 STO_0 |- argumentIR
@@ -100,48 +106,60 @@ rulegroup Copy_in_argument/out {
 rulegroup Copy_in {
 
   rule Copy_in/nil:
-    STO p_caller EC_caller eps `@ p_callee EC_callee eps
-    ~> STO EC_caller `@ EC_callee `# (`` eps)
+    p_shared STO |-
+      p_caller EC_caller eps
+      `@ p_callee EC_callee_0 eps
+    ~> STO EC_caller EC_callee_1 `# (`` eps)
+    ---- ;; propagate shared layer
+    -- if EC_callee_1 = $copy_e(p_shared, EC_caller, EC_callee_0)
 
   rule Copy_in/cons-head-abort:
-    STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
-       `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
-    ~> STO_1 EC_caller_1 `@ EC_callee_1 `# abortResult
+    p_shared STO_0 |-
+      p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
+      `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
+    ~> STO_1 EC_caller_1 EC_callee_1 `# abortResult
     ----
     -- Copy_in_argument:
-        STO_0 p_caller EC_caller_0 parameterIR_h
-           `@ p_callee EC_callee_0 argumentIR_h
-        ~> STO_1 EC_caller_1 `@ EC_callee_1 `# abortResult
+        STO_0 |-
+          p_caller EC_caller_0 parameterIR_h
+          `@ p_callee EC_callee_0 argumentIR_h
+        ~> STO_1 EC_caller_1 EC_callee_1 `# abortResult
 
   rule Copy_in/cons-head-cont-tail-abort:
-    STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
-       `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
-    ~> STO_2 EC_caller_2 `@ EC_callee_2 `# abortResult
+    p_shared STO_0 |-
+      p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
+      `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
+    ~> STO_2 EC_caller_2 EC_callee_2 `# abortResult
     ----
     -- Copy_in_argument:
-        STO_0 p_caller EC_caller_0 parameterIR_h
-           `@ p_callee EC_callee_0 argumentIR_h
-        ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` storageReference_h?)
+        STO_0 |-
+          p_caller EC_caller_0 parameterIR_h
+          `@ p_callee EC_callee_0 argumentIR_h
+        ~> STO_1 EC_caller_1 EC_callee_1 `# (`` storageReference_h?)
     ----
     -- Copy_in:
-        STO_1 p_caller EC_caller_1 parameterIR_t*
-           `@ p_callee EC_callee_1 argumentIR_t*
-        ~> STO_2 EC_caller_2 `@ EC_callee_2 `# abortResult
+        p_shared STO_1 |-
+          p_caller EC_caller_1 parameterIR_t*
+          `@ p_callee EC_callee_1 argumentIR_t*
+        ~> STO_2 EC_caller_2 EC_callee_2 `# abortResult
 
   rule Copy_in/cons-head-cont-tail-cont:
-    STO_0 p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
-       `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
-    ~> STO_2 EC_caller_2 `@ EC_callee_2 `# (`` storageReference?*)
+    p_shared STO_0 |-
+      p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
+      `@ p_callee EC_callee_0 (argumentIR_h :: argumentIR_t*)
+    ~> STO_2 EC_caller_2 EC_callee_2 `# (`` storageReference?*)
     ----
     -- Copy_in_argument:
-        STO_0 p_caller EC_caller_0 parameterIR_h
-           `@ p_callee EC_callee_0 argumentIR_h
-        ~> STO_1 EC_caller_1 `@ EC_callee_1 `# (`` storageReference_h?)
+        STO_0 |-
+          p_caller EC_caller_0 parameterIR_h
+          `@ p_callee EC_callee_0 argumentIR_h
+        ~> STO_1 EC_caller_1 EC_callee_1 `# (`` storageReference_h?)
     ----
     -- Copy_in:
-        STO_1 p_caller EC_caller_1 parameterIR_t*
-           `@ p_callee EC_callee_1 argumentIR_t*
-        ~> STO_2 EC_caller_2 `@ EC_callee_2 `# (`` storageReference_t*)
+        p_shared STO_1 |-
+          p_caller EC_caller_1 parameterIR_t*
+          `@ p_callee EC_callee_1 argumentIR_t*
+        ~> STO_2 EC_caller_2 EC_callee_2 `# (`` storageReference_t*)
     ----
     -- if storageReference?*
         = storageReference_h? :: storageReference_t*
@@ -154,7 +172,7 @@ rulegroup Copy_in {
 
 rule Copy_in_default:
   parameterIR* `@ p_callee EC_callee_0 value*
-  ~> `@ EC_callee_1
+  ~> EC_callee_1
   ----
   -- if (_ _ _ nameIR _ = parameterIR)*
   -- if EC_callee_1

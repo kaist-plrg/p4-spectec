@@ -636,6 +636,19 @@ def $cast_error(SET `< typeIR >, nameIR) = SET `{ $cast_error(typeIR, nameIR) }
 
 def $cast_op(typeIR, ERROR `. nameIR) = $cast_error(typeIR, nameIR)
 
+;;; Cast from list
+
+dec $cast_list(typeIR, value*) : value
+  hint(testgen_ignore)
+
+def $cast_list(TYPEDEF _ typeIR, value*)
+  = $cast_list(typeIR, value*)
+def $cast_list(LIST `< typeIR >, value*)
+  = LIST `[ $cast_op(typeIR, value)* ]
+
+def $cast_op(typeIR, LIST `[ value* ])
+  = $cast_list(typeIR, value*)
+
 ;;; Cast from struct
 
 dec $cast_struct(typeIR, typeId, (value, id)*) : value

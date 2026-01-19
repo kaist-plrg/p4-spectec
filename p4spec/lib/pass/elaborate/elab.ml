@@ -1288,7 +1288,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
     let prem_il = Il.IfHoldPr (id, notexp_il) in
     (ctx, prem_il)
   else
-    let prem_il = Il.RulePr (id, notexp_il) in
+    let prem_il = Il.RulePr (id, notexp_il, inputs) in
     (ctx, prem_il)
 
 (* Elaboration of negated rule premises *)
@@ -1324,7 +1324,7 @@ and elab_iter_prem (ctx : Ctx.t) (prem : prem) (iter : iter) : Ctx.t * Il.prem'
   let iter_il = elab_iter iter in
   let ctx, prem_il_opt = elab_prem ctx prem in
   let prem_il = Option.get prem_il_opt in
-  let prem_il = Il.IterPr (prem_il, (iter_il, [])) in
+  let prem_il = Il.IterPr (prem_il, (iter_il, [], [])) in
   (ctx, prem_il)
 
 (* Elaboration of debug premises *)
@@ -1460,7 +1460,7 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     List.map
       (fun notexp_il ->
         let _, exps_il = notexp_il in
-        Hints.Input.split_without_idx inputs exps_il)
+        Hints.Input.split inputs exps_il)
       notexps_il
     |> List.split
   in

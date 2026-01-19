@@ -5,7 +5,8 @@
 ;;; IN | `EMPTY
 
 rule Copy_out_argument/in-directionless:
-  STO p_caller EC_caller_0 (_ direction typeIR nameIR _)
+  STO |-
+    p_caller EC_caller_0 (_ direction typeIR nameIR _)
    `@ p_callee EC_callee eps
   ~> EC_caller_0
   ---- ;; check parameter direction
@@ -16,14 +17,16 @@ rule Copy_out_argument/in-directionless:
 rulegroup Copy_out_argument/out-inout {
 
   rule Copy_out_argument/dontcare:
-    STO p_caller EC_caller (_ direction typeIR nameIR _)
+    STO |-
+      p_caller EC_caller (_ direction typeIR nameIR _)
      `@ p_callee EC_callee eps
     ~> EC_caller
     ---- ;; check parameter direction
     -- if direction = OUT \/ direction = INOUT
 
   rule Copy_out_argument/non-dontcare:
-    STO p_caller EC_caller_0 (_ direction typeIR nameIR _)
+    STO |-
+      p_caller EC_caller_0 (_ direction typeIR nameIR _)
      `@ p_callee EC_callee storageReference
     ~> EC_caller_1
     ---- ;; check parameter direction
@@ -41,25 +44,51 @@ rulegroup Copy_out_argument/out-inout {
 ;; Copy-out (multiple arguments)
 ;;
 
-rulegroup Copy_out {
+relation Copy_out_inner:
+  store |-
+    cursor evalContext parameterListIR
+    `@ cursor evalContext storageReference?*
+  ~> evalContext
+  hint(input %0 %1 %2 %3 %4 %5 %6)
 
-  rule Copy_out/nil:
-    STO p_caller EC_caller eps `@ p_callee EC_callee eps
+rulegroup Copy_out_inner {
+
+  rule Copy_out_inner/nil:
+    STO |-
+      p_caller EC_caller eps
+      `@ p_callee EC_callee eps
     ~> EC_caller
 
-  rule Copy_out/cons:
-    STO p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
+  rule Copy_out_inner/cons:
+    STO |-
+      p_caller EC_caller_0 (parameterIR_h :: parameterIR_t*)
      `@ p_callee EC_callee (storageReference_h? :: storageReference_t?*)
     ~> EC_caller_2
     ----
     -- Copy_out_argument:
-        STO p_caller EC_caller_0 parameterIR_h
+        STO |-
+          p_caller EC_caller_0 parameterIR_h
          `@ p_callee EC_callee storageReference_h?
         ~> EC_caller_1
     ----
-    -- Copy_out:
-        STO p_caller EC_caller_1 parameterIR_t*
+    -- Copy_out_inner:
+        STO |-
+          p_caller EC_caller_1 parameterIR_t*
          `@ p_callee EC_callee storageReference_t?*
         ~> EC_caller_2
 
 }
+
+rule Copy_out:
+  p_shared STO |-
+    p_caller EC_caller_0 parameterListIR
+    `@ p_callee EC_callee storageReference?*
+  ~> EC_caller_2
+  ---- ;; propagate shared layer
+  -- if EC_caller_1 = $copy_e(p_shared, EC_callee, EC_caller_0)
+  ---- ;; perform copy-out for each argument
+  -- Copy_out_inner:
+      STO |-
+        p_caller EC_caller_1 parameterListIR
+       `@ p_callee EC_callee storageReference?*
+      ~> EC_caller_2

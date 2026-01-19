@@ -1,8 +1,6 @@
 open Domain.Lib
 open Lang
 open Ol.Ast
-open Runtime.Dynamic_Sl
-open Envs
 open Util.Source
 
 (* Helper for replacing identifiers in expressions and instructions. *)
@@ -28,16 +26,6 @@ let filter (p : Id.t -> 'a -> bool) (replacer : t) : t =
   Replace.filter p replacer
 
 (* Replacement *)
-
-let replace_iterexp (replacer : t) (iterexp : iterexp) : iterexp =
-  let iter, vars = iterexp in
-  let vars =
-    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars
-  in
-  (iter, vars)
-
-let replace_iterexps (replacer : t) (iterexps : iterexp list) : iterexp list =
-  List.map (replace_iterexp replacer) iterexps
 
 let rec replace_exp (replacer : t) (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
@@ -128,6 +116,16 @@ let rec replace_exp (replacer : t) (exp : exp) : exp =
 and replace_exps (replacer : t) (exps : exp list) : exp list =
   List.map (replace_exp replacer) exps
 
+and replace_iterexp (replacer : t) (iterexp : iterexp) : iterexp =
+  let iter, vars = iterexp in
+  let vars =
+    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars
+  in
+  (iter, vars)
+
+and replace_iterexps (replacer : t) (iterexps : iterexp list) : iterexp list =
+  List.map (replace_iterexp replacer) iterexps
+
 and replace_path (replacer : t) (path : path) : path =
   let at, note = (path.at, path.note) in
   match path.it with
@@ -156,15 +154,14 @@ and replace_arg (replacer : t) (arg : arg) : arg =
 and replace_args (replacer : t) (args : arg list) : arg list =
   List.map (replace_arg replacer) args
 
-and replace_case (ihenv : IHEnv.t) (replacer : t) (case : case) : case =
+and replace_case (replacer : t) (case : case) : case =
   let guard, instrs = case in
   let guard = replace_guard replacer guard in
-  let instrs = replace_instrs ihenv replacer instrs in
+  let instrs = replace_instrs replacer instrs in
   (guard, instrs)
 
-and replace_cases (ihenv : IHEnv.t) (replacer : t) (cases : case list) :
-    case list =
-  List.map (replace_case ihenv replacer) cases
+and replace_cases (replacer : t) (cases : case list) : case list =
+  List.map (replace_case replacer) cases
 
 and replace_guard (replacer : t) (guard : guard) : guard =
   match guard with
@@ -177,67 +174,57 @@ and replace_guard (replacer : t) (guard : guard) : guard =
       let exp = replace_exp replacer exp in
       MemG exp
 
-and replace_instr (ihenv : IHEnv.t) (replacer : t) (instr : instr) : t * instr =
+and replace_instr (replacer : t) (instr : instr) : t * instr =
   let at = instr.at in
   match instr.it with
   | IfI (exp_cond, iterexps, instrs_then) ->
       let exp_cond = replace_exp replacer exp_cond in
       let iterexps = replace_iterexps replacer iterexps in
-      let instrs_then = replace_instrs ihenv replacer instrs_then in
+      let instrs_then = replace_instrs replacer instrs_then in
       let instr = IfI (exp_cond, iterexps, instrs_then) $ at in
       (replacer, instr)
   | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
       let exps = replace_exps replacer exps in
       let iterexps = replace_iterexps replacer iterexps in
-      let instrs_hold = replace_instrs ihenv replacer instrs_hold in
-      let instrs_nothold = replace_instrs ihenv replacer instrs_nothold in
+      let instrs_hold = replace_instrs replacer instrs_hold in
+      let instrs_nothold = replace_instrs replacer instrs_nothold in
       let instr =
         HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
       in
       (replacer, instr)
   | CaseI (exp, cases, total) ->
       let exp = replace_exp replacer exp in
-      let cases = replace_cases ihenv replacer cases in
+      let cases = replace_cases replacer cases in
       let instr = CaseI (exp, cases, total) $ at in
       (replacer, instr)
   | OtherwiseI instr ->
-      let _, instr = replace_instr ihenv replacer instr in
+      let _, instr = replace_instr replacer instr in
       let instr = OtherwiseI instr $ at in
       (replacer, instr)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let exps_group = replace_exps replacer exps_group in
-      let instrs_group = replace_instrs ihenv replacer instrs_group in
+      let instrs_group = replace_instrs replacer instrs_group in
       let instr =
         GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
       in
       (replacer, instr)
-  | LetI (exp_l, exp_r, iterexps) ->
+  | LetI (exp_l, exp_r, iterinstrs) ->
       let frees_l = Ol.Free.free_exp exp_l in
       let replacer = filter (fun id _ -> not (IdSet.mem id frees_l)) replacer in
       let exp_r = replace_exp replacer exp_r in
-      let iterexps = replace_iterexps replacer iterexps in
-      let instr = LetI (exp_l, exp_r, iterexps) $ at in
+      let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
+      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
       (replacer, instr)
-  | RuleI (id_rel, (mixop, exps), iterexps) ->
-      let exps_input_indexed, exps_output_indexed =
-        let inputs = IHEnv.find id_rel ihenv in
-        Hints.Input.split inputs exps
-      in
-      let exps_input_indexed =
-        let idxs_input, exps_input = List.split exps_input_indexed in
-        let exps_input = replace_exps replacer exps_input in
-        List.combine idxs_input exps_input
-      in
-      let frees_output =
-        let exps_output = List.map snd exps_output_indexed in
-        Ol.Free.free_exps exps_output
-      in
+  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs) ->
+      let exps_input, exps_output = Hints.Input.split inputs exps in
+      let exps_input = replace_exps replacer exps_input in
+      let frees_output = Ol.Free.free_exps exps_output in
       let replacer =
         filter (fun id _ -> not (IdSet.mem id frees_output)) replacer
       in
-      let exps = Hints.Input.combine exps_input_indexed exps_output_indexed in
-      let iterexps = replace_iterexps replacer iterexps in
-      let instr = RuleI (id_rel, (mixop, exps), iterexps) $ at in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
+      let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
+      let instr = RuleI (id_rel, (mixop, exps), inputs, iterinstrs) $ at in
       (replacer, instr)
   | ResultI (rel_signature, exps) ->
       let exps = replace_exps replacer exps in
@@ -252,11 +239,21 @@ and replace_instr (ihenv : IHEnv.t) (replacer : t) (instr : instr) : t * instr =
       let instr = DebugI exp $ at in
       (replacer, instr)
 
-and replace_instrs (ihenv : IHEnv.t) (replacer : t) (instrs : instr list) :
-    instr list =
+and replace_instrs (replacer : t) (instrs : instr list) : instr list =
   List.fold_left
     (fun (replacer, instrs) instr ->
-      let replacer, instr = replace_instr ihenv replacer instr in
+      let replacer, instr = replace_instr replacer instr in
       (replacer, instrs @ [ instr ]))
     (replacer, []) instrs
   |> snd
+
+and replace_iterinstr_bound (replacer : t) (iterinstr : iterinstr) : iterinstr =
+  let iter, vars_bind, vars_bound = iterinstr in
+  let vars_bound =
+    List.filter (fun (id, _, _) -> not (Replace.mem id replacer)) vars_bound
+  in
+  (iter, vars_bind, vars_bound)
+
+and replace_iterinstrs_bound (replacer : t) (iterinstrs : iterinstr list) :
+    iterinstr list =
+  List.map (replace_iterinstr_bound replacer) iterinstrs

@@ -3,6 +3,7 @@ open Lang
 open Il
 open Runtime.Dynamic_Sl
 open Envs
+open Error
 open Util.Source
 
 (* Structuring parameters *)
@@ -41,50 +42,72 @@ let struct_params_from_args (params : param list) (args_input : arg list) :
 
 (* Structuring premises *)
 
-let rec internalize_iter ?(iterexps : iterexp list = []) (prem : prem) :
-    prem * iterexp list =
+let rec internalize_iter ?(iterprems : iterprem list = []) (prem : prem) :
+    prem * iterprem list =
   match prem.it with
-  | IterPr (prem, iterexp) ->
-      internalize_iter ~iterexps:(iterexp :: iterexps) prem
-  | _ -> (prem, iterexps)
+  | IterPr (prem, iterprem) ->
+      internalize_iter ~iterprems:(iterprem :: iterprems) prem
+  | _ -> (prem, iterprems)
 
 let rec struct_prems (prems : prem list) (instr_ret : Ol.Ast.instr) :
     Ol.Ast.instr list =
   let prems_internalized = List.map internalize_iter prems in
   struct_prems' prems_internalized instr_ret
 
-and struct_prems' (prems_internalized : (prem * iterexp list) list)
+and struct_prems' (prems_internalized : (prem * iterprem list) list)
     (instr_ret : Ol.Ast.instr) : Ol.Ast.instr list =
   match prems_internalized with
   | [] -> [ instr_ret ]
   | [ ({ it = ElsePr; at; _ }, []) ] ->
       let instr = Ol.Ast.OtherwiseI instr_ret $ at in
       [ instr ]
-  | (prem_h, iterexps_h) :: prems_internalized_t -> (
+  | (prem_h, iterprems_h) :: prems_internalized_t -> (
       let at = prem_h.at in
       match prem_h.it with
-      | RulePr (id, notexp) ->
-          let instr_h = Ol.Ast.RuleI (id, notexp, iterexps_h) $ at in
+      | RulePr (id, notexp, inputs) ->
+          let instr_h = Ol.Ast.RuleI (id, notexp, inputs, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           instr_h :: instrs_t
       | IfPr exp ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ -> error at "an if premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h = Ol.Ast.IfI (exp, iterexps_h, instrs_t) $ at in
           [ instr_h ]
       | IfHoldPr (id, notexp) ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ -> error at "an if holds premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h =
             Ol.Ast.HoldI (id, notexp, iterexps_h, instrs_t, []) $ at
           in
           [ instr_h ]
       | IfNotHoldPr (id, notexp) ->
+          let iterexps_h =
+            List.map
+              (function
+                | iter, vars_bound, [] -> (iter, vars_bound)
+                | _ ->
+                    error at "an if not holds premise should not have bindings")
+              iterprems_h
+          in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           let instr_h =
             Ol.Ast.HoldI (id, notexp, iterexps_h, [], instrs_t) $ at
           in
           [ instr_h ]
       | LetPr (exp_l, exp_r) ->
-          let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterexps_h) $ at in
+          let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
           instr_h :: instrs_t
       | DebugPr exp ->
@@ -146,7 +169,7 @@ let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
 
 (* Structuring definitions *)
 
-let rec struct_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.def =
+let rec struct_def (tdenv : TDEnv.t) (def : def) : Sl.def =
   let at = def.at in
   match def.it with
   | ExternTypD (id, hints) -> Sl.ExternTypD (id, hints) $ at
@@ -155,15 +178,15 @@ let rec struct_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : def) : Sl.def =
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, hints) ->
-      struct_defined_rel_def ihenv tdenv at id nottyp inputs rulegroups hints
+      struct_defined_rel_def tdenv at id nottyp inputs rulegroups hints
   | ExternDecD (id, tparams, params, typ, hints) ->
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
   | TableDecD (id, params, typ, tablerows, hints) ->
-      struct_table_dec_def ihenv tdenv at id params tablerows typ hints
+      struct_table_dec_def tdenv at id params tablerows typ hints
   | FuncDecD (id, tparams, params, typ, clauses, hints) ->
-      struct_func_dec_def ihenv tdenv at id tparams params typ clauses hints
+      struct_func_dec_def tdenv at id tparams params typ clauses hints
 
 (* Structuring relation definitions *)
 
@@ -181,9 +204,9 @@ and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
   let externrel = (id_rel, (nottyp, inputs), exps_match, hints) in
   Sl.ExternRelD externrel $ at
 
-and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
-    (id_rel : id) (nottyp : nottyp) (inputs : int list)
-    (rulegroups : rulegroup list) (hints : hint list) : Sl.def =
+and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
+    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
+    (hints : hint list) : Sl.def =
   let frees = Il.Free.free_rulegroups rulegroups in
   let rulegroups, exps_match_group, prems_match_group =
     List.fold_left
@@ -224,10 +247,10 @@ and struct_defined_rel_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
       prems_match_group rulegroups
     |> Merge.merge_blocks
   in
-  let instrs = Optimize.optimize ihenv tdenv instrs in
+  let instrs = Optimize.optimize tdenv instrs in
   let instrs = Totalize.totalize tdenv instrs in
   let exps_match_unified, instrs =
-    Prettify.pretty_rel ihenv exps_match_unified instrs
+    Prettify.pretty_rel exps_match_unified instrs
   in
   let instrs = Instrument.instrument instrs in
   Sl.RelD (id_rel, rel_signature, exps_match_unified, instrs, hints) $ at
@@ -246,8 +269,8 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
   let builtinfunc = (id_dec, tparams, params, typ, hints) in
   Sl.BuiltinDecD builtinfunc $ at
 
-and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
-    (id_dec : id) (params : param list) (tablerows : tablerow list) (typ : typ)
+and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
+    (params : param list) (tablerows : tablerow list) (typ : typ)
     (hints : hint list) : Sl.def =
   let exps_signature_group, clauses =
     tablerows
@@ -262,7 +285,7 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
   let instrs_tablerows_group =
     paths
     |> List.map struct_tablerow_path
-    |> List.map (Optimize.optimize ihenv tdenv)
+    |> List.map (Optimize.optimize tdenv)
     |> List.map (Totalize.totalize tdenv)
     |> List.map Instrument.instrument
   in
@@ -277,14 +300,14 @@ and struct_table_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
   let tablefunc = (id_dec, params, typ, tablerows, hints) in
   Sl.TableDecD tablefunc $ at
 
-and struct_func_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
-    (id_dec : id) (tparams : tparam list) (params : param list) (typ : typ)
+and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
+    (tparams : tparam list) (params : param list) (typ : typ)
     (clauses : clause list) (hints : hint list) : Sl.def =
   let args_input, paths = Antiunify.antiunify_clauses clauses in
   let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
-  let instrs = Optimize.optimize ihenv tdenv instrs in
+  let instrs = Optimize.optimize tdenv instrs in
   let instrs = Totalize.totalize tdenv instrs in
-  let args_input, instrs = Prettify.pretty_func ihenv args_input instrs in
+  let args_input, instrs = Prettify.pretty_func args_input instrs in
   let params = struct_params_from_args params args_input in
   let instrs = Instrument.instrument instrs in
   let func = (id_dec, tparams, params, typ, instrs, hints) in
@@ -292,30 +315,21 @@ and struct_func_dec_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (at : region)
 
 (* Load type definitions *)
 
-let load_def (ihenv : IHEnv.t) (tdenv : TDEnv.t) (def : def) : IHEnv.t * TDEnv.t
-    =
+let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
   | ExternTypD (id, _hints) ->
       let td = Typdef.Extern in
-      let tdenv = TDEnv.add id td tdenv in
-      (ihenv, tdenv)
+      TDEnv.add id td tdenv
   | TypD (id, tparams, deftyp, _hints) ->
       let td = Typdef.Defined (tparams, deftyp) in
-      let tdenv = TDEnv.add id td tdenv in
-      (ihenv, tdenv)
-  | ExternRelD (id, _, inputs, _) | RelD (id, _, inputs, _, _) ->
-      let ihenv = IHEnv.add id inputs ihenv in
-      (ihenv, tdenv)
-  | _ -> (ihenv, tdenv)
+      TDEnv.add id td tdenv
+  | _ -> tdenv
 
-let load_spec (ihenv : IHEnv.t) (tdenv : TDEnv.t) (spec : spec) :
-    IHEnv.t * TDEnv.t =
-  List.fold_left
-    (fun (ihenv, tdenv) def -> load_def ihenv tdenv def)
-    (ihenv, tdenv) spec
+let load_spec (tdenv : TDEnv.t) (spec : spec) : TDEnv.t =
+  List.fold_left load_def tdenv spec
 
 (* Entry point *)
 
 let struct_spec (spec : spec) : Sl.spec =
-  let ihenv, tdenv = load_spec IHEnv.empty TDEnv.empty spec in
-  List.map (struct_def ihenv tdenv) spec
+  let tdenv = load_spec TDEnv.empty spec in
+  List.map (struct_def tdenv) spec

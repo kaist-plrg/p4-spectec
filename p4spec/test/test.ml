@@ -46,16 +46,189 @@ exception TestUnknownErr of float
 
 (* Timer *)
 
-let start () = Unix.gettimeofday ()
-let stop start = Unix.gettimeofday () -. start
+let start () = Util.Time.now ()
+let stop start = Util.Time.now () -. start
 
-(* Spec elaboration test *)
+(* Operations *)
 
-let elab specdir =
+let frontend specdir =
   specdir
   |> Filesys.collect_files ~suffix:".watsup"
   |> List.concat_map Frontend.Parse.parse_file
-  |> Elaborate.Elab.elab_spec
+
+let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
+let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
+let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
+
+let driver ?(arch : string option) mode specdir =
+  let spec_sim =
+    match mode with
+    | `IL ->
+        let spec_il = elab specdir in
+        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
+    | `SL ->
+        let spec_sl = structure specdir in
+        (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+  in
+  let (module Driver) =
+    match arch with
+    | Some arch -> Backend_sim.Gen.gen arch
+    | None -> Backend_sim.Gen.gen_placeholder ()
+  in
+  Driver.init spec_sim;
+  (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
+
+let run_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    relname includes_p4 filename_p4 =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
+  in
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_program relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
+
+let run_with_dangling (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    relname includes_p4 filename_p4 =
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_program relname includes_p4 filename_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
+let sim_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    includes_p4 filename_p4 filename_stf =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
+  in
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
+
+let sim_with_dangling (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
+    includes_p4 filename_p4 filename_stf =
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
+let cover_run_instr ?(arch : string option) mode filenames_spec relname
+    includes_p4 filenames_p4 =
+  let spec_sim, (module Driver) = driver ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> assert false
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let _, cover_single =
+          run_with_instr
+            (module Driver)
+            spec_sim relname includes_p4 filename_p4
+        in
+        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
+      cover_multi filenames_p4
+  in
+  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_multi spec_sl
+
+let cover_run_dangling ?(arch : string option) mode filenames_spec relname
+    includes_p4 filenames_p4 =
+  let spec_sim, (module Driver) = driver ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> assert false
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi filename_p4 ->
+        let program_result, cover_single =
+          run_with_dangling
+            (module Driver)
+            spec_sim relname includes_p4 filename_p4
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass _ -> (true, true)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
+          welltyped cover_single)
+      cover_multi filenames_p4
+  in
+  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover_multi
+
+let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
+    filenames_p4 filenames_stf =
+  let spec_sim, (module Driver) = driver ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> assert false
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi filename_p4 filename_stf ->
+        let _, cover_single =
+          sim_with_instr
+            (module Driver)
+            spec_sim includes_p4 filename_p4 filename_stf
+        in
+        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
+      cover_multi filenames_p4 filenames_stf
+  in
+  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_multi spec_sl
+
+let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
+    filenames_p4 filenames_stf =
+  let spec_sim, (module Driver) = driver ?arch mode filenames_spec in
+  let spec_sl =
+    match spec_sim with
+    | Runtime.Sim.Simulator.SL spec_sl -> spec_sl
+    | _ -> assert false
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi filename_p4 filename_stf ->
+        let program_result, cover_single =
+          sim_with_dangling
+            (module Driver)
+            spec_sim includes_p4 filename_p4 filename_stf
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass -> (true, true)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
+          welltyped cover_single)
+      cover_multi filenames_p4 filenames_stf
+  in
+  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover_multi
+
+(* Spec elaboration test *)
 
 let elab_test specdir =
   let spec_il = elab specdir in
@@ -73,8 +246,6 @@ let elab_command =
 
 (* Structuring test *)
 
-let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-
 let structure_test specdir =
   let spec_sl = structure specdir in
   Sl.Print.string_of_spec spec_sl |> print_endline
@@ -90,8 +261,6 @@ let structure_command =
          Format.printf "%s\n" (string_of_error at msg))
 
 (* Prose test *)
-
-let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
 let prose_test specdir =
   let spec_pl = prosify specdir in
@@ -109,11 +278,10 @@ let prose_command =
 
 (* Interpreter test *)
 
-let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
-    filename_p4 =
+let run (module Driver : Sim.DRIVER) negative relname includes_p4 filename_p4 =
   let time_start = start () in
   try
-    (match Runner.run_program spec_sim relname includes_p4 filename_p4 with
+    (match Driver.run_program relname includes_p4 filename_p4 with
     | Pass _ -> if negative then raise (TestRunNegErr time_start)
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -123,8 +291,8 @@ let run (module Runner : Sim.DRIVER) negative spec_sim relname includes_p4
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
-    =
+let run_test (module Driver : Sim.DRIVER) negative stat relname includes_p4
+    excludes_p4 filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -135,9 +303,8 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Backend_sim.Gen.gen_placeholder () in
       let time_start =
-        run (module Runner) negative spec_sim relname includes_p4 filename_p4
+        run (module Driver) negative relname includes_p4 filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in
@@ -181,15 +348,6 @@ let run_test negative stat spec_sim relname includes_p4 excludes_p4 filename_p4
 
 let run_test_driver mode negative specdir relname includes_p4 excludes_p4
     testdirs_p4 =
-  let spec_sim =
-    match mode with
-    | `IL ->
-        let spec_il = elab specdir in
-        (Sim.IL spec_il : Sim.spec)
-    | `SL ->
-        let spec_sl = structure specdir in
-        (Sim.SL spec_sl : Sim.spec)
-  in
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
@@ -201,14 +359,17 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
+  let spec_sim, (module Driver) = driver mode specdir in
+  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
         Format.asprintf "\n>>> Running interpreter test (%s) on %s" relname
           filename_p4
         |> print_endline;
-        run_test negative stat spec_sim relname includes_p4 excludes_p4
-          filename_p4)
+        run_test
+          (module Driver)
+          negative stat relname includes_p4 excludes_p4 filename_p4)
       stat filenames_p4
   in
   log_stat
@@ -241,13 +402,10 @@ let run_command =
 
 (* Simulator test *)
 
-let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
-    filename_stf =
+let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
   let time_start = start () in
   try
-    (match
-       Runner.run_stf_test spec_sim includes_p4 filename_p4 filename_stf
-     with
+    (match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -256,8 +414,8 @@ let run_sim (module Runner : Sim.DRIVER) spec_sim includes_p4 filename_p4
   | TestRunErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
-    filename_stf =
+let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes_p4
+    filename_p4 filename_stf =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_stf in
     log |> print_endline;
@@ -268,9 +426,8 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
     })
   else
     try
-      let (module Runner) = Backend_sim.Gen.gen arch in
       let time_start =
-        run_sim (module Runner) spec_sim includes_p4 filename_p4 filename_stf
+        run_sim (module Driver) includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_stf in
@@ -307,15 +464,6 @@ let run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
 
 let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
     testdirs_stf patchdir =
-  let spec_sim =
-    match mode with
-    | `IL ->
-        let spec_il = elab specdir in
-        (Sim.IL spec_il : Sim.spec)
-    | `SL ->
-        let spec_sl = structure specdir in
-        (Sim.SL spec_sl : Sim.spec)
-  in
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
@@ -327,6 +475,8 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
+  let spec_sim, (module Driver) = driver ~arch mode specdir in
+  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->
@@ -334,8 +484,9 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
           "\n>>> Running simulation test (%s) on %s with packet input %s" arch
           filename_p4 filename_stf
         |> print_endline;
-        run_sim_test stat arch spec_sim includes_p4 excludes_p4 filename_p4
-          filename_stf)
+        run_sim_test
+          (module Driver : Sim.DRIVER)
+          stat includes_p4 excludes_p4 filename_p4 filename_stf)
       stat filename_pairs
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
@@ -368,46 +519,46 @@ let sim_command =
 
 (* Dangling coverage test *)
 
-let cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4 =
-  let spec_sl = structure specdir in
+let cover_run mode specdir relname includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
   in
   let filenames_p4 =
-    List.concat_map (Filesys.collect_files ~suffix:".p4") testdirs_p4
+    testdirs_p4
+    |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+    |> List.filter (fun filename_p4 -> not (List.mem filename_p4 excludes_p4))
   in
-  let filenames_p4 =
-    List.filter
-      (fun filename_p4 -> not (List.mem filename_p4 excludes_p4))
-      filenames_p4
-  in
-  let (module Runner) = Backend_sim.Gen.gen_placeholder () in
-  let cover =
-    Runner.cover_dangling_programs (Sim.SL spec_sl) relname includes_p4
-      filenames_p4
-  in
-  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover
+  match mode with
+  | `Instr -> cover_run_instr `SL specdir relname includes_p4 filenames_p4
+  | `Dangling -> cover_run_dangling `SL specdir relname includes_p4 filenames_p4
 
-let cover_dangling_command =
-  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
+let cover_run_command =
+  Core.Command.basic ~summary:"measure coverage of the spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
      and relname = flag "-rel" (required string) ~doc:"relation name"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and testdirs_p4 =
-       flag "-p4-dir" (listed string) ~doc:"p4 test directories"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
-       cover_dangling_test specdir relname includes_p4 excludes_p4 testdirs_p4)
+       cover_run mode specdir relname includes_p4 excludes_p4 testdirs_p4)
 
 (* Instruction coverage test - on simulation *)
 
-let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
-    testdirs_stf patchdir =
-  let spec_sl = structure specdir in
+let cover_sim mode arch specdir includes_p4 excludes_p4 testdirs_p4 testdirs_stf
+    patchdir =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
@@ -418,14 +569,12 @@ let cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
            not (List.exists (String.equal filename_p4) excludes_p4))
     |> List.split
   in
-  let (module Runner) = Backend_sim.Gen.gen arch in
-  let cover_instr =
-    Runner.cover_instr_stfs (Sim.SL spec_sl) includes_p4 filenames_p4
-      filenames_stf
-  in
-  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_instr spec_sl
+  match mode with
+  | `Instr -> cover_sim_instr `SL specdir includes_p4 filenames_p4 filenames_stf
+  | `Dangling ->
+      cover_sim_dangling `SL specdir includes_p4 filenames_p4 filenames_stf
 
-let cover_sim_instr_command =
+let cover_sim_command =
   Core.Command.basic
     ~summary:"measure instruction coverage of the P4 spec when simulated"
     (let open Core.Command.Let_syntax in
@@ -437,9 +586,19 @@ let cover_sim_instr_command =
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"stf test directories"
      and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
-     and arch = flag "-arch" (required string) ~doc:"architecture name" in
+     and arch = flag "-arch" (required string) ~doc:"architecture name"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
+     in
      fun () ->
-       cover_sim_instr_driver arch specdir includes_p4 excludes_p4 testdirs_p4
+       cover_sim mode arch specdir includes_p4 excludes_p4 testdirs_p4
          testdirs_stf patchdir)
 
 (* P4 Parser test *)
@@ -463,7 +622,7 @@ let parse_roundtrip time_start includes filename spec =
     raise (TestParseRoundtripErr time_start)
   else time_start
 
-let run_parser includes_p4 filename_p4 spec =
+let parser_ includes_p4 filename_p4 spec =
   let time_start = start () in
   try parse_roundtrip time_start includes_p4 filename_p4 spec with
   | TestParseFileErr _ as err -> raise err
@@ -471,7 +630,7 @@ let run_parser includes_p4 filename_p4 spec =
   | TestParseRoundtripErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
+let parser_test_ stat includes_p4 excludes_p4 filename_p4 spec =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -482,7 +641,7 @@ let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
     })
   else
     try
-      let time_start = run_parser includes_p4 filename_p4 spec in
+      let time_start = parser_ includes_p4 filename_p4 spec in
       let duration = stop time_start in
       let log = Format.asprintf "Parser roundtrip success: %s" filename_p4 in
       log |> print_endline;
@@ -543,7 +702,7 @@ let run_parser_test stat includes_p4 excludes_p4 filename_p4 spec =
           fail_run = stat.fail_run + 1;
         }
 
-let run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
+let parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
@@ -560,12 +719,12 @@ let run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
       (fun stat filename_p4 ->
         Format.asprintf "\n>>> Running parser test on %s" filename_p4
         |> print_endline;
-        run_parser_test stat includes_p4 excludes_p4 filename_p4 spec)
+        parser_test_ stat includes_p4 excludes_p4 filename_p4 spec)
       stat filenames_p4
   in
   log_stat "\nRunning parser" stat total
 
-let run_parser_command =
+let parser_command_ =
   Core.Command.basic ~summary:"run parser test on P4 files"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
@@ -573,8 +732,7 @@ let run_parser_command =
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
-     fun () ->
-       run_parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir)
+     fun () -> parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir)
 
 let command =
   Core.Command.group ~summary:"p4spec-test"
@@ -584,9 +742,9 @@ let command =
       ("prose", prose_command);
       ("run", run_command);
       ("sim", sim_command);
-      ("cover-dangling", cover_dangling_command);
-      ("cover-sim-instr", cover_sim_instr_command);
-      ("parser", run_parser_command);
+      ("cover-run", cover_run_command);
+      ("cover-sim", cover_sim_command);
+      ("parser", parser_command_);
     ]
 
 let () = Command_unix.run ~version command

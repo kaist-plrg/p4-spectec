@@ -10,47 +10,47 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
-  (* Specification *)
+  (* Mode *)
 
-  let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
-  let init_spec (spec_ : Sim.spec) : unit = spec := spec_
+  let mode : Sim.mode ref = ref (Sim.Empty_mode : Sim.mode)
+  let init_mode (mode_ : Sim.mode) : unit = mode := mode_
 
   (* Call entry points *)
 
   let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
-    match !spec with
-    | IL spec_il -> (
-        let rel_result_il = Interp_IL.eval_rel spec_il relname values_input in
+    match !mode with
+    | IL_mode -> (
+        let rel_result_il = Interp_IL.eval_rel relname values_input in
         match rel_result_il with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
-    | SL spec_sl -> (
-        let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
+    | SL_mode -> (
+        let rel_result_sl = Interp_SL.eval_rel relname values_input in
         match rel_result_sl with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
-    | Empty -> assert false
+    | Empty_mode -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
 
   let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
-    match !spec with
-    | IL spec_il -> (
+    match !mode with
+    | IL_mode -> (
         let func_result_il =
-          Interp_IL.eval_func spec_il funcname typs_input values_input
+          Interp_IL.eval_func funcname typs_input values_input
         in
         match func_result_il with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
-    | SL spec_sl -> (
+    | SL_mode -> (
         let func_result_sl =
-          Interp_SL.eval_func spec_sl funcname typs_input values_input
+          Interp_SL.eval_func funcname typs_input values_input
         in
         match func_result_sl with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
-    | Empty -> assert false
+    | Empty_mode -> assert false
 
   let init_call_func () = Spec.Func.register call_func
 
@@ -100,9 +100,31 @@ struct
         register |> extern_to_yojson |> wrap_extern_v "externState"
     | _ -> wrap_extern_v "externState" `Null
 
-  let eval_extern_func_lctk_call (_values_input : Value.t list) : Value.t list =
-    error_no_region
-      "eval_extern_func_lctk_call not implemented for the placeholder simulator"
+  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_name_func, value_names_param =
+      match values_input with
+      | [ value_ctx; value_name_func; value_names_param ] ->
+          (value_ctx, value_name_func, value_names_param)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to local compile-time known extern \
+             function call"
+    in
+    let name_func = unwrap_text_v value_name_func in
+    let names_param =
+      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+    in
+    match (name_func, names_param) with
+    | "static_assert", [ "check"; "message" ] ->
+        [ Core.Func.static_assert ~message:true value_ctx ]
+    | "static_assert", [ "check" ] ->
+        [ Core.Func.static_assert ~message:false value_ctx ]
+    | _ ->
+        error_no_region
+          ("unsupported local compile-time known extern function call: "
+         ^ name_func ^ "("
+          ^ String.concat ", " names_param
+          ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_sto, value_name_func, value_names_param =
@@ -185,6 +207,12 @@ struct
       | PacketIn packet_in, "advance", [ "sizeInBits" ] ->
           let packet_in, value_ctx, value_sto, value_callResult =
             Core.Object.PacketIn.advance value_ctx value_sto packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_sto, value_callResult)
+      | PacketIn packet_in, "length", [] ->
+          let packet_in, value_ctx, value_sto, value_callResult =
+            Core.Object.PacketIn.length value_ctx value_sto packet_in
           in
           let packet_in = PacketIn packet_in in
           (packet_in, value_ctx, value_sto, value_callResult)
@@ -275,25 +303,27 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
-  (* Initializer *)
-
-  let init (spec_ : Sim.spec) : unit =
-    init_spec spec_;
-    init_call_rel ();
-    init_call_func ()
+  let table_add_default_action (value_sto : Value.t) (value_tableName : Value.t)
+      (value_tableActionInterface : Value.t) : Value.t =
+    (* Lookup table object *)
+    let value_tableObject = find_table value_sto value_tableName in
+    (* Add entry to table object *)
+    let value_tableObject =
+      Spec.Func.tableObject_add_default_action value_tableObject
+        value_tableActionInterface
+    in
+    (* Update store with modified table object *)
+    update_table value_sto value_tableName value_tableObject
 
   (* Pipeline initializer *)
 
-  let init_pipe (spec_ : Sim.spec) (includes_p4 : string list)
-      (filename_p4 : string) : Value.t * Value.t =
-    init spec_;
+  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
+      Value.t * Value.t =
     let program_result =
-      match !spec with
-      | IL spec_il ->
-          Interp_IL.eval_program spec_il "V1Model_init" includes_p4 filename_p4
-      | SL spec_sl ->
-          Interp_SL.eval_program spec_sl "V1Model_init" includes_p4 filename_p4
-      | Empty -> assert false
+      match !mode with
+      | IL_mode -> Interp_IL.eval_program "V1Model_init" includes_p4 filename_p4
+      | SL_mode -> Interp_SL.eval_program "V1Model_init" includes_p4 filename_p4
+      | Empty_mode -> assert false
     in
     match program_result with
     | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
@@ -378,7 +408,9 @@ struct
       let packet_in = get_packet_in value_sto in
       (* Get output packet *)
       let packet_out = get_packet_out value_sto in
-      let packet = Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out) in
+      let packet =
+        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+      in
       (* Return port and packet *)
       let tx = (port, packet) in
       Some tx
@@ -433,4 +465,11 @@ struct
     let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto rx in
     if drop then (value_ctx, value_sto, None)
     else drive_pipe_post value_ctx value_sto
+
+  (* Initializer *)
+
+  let init (mode_ : Sim.mode) : unit =
+    init_mode mode_;
+    init_call_rel ();
+    init_call_func ()
 end

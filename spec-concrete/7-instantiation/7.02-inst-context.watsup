@@ -81,6 +81,7 @@ def $exit_i(IC) = IC[ .LOCAL.FRAMES = frame_t* ]
 ;;
 
 dec $enter_path_i(instContext, id) : instContext
+  hint(prose_in %0 "with" %1 "added to the path")
 
 def $enter_path_i(IC, id) = IC[ .PATH = IC.PATH ++ id ]
 
@@ -89,6 +90,7 @@ def $enter_path_i(IC, id) = IC[ .PATH = IC.PATH ++ id ]
 ;;
 
 dec $inherit_i(cursor, instContext) : instContext
+  hint(prose_in "an instantiation context same as" %1 "up to the" %0 "layer")
 
 def $inherit_i(GLOBAL, IC)
   = IC[ .BLOCK = blockInstLayer ][ .LOCAL = localInstLayer ]
@@ -265,3 +267,20 @@ def $find_constructorDef_i(IC, `. nameIR, argumentIR*)
       callTargetKey,
       def $parameterListIR_of_constructorDef)
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
+
+;;
+;; Type substitutions
+;;
+
+dec $subst_type_i(cursor, instContext, typeIR) : typeIR
+  hint(prose_in %2 "substituted by bound type variables in" %1 "from the" %0 "layer")
+
+def $subst_type_i(GLOBAL, IC, typeIR) = typeIR
+def $subst_type_i(BLOCK, IC, typeIR) = typeIR_subst
+  -- if theta = IC.BLOCK.TYPE
+  -- if typeIR_subst = $subst_typeIR(theta, typeIR)
+def $subst_type_i(LOCAL, IC, typeIR) = typeIR_subst
+  -- if theta_block = IC.BLOCK.TYPE
+  -- if theta_local = IC.LOCAL.TYPE
+  -- if theta = $extend_map<typeId, typeIR>(theta_block, theta_local)
+  -- if typeIR_subst = $subst_typeIR(theta, typeIR)

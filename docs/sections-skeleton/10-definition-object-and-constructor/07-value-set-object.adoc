@@ -1,0 +1,59 @@
+[#sec-value-set-object]
+=== Parser value set objects
+
+// Section 13.11 of the P4-16 Language Specification
+In some cases, the values that determine the transition from one parser state
+to another need to be determined at runtime. MPLS is one example where the
+value of the MPLS label field is used to determine what headers follow the MPLS
+tag and this mapping may change dynamically at runtime. To support this
+functionality, P4 supports the notion of a Parser Value Set. This is a named
+set of values with a runtime API to add and remove values from the set.
+
+// Section 13.11 of the P4-16 Language Specification
+Value sets are declared locally within a parser. They should be declared before
+being referenced in parser `keysetExpression` and can be used as a label in a
+select expression.
+
+// Section 13.11 of the P4-16 Language Specification
+The syntax for declaring value sets is:
+
+// Added
+${syntax: valueSetType valueSetDeclaration}
+
+// Section 13.11 of the P4-16 Language Specification
+Parser Value Sets support a `size` argument to provide hints to the compiler to
+reserve hardware resources to implement the value set. Thus, the `size`
+argument must be a compile-time known value. For example, this parser value
+set:
+
+// Section 13.11 of the P4-16 Language Specification
+[source,p4]
+----
+value_set<bit<16>>(4) pvs;
+----
+
+// Section 13.11 of the P4-16 Language Specification
+creates a value_set of size 4 with entries of type `bit<16>`.
+
+// Section 13.11 of the P4-16 Language Specification
+The semantics of the `size` argument is similar to the `size` property of a
+table. If a value set has a `size` argument with value `N`, it is recommended
+that a compiler should choose a data plane implementation that is capable of
+storing `N` value set entries. See "Size property of P4 tables and parser value
+sets"
+footnote:P4SizeProperty[<https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/p4-table-and-parser-value-set-sizes.md>]
+for further discussion on the implementation of parser value set size.
+
+// Section 13.11 of the P4-16 Language Specification
+The value set is populated by the control plane by methods specified in the
+P4Runtime specification.footnote:P4RuntimeAPI[The P4Runtime API is defined as a
+Google Protocol Buffer `.proto` file and an accompanying English specification
+document here: <https://github.com/p4lang/p4runtime>]
+
+// Added
+Similar to ``table``s, a ``value_set`` declaration creates a new parser value
+set object. Thus, no constructor is defined for them. The object is represented
+as:
+
+// Added
+${syntax: valueSetObject}

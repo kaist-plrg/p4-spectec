@@ -139,6 +139,8 @@ args:
     { $1 :: $3 }
 
 arg:
+  | ADD COLON number
+    { "add", $3 }
   | ID COLON number
     { $1, $3 }
 

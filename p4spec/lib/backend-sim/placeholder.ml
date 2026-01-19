@@ -8,47 +8,47 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
-  (* Specification *)
+  (* Mode *)
 
-  let spec : Sim.spec ref = ref (Sim.Empty : Sim.spec)
-  let init_spec (spec_ : Sim.spec) : unit = spec := spec_
+  let mode : Sim.mode ref = ref (Sim.Empty_mode : Sim.mode)
+  let init_mode (mode_ : Sim.mode) : unit = mode := mode_
 
   (* Call entry points *)
 
   let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
-    match !spec with
-    | IL spec_il -> (
-        let rel_result_il = Interp_IL.eval_rel spec_il relname values_input in
+    match !mode with
+    | IL_mode -> (
+        let rel_result_il = Interp_IL.eval_rel relname values_input in
         match rel_result_il with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
-    | SL spec_sl -> (
-        let rel_result_sl = Interp_SL.eval_rel spec_sl relname values_input in
+    | SL_mode -> (
+        let rel_result_sl = Interp_SL.eval_rel relname values_input in
         match rel_result_sl with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
-    | Empty -> assert false
+    | Empty_mode -> assert false
 
   let init_call_rel () = Spec.Rel.register call_rel
 
   let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
-    match !spec with
-    | IL spec_il -> (
+    match !mode with
+    | IL_mode -> (
         let func_result_il =
-          Interp_IL.eval_func spec_il funcname typs_input values_input
+          Interp_IL.eval_func funcname typs_input values_input
         in
         match func_result_il with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
-    | SL spec_sl -> (
+    | SL_mode -> (
         let func_result_sl =
-          Interp_SL.eval_func spec_sl funcname typs_input values_input
+          Interp_SL.eval_func funcname typs_input values_input
         in
         match func_result_sl with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
-    | Empty -> assert false
+    | Empty_mode -> assert false
 
   let init_call_func () = Spec.Func.register call_func
 
@@ -100,17 +100,16 @@ struct
     error_no_region
       "table_add_entry not implemented for the placeholder simulator"
 
-  (* Initializer *)
-
-  let init (spec_ : Sim.spec) : unit =
-    init_spec spec_;
-    init_call_rel ();
-    init_call_func ()
+  let table_add_default_action (_value_sto : Value.t)
+      (_value_tableName : Value.t) (_value_tableActionInterface : Value.t) :
+      Value.t =
+    error_no_region
+      "table_add_default_action not implemented for the placeholder simulator"
 
   (* Pipeline initializer *)
 
-  let init_pipe (_spec : Sim.spec) (_includes_p4 : string list)
-      (_filename_p4 : string) : Value.t * Value.t =
+  let init_pipe (_includes_p4 : string list) (_filename_p4 : string) :
+      Value.t * Value.t =
     error_no_region "init_pipe not implemented for the placeholder simulator"
 
   (* Pipeline driver *)
@@ -118,4 +117,11 @@ struct
   let drive_pipe (_value_ctx : Value.t) (_value_sto : Value.t) (_rx : IO.rx) :
       Value.t * Value.t * IO.tx option =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
+
+  (* Initializer *)
+
+  let init (mode_ : Sim.mode) : unit =
+    init_mode mode_;
+    init_call_rel ();
+    init_call_func ()
 end

@@ -19,6 +19,12 @@ open Util.Source
 let empty = VEnv.empty
 let singleton id typ = VEnv.add id (typ, []) VEnv.empty
 
+let diff (occurs_a : VEnv.t) (occurs_b : VEnv.t) : VEnv.t =
+  VEnv.fold
+    (fun id (typ, iters) acc ->
+      if VEnv.mem id occurs_b then acc else VEnv.add id (typ, iters) acc)
+    occurs_a VEnv.empty
+
 let union (occurs_a : VEnv.t) (occurs_b : VEnv.t) : VEnv.t =
   VEnv.union
     (fun id (typ_a, iters_a) (typ_b, iters_b) ->
@@ -33,6 +39,12 @@ let union (occurs_a : VEnv.t) (occurs_b : VEnv.t) : VEnv.t =
       else Some (typ_b, iters_b))
     occurs_a occurs_b
 
+let iterate (occurs : VEnv.t) (itervars : (id * typ * iter list) list)
+    (iter : iter) : VEnv.t =
+  List.fold_left
+    (fun occurs (id, typ, iters) -> VEnv.add id (typ, iters @ [ iter ]) occurs)
+    occurs itervars
+
 let collect_itervars (bounds : VEnv.t) (occurs : VEnv.t) (iter : iter) :
     (id * typ * iter list) list =
   occurs |> VEnv.bindings
@@ -42,6 +54,12 @@ let collect_itervars (bounds : VEnv.t) (occurs : VEnv.t) (iter : iter) :
            let typ, iters = typ in
            Some (id, typ, iters)
          else None)
+
+let is_binding_itervar (binds : VEnv.t)
+    ((id, typ, iters) : id * typ * iter list) : bool =
+  match VEnv.find_opt id binds with
+  | Some (typ_bind, iters_bind) -> Typ.sub (typ, iters) (typ_bind, iters_bind)
+  | None -> false
 
 (* Expression *)
 
@@ -238,54 +256,55 @@ and annotate_args (bounds : VEnv.t) (args : arg list) : VEnv.t * arg list =
 
 (* Premise *)
 
-and annotate_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) :
-    VEnv.t * prem =
+and annotate_prem_inner (bounds : VEnv.t) (prem : prem) : VEnv.t * VEnv.t * prem
+    =
   let at = prem.at in
   match prem.it with
-  | RulePr (id, notexp) ->
+  | RulePr (id, notexp, inputs) ->
       let mixop, exps = notexp in
-      let occurs, exps = annotate_exps bounds exps in
+      let exps_input, exps_output = Hints.Input.split inputs exps in
+      let occurs_input, exps_input = annotate_exps bounds exps_input in
+      let occurs_output, exps_output = annotate_exps bounds exps_output in
+      let occurs = union occurs_input occurs_output in
+      let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
-      let prem = RulePr (id, notexp) $ at in
-      (occurs, prem)
+      let prem = RulePr (id, notexp, inputs) $ at in
+      (occurs_output, occurs, prem)
   | IfPr exp ->
       let occurs, exp = annotate_exp bounds exp in
       let prem = IfPr exp $ at in
-      (occurs, prem)
+      (empty, occurs, prem)
   | IfHoldPr (id, notexp) ->
       let mixop, exps = notexp in
       let occurs, exps = annotate_exps bounds exps in
       let notexp = (mixop, exps) in
       let prem = IfHoldPr (id, notexp) $ at in
-      (occurs, prem)
+      (empty, occurs, prem)
   | IfNotHoldPr (id, notexp) ->
       let mixop, exps = notexp in
       let occurs, exps = annotate_exps bounds exps in
       let notexp = (mixop, exps) in
       let prem = IfNotHoldPr (id, notexp) $ at in
-      (occurs, prem)
-  | ElsePr -> (empty, prem)
+      (empty, occurs, prem)
+  | ElsePr -> (empty, empty, prem)
   | LetPr (exp_l, exp_r) ->
       let occurs_l, exp_l = annotate_exp bounds exp_l in
       let occurs_r, exp_r = annotate_exp bounds exp_r in
       let prem = LetPr (exp_l, exp_r) $ at in
       let occurs = union occurs_l occurs_r in
-      (occurs, prem)
-  | IterPr (_, (_, _ :: _)) ->
+      (occurs_l, occurs, prem)
+  | IterPr (_, (_, vars_bound, vars_bind))
+    when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error at "iterated premise should initially have no annotations"
-  | IterPr (prem, (iter, [])) -> (
-      let occurs, prem = annotate_prem binds bounds prem in
+  | IterPr (prem, (iter, _, _)) -> (
+      let occurs_bind, occurs, prem = annotate_prem_inner bounds prem in
       let itervars = collect_itervars bounds occurs iter in
-      match itervars with
-      | [] -> error at "empty iteration"
-      | _
-        when List.for_all
-               (fun (id, typ, iters) ->
-                 match VEnv.find_opt id binds with
-                 | Some (typ_bind, iters_bind) ->
-                     Typ.sub (typ, iters) (typ_bind, iters_bind)
-                 | None -> false)
-               itervars ->
+      let occurs_bound = diff occurs occurs_bind in
+      let itervars_bound = collect_itervars bounds occurs_bound iter in
+      let itervars_bind = collect_itervars bounds occurs_bind iter in
+      match (itervars_bound, itervars_bind) with
+      | [], [] -> error at "empty iteration"
+      | [], _ ->
           error at
             ("cannot determine dimension of binding identifier(s) only: "
             ^ String.concat ", "
@@ -293,33 +312,40 @@ and annotate_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) :
                    (fun (id, _typ, iters) ->
                      Id.to_string id
                      ^ String.concat "" (List.map Il.Print.string_of_iter iters))
-                   itervars)
+                   itervars_bind)
             ^ " "
             ^ Il.Print.string_of_prem prem)
       | _ ->
-          let prem = IterPr (prem, (iter, itervars)) $ at in
-          let occurs =
-            List.fold_left
-              (fun occurs (id, typ, iters) ->
-                VEnv.add id (typ, iters @ [ iter ]) occurs)
-              occurs itervars
+          let occurs_bind = iterate occurs_bind itervars_bind iter in
+          let occurs = iterate occurs itervars iter in
+          let prem =
+            IterPr (prem, (iter, itervars_bound, itervars_bind)) $ at
           in
-          (occurs, prem))
+          (occurs_bind, occurs, prem))
   | DebugPr exp ->
       let occurs, exp = annotate_exp bounds exp in
       let prem = DebugPr exp $ at in
-      (occurs, prem)
+      (empty, occurs, prem)
 
-and annotate_prems (binds : VEnv.t) (bounds : VEnv.t) (prems : prem list) :
-    VEnv.t * prem list =
+and annotate_prems_inner (bounds : VEnv.t) (prems : prem list) :
+    VEnv.t * VEnv.t * prem list =
   match prems with
-  | [] -> (empty, [])
+  | [] -> (empty, empty, [])
   | prem :: prems ->
-      let occurs_h, prem_h = annotate_prem binds bounds prem in
-      let occurs_t, prems_t = annotate_prems binds bounds prems in
-      let prems = prem_h :: prems_t in
+      let occurs_bind_h, occurs_h, prem_h = annotate_prem_inner bounds prem in
+      let occurs_bind_t, occurs_t, prems_t =
+        annotate_prems_inner bounds prems
+      in
+      let occurs_bind = union occurs_bind_h occurs_bind_t in
       let occurs = union occurs_h occurs_t in
-      (occurs, prems)
+      let prems = prem_h :: prems_t in
+      (occurs_bind, occurs, prems)
+
+and annotate_prem (bounds : VEnv.t) (prem : prem) : VEnv.t * prem =
+  annotate_prem_inner bounds prem |> fun (_, occurs, prem) -> (occurs, prem)
+
+and annotate_prems (bounds : VEnv.t) (prems : prem list) : VEnv.t * prem list =
+  annotate_prems_inner bounds prems |> fun (_, occurs, prems) -> (occurs, prems)
 
 (* Analysis *)
 
@@ -350,13 +376,8 @@ let analyze_arg (bounds : VEnv.t) (arg : arg) : arg =
 let analyze_args (bounds : VEnv.t) (args : arg list) : arg list =
   analyze annotate_args bounds args
 
-let analyze_prem (binds : VEnv.t) (bounds : VEnv.t) (prem : prem) : prem =
-  analyze (annotate_prem binds) bounds prem
+let analyze_prem (bounds : VEnv.t) (prem : prem) : prem =
+  analyze annotate_prem bounds prem
 
-let analyze_prems (binds : VEnv.t) (bounds : VEnv.t) (prems : prem list) :
-    prem list =
-  analyze (annotate_prems binds) bounds prems
-
-let analyze_sideconditions (bounds : VEnv.t) (sideconditions : prem list) :
-    prem list =
-  analyze (annotate_prems VEnv.empty) bounds sideconditions
+let analyze_prems (bounds : VEnv.t) (prems : prem list) : prem list =
+  analyze annotate_prems bounds prems
