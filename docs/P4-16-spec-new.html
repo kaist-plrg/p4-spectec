@@ -866,10 +866,10 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_parameters">9.1. Parameters</a></li>
 <li><a href="#sec-callable-definitions">9.2. Callable definitions (callable constructors)</a></li>
 <li><a href="#sec-actions">9.3. Actions</a></li>
-<li><a href="#sec-functions">9.4. Functions</a>
+<li><a href="#sec-function">9.4. Functions</a>
 <ul class="sectlevel3">
-<li><a href="#_user_defined_functions">9.4.1. User-defined functions</a></li>
-<li><a href="#_extern_functions">9.4.2. Extern functions</a></li>
+<li><a href="#sec-user-defined-function">9.4.1. User-defined functions</a></li>
+<li><a href="#sec-extern-function">9.4.2. Extern functions</a></li>
 </ul>
 </li>
 <li><a href="#sec-methods">9.5. Methods</a>
@@ -914,7 +914,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-instantiation-abstract-methods">11.3.1. Instantiating objects with abstract methods</a></li>
 </ul>
 </li>
-<li><a href="#sec-functionDeclaration">11.4. Function declaration</a></li>
+<li><a href="#sec-function-declaration">11.4. Function declarations</a></li>
 <li><a href="#sec-actionDeclaration">11.5. Action declaration</a></li>
 <li><a href="#sec-errorDeclaration">11.6. Error declaration</a></li>
 <li><a href="#sec-matchKindDeclaration">11.7. Match kind declaration</a></li>
@@ -10159,7 +10159,7 @@ type definition:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-functions">9.4. Functions</h3>
+<h3 id="sec-function">9.4. Functions</h3>
 <div class="paragraph">
 <p>Two kinds of functions are supported in P4: user-defined functions and extern
 functions. The former are functions whose implementation is provided in P4
@@ -10185,7 +10185,7 @@ syntax functionDef =
 </div>
 </div>
 <div class="sect3">
-<h4 id="_user_defined_functions">9.4.1. User-defined functions</h4>
+<h4 id="sec-user-defined-function">9.4.1. User-defined functions</h4>
 <div class="paragraph">
 <p>Functions can only be declared at the top level and all parameters must have a
 direction. P4 functions are modeled after functions as found in most other
@@ -10217,9 +10217,9 @@ A function with a non-void return type must return a value of the suitable type
 on all possible execution paths.</p>
 </div>
 <div class="paragraph">
-<p>The typing rule for <code>function</code> declarations is explained in
-<a href="#sec-function-declaration">[sec-function-declaration]</a>. This introduces a function type definition,
-which can be specialized to a function type.</p>
+<p>The typing and instantiation rules for <code>function</code> declarations is explained in
+<a href="#sec-function-declaration">Section 11.4</a>. This introduces a function type definition, which
+can be specialized to a function type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -10303,7 +10303,7 @@ syntax definedFunctionTypeIR =
 </div>
 </div>
 <div class="sect3">
-<h4 id="_extern_functions">9.4.2. Extern functions</h4>
+<h4 id="sec-extern-function">9.4.2. Extern functions</h4>
 <div class="paragraph">
 <p>An extern function declaration describes the name and type signature of the
 function, but not its implementation.</p>
@@ -14738,23 +14738,254 @@ provided or not.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-functionDeclaration">11.4. Function declaration</h3>
-<div id="functionDeclarationIR" class="listingblock">
+<h3 id="sec-function-declaration">11.4. Function declarations</h3>
+<div class="paragraph">
+<p>Function declarations introduce user-defined functions into a P4 program.</p>
+</div>
+<div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototype =
    | typeOrVoid name typeParameterListOpt `(parameterList)
 
 syntax functionDeclaration =
-   | annotationList functionPrototype blockStatement
-
-syntax functionPrototypeIR =
+   | annotationList functionPrototype blockStatement</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#sec-user-defined-function">Section 9.4.1</a> describes the semantics of user-defined functions in P4.
+After type checking, function declarations are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="functionDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototypeIR =
    | typeIR nameIR `&lt;typeParameterListIR , typeParameterListIR&gt; `(parameterListIR)
 
 syntax functionDeclarationIR =
    | annotationList functionPrototypeIR blockStatementIR</code></pre>
 </div>
 </div>
-<h4 id="_type_checking" class="discrete">Type checking</h4>
+<h6 id="_type_checking_function_declarations" class="discrete">§ Type checking function declarations</h6>
+<div class="paragraph">
+<p>Function declarations are type checked with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation FuncDecl_ok: cursor typingContext |- functionDeclaration : typingContext functionDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="FuncDecl_ok" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#FuncDecl_ok">FuncDecl_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>functionDeclaration</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated typing context <code>typingContext'</code> and <code>functionDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It is defined by the following rule:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup FuncDecl_ok:
+  rule FuncDecl_ok:
+  p TC_0 |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : TC_4 functionDeclarationIR
+ -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
+ -- (if (typeId_expl = $name(typeParameter)))*
+ -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
+ -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
+ -- if parameter* = $flatten_parameterList(parameterList)
+ -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # typeId_impl*
+ -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
+ -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret]
+ -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
+ -- if f = RET \/ typeIR_ret = VOID
+ -- if callableId = $callableId(name, parameterList)
+ -- if definedFunctionTypeDefIR = FUNCTION `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
+ -- CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR
+ -- if TC_4 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR)
+ -- if nameIR = $name(name)
+ -- if functionDeclarationIR = annotationList (typeIR_ret nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)) blockStatementIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#FuncDecl_ok">Typing <code>annotationList</code> <code>typeOrVoid</code> <code>name</code> <code>typeParameterListOpt</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>blockStatement</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR<sub>ret</sub></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Type_ok">typing <code>typeOrVoid</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>1</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>3</sub></code> be <code>TC<sub>2</sub>[LOCAL.KIND</code> <code>=</code> <code>FUNCTION</code> <code>:</code> <code>typeIR<sub>ret</sub>]</code>.</p>
+</li>
+<li>
+<p>Let</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the typing context <code>_</code>,the abstract control flow <code>f</code>,and the typed block statement <code>blockStatementIR</code> be</p>
+</li>
+<li>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under typing context <code>TC<sub>3</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If <code>f</code> is <code>RET</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Let <code>definedFunctionTypeDefIR</code> be <code>FUNCTION</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>definedFunctionTypeDefIR</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>functionDeclarationIR</code> be <code>annotationList</code> <code>typeIR<sub>ret</sub></code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>functionDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>callableId'</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Let <code>definedFunctionTypeDefIR'</code> be <code>FUNCTION</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR'</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>4'</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId'</code> to <code>definedFunctionTypeDefIR'</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR'</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>functionDeclarationIR'</code> be <code>annotationList</code> <code>typeIR<sub>ret</sub></code> <code>nameIR'</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>4'</sub></code> and <code>functionDeclarationIR'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, function declarations are typed with:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -14800,7 +15031,91 @@ syntax functionDeclarationIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation" class="discrete">Compile-time evaluation</h4>
+<h6 id="_compile_time_evaluation_of_function_declarations" class="discrete">§ Compile-time evaluation of function declarations</h6>
+<div class="paragraph">
+<p>At compile-time, function declarations are loaded into the context with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation FuncDecl_inst: cursor instContext |- functionDeclarationIR : instContext</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="FuncDecl_inst" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#FuncDecl_inst">FuncDecl_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Instantiating <code>functionDeclarationIR</code>, under cursor <code>cursor</code>, and instantiation context <code>instContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated instantiation context <code>instContext'</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It is defined by the following rule:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup FuncDecl_inst:
+  rule FuncDecl_inst:
+  p IC_0 |- annotationList (typeIR nameIR (`&lt;typeParameterListIR , typeParameterListIR_inferred&gt;) `(parameterListIR)) blockStatementIR : IC_1
+ -- if callableId = $callableId_IR(nameIR, parameterListIR)
+ -- if definedFunctionDef = FUNCTION nameIR `&lt;typeParameterListIR ++ typeParameterListIR_inferred&gt; `(parameterListIR) blockStatementIR
+ -- if IC_1 = $add_callableDef_overload_i(p, IC_0, callableId, definedFunctionDef)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#FuncDecl_inst">Instantiating <code>annotationList</code> <code>typeIR</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code>, under cursor <code>p</code>, and instantiation context <code>IC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Let <code>definedFunctionDef</code> be <code>FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&#43;&#43;</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>1</sub></code> be <a href="#add_callableDef_overload_i"><code>IC<sub>0</sub></code> where <code>callableId</code> to <code>definedFunctionDef</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
+</li>
+<li>
+<p>Result in the updated instantiation context <code>IC<sub>1</sub></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, function declarations are loaded with:</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -14858,7 +15173,7 @@ syntax actionDeclarationIR =
    | annotationList ACTION nameIR `(parameterListIR) blockStatementIR</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_2" class="discrete">Type checking</h4>
+<h4 id="_type_checking" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -14904,7 +15219,7 @@ syntax actionDeclarationIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_2" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -14987,7 +15302,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 <div class="paragraph">
 <p>The underlying representation of errors is target-dependent.</p>
 </div>
-<h4 id="_type_checking_3" class="discrete">Type checking</h4>
+<h4 id="_type_checking_2" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15103,7 +15418,7 @@ described in <a href="#sec-error-exprs">[sec-error-exprs]</a>.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_3" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_2" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15215,7 +15530,7 @@ cannot declare new match kinds.</p>
 <p>Operations on values of type <code>match_kind</code> are described in
 <a href="#sec-match-kind-exprs">[sec-match-kind-exprs]</a>.</p>
 </div>
-<h4 id="_type_checking_4" class="discrete">Type checking</h4>
+<h4 id="_type_checking_3" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15313,7 +15628,7 @@ cannot declare new match kinds.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_4" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_3" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15392,7 +15707,7 @@ syntax externFunctionDeclarationIR =
    | annotationList EXTERN functionPrototypeIR ;</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_5" class="discrete">Type checking</h5>
+<h5 id="_type_checking_4" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15403,7 +15718,7 @@ syntax externFunctionDeclarationIR =
   TC_0 |- annotationList EXTERN (typeOrVoid name typeParameterListOpt `(parameterList)) ; : TC_4 externFunctionDeclarationIR
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, typeId_expl*, (` typeId_expl)*)
+ -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
  -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION : typeIR_ret]
  -- if parameter* = $flatten_parameterList(parameterList)
@@ -15452,7 +15767,7 @@ syntax externFunctionDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(LOCAL,</code> <code>TC<sub>0</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -15490,7 +15805,7 @@ syntax externFunctionDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code>(<code>parameterList</code>)</a>.</p>
+<p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>externFunctionTypeDefIR</code> be <code>EXTERN_FUNCTION</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
@@ -15502,7 +15817,7 @@ syntax externFunctionDeclarationIR =
 <p>Check that <a href="#CallableTypeDef_wf"><code>externFunctionTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>4</sub></code> be <code><a href="#add_callableDef_overload_t"></code> <code>add_callableDef_overload_t(GLOBAL,</code> <code>TC<sub>0</sub>,</code> <code>callableId,</code> <code>externFunctionTypeDefIR)</a></code>.</p>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>externFunctionTypeDefIR</code> is added as an overloaded callable to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -15517,7 +15832,7 @@ syntax externFunctionDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_5" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_4" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15546,13 +15861,13 @@ syntax externFunctionDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>callableId</code> be <code><a href="#callableId_IR"></code> <code>callableId_IR(nameIR,</code> <code>parameterListIR)</a></code>.</p>
+<p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>externFunctionDef</code> be <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&#43;&#43;</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_callableDef_overload_i"></code> <code>add_callableDef_overload_i(GLOBAL,</code> <code>IC<sub>0</sub>,</code> <code>callableId,</code> <code>externFunctionDef)</a></code>.</p>
+<p>Let <code>IC<sub>1</sub></code> be <a href="#add_callableDef_overload_i"><code>IC<sub>0</sub></code> where <code>callableId</code> to <code>externFunctionDef</code> is added as an overloaded callable to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and the updated store <code>STO</code>.</p>
@@ -15573,7 +15888,7 @@ syntax externObjectDeclarationIR =
    | annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{externConstructorPrototypeListIR externMethodPrototypeListIR}</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_6" class="discrete">Type checking</h5>
+<h5 id="_type_checking_5" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15588,14 +15903,14 @@ syntax externObjectDeclarationIR =
  -- if TC_1 = TC_0[BLOCK.KIND = EXTERN]
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (` typeId_expl)*)
+ -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
  -- if nameIR = $name(nonTypeName)
  -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype* : TC_3 externMethodPrototypeIR*
  -- if `{(callableId : externMethodTypeDefIR)*} = TC_3.BLOCK.CALLABLE
  -- if typeDefIR_extern = EXTERN nameIR `&lt;typeId_expl* , eps&gt; `{(callableId : externMethodTypeDefIR)*}
  -- if TC_4 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_extern)
  -- if TC_5 = TC_4[BLOCK.KIND = EXTERN]
- -- if TC_6 = $add_typeDefs_t(BLOCK, TC_5, typeId_expl*, (` typeId_expl)*)
+ -- if TC_6 = $add_typeParameters_t(BLOCK, TC_5, typeId_expl*)
  -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype* : TC_7 externConstructorPrototypeIR*
  -- if TC_8 = TC_4[GLOBAL.CONSTRUCTOR = TC_7.GLOBAL.CONSTRUCTOR]
  -- if externObjectDeclarationIR = annotationList EXTERN nameIR `&lt;typeId_expl* ,&gt; `{externConstructorPrototypeIR* externMethodPrototypeIR*}</pre>
@@ -15660,7 +15975,7 @@ syntax externObjectDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>nonTypeName</code></a>.</p>
@@ -15711,7 +16026,7 @@ syntax externObjectDeclarationIR =
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[BLOCK.KIND</code> <code>=</code> <code>EXTERN]</code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>5</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>5</sub></code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -15739,7 +16054,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_6" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_5" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -15830,7 +16145,7 @@ syntax externObjectDeclarationIR =
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typeDef_i"></code> <code>add_typeDef_i(GLOBAL,</code> <code>IC<sub>0</sub>,</code> <code>nameIR,</code> <code>externObjectTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>callableId<sub>constructor</sub></code> be <code><a href="#callableId_IR"></code> <code>callableId_IR(nameIR,</code> <code>·)</a></code>.</p>
+<p>Let <code>callableId<sub>constructor</sub></code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>constructorDef</code> be <code>EXTERN</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> <code>{</code> <code>externMethodPrototypeIR<sup>*</sup></code> <code>}</code>.</p>
@@ -15935,7 +16250,7 @@ syntax externObjectDeclarationIR =
 </div>
 <div class="sect2">
 <h3 id="sec-parserDeclaration">11.9. Parser declaration</h3>
-<h4 id="_type_checking_7" class="discrete">Type checking</h4>
+<h4 id="_type_checking_6" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16004,7 +16319,7 @@ syntax externObjectDeclarationIR =
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_parameters_t"></code> <code>add_parameters_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>constructorParameterIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -16026,7 +16341,7 @@ syntax externObjectDeclarationIR =
 <p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_parameters_t"></code> <code>add_parameters_t(BLOCK,</code> <code>TC<sub>2</sub>,</code> <code>parameterIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>parserLocalDeclaration<sup>*</sup></code> be <a href="#flatten_parserLocalDeclarationList">the list of parser local declarations in <code>parserLocalDeclarationList</code></a>.</p>
@@ -16103,7 +16418,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_7" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_6" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16132,7 +16447,7 @@ syntax externObjectDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>callableId</code> be <code><a href="#callableId_IR"></code> <code>callableId_IR(nameIR,</code> <code>constructorParameterListIR)</a></code>.</p>
+<p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>constructorDef</code> be <code>PARSER</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>parserLocalDeclarationListIR</code> <code>parserStateListIR</code> <code>}</code>.</p>
@@ -16150,7 +16465,7 @@ syntax externObjectDeclarationIR =
 </div>
 <div class="sect2">
 <h3 id="sec-controlDeclaration">11.10. Control declaration</h3>
-<h4 id="_type_checking_8" class="discrete">Type checking</h4>
+<h4 id="_type_checking_7" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16218,7 +16533,7 @@ syntax externObjectDeclarationIR =
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_parameters_t"></code> <code>add_parameters_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>constructorParameterIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -16240,7 +16555,7 @@ syntax externObjectDeclarationIR =
 <p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <code><a href="#add_parameters_t"></code> <code>add_parameters_t(BLOCK,</code> <code>TC<sub>2</sub>,</code> <code>parameterIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>controlLocalDeclaration<sup>*</sup></code> be <a href="#flatten_controlLocalDeclarationList">the list of control local declarations in <code>controlLocalDeclarationList</code></a>.</p>
@@ -16314,7 +16629,7 @@ syntax externObjectDeclarationIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_8" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_7" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16343,7 +16658,7 @@ syntax externObjectDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>callableId</code> be <code><a href="#callableId_IR"></code> <code>callableId_IR(nameIR,</code> <code>constructorParameterListIR)</a></code>.</p>
+<p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>constructorDef</code> be <code>CONTROL</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>controlLocalDeclarationListIR</code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
@@ -16416,7 +16731,7 @@ syntax enumTypeDeclarationIR =
 </div>
 <div class="sect4">
 <h5 id="sec-enumTypeDeclaration-non-serializable">11.11.1.1. Enum type declaration without an underlying type</h5>
-<h6 id="_type_checking_9" class="discrete">Type checking</h6>
+<h6 id="_type_checking_8" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16551,7 +16866,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_9" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_8" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16634,7 +16949,7 @@ syntax enumTypeDeclarationIR =
 </div>
 <div class="sect4">
 <h5 id="sec-enumTypeDeclaration-serializable">11.11.1.2. Enum type declaration with an underlying type</h5>
-<h6 id="_type_checking_10" class="discrete">Type checking</h6>
+<h6 id="_type_checking_9" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16848,7 +17163,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_10" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_9" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16936,7 +17251,7 @@ syntax enumTypeDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-struct-type-declaration">11.11.2. Struct type declaration</h4>
-<h5 id="_type_checking_11" class="discrete">Type checking</h5>
+<h5 id="_type_checking_10" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16947,7 +17262,7 @@ syntax enumTypeDeclarationIR =
   TC_0 |- annotationList STRUCT name typeParameterListOpt `{typeFieldList} : TC_2 structTypeDeclarationIR
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (` typeId_expl)*)
+ -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
  -- if (annotationList_field type_field name_field ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field # typeId_impl_field*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_field**)
@@ -16994,7 +17309,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>0</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>field</sub></code> <code>type<sub>field</sub></code> <code>name<sub>field</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -17071,7 +17386,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_11" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_10" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17132,7 +17447,7 @@ syntax enumTypeDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-header-type-declaration">11.11.3. Header type declaration</h4>
-<h5 id="_type_checking_12" class="discrete">Type checking</h5>
+<h5 id="_type_checking_11" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17143,7 +17458,7 @@ syntax enumTypeDeclarationIR =
   TC_0 |- annotationList HEADER name typeParameterListOpt `{typeFieldList} : TC_2 headerTypeDeclarationIR
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (` typeId_expl)*)
+ -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
@@ -17190,7 +17505,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>0</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -17267,7 +17582,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_12" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_11" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17328,7 +17643,7 @@ syntax enumTypeDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-header-union-type-declaration">11.11.4. Header union type declaration</h4>
-<h5 id="_type_checking_13" class="discrete">Type checking</h5>
+<h5 id="_type_checking_12" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17339,7 +17654,7 @@ syntax enumTypeDeclarationIR =
   TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{typeFieldList} : TC_2 headerUnionTypeDeclarationIR
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (` typeId_expl)*)
+ -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
@@ -17386,7 +17701,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>1</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>0</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -17463,7 +17778,7 @@ syntax enumTypeDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_13" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_12" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17545,7 +17860,7 @@ syntax typedefDeclarationIR =
 </div>
 <div class="sect4">
 <h5 id="sec-typdef-declaration">11.11.5.1. <code>typedef</code> declaration</h5>
-<h6 id="_type_checking_14" class="discrete">Type checking</h6>
+<h6 id="_type_checking_13" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17762,7 +18077,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_14" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_13" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17913,7 +18228,7 @@ syntax typedefDeclarationIR =
 </div>
 <div class="sect4">
 <h5 id="sec-newtype-declaration">11.11.5.2. New type declaration</h5>
-<h6 id="_type_checking_15" class="discrete">Type checking</h6>
+<h6 id="_type_checking_14" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17992,7 +18307,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_15" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_14" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18036,7 +18351,7 @@ syntax typedefDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-parser-type-declaration">11.11.6. Parser type declaration</h4>
-<h5 id="_type_checking_16" class="discrete">Type checking</h5>
+<h5 id="_type_checking_15" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18048,7 +18363,7 @@ syntax typedefDeclarationIR =
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (` typeId_expl)*)
+ -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
  -- if parameter* = $flatten_parameterList(parameterList)
  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
@@ -18096,7 +18411,7 @@ syntax typedefDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -18139,7 +18454,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_16" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_15" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18182,7 +18497,7 @@ syntax typedefDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-control-type-declaration">11.11.7. Control type declaration</h4>
-<h5 id="_type_checking_17" class="discrete">Type checking</h5>
+<h5 id="_type_checking_16" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18194,7 +18509,7 @@ syntax typedefDeclarationIR =
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (` typeId_expl)*)
+ -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
  -- if parameter* = $flatten_parameterList(parameterList)
  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
@@ -18242,7 +18557,7 @@ syntax typedefDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -18285,7 +18600,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_17" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_16" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18328,7 +18643,7 @@ syntax typedefDeclarationIR =
 </div>
 <div class="sect3">
 <h4 id="sec-package-type-declaration">11.11.8. Package type declaration</h4>
-<h5 id="_type_checking_18" class="discrete">Type checking</h5>
+<h5 id="_type_checking_17" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18340,7 +18655,7 @@ syntax typedefDeclarationIR =
  -- if TC_1 = TC_0[BLOCK.KIND = PACKAGE]
  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
  -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (` typeId_expl)*)
+ -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
  -- if constructorParameter* = $flatten_parameterList(parameterList)
  -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter* : constructorParameterIR* # typeId_impl*
  -- if nameIR = $name(name)
@@ -18394,7 +18709,7 @@ syntax typedefDeclarationIR =
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <code><a href="#add_typeDefs_t"></code> <code>add_typeDefs_t(BLOCK,</code> <code>TC<sub>1</sub>,</code> <code>typeId<sub>expl</sub><sup>*</sup>,</code> <code>(typeId<sub>expl</sub>)<sup>*</sup>)</a></code>.</p>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
@@ -18472,7 +18787,7 @@ syntax typedefDeclarationIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_18" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_17" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18527,7 +18842,7 @@ syntax typedefDeclarationIR =
 <p>Let <code>IC<sub>1</sub></code> be <code><a href="#add_typeDef_i"></code> <code>add_typeDef_i(GLOBAL,</code> <code>IC<sub>0</sub>,</code> <code>nameIR,</code> <code>packageObjectTypeDefIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>callableId</code> be <code><a href="#callableId_IR"></code> <code>callableId_IR(nameIR,</code> <code>parameterIR<sup>*</sup>)</a></code>.</p>
+<p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>constructorDef</code> be <code>PACKAGE</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&#43;&#43;</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
@@ -18580,7 +18895,7 @@ syntax statementIR =
    | switchStatementIR</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_19" class="discrete">Type checking</h5>
+<h5 id="_type_checking_18" class="discrete">Type checking</h5>
 <div id="flow" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax flow =
@@ -18618,7 +18933,7 @@ syntax statementIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_19" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_18" class="discrete">Compile-time evaluation</h5>
 <div id="Stmt_inst" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -18693,7 +19008,7 @@ syntax emptyStatementIR = emptyStatement</code></pre>
 <div class="paragraph">
 <p>The empty statement, written <code>;</code> is a no-op.</p>
 </div>
-<h4 id="_type_checking_20" class="discrete">Type checking</h4>
+<h4 id="_type_checking_19" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18738,7 +19053,7 @@ syntax emptyStatementIR = emptyStatement</code></pre>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_20" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_19" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18828,7 +19143,7 @@ any side-effects within this operand (eg, a function call inside an array index
 or slice expression) only occur once.  This is not valid
 for comparison operators, logical operators, concat, range, or mask operators.</p>
 </div>
-<h4 id="_type_checking_21" class="discrete">Type checking</h4>
+<h4 id="_type_checking_20" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19643,7 +19958,7 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_21" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_20" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19702,7 +20017,7 @@ syntax callStatementIR =
    | callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentListIR) ;</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_22" class="discrete">Type checking</h4>
+<h4 id="_type_checking_21" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20217,7 +20532,7 @@ syntax callStatementIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_22" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_21" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20355,7 +20670,7 @@ annotations.</p>
 constructor arguments.  These need to be instantiated before they are
 invoked.</p>
 </div>
-<h4 id="_type_checking_23" class="discrete">Type checking</h4>
+<h4 id="_type_checking_22" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20482,7 +20797,7 @@ invoked.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_23" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_22" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20626,7 +20941,7 @@ parameters of the enclosing <code>action</code>, <code>function</code>, or <code
 still performed after the execution of the <code>return</code> statement.  See
 <a href="#sec-calling-convention">[sec-calling-convention]</a> for details on copy-out behavior.</p>
 </div>
-<h4 id="_type_checking_24" class="discrete">Type checking</h4>
+<h4 id="_type_checking_23" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20733,7 +21048,7 @@ still performed after the execution of the <code>return</code> statement.  See
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_24" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_23" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20887,7 +21202,7 @@ call, then the function/method call does not occur.</p>
 </li>
 </ul>
 </div>
-<h4 id="_type_checking_25" class="discrete">Type checking</h4>
+<h4 id="_type_checking_24" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20932,7 +21247,7 @@ call, then the function/method call does not occur.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_25" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_24" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -21005,7 +21320,7 @@ of statements and declarations, which are executed sequentially. The
 declarations (e.g., variables and constants) within a block statement
 are only visible within the block.</p>
 </div>
-<h4 id="_type_checking_26" class="discrete">Type checking</h4>
+<h4 id="_type_checking_25" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -21276,7 +21591,7 @@ are only visible within the block.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_26" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_25" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -22234,7 +22549,7 @@ match on the kind of action executed, no matter whether there was a
 table hit or miss. The <code>default</code> label does not indicate that the
 table missed and the <code>default_action</code> was executed.</p>
 </div>
-<h5 id="_type_checking_27" class="discrete">Type checking</h5>
+<h5 id="_type_checking_26" class="discrete">Type checking</h5>
 <div id="SwitchLabel_table_ok" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -22819,7 +23134,7 @@ ambiguity with a block statement.</p>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_27" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_26" class="discrete">Compile-time evaluation</h4>
 <div id="SwitchCase_inst" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -22993,7 +23308,7 @@ syntax typedExpressionIR =
    | expressionIR # expressionNoteIR</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_28" class="discrete">Type checking</h5>
+<h5 id="_type_checking_27" class="discrete">Type checking</h5>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -23043,7 +23358,7 @@ syntax typedExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_28" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_27" class="discrete">Compile-time evaluation</h5>
 <div id="Expr_inst" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -23090,7 +23405,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
    | FALSE</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_29" class="discrete">Type checking</h5>
+<h5 id="_type_checking_28" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Details</summary>
 <div class="content">
@@ -23200,7 +23515,7 @@ syntax literalExpressionIR = literalExpression</code></pre>
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_29" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_28" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Details</summary>
 <div class="content">
@@ -23322,7 +23637,7 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 </tr>
 </tbody>
 </table>
-<h5 id="_type_checking_30" class="discrete">Type checking</h5>
+<h5 id="_type_checking_29" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23466,7 +23781,7 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_30" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_29" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23541,7 +23856,7 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
    | " text "</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_31" class="discrete">Type checking</h5>
+<h5 id="_type_checking_30" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23609,7 +23924,7 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_31" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_30" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23654,7 +23969,7 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 syntax referenceExpressionIR = prefixedNameIR</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_32" class="discrete">Type checking</h4>
+<h4 id="_type_checking_31" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23765,7 +24080,7 @@ syntax referenceExpressionIR = prefixedNameIR</code></pre>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_32" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_31" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23812,7 +24127,7 @@ syntax referenceExpressionIR = prefixedNameIR</code></pre>
 syntax defaultExpressionIR = defaultExpression</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_33" class="discrete">Type checking</h4>
+<h4 id="_type_checking_32" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23880,7 +24195,7 @@ syntax defaultExpressionIR = defaultExpression</code></pre>
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_33" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_32" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23932,7 +24247,7 @@ syntax unaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-unaryExpression-lnot">13.4.1. Negation operators</h4>
-<h5 id="_type_checking_34" class="discrete">Type checking</h5>
+<h5 id="_type_checking_33" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -23997,7 +24312,7 @@ syntax unaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-unaryExpression-bnot">13.4.2. Bitwise complement operators</h4>
-<h5 id="_type_checking_35" class="discrete">Type checking</h5>
+<h5 id="_type_checking_34" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24062,7 +24377,7 @@ syntax unaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-unaryExpression-uplusminus">13.4.3. Plus and minus operators</h4>
-<h5 id="_type_checking_36" class="discrete">Type checking</h5>
+<h5 id="_type_checking_35" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24203,7 +24518,7 @@ syntax unaryExpressionIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_34" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_33" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24277,7 +24592,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-plusminusmult">13.5.1. Plus, minus, and multiplication operators</h4>
-<h5 id="_type_checking_37" class="discrete">Type checking</h5>
+<h5 id="_type_checking_36" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24372,7 +24687,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-satplusminus">13.5.2. Saturating plus and minus operators</h4>
-<h5 id="_type_checking_38" class="discrete">Type checking</h5>
+<h5 id="_type_checking_37" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24467,7 +24782,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-divmod">13.5.3. Division and modulo operators</h4>
-<h5 id="_type_checking_39" class="discrete">Type checking</h5>
+<h5 id="_type_checking_38" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24623,7 +24938,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-shift">13.5.4. Shift left and right operators</h4>
-<h5 id="_type_checking_40" class="discrete">Type checking</h5>
+<h5 id="_type_checking_39" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24783,7 +25098,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-equality">13.5.5. Equality and inequality operators</h4>
-<h5 id="_type_checking_41" class="discrete">Type checking</h5>
+<h5 id="_type_checking_40" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24878,7 +25193,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-comparison">13.5.6. Comparison operators</h4>
-<h5 id="_type_checking_42" class="discrete">Type checking</h5>
+<h5 id="_type_checking_41" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -24970,7 +25285,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-bitwise">13.5.7. Bitwise and, xor, and or operators</h4>
-<h5 id="_type_checking_43" class="discrete">Type checking</h5>
+<h5 id="_type_checking_42" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25065,7 +25380,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-concat">13.5.8. Concatenation operators</h4>
-<h5 id="_type_checking_44" class="discrete">Type checking</h5>
+<h5 id="_type_checking_43" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25164,7 +25479,7 @@ syntax binaryExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-binaryExpression-logical">13.5.9. Logical and, and or operator</h4>
-<h5 id="_type_checking_45" class="discrete">Type checking</h5>
+<h5 id="_type_checking_44" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25384,7 +25699,7 @@ syntax binaryExpressionIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_35" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_34" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25525,7 +25840,7 @@ syntax ternaryExpressionIR =
    | typedExpressionIR ? typedExpressionIR : typedExpressionIR</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_46" class="discrete">Type checking</h4>
+<h4 id="_type_checking_45" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25701,7 +26016,7 @@ syntax ternaryExpressionIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_36" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_35" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25777,7 +26092,7 @@ syntax castExpressionIR =
    | `(typeIR) typedExpressionIR</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_47" class="discrete">Type checking</h4>
+<h4 id="_type_checking_46" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25903,7 +26218,7 @@ syntax castExpressionIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_37" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_36" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -25966,7 +26281,7 @@ syntax dataExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-invalid-header-dataExpression">13.8.1. Invalid header expressions</h4>
-<h5 id="_type_checking_48" class="discrete">Type checking</h5>
+<h5 id="_type_checking_47" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -26034,7 +26349,7 @@ syntax dataExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_38" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_37" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -26074,7 +26389,7 @@ syntax dataExpressionIR =
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax sequenceElementExpression = expressionList</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_49" class="discrete">Type checking</h5>
+<h5 id="_type_checking_48" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -26399,7 +26714,7 @@ syntax dataExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_39" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_38" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -26470,7 +26785,7 @@ syntax dataExpressionIR =
    | name = expression , namedExpressionList , ...</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_50" class="discrete">Type checking</h5>
+<h5 id="_type_checking_49" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -26915,7 +27230,7 @@ syntax dataExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_40" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_39" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -27004,7 +27319,7 @@ syntax errorAccessExpressionIR =
    | ERROR . nameIR</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_51" class="discrete">Type checking</h5>
+<h5 id="_type_checking_50" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -27092,7 +27407,7 @@ syntax errorAccessExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_41" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_40" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -27154,7 +27469,7 @@ syntax memberAccessExpressionIR =
 </div>
 <div class="sect4">
 <h5 id="sec-memberAccessExpression-type">13.9.2.1. Type accesses</h5>
-<h6 id="_type_checking_52" class="discrete">Type checking</h6>
+<h6 id="_type_checking_51" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -27351,7 +27666,7 @@ syntax memberAccessExpressionIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_42" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_41" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -27423,7 +27738,7 @@ syntax memberAccessExpressionIR =
 </div>
 <div class="sect4">
 <h5 id="sec-memberAccessExpression-expression">13.9.2.2. Field accesses</h5>
-<h6 id="_type_checking_53" class="discrete">Type checking</h6>
+<h6 id="_type_checking_52" class="discrete">Type checking</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -28057,7 +28372,7 @@ syntax memberAccessExpressionIR =
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_43" class="discrete">Compile-time evaluation</h6>
+<h6 id="_compile_time_evaluation_42" class="discrete">Compile-time evaluation</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -28189,7 +28504,7 @@ syntax indexAccessExpressionIR =
    | typedExpressionIR `[typedExpressionIR]</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_54" class="discrete">Type checking</h5>
+<h5 id="_type_checking_53" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -28406,7 +28721,7 @@ syntax sliceAccessExpressionIR =
    | typedExpressionIR `[typedExpressionIR : typedExpressionIR]</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_55" class="discrete">Type checking</h5>
+<h5 id="_type_checking_54" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -28624,7 +28939,7 @@ syntax sliceAccessExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_44" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_43" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -28702,7 +29017,7 @@ syntax callExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-callExpression-callable">13.10.1. Callable call expressions</h4>
-<h5 id="_type_checking_56" class="discrete">Type checking</h5>
+<h5 id="_type_checking_55" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29049,7 +29364,7 @@ syntax callExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_45" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_44" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29157,7 +29472,7 @@ syntax callExpressionIR =
 </div>
 <div class="sect3">
 <h4 id="sec-constructor-call-expression">13.10.2. Constructor call expressions</h4>
-<h5 id="_type_checking_57" class="discrete">Type checking</h5>
+<h5 id="_type_checking_56" class="discrete">Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29362,7 +29677,7 @@ syntax callExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_46" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_45" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29606,7 +29921,7 @@ syntax callExpressionIR =
 </div>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_47" class="discrete">Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_46" class="discrete">Compile-time evaluation</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29655,7 +29970,7 @@ syntax parenthesizedExpressionIR =
    | `(typedExpressionIR)</code></pre>
 </div>
 </div>
-<h4 id="_type_checking_58" class="discrete">Type checking</h4>
+<h4 id="_type_checking_57" class="discrete">Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -29749,7 +30064,7 @@ syntax parenthesizedExpressionIR =
 </div>
 </div>
 </div>
-<h4 id="_compile_time_evaluation_48" class="discrete">Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_47" class="discrete">Compile-time evaluation</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -30801,7 +31116,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">[sec-entries]
 <div class="ulist">
 <ul>
 <li>
-<p>Top-level functions (<a href="#sec-functions">Section 9.4</a>)</p>
+<p>Top-level functions (<a href="#sec-functions">[sec-functions]</a>)</p>
 <div class="ulist">
 <ul>
 <li>

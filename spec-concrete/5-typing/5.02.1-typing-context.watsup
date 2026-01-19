@@ -206,6 +206,7 @@ def $add_vars_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
 
 dec $add_parameter_t(cursor, typingContext, parameterIR) : typingContext
 dec $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext
+  hint(prose_in %2 "added to the" %0 "layer of" %1)
 
 def $add_parameter_t(cursor, TC, _ `EMPTY typeIR id (`= value)?) = TC'
   -- if varTypeIR = `EMPTY typeIR CTK value?
@@ -224,6 +225,7 @@ def $add_parameters_t(cursor, TC, parameterIR_h :: parameterIR_t*) = TC''
 
 dec $add_constructorParameter_t(typingContext, parameterIR) : typingContext
 dec $add_constructorParameters_t(typingContext, parameterIR*) : typingContext
+  hint(prose_in %1 "added to" %0)
 
 def $add_constructorParameter_t(TC, _ direction typeIR id eps) = TC'
   -- if varTypeIR = direction typeIR CTK eps
@@ -266,10 +268,19 @@ def $add_typeDefs_t(p, TC, typeId_h :: typeId_t*, typeDefIR_h :: typeDefIR_t*) =
   -- if TC' = $add_typeDef_t(p, TC, typeId_h, typeDefIR_h)
   -- if TC'' = $add_typeDefs_t(p, TC', typeId_t*, typeDefIR_t*)
 
+;;; Adder for type parameters
+
+dec $add_typeParameters_t(cursor, typingContext, typeId*) : typingContext
+  hint(prose_in "type parameters" %2 "added to the" %0 "layer of" %1)
+
+def $add_typeParameters_t(p, TC, typeId*)
+  = $add_typeDefs_t(p, TC, typeId*, (`` typeId)*)
+
 ;;; Adder for callables
 
 dec $add_callableDef_overload_t(cursor, typingContext, callableId, callableTypeDefIR)
   : typingContext
+  hint(prose_in %1 "where" %2 "to" %3 "is added as an overloaded callable to the" %0 "layer")
 
 def $add_callableDef_overload_t(GLOBAL, TC, callableId, callableTypeDefIR) = TC'
   -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
@@ -290,6 +301,7 @@ def $add_callableDef_overload_t(BLOCK, TC, callableId, callableTypeDefIR) = TC'
 
 dec $add_callableDef_non_overload_t(cursor, typingContext, callableId, callableTypeDefIR)
   : typingContext
+  hint(prose_in %1 "where" %2 "to" %3 "is added as a non-overloaded callable to the" %0 "layer")
 
 def $add_callableDef_non_overload_t(GLOBAL, TC, callableId, callableTypeDefIR) = TC'
   -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE

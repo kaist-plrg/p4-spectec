@@ -3069,7 +3069,7 @@ syntax callableId = callTargetId
 ;; ../../../../spec-concrete/2-static-runtime/2.0-domain.watsup:54.24-54.36
 syntax constructorId = callTargetId
 
-;; ../../../../spec-concrete/2-static-runtime/2.0-domain.watsup:56.1-57.61
+;; ../../../../spec-concrete/2-static-runtime/2.0-domain.watsup:56.1-57.58
 def $callableId(name, parameterList)
 
 1. Return ($name(name) ( $callableId'(parameterList) ))
@@ -12090,7 +12090,7 @@ def $add_parameter_t(cursor, TC, (_annotationList direction typeIR id ((= value)
 
     3. Return TC'
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:208.1-208.75
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:208.1-209.52
 def $add_parameters_t(cursor, TC, (parameterIR)*)
 
 1. Case analysis on (parameterIR)*
@@ -12109,7 +12109,7 @@ def $add_parameters_t(cursor, TC, (parameterIR)*)
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:225.1-225.76
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:226.1-226.76
 def $add_constructorParameter_t(TC, (_annotationList direction typeIR id constantInitializerOptIR))
 
 1. (Let (constantInitializerIR)? be constantInitializerOptIR)
@@ -12136,7 +12136,7 @@ def $add_constructorParameter_t(TC, (_annotationList direction typeIR id constan
 
 3. Else Phantom#496
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:226.1-226.78
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:227.1-228.34
 def $add_constructorParameters_t(TC, (parameterIR)*)
 
 1. Case analysis on (parameterIR)*
@@ -12155,7 +12155,7 @@ def $add_constructorParameters_t(TC, (parameterIR)*)
 
     4. Return TC''
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:242.1-242.77
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:244.1-244.77
 def $add_typeDef_t(cursor, TC, typeId, typeDefIR)
 
 1. Case analysis on cursor
@@ -12202,7 +12202,7 @@ def $add_typeDef_t(cursor, TC, typeId, typeDefIR)
 
     2. Else Phantom#499
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:243.1-243.80
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:245.1-245.80
 def $add_typeDefs_t(p, TC, (typeId)*, (typeDefIR)*)
 
 1. Case analysis on (typeId)*
@@ -12231,7 +12231,12 @@ def $add_typeDefs_t(p, TC, (typeId)*, (typeDefIR)*)
 
     2. Else Phantom#501
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:271.1-272.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:273.1-274.70
+def $add_typeParameters_t(p, TC, (typeId)*)
+
+1. Return $add_typeDefs_t(p, TC, (typeId)*, (((` typeId) as typeDefIR))*)
+
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:281.1-283.94
 def $add_callableDef_overload_t(cursor, TC, callableId, callableTypeDefIR)
 
 1. Case analysis on cursor
@@ -12266,7 +12271,7 @@ def $add_callableDef_overload_t(cursor, TC, callableId, callableTypeDefIR)
 
 1. Else Phantom#504
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:291.1-292.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:302.1-304.97
 def $add_callableDef_non_overload_t(cursor, TC, callableId, callableTypeDefIR)
 
 1. Case analysis on cursor
@@ -12309,7 +12314,7 @@ def $add_callableDef_non_overload_t(cursor, TC, callableId, callableTypeDefIR)
 
 1. Else Phantom#507
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:317.1-318.18
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:329.1-330.18
 def $add_constructorDef_t(TC, callableId, constructorTypeDefIR)
 
 1. (Let constructorTypeDefEnv be TC.global.constructor)
@@ -12324,7 +12329,7 @@ def $add_constructorDef_t(TC, callableId, constructorTypeDefIR)
 
 2. Else Phantom#508
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:335.1-336.69
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:347.1-348.69
 def $find_var_t(p, TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -12403,7 +12408,7 @@ def $find_var_t(p, TC, prefixedNameIR)
 
     1. Else Phantom#516
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:359.1-360.70
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:371.1-372.70
 def $find_var_value_t(p, TC, prefixedNameIR)
 
 1. (Let (varTypeIR)? be $find_var_t(p, TC, prefixedNameIR))
@@ -12422,7 +12427,7 @@ def $find_var_value_t(p, TC, prefixedNameIR)
 
 2. Else Phantom#518
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:367.1-368.71
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:379.1-380.71
 def $find_typeDef_t(p, TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -12501,7 +12506,7 @@ def $find_typeDef_t(p, TC, prefixedNameIR)
 
     1. Else Phantom#526
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:395.1-397.95
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:407.1-409.95
 def $find_callableDef_overloaded_t(cursor, TC, prefixedNameIR, (argumentIR)*)
 
 1. Case analysis on cursor
@@ -12568,7 +12573,7 @@ def $find_callableDef_overloaded_t(cursor, TC, prefixedNameIR, (argumentIR)*)
 
     1. Else Phantom#530
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:426.1-428.90
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:438.1-440.90
 def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -12625,7 +12630,7 @@ def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
     1. Else Phantom#536
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:447.1-448.45
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:459.1-460.45
 def $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*)
 
 1. Case analysis on prefixedNameIR
@@ -12646,7 +12651,7 @@ def $find_constructorDef_overloaded_t(TC, prefixedNameIR, (argumentIR)*)
 
     3. Return $find_overloaded<constructorTypeDefIR>(TC.global.constructor, callTargetKey, $parameterListIR_of_constructorTypeDefIR)
 
-;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:465.1-466.50
+;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:477.1-478.50
 def $find_local_return_type_t(TC)
 
 1. (Let localKind be TC.local.kind)
@@ -22590,7 +22595,7 @@ relation FuncDecl_ok: p TC_0 |- (annotationList (typeOrVoid name typeParameterLi
 
   2. (Let typeId_expl be $name(typeParameter))*
 
-  3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+  3. (Let TC_1 be $add_typeParameters_t((local), TC_0, (typeId_expl)*))
 
   4. (Type_ok: (local) TC_1 |- typeOrVoid : typeIR_ret # (typeId)*)
 
@@ -22784,7 +22789,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let typeId_expl be $name(typeParameter))*
 
-      3. (Let TC_1 be $add_typeDefs_t((local), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      3. (Let TC_1 be $add_typeParameters_t((local), TC_0, (typeId_expl)*))
 
       4. (Type_ok: (local) TC_1 |- typeOrVoid : typeIR_ret # (typeId)*)
 
@@ -22840,7 +22845,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
           4. (Let typeId_expl be $name(typeParameter))*
 
-          5. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+          5. (Let TC_2 be $add_typeParameters_t((block), TC_1, (typeId_expl)*))
 
           6. (Let nameIR be $name((nonTypeName as name)))
 
@@ -22858,7 +22863,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
             4. (Let TC_5 be TC_4[block.kind = (extern)])
 
-            5. (Let TC_6 be $add_typeDefs_t((block), TC_5, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+            5. (Let TC_6 be $add_typeParameters_t((block), TC_5, (typeId_expl)*))
 
             6. (ExternConstructors_ok: TC_6 nameIR |- (externConstructorPrototype)* : TC_7 (externConstructorPrototypeIR)*)
 
@@ -23094,7 +23099,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let typeId_expl be $name(typeParameter))*
 
-      3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      3. (Let TC_1 be $add_typeParameters_t((block), TC_0, (typeId_expl)*))
 
       4. (Let ((annotationList_field type_field name_field ;))* be $flatten_typeFieldList(typeFieldList))
 
@@ -23128,7 +23133,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let typeId_expl be $name(typeParameter))*
 
-      3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      3. (Let TC_1 be $add_typeParameters_t((block), TC_0, (typeId_expl)*))
 
       4. (Let ((annotationList_f type_f name_f ;))* be $flatten_typeFieldList(typeFieldList))
 
@@ -23162,7 +23167,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       2. (Let typeId_expl be $name(typeParameter))*
 
-      3. (Let TC_1 be $add_typeDefs_t((block), TC_0, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      3. (Let TC_1 be $add_typeParameters_t((block), TC_0, (typeId_expl)*))
 
       4. (Let ((annotationList_f type_f name_f ;))* be $flatten_typeFieldList(typeFieldList))
 
@@ -23336,7 +23341,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       3. (Let typeId_expl be $name(typeParameter))*
 
-      4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      4. (Let TC_2 be $add_typeParameters_t((block), TC_1, (typeId_expl)*))
 
       5. (Let (parameter)* be $flatten_parameterList(parameterList))
 
@@ -23368,7 +23373,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       3. (Let typeId_expl be $name(typeParameter))*
 
-      4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      4. (Let TC_2 be $add_typeParameters_t((block), TC_1, (typeId_expl)*))
 
       5. (Let (parameter)* be $flatten_parameterList(parameterList))
 
@@ -23400,7 +23405,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
       3. (Let typeId_expl be $name(typeParameter))*
 
-      4. (Let TC_2 be $add_typeDefs_t((block), TC_1, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      4. (Let TC_2 be $add_typeParameters_t((block), TC_1, (typeId_expl)*))
 
       5. (Let (constructorParameter)* be $flatten_parameterList(parameterList))
 
@@ -26809,7 +26814,7 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
       4. (Let typeId_expl be $name(typeParameter))*
 
-      5. (Let TC_3 be $add_typeDefs_t((local), TC_2, (typeId_expl)*, (((` typeId_expl) as typeDefIR))*))
+      5. (Let TC_3 be $add_typeParameters_t((local), TC_2, (typeId_expl)*))
 
       6. (Type_ok: (local) TC_3 |- typeOrVoid : typeIR_ret # (typeId)*)
 
@@ -29218,15 +29223,12 @@ def $callable_tableApplyMethod(cursor, TC)
 
     1. Return ($is_control_apply_method_localKind(TC.local.kind) \/ $is_table_apply_method_localKind(TC.local.kind))
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.0-domain.watsup:5.1-5.57
+;; ../../../../spec-concrete/6-dynamic-runtime/6.0-domain.watsup:5.1-6.58
 def $callableId_IR(nameIR, (parameterIR)*)
 
-1. Return (nameIR ( ($callableId_IR'(parameterIR))* ))
+1. (Let (_annotationList _direction _typeIR id _constantInitializerOptIR) be parameterIR)*
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.0-domain.watsup:6.1-6.38
-def $callableId_IR'((_annotationList _direction _typeIR id _constantInitializerOptIR))
-
-1. Return id
+2. Return (nameIR ( (id)* ))
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.1-storage-reference.watsup:6.1-9.41
 syntax storageReference = 
@@ -30254,7 +30256,7 @@ def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
     2. Else Phantom#1937
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:171.1-172.16
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:171.1-173.94
 def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
 1. Case analysis on cursor
@@ -30281,7 +30283,7 @@ def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
 1. Else Phantom#1940
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:185.1-186.16
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:186.1-188.97
 def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
 1. Case analysis on cursor
@@ -30316,14 +30318,14 @@ def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
 1. Else Phantom#1943
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:205.1-205.81
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:207.1-207.81
 def $add_constructorDef_i(IC, callableId, constructorDef)
 
 1. (Let constructorDefEnv be $add_map<callableId, constructorDef>(IC.global.constructor, callableId, constructorDef))
 
 2. Return IC[global.constructor = constructorDefEnv]
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:206.1-206.84
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:208.1-208.84
 def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
 1. Case analysis on (callableId)*
@@ -30352,7 +30354,7 @@ def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
     2. Else Phantom#1945
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:227.1-227.61
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:229.1-229.61
 def $find_var_i(p, IC, prefixedNameIR)
 
 1. If ((prefixedNameIR matches pattern `.%`)), then
@@ -30439,7 +30441,7 @@ def $find_var_i(p, IC, prefixedNameIR)
 
     1. Else Phantom#1955
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:246.1-246.70
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:248.1-248.70
 def $find_typeDef_i(_cursor, IC, prefixedNameIR)
 
 1. Case analysis on prefixedNameIR
@@ -30456,7 +30458,7 @@ def $find_typeDef_i(_cursor, IC, prefixedNameIR)
 
     2. Return $find_map<typeId, typeDefIR>(IC.global.type, nameIR)
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:255.1-256.39
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:257.1-258.39
 def $find_constructorDef_i(IC, prefixedNameIR, (argumentIR)*)
 
 1. Case analysis on prefixedNameIR
@@ -30477,7 +30479,7 @@ def $find_constructorDef_i(IC, prefixedNameIR, (argumentIR)*)
 
     3. Return $find_overloaded<constructorDef>(IC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
 
-;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:275.1-276.86
+;; ../../../../spec-concrete/7-instantiation/7.02-inst-context.watsup:277.1-278.86
 def $subst_type_i(cursor, IC, typeIR)
 
 1. Case analysis on cursor
