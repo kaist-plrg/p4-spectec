@@ -30,7 +30,7 @@ let timeout_seed = 30
 
 (* Environment for the spec *)
 type specenv = {
-  runner : (module Sim.DRIVER);
+  driver : (module Sim.DRIVER);
   printer : Sl.value -> string;
   spec : Sim.spec;
   relname : string;
@@ -136,13 +136,15 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     specenv =
-  let runner = Backend_sim.Gen.gen_placeholder () in
+  let (module Driver : Sim.DRIVER) = Backend_sim.Gen.gen_placeholder () in
+  Driver.init (Sim.SL spec);
+  let driver = (module Driver : Sim.DRIVER) in
   let printer value_program =
     Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let spec = Sim.SL spec in
-  { runner; printer; spec; relname; tdenv; mixopenv; includes_p4 }
+  { driver; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =
   Util.Filesys.mkdir dirname_gen;

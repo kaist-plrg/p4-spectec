@@ -87,59 +87,41 @@ rule Decl_ok/constantDeclaration:
 
 ;;;; annotationList type `( argumentList ) name `;
 
-rulegroup InstDecl_ok/non-objectInitializer {
+relation InstDecl_non_objectInitializer_ok:
+  cursor typingContext |- annotationList prefixedTypeName `< typeArgument* >
+                           `( argument* ) name `;
+                        : typingContext instantiationIR
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `; "under cursor" %0
+                 "and typing context" %1)
+  hint(prose_out "the updated typing context" %7 "and" %8)
 
-  rule InstDecl_ok/prefixedTypeName:
-    p TC_0 |- annotationList prefixedTypeName `( argumentList ) name `;
-            : TC_1 instantiationIR
-    ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC_0 |- argument : argumentIR)*
-    ---- ;; check constructor type
-    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< eps > `( argumentIR* )
-                                   : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
-    ---- ;; check instantiation convention
-    -- Inst_ok:
-        p TC_0 NAMED |- constructorTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
-                      : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    ---- ;; update the context with the instantiated object
-    -- if nameIR = $name(name)
-    -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
-    ---- ;; create IR
-    -- if instantiationIR
-        = annotationList typeIR_object prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR* ) nameIR eps `;
-
-  rule InstDecl_ok/specializedType:
-    p TC_0 |- annotationList
-              (prefixedTypeName `< typeArgumentList >) `( argumentList ) name `;
-            : TC_1 instantiationIR
-    ---- ;; check type arguments
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
-    ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC_0 |- argument : argumentIR)*
-    ---- ;; check constructor type
-    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- ConstructorType_ok:
-        p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-               : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
-    ---- ;; check instantiation convention
-    -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
-    -- Inst_ok:
-        p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
-                      : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    ---- ;; update the context with the instantiated object
-    -- if nameIR = $name(name)
-    -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
-    ---- ;; create IR
-    -- if instantiationIR
-        = annotationList typeIR_object prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR eps `;
-
-}
+rule InstDecl_non_objectInitializer_ok:
+  p TC_0 |- annotationList prefixedTypeName `< typeArgument* >
+              `( argument* ) name `;
+          : TC_1 instantiationIR
+  ---- ;; check type arguments
+  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
+  ---- ;; check arguments
+  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  ---- ;; check constructor type
+  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+  -- ConstructorType_ok:
+      p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+             : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
+  ---- ;; check instantiation convention
+  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
+  -- Inst_ok:
+      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+                        `( argumentIR* `# id_default* )
+                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; update the context with the instantiated object
+  -- if nameIR = $name(name)
+  -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
+  ---- ;; create IR
+  -- if instantiationIR
+      = annotationList typeIR_object prefixedNameIR
+          `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR eps `;
 
 ;;;; annotationList type `( argumentList ) name objectInitializer `;
 
@@ -289,97 +271,106 @@ def $subst_externMethodTypeDefEnv(
           externMethodTypeDefEnv_extern,
           callableId, externMethodTypeDefIR_concrete)
 
-rulegroup InstDecl_ok/objectInitializer {
+relation InstDecl_objectInitializer_ok:
+  cursor typingContext |- annotationList prefixedTypeName `< typeArgument* >
+                           `( argument* ) name `= `{ objectDeclaration* } `;
+                        : typingContext instantiationIR
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `= `{ %7 } `; "under cursor" %0
+                 "and typing context" %1)
+  hint(prose_out "the updated typing context" %8 "and" %9)
 
-  rule InstDecl_ok/prefixedTypeName:
+rule InstDecl_objectInitializer_ok:
+  p TC_0 |- annotationList
+              prefixedTypeName `< typeArgument* > `( argument* )
+              name `= `{ objectDeclaration* } `;
+          : TC_2 instantiationIR
+  ---- ;; check type arguments
+  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
+  ---- ;; check arguments
+  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  ---- ;; check constructor type
+  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+                                 : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
+  ---- ;; check instantiation convention
+  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
+  -- Inst_ok:
+      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+                        `( argumentIR* `# id_default* )
+                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; object initializer can be specified for an extern object
+  -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
+      = $unroll_typeIR(typeIR_object)
+  ---- ;; temporarily add "this" to the context
+  -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
+  ---- ;; check object initializer
+  -- ObjectDecls_ok:
+      p TC_1 |- objectDeclaration*
+              : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
+  ---- ;; create updated extern type
+  -- if externMethodTypeDefEnv_init_subst
+      = $subst_externMethodTypeDefEnv(
+          externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
+  -- if typeIR_object_init
+      = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
+  ---- ;; constructed object may not contain an abstract method
+  -- if $is_concrete_extern_object(typeIR_object_init)
+  ---- ;; update the context with the instantiated object
+  -- if nameIR = $name(name)
+  -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
+  ---- ;; create IR
+  -- if instantiationIR
+      = annotationList typeIR_object_init prefixedNameIR
+          `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+          nameIR (`= `{ objectDeclarationIR* }) `;
+
+rulegroup InstDecl_ok {
+
+  rule InstDecl_ok/non-objectInitializer-prefixedTypeName:
+    p TC_0 |- annotationList prefixedTypeName `( argumentList ) name `;
+            : TC_1 instantiationIR
+    -- if argument* = $flatten_argumentList(argumentList)
+    -- InstDecl_non_objectInitializer_ok:
+        p TC_0 |- annotationList
+                    prefixedTypeName `< eps > `( argument* ) name `;
+                : TC_1 instantiationIR
+
+  rule InstDecl_ok/non-objectInitializer-specializedType:
+    p TC_0 |- annotationList
+              (prefixedTypeName `< typeArgumentList >) `( argumentList ) name `;
+            : TC_1 instantiationIR
+    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+    -- if argument* = $flatten_argumentList(argumentList)
+    -- InstDecl_non_objectInitializer_ok:
+        p TC_0 |- annotationList prefixedTypeName `< typeArgument* >
+                    `( argument* ) name `;
+                : TC_1 instantiationIR
+
+  rule InstDecl_ok/objectInitializer-prefixedTypeName:
     p TC_0 |- annotationList
                 prefixedTypeName `( argumentList ) name (`= `{ objectDeclarationList }) `;
-            : TC_2 instantiationIR
-    ---- ;; check arguments
+            : TC_1 instantiationIR
     -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC_0 |- argument : argumentIR)*
-    ---- ;; check constructor type
-    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< eps > `( argumentIR* )
-                                    : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
-    ---- ;; check instantiation convention
-    -- Inst_ok:
-        p TC_0 NAMED |- constructorTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
-                      : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    ---- ;; object initializer can be specified for an extern object
-    -- if $is_externObjectTypeIR($unroll_typeIR(typeIR_object))
-    -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
-        = typeIR_object
-    ---- ;; temporarily add "this" to the context
-    -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
-    ---- ;; check object initializer
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- ObjectDecls_ok:
-        p TC_1 |- objectDeclaration*
-                : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
-    ---- ;; create updated extern type
-    -- if externMethodTypeDefEnv_init_subst
-        = $subst_externMethodTypeDefEnv(
-            externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
-    -- if typeIR_object_init
-        = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
-    ---- ;; constructed object may not contain an abstract method
-    -- if $is_concrete_extern_object(typeIR_object_init)
-    ---- ;; update the context with the instantiated object
-    -- if nameIR = $name(name)
-    -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
-    ---- ;; create IR
-    -- if instantiationIR
-        = annotationList typeIR_object_init prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR (`= `{ objectDeclarationIR* }) `;
+    -- InstDecl_objectInitializer_ok:
+        p TC_0 |- annotationList
+                    prefixedTypeName `< eps > `( argument* ) name `= `{ objectDeclaration* } `;
+                : TC_1 instantiationIR
 
-  rule InstDecl_ok/specializedType:
+  rule InstDecl_ok/objectInitializer-specializedType:
     p TC_0 |- annotationList
-              (prefixedTypeName `< typeArgumentList >) `( argumentList )
-              name (`= `{ objectDeclarationList }) `;
-            : TC_2 instantiationIR
-    ---- ;; check type arguments
+                (prefixedTypeName `< typeArgumentList >) `( argumentList )
+                name (`= `{ objectDeclarationList }) `;
+            : TC_1 instantiationIR
     -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
-    ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC_0 |- argument : argumentIR)*
-    ---- ;; check constructor type
-    -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-                                   : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
-    ---- ;; check instantiation convention
-    -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
-    -- Inst_ok:
-        p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                          `( argumentIR* `# id_default* )
-                      : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    ---- ;; object initializer can be specified for an extern object
-    -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
-        = $unroll_typeIR(typeIR_object)
-    ---- ;; temporarily add "this" to the context
-    -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
-    ---- ;; check object initializer
     -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
-    -- ObjectDecls_ok:
-        p TC_1 |- objectDeclaration*
-                : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
-    ---- ;; create updated extern type
-    -- if externMethodTypeDefEnv_init_subst
-        = $subst_externMethodTypeDefEnv(
-            externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
-    -- if typeIR_object_init
-        = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
-    ---- ;; constructed object may not contain an abstract method
-    -- if $is_concrete_extern_object(typeIR_object_init)
-    ---- ;; update the context with the instantiated object
-    -- if nameIR = $name(name)
-    -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
-    ---- ;; create IR
-    -- if instantiationIR
-        = annotationList typeIR_object_init prefixedNameIR
-            `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-            nameIR (`= `{ objectDeclarationIR* }) `;
+    -- InstDecl_objectInitializer_ok:
+        p TC_0 |- annotationList
+                    prefixedTypeName `< typeArgument* >
+                    `( argument* ) name `= `{ objectDeclaration* } `;
+                : TC_1 instantiationIR
 
 }
 
@@ -746,9 +737,7 @@ rule Enum_serializable_field_ok:
   -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~> value
   ---- ;; temporarily add value to block context
   -- if nameIR = $name(name)
-  -- if enumTypeDefIR = ENUM nameIR_enum `< typeIR > `{ eps }
-  -- if value_enum = nameIR_enum `. nameIR `. value
-  -- if varTypeIR = `EMPTY enumTypeDefIR LCTK value_enum
+  -- if varTypeIR = `EMPTY typeIR LCTK value
   -- if TC_1 = $add_var_t(BLOCK, TC_0, nameIR, varTypeIR)
 
 relation Enum_serializable_fields_ok:
@@ -756,20 +745,24 @@ relation Enum_serializable_fields_ok:
                                : typingContext namedExpressionIR* `# value*
   hint(input %0 %1 %2 %3)
 
-rule Enum_serializable_fields_ok/nil:
-  TC nameIR_enum typeIR |- eps : TC eps `# eps
+rulegroup Enum_serializable_fields_ok {
 
-rule Enum_serializable_fields_ok/cons:
-  TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*
-                           : TC_2 namedExpressionIR* `# value_field*
-  -- Enum_serializable_field_ok:
-      TC_0 nameIR_enum typeIR |- namedExpression_h
-                               : TC_1 namedExpressionIR_h `# value_field_h
-  -- Enum_serializable_fields_ok:
-      TC_1 nameIR_enum typeIR |- namedExpression_t*
-                               : TC_2 namedExpressionIR_t* `# value_field_t*
-  -- if namedExpressionIR* = namedExpressionIR_h :: namedExpressionIR_t*
-  -- if value_field* = value_field_h :: value_field_t*
+  rule Enum_serializable_fields_ok/nil:
+    TC nameIR_enum typeIR |- eps : TC eps `# eps
+
+  rule Enum_serializable_fields_ok/cons:
+    TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*
+                             : TC_2 namedExpressionIR* `# value_field*
+    -- Enum_serializable_field_ok:
+        TC_0 nameIR_enum typeIR |- namedExpression_h
+                                 : TC_1 namedExpressionIR_h `# value_field_h
+    -- Enum_serializable_fields_ok:
+        TC_1 nameIR_enum typeIR |- namedExpression_t*
+                                 : TC_2 namedExpressionIR_t* `# value_field_t*
+    -- if namedExpressionIR* = namedExpressionIR_h :: namedExpressionIR_t*
+    -- if value_field* = value_field_h :: value_field_t*
+
+}
 
 rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
@@ -1068,16 +1061,20 @@ rule Decl_ok/packageTypeDeclaration:
 ;;;; syntax declarationList (doesn't exist in the grammar)
 ;;
 
-rule Decls_ok/nil:
-  TC |- eps : TC eps
+rulegroup Decls_ok {
 
-rule Decls_ok/cons:
-  TC_0 |- declaration_h :: declaration_t*
-        : TC_2 (declarationIR_h :: declarationIR_t*)
-  -- Decl_ok:
-      TC_0 |- declaration_h : TC_1 declarationIR_h
-  -- Decls_ok:
-      TC_1 |- declaration_t* : TC_2 declarationIR_t*
+  rule Decls_ok/nil:
+    TC |- eps : TC eps
+
+  rule Decls_ok/cons:
+    TC_0 |- declaration_h :: declaration_t*
+          : TC_2 (declarationIR_h :: declarationIR_t*)
+    -- Decl_ok:
+        TC_0 |- declaration_h : TC_1 declarationIR_h
+    -- Decls_ok:
+        TC_1 |- declaration_t* : TC_2 declarationIR_t*
+
+}
 
 ;;
 ;;;; syntax p4program

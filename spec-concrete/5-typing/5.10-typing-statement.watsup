@@ -714,16 +714,20 @@ rule BlockElementStmt_ok/statement:
 ;; syntax blockElementStatementList
 ;;
 
-rule BlockElementStmts_ok/nil:
-  TC f l |- eps : TC f eps
+rulegroup BlockElementStmts_ok {
 
-rule BlockElementStmts_ok/cons:
-  TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t*
-                : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
-  -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h
-                                            : TC_1 f_1 blockElementStatementIR_h
-  -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*
-                                              : TC_2 f_2 blockElementStatementIR_t*
+  rule BlockElementStmts_ok/nil:
+    TC f l |- eps : TC f eps
+
+  rule BlockElementStmts_ok/cons:
+    TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t*
+                  : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
+    -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h
+                                              : TC_1 f_1 blockElementStatementIR_h
+    -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*
+                                                : TC_2 f_2 blockElementStatementIR_t*
+
+}
 
 ;;
 ;; syntax blockStatement

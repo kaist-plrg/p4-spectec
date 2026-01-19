@@ -1853,7 +1853,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output)
     else invoke_defined_func' ()
 
-  (* Load definitions into the context *)
+  (* Globals *)
+
+  type global = Global of Ctx.t | Empty
+
+  let global : global ref = ref Empty
+
+  let ctx_global () : Ctx.t =
+    match !global with
+    | Global ctx -> ctx
+    | Empty -> back no_region "interpreter not initialized"
 
   let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
     match def.it with
@@ -1882,37 +1891,41 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let func = Func.Defined (tparams, params, instrs) in
         Ctx.add_func Global ctx id func
 
-  let load_spec (ctx : Ctx.t) (spec : spec) : Ctx.t =
-    List.fold_left load_def ctx spec
-
-  (* Entry points for evaluation *)
-
-  let do_init (spec : spec) : unit =
+  let init (spec : spec) : unit =
     let printer value =
       Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
     in
     Builtin.Call.init printer;
+    let ctx = Ctx.empty () in
+    let ctx = List.fold_left load_def ctx spec in
+    global := Global ctx
+
+  (* Entry points for evaluation *)
+
+  let do_init () : unit =
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache
 
-  let do_eval_rel (ctx : Ctx.t) (spec : spec) (relname : string)
-      (values_input : value list) : value list =
-    let ctx = load_spec ctx spec in
+  let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
-      let values_ouput = invoke_rel ctx (relname $ no_region) values_input in
+      let ctx_global = ctx_global () in
+      let values_ouput =
+        invoke_rel ctx_global (relname $ no_region) values_input
+      in
       values_ouput
     with Backtrace traces ->
       let failtraces = back_failtraces traces in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 
-  let do_eval_func (ctx : Ctx.t) (spec : spec) (funcname : string)
-      (targs : targ list) (values_input : value list) : value =
-    let ctx = load_spec ctx spec in
+  let do_eval_func (funcname : string) (targs : targ list)
+      (values_input : value list) : value =
     try
+      let ctx_global = ctx_global () in
       let value_output =
-        invoke_func_with_values ctx (funcname $ no_region) targs values_input
+        invoke_func_with_values ctx_global (funcname $ no_region) targs
+          values_input
       in
       value_output
     with Backtrace traces ->
@@ -1920,36 +1933,32 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 
-  let eval_program (spec : spec) (relname : string) (includes_p4 : string list)
+  let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    do_init spec;
-    let ctx = Ctx.empty () in
+    do_init ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       Hook.on_program value_program;
-      let values_output = do_eval_rel ctx spec relname [ value_program ] in
+      let values_output = do_eval_rel relname [ value_program ] in
       Sim.Pass values_output
     with
     | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
     | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
         Sim.Fail (`Runtime (at, msg))
 
-  let eval_rel (spec : spec) (relname : string) (values_input : value list) :
-      Sim.rel_result =
-    do_init spec;
-    let ctx = Ctx.empty () in
+  let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
+    do_init ();
     try
-      let values_output = do_eval_rel ctx spec relname values_input in
+      let values_output = do_eval_rel relname values_input in
       Sim.Pass values_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
       Sim.Fail (at, msg)
 
-  let eval_func (spec : spec) (funcname : string) (targs : targ list)
+  let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    do_init spec;
-    let ctx = Ctx.empty () in
+    do_init ();
     try
-      let value_output = do_eval_func ctx spec funcname targs values_input in
+      let value_output = do_eval_func funcname targs values_input in
       Sim.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
       Sim.Fail (at, msg)

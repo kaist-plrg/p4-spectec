@@ -79,7 +79,7 @@ let update_hit_new (fuel : int) (pid : pid) (idx_seed : int) (strategy : string)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
       config.specenv.relname config.specenv.includes_p4 filename_gen_p4
   in
   match program_result with
@@ -127,7 +127,7 @@ let update_close_miss_new (fuel : int) (pid : pid) (idx_seed : int)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.runner config.specenv.spec
+    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
       config.specenv.relname config.specenv.includes_p4 filename_gen_p4
   in
   match program_result with
@@ -153,7 +153,7 @@ let update_interesting (fuel : int) (pid : pid) (idx_seed : int)
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
     let rel_result, cover =
-      Runner.run_program_internal_with_dangling config.specenv.runner
+      Runner.run_program_internal_with_dangling config.specenv.driver
         config.specenv.spec config.specenv.relname value_program
     in
     match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
@@ -438,7 +438,7 @@ let fuzz_seed (fuel : int) (pid : pid) (idx_seed : int) (config : Config.t)
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
   let program_result, cover, vdg =
-    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.runner
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.driver
       config.specenv.spec config.specenv.relname config.specenv.includes_p4
       filename_p4
   in
@@ -607,8 +607,8 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
-          Boot.boot_cold specenv.runner spec relname includes_p4 excludes_p4
-            dirname_seed_p4
+          Boot.boot_cold specenv.driver specenv.spec relname includes_p4
+            excludes_p4 dirname_seed_p4
         in
         (* Log the initial coverage for later use in warm boot *)
         let filename_cov = dirname_gen ^ "/boot.coverage" in

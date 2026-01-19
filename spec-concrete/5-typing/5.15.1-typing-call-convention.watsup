@@ -126,16 +126,20 @@ rule Call_convention_argument_ok/dontcare:
 ;; Calling convention (multiple arguments)
 ;;
 
-rule Call_convention_ok/nil:
-  p TC actctxt |- eps `@ eps : eps
+rulegroup Call_convention_ok {
 
-rule Call_convention_ok/cons:
-  p TC actctxt |- (parameterIR_h :: parameterIR_t*)
-                    `@ (argumentIR_h :: argumentIR_t*)
-                : (argumentIR_h_cast :: argumentIR_t_cast*)
-  -- Call_convention_argument_ok:
-      p TC actctxt |- parameterIR_h `@ argumentIR_h
-                    : argumentIR_h_cast
-  -- Call_convention_ok:
-      p TC actctxt |- parameterIR_t* `@ argumentIR_t*
-                    : argumentIR_t_cast*
+  rule Call_convention_ok/nil:
+    p TC actctxt |- eps `@ eps : eps
+
+  rule Call_convention_ok/cons:
+    p TC actctxt |- (parameterIR_h :: parameterIR_t*)
+                      `@ (argumentIR_h :: argumentIR_t*)
+                  : (argumentIR_h_cast :: argumentIR_t_cast*)
+    -- Call_convention_argument_ok:
+        p TC actctxt |- parameterIR_h `@ argumentIR_h
+                      : argumentIR_h_cast
+    -- Call_convention_ok:
+        p TC actctxt |- parameterIR_t* `@ argumentIR_t*
+                      : argumentIR_t_cast*
+
+}

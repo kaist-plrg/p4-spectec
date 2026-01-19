@@ -70,6 +70,7 @@ and validate' (cursor : int) (hint : t) (items : 'a list) : (int, string) result
           let* cursor = cursor_result in
           validate' cursor hint items)
         (Ok cursor) hints
+  | BrackH (_, hint, _) -> validate' cursor hint items
   | HoleH `Next -> Ok (cursor + 1)
   | HoleH (`Num idx) when idx < List.length items -> Ok cursor
   | HoleH (`Num idx) -> Error (Format.asprintf "index %d out of bounds" idx)
@@ -147,6 +148,7 @@ and collect' (idxs : int list) (hintexp : t) : int list =
   match hintexp with
   | TextH _ -> idxs
   | SeqH hints -> List.fold_left collect' idxs hints
+  | BrackH (_, hint, _) -> collect' idxs hint
   | HoleH (`Num i) -> i :: idxs
   | HoleH `Next -> idxs
   | FuseH (hint_l, hint_r) ->
@@ -173,6 +175,9 @@ and realign' (realign : (int * int) list) (hint : t) : t =
   | SeqH hints ->
       let hints = List.map (realign' realign) hints in
       SeqH hints
+  | BrackH (atom_l, hint, atom_r) ->
+      let hint = realign' realign hint in
+      BrackH (atom_l, hint, atom_r)
   | HoleH (`Num idx) ->
       let idx_realigned = List.assoc idx realign in
       HoleH (`Num idx_realigned)
