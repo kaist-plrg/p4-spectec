@@ -103,18 +103,15 @@ NOTE: Add explainer on explicit and implicit type parameters for type definition
 // Added
 Notice that P4 has struct types, but the surface syntax does not have an
 explicit construct for struct types. Instead, struct types are always
-referenced by name.
+referenced by name. To easily handle named types in P4~IR~, the internal
+representation of types contain representations for the referred types.
 
-To easily handle named types in P4~IR~, the internal representation of types
-contain representations for the referred types.
+${syntax: structTypeIR}
 
-${syntax: structTypeIR dataTypeIR typeIR}
-
-For example, a struct type is represented as `structTypeIR` in P4~IR~.
-
-Thus, after type checking, a named type in P4~16~ is resolved to its referred
-type in P4~IR~. For named types referring to monomorphic type definitions, the
-resolved type is simply the type defined by the type definition.
+For example, a struct type is represented as `structTypeIR` in P4~IR~. Thus,
+after type checking, a named type in P4~16~ is resolved to its referred type in
+P4~IR~. For named types referring to monomorphic type definitions, the resolved
+type is simply the type defined by the type definition.
 
 [source,p4]
 ----
@@ -123,8 +120,7 @@ void f(E_t e) {}
 ----
 
 In the above example, the named type `E_t` is resolved to the enum type
-`enumTypeIR`. For named types referring to polymorphic type definitions, the
-resolved type is a specialized type, `specializedTypeIR`.
+`enumTypeIR`.
 
 [source,p4]
 ----
@@ -133,11 +129,15 @@ void f(S<bit<32>> s) {}
 ----
 
 In the above example, the named type `S<bit<32>>` is resolved to a
-`specializedTypeIR`, where it specializes a `structTypeDefIR` with the type
-argument `bit<32>`. This can be further resolved to its underlying type
-`structTypeIR` with specialization, discussed in <<sec-type-specialization>>.
+`structTypeIR`, where it specializes a `structTypeDefIR` with the type argument
+`bit<32>`. Type specialization is discussed in detail in the next section.
 
-Following sections discuss name resolution for named types in detail.
+[#sec-type-specialization]
+==== Type specialization
+
+// Added
+${func-source: specialize_typeDefIR}
+${func-prose: specialize_typeDefIR}
 
 ==== Prefixed type names
 
@@ -155,7 +155,7 @@ polymorphic (but without type arguments), then the resolved type is a
 specialized type with no type arguments.
 
 [discrete]
-===== Type checking prefixed type names
+====== § Type checking prefixed type names
 
 // Added
 ${rulegroup-source: Type_ok/prefixedTypeName}
@@ -198,15 +198,8 @@ Register<bit<32>>(128) registerBank;
 The instantiation of `registerBank` is made using the `Register` type
 specialized with the `bit<32>` bound to the `T` type argument.
 
-[#sec-type-specialization]
-===== Type specialization
-
-// Added
-${func-source: specialize_typeDefIR}
-${func-prose: specialize_typeDefIR}
-
 [discrete]
-===== Type checking specialized types
+====== § Type checking specialized types
 
 // Added
 ${rulegroup-source: Type_ok/specializedType}

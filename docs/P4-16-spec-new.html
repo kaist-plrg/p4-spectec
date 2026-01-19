@@ -809,12 +809,9 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#sec-type-definitions">8.2.1. Type definitions (type constructors)</a></li>
 <li><a href="#_type_resoultion">8.2.2. Type resoultion</a></li>
-<li><a href="#_prefixed_type_names">8.2.3. Prefixed type names</a></li>
-<li><a href="#_specialized_types">8.2.4. Specialized types</a>
-<ul class="sectlevel4">
-<li><a href="#sec-type-specialization">8.2.4.1. Type specialization</a></li>
-</ul>
-</li>
+<li><a href="#sec-type-specialization">8.2.3. Type specialization</a></li>
+<li><a href="#_prefixed_type_names">8.2.4. Prefixed type names</a></li>
+<li><a href="#_specialized_types">8.2.5. Specialized types</a></li>
 </ul>
 </li>
 <li><a href="#_data_types_and_values">8.3. Data types and values</a>
@@ -5445,6 +5442,41 @@ restricted circumstances.</p>
    | integerValue</code></pre>
 </div>
 </div>
+<h6 id="_well_formedness_of_base_types" class="discrete">§ Well-formedness of base types</h6>
+<div class="paragraph">
+<p>The well-formedness rules for base types are as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_wf/baseTypeIR:
+  rule Type_wf/baseTypeIR:
+  B |- baseTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_wf"><code>baseTypeIR</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 <div class="paragraph">
 <p>The following sections describe each of these base types in more detail.</p>
 </div>
@@ -5464,7 +5496,7 @@ in P4 programs.</p>
 <div class="paragraph">
 <p>There is no value of type <code>void</code>.</p>
 </div>
-<h5 id="_type_checking_void_types" class="discrete">Type checking void types</h5>
+<h6 id="_type_checking_void_types" class="discrete">§ Type checking void types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5512,7 +5544,7 @@ syntax boolValue =
 <p>The Boolean type <code>bool</code> contains just two values, <code>false</code> and <code>true</code>. Boolean
 values are not integers or bit-strings.</p>
 </div>
-<h5 id="_type_checking_boolean_types" class="discrete">Type checking boolean types</h5>
+<h6 id="_type_checking_boolean_types" class="discrete">§ Type checking boolean types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5589,7 +5621,7 @@ type (these errors are declared in the P4 core library):</p>
 <div class="paragraph">
 <p>The semantics of an error declaration is described in <a href="#sec-errorDeclaration">Section 11.6</a>.</p>
 </div>
-<h5 id="_type_checking_error_types" class="discrete">Type checking error types</h5>
+<h6 id="_type_checking_error_types" class="discrete">§ Type checking error types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5667,7 +5699,7 @@ cannot declare new match kinds.</p>
 <p>The semantics of a match kind declaration is described in
 <a href="#sec-matchKindDeclaration">Section 11.7</a>.</p>
 </div>
-<h5 id="_type_checking_match_kind_types" class="discrete">Type checking match kind types</h5>
+<h6 id="_type_checking_match_kind_types" class="discrete">§ Type checking match kind types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5737,7 +5769,7 @@ should be used for a given table in the generated control-plane API:</p>
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"acl"</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> t1 <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
 </div>
 </div>
-<h5 id="_type_checking_string_types" class="discrete">Type checking string types</h5>
+<h6 id="_type_checking_string_types" class="discrete">§ Type checking string types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5889,7 +5921,7 @@ functions, must be directionless, indicating that all calls must provide a
 compile-time known value as an argument for such a parameter.  See
 <a href="#sec-call-convention">Chapter 17</a> for more details on directionless parameters.</p>
 </div>
-<h6 id="_type_checking_arbitrary_precision_integer_types" class="discrete">Type checking arbitrary-precision integer types</h6>
+<h6 id="_type_checking_arbitrary_precision_integer_types" class="discrete">§ Type checking arbitrary-precision integer types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -5958,7 +5990,7 @@ bits numbered from 0 to 127, where bit 127 is the most significant.</p>
 they may limit the maximum size, or they may only support some arithmetic
 operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 </div>
-<h6 id="_type_checking_fixed_width_unsigned_integer_types" class="discrete">Type checking fixed-width unsigned integer types</h6>
+<h6 id="_type_checking_fixed_width_unsigned_integer_types" class="discrete">§ Type checking fixed-width unsigned integer types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6093,7 +6125,7 @@ arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 <div class="paragraph">
 <p>A signed integer with width 1 can only have two legal values: 0 and -1.</p>
 </div>
-<h6 id="_type_checking_fixed_width_signed_integer_types" class="discrete">Type checking fixed-width signed integer types</h6>
+<h6 id="_type_checking_fixed_width_signed_integer_types" class="discrete">§ Type checking fixed-width signed integer types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6211,7 +6243,7 @@ Note that <code>varbit&lt;W&gt;</code> type refers to both cases of <code>varbit
 example, they may limit the maximum size, or they may require <code>varbit</code> values
 to always contain an integer number of bytes at runtime.</p>
 </div>
-<h6 id="_type_checking_dynamically_sized_bit_string_types" class="discrete">Type checking dynamically-sized bit-string types</h6>
+<h6 id="_type_checking_dynamically_sized_bit_string_types" class="discrete">§ Type checking dynamically-sized bit-string types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6301,41 +6333,6 @@ to always contain an integer number of bytes at runtime.</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<h4 id="_well_formedness_of_base_types" class="discrete">Well-formedness of base types</h4>
-<div class="paragraph">
-<p>The well-formedness rules for base types are as follows:</p>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>rulegroup Type_wf/baseTypeIR:
-  rule Type_wf/baseTypeIR:
-  B |- baseTypeIR</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Type_wf"><code>baseTypeIR</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>The relation holds.</p>
 </li>
 </ol>
 </div>
@@ -6524,42 +6521,20 @@ Add explainer on explicit and implicit type parameters for type definitions here
 <div class="paragraph">
 <p>Notice that P4 has struct types, but the surface syntax does not have an
 explicit construct for struct types. Instead, struct types are always
-referenced by name.</p>
-</div>
-<div class="paragraph">
-<p>To easily handle named types in P4<sub>IR</sub>, the internal representation of types
-contain representations for the referred types.</p>
+referenced by name. To easily handle named types in P4<sub>IR</sub>, the internal
+representation of types contain representations for the referred types.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax structTypeIR =
-   | STRUCT typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}
-
-syntax dataTypeIR =
-   | listTypeIR
-   | tupleTypeIR
-   | headerStackTypeIR
-   | structTypeIR
-   | headerTypeIR
-   | headerUnionTypeIR
-   | enumTypeIR
-
-syntax typeIR =
-   | baseTypeIR
-   | nameTypeIR
-   | aliasTypeIR
-   | dataTypeIR
-   | objectTypeIR
-   | synthesizedTypeIR</code></pre>
+   | STRUCT typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>For example, a struct type is represented as <code>structTypeIR</code> in P4<sub>IR</sub>.</p>
-</div>
-<div class="paragraph">
-<p>Thus, after type checking, a named type in P4<sub>16</sub> is resolved to its referred
-type in P4<sub>IR</sub>. For named types referring to monomorphic type definitions, the
-resolved type is simply the type defined by the type definition.</p>
+<p>For example, a struct type is represented as <code>structTypeIR</code> in P4<sub>IR</sub>. Thus,
+after type checking, a named type in P4<sub>16</sub> is resolved to its referred type in
+P4<sub>IR</sub>. For named types referring to monomorphic type definitions, the resolved
+type is simply the type defined by the type definition.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6569,8 +6544,7 @@ resolved type is simply the type defined by the type definition.</p>
 </div>
 <div class="paragraph">
 <p>In the above example, the named type <code>E_t</code> is resolved to the enum type
-<code>enumTypeIR</code>. For named types referring to polymorphic type definitions, the
-resolved type is a specialized type, <code>specializedTypeIR</code>.</p>
+<code>enumTypeIR</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6580,16 +6554,68 @@ resolved type is a specialized type, <code>specializedTypeIR</code>.</p>
 </div>
 <div class="paragraph">
 <p>In the above example, the named type <code>S&lt;bit&lt;32&gt;&gt;</code> is resolved to a
-<code>specializedTypeIR</code>, where it specializes a <code>structTypeDefIR</code> with the type
-argument <code>bit&lt;32&gt;</code>. This can be further resolved to its underlying type
-<code>structTypeIR</code> with specialization, discussed in <a href="#sec-type-specialization">Section 8.2.4.1</a>.</p>
-</div>
-<div class="paragraph">
-<p>Following sections discuss name resolution for named types in detail.</p>
+<code>structTypeIR</code>, where it specializes a <code>structTypeDefIR</code> with the type argument
+<code>bit&lt;32&gt;</code>. Type specialization is discussed in detail in the next section.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_prefixed_type_names">8.2.3. Prefixed type names</h4>
+<h4 id="sec-type-specialization">8.2.3. Type specialization</h4>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>def $specialize_typeDefIR(typeDefIR_base, typeArgumentIR*) = typeIR_spec
+ -- if (typeParameterIR_expl*, typeParameterIR_impl*) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
+ -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
+ -- if |typeParameterIR*| = |typeArgumentIR*|
+ -- if theta = `{(typeParameterIR : typeArgumentIR)*}
+ -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+ -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="specialize_typeDefIR" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#specialize_typeDefIR"><code>typeDefIR<sub>base</sub></code> specialized by <code>typeArgumentIR<sup>*</sup></code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>(typeParameterIR<sub>expl</sub><sup>*</sup>,</code> <code>typeParameterIR<sub>impl</sub><sup>*</sup>)</code> be <a href="#typeParameterListIR_of_typeDefIR">the type parameters of <code>typeDefIR<sub>base</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeParameterIR<sup>*</sup></code> be <code>typeParameterIR<sub>expl</sub><sup>*</sup></code> <code>&#43;&#43;</code> <code>typeParameterIR<sub>impl</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeParameterIR<sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>theta</code> be <code>{</code> <code>(typeParameterIR</code> <code>:</code> <code>typeArgumentIR)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>base</sub></code> substituted by <code>theta</code></a>.</p>
+</li>
+<li>
+<p>Return <code>typeIR<sub>spec</sub></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_prefixed_type_names">8.2.4. Prefixed type names</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax prefixedTypeName =
@@ -6609,7 +6635,7 @@ type defined by the type definition. If the referenced type definition is
 polymorphic (but without type arguments), then the resolved type is a
 specialized type with no type arguments.</p>
 </div>
-<h5 id="_type_checking_prefixed_type_names" class="discrete">Type checking prefixed type names</h5>
+<h6 id="_type_checking_prefixed_type_names" class="discrete">§ Type checking prefixed type names</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6682,7 +6708,7 @@ specialized type with no type arguments.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_specialized_types">8.2.4. Specialized types</h4>
+<h4 id="_specialized_types">8.2.5. Specialized types</h4>
 <div class="paragraph">
 <p>A generic type may be specialized by specifying arguments for its type
 variables. In cases where the compiler can infer type arguments, type
@@ -6735,62 +6761,7 @@ specializing the Register type:</p>
 <p>The instantiation of <code>registerBank</code> is made using the <code>Register</code> type
 specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type argument.</p>
 </div>
-<div class="sect4">
-<h5 id="sec-type-specialization">8.2.4.1. Type specialization</h5>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>def $specialize_typeDefIR(typeDefIR_base, typeArgumentIR*) = typeIR_spec
- -- if (typeParameterIR_expl*, typeParameterIR_impl*) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
- -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
- -- if |typeParameterIR*| = |typeArgumentIR*|
- -- if theta = `{(typeParameterIR : typeArgumentIR)*}
- -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
- -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div id="specialize_typeDefIR" class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#specialize_typeDefIR"><code>typeDefIR<sub>base</sub></code> specialized by <code>typeArgumentIR<sup>*</sup></code></a></p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>(typeParameterIR<sub>expl</sub><sup>*</sup>,</code> <code>typeParameterIR<sub>impl</sub><sup>*</sup>)</code> be <a href="#typeParameterListIR_of_typeDefIR">the type parameters of <code>typeDefIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeParameterIR<sup>*</sup></code> be <code>typeParameterIR<sub>expl</sub><sup>*</sup></code> <code>&#43;&#43;</code> <code>typeParameterIR<sub>impl</sub><sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Check that the length of <code>typeParameterIR<sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Let <code>theta</code> be <code>{</code> <code>(typeParameterIR</code> <code>:</code> <code>typeArgumentIR)<sup>*</sup></code> <code>}</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>spec</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>base</sub></code> substituted by <code>theta</code></a>.</p>
-</li>
-<li>
-<p>Return <code>typeIR<sub>spec</sub></code>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<h5 id="_type_checking_specialized_types" class="discrete">Type checking specialized types</h5>
+<h6 id="_type_checking_specialized_types" class="discrete">§ Type checking specialized types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6858,7 +6829,6 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 </div>
 </div>
 </div>
-</div>
 <div class="sect2">
 <h3 id="_data_types_and_values">8.3. Data types and values</h3>
 <div id="dataValue" class="listingblock">
@@ -6909,7 +6879,7 @@ syntax listValue =
    | LIST `[value*]</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_list_types" class="discrete">Type checking list types</h5>
+<h6 id="_type_checking_list_types" class="discrete">§ Type checking list types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -6955,7 +6925,7 @@ syntax listValue =
 </div>
 </div>
 </div>
-<h5 id="_well_formedness_of_list_types" class="discrete">Well-formedness of list types</h5>
+<h6 id="_well_formedness_of_list_types" class="discrete">§ Well-formedness of list types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7019,7 +6989,7 @@ syntax tupleValue =
    | TUPLE `(value*)</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_tuple_types" class="discrete">Type checking tuple types</h5>
+<h6 id="_type_checking_tuple_types" class="discrete">§ Type checking tuple types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7069,7 +7039,7 @@ syntax tupleValue =
 </div>
 </div>
 </div>
-<h5 id="_well_formedness_of_tuple_types" class="discrete">Well-formedness of tuple types</h5>
+<h6 id="_well_formedness_of_tuple_types" class="discrete">§ Well-formedness of tuple types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7159,7 +7129,7 @@ which may be valid.</p>
 <p>introduce a header stack called <code>mpls</code> containing ten entries, each of type
 <code>Mpls_h</code>.</p>
 </div>
-<h5 id="_type_checking_header_stack_types" class="discrete">Type checking header stack types</h5>
+<h6 id="_type_checking_header_stack_types" class="discrete">§ Type checking header stack types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7247,7 +7217,7 @@ which may be valid.</p>
 </div>
 </div>
 </div>
-<h5 id="_well_formedness_of_header_stack_types" class="discrete">Well-formedness of header stack types</h5>
+<h6 id="_well_formedness_of_header_stack_types" class="discrete">§ Well-formedness of header stack types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7364,14 +7334,14 @@ syntax structValue =
    | STRUCT typeId `{fieldValue*}</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_struct_types" class="discrete">Type checking struct types</h5>
+<h6 id="_type_checking_struct_types" class="discrete">§ Type checking struct types</h6>
 <div class="paragraph">
 <p>Struct types are introduced by <code>struct</code> declarations. Its typing rule is
 explained in <a href="#sec-struct-type-declaration">Section 11.11.2</a>. Struct types are then used by
 referencing their names. Thus struct types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_struct_types" class="discrete">Well-formedness of struct types</h5>
+<h6 id="_well_formedness_of_struct_types" class="discrete">§ Well-formedness of struct types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7571,14 +7541,14 @@ syntax headerValue =
    | HEADER typeId `{bool ; fieldValue*}</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_header_types" class="discrete">Type checking header types</h5>
+<h6 id="_type_checking_header_types" class="discrete">§ Type checking header types</h6>
 <div class="paragraph">
 <p>Header types are introduced by <code>header</code> declarations. Its typing rule is
 explained in <a href="#sec-header-type-declaration">Section 11.11.3</a>. Header types are then used by
 referencing their names. Thus header types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_header_types" class="discrete">Well-formedness of header types</h5>
+<h6 id="_well_formedness_of_header_types" class="discrete">§ Well-formedness of header types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -7684,7 +7654,7 @@ syntax headerUnionValue =
    | HEADER_UNION typeId `{fieldValue*}</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_header_union_types" class="discrete">Type checking header union types</h5>
+<h6 id="_type_checking_header_union_types" class="discrete">§ Type checking header union types</h6>
 <div class="paragraph">
 <p>Header union types are introduced by <code>header_union</code> declarations. Its typing
 rule is explained in <a href="#sec-header-union-type-declaration">Section 11.11.4</a>. Header union types
@@ -7866,14 +7836,14 @@ representation range of the underlying type.</p>
 <p>Annotations, represented by the non-terminal <code>annotationList</code>, are described in
 <a href="#sec-annotations">[sec-annotations]</a>.</p>
 </div>
-<h5 id="_type_checking_enum_types" class="discrete">Type checking enum types</h5>
+<h6 id="_type_checking_enum_types" class="discrete">§ Type checking enum types</h6>
 <div class="paragraph">
 <p>Enum types are introduced by <code>enum</code> declarations. Its typing rule is explained
 in <a href="#sec-enum-type-declaration">Section 11.11.1</a>. Enum types are then used by referencing their
 names. Thus enum types can be obtained from named types, as illustrated in
 <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_enum_types" class="discrete">Well-formedness of enum types</h5>
+<h6 id="_well_formedness_of_enum_types" class="discrete">§ Well-formedness of enum types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8028,14 +7998,14 @@ object types are represented as:</p>
    | EXTERN typeId `&lt;typeArgumentIR*&gt; externMethodTypeDefEnv</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_extern_object_types" class="discrete">Type checking extern object types</h5>
+<h6 id="_type_checking_extern_object_types" class="discrete">§ Type checking extern object types</h6>
 <div class="paragraph">
 <p>Extern object types are introduced by <code>extern</code> declarations. Its typing rule is
 explained in <a href="#sem-extern-object-declaration">[sem-extern-object-declaration]</a>. Extern object types are then
 used by referencing their names. Thus extern object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_extern_object_types" class="discrete">Well-formedness of extern object types</h5>
+<h6 id="_well_formedness_of_extern_object_types" class="discrete">§ Well-formedness of extern object types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8127,14 +8097,14 @@ Internally, parser types are represented as:</p>
    | PARSER typeId `&lt;typeArgumentIR*&gt; `(parameterIR*)</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_parser_object_types" class="discrete">Type checking parser object types</h5>
+<h6 id="_type_checking_parser_object_types" class="discrete">§ Type checking parser object types</h6>
 <div class="paragraph">
 <p>Parser object types are introduced by <code>parser</code> declarations. Its typing rule is
 explained in <a href="#sec-parser-type-declaration">Section 11.11.6</a>. Parser object types are then used
 by referencing their names. Thus parser object types can be obtained from named
 types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_parser_object_types" class="discrete">Well-formedness of parser object types</h5>
+<h6 id="_well_formedness_of_parser_object_types" class="discrete">§ Well-formedness of parser object types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8204,14 +8174,14 @@ Internally, control types are represented as:</p>
    | CONTROL typeId `&lt;typeArgumentIR*&gt; `(parameterIR*)</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_control_object_types" class="discrete">Type checking control object types</h5>
+<h6 id="_type_checking_control_object_types" class="discrete">§ Type checking control object types</h6>
 <div class="paragraph">
 <p>Control object types are introduced by <code>control</code> declarations. Its typing rule
 is explained in <a href="#sec-control-type-declaration">Section 11.11.7</a>. Control object types are then
 used by referencing their names. Thus control object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_control_object_types" class="discrete">Well-formedness of control object types</h5>
+<h6 id="_well_formedness_of_control_object_types" class="discrete">§ Well-formedness of control object types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8278,14 +8248,14 @@ Internally, package types are represented as:</p>
    | PACKAGE typeId `&lt;typeArgumentIR*&gt; `{typeIR*}</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_package_object_types" class="discrete">Type checking package object types</h5>
+<h6 id="_type_checking_package_object_types" class="discrete">§ Type checking package object types</h6>
 <div class="paragraph">
 <p>Package object types are introduced by <code>package</code> declarations. Its typing rule
 is explained in <a href="#sec-package-type-declaration">Section 11.11.8</a>. Package object types are then
 used by referencing their names. Thus package object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
-<h5 id="_well_formedness_of_package_object_types" class="discrete">Well-formedness of package object types</h5>
+<h6 id="_well_formedness_of_package_object_types" class="discrete">§ Well-formedness of package object types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8347,7 +8317,7 @@ syntax tableObjectTypeDefIR = tableObjectTypeIR</code></pre>
 <div class="paragraph">
 <p>Table metadata types are introduced in <a href="#sec-table-metadata-type-and-value">Section 8.6.6</a>.</p>
 </div>
-<h5 id="_well_formedness_of_table_object_types" class="discrete">Well-formedness of table object types</h5>
+<h6 id="_well_formedness_of_table_object_types" class="discrete">§ Well-formedness of table object types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8465,14 +8435,14 @@ suitable number of type arguments:</p>
    | TYPEDEF typeId typeIR</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_typedef_types" class="discrete">Type checking <code>typedef</code> types</h5>
+<h6 id="_type_checking_typedef_types" class="discrete">§ Type checking <code>typedef</code> types</h6>
 <div class="paragraph">
 <p><code>typedef</code>s are introduced by <code>typedef</code> declarations. Its typing rule is
 explained in <a href="#sec-typedef-declaration">[sec-typedef-declaration]</a>. <code>typedef</code>s are then used by
 referencing their names. Thus <code>typedef</code> types can be obtained from named types,
 as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
-<h5 id="_well_formedness_of_typedef_types" class="discrete">Well-formedness of <code>typedef</code> types</h5>
+<h6 id="_well_formedness_of_typedef_types" class="discrete">§ Well-formedness of <code>typedef</code> types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8562,14 +8532,14 @@ with the control-plane software).</p>
    | TYPE typeId typeIR</code></pre>
 </div>
 </div>
-<h5 id="_type_checking_new_types" class="discrete">Type checking new types</h5>
+<h6 id="_type_checking_new_types" class="discrete">§ Type checking new types</h6>
 <div class="paragraph">
 <p><code>type</code>s are introduced by <code>type</code> declarations. Its typing rule is explained
 in <a href="#sec-newtype-declaration">Section 11.11.5.2</a>. <code>type</code>s are then used by referencing their
 names. Thus <code>type</code> types can be obtained from named types, as illustrated in
 <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
-<h5 id="_well_formedness_of_new_types" class="discrete">Well-formedness of new types</h5>
+<h6 id="_well_formedness_of_new_types" class="discrete">§ Well-formedness of new types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8698,7 +8668,7 @@ a type and value, we need to represent those of <code>...</code>.
 </tr>
 </table>
 </div>
-<h5 id="_well_formnedness_of_default_types" class="discrete">Well-formnedness of default types</h5>
+<h6 id="_well_formnedness_of_default_types" class="discrete">§ Well-formnedness of default types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8787,7 +8757,7 @@ must have a type and value, we need to represent those of <code>{#}</code>.
 </tr>
 </table>
 </div>
-<h5 id="_well_formnedness_of_invalid_header_types" class="discrete">Well-formnedness of invalid header types</h5>
+<h6 id="_well_formnedness_of_invalid_header_types" class="discrete">§ Well-formnedness of invalid header types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -8921,7 +8891,7 @@ represent the expression sequence within curly braces, apart from tuple types.
 </tr>
 </table>
 </div>
-<h5 id="_well_formnedness_of_sequence_types" class="discrete">Well-formnedness of sequence types</h5>
+<h6 id="_well_formnedness_of_sequence_types" class="discrete">§ Well-formnedness of sequence types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9078,7 +9048,7 @@ optTrailingComma }</code>.
 </tr>
 </table>
 </div>
-<h5 id="_well_formnedness_of_record_types" class="discrete">Well-formnedness of record types</h5>
+<h6 id="_well_formnedness_of_record_types" class="discrete">§ Well-formnedness of record types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9179,7 +9149,7 @@ by the compiler internally and used for type-checking.</p>
    | SET `{...}</code></pre>
 </div>
 </div>
-<h5 id="_well_formnedness_of_set_types" class="discrete">Well-formnedness of set types</h5>
+<h6 id="_well_formnedness_of_set_types" class="discrete">§ Well-formnedness of set types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9287,7 +9257,7 @@ syntax tableMetadataValue =
    | tableMetadataStructValue</code></pre>
 </div>
 </div>
-<h5 id="_well_formnedness_of_table_metadata_types" class="discrete">Well-formnedness of table metadata types</h5>
+<h6 id="_well_formnedness_of_table_metadata_types" class="discrete">§ Well-formnedness of table metadata types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9651,7 +9621,7 @@ calling convention is described in <a href="#sec-call-convention-overview">Secti
 the formal typing and well-formedness rules for parameters that implement the
 restrictions described there.</p>
 </div>
-<h4 id="_type_checking_parameters" class="discrete">Type checking parameters</h4>
+<h6 id="_type_checking_parameters" class="discrete">§ Type checking parameters</h6>
 <div id="Parameter_ok" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -9812,7 +9782,7 @@ the same type as the parameter type.</p>
 </div>
 </div>
 </div>
-<h4 id="_well_formedness_of_parameter_types" class="discrete">Well-formedness of parameter types</h4>
+<h6 id="_well_formedness_of_parameter_types" class="discrete">§ Well-formedness of parameter types</h6>
 <div id="ParameterType_wf" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -10019,7 +9989,7 @@ proper type argument(s), it yields a function type:</p>
    | FUNCTION `(parameterIR*) : typeIR</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness" class="discrete">Well-formedness</h4>
+<h6 id="_well_formedness_of_callable_definition_types" class="discrete">§ Well-formedness of callable definition types</h6>
 <div class="paragraph">
 <p>${relation: CallableTypeDef_wf}</p>
 </div>
@@ -10125,7 +10095,7 @@ type definition:</p>
    | ACTION nameIR `(parameterListIR) blockStatementIR</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness_2" class="discrete">Well-formedness</h4>
+<h6 id="_well_formedness_of_action_types" class="discrete">§ Well-formedness of action types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10269,7 +10239,7 @@ syntax definedFunctionTypeIR =
    | FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) blockStatementIR</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_3" class="discrete">Well-formedness</h5>
+<h6 id="_well_formedness_of_function_types" class="discrete">§ Well-formedness of function types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10367,7 +10337,7 @@ syntax externFunctionTypeIR =
    | EXTERN_FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR)</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_4" class="discrete">Well-formedness</h5>
+<h5 id="_well_formedness" class="discrete">Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10535,7 +10505,7 @@ prior to the method definition. Here is an example:</p>
 <p>When such an object is instantiated the user has to supply an implementation
 of all the <code>abstract</code> methods (see <a href="#sec-instantiating-abstract-methods">[sec-instantiating-abstract-methods]</a>).</p>
 </div>
-<h6 id="_well_formedness_5" class="discrete">Well-formedness</h6>
+<h6 id="_well_formedness_of_method_types" class="discrete">§ Well-formedness of method types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10692,7 +10662,7 @@ syntax parserApplyMethodDef =
    | PARSER_APPLY `(parameterListIR) `{parserLocalDeclarationListIR ; stateEnv}</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_6" class="discrete">Well-formedness</h5>
+<h6 id="_well_formedness_of_parser_apply_method_types" class="discrete">§ Well-formedness of parser apply method types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10792,7 +10762,7 @@ syntax controlApplyMethodDef =
    | CONTROL_APPLY `(parameterListIR) `{controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR}</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_7" class="discrete">Well-formedness</h5>
+<h6 id="_well_formedness_of_control_apply_method_types" class="discrete">§ Well-formedness of control apply method types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -10877,7 +10847,7 @@ syntax tableApplyMethodDef =
    | TABLE_APPLY `{tablePropertyListIR}</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_8" class="discrete">Well-formedness</h5>
+<h6 id="_well_formedness_of_table_apply_method_types" class="discrete">§ Well-formedness of table apply method types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -11105,7 +11075,7 @@ the <code>udpSupport</code> parameter, as in the following example:</p>
 syntax constructorParameterIR = parameterIR</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_of_constructor_parameters" class="discrete">Well-formedness of constructor parameters</h5>
+<h6 id="_well_formedness_of_constructor_parameters" class="discrete">§ Well-formedness of constructor parameters</h6>
 <div id="ConstructorParameterType_wf" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -11205,7 +11175,7 @@ syntax constructorTypeDefIR =
    | CONSTRUCTOR `&lt;typeParameterIR* , typeParameterIR*&gt; `(constructorParameterIR*) : typeIR</code></pre>
 </div>
 </div>
-<h5 id="_well_formedness_of_constructor_definition_types" class="discrete">Well-formedness of constructor definition types</h5>
+<h6 id="_well_formedness_of_constructor_definition_types" class="discrete">§ Well-formedness of constructor definition types</h6>
 <div id="ConstructorTypeDef_wf" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
@@ -11329,7 +11299,7 @@ instances can thus be used as arguments in the construction of such objects.</p>
 <p>No other operations are available on extern objects, e.g., equality comparison
 is not defined.</p>
 </div>
-<h4 id="_well_formedness_of_extern_object_constructor_types" class="discrete">Well-formedness of extern object constructor types</h4>
+<h6 id="_well_formedness_of_extern_object_constructor_types" class="discrete">§ Well-formedness of extern object constructor types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -11398,7 +11368,7 @@ is not defined.</p>
 </div>
 </div>
 </div>
-<h4 id="_instantiation_of_extern_objects" class="discrete">Instantiation of extern objects</h4>
+<h6 id="_instantiation_of_extern_objects" class="discrete">§ Instantiation of extern objects</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -11711,7 +11681,7 @@ as:</p>
    | PARSER `(parameterListIR) `{frame parserLocalDeclarationListIR stateEnv}</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness_of_parser_object_constructor_types" class="discrete">Well-formedness of parser object constructor types</h4>
+<h6 id="_well_formedness_of_parser_object_constructor_types" class="discrete">§ Well-formedness of parser object constructor types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -11780,7 +11750,7 @@ as:</p>
 </div>
 </div>
 </div>
-<h4 id="_instantiation_of_parser_objects" class="discrete">Instantiation of parser objects</h4>
+<h6 id="_instantiation_of_parser_objects" class="discrete">§ Instantiation of parser objects</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -11993,7 +11963,7 @@ as:</p>
    | CONTROL `(parameterListIR) `{frame controlLocalDeclarationListIR actionDefEnv controlBodyIR}</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness_of_control_object_constructor_types" class="discrete">Well-formedness of control object constructor types</h4>
+<h6 id="_well_formedness_of_control_object_constructor_types" class="discrete">§ Well-formedness of control object constructor types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12062,7 +12032,7 @@ as:</p>
 </div>
 </div>
 </div>
-<h4 id="_instantiation_of_control_objects" class="discrete">Instantiation of control objects</h4>
+<h6 id="_instantiation_of_control_objects" class="discrete">§ Instantiation of control objects</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12365,7 +12335,7 @@ syntax tableObject =
    | TABLE typeId `{frame tableObjectProperty}</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness_of_table_object_constructor_types" class="discrete">Well-formedness of table object constructor types</h4>
+<h6 id="_well_formedness_of_table_object_constructor_types" class="discrete">§ Well-formedness of table object constructor types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12513,7 +12483,7 @@ with them.</p>
    | PACKAGE `&lt;theta&gt; `{frame}</code></pre>
 </div>
 </div>
-<h4 id="_well_formedness_of_package_object_constructor_types" class="discrete">Well-formedness of package object constructor types</h4>
+<h6 id="_well_formedness_of_package_object_constructor_types" class="discrete">§ Well-formedness of package object constructor types</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12582,7 +12552,7 @@ with them.</p>
 </div>
 </div>
 </div>
-<h4 id="_instantiation_of_package_objects" class="discrete">Instantiation of package objects</h4>
+<h6 id="_instantiation_of_package_objects" class="discrete">§ Instantiation of package objects</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12730,7 +12700,7 @@ with them.</p>
 <p>As described in <a href="#sec-p4-abstract-machine">Chapter 7</a>, declarations are type checked,
 instantiated at compile time, and evaluated at runtime.</p>
 </div>
-<h5 id="_type_checking_declarations" class="discrete">Type checking declarations</h5>
+<h6 id="_type_checking_declarations" class="discrete">§ Type checking declarations</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12781,7 +12751,7 @@ instantiated at compile time, and evaluated at runtime.</p>
    | typeDeclarationIR</code></pre>
 </div>
 </div>
-<h5 id="_compile_time_evaluation_of_declarations" class="discrete">Compile-time evaluation of declarations</h5>
+<h6 id="_compile_time_evaluation_of_declarations" class="discrete">§ Compile-time evaluation of declarations</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -12819,7 +12789,7 @@ instantiated at compile time, and evaluated at runtime.</p>
 <code>store</code>. <a href="#sec-instantiation-declaration">Section 11.3</a> describes how objects are
 instantiated from a declaration.</p>
 </div>
-<h5 id="_runtime_evaluation_of_declarations" class="discrete">Runtime evaluation of declarations</h5>
+<h6 id="_runtime_evaluation_of_declarations" class="discrete">§ Runtime evaluation of declarations</h6>
 <div class="paragraph">
 <p>All declarations except constant and variable declarations are evaluated at
 compile-time. See <a href="#sec-variable-declaration">Section 11.1</a> for the runtime evaluation of
@@ -12925,7 +12895,7 @@ languages such as C. The value of a variable is never preserved from one
 invocation of its enclosing block to the next. In particular, variables cannot
 be used to maintain state between different network packets.</p>
 </div>
-<h6 id="_type_checking_variable_declarations" class="discrete">Type checking variable declarations</h6>
+<h6 id="_type_checking_variable_declarations" class="discrete">§ Type checking variable declarations</h6>
 <div class="paragraph">
 <p>Variable declarations are type checked using the following relation:</p>
 </div>
@@ -13115,7 +13085,7 @@ be used to maintain state between different network packets.</p>
 </div>
 </div>
 </div>
-<h6 id="_runtime_evaluation_of_variable_declarations" class="discrete">Runtime evaluation of variable declarations</h6>
+<h6 id="_runtime_evaluation_of_variable_declarations" class="discrete">§ Runtime evaluation of variable declarations</h6>
 <div class="paragraph">
 <p>Variable declarations are evaluated at runtime using the following relation:</p>
 </div>
@@ -13377,7 +13347,7 @@ The following are all legal constant declarations:</p>
 <span style="color: #cf222e">const</span> Version version <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #0550ae">32w0</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">32w0</span> <span style="color: #24292f;background-color: #f6f8fa">};</span></code></pre>
 </div>
 </div>
-<h6 id="_type_checking_constant_declarations" class="discrete">Type checking constant declarations</h6>
+<h6 id="_type_checking_constant_declarations" class="discrete">§ Type checking constant declarations</h6>
 <div class="paragraph">
 <p>Constant declarations are type checked with the relation:</p>
 </div>
@@ -13557,7 +13527,7 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_of_constant_declarations" class="discrete">Compile-time evaluation of constant declarations</h6>
+<h6 id="_compile_time_evaluation_of_constant_declarations" class="discrete">§ Compile-time evaluation of constant declarations</h6>
 <div class="paragraph">
 <p>Constant declarations are evaluated during instantiation phase with:</p>
 </div>
@@ -13687,7 +13657,7 @@ evaluated with:</p>
 </div>
 </div>
 </div>
-<h6 id="_runtime_evaluation_of_constant_declarations" class="discrete">Runtime evaluation of constant declarations</h6>
+<h6 id="_runtime_evaluation_of_constant_declarations" class="discrete">§ Runtime evaluation of constant declarations</h6>
 <div class="paragraph">
 <p>Constant declarations are evaluated at runtime using the following relation:</p>
 </div>
@@ -13890,7 +13860,7 @@ abstract methods are invoked and what the meaning of their arguments and return
 values is; target architectures may impose additional constraints on abstract
 methods.</p>
 </div>
-<h6 id="_type_checking_instantiations" class="discrete">Type checking instantiations</h6>
+<h6 id="_type_checking_instantiations" class="discrete">§ Type checking instantiations</h6>
 <div class="paragraph">
 <p>Instantiations are type checked with the relation:</p>
 </div>
@@ -14109,12 +14079,8 @@ methods.</p>
 <p>There are two sub-relations, depending on whether object initializers were
 provided or not.</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>When object initializers are absent:</strong></p>
-</li>
-</ul>
+<div class="paragraph">
+<p><strong>§.a When object initializers are absent:</strong></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14259,12 +14225,8 @@ provided or not.</p>
 </div>
 </div>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>When object initializers are present:</strong></p>
-</li>
-</ul>
+<div class="paragraph">
+<p><strong>§.b When object initializers are present:</strong></p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14497,7 +14459,7 @@ provided or not.</p>
 </div>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_of_instantiations" class="discrete">Compile-time evaluation of instantiations</h6>
+<h6 id="_compile_time_evaluation_of_instantiations" class="discrete">§ Compile-time evaluation of instantiations</h6>
 <div class="paragraph">
 <p>Instantiations are evaluated at compile-time with the relation:</p>
 </div>
