@@ -262,42 +262,46 @@ relation Callee_eval:
                             : evalContext store calleeResult
   hint(input %0 %1 %2 %3 %4)
 
-syntax copyInResult =
+syntax copyInArgumentResult =
   | continueResult<storageReference?>
   | abortResult
 
 relation Copy_in_argument:
-  store cursor evalContext parameterIR
-     `@ cursor evalContext argumentIR
-  ~> store evalContext `@ evalContext `# copyInResult
+  store |-
+    cursor evalContext parameterIR
+    `@ cursor evalContext argumentIR
+  ~> store evalContext evalContext `# copyInArgumentResult
   hint(input %0 %1 %2 %3 %4 %5 %6)
   
-syntax copyInListResult =
+syntax copyInResult =
   | continueResult<storageReference?*>
   | abortResult
 
 relation Copy_in:
-  store cursor evalContext parameterListIR
-     `@ cursor evalContext argumentListIR
-  ~> store evalContext `@ evalContext `# copyInListResult
-  hint(input %0 %1 %2 %3 %4 %5 %6)
+  cursor store |-
+    cursor evalContext parameterListIR
+    `@ cursor evalContext argumentListIR
+  ~> store evalContext evalContext `# copyInResult
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
 
 relation Copy_in_default:
   parameterListIR `@ cursor evalContext value*
-  ~> `@ evalContext
+  ~> evalContext
   hint(input %0 %1 %2 %3)
 
 relation Copy_out_argument:
-  store cursor evalContext parameterIR
+  store |-
+     cursor evalContext parameterIR
      `@ cursor evalContext storageReference?
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
 relation Copy_out:
-  store cursor evalContext parameterListIR
-     `@ cursor evalContext storageReference?*
+  cursor store |-
+    cursor evalContext parameterListIR
+    `@ cursor evalContext storageReference?*
   ~> evalContext
-  hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
 
 relation Call_eval:
   cursor evalContext store |- callee `@ `< typeArgumentListIR >
