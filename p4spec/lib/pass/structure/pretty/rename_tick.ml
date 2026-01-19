@@ -52,7 +52,6 @@ let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
       let frees = Ol.Free.free_exp exp_cond |> IdSet.union frees in
       let instrs_then = upstream frees instrs_then in
       let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let frees = Ol.Free.free_instrs instrs_then |> IdSet.union frees in
       let instrs_t = upstream frees instrs_t in
       instr_h :: instrs_t
   | {
@@ -82,7 +81,6 @@ let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
           cases
       in
       let instr_h = CaseI (exp, cases, total) $ at in
-      let frees = Ol.Free.free_cases cases |> IdSet.union frees in
       let instrs_t = upstream frees instrs_t in
       instr_h :: instrs_t
   | { it = GroupI (id, rel_signature, exps, instrs_group); at; _ } :: instrs_t
@@ -90,7 +88,6 @@ let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
       let frees = Ol.Free.free_exps exps |> IdSet.union frees in
       let instrs_group = upstream frees instrs_group in
       let instr_h = GroupI (id, rel_signature, exps, instrs_group) $ at in
-      let frees = Ol.Free.free_instrs instrs_group |> IdSet.union frees in
       let instrs_t = upstream frees instrs_t in
       instr_h :: instrs_t
   | { it = LetI (exp_l, exp_r, iterinstrs); at; _ } :: instrs_t ->
