@@ -542,12 +542,16 @@ def $is_externMethodPrototype(externMethodPrototype) = true
 def $is_externMethodPrototype(externConstructorOrMethodPrototype) = false
   -- otherwise
 
-rule Decl_ok/externObjectDeclaration:
-  TC_0 |- annotationList EXTERN nonTypeName
-            typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
-        : TC_8 externObjectDeclarationIR
-  ---- ;; split methods and constructors
-  -- if externConstructorOrMethodPrototype*
+dec $split_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList)
+  : (externConstructorPrototype* , externMethodPrototype*)
+  hint(prose_in %0 "split into constructors and methods")
+
+def $split_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList)
+  = (externConstructorPrototype* ,
+     externMethodPrototype*)
+  -- if externConstructorOrMethodPrototype* 
       = $flatten_externConstructorOrMethodPrototypeList(
           externConstructorOrMethodPrototypeList)
   -- if externConstructorPrototype*
@@ -558,6 +562,16 @@ rule Decl_ok/externObjectDeclaration:
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
           def $is_externMethodPrototype)
+
+rule Decl_ok/externObjectDeclaration:
+  TC_0 |- annotationList EXTERN nonTypeName
+            typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+        : TC_8 externObjectDeclarationIR
+  ---- ;; split methods and constructors
+  -- if (externConstructorPrototype* ,
+          externMethodPrototype*)
+      = $split_externConstructorOrMethodPrototypeList(
+          externConstructorOrMethodPrototypeList)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = EXTERN ]
   ---- ;; check type parameters and add to context

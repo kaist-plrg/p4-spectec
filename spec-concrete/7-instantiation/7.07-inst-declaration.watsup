@@ -238,15 +238,15 @@ rule Decl_inst/matchKindDeclarationIR:
 
 rule Decl_inst/externFunctionDeclarationIR:
   IC_0 STO |- annotationList EXTERN (typeIR nameIR
-                `< typeParameterListIR `, typeParameterListIR_inferred >
+                `< typeParameterListIR_expl `, typeParameterListIR_impl >
                 `( parameterListIR )) `;
              : IC_1 STO
   ---- ;; bind extern function definition to callable environment
   -- if callableId = $callableId_IR(nameIR, parameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if externFunctionDef
-      = EXTERN_FUNCTION nameIR
-          `< typeParameterListIR ++ typeParameterListIR_inferred >
-          `( parameterListIR )
+      = EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR )
   -- if IC_1 = $add_callableDef_overload_i(GLOBAL, IC_0, callableId, externFunctionDef)
 
 ;;;; externObjectDeclarationIR
@@ -339,6 +339,8 @@ rulegroup Decl_inst/externObjectDeclarationIR {
                   `< typeParameterListIR `, >
                   `{ externConstructorPrototypeIR* externMethodPrototypeIR* }
               : IC_2 STO
+    ---- ;; if constructor was provided
+    -- if externConstructorPrototypeIR* =/= eps
     ---- ;; bind methods to callable environment
     -- if (callableId_method
         = $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR))*
