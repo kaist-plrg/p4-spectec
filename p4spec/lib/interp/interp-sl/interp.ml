@@ -1237,7 +1237,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_instrs ctx Cont instrs_then else (ctx, Cont)
+    if cond then
+      let _, sign_then = eval_instrs ctx Cont instrs_then in
+      (ctx, sign_then)
+    else (ctx, Cont)
 
   (* Hold instruction evaluation *)
 
@@ -1386,19 +1389,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | None -> ());
     (* Evaluate the matching case if any *)
     match instrs_opt with
-    | Some instrs -> eval_instrs ctx Cont instrs
+    | Some instrs ->
+        let _, sign = eval_instrs ctx Cont instrs in
+        (ctx, sign)
     | None -> (ctx, Cont)
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (id_group : id)
+  and eval_group_instr (ctx : Ctx.t) (_id_group : id)
       (_rel_signature : rel_signature) (_exps_group : exp list)
       (instrs_group : instr list) : Ctx.t * Sign.t =
-    let ctx_group, sign_group = eval_instrs ctx Cont instrs_group in
-    match sign_group with
-    | Cont -> (ctx, Sign.Cont)
-    | Res values_output -> (ctx_group, Sign.Res values_output)
-    | Ret _ -> back id_group.at "cannot return from try instruction"
+    let _, sign_group = eval_instrs ctx Cont instrs_group in
+    (ctx, sign_group)
 
   (* Let instruction evaluation *)
 
