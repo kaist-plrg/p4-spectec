@@ -159,6 +159,10 @@ struct
           Func.update_checksum_with_payload value_ctx value_sto packet_in
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
+      | "log_msg", [ "msg" ] ->
+          Func.log_msg value_ctx value_sto
+      | "log_msg", [ "msg"; "data" ] ->
+          Func.log_msg_format value_ctx value_sto
       | _ ->
           error_no_region
             ("unsupported extern function call: " ^ name_func ^ "("

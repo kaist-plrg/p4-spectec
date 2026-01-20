@@ -514,5 +514,60 @@ let _assume (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
 
    extern void log_msg(string msg);
    extern void log_msg<T>(string msg, in T data); *)
-let _log_msg (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  error_no_region "extern function log_msg is not implemented"
+
+let log_msg (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  let msg =
+    Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string
+  in
+  print_endline msg;
+  (* Return void *)
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
+
+let format_braces (fmt : string) (args : Value.t list) =
+  let n = String.length fmt in
+  let buf = Buffer.create (n + 64) in
+  let rec walk i args =
+    if i >= n then
+      match args with
+      | [] -> Buffer.contents buf
+      | _ -> invalid_arg "format_braces: too many arguments"
+    else
+      match fmt.[i] with
+      | '{' when i + 1 < n && fmt.[i + 1] = '{' ->
+        Buffer.add_char buf '{';
+        walk (i + 2) args
+      | '}' when i + 1 < n && fmt.[i + 1] = '}' ->
+        Buffer.add_char buf '}';
+        walk (i + 2) args
+      | '{' when i + 1 < n && fmt.[i + 1] = '}' -> (
+          match args with
+          | a :: rest ->
+              Buffer.add_string buf (Value.to_string a);
+              walk (i + 2) rest
+          | [] -> invalid_arg "format_braces: not enough arguments")
+      | c ->
+          Buffer.add_char buf c;
+          walk (i + 1) args
+  in
+  walk 0 args
+
+let log_msg_format (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  let msg =
+    Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string
+  in
+  let data =
+    Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
+  in
+  format_braces msg data |> print_endline;
+  (* Return void *)
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
