@@ -14921,10 +14921,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
   ... If let ``abortResult`` be ``expressionResult'``:
    .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``abortResult``.
-  ... Let 
-* the updated evaluation context ``EC~2'~``, store ``STO~2'~`` and expression result ``expressionResult~r~`` be
-* the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
-  ... Result in the updated evaluation context ``EC~2'~``, store ``STO~2'~`` and expression result ``expressionResult~r~``.
+  ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'``.
 . Else if ``binop`` is ``||``:
  .. Let 
 * the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
@@ -14940,10 +14937,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
   ... If let ``abortResult`` be ``expressionResult'``:
    .... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``abortResult``.
-  ... Let 
-* the updated evaluation context ``EC~2'~``, store ``STO~2'~`` and expression result ``expressionResult~r~`` be
-* the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``p``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
-  ... Result in the updated evaluation context ``EC~2'~``, store ``STO~2'~`` and expression result ``expressionResult~r~``.
+  ... Result in the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'``.
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~cond~`` ``?`` ``typedExpressionIR~true~`` ``:`` ``typedExpressionIR~false~`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -15134,31 +15128,21 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``[value~base~,`` ``value']`` be ``value^{asterisk}^``.
  .. Check that ``value'`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value'``.
- .. Check that ``value~base~`` has type ``tupleValue``.
- .. Let ``TUPLE`` ``(`` ``value~elem~^{asterisk}^`` ``)`` be ``value~base~``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
- .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
-. Let 
-* the updated evaluation context ``EC~1'~``, store ``STO~1'~`` and expression list result ``expressionListResult'`` be
-* the result of <<Exprs_eval, evaluating ``[typedExpressionIR~base~,`` ``typedExpressionIR~index~]``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
-. If let ``value^{asterisk}^`` be ``expressionListResult'``:
- .. Check that ``value^{asterisk}^`` is a list of length 2.
- .. Let ``[value~base~,`` ``value']`` be ``value^{asterisk}^``.
- .. Check that ``value'`` has type ``integerValue``.
- .. Let ``integerValue~index~`` be ``value'``.
- .. Check that ``value~base~`` has type ``headerStackValue``.
- .. Let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
- .. Let ``int'`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
- .. Check that ``int'`` has type ``nat``.
- .. Let ``n~idx~`` be ``int'``.
- .. Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
- .. Result in the updated evaluation context ``EC~1'~``, store ``STO~1'~`` and expression result ``expressionResult``.
+ .. If let ``TUPLE`` ``(`` ``value~elem~^{asterisk}^`` ``)`` be ``value~base~``:
+  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~index~`` be ``int``.
+  ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
+ .. Else if let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``:
+  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~index~`` be ``int``.
+  ... Let ``int'`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
+  ... Check that ``int'`` has type ``nat``.
+  ... Let ``n~idx~`` be ``int'``.
+  ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
 <<Expr_eval, Evaluating <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~hi~`` ``:`` ``typedExpressionIR~lo~`` ``]`` annotated with ``expressionNoteIR``>>, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
@@ -16981,11 +16965,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Result in ``EC~2~``, ``STO~2~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult``:
   ... Result in ``EC~2~``, ``STO~2~``, and ```EMPTY``.
- .. Let 
-* the updated evaluation context ``EC~2'~``,the store ``STO~2'~``,and the instantiated statement ``statementResult~loop~`` be
-* the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
- .. If ``statementResult~loop~`` is in ``[`EMPTY,`` ``CONTINUE]``:
-  ... Let <<ForUpdateStmts_eval, EC~2'~ STO~2'~ |- forUpdateStatementListIR : EC~3~ STO~3~ statementResult'>>.
+ .. If ``statementResult`` is in ``[`EMPTY,`` ``CONTINUE]``:
+  ... Let <<ForUpdateStmts_eval, EC~2~ STO~2~ |- forUpdateStatementListIR : EC~3~ STO~3~ statementResult'>>.
   ... If let ``exitResult`` be ``statementResult'``:
    .... Result in ``EC~3~``, ``STO~3~``, and ``EXIT``.
   ... Else if let ``continueEmptyResult`` be ``statementResult'``:
@@ -17061,11 +17042,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult``:
   ... Result in ``EC~2~``, ``STO~1~``, and ```EMPTY``.
- .. Let 
-* the updated evaluation context ``EC~2'~``,the store ``STO~1'~``,and the instantiated statement ``statementResult~loop~`` be
-* the result of <<Stmt_eval, the compile-time evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
- .. If ``statementResult~loop~`` is in ``[`EMPTY,`` ``CONTINUE]``:
-  ... Let <<ForInLoop_eval, EC~2'~ STO~1'~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult'>>.
+ .. If ``statementResult`` is in ``[`EMPTY,`` ``CONTINUE]``:
+  ... Let <<ForInLoop_eval, EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult'>>.
   ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult'``.
 
 <<match_switchLabelIR_table, match_switchLabelIR_table(id, switchLabelIR)>>

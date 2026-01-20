@@ -45,10 +45,10 @@ module Bind = struct
         Format.asprintf "Let %s = %s"
           (string_of_expunit expunit_l)
           (string_of_expunit expunit_r)
-    | RuleBind (id, expunits_l, expunits_r) ->
+    | RuleBind (id, expunits_input, expunits_output) ->
         Format.asprintf "%s |- %s : %s)" (Id.to_string id)
-          (string_of_expunits expunits_l)
-          (string_of_expunits expunits_r)
+          (string_of_expunits expunits_input)
+          (string_of_expunits expunits_output)
 
   (* Constructors *)
 
@@ -71,13 +71,13 @@ module Bind = struct
              ((iter, vars_bound), (iter, vars_bind)))
       |> List.split
     in
-    let expunit_l = init_expunit exp_l iterexps_bound in
-    let expunit_r = init_expunit exp_r iterexps_bind in
+    let expunit_l = init_expunit exp_l iterexps_bind in
+    let expunit_r = init_expunit exp_r iterexps_bound in
     LetBind (expunit_l, expunit_r)
 
   let init_rule_bind (id : id) (notexp : notexp) (inputs : Hints.Input.t)
       (iterinstrs : iterinstr list) : t =
-    let exps_l, exps_r =
+    let exps_input, exps_output =
       let _, exps = notexp in
       Hints.Input.split inputs exps
     in
@@ -87,13 +87,13 @@ module Bind = struct
              ((iter, vars_bound), (iter, vars_bind)))
       |> List.split
     in
-    let expunits_l =
-      List.map (fun exp_l -> init_expunit exp_l iterexps_bound) exps_l
+    let expunits_input =
+      List.map (fun exp_input -> init_expunit exp_input iterexps_bound) exps_input
     in
-    let expunits_r =
-      List.map (fun exp_r -> init_expunit exp_r iterexps_bind) exps_r
+    let expunits_output =
+      List.map (fun exp_output -> init_expunit exp_output iterexps_bind) exps_output
     in
-    RuleBind (id, expunits_l, expunits_r)
+    RuleBind (id, expunits_input, expunits_output)
 
   (* Collapsing two bindings,
      if two bindings have syntactically equal right-hand sides,
@@ -157,7 +157,7 @@ module Bind = struct
   let rec collapse_expunits (renamer : Renamer.t) (expunits : expunit list)
       (expunits_target : expunit list) : Renamer.t option =
     match (expunits, expunits_target) with
-    | [], [] -> Some Renamer.empty
+    | [], [] -> Some renamer
     | expunit_h :: expunits_t, expunit_target_h :: expunits_target_t -> (
         match collapse_expunit renamer expunit_h expunit_target_h with
         | Some renamer -> collapse_expunits renamer expunits_t expunits_target_t
@@ -170,11 +170,11 @@ module Bind = struct
         LetBind (expunit_target_l, expunit_target_r) )
       when eq_expunit expunit_r expunit_target_r ->
         collapse_expunit Renamer.empty expunit_l expunit_target_l
-    | ( RuleBind (id, expunits_l, expunits_r),
-        RuleBind (id_target, expunits_target_l, expunits_target_r) )
-      when Sl.Eq.eq_id id id_target && eq_expunits expunits_r expunits_target_r
+    | ( RuleBind (id, expunits_input, expunits_output),
+        RuleBind (id_target, expunits_target_input, expunits_target_output) )
+      when Sl.Eq.eq_id id id_target && eq_expunits expunits_input expunits_target_input
       ->
-        collapse_expunits Renamer.empty expunits_l expunits_target_l
+        collapse_expunits Renamer.empty expunits_output expunits_target_output
     | _ -> None
 end
 
