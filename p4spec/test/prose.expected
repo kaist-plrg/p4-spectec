@@ -3206,9 +3206,11 @@ for each ``typeId~fresh'~`` in ``typeId~fresh'~^{asterisk}^``
 . Else if let ``HEADER_STACK`` ``[`` ``value'^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value``:
  .. Return ``<<cast_header_stack,`` ``cast_header_stack(typeIR,`` ``value'^{asterisk}^,`` ``n~size~)>>``.
 . Else if let ``enumValue`` be ``value``:
- .. Check that ``enumValue`` matches pattern ``%`` ``.`` ``%`` ``.`` ``%``.
- .. Let ``++_++`` ``.`` ``++_++`` ``.`` ``value'`` be ``enumValue``.
- .. Return ``<<cast_op,`` ``cast_op(typeIR,`` ``value')>>``.
+ .. If let ``++_++`` ``.`` ``++_++`` ``.`` ``value'`` be ``enumValue``:
+  ... Return ``<<cast_op,`` ``cast_op(typeIR,`` ``value')>>``.
+ .. Else:
+  ... Let ``typeId`` ``.`` ``nameIR`` be ``enumValue``.
+  ... Return ``<<cast_enum,`` ``cast_enum(typeIR,`` ``typeId`` ``.`` ``nameIR)>>``.
 . Else if let ``sequenceValue`` be ``value``:
  .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
  .. Let ``SEQ`` ``(`` ``value'^{asterisk}^`` ``)`` be ``sequenceValue``.
@@ -3456,6 +3458,18 @@ for each ``id`` in ``id^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
 . Let ``typeIR'`` ``[`` ``n~size'~`` ``]`` be ``typeIR``.
 . Check that ``n~size'~`` is equal to ``n~size'~``.
 . Return ``HEADER_STACK`` ``[`` ``value^{asterisk}^`` ``(`` ``0`` ``;`` ``n~size'~`` ``)`` ``]``.
+
+<<cast_enum, cast_enum(typeIR, enumValue)>>
+
+
+. Check that ``typeIR`` has type ``enumTypeIR``.
+. Let ``enumTypeIR`` be ``typeIR``.
+. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``{`` ``%`` ``}``.
+. Let ``ENUM`` ``typeId~t~`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
+. Check that ``enumValue`` matches pattern ``%`` ``.`` ``%``.
+. Let ``typeId~v~`` ``.`` ``nameIR`` be ``enumValue``.
+. Check that ``typeId~t~`` is equal to ``typeId~v~``.
+. Return ``typeId~v~`` ``.`` ``nameIR``.
 
 <<cast_sequence, cast_sequence(typeIR, value^{asterisk}^)>>
 
@@ -13231,14 +13245,15 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 * the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
+. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
+. Let ``IC~callee~`` be <<enter_path_i, ``IC`` with ``typeId`` added to the path>>.
 . Let 
 * the updated store ``STO~1~``,and the constructed ``object`` be
-* the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>.
+* the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC~callee~``, and store ``STO``>>.
 . Let ``typeId~fresh~`` be <<fresh_typeId, a fresh type variable>>.
-. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
 . Let ``typeIR`` be ``typeId``.
 . Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
-. Let ``objectId`` be ``IC.PATH`` ``{pp}`` ``[nameIR]``.
+. Let ``objectId`` be ``IC.PATH`` ``{pp}`` ``[typeId]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.

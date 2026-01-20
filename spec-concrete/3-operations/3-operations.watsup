@@ -691,6 +691,20 @@ def $cast_op(typeIR, HEADER_STACK `[ value* `( _; n_size ) ])
 
 def $cast_op(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
 
+;; Cast from non-serializable enum field
+
+dec $cast_enum(typeIR, enumValue) : value
+  hint(testgen_ignore)
+
+def $cast_enum(
+    ENUM typeId_t `{ _ },
+    typeId_v `. nameIR)
+  = typeId_v `. nameIR
+  -- if typeId_t = typeId_v
+
+def $cast_op(typeIR, typeId `. nameIR)
+  = $cast_enum(typeIR, typeId `. nameIR)
+
 ;; Cast from sequence
 
 dec $cast_sequence(typeIR, value*) : value
