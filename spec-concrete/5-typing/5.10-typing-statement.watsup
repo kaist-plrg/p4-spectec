@@ -62,6 +62,30 @@ rulegroup Stmt_ok/assignmentStatement {
 
 rulegroup Stmt_ok/callStatement {
 
+  rule Stmt_ok/callStatement-no-typeArgumentList-static_assert:
+    p TC f l |- lvalue_callable `( argumentList ) `;
+              : TC f emptyStatementIR
+    ---- ;; check base lvalue
+    -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
+    ---- ;; check arguments
+    -- if argument* = $flatten_argumentList(argumentList)
+    -- (Argument_ok: p TC |- argument : argumentIR)*
+    ---- ;; check lvalue as callable
+    -- CallableType_ok:
+        p TC |- callableTargetIR `< eps > `( argumentIR* )
+              : callableTypeIR `< `# typeId_impl* > `( `# id_default* )
+    ---- ;; check calling convention
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
+                      : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if $is_static_assert_callableTarget(callableTargetIR)
+    ---- ;; create IR
+    -- if callExpressionIR
+        = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if expressionNoteIR = `( typeIR_ret LCTK )
+    -- Expr_eval_lctk:
+        p TC |- (callExpressionIR `# expressionNoteIR) ~> (`B true)
+    -- if emptyStatementIR = `;
+
   rule Stmt_ok/callStatement-no-typeArgumentList:
     p TC f l |- lvalue_callable `( argumentList ) `;
               : TC f callStatementIR
@@ -77,6 +101,7 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check calling convention
     -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if ~$is_static_assert_callableTarget(callableTargetIR)
     ---- ;; create IR
     -- if callStatementIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* ) `;

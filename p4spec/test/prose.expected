@@ -7328,9 +7328,17 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Call_ok, typing the invocation ``callableTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``typeIR~ret~`` is not equal to ``VOID``.
  .. Let ``ctk''`` be ``<<is_static_callableTarget,`` ``is_static_callableTarget(callableTargetIR)>>``.
- .. Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
- .. Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
- .. Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR'''``>>.
+ .. If ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR)>>``:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
+  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callExpressionIR`` annotated with ``expressionNoteIR'''``, under cursor ``p`` and typing context ``TC``>>.
+  ... Check that ``value`` is equal to ```B`` ``true``.
+  ... Let ``literalExpressionIR`` be ``TRUE``.
+  ... Result in <<typedExpressionIR, ``literalExpressionIR`` annotated with ``expressionNoteIR'''``>>.
+ .. Else:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
+  ... Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR'''``>>.
 . Else:
  .. Let ``callableTarget`` ``<`` ``realTypeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` be ``callExpression``.
  .. Let 
@@ -7645,8 +7653,19 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the return type ``typeIR~ret~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
 * the result of <<Call_ok, typing the invocation ``callableTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``>>.
- .. Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``;``.
- .. Result in 
+ .. If ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR)>>``:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``LCTK``>>.
+  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callExpressionIR`` annotated with ``expressionNoteIR``, under cursor ``p`` and typing context ``TC``>>.
+  ... Check that ``value`` is equal to ```B`` ``true``.
+  ... Let ``emptyStatementIR`` be ``;``.
+  ... Result in 
+* the typing context ``TC``,
+* the abstract control flow ``f``,
+* and the typed statement ``emptyStatementIR``.
+ .. Else:
+  ... Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``;``.
+  ... Result in 
 * the typing context ``TC``,
 * the abstract control flow ``f``,
 * and the typed statement ``callStatementIR``.
@@ -10139,6 +10158,15 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
  .. Return ``LCTK``.
 . Otherwise:
  .. Return ``DYN``.
+
+<<is_static_assert_callableTarget, is_static_assert_callableTarget(callableTargetIR)>>
+
+
+. If ``callableTargetIR`` is equal to ``.`` ``"static_assert"``: return ``true``.
+. If ``callableTargetIR`` is equal to ``"static_assert"``: return ``true``.
+. If let ``(`` ``callableTargetIR'`` ``)`` be ``callableTargetIR``:
+ .. Return ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR')>>``.
+. Otherwise: return ``false``.
 
 <<CallableTarget_ok, CallableTarget_ok>>:
 
