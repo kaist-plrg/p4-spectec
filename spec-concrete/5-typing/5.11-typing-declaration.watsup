@@ -135,6 +135,21 @@ relation ObjectDecl_ok:
 
 ;;;;; syntax objectDeclaration
 
+;;;;;; instantiation
+
+rule ObjectDecl_ok/instantiation:
+  p TC_0 typeFrame
+  externMethodTypeDefEnv |- instantiation
+                          : typeFrame_init externMethodTypeDefEnv instantiationIR
+  ---- ;; check instantiation
+  -- InstDecl_ok: p TC_0 |- instantiation
+                          : TC_1 instantiationIR
+  ---- ;; add instance
+  -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
+  -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
+  -- if typeFrame_init
+      = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
+
 ;;;;;; functionDeclaration
 ;;;;;; syntax functionDeclaration =
 ;;;;;;   annotationList functionPrototype blockStatement
@@ -179,21 +194,6 @@ rule ObjectDecl_ok/functionDeclaration:
       = annotationList
           (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
           blockStatementIR
-
-;;;;;; instantiation
-
-rule ObjectDecl_ok/instantiation:
-  p TC_0 typeFrame
-  externMethodTypeDefEnv |- instantiation
-                          : typeFrame_init externMethodTypeDefEnv instantiationIR
-  ---- ;; check instantiation
-  -- InstDecl_ok: p TC_0 |- instantiation
-                          : TC_1 instantiationIR
-  ---- ;; add instance
-  -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
-  -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
-  -- if typeFrame_init
-      = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
 
 relation ObjectDecls_ok:
   cursor typingContext typeFrame externMethodTypeDefEnv

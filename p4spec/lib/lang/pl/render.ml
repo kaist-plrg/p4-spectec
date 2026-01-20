@@ -19,7 +19,7 @@ let link context = { context with in_link = true }
 
 (* Widths *)
 
-let adoc_width_short = 20
+let adoc_width_short = 30
 let adoc_fits_in_width_short (s : string) = String.length s <= adoc_width_short
 
 (* Subscript, superscript, and ligature *)
@@ -178,10 +178,10 @@ let render_binop ctx binop =
   if ctx.in_code then Sl.Print.string_of_binop binop
   else
     match binop with
-    | `AndOp -> "and" |> adoc_bold
-    | `OrOp -> "or" |> adoc_bold
-    | `ImplOp -> "implies" |> adoc_bold
-    | `EquivOp -> "is equivalent to" |> adoc_bold
+    | `AndOp -> "and"
+    | `OrOp -> "or"
+    | `ImplOp -> "implies"
+    | `EquivOp -> "is equivalent to"
     | _ -> Sl.Print.string_of_binop binop
 
 let render_cmpop ctx cmpop =
@@ -230,11 +230,11 @@ let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
           exps_input
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
       in
-      if adoc_fits_in_width_short prose_out || adoc_fits_in_width_short prose_in
-      then F.asprintf "%s be the result of %s" prose_out prose_in
+      if adoc_fits_in_width_short prose_in then
+        F.asprintf "%s be the result of %s" prose_out prose_in
       else
-        F.asprintf "\n%s%s be\n%sthe result of %s" (adoc_unordered_bullet 0)
-          prose_out (adoc_unordered_bullet 0) prose_in
+        F.asprintf "%s be\n%sthe result of %s" prose_out
+          (adoc_unordered_bullet 0) prose_in
   | MathRelCall (id_rel, mixop, exps) ->
       code_of_notexp (in_link |> code) (mixop, exps)
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
@@ -319,9 +319,7 @@ and render_exp ctx exp : string =
       render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t
       |> adoc_as_code ctx
   | CatE (exp_l, exp_r) ->
-      (* always print as code *)
-      render_exp in_code exp_l ^ " {pp} " ^ render_exp in_code exp_r
-      |> adoc_as_code ctx
+      render_exp ctx exp_l ^ " concatenated with " ^ render_exp ctx exp_r
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
