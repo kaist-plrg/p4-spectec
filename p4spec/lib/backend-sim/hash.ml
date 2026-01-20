@@ -151,6 +151,14 @@ let compute_hash (algo : string) ((width, value) : Bigint.t * Bigint.t) :
   | "identity" -> value
   | _ -> Format.asprintf "(TODO: compute_hash) %s" algo |> failwith
 
+let pad_right_to_16 ((width, value) : Bigint.t * Bigint.t) : Bigint.t * Bigint.t
+    =
+  let remainder : Bigint.t = Bigint.(width % of_int 16) in
+  if Bigint.(zero = remainder) then (width, value)
+  else
+    let pad = Bigint.(of_int 16 - remainder) in
+    (Bigint.(width + pad), value)
+
 let package (values : Value.t list) : Bigint.t * Bigint.t =
   values
   |> List.map unpack_p4_precision_numberValue
@@ -162,6 +170,7 @@ let package (values : Value.t list) : Bigint.t * Bigint.t =
          let value_pack = Bigint.(value_pack + value) in
          (width_pack, value_pack))
        (Bigint.zero, Bigint.zero)
+  |> pad_right_to_16
 
 let compute_checksum (algo : string) (values : Value.t list) : Bigint.t =
   values |> package |> compute_hash algo
