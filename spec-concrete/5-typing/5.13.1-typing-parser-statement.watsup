@@ -375,10 +375,9 @@ rule ParserStmt_ok/parserBlockStatement:
   TC_0 |- annotationList `{ parserStatementList }
         : TC_1 parserBlockStatementIR
   ---- ;; check statements in nested context
-  -- if parserStatement*
-      = $flatten_parserStatementList(parserStatementList)
   -- if TC_1 = $enter_t(TC_0)
-  -- ParserStmts_ok: TC_1 |- parserStatement* : TC_2 parserStatementIR*
+  -- ParserStmtList_ok:
+      TC_1 |- parserStatementList : TC_2 parserStatementIR*
   -- if TC_3 = $exit_t(TC_2)
   ---- ;; create IR
   -- if parserBlockStatementIR = annotationList `{ parserStatementIR* }
@@ -429,6 +428,12 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
 ;; syntax parserStatementList
 ;;
 
+relation ParserStmts_ok:
+  typingContext |- parserStatement* : typingContext parserStatementIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1#", under typing context" %0)
+  hint(prose_out "the updated typing context" %2 "and the typed parser statements" %3)
+
 rulegroup ParserStmts_ok {
 
   rule ParserStmts_ok/nil:
@@ -443,3 +448,10 @@ rulegroup ParserStmts_ok {
                              : TC_2 parserStatementIR_t*
 
 }
+
+rule ParserStmtList_ok:
+  TC_0 |- parserStatementList
+        : TC_1 parserStatementIR*
+  -- if parserStatement* = $flatten_parserStatementList(parserStatementList)
+  ---- ;; check statements
+  -- ParserStmts_ok: TC_0 |- parserStatement* : TC_1 parserStatementIR*

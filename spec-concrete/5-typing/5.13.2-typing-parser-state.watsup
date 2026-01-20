@@ -31,8 +31,10 @@ rule ParserState_ok:
 ;; syntax parserStateList
 ;;
 
-rule ParserStates_ok:
-  TC |- parserState* : parserStateIR*
+rule ParserStateList_ok:
+  TC |- parserStateList : parserStateIR*
+  -- if parserState*
+      = $flatten_parserStateList(parserStateList)
   ---- ;; check that state names are distinct
   -- if (_ STATE name_state `{ _ _ } = parserState)*
   -- if (nameIR_state = $name(name_state))*

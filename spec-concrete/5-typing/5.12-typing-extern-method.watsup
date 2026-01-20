@@ -22,8 +22,8 @@ rule ExternMethod_ok/non-abstract:
   ---- ;; set local context
   -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD `: typeIR_ret ]
   ---- ;; check parameters and add them to the context
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      LOCAL TC_2 |- parameterList : parameterIR* `# typeId_impl*
   -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
   ---- ;; create method type and add it to the context
   -- if callableId = $callableId(name, parameterList)
@@ -56,8 +56,8 @@ rule ExternMethod_ok/abstract:
   ---- ;; set local context
   -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD ABSTRACT `: typeIR_ret ]
   ---- ;; check parameters and add them to the context
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      LOCAL TC_2 |- parameterList : parameterIR* `# typeId_impl*
   -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
   ---- ;; create method type and add it to the context
   -- if callableId = $callableId(name, parameterList)
@@ -108,9 +108,9 @@ rule ExternConstructor_ok:
   -- if nameIR = $name(typeIdentifier)
   -- if nameIR = typeId_extern
   ---- ;; check constructor parameters
-  -- if constructorParameter* = $flatten_parameterList(parameterList)
-  -- ConstructorParameters_ok: BLOCK TC_0 |- constructorParameter*
-                                           : constructorParameterIR* `# typeId_impl*
+  -- ConstructorParameterListOpt_ok:
+      TC_0 |- `( parameterList )
+            : constructorParameterIR* `# typeId_impl*
   ---- ;; find extern type
   -- if externObjectTypeDefIR
       = $find_typeDef_t(GLOBAL, TC_0, `` typeId_extern)

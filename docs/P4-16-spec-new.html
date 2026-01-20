@@ -6773,8 +6773,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
  -- if $is_polymorphic_typeDefIR(typeDefIR)
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- TypeArguments_ok: p TC |- typeArgument* : typeIR_arg* # typeId_fresh*
+ -- TypeArgumentList_ok: p TC |- typeArgumentList : typeIR_arg* # typeId_fresh*
  -- if typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*)</pre>
 </div>
 </div>
@@ -6802,9 +6801,6 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <p>Check that <a href="#is_polymorphic_typeDefIR"><code>typeDefIR'</code> is polymorphic</a>.</p>
 </li>
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -6812,7 +6808,7 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <p><code>typeIR<sub>arg</sub><sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -6998,8 +6994,7 @@ syntax tupleValue =
 <pre>rulegroup Type_ok/tupleType:
   rule Type_ok/tupleType:
   p TC |- TUPLE `&lt;typeArgumentList&gt; : (TUPLE `&lt;typeIR_arg*&gt;) # typeId_fresh*
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- TypeArguments_ok: p TC |- typeArgument* : typeIR_arg* # typeId_fresh*</pre>
+ -- TypeArgumentList_ok: p TC |- typeArgumentList : typeIR_arg* # typeId_fresh*</pre>
 </div>
 </div>
 </div>
@@ -7017,9 +7012,6 @@ syntax tupleValue =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -7027,7 +7019,7 @@ syntax tupleValue =
 <p><code>typeIR<sub>arg</sub><sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -9874,30 +9866,13 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Check that <code>~<a href="#is_synthesizedTypeIR"></code> <code>is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
 </li>
 <li>
-<p>If <code>direction</code> is <code>IN</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>direction</code> <code>=</code> <code>IN</code> <strong>or</strong> <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
+</li>
 <li>
 <p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>direction</code> is <code>`EMPTY</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> <strong>implies</strong> <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
-</li>
-<li>
-<p>The relation holds.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -13908,24 +13883,16 @@ methods.</p>
 <pre>rulegroup InstDecl_ok:
   rule InstDecl_ok/non-objectInitializer-prefixedTypeName:
   p TC_0 |- annotationList prefixedTypeName `(argumentList) name ; : TC_1 instantiationIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;eps&gt; `(argument*) name ; : TC_1 instantiationIR
+ -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;`EMPTY&gt; `(argumentList) name ; : TC_1 instantiationIR
   rule InstDecl_ok/non-objectInitializer-specializedType:
   p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name ; : TC_1 instantiationIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- if argument* = $flatten_argumentList(argumentList)
- -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : TC_1 instantiationIR
+ -- InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name ; : TC_1 instantiationIR
   rule InstDecl_ok/objectInitializer-prefixedTypeName:
   p TC_0 |- annotationList prefixedTypeName `(argumentList) name (= `{objectDeclarationList}) ; : TC_1 instantiationIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
- -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;eps&gt; `(argument*) name = `{objectDeclaration*} ; : TC_1 instantiationIR
+ -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;`EMPTY&gt; `(argumentList) name = `{objectDeclarationList} ; : TC_1 instantiationIR
   rule InstDecl_ok/objectInitializer-specializedType:
   p TC_0 |- annotationList (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) name (= `{objectDeclarationList}) ; : TC_1 instantiationIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- if argument* = $flatten_argumentList(argumentList)
- -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
- -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : TC_1 instantiationIR</pre>
+ -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name = `{objectDeclarationList} ; : TC_1 instantiationIR</pre>
 </div>
 </div>
 </div>
@@ -13951,9 +13918,6 @@ methods.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -13961,7 +13925,7 @@ methods.</p>
 <p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>`EMPTY</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13977,12 +13941,6 @@ methods.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -13990,7 +13948,7 @@ methods.</p>
 <p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#InstDecl_non_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -14016,12 +13974,6 @@ methods.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -14029,7 +13981,7 @@ methods.</p>
 <p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>`EMPTY</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclarationList</code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -14045,15 +13997,6 @@ methods.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>objectDeclaration<sup>*</sup></code> be <a href="#flatten_objectDeclarationList">the list of object declarations in <code>objectDeclarationList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -14061,7 +14004,7 @@ methods.</p>
 <p>the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#InstDecl_objectInitializer_ok">typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclarationList</code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -14091,7 +14034,7 @@ provided or not.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : typingContext instantiationIR</pre>
+<pre>relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name ; : typingContext instantiationIR</pre>
 </div>
 </div>
 </div>
@@ -14109,7 +14052,7 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
 </li>
 <li>
 <p>Results in the updated typing context <code>typingContext'</code> and <code>instantiationIR</code>.</p>
@@ -14125,9 +14068,9 @@ provided or not.</p>
 <div class="content">
 <pre>rulegroup InstDecl_non_objectInitializer_ok:
   rule InstDecl_non_objectInitializer_ok:
-  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name ; : TC_1 instantiationIR
- -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name ; : TC_1 instantiationIR
+ -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR* # typeId_impl*
+ -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
@@ -14147,7 +14090,7 @@ provided or not.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#InstDecl_non_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#InstDecl_non_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14159,26 +14102,22 @@ provided or not.</p>
 <p><code>typeArgumentIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -14237,7 +14176,7 @@ provided or not.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : typingContext instantiationIR</pre>
+<pre>relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name = `{objectDeclarationList} ; : typingContext instantiationIR</pre>
 </div>
 </div>
 </div>
@@ -14255,7 +14194,7 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
+<p>Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclarationList</code> <code>}</code> ; under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
 </li>
 <li>
 <p>Results in the updated typing context <code>typingContext'</code> and <code>instantiationIR</code>.</p>
@@ -14271,16 +14210,16 @@ provided or not.</p>
 <div class="content">
 <pre>rulegroup InstDecl_objectInitializer_ok:
   rule InstDecl_objectInitializer_ok:
-  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgument*&gt; `(argument*) name = `{objectDeclaration*} ; : TC_2 instantiationIR
- -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  p TC_0 |- annotationList prefixedTypeName `&lt;typeArgumentList&gt; `(argumentList) name = `{objectDeclarationList} ; : TC_2 instantiationIR
+ -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR* # typeId_impl*
+ -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
  -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_extern = $unroll_typeIR(typeIR_object)
  -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
- -- ObjectDecls_ok: p TC_1 |- objectDeclaration* : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
+ -- ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
  -- if externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
  -- if typeIR_object_init = EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_init_subst
  -- if $is_concrete_extern_object(typeIR_object_init)
@@ -14299,7 +14238,7 @@ provided or not.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#InstDecl_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgument<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argument<sup>*</sup></code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclaration<sup>*</sup></code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#InstDecl_objectInitializer_ok">Typing <code>annotationList</code> <code>prefixedTypeName</code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>name</code> = <code>{</code> <code>objectDeclarationList</code> <code>}</code> ; under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14311,26 +14250,22 @@ provided or not.</p>
 <p><code>typeArgumentIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -14382,10 +14317,10 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>typeFrame<sub>init</sub></code> and <code>externMethodTypeDefEnv<sub>init</sub></code> local to the object declaration block, and typed <code>objectDeclarationIR<sup>*</sup></code> be</p>
+<p><code>typeFrame<sub>init</sub></code> and <code>externMethodTypeDefEnv<sub>init</sub></code> of the object declaration block and <code>objectDeclarationIR<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ObjectDecls_ok">typing <code>objectDeclaration<sup>*</sup></code> under cursor <code>p</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#ObjectDeclList_ok">typing <code>objectDeclarationList</code> under cursor <code>p</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -14815,12 +14750,9 @@ syntax functionDeclarationIR =
 <pre>rulegroup FuncDecl_ok:
   rule FuncDecl_ok:
   p TC_0 |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : TC_4 functionDeclarationIR
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
+ -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # typeId_impl*
+ -- ParameterList_ok: LOCAL TC_1 |- parameterList : parameterIR* # typeId_impl*
  -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
  -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret]
  -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
@@ -14848,27 +14780,17 @@ syntax functionDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -14887,9 +14809,6 @@ syntax functionDeclarationIR =
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -14897,7 +14816,7 @@ syntax functionDeclarationIR =
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -14922,9 +14841,8 @@ syntax functionDeclarationIR =
 </div>
 </li>
 <li>
-<p>If <code>f</code> is <code>RET</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<p>Check that <code>f</code> <code>=</code> <code>RET</code> <strong>or</strong> <code>typeIR<sub>ret</sub></code> <code>=</code> <code>VOID</code>.</p>
+</li>
 <li>
 <p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
 </li>
@@ -14948,40 +14866,6 @@ syntax functionDeclarationIR =
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>functionDeclarationIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
-</li>
-<li>
-<p>Let <code>definedFunctionTypeDefIR</code> be <code>FUNCTION</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
-</li>
-<li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>definedFunctionTypeDefIR</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
-</li>
-<li>
-<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
-</li>
-<li>
-<p>Let <code>functionDeclarationIR</code> be <code>annotationList</code> <code>typeIR<sub>ret</sub></code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>
-</li>
-<li>
-<p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>functionDeclarationIR</code>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -15235,8 +15119,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
   rule ActionDecl_ok:
   p TC_0 |- annotationList ACTION name `(parameterList) blockStatement : TC_3 actionDeclarationIR
  -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* # eps
+ -- ParameterList_ok: LOCAL TC_1 |- parameterList : parameterIR* # eps
  -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
  -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
  -- if callableId = $callableId(name, parameterList)
@@ -15265,9 +15148,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[LOCAL.KIND</code> <code>=</code> <code>ACTION]</code>.</p>
 </li>
 <li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -15275,7 +15155,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15943,13 +15823,10 @@ represented.</p>
 <pre>rulegroup Decl_ok/externFunctionDeclaration:
   rule Decl_ok/externFunctionDeclaration:
   TC_0 |- annotationList EXTERN (typeOrVoid name typeParameterListOpt `(parameterList)) ; : TC_4 externFunctionDeclarationIR
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
+ -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
  -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION : typeIR_ret]
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* # typeId_impl*
+ -- ParameterList_ok: LOCAL TC_2 |- parameterList : parameterIR* # typeId_impl*
  -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
  -- if callableId = $callableId(name, parameterList)
  -- if externFunctionTypeDefIR = EXTERN_FUNCTION `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
@@ -15974,27 +15851,17 @@ represented.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -16016,9 +15883,6 @@ represented.</p>
 <p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub>[LOCAL.KIND</code> <code>=</code> <code>EXTERN_FUNCTION</code> <code>:</code> <code>typeIR<sub>ret</sub>]</code>.</p>
 </li>
 <li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16026,7 +15890,7 @@ represented.</p>
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16147,9 +16011,7 @@ represented.</p>
   TC_0 |- annotationList EXTERN nonTypeName typeParameterListOpt `{externConstructorOrMethodPrototypeList} : TC_8 externObjectDeclarationIR
  -- if (externConstructorPrototype*, externMethodPrototype*) = $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
  -- if TC_1 = TC_0[BLOCK.KIND = EXTERN]
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
  -- if nameIR = $name(nonTypeName)
  -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype* : TC_3 externMethodPrototypeIR*
  -- if `{(callableId : externMethodTypeDefIR)*} = TC_3.BLOCK.CALLABLE
@@ -16183,27 +16045,17 @@ represented.</p>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>EXTERN]</code>.</p>
 </li>
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>nonTypeName</code></a>.</p>
@@ -16547,17 +16399,13 @@ syntax parserDeclarationIR =
   rule Decl_ok/parserDeclaration:
   TC_0 |- annotationList PARSER name `EMPTY `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_6 parserDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
- -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
- -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
  -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # eps
  -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
- -- if parserLocalDeclaration* = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
- -- ParserLocalDecls_ok: TC_3 |- parserLocalDeclaration* : TC_4 parserLocalDeclarationIR*
+ -- ParserLocalDeclList_ok: TC_3 |- parserLocalDeclarationList : TC_4 parserLocalDeclarationIR*
  -- if TC_5 = TC_4[LOCAL.KIND = PARSER_STATE]
- -- if parserState* = $flatten_parserStateList(parserStateList)
- -- ParserStates_ok: TC_5 |- parserState* : parserStateIR*
+ -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*
  -- if callableTypeDefIR = PARSER_APPLY `(parameterIR*)
  -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
  -- if nameIR = $name(name)
@@ -16587,9 +16435,6 @@ syntax parserDeclarationIR =
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>PARSER]</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_constructorParameterListOpt">the list of constructor parameters in <code>constructorParameterListOpt</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16597,7 +16442,7 @@ syntax parserDeclarationIR =
 <p>the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ConstructorParameters_ok">typing <code>constructorParameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16609,9 +16454,6 @@ syntax parserDeclarationIR =
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16619,7 +16461,7 @@ syntax parserDeclarationIR =
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16631,9 +16473,6 @@ syntax parserDeclarationIR =
 <p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>parserLocalDeclaration<sup>*</sup></code> be <a href="#flatten_parserLocalDeclarationList">the list of parser local declarations in <code>parserLocalDeclarationList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16641,16 +16480,13 @@ syntax parserDeclarationIR =
 <p>the updated typing context <code>TC<sub>4</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ParserLocalDecls_ok">typing <code>parserLocalDeclaration<sup>*</sup></code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
+<p>the result of <a href="#ParserLocalDeclList_ok">typing <code>parserLocalDeclarationList</code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub>[LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE]</code>.</p>
-</li>
-<li>
-<p>Let <code>parserState<sup>*</sup></code> be <a href="#flatten_parserStateList">the list of parser states in <code>parserStateList</code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -16660,7 +16496,7 @@ syntax parserDeclarationIR =
 <p>the typed parser states <code>parserStateIR<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ParserStates_ok">typing <code>parserState<sup>*</sup></code>, under typing context <code>TC<sub>5</sub></code></a>.</p>
+<p>the result of <a href="#ParserStateList_ok">typing <code>parserStateList</code>, under typing context <code>TC<sub>5</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16814,14 +16650,11 @@ syntax controlDeclarationIR =
   rule Decl_ok/controlDeclaration:
   TC_0 |- annotationList CONTROL name `EMPTY `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
- -- if constructorParameter* = $flatten_constructorParameterListOpt(constructorParameterListOpt)
- -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter* : constructorParameterIR* # eps
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
  -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # eps
  -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
- -- if controlLocalDeclaration* = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
- -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration* : TC_4 controlLocalDeclarationIR*
+ -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*
  -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
  -- if callableTypeDefIR = CONTROL_APPLY `(parameterIR*)
@@ -16853,9 +16686,6 @@ syntax controlDeclarationIR =
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>CONTROL]</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_constructorParameterListOpt">the list of constructor parameters in <code>constructorParameterListOpt</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16863,7 +16693,7 @@ syntax controlDeclarationIR =
 <p>the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ConstructorParameters_ok">typing <code>constructorParameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16875,9 +16705,6 @@ syntax controlDeclarationIR =
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16885,7 +16712,7 @@ syntax controlDeclarationIR =
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -16897,9 +16724,6 @@ syntax controlDeclarationIR =
 <p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>controlLocalDeclaration<sup>*</sup></code> be <a href="#flatten_controlLocalDeclarationList">the list of control local declarations in <code>controlLocalDeclarationList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -16907,7 +16731,7 @@ syntax controlDeclarationIR =
 <p>the updated typing context <code>TC<sub>4</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ControlLocalDecls_ok">typing <code>controlLocalDeclaration<sup>*</sup></code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
+<p>the result of <a href="#ControlLocalDeclList_ok">typing <code>controlLocalDeclarationList</code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -17603,9 +17427,7 @@ syntax enumTypeDeclarationIR =
 <pre>rulegroup Decl_ok/structTypeDeclaration:
   rule Decl_ok/structTypeDeclaration:
   TC_0 |- annotationList STRUCT name typeParameterListOpt `{typeFieldList} : TC_2 structTypeDeclarationIR
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- if (annotationList_field type_field name_field ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field # typeId_impl_field*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_field**)
@@ -17632,27 +17454,17 @@ syntax enumTypeDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>field</sub></code> <code>type<sub>field</sub></code> <code>name<sub>field</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -17799,9 +17611,7 @@ syntax enumTypeDeclarationIR =
 <pre>rulegroup Decl_ok/headerTypeDeclaration:
   rule Decl_ok/headerTypeDeclaration:
   TC_0 |- annotationList HEADER name typeParameterListOpt `{typeFieldList} : TC_2 headerTypeDeclarationIR
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
@@ -17828,27 +17638,17 @@ syntax enumTypeDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -17995,9 +17795,7 @@ syntax enumTypeDeclarationIR =
 <pre>rulegroup Decl_ok/headerUnionTypeDeclaration:
   rule Decl_ok/headerUnionTypeDeclaration:
   TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{typeFieldList} : TC_2 headerUnionTypeDeclarationIR
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
  -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
@@ -18024,27 +17822,17 @@ syntax enumTypeDeclarationIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
@@ -18704,11 +18492,8 @@ syntax typedefDeclarationIR =
   rule Decl_ok/parserTypeDeclaration:
   TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) ; : TC_3 parserTypeDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # typeId_impl*
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- if parserObjectTypeDefIR = PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- parserObjectTypeDefIR
@@ -18734,30 +18519,17 @@ syntax typedefDeclarationIR =
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>PARSER]</code>.</p>
 </li>
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -18767,7 +18539,7 @@ syntax typedefDeclarationIR =
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18850,11 +18622,8 @@ syntax typedefDeclarationIR =
   rule Decl_ok/controlTypeDeclaration:
   TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) ; : TC_3 controlTypeDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
- -- if parameter* = $flatten_parameterList(parameterList)
- -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* # typeId_impl*
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- if controlObjectTypeDefIR = CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- controlObjectTypeDefIR
@@ -18880,30 +18649,17 @@ syntax typedefDeclarationIR =
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>CONTROL]</code>.</p>
 </li>
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>parameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -18913,7 +18669,7 @@ syntax typedefDeclarationIR =
 <p>the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Parameters_ok">typing <code>parameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18996,11 +18752,8 @@ syntax typedefDeclarationIR =
   rule Decl_ok/packageTypeDeclaration:
   TC_0 |- annotationList PACKAGE name typeParameterListOpt `(parameterList) ; : TC_4 packageTypeDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PACKAGE]
- -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
- -- (if (typeId_expl = $name(typeParameter)))*
- -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
- -- if constructorParameter* = $flatten_parameterList(parameterList)
- -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter* : constructorParameterIR* # typeId_impl*
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
+ -- ConstructorParameterListOpt_ok: TC_2 |- `(parameterList) : constructorParameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- (if (_ _ typeIR_package_inner _ _ = constructorParameterIR))*
  -- if packageObjectTypeDefIR = PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{typeIR_package_inner*}
@@ -19032,30 +18785,17 @@ syntax typedefDeclarationIR =
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub>[BLOCK.KIND</code> <code>=</code> <code>PACKAGE]</code>.</p>
 </li>
 <li>
-<p>Let <code>typeParameter<sup>*</sup></code> be <a href="#flatten_typeParameterListOpt">the list of type parameters in <code>typeParameterListOpt</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeId<sub>expl</sub><sup>*</sup></code> be the list of <code>typeId<sub>expl</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeId<sub>expl</sub></code> be <a href="#name">the name of <code>typeParameter</code></a>.</p>
+<p>the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>typeParameter</code> in <code>typeParameter<sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeParameters_t">type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>constructorParameter<sup>*</sup></code> be <a href="#flatten_parameterList">the list of parameters in <code>parameterList</code></a>.</p>
 </li>
 <li>
 <p>Let</p>
@@ -19065,7 +18805,7 @@ syntax typedefDeclarationIR =
 <p>the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#ConstructorParameters_ok">typing <code>constructorParameter<sup>*</sup></code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>(</code> <code>parameterList</code> <code>)</code> under typing context <code>TC<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -19707,24 +19447,10 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Check that <code>value<sup>?</sup></code> is none.</p>
 </li>
 <li>
-<p>If <code>direction</code> is <code>OUT</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<p>Check that <code>direction</code> <code>=</code> <code>OUT</code> <strong>or</strong> <code>direction</code> <code>=</code> <code>INOUT</code>.</p>
+</li>
 <li>
 <p>Result in <a href="#typedLvalueIR"><code>prefixedNameIR</code> with note <code>(</code> <code>typeIR</code> <code>)</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>direction</code> is <code>INOUT</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Result in <a href="#typedLvalueIR"><code>prefixedNameIR</code> with note <code>(</code> <code>typeIR</code> <code>)</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -19812,70 +19538,16 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>member</code></a>.</p>
 </li>
 <li>
-<p>If <code>nameIR</code> is equal to <code>"next"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>nameIR</code> <code>=</code> <code>"next"</code> <strong>or</strong> <code>nameIR</code> <code>=</code> <code>"last"</code>.</p>
+</li>
 <li>
-<p>If <code>p</code> <code>=</code> <code>BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <strong>or</strong> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+</li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedLvalueIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> <code>=</code> <code>LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>typedLvalueIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>nameIR</code> is equal to <code>"last"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>If <code>p</code> <code>=</code> <code>BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>typedLvalueIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> <code>=</code> <code>LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>typedLvalueIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -20370,18 +20042,15 @@ syntax callStatementIR =
   rule Stmt_ok/callStatement-no-typeArgumentList:
   p TC f l |- lvalue_callable `(argumentList) ; : TC f callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
  -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if callStatementIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) ;
   rule Stmt_ok/callStatement-typeArgumentList:
   p TC f l |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : TC f callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR* # typeId_impl*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
  -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
@@ -20420,23 +20089,16 @@ syntax callStatementIR =
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -20508,9 +20170,6 @@ syntax callStatementIR =
 </div>
 </li>
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -20518,29 +20177,22 @@ syntax callStatementIR =
 <p><code>typeArgumentIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -23091,8 +22743,7 @@ table missed and the <code>default_action</code> was executed.</p>
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if TABLE_ENUM typeId_table_enum `{_} = $unroll_typeIR(typeIR_switch)
  -- if typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
- -- if switchCase* = $flatten_switchCaseList(switchCaseList)
- -- SwitchCases_table_ok: TC f l typeId_table |- switchCase* : f_post switchCaseIR* # switchLabel*
+ -- SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : f_post switchCaseIR* # switchLabel*
  -- if $distinct_&lt;switchLabel&gt;(switchLabel*)
  -- if switchStatementIR = SWITCH `(typedExpressionIR_switch) `{switchCaseIR*}</pre>
 </div>
@@ -23143,10 +22794,7 @@ table missed and the <code>default_action</code> was executed.</p>
 <p>Let <code>typeId<sub>table</sub></code> be <a href="#strip_prefix">the text <code>text</code> with the prefix <code>"action_list("</code> removed</a>.</p>
 </li>
 <li>
-<p>Let <code>switchCase<sup>*</sup></code> be <a href="#flatten_switchCaseList">the list of switch cases in <code>switchCaseList</code></a>.</p>
-</li>
-<li>
-<p>Let <a href="#SwitchCases_table_ok">TC f l typeId<sub>table</sub> |- switchCase<sup>*</sup> : f<sub>post</sub> switchCaseIR<sup>*</sup> # switchLabel<sup>*</sup></a>.</p>
+<p>Let <a href="#SwitchCaseList_table_ok">TC f l typeId<sub>table</sub> |- switchCaseList : f<sub>post</sub> switchCaseIR<sup>*</sup> # switchLabel<sup>*</sup></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#distinct_">the elements of <code>switchLabel<sup>*</sup></code> are distinct</a>.</p>
@@ -23406,8 +23054,7 @@ ambiguity with a block statement.</p>
  -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if $compat_switch(typeIR_switch)
- -- if switchCase* = $flatten_switchCaseList(switchCaseList)
- -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase* : f_post switchCaseIR* # switchLabel*
+ -- SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : f_post switchCaseIR* # switchLabel*
  -- if $distinct_&lt;switchLabel&gt;(switchLabel*)
  -- if switchStatementIR = SWITCH `(typedExpressionIR_switch) `{switchCaseIR*}</pre>
 </div>
@@ -23446,10 +23093,7 @@ ambiguity with a block statement.</p>
 <p>Check that <code><a href="#compat_switch"></code> <code>compat_switch(typeIR<sub>switch</sub>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>switchCase<sup>*</sup></code> be <a href="#flatten_switchCaseList">the list of switch cases in <code>switchCaseList</code></a>.</p>
-</li>
-<li>
-<p>Let <a href="#SwitchCases_general_ok">TC f l typeIR<sub>switch</sub> |- switchCase<sup>*</sup> : f<sub>post</sub> switchCaseIR<sup>*</sup> # switchLabel<sup>*</sup></a>.</p>
+<p>Let <a href="#SwitchCaseList_general_ok">TC f l typeIR<sub>switch</sub> |- switchCaseList : f<sub>post</sub> switchCaseIR<sup>*</sup> # switchLabel<sup>*</sup></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#distinct_">the elements of <code>switchLabel<sup>*</sup></code> are distinct</a>.</p>
@@ -24752,9 +24396,8 @@ syntax unaryExpressionIR =
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>unop</code> is <code>+</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<p>Check that <code>unop</code> <code>=</code> <code>+</code> <strong>or</strong> <code>unop</code> <code>=</code> <code>-</code>.</p>
+</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -24782,44 +24425,6 @@ syntax unaryExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>unop</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>unop</code> is <code>-</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>typedExpressionIR</code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression'</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until $compat_uplusminus is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>unop</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -25400,9 +25005,8 @@ syntax binaryExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <a href="#is_arbitraryIntTypeIR"><code>typeIR<sub>r_reduced</sub></code> is int type</a>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code> <strong>or</strong> <code><a href="#is_fixedIntTypeIR"></code> <code>is_fixedIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code>.</p>
+</li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
 </li>
@@ -25411,25 +25015,6 @@ syntax binaryExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <a href="#is_fixedIntTypeIR"><code>typeIR<sub>r_reduced</sub></code> is fixed-width int type</a>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -26743,7 +26328,6 @@ syntax dataExpressionIR =
   p TC |- `{expressionList _} : (SEQ `{typedExpressionIR_e*}) # expressionNoteIR
  -- if expression_e* = $flatten_expressionList(expressionList)
  -- if ~(... &lt;- expression_e*)
- -- if expression_e* = $flatten_expressionList(expressionList)
  -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
  -- (if (typeIR_e = $type_of_typedExpressionIR(typedExpressionIR_e)))*
  -- (if (ctk_e = $ctk_of_typedExpressionIR(typedExpressionIR_e)))*
@@ -26786,9 +26370,6 @@ syntax dataExpressionIR =
 <p>If <code>&#8230;&#8203;</code> is not in <code>expression<sub>e</sub><sup>*</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>expression<sub>e</sub><sup>*</sup></code> is equal to <a href="#flatten_expressionList">the list of expressions in <code>expressionList</code></a>.</p>
-</li>
 <li>
 <p>Let <code>typedExpressionIR<sub>e</sub><sup>*</sup></code> be the list of <code>typedExpressionIR<sub>e</sub></code>, obtained by repeating:</p>
 <div class="openblock">
@@ -28226,9 +27807,8 @@ syntax memberAccessExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p</code> <code>=</code> <code>BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <strong>or</strong> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -28256,44 +27836,6 @@ syntax memberAccessExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"lastIndex"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> <code>=</code> <code>LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>typedExpressionIR<sub>base</sub></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
-</li>
-<li>
-<p>Check that <code>typeIR</code> has type <code>headerStackTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT</code> <code>&lt;</code> <code>32</code> <code>&gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"lastIndex"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -28303,9 +27845,8 @@ syntax memberAccessExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p</code> <code>=</code> <code>BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <strong>or</strong> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -28336,47 +27877,6 @@ syntax memberAccessExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"last"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> <code>=</code> <code>LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>typedExpressionIR<sub>base</sub></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
-</li>
-<li>
-<p>Check that <code>typeIR</code> has type <code>headerStackTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR'</code> <code>[</code> <code>n<sub>size</sub></code> <code>]</code> be <code>typeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"last"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -28386,9 +27886,8 @@ syntax memberAccessExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>If <code>p</code> <code>=</code> <code>BLOCK</code> <strong>and</strong> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <strong>or</strong> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+</li>
 <li>
 <p>Let</p>
 <div class="ulist">
@@ -28419,47 +27918,6 @@ syntax memberAccessExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"next"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>If <code>p</code> <code>=</code> <code>LOCAL</code> <strong>and</strong> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>typedExpressionIR<sub>base</sub></code> be</p>
-</li>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
-</li>
-<li>
-<p>Check that <code>typeIR</code> has type <code>headerStackTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR'</code> <code>[</code> <code>n<sub>size</sub></code> <code>]</code> be <code>typeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"next"</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
 </li>
 </ol>
 </div>
@@ -29370,8 +28828,7 @@ syntax callExpressionIR =
   rule Expr_ok/non-typeArgumentList:
   p TC |- callableTarget `(argumentList) : callExpressionIR # expressionNoteIR
  -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default*)
  -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if typeIR_ret =/= VOID
@@ -29383,8 +28840,7 @@ syntax callExpressionIR =
  -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
  -- if realTypeArgument* = $flatten_realTypeArgumentList(realTypeArgumentList)
  -- TypeArguments_ok: p TC |- realTypeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
  -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
@@ -29432,23 +28888,16 @@ syntax callExpressionIR =
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -29532,23 +28981,16 @@ syntax callExpressionIR =
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -29824,8 +29266,7 @@ syntax callExpressionIR =
 <pre>rulegroup Expr_ok/callExpression-constructor:
   rule Expr_ok/prefixedTypeName:
   p TC |- prefixedTypeName `(argumentList) : callExpressionIR # expressionNoteIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
  -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
@@ -29834,10 +29275,8 @@ syntax callExpressionIR =
  -- if expressionNoteIR = `(typeIR_object CTK)
   rule Expr_ok/specializedType:
   p TC |- (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) : callExpressionIR # expressionNoteIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR* # typeId_impl*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
@@ -29866,23 +29305,16 @@ syntax callExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -29934,9 +29366,6 @@ syntax callExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -29944,29 +29373,22 @@ syntax callExpressionIR =
 <p><code>typeArgumentIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -30029,8 +29451,7 @@ syntax callExpressionIR =
 <pre>rulegroup Expr_ok/callExpression-constructor:
   rule Expr_ok/prefixedTypeName:
   p TC |- prefixedTypeName `(argumentList) : callExpressionIR # expressionNoteIR
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
  -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
@@ -30039,10 +29460,8 @@ syntax callExpressionIR =
  -- if expressionNoteIR = `(typeIR_object CTK)
   rule Expr_ok/specializedType:
   p TC |- (prefixedTypeName `&lt;typeArgumentList&gt;) `(argumentList) : callExpressionIR # expressionNoteIR
- -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
- -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* # typeId_impl*
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR* # typeId_impl*
+ -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- ConstructorType_ok: p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
@@ -30071,23 +29490,16 @@ syntax callExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -30139,9 +29551,6 @@ syntax callExpressionIR =
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>typeArgument<sup>*</sup></code> be <a href="#flatten_typeArgumentList">the list of type arguments in <code>typeArgumentList</code></a>.</p>
-</li>
-<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -30149,29 +29558,22 @@ syntax callExpressionIR =
 <p><code>typeArgumentIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 </li>
 <li>
-<p>the result of <a href="#TypeArguments_ok">typing <code>typeArgument<sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#TypeArgumentList_ok">typing <code>typeArgumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p><code>argumentIR<sup>*</sup></code> be</p>
+</li>
+<li>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>

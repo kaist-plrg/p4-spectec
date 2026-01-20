@@ -88,8 +88,8 @@ rule Decl_ok/constantDeclaration:
 ;;;; annotationList type `( argumentList ) name `;
 
 relation InstDecl_non_objectInitializer_ok:
-  cursor typingContext |- annotationList prefixedTypeName `< typeArgument* >
-                           `( argument* ) name `;
+  cursor typingContext |- annotationList prefixedTypeName `< typeArgumentList >
+                           `( argumentList ) name `;
                         : typingContext instantiationIR
   hint(input %0 %1 %2 %3 %4 %5 %6)
   hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `; "under cursor" %0
@@ -97,13 +97,15 @@ relation InstDecl_non_objectInitializer_ok:
   hint(prose_out "the updated typing context" %7 "and" %8)
 
 rule InstDecl_non_objectInitializer_ok:
-  p TC_0 |- annotationList prefixedTypeName `< typeArgument* >
-              `( argument* ) name `;
+  p TC_0 |- annotationList prefixedTypeName `< typeArgumentList >
+              `( argumentList ) name `;
           : TC_1 instantiationIR
   ---- ;; check type arguments
-  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
+  -- TypeArgumentList_ok:
+      p TC_0 |- typeArgumentList : typeArgumentIR* `# typeId_impl*
   ---- ;; check arguments
-  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  -- ArgumentList_ok:
+      p TC_0 |- argumentList : argumentIR*
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
   -- ConstructorType_ok:
@@ -149,14 +151,13 @@ rule ObjectDecl_ok/functionDeclaration:
   -- if TC_1 = TC_0[ .BLOCK.KIND = EXTERN ]
   -- if TC_2 = TC_1[ .BLOCK.FRAME = typeFrame ]
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_3 = $add_typeParameters_t(LOCAL, TC_2, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      LOCAL TC_2 |- typeParameterListOpt : TC_3 typeId_expl*
   ---- ;; check return type
   -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; check parameters
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_3 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      LOCAL TC_3 |- parameterList : parameterIR* `# typeId_impl*
   -- if TC_4 = $add_parameters_t(LOCAL, TC_3, parameterIR*)
   ---- ;; check body
   -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `: typeIR_ret) ]
@@ -194,17 +195,17 @@ rule ObjectDecl_ok/instantiation:
   -- if typeFrame_init
       = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
 
-relation ObjectDecls_ok_inner:
+relation ObjectDecls_ok:
   cursor typingContext typeFrame externMethodTypeDefEnv
   |- objectDeclaration*
    : typeFrame externMethodTypeDefEnv objectDeclarationListIR
   hint(input %0 %1 %2 %3 %4)
 
-rule ObjectDecls_ok_inner/nil:
+rule ObjectDecls_ok/nil:
   p TC typeFrame externMethodTypeDefEnv
   |- eps : typeFrame externMethodTypeDefEnv eps
 
-rule ObjectDecls_ok_inner/cons:
+rule ObjectDecls_ok/cons:
   p TC typeFrame_0 externMethodTypeDefEnv_0
   |- objectDeclaration_h :: objectDeclaration_t*
    : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_h :: objectDeclarationIR_t*)
@@ -212,24 +213,26 @@ rule ObjectDecls_ok_inner/cons:
       p TC typeFrame_0 externMethodTypeDefEnv_0
       |- objectDeclaration_h
        : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h
-  -- ObjectDecls_ok_inner:
+  -- ObjectDecls_ok:
       p TC typeFrame_1 externMethodTypeDefEnv_1
       |- objectDeclaration_t*
        : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
 
-relation ObjectDecls_ok:
-  cursor typingContext |- objectDeclaration*
+relation ObjectDeclList_ok:
+  cursor typingContext |- objectDeclarationList
                         : typeFrame externMethodTypeDefEnv
                           objectDeclarationListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2 "under cursor" %0 "and typing context" %1)
   hint(prose_out %3 "and" %4
-                 "local to the object declaration block, and typed" %5)
+                 "of the object declaration block and" %5)
 
-rule ObjectDecls_ok:
-  p TC |- objectDeclaration*
+rule ObjectDeclList_ok:
+  p TC |- objectDeclarationList
         : typeFrame externMethodTypeDefEnv objectDeclarationListIR
-  -- ObjectDecls_ok_inner:
+  -- if objectDeclaration*
+      = $flatten_objectDeclarationList(objectDeclarationList)
+  -- ObjectDecls_ok:
       p TC `{ eps } `{ eps }
       |- objectDeclaration*
        : typeFrame externMethodTypeDefEnv objectDeclarationListIR
@@ -272,8 +275,8 @@ def $subst_externMethodTypeDefEnv(
           callableId, externMethodTypeDefIR_concrete)
 
 relation InstDecl_objectInitializer_ok:
-  cursor typingContext |- annotationList prefixedTypeName `< typeArgument* >
-                           `( argument* ) name `= `{ objectDeclaration* } `;
+  cursor typingContext |- annotationList prefixedTypeName `< typeArgumentList >
+                           `( argumentList ) name `= `{ objectDeclarationList } `;
                         : typingContext instantiationIR
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `= `{ %7 } `; "under cursor" %0
@@ -282,13 +285,15 @@ relation InstDecl_objectInitializer_ok:
 
 rule InstDecl_objectInitializer_ok:
   p TC_0 |- annotationList
-              prefixedTypeName `< typeArgument* > `( argument* )
-              name `= `{ objectDeclaration* } `;
+              prefixedTypeName `< typeArgumentList > `( argumentList )
+              name `= `{ objectDeclarationList } `;
           : TC_2 instantiationIR
   ---- ;; check type arguments
-  -- TypeArguments_ok: p TC_0 |- typeArgument* : typeArgumentIR* `# typeId_impl*
+  -- TypeArgumentList_ok:
+      p TC_0 |- typeArgumentList : typeArgumentIR* `# typeId_impl*
   ---- ;; check arguments
-  -- (Argument_ok: p TC_0 |- argument : argumentIR)*
+  -- ArgumentList_ok:
+      p TC_0 |- argumentList : argumentIR*
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
   -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
@@ -305,8 +310,8 @@ rule InstDecl_objectInitializer_ok:
   ---- ;; temporarily add "this" to the context
   -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
   ---- ;; check object initializer
-  -- ObjectDecls_ok:
-      p TC_1 |- objectDeclaration*
+  -- ObjectDeclList_ok:
+      p TC_1 |- objectDeclarationList
               : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
   ---- ;; create updated extern type
   -- if externMethodTypeDefEnv_init_subst
@@ -330,32 +335,28 @@ rulegroup InstDecl_ok {
   rule InstDecl_ok/non-objectInitializer-prefixedTypeName:
     p TC_0 |- annotationList prefixedTypeName `( argumentList ) name `;
             : TC_1 instantiationIR
-    -- if argument* = $flatten_argumentList(argumentList)
     -- InstDecl_non_objectInitializer_ok:
         p TC_0 |- annotationList
-                    prefixedTypeName `< eps > `( argument* ) name `;
+                    prefixedTypeName `< `EMPTY > `( argumentList ) name `;
                 : TC_1 instantiationIR
 
   rule InstDecl_ok/non-objectInitializer-specializedType:
     p TC_0 |- annotationList
               (prefixedTypeName `< typeArgumentList >) `( argumentList ) name `;
             : TC_1 instantiationIR
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- if argument* = $flatten_argumentList(argumentList)
     -- InstDecl_non_objectInitializer_ok:
-        p TC_0 |- annotationList prefixedTypeName `< typeArgument* >
-                    `( argument* ) name `;
+        p TC_0 |- annotationList prefixedTypeName `< typeArgumentList >
+                    `( argumentList ) name `;
                 : TC_1 instantiationIR
 
   rule InstDecl_ok/objectInitializer-prefixedTypeName:
     p TC_0 |- annotationList
                 prefixedTypeName `( argumentList ) name (`= `{ objectDeclarationList }) `;
             : TC_1 instantiationIR
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
     -- InstDecl_objectInitializer_ok:
         p TC_0 |- annotationList
-                    prefixedTypeName `< eps > `( argument* ) name `= `{ objectDeclaration* } `;
+                    prefixedTypeName `< `EMPTY > `( argumentList ) name
+                    `= `{ objectDeclarationList } `;
                 : TC_1 instantiationIR
 
   rule InstDecl_ok/objectInitializer-specializedType:
@@ -363,13 +364,10 @@ rulegroup InstDecl_ok {
                 (prefixedTypeName `< typeArgumentList >) `( argumentList )
                 name (`= `{ objectDeclarationList }) `;
             : TC_1 instantiationIR
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- if objectDeclaration* = $flatten_objectDeclarationList(objectDeclarationList)
     -- InstDecl_objectInitializer_ok:
         p TC_0 |- annotationList
-                    prefixedTypeName `< typeArgument* >
-                    `( argument* ) name `= `{ objectDeclaration* } `;
+                    prefixedTypeName `< typeArgumentList >
+                    `( argumentList ) name `= `{ objectDeclarationList } `;
                 : TC_1 instantiationIR
 
 }
@@ -392,14 +390,13 @@ rule FuncDecl_ok:
             (typeOrVoid name typeParameterListOpt `( parameterList )) blockStatement
           : TC_4 functionDeclarationIR
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; check parameters
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      LOCAL TC_1 |- parameterList : parameterIR* `# typeId_impl*
   -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
   ---- ;; check body
   -- if TC_3 = TC_2[ .LOCAL.KIND = FUNCTION `: typeIR_ret ]
@@ -436,8 +433,8 @@ rule ActionDecl_ok:
   ---- ;; set local context
   -- if TC_1 = TC_0 [ .LOCAL.KIND = ACTION ]
   ---- ;; check parameters
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_1 |- parameter* : parameterIR* `# eps
+  -- ParameterList_ok:
+      LOCAL TC_1 |- parameterList : parameterIR* `# eps
   ---- ;; add parameters to the context
   -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
   ---- ;; check body
@@ -502,16 +499,15 @@ rule Decl_ok/externFunctionDeclaration:
                   (typeOrVoid name typeParameterListOpt `( parameterList )) `;
         : TC_4 externFunctionDeclarationIR
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; set local context
   -- if TC_2 = TC_1 [ .LOCAL.KIND = EXTERN_FUNCTION `: typeIR_ret ]
   ---- ;; check parameters
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: LOCAL TC_2 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      LOCAL TC_2 |- parameterList : parameterIR* `# typeId_impl*
   -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
   ---- ;; check extern function type and add to context
   -- if callableId = $callableId(name, parameterList)
@@ -575,9 +571,8 @@ rule Decl_ok/externObjectDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = EXTERN ]
   ---- ;; check type parameters and add to context
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check methods
   -- if nameIR = $name(nonTypeName)
   -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype*
@@ -614,25 +609,23 @@ rule Decl_ok/parserDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; check constructor parameters
-  -- if constructorParameter*
-      = $flatten_constructorParameterListOpt(constructorParameterListOpt)
-  -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter*
-                                           : constructorParameterIR* `# eps
+  -- ConstructorParameterListOpt_ok:
+      TC_1 |- constructorParameterListOpt
+            : constructorParameterIR* `# eps
   -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
   ---- ;; check parameters to apply method
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# eps
+  -- ParameterList_ok:
+      BLOCK TC_2 |- parameterList : parameterIR* `# eps
   -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
   ---- ;; check parser local declarations
-  -- if parserLocalDeclaration*
-      = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
-  -- ParserLocalDecls_ok: TC_3 |- parserLocalDeclaration*
-                                : TC_4 parserLocalDeclarationIR*
+  -- ParserLocalDeclList_ok:
+      TC_3 |- parserLocalDeclarationList
+            : TC_4 parserLocalDeclarationIR*
   ---- ;; set local context
   -- if TC_5 = TC_4 [ .LOCAL.KIND = PARSER_STATE ]
   ---- ;; check parser states
-  -- if parserState* = $flatten_parserStateList(parserStateList)
-  -- ParserStates_ok: TC_5 |- parserState* : parserStateIR*
+  -- ParserStateList_ok:
+      TC_5 |- parserStateList : parserStateIR*
   ---- ;; check apply method
   -- if callableTypeDefIR = PARSER_APPLY `( parameterIR* )
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
@@ -665,20 +658,18 @@ rule Decl_ok/controlDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; check constructor parameters
-  -- if constructorParameter*
-      = $flatten_constructorParameterListOpt(constructorParameterListOpt)
-  -- ConstructorParameters_ok: BLOCK TC_1 |- constructorParameter*
-                                           : constructorParameterIR* `# eps
+  -- ConstructorParameterListOpt_ok:
+      TC_1 |- constructorParameterListOpt
+            : constructorParameterIR* `# eps
   -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
   ---- ;; check parameters to apply method
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# eps
+  -- ParameterList_ok:
+      BLOCK TC_2 |- parameterList : parameterIR* `# eps
   -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
   ---- ;; check control local declarations
-  -- if controlLocalDeclaration*
-      = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
-  -- ControlLocalDecls_ok: TC_3 |- controlLocalDeclaration*
-                                 : TC_4 controlLocalDeclarationIR*
+  -- ControlLocalDeclList_ok:
+      TC_3 |- controlLocalDeclarationList
+            : TC_4 controlLocalDeclarationIR*
   ---- ;; set local context
   -- if TC_5 = TC_4 [ .LOCAL.KIND = CONTROL_APPLY_METHOD ]
   ---- ;; check control body
@@ -814,9 +805,8 @@ rule Decl_ok/structTypeDeclaration:
   TC_0 |- annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
         : TC_2 structTypeDeclarationIR
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check type fields
   -- if (annotationList_field type_field name_field `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -842,9 +832,8 @@ rule Decl_ok/headerTypeDeclaration:
   TC_0 |- annotationList HEADER name typeParameterListOpt `{ typeFieldList }
         : TC_2 headerTypeDeclarationIR
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -870,9 +859,8 @@ rule Decl_ok/headerUnionTypeDeclaration:
   TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }
         : TC_2 headerUnionTypeDeclarationIR
   ---- ;; check type parameters
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -992,12 +980,11 @@ rule Decl_ok/parserTypeDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; add type parameters to the context
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check parameters to apply method
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      BLOCK TC_2 |- parameterList : parameterIR* `# typeId_impl*
   ---- ;; update the context with parser type
   -- if nameIR = $name(name)
   -- if parserObjectTypeDefIR
@@ -1018,12 +1005,11 @@ rule Decl_ok/controlTypeDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; add type parameters to the context
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check parameters to apply method
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# typeId_impl*
+  -- ParameterList_ok:
+      BLOCK TC_2 |- parameterList : parameterIR* `# typeId_impl*
   ---- ;; update the context with control type
   -- if nameIR = $name(name)
   -- if controlObjectTypeDefIR
@@ -1044,13 +1030,12 @@ rule Decl_ok/packageTypeDeclaration:
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PACKAGE ]
   ---- ;; add type parameters to the context
-  -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-  -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
-  -- if constructorParameter* = $flatten_parameterList(parameterList)
-  -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter*
-                                          : constructorParameterIR* `# typeId_impl*
+  -- ConstructorParameterListOpt_ok:
+      TC_2 |- `( parameterList )
+            : constructorParameterIR* `# typeId_impl*
   ---- ;; update the context with package type
   -- if nameIR = $name(name)
   -- if (_ _ typeIR_package_inner _ _ = constructorParameterIR)*

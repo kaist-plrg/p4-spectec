@@ -63,6 +63,13 @@ rule ControlLocalDecl_ok/tableDeclaration:
 ;; syntax controlLocalDeclarationList
 ;;
 
+relation ControlLocalDecls_ok:
+  typingContext |- controlLocalDeclaration*
+                 : typingContext controlLocalDeclarationIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1#", under typing context" %0)
+  hint(prose_out "the updated typing context" %2 "and the typed control local declarations" %3)
+
 rulegroup ControlLocalDecls_ok {
 
   rule ControlLocalDecls_ok/nil:
@@ -77,3 +84,12 @@ rulegroup ControlLocalDecls_ok {
                                    : TC_2 controlLocalDeclarationIR_t*
 
 }
+
+rule ControlLocalDeclList_ok:
+  TC_0 |- controlLocalDeclarationList
+        : TC_1 controlLocalDeclarationIR*
+  -- if controlLocalDeclaration*
+      = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+  -- ControlLocalDecls_ok:
+      TC_0 |- controlLocalDeclaration*
+            : TC_1 controlLocalDeclarationIR*

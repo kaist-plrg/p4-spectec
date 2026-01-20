@@ -57,6 +57,13 @@ rule ParserLocalDecl_ok/valueSetDeclaration:
 ;; syntax parserLocalDeclarationList
 ;;
 
+relation ParserLocalDecls_ok:
+  typingContext |- parserLocalDeclaration*
+                 : typingContext parserLocalDeclarationIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1#", under typing context" %0)
+  hint(prose_out "the updated typing context" %2 "and the typed parser local declarations" %3)
+
 rulegroup ParserLocalDecls_ok {
 
   rule ParserLocalDecls_ok/nil:
@@ -71,3 +78,11 @@ rulegroup ParserLocalDecls_ok {
                                   : TC_2 parserLocalDeclarationIR_t*
 
 }
+
+rule ParserLocalDeclList_ok:
+  TC_0 |- parserLocalDeclarationList
+       : TC_1 parserLocalDeclarationIR*
+  -- if parserLocalDeclaration*
+      = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+  -- ParserLocalDecls_ok: TC_0 |- parserLocalDeclaration*
+                                : TC_1 parserLocalDeclarationIR*

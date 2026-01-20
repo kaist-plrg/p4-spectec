@@ -88,10 +88,14 @@ module Bind = struct
       |> List.split
     in
     let expunits_input =
-      List.map (fun exp_input -> init_expunit exp_input iterexps_bound) exps_input
+      List.map
+        (fun exp_input -> init_expunit exp_input iterexps_bound)
+        exps_input
     in
     let expunits_output =
-      List.map (fun exp_output -> init_expunit exp_output iterexps_bind) exps_output
+      List.map
+        (fun exp_output -> init_expunit exp_output iterexps_bind)
+        exps_output
     in
     RuleBind (id, expunits_input, expunits_output)
 
@@ -172,8 +176,8 @@ module Bind = struct
         collapse_expunit Renamer.empty expunit_l expunit_target_l
     | ( RuleBind (id, expunits_input, expunits_output),
         RuleBind (id_target, expunits_target_input, expunits_target_output) )
-      when Sl.Eq.eq_id id id_target && eq_expunits expunits_input expunits_target_input
-      ->
+      when Sl.Eq.eq_id id id_target
+           && eq_expunits expunits_input expunits_target_input ->
         collapse_expunits Renamer.empty expunits_output expunits_target_output
     | _ -> None
 end

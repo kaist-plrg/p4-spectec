@@ -4797,12 +4797,9 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``~<<is_synthesizedTypeIR,`` ``is_synthesizedTypeIR(typeIR~unroll~)>>``.
- .. If ``direction`` is ``IN``:
-  ... Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction`` ``=`` ```EMPTY``.
-  ... The relation holds.
- .. Else if ``direction`` is ```EMPTY``:
-  ... Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction`` ``=`` ```EMPTY``.
-  ... The relation holds.
+ .. Check that ``direction`` ``=`` ``IN`` *or* ``direction`` ``=`` ```EMPTY``.
+ .. Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` *implies* ``direction`` ``=`` ```EMPTY``.
+ .. The relation holds.
 
 <<ReturnType_wf, ReturnType_wf>>:
 
@@ -5634,104 +5631,55 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` annotated with ``expressionNoteIR``>>, under cursor ``p`` and typing context ``TC``>>:
 
-. If ``prefixedNameIR`` is equal to ``.`` ``"static_assert"``:
- .. Let 
+. Check that ``prefixedNameIR`` ``=`` ``.`` ``"static_assert"`` *or* ``prefixedNameIR`` ``=`` ``"static_assert"``.
+. Let 
 * the callable type ``callableTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^`` be
 * the result of <<CallableType_ok, finding the type of ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that ``callableTypeIR`` has type ``externFunctionTypeIR``.
- .. Let ``externFunctionTypeIR`` be ``callableTypeIR``.
- .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Check that ``id^{asterisk}^`` is an empty list.
- .. Let ``EXTERN_FUNCTION`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR'`` be ``externFunctionTypeIR``.
- .. Check that ``typeIR'`` has type ``boolTypeIR``.
- .. Let ``boolTypeIR`` be ``typeIR'``.
- .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~``, obtained by repeating:
+. Check that ``callableTypeIR`` has type ``externFunctionTypeIR``.
+. Let ``externFunctionTypeIR`` be ``callableTypeIR``.
+. Check that ``typeId^{asterisk}^`` is an empty list.
+. Check that ``id^{asterisk}^`` is an empty list.
+. Let ``EXTERN_FUNCTION`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR'`` be ``externFunctionTypeIR``.
+. Check that ``typeIR'`` has type ``boolTypeIR``.
+. Let ``boolTypeIR`` be ``typeIR'``.
+. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~``, obtained by repeating:
 +
 --
-  *** Let ``nameIR~param~`` be the name of ``parameterIR``.
+ ** Let ``nameIR~param~`` be the name of ``parameterIR``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
- .. Let ``(parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR'^{asterisk}^,`` ``value^{asterisk}^)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``·``>>.
- .. Check that ``parameterIR'^{asterisk}^`` is an empty list.
- .. Check that ``value^{asterisk}^`` is an empty list.
- .. Let ``value~argument~^{asterisk}^`` be the list of ``value~argument~``, obtained by repeating:
+. Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
+. Let ``(parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR'^{asterisk}^,`` ``value^{asterisk}^)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``·``>>.
+. Check that ``parameterIR'^{asterisk}^`` is an empty list.
+. Check that ``value^{asterisk}^`` is an empty list.
+. Let ``value~argument~^{asterisk}^`` be the list of ``value~argument~``, obtained by repeating:
 +
 --
-  *** Let ``value~argument~`` be the result of <<Argument_eval_lctk, local compile-time evaluation of ``argumentIR~aligned~``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argumentIR~aligned~`` in ``argumentIR~aligned~^{asterisk}^``
- .. Let ``direction~param_aligned~^{asterisk}^`` be the list of ``direction~param_aligned~``, ``nameIR~param_aligned~^{asterisk}^`` be the list of ``nameIR~param_aligned~``, and ``typeIR~param_aligned~^{asterisk}^`` be the list of ``typeIR~param_aligned~``, obtained by repeating:
-+
---
-  *** Let ``direction~param_aligned~``, ``typeIR~param_aligned~``, and ``nameIR~param_aligned~`` be the direction, the type, and the name of ``parameterIR~aligned~``.
---
-+
-for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
- .. Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
-+
---
-  *** Let ``varTypeIR`` be ``direction~param_aligned~`` ``typeIR~param_aligned~`` ``LCTK`` ``value~argument~``.
---
-+
-for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^``, ``typeIR~param_aligned~`` in ``typeIR~param_aligned~^{asterisk}^``, and ``value~argument~`` in ``value~argument~^{asterisk}^``
- .. Let ``TC~callee_1~`` be <<add_vars_t, ``TC~callee_0~`` where each of ``nameIR~param_aligned~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``LOCAL`` layer>>.
- .. Let ``value'`` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
- .. Check that ``value'`` has type ``boolValue``.
- .. Let ``boolValue`` be ``value'``.
- .. Check that ```B`` ``true`` is equal to ``boolValue``.
- .. Result in ``boolValue``.
-. If ``prefixedNameIR`` is equal to ``"static_assert"``:
- .. Let 
-* the callable type ``callableTypeIR`` with fresh type variables ``typeId^{asterisk}^`` and default parameter ids ``id^{asterisk}^`` be
-* the result of <<CallableType_ok, finding the type of ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
- .. Check that ``callableTypeIR`` has type ``externFunctionTypeIR``.
- .. Let ``externFunctionTypeIR`` be ``callableTypeIR``.
- .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Check that ``id^{asterisk}^`` is an empty list.
- .. Let ``EXTERN_FUNCTION`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR'`` be ``externFunctionTypeIR``.
- .. Check that ``typeIR'`` has type ``boolTypeIR``.
- .. Let ``boolTypeIR`` be ``typeIR'``.
- .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~``, obtained by repeating:
-+
---
-  *** Let ``nameIR~param~`` be the name of ``parameterIR``.
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
- .. Let ``(parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR'^{asterisk}^,`` ``value^{asterisk}^)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``·``>>.
- .. Check that ``parameterIR'^{asterisk}^`` is an empty list.
- .. Check that ``value^{asterisk}^`` is an empty list.
- .. Let ``value~argument~^{asterisk}^`` be the list of ``value~argument~``, obtained by repeating:
-+
---
-  *** Let ``value~argument~`` be the result of <<Argument_eval_lctk, local compile-time evaluation of ``argumentIR~aligned~``, under cursor ``p`` and typing context ``TC``>>.
+ ** Let ``value~argument~`` be the result of <<Argument_eval_lctk, local compile-time evaluation of ``argumentIR~aligned~``, under cursor ``p`` and typing context ``TC``>>.
 --
 +
 for each ``argumentIR~aligned~`` in ``argumentIR~aligned~^{asterisk}^``
- .. Let ``direction~param_aligned~^{asterisk}^`` be the list of ``direction~param_aligned~``, ``nameIR~param_aligned~^{asterisk}^`` be the list of ``nameIR~param_aligned~``, and ``typeIR~param_aligned~^{asterisk}^`` be the list of ``typeIR~param_aligned~``, obtained by repeating:
+. Let ``direction~param_aligned~^{asterisk}^`` be the list of ``direction~param_aligned~``, ``nameIR~param_aligned~^{asterisk}^`` be the list of ``nameIR~param_aligned~``, and ``typeIR~param_aligned~^{asterisk}^`` be the list of ``typeIR~param_aligned~``, obtained by repeating:
 +
 --
-  *** Let ``direction~param_aligned~``, ``typeIR~param_aligned~``, and ``nameIR~param_aligned~`` be the direction, the type, and the name of ``parameterIR~aligned~``.
+ ** Let ``direction~param_aligned~``, ``typeIR~param_aligned~``, and ``nameIR~param_aligned~`` be the direction, the type, and the name of ``parameterIR~aligned~``.
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
- .. Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
+. Let ``varTypeIR^{asterisk}^`` be the list of ``varTypeIR``, obtained by repeating:
 +
 --
-  *** Let ``varTypeIR`` be ``direction~param_aligned~`` ``typeIR~param_aligned~`` ``LCTK`` ``value~argument~``.
+ ** Let ``varTypeIR`` be ``direction~param_aligned~`` ``typeIR~param_aligned~`` ``LCTK`` ``value~argument~``.
 --
 +
 for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^``, ``typeIR~param_aligned~`` in ``typeIR~param_aligned~^{asterisk}^``, and ``value~argument~`` in ``value~argument~^{asterisk}^``
- .. Let ``TC~callee_1~`` be <<add_vars_t, ``TC~callee_0~`` where each of ``nameIR~param_aligned~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``LOCAL`` layer>>.
- .. Let ``value'`` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
- .. Check that ``value'`` has type ``boolValue``.
- .. Let ``boolValue`` be ``value'``.
- .. Check that ```B`` ``true`` is equal to ``boolValue``.
- .. Result in ``boolValue``.
+. Let ``TC~callee_1~`` be <<add_vars_t, ``TC~callee_0~`` where each of ``nameIR~param_aligned~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``LOCAL`` layer>>.
+. Let ``value'`` be the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
+. Check that ``value'`` has type ``boolValue``.
+. Let ``boolValue`` be ``value'``.
+. Check that ```B`` ``true`` is equal to ``boolValue``.
+. Result in ``boolValue``.
 
 <<Expr_eval_lctk, Local compile-time evaluation of <<typedExpressionIR, ``(`` ``callableTargetIR'`` ``)`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` annotated with type ``typeIR`` and compile-time known-ness ``ctk``>>, under cursor ``p`` and typing context ``TC``>>:
 
@@ -5880,10 +5828,9 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 . Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
 . Let ``typeDefIR'`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that <<is_polymorphic_typeDefIR, ``typeDefIR'`` is polymorphic>>.
-. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
 . Let 
 * ``typeIR~arg~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<specialize_typeDefIR, ``typeDefIR'`` specialized by ``typeIR~arg~^{asterisk}^``>>.
 . Result in ``typeIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
@@ -5914,11 +5861,28 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 
 <<Type_ok, Typing ``TUPLE`` ``<`` ``typeArgumentList`` ``>``, under cursor ``p`` and typing context ``TC``>>:
 
-. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
 . Let 
 * ``typeIR~arg~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC``>>.
 . Result in ``TUPLE`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+
+<<TypeParameterListOpt_ok, TypeParameterListOpt_ok>>:
+
+* Typing ``typeParameterListOpt``, under cursor ``cursor`` and typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and type parameters ``typeId^{asterisk}^``.
+
+<<TypeParameterListOpt_ok, Typing ``typeParameterListOpt``, under cursor ``p`` and typing context ``TC~0~``>>:
+
+. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
+. Let ``typeId^{asterisk}^`` be the list of ``typeId``, obtained by repeating:
++
+--
+ ** Let ``typeId`` be <<name, the name of ``typeParameter``>>.
+--
++
+for each ``typeParameter`` in ``typeParameter^{asterisk}^``
+. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId^{asterisk}^`` added to the ``p`` layer of ``TC~0~``>>.
+. Result in the updated typing context ``TC~1~`` and type parameters ``typeId^{asterisk}^``.
 
 <<TypeArgument_ok, TypeArgument_ok>>:
 
@@ -5965,6 +5929,19 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<TypeArguments_ok, typing ``typeArgument~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeId~impl~^{asterisk}^`` be ``typeId~impl_h~^{asterisk}^`` ``{pp}`` ``typeId~impl_t~^{asterisk}^``.
 . Result in ``typeArgumentIR~h~`` ``{two-colons}`` ``typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
+
+<<TypeArgumentList_ok, TypeArgumentList_ok>>:
+
+* Typing ``typeArgumentList``, under cursor ``cursor`` and typing context ``typingContext``:
+* Results in ``typeArgumentListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
+
+<<TypeArgumentList_ok, Typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC``>>:
+
+. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
+. Let 
+* ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+. Result in ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
 <<Sub_expl, Sub_expl>>:
 
@@ -6650,24 +6627,15 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 
 <<Expr_ok, Typing ``unop`` ``expression'``, under cursor ``p`` and typing context ``TC``>>:
 
-. If ``unop`` is ``+``:
- .. Let 
+. Check that ``unop`` ``=`` ``+`` *or* ``unop`` ``=`` ``-``.
+. Let 
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression'``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_uplusminus is satisfied>>.
- .. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
- .. Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
- .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
- .. Result in <<typedExpressionIR, ``unop`` ``typedExpressionIR~reduced~`` annotated with ``expressionNoteIR``>>.
-. Else if ``unop`` is ``-``:
- .. Let 
-* ``typedExpressionIR`` be
-* the result of <<Expr_ok, typing ``expression'``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_uplusminus is satisfied>>.
- .. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
- .. Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
- .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
- .. Result in <<typedExpressionIR, ``unop`` ``typedExpressionIR~reduced~`` annotated with ``expressionNoteIR``>>.
+. Let ``typedExpressionIR~reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR`` until $compat_uplusminus is satisfied>>.
+. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~reduced~``>>.
+. Let ``ctk~reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~reduced~``>>.
+. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
+. Result in <<typedExpressionIR, ``unop`` ``typedExpressionIR~reduced~`` annotated with ``expressionNoteIR``>>.
 
 <<Expr_ok, Typing ``expression~l~`` ``binop`` ``expression~r~``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -6755,14 +6723,10 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
 . If ``ctk~r_reduced~`` is ``LCTK``:
- .. If <<is_arbitraryIntTypeIR, ``typeIR~r_reduced~`` is int type>>:
-  ... Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
- .. If <<is_fixedIntTypeIR, ``typeIR~r_reduced~`` is fixed-width int type>>:
-  ... Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
+ .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~r_reduced~)>>`` *or* ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(typeIR~r_reduced~)>>``.
+ .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
+ .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
+ .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
 
 <<Expr_ok, Typing ``expression~l~`` ``binop`` ``expression~r~``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -6903,7 +6867,6 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 
 . Let ``expression~e~^{asterisk}^`` be <<flatten_expressionList, the list of expressions in ``expressionList``>>.
 . If ``...`` is not in ``expression~e~^{asterisk}^``:
- .. Check that ``expression~e~^{asterisk}^`` is equal to <<flatten_expressionList, the list of expressions in ``expressionList``>>.
  .. Let ``typedExpressionIR~e~^{asterisk}^`` be the list of ``typedExpressionIR~e~``, obtained by repeating:
 +
 --
@@ -7108,66 +7071,37 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``LCTK``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"size"`` annotated with ``expressionNoteIR``>>.
 . If ``"lastIndex"`` is equal to <<name, the name of ``member``>>:
- .. If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-  ... Let 
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` *or* ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let 
 * ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"lastIndex"`` annotated with ``expressionNoteIR``>>.
- .. If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-  ... Let 
-* ``typedExpressionIR~base~`` be
-* the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"lastIndex"`` annotated with ``expressionNoteIR``>>.
+ .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
+ .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
+ .. Check that ``typeIR`` has type ``headerStackTypeIR``.
+ .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``DYN``>>.
+ .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"lastIndex"`` annotated with ``expressionNoteIR``>>.
 . If ``"last"`` is equal to <<name, the name of ``member``>>:
- .. If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-  ... Let 
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` *or* ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let 
 * ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"last"`` annotated with ``expressionNoteIR``>>.
- .. If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-  ... Let 
-* ``typedExpressionIR~base~`` be
-* the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"last"`` annotated with ``expressionNoteIR``>>.
+ .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
+ .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
+ .. Check that ``typeIR`` has type ``headerStackTypeIR``.
+ .. Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
+ .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
+ .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"last"`` annotated with ``expressionNoteIR``>>.
 . If ``"next"`` is equal to <<name, the name of ``member``>>:
- .. If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-  ... Let 
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` *or* ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let 
 * ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"next"`` annotated with ``expressionNoteIR``>>.
- .. If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-  ... Let 
-* ``typedExpressionIR~base~`` be
-* the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
-  ... Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
-  ... Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-  ... Check that ``typeIR`` has type ``headerStackTypeIR``.
-  ... Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
-  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
-  ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"next"`` annotated with ``expressionNoteIR``>>.
+ .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
+ .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
+ .. Check that ``typeIR`` has type ``headerStackTypeIR``.
+ .. Let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``.
+ .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
+ .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"next"`` annotated with ``expressionNoteIR``>>.
 . Let 
 * ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
@@ -7289,14 +7223,9 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let 
 * the typed callable target ``callableTargetIR`` be
 * the result of <<CallableTarget_ok, typing ``callableTarget``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let 
 * the callable type ``callableTypeIR`` with fresh type variables ``typeId~infer~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
 * the result of <<CallableType_ok, finding the type of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
@@ -7317,14 +7246,9 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<TypeArguments_ok, typing ``realTypeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let 
 * the callable type ``callableTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
 * the result of <<CallableType_ok, finding the type of ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
@@ -7341,14 +7265,9 @@ for each ``argument`` in ``argument^{asterisk}^``
 <<Expr_ok, Typing ``callTarget`` ``(`` ``argumentList`` ``)``, under cursor ``p`` and typing context ``TC``>>:
 
 . If let ``prefixedTypeName`` be ``callTarget``:
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
 * ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
@@ -7361,18 +7280,12 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~object~`` and compile-time known-ness ``CTK``>>.
  .. Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR``>>.
 . Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``callTarget``:
- .. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
  .. Let 
 * ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC``>>.
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
  .. Let 
 * ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
@@ -7425,6 +7338,23 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 . Result in ``_``.
 
+<<ArgumentList_ok, ArgumentList_ok>>:
+
+* Typing ``argumentList``, under cursor ``cursor`` and typing context ``typingContext``:
+* Results in ``argumentListIR``.
+
+<<ArgumentList_ok, Typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>:
+
+. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
+. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
++
+--
+ ** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
+--
++
+for each ``argument`` in ``argument^{asterisk}^``
+. Result in ``argumentIR^{asterisk}^``.
+
 <<Lvalue_ok, Lvalue_ok>>:
 
 * Typing ``lvalue``, under cursor ``cursor`` and typing context ``typingContext``:
@@ -7436,10 +7366,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let ``direction`` ``typeIR`` ``ctk`` ``value^?^`` be <<option_get, *!*>> <<find_var_t, the type of variable ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that ``ctk`` is ``DYN``.
 . Check that ``value^?^`` is none.
-. If ``direction`` is ``OUT``:
- .. Result in <<typedLvalueIR, ``prefixedNameIR`` with note ``(`` ``typeIR`` ``)``>>.
-. Else if ``direction`` is ``INOUT``:
- .. Result in <<typedLvalueIR, ``prefixedNameIR`` with note ``(`` ``typeIR`` ``)``>>.
+. Check that ``direction`` ``=`` ``OUT`` *or* ``direction`` ``=`` ``INOUT``.
+. Result in <<typedLvalueIR, ``prefixedNameIR`` with note ``(`` ``typeIR`` ``)``>>.
 
 <<Lvalue_ok, Typing ``lvalue~base~`` ``.`` ``member``, under cursor ``p`` and typing context ``TC``>>:
 
@@ -7450,20 +7378,10 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . If let ``typeIR'`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
- .. If ``nameIR`` is equal to ``"next"``:
-  ... If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-   .... Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
-   .... Result in ``typedLvalueIR``.
-  ... If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-   .... Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
-   .... Result in ``typedLvalueIR``.
- .. Else if ``nameIR`` is equal to ``"last"``:
-  ... If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-   .... Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
-   .... Result in ``typedLvalueIR``.
-  ... If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-   .... Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
-   .... Result in ``typedLvalueIR``.
+ .. Check that ``nameIR`` ``=`` ``"next"`` *or* ``nameIR`` ``=`` ``"last"``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` *or* ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
+ .. Result in ``typedLvalueIR``.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~field~,`` ``typeIR~field~))^{asterisk}^)>>``.
@@ -7608,14 +7526,9 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the typed callable target ``callableTargetIR`` be
 * the result of <<CallableTarget_lvalue_ok, typing ``lvalue~callable~``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let 
 * the callable type ``callableTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
 * the result of <<CallableType_ok, finding the type of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
@@ -7632,18 +7545,12 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the typed callable target ``callableTargetIR`` be
 * the result of <<CallableTarget_lvalue_ok, typing ``lvalue~callable~``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
  .. Let 
 * ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
- .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
-  *** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC``>>.
+ .. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC``>>.
  .. Let 
 * the callable type ``callableTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
 * the result of <<CallableType_ok, finding the type of ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>.
@@ -7762,21 +7669,13 @@ for each ``argument`` in ``argument^{asterisk}^``
 <<Stmt_ok, Typing ``annotationList`` ``FOR`` ``(`` ``forInitStatementList`` ``;`` ``expression`` ``;`` ``forUpdateStatementList`` ``)`` ``statement'``, under cursor ``LOCAL``, typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>:
 
 . Let ``TC~1~`` be ``<<enter_t,`` ``enter_t(TC)>>``.
-. Let ``forInitStatement^{asterisk}^`` be ``<<flatten_forInitStatementList,`` ``flatten_forInitStatementList(forInitStatementList)>>``.
-. Let <<ForInitStmts_ok, TC~1~ |- forInitStatement^{asterisk}^ : TC~2~ forInitStatementIR^{asterisk}^>>.
+. Let <<ForInitStmtList_ok, TC~1~ |- forInitStatementList : TC~2~ forInitStatementIR^{asterisk}^>>.
 . Let 
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
 . Check that ``BOOL`` is equal to <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
-. Let ``forUpdateStatement^{asterisk}^`` be ``<<flatten_forUpdateStatementList,`` ``flatten_forUpdateStatementList(forUpdateStatementList)>>``.
-. Let ``forUpdateStatementIR^{asterisk}^`` be the list of ``forUpdateStatementIR``, obtained by repeating:
-+
---
- ** Let <<ForUpdateStmt_ok, TC~2~ |- forUpdateStatement : forUpdateStatementIR>>.
---
-+
-for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
+. Let <<ForUpdateStmtList_ok, TC~2~ |- forUpdateStatementList : forUpdateStatementIR^{asterisk}^>>.
 . Let 
 * the typing context ``TC~3~``,the abstract control flow ``f~post~``,and the typed statement ``statementIR`` be
 * the result of <<Stmt_ok, typing ``statement'``, under cursor ``LOCAL``, typing context ``TC~2~``, abstract control flow ``f``, and loop context ``LOOP``>>.
@@ -7830,8 +7729,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Let ``TABLE_ENUM`` ``typeId~table_enum~`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeIR``.
 . Let ``text`` be <<strip_suffix, the text ``typeId~table_enum~`` with the suffix ``")"`` removed>>.
 . Let ``typeId~table~`` be <<strip_prefix, the text ``text`` with the prefix ``"action_list("`` removed>>.
-. Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
-. Let <<SwitchCases_table_ok, TC f l typeId~table~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Let <<SwitchCaseList_table_ok, TC f l typeId~table~ |- switchCaseList : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
 . Check that <<distinct_, the elements of ``switchLabel^{asterisk}^`` are distinct>>.
 . Let ``switchStatementIR`` be ``SWITCH`` ``(`` ``typedExpressionIR~switch~`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``.
 . Result in 
@@ -7846,8 +7744,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~switch~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR~switch~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~switch~``>>.
 . Check that ``<<compat_switch,`` ``compat_switch(typeIR~switch~)>>``.
-. Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
-. Let <<SwitchCases_general_ok, TC f l typeIR~switch~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Let <<SwitchCaseList_general_ok, TC f l typeIR~switch~ |- switchCaseList : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
 . Check that <<distinct_, the elements of ``switchLabel^{asterisk}^`` are distinct>>.
 . Let ``switchStatementIR`` be ``SWITCH`` ``(`` ``typedExpressionIR~switch~`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``.
 . Result in 
@@ -7907,32 +7804,24 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the abstract control flow ``f~post~``,
 * and the typed block element statement ``statementIR``.
 
-<<BlockElementStmts_ok, BlockElementStmts_ok>>:
+<<BlockElementStmtList_ok, BlockElementStmtList_ok>>:
 
-* Typing ``blockElementStatement^{asterisk}^``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
+* Typing ``blockElementStatementList``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
 * Results in 
  ** the typing context ``typingContext'``,
  ** the abstract control flow ``flow'``,
  ** and the typed block element statements ``blockElementStatementIR^{asterisk}^``.
 
-<<BlockElementStmts_ok, Typing ``blockElementStatement^{asterisk}^``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``l``>>:
+<<BlockElementStmtList_ok, Typing ``blockElementStatementList``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>:
 
-. If ``blockElementStatement^{asterisk}^`` is equal to ``·``:
- .. Result in 
-* the typing context ``typingContext``,
-* the abstract control flow ``flow``,
-* and the typed block element statements ``·``.
-. If let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``:
- .. Let 
-* the typing context ``TC~1~``,the abstract control flow ``f~1~``,and the typed block element statement ``blockElementStatementIR~h~`` be
-* the result of <<BlockElementStmt_ok, typing ``blockElementStatement~h~``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``l``>>.
- .. Let 
-* the typing context ``TC~2~``,the abstract control flow ``f~2~``,and the typed block element statements ``blockElementStatementIR~t~^{asterisk}^`` be
-* the result of <<BlockElementStmts_ok, typing ``blockElementStatement~t~^{asterisk}^``, under typing context ``TC~1~``, abstract control flow ``f~1~``, and loop context ``l``>>.
- .. Result in 
-* the typing context ``TC~2~``,
-* the abstract control flow ``f~2~``,
-* and the typed block element statements ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^``.
+. Let ``blockElementStatement^{asterisk}^`` be <<flatten_blockElementStatementList, the list of block element statements in ``blockElementStatementList``>>.
+. Let 
+* the typing context ``TC~1~``,the abstract control flow ``f~post~``,and the typed block element statements ``blockElementStatementIR^{asterisk}^`` be
+* the result of <<BlockElementStmts_ok, typing ``blockElementStatement^{asterisk}^``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>.
+. Result in 
+* the typing context ``TC~1~``,
+* the abstract control flow ``f~post~``,
+* and the typed block element statements ``blockElementStatementIR^{asterisk}^``.
 
 <<Block_ok, Block_ok>>:
 
@@ -7944,10 +7833,9 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 <<Block_ok, Typing ``annotationList`` ``{`` ``blockElementStatementList`` ``}``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>:
 
-. Let ``blockElementStatement^{asterisk}^`` be <<flatten_blockElementStatementList, the list of block element statements in ``blockElementStatementList``>>.
 . Let 
 * the typing context ``TC~1~``,the abstract control flow ``f~post~``,and the typed block element statements ``blockElementStatementIR^{asterisk}^`` be
-* the result of <<BlockElementStmts_ok, typing ``blockElementStatement^{asterisk}^``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>.
+* the result of <<BlockElementStmtList_ok, typing ``blockElementStatementList``, under typing context ``TC~0~``, abstract control flow ``f``, and loop context ``l``>>.
 . Let ``blockStatementIR`` be ``annotationList`` ``{`` ``blockElementStatementIR^{asterisk}^`` ``}``.
 . Result in 
 * the typing context ``TC~1~``,
@@ -7987,46 +7875,30 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``value~init~`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC``>>.
  .. Result in the parameter ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``=`` ``value~init~`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
-<<Parameters_ok, Parameters_ok>>:
+<<ParameterList_ok, ParameterList_ok>>:
 
-* Typing ``parameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``:
+* Typing ``parameterList``, under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
 
-<<Parameters_ok, Typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
+<<ParameterList_ok, Typing ``parameterList``, under cursor ``p`` and typing context ``TC``>>:
 
-. If ``parameter^{asterisk}^`` is equal to ``·``:
- .. Result in the parameter list ``·`` and a set of fresh type variables ``·``.
-. If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
- .. Let 
-* the parameter ``parameterIR~h~`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
-* the result of <<Parameter_ok, typing ``parameter~h~``, under cursor ``p`` and typing context ``TC``>>.
- .. Let 
-* the parameter list ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
- .. Result in the parameter list ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` ``{pp}`` ``typeId~fresh_t~^{asterisk}^``.
-
-<<ConstructorParameter_ok, ConstructorParameter_ok>>:
-
-* Typing ``constructorParameter``, under cursor ``cursor`` and typing context ``typingContext``:
-* Results in the constructor parameter ``constructorParameterIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
-
-<<ConstructorParameter_ok, Typing ``constructorParameter``, under cursor ``p`` and typing context ``TC``>>:
-
+. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
-* the parameter ``constructorParameterIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Parameter_ok, typing ``constructorParameter``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the constructor parameter ``constructorParameterIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+* the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+. Result in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
-<<ConstructorParameters_ok, ConstructorParameters_ok>>:
+<<ConstructorParameterListOpt_ok, ConstructorParameterListOpt_ok>>:
 
-* Typing ``constructorParameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``:
+* Typing ``constructorParameterListOpt`` under typing context ``typingContext``:
 * Results in the constructor parameter list ``constructorParameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
 
-<<ConstructorParameters_ok, Typing ``constructorParameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
+<<ConstructorParameterListOpt_ok, Typing ``constructorParameterListOpt`` under typing context ``TC``>>:
 
+. Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
 . Let 
 * the parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+* the result of <<Parameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC``>>.
 . Result in the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ExternMethod_ok, ExternMethod_ok>>:
@@ -8052,10 +7924,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be ``TC~1~[LOCAL.KIND`` ``=`` ``EXTERN_METHOD`` ``:`` ``typeIR~ret~]``.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
 . Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
 . Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
@@ -8082,10 +7953,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be ``TC~1~[LOCAL.KIND`` ``=`` ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~]``.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
 . Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``ABSTRACT`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
 . Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
@@ -8121,10 +7991,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 . Let ``nameIR`` be <<name, the name of ``typeIdentifier``>>.
 . Check that ``nameIR`` is equal to ``typeId~extern~``.
-. Let ``constructorParameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<ConstructorParameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
+* the result of <<ConstructorParameterListOpt_ok, typing ``(`` ``parameterList`` ``)`` under typing context ``TC~0~``>>.
 . Let ``typeDefIR'`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``typeId~extern~`` in the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that ``typeDefIR'`` has type ``externObjectTypeDefIR``.
 . Let ``externObjectTypeDefIR`` be ``typeDefIR'``.
@@ -8274,11 +8143,10 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 
 <<ParserStmt_ok, Typing ``annotationList`` ``{`` ``parserStatementList`` ``}``, under typing context ``TC~0~``>>:
 
-. Let ``parserStatement'^{asterisk}^`` be <<flatten_parserStatementList, the list of parser statements in ``parserStatementList``>>.
 . Let ``TC~1~`` be ``<<enter_t,`` ``enter_t(TC~0~)>>``.
 . Let 
 * the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR^{asterisk}^`` be
-* the result of <<ParserStmts_ok, typing ``parserStatement'^{asterisk}^``, under typing context ``TC~1~``>>.
+* the result of <<ParserStmtList_ok, typing ``parserStatementList``, under typing context ``TC~1~``>>.
 . Let ``parserBlockStatementIR`` be ``annotationList`` ``{`` ``parserStatementIR^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~1~`` and the typed parser statement ``parserBlockStatementIR``.
 
@@ -8309,23 +8177,18 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 * the result of <<ParserStmt_ok, typing ``parserStatement~else~``, under typing context ``TC~0~``>>.
  .. Result in the updated typing context ``TC~0~`` and the typed parser statement ``IF`` ``(`` ``typedExpressionIR~cond~`` ``)`` ``parserStatementIR~then~`` ``ELSE`` ``parserStatementIR~else~``.
 
-<<ParserStmts_ok, ParserStmts_ok>>:
+<<ParserStmtList_ok, ParserStmtList_ok>>:
 
-* Typing ``parserStatement^{asterisk}^``, under typing context ``typingContext``:
+* Typing ``parserStatementList``, under typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and the typed parser statements ``parserStatementIR^{asterisk}^``.
 
-<<ParserStmts_ok, Typing ``parserStatement^{asterisk}^``, under typing context ``typingContext``>>:
+<<ParserStmtList_ok, Typing ``parserStatementList``, under typing context ``TC~0~``>>:
 
-. If ``parserStatement^{asterisk}^`` is equal to ``·``:
- .. Result in the updated typing context ``typingContext`` and the typed parser statements ``·``.
-. If let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``:
- .. Let 
-* the updated typing context ``TC~1~`` and the typed parser statement ``parserStatementIR~h~`` be
-* the result of <<ParserStmt_ok, typing ``parserStatement~h~``, under typing context ``typingContext``>>.
- .. Let 
-* the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR~t~^{asterisk}^`` be
-* the result of <<ParserStmts_ok, typing ``parserStatement~t~^{asterisk}^``, under typing context ``TC~1~``>>.
- .. Result in the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^``.
+. Let ``parserStatement^{asterisk}^`` be <<flatten_parserStatementList, the list of parser statements in ``parserStatementList``>>.
+. Let 
+* the updated typing context ``TC~1~`` and the typed parser statements ``parserStatementIR^{asterisk}^`` be
+* the result of <<ParserStmts_ok, typing ``parserStatement^{asterisk}^``, under typing context ``TC~0~``>>.
+. Result in the updated typing context ``TC~1~`` and the typed parser statements ``parserStatementIR^{asterisk}^``.
 
 <<ParserState_ok, ParserState_ok>>:
 
@@ -8346,13 +8209,14 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 . Let ``parserStateIR`` be ``annotationList`` ``STATE`` ``nameIR`` ``{`` ``parserStatementIR^{asterisk}^`` ``transitionStatementIR`` ``}``.
 . Result in the typed parser state ``parserStateIR``.
 
-<<ParserStates_ok, ParserStates_ok>>:
+<<ParserStateList_ok, ParserStateList_ok>>:
 
-* Typing ``parserState^{asterisk}^``, under typing context ``typingContext``:
+* Typing ``parserStateList``, under typing context ``typingContext``:
 * Results in the typed parser states ``parserStateIR^{asterisk}^``.
 
-<<ParserStates_ok, Typing ``parserState^{asterisk}^``, under typing context ``TC``>>:
+<<ParserStateList_ok, Typing ``parserStateList``, under typing context ``TC``>>:
 
+. Let ``parserState^{asterisk}^`` be <<flatten_parserStateList, the list of parser states in ``parserStateList``>>.
 . Let ``name~state~^{asterisk}^`` be the list of ``name~state~``, obtained by repeating:
 +
 --
@@ -8426,23 +8290,18 @@ for each ``parserState`` in ``parserState^{asterisk}^``
 . Let ``valueSetDeclarationIR`` be ``annotationList`` ``VALUE_SET`` ``<`` ``typeIR`` ``>`` ``(`` ``typedExpressionIR`` ``)`` ``nameIR`` ``;``.
 . Result in the updated typing context ``TC~1~`` and the typed parser local declaration ``valueSetDeclarationIR``.
 
-<<ParserLocalDecls_ok, ParserLocalDecls_ok>>:
+<<ParserLocalDeclList_ok, ParserLocalDeclList_ok>>:
 
-* Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``typingContext``:
+* Typing ``parserLocalDeclarationList``, under typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^``.
 
-<<ParserLocalDecls_ok, Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``typingContext``>>:
+<<ParserLocalDeclList_ok, Typing ``parserLocalDeclarationList``, under typing context ``TC~0~``>>:
 
-. If ``parserLocalDeclaration^{asterisk}^`` is equal to ``·``:
- .. Result in the updated typing context ``typingContext`` and the typed parser local declarations ``·``.
-. If let ``parserLocalDeclaration~h~`` ``{two-colons}`` ``parserLocalDeclaration~t~^{asterisk}^`` be ``parserLocalDeclaration^{asterisk}^``:
- .. Let 
-* the updated typing context ``TC~1~`` and the typed parser local declaration ``parserLocalDeclarationIR~h~`` be
-* the result of <<ParserLocalDecl_ok, typing ``parserLocalDeclaration~h~``, under typing context ``typingContext``>>.
- .. Let 
-* the updated typing context ``TC~2~`` and the typed parser local declarations ``parserLocalDeclarationIR~t~^{asterisk}^`` be
-* the result of <<ParserLocalDecls_ok, typing ``parserLocalDeclaration~t~^{asterisk}^``, under typing context ``TC~1~``>>.
- .. Result in the updated typing context ``TC~2~`` and the typed parser local declarations ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationIR~t~^{asterisk}^``.
+. Let ``parserLocalDeclaration^{asterisk}^`` be <<flatten_parserLocalDeclarationList, the list of parser local declarations in ``parserLocalDeclarationList``>>.
+. Let 
+* the updated typing context ``TC~1~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
+* the result of <<ParserLocalDecls_ok, typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``TC~0~``>>.
+. Result in the updated typing context ``TC~1~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^``.
 
 <<TableKey_ok, TableKey_ok>>:
 
@@ -8635,13 +8494,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If let ``NOPRILPM`` ``n`` be ``matchMode``:
  .. Let ``TBLS`` be ``LPM`` ``n``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[DEFAULT]`` ``)``.
-. If ``TBLC.MODE`` is ``NOPRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[DEFAULT]`` ``)``.
-. Else if ``TBLC.MODE`` is ``PRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[DEFAULT]`` ``)``.
-. Else if ``TBLC.MODE`` is ``PRILPM``:
+. If ``TBLC.MODE`` ``=`` ``NOPRI`` ``\/`` ``TBLC.MODE`` ``=`` ``PRI`` *or* ``TBLC.MODE`` ``=`` ``PRILPM``:
  .. Let ``TBLS`` be ``NOLPM``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[DEFAULT]`` ``)``.
 
@@ -8651,13 +8504,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
  .. Let ``TBLS`` be ``LPM`` ``0``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[_]`` ``)``.
-. If ``TBLC.MODE`` is ``NOPRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[_]`` ``)``.
-. Else if ``TBLC.MODE`` is ``PRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[_]`` ``)``.
-. Else if ``TBLC.MODE`` is ``PRILPM``:
+. If ``TBLC.MODE`` ``=`` ``NOPRI`` ``\/`` ``TBLC.MODE`` ``=`` ``PRI`` *or* ``TBLC.MODE`` ``=`` ``PRILPM``:
  .. Let ``TBLS`` be ``NOLPM``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``(`` ``[_]`` ``)``.
 
@@ -8691,13 +8538,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If let ``NOPRILPM`` ``n`` be ``matchMode``:
  .. Let ``TBLS`` be ``LPM`` ``n``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``DEFAULT``.
-. If ``TBLC.MODE`` is ``NOPRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``DEFAULT``.
-. Else if ``TBLC.MODE`` is ``PRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``DEFAULT``.
-. Else if ``TBLC.MODE`` is ``PRILPM``:
+. If ``TBLC.MODE`` ``=`` ``NOPRI`` ``\/`` ``TBLC.MODE`` ``=`` ``PRI`` *or* ``TBLC.MODE`` ``=`` ``PRILPM``:
  .. Let ``TBLS`` be ``NOLPM``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``DEFAULT``.
 
@@ -8707,13 +8548,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
  .. Let ``TBLS`` be ``LPM`` ``0``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``_``.
-. If ``TBLC.MODE`` is ``NOPRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``_``.
-. Else if ``TBLC.MODE`` is ``PRI``:
- .. Let ``TBLS`` be ``NOLPM``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``_``.
-. Else if ``TBLC.MODE`` is ``PRILPM``:
+. If ``TBLC.MODE`` ``=`` ``NOPRI`` ``\/`` ``TBLC.MODE`` ``=`` ``PRI`` *or* ``TBLC.MODE`` ``=`` ``PRILPM``:
  .. Let ``TBLS`` be ``NOLPM``.
  .. Result in the updated table context ``TBLS`` and the typed keyset expression ``_``.
 
@@ -8762,35 +8597,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that ``TBLS`` matches pattern ``LPM`` ``%``.
  .. Let ``LPM`` ``n~prefix~`` be ``TBLS``.
  .. Result in the updated table context ``tableContext`` and the typed table entry priority ``PRIORITY`` ``=`` ``D`` ``n~prefix~`` ``:``.
-. If ``tableContext.MODE`` is ``PRI``:
- .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
-  ... If ``tableContext.PRIORITIES.LARGEST_WINS``:
-   .... Let ``n~size~`` be ``tableContext.ENTRIES.SIZE``.
-   .... Let ``n~delta~`` be ``tableContext.PRIORITIES.DELTA``.
-   .... Let ``int`` be ``n~size~`` ``-`` ``1`` ``*`` ``n~delta~`` ``+`` ``1``.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n`` be ``int``.
-   .... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``D`` ``n`` ``:``.
-  ... Else:
-   .... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``1)>>``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``D`` ``1`` ``:``.
- .. Else:
-  ... If ``tableContext.PRIORITIES.LARGEST_WINS``:
-   .... Let ``n~last~`` be ``<<find_table_priority_last,`` ``find_table_priority_last(tableContext)>>``.
-   .... Let ``n~delta~`` be ``tableContext.PRIORITIES.DELTA``.
-   .... Let ``int`` be ``n~last~`` ``-`` ``n~delta~``.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n`` be ``int``.
-   .... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``D`` ``n`` ``:``.
-  ... Else:
-   .... Let ``n~last~`` be ``<<find_table_priority_last,`` ``find_table_priority_last(tableContext)>>``.
-   .... Let ``n~delta~`` be ``tableContext.PRIORITIES.DELTA``.
-   .... Let ``n`` be ``n~last~`` ``+`` ``n~delta~``.
-   .... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``D`` ``n`` ``:``.
-. Else if ``tableContext.MODE`` is ``PRILPM``:
+. If ``tableContext.MODE`` ``=`` ``PRI`` *or* ``tableContext.MODE`` ``=`` ``PRILPM``:
  .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
   ... If ``tableContext.PRIORITIES.LARGEST_WINS``:
    .... Let ``n~size~`` be ``tableContext.ENTRIES.SIZE``.
@@ -8821,101 +8628,55 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 <<TableEntry_priority_ok, Typing ``PRIORITY`` ``=`` ``integerLiteral`` ``:``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``>>:
 
-. If ``tableContext.MODE`` is ``PRI``:
- .. Check that ``~tableContext.ENTRIES.CONST``.
- .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
-  ... Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
- .. Else:
-  ... Check that ``tableContext.PRIORITIES.INIT``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
-. Else if ``tableContext.MODE`` is ``PRILPM``:
- .. Check that ``~tableContext.ENTRIES.CONST``.
- .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
-  ... Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
- .. Else:
-  ... Check that ``tableContext.PRIORITIES.INIT``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
+. Check that ``tableContext.MODE`` ``=`` ``PRI`` *or* ``tableContext.MODE`` ``=`` ``PRILPM``.
+. Check that ``~tableContext.ENTRIES.CONST``.
+. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
+ .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n`` be ``int``.
+ .. Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
+ .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
+ .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
+. Else:
+ .. Check that ``tableContext.PRIORITIES.INIT``.
+ .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n`` be ``int``.
+ .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
+ .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
 
 <<TableEntry_priority_ok, Typing ``PRIORITY`` ``=`` ``(`` ``expression`` ``)`` ``:``, under typing context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``>>:
 
-. If ``tableContext.MODE`` is ``PRI``:
- .. Check that ``~tableContext.ENTRIES.CONST``.
- .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
-  ... Let 
+. Check that ``tableContext.MODE`` ``=`` ``PRI`` *or* ``tableContext.MODE`` ``=`` ``PRILPM``.
+. Check that ``~tableContext.ENTRIES.CONST``.
+. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
+ .. Let 
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
-  ... Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
- .. Else:
-  ... Check that ``tableContext.PRIORITIES.INIT``.
-  ... Let 
+ .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
+ .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue`` be ``value``.
+ .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n`` be ``int``.
+ .. Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
+ .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
+ .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
+. Else:
+ .. Check that ``tableContext.PRIORITIES.INIT``.
+ .. Let 
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
-. Else if ``tableContext.MODE`` is ``PRILPM``:
- .. Check that ``~tableContext.ENTRIES.CONST``.
- .. If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
-  ... Let 
-* ``typedExpressionIR`` be
-* the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``tableContext[PRIORITIES.INIT`` ``=`` ``true]``.
-  ... Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
- .. Else:
-  ... Check that ``tableContext.PRIORITIES.INIT``.
-  ... Let 
-* ``typedExpressionIR`` be
-* the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
+ .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
+ .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue`` be ``value``.
+ .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n`` be ``int``.
+ .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
+ .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
 
 <<TableEntry_ok, TableEntry_ok>>:
 
@@ -9021,18 +8782,10 @@ for each ``argument`` in ``argument^{asterisk}^``
 * ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
- .. If <<is_arbitraryIntTypeIR, ``typeIR`` with typedefs unrolled is int type>>:
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
-  ... Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
- .. If <<is_fixedIntTypeIR, ``typeIR`` with typedefs unrolled is fixed-width int type>>:
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
-  ... Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
- .. If <<is_fixedBitTypeIR, ``typeIR`` with typedefs unrolled is fixed-width bit type>>:
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
-  ... Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
+ .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` *or* ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
+ .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
+ .. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
 . If ``"largest_priority_wins"`` is equal to <<tableCustomName, the name of ``tableCustomName'``>>:
  .. Let 
 * ``typedExpressionIR`` be
@@ -9053,42 +8806,18 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
- .. If <<is_arbitraryIntTypeIR, ``typeIR`` with typedefs unrolled is int type>>:
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~delta~`` be ``int``.
-  ... Check that ``n~delta~`` is greater than ``0``.
-  ... Let ``TBLC~1~`` be ``TBLC~0~[PRIORITIES.DELTA`` ``=`` ``n~delta~]``.
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ``D`` ``n~delta~`` ``;``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
- .. If <<is_fixedIntTypeIR, ``typeIR`` with typedefs unrolled is fixed-width int type>>:
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~delta~`` be ``int``.
-  ... Check that ``n~delta~`` is greater than ``0``.
-  ... Let ``TBLC~1~`` be ``TBLC~0~[PRIORITIES.DELTA`` ``=`` ``n~delta~]``.
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ``D`` ``n~delta~`` ``;``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
- .. If <<is_fixedBitTypeIR, ``typeIR`` with typedefs unrolled is fixed-width bit type>>:
-  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
-  ... Check that ``value`` has type ``integerValue``.
-  ... Let ``integerValue`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~delta~`` be ``int``.
-  ... Check that ``n~delta~`` is greater than ``0``.
-  ... Let ``TBLC~1~`` be ``TBLC~0~[PRIORITIES.DELTA`` ``=`` ``n~delta~]``.
-  ... Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
-  ... Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ``D`` ``n~delta~`` ``;``.
-  ... Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
+ .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` *or* ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue`` be ``value``.
+ .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~delta~`` be ``int``.
+ .. Check that ``n~delta~`` is greater than ``0``.
+ .. Let ``TBLC~1~`` be ``TBLC~0~[PRIORITIES.DELTA`` ``=`` ``n~delta~]``.
+ .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
+ .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ``D`` ``n~delta~`` ``;``.
+ .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
 . Let ``nameIR`` be <<tableCustomName, the name of ``tableCustomName'``>>.
 . If ``nameIR`` ``=/=`` ``"size"`` ``/\`` ``nameIR`` ``=/=`` ``"largest_priority_wins"`` *and* ``nameIR`` ``=/=`` ``"priority_delta"``:
  .. Let 
@@ -9228,23 +8957,18 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``tableDeclarationIR`` be ``annotationList`` ``TABLE`` ``typeIR~table~`` ``nameIR`` ``{`` ``tablePropertyIR^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~3~`` and the typed control local declaration ``tableDeclarationIR``.
 
-<<ControlLocalDecls_ok, ControlLocalDecls_ok>>:
+<<ControlLocalDeclList_ok, ControlLocalDeclList_ok>>:
 
-* Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``typingContext``:
+* Typing ``controlLocalDeclarationList``, under typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^``.
 
-<<ControlLocalDecls_ok, Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``typingContext``>>:
+<<ControlLocalDeclList_ok, Typing ``controlLocalDeclarationList``, under typing context ``TC~0~``>>:
 
-. If ``controlLocalDeclaration^{asterisk}^`` is equal to ``·``:
- .. Result in the updated typing context ``typingContext`` and the typed control local declarations ``·``.
-. If let ``controlLocalDeclaration~h~`` ``{two-colons}`` ``controlLocalDeclaration~t~^{asterisk}^`` be ``controlLocalDeclaration^{asterisk}^``:
- .. Let 
-* the updated typing context ``TC~1~`` and the typed control local declaration ``controlLocalDeclarationIR~h~`` be
-* the result of <<ControlLocalDecl_ok, typing ``controlLocalDeclaration~h~``, under typing context ``typingContext``>>.
- .. Let 
-* the updated typing context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~t~^{asterisk}^`` be
-* the result of <<ControlLocalDecls_ok, typing ``controlLocalDeclaration~t~^{asterisk}^``, under typing context ``TC~1~``>>.
- .. Result in the updated typing context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationIR~t~^{asterisk}^``.
+. Let ``controlLocalDeclaration^{asterisk}^`` be <<flatten_controlLocalDeclarationList, the list of control local declarations in ``controlLocalDeclarationList``>>.
+. Let 
+* the updated typing context ``TC~1~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
+* the result of <<ControlLocalDecls_ok, typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``TC~0~``>>.
+. Result in the updated typing context ``TC~1~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^``.
 
 <<VarDecl_ok, VarDecl_ok>>:
 
@@ -9316,34 +9040,26 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 
 . If let ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``;`` be ``instantiation``:
  .. If let ``prefixedTypeName`` be ``type``:
-  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
   ... Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
-* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``·`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ```EMPTY`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
   ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
  .. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
-  ... Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
-  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
   ... Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
-* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+* the result of <<InstDecl_non_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>.
   ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 . Else:
  .. Let ``annotationList`` ``type`` ``(`` ``argumentList`` ``)`` ``name`` ``=`` ``{`` ``objectDeclarationList`` ``}`` ``;`` be ``instantiation``.
  .. If let ``prefixedTypeName`` be ``type``:
-  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
-  ... Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
   ... Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
-* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``·`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ```EMPTY`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` = ``{`` ``objectDeclarationList`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
   ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
  .. Else if let ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` be ``type``:
-  ... Let ``typeArgument^{asterisk}^`` be <<flatten_typeArgumentList, the list of type arguments in ``typeArgumentList``>>.
-  ... Let ``argument^{asterisk}^`` be <<flatten_argumentList, the list of arguments in ``argumentList``>>.
-  ... Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
   ... Let 
 * the updated typing context ``TC~1~`` and ``instantiationIR`` be
-* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
+* the result of <<InstDecl_objectInitializer_ok, typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` = ``{`` ``objectDeclarationList`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>.
   ... Result in the updated typing context ``TC~1~`` and ``instantiationIR``.
 
 <<FuncDecl_ok, FuncDecl_ok>>:
@@ -9353,46 +9069,30 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 
 <<FuncDecl_ok, Typing ``annotationList`` ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``blockStatement``, under cursor ``p`` and typing context ``TC~0~``>>:
 
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~0~``>>.
+. Let 
+* the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
 . Let 
 * ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Let ``TC~2~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~1~``>>.
 . Let ``TC~3~`` be ``TC~2~[LOCAL.KIND`` ``=`` ``FUNCTION`` ``:`` ``typeIR~ret~]``.
 . Let 
 * the typing context ``++_++``,the abstract control flow ``f``,and the typed block statement ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~3~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
-. If ``f`` is ``RET``:
- .. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
- .. Let ``definedFunctionTypeDefIR`` be ``FUNCTION`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
- .. Check that <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
- .. Let ``TC~4~`` be <<add_callableDef_overload_t, ``TC~0~`` where ``callableId`` to ``definedFunctionTypeDefIR`` is added as an overloaded callable to the ``p`` layer>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
- .. Result in the updated typing context ``TC~4~`` and ``functionDeclarationIR``.
-. If ``typeIR~ret~`` is equal to ``VOID``:
- .. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
- .. Let ``definedFunctionTypeDefIR`` be ``FUNCTION`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
- .. Check that <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
- .. Let ``TC~4~`` be <<add_callableDef_overload_t, ``TC~0~`` where ``callableId`` to ``definedFunctionTypeDefIR`` is added as an overloaded callable to the ``p`` layer>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
- .. Result in the updated typing context ``TC~4~`` and ``functionDeclarationIR``.
+. Check that ``f`` ``=`` ``RET`` *or* ``typeIR~ret~`` ``=`` ``VOID``.
+. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
+. Let ``definedFunctionTypeDefIR`` be ``FUNCTION`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
+. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
+. Check that <<CallableTypeDef_wf, ``definedFunctionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
+. Let ``TC~4~`` be <<add_callableDef_overload_t, ``TC~0~`` where ``callableId`` to ``definedFunctionTypeDefIR`` is added as an overloaded callable to the ``p`` layer>>.
+. Let ``nameIR`` be <<name, the name of ``name``>>.
+. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
+. Result in the updated typing context ``TC~4~`` and ``functionDeclarationIR``.
 
 <<ActionDecl_ok, ActionDecl_ok>>:
 
@@ -9402,10 +9102,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 <<ActionDecl_ok, Typing ``annotationList`` ``ACTION`` ``name`` ``(`` ``parameterList`` ``)`` ``blockStatement``, under cursor ``p`` and typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[LOCAL.KIND`` ``=`` ``ACTION]``.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~1~``>>.
 . Let 
@@ -9518,24 +9217,17 @@ for each ``value~match_kind~`` in ``value~match_kind~^{asterisk}^``
 
 <<Decl_ok, Typing ``annotationList`` ``EXTERN`` ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~0~``>>.
+. Let 
+* the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
 . Let 
 * ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be ``TC~1~[LOCAL.KIND`` ``=`` ``EXTERN_FUNCTION`` ``:`` ``typeIR~ret~]``.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
 . Let ``externFunctionTypeDefIR`` be ``EXTERN_FUNCTION`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
@@ -9549,15 +9241,9 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 . Let ``(externConstructorPrototype^{asterisk}^,`` ``externMethodPrototype^{asterisk}^)`` be <<split_externConstructorOrMethodPrototypeList, ``externConstructorOrMethodPrototypeList`` split into constructors and methods>>.
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``EXTERN]``.
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~2~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
+. Let 
+* the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 . Let ``nameIR`` be <<name, the name of ``nonTypeName``>>.
 . Let 
 * the updated typing context ``TC~3~`` and the typed method prototypes ``externMethodPrototypeIR^{asterisk}^`` be
@@ -9585,27 +9271,23 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 <<Decl_ok, Typing ``annotationList`` ``PARSER`` ``name`` ```EMPTY`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``parserLocalDeclarationList`` ``parserStateList`` ``}`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``PARSER]``.
-. Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
 . Let 
 * the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<ConstructorParameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
+* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be <<add_parameters_t, ``constructorParameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Check that ``typeId'^{asterisk}^`` is an empty list.
 . Let ``TC~3~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~2~``>>.
-. Let ``parserLocalDeclaration^{asterisk}^`` be <<flatten_parserLocalDeclarationList, the list of parser local declarations in ``parserLocalDeclarationList``>>.
 . Let 
 * the updated typing context ``TC~4~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
-* the result of <<ParserLocalDecls_ok, typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``TC~3~``>>.
+* the result of <<ParserLocalDeclList_ok, typing ``parserLocalDeclarationList``, under typing context ``TC~3~``>>.
 . Let ``TC~5~`` be ``TC~4~[LOCAL.KIND`` ``=`` ``PARSER_STATE]``.
-. Let ``parserState^{asterisk}^`` be <<flatten_parserStateList, the list of parser states in ``parserStateList``>>.
 . Let 
 * the typed parser states ``parserStateIR^{asterisk}^`` be
-* the result of <<ParserStates_ok, typing ``parserState^{asterisk}^``, under typing context ``TC~5~``>>.
+* the result of <<ParserStateList_ok, typing ``parserStateList``, under typing context ``TC~5~``>>.
 . Let ``callableTypeDefIR`` be ``PARSER_APPLY`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
@@ -9622,22 +9304,19 @@ for each ``callableTypeDefIR`` in ``callableTypeDefIR^{asterisk}^``
 <<Decl_ok, Typing ``annotationList`` ``CONTROL`` ``name`` ```EMPTY`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``controlLocalDeclarationList`` ``APPLY`` ``controlBody`` ``}`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``CONTROL]``.
-. Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
 . Let 
 * the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<ConstructorParameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
+* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let ``TC~2~`` be <<add_parameters_t, ``constructorParameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Check that ``typeId'^{asterisk}^`` is an empty list.
 . Let ``TC~3~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~2~``>>.
-. Let ``controlLocalDeclaration^{asterisk}^`` be <<flatten_controlLocalDeclarationList, the list of control local declarations in ``controlLocalDeclarationList``>>.
 . Let 
 * the updated typing context ``TC~4~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
-* the result of <<ControlLocalDecls_ok, typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``TC~3~``>>.
+* the result of <<ControlLocalDeclList_ok, typing ``controlLocalDeclarationList``, under typing context ``TC~3~``>>.
 . Let ``TC~5~`` be ``TC~4~[LOCAL.KIND`` ``=`` ``CONTROL_APPLY_METHOD]``.
 . Let 
 * the typing context ``++_++``,the abstract control flow ``++_++``,and the typed block statement ``controlBodyIR`` be
@@ -9737,15 +9416,9 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 
 <<Decl_ok, Typing ``annotationList`` ``STRUCT`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~0~``>>.
+. Let 
+* the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~field~`` ``type~field~`` ``name~field~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
 . Let ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~`` and ``typeId~impl_field~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_field~^{asterisk}^``, obtained by repeating:
 +
@@ -9774,15 +9447,9 @@ for each ``name~field~`` in ``name~field~^{asterisk}^``
 
 <<Decl_ok, Typing ``annotationList`` ``HEADER`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~0~``>>.
+. Let 
+* the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~f~`` ``type~f~`` ``name~f~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
 . Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId~impl_f~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_f~^{asterisk}^``, obtained by repeating:
 +
@@ -9811,15 +9478,9 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 
 <<Decl_ok, Typing ``annotationList`` ``HEADER_UNION`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~1~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~0~``>>.
+. Let 
+* the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~f~`` ``type~f~`` ``name~f~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
 . Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId~impl_f~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_f~^{asterisk}^``, obtained by repeating:
 +
@@ -9912,19 +9573,12 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 <<Decl_ok, Typing ``annotationList`` ``PARSER`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``PARSER]``.
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~2~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
+. Let 
+* the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``parserObjectTypeDefIR`` be ``PARSER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
@@ -9936,19 +9590,12 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 <<Decl_ok, Typing ``annotationList`` ``CONTROL`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``CONTROL]``.
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~2~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
+. Let 
+* the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``controlObjectTypeDefIR`` be ``CONTROL`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
@@ -9960,19 +9607,12 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 <<Decl_ok, Typing ``annotationList`` ``PACKAGE`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``PACKAGE]``.
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~2~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let ``constructorParameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
+. Let 
+* the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 . Let 
 * the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<ConstructorParameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
+* the result of <<ConstructorParameterListOpt_ok, typing ``(`` ``parameterList`` ``)`` under typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``typeIR~package_inner~^{asterisk}^`` be the list of ``typeIR~package_inner~``, obtained by repeating:
 +
@@ -10035,16 +9675,11 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
-. If ``direction`` is ``OUT``:
- .. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~arg~``>>.
- .. Check that <<Type_alpha, ``typeIR~param~`` and ``typeIR~arg~`` are the same type>>.
- .. Check that <<Expr_lvalue_ok, p TC |- typedExpressionIR~arg~>>.
- .. Result in ``typedExpressionIR~arg~``.
-. Else if ``direction`` is ``INOUT``:
- .. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~arg~``>>.
- .. Check that <<Type_alpha, ``typeIR~param~`` and ``typeIR~arg~`` are the same type>>.
- .. Check that <<Expr_lvalue_ok, p TC |- typedExpressionIR~arg~>>.
- .. Result in ``typedExpressionIR~arg~``.
+. Check that ``direction`` ``=`` ``OUT`` *or* ``direction`` ``=`` ``INOUT``.
+. Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~arg~``>>.
+. Check that <<Type_alpha, ``typeIR~param~`` and ``typeIR~arg~`` are the same type>>.
+. Check that <<Expr_lvalue_ok, p TC |- typedExpressionIR~arg~>>.
+. Result in ``typedExpressionIR~arg~``.
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ```EMPTY`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
@@ -10965,6 +10600,24 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``expression`` be ``<<lvalue_to_expression,`` ``lvalue_to_expression(lvalue')>>``.
  .. Return ``(`` ``expression`` ``)``.
 
+<<Parameters_ok, Parameters_ok>>:
+
+* Typing ``parameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``:
+* Results in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
+
+<<Parameters_ok, Typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
+
+. If ``parameter^{asterisk}^`` is equal to ``·``:
+ .. Result in the parameter list ``·`` and a set of fresh type variables ``·``.
+. If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
+ .. Let 
+* the parameter ``parameterIR~h~`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
+* the result of <<Parameter_ok, typing ``parameter~h~``, under cursor ``p`` and typing context ``TC``>>.
+ .. Let 
+* the parameter list ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
+* the result of <<Parameters_ok, typing ``parameter~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
+ .. Result in the parameter list ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` ``{pp}`` ``typeId~fresh_t~^{asterisk}^``.
+
 <<compat_direct_application, compat_direct_application(typeIR'')>>:
 [cols="2", options="header"]
 |===
@@ -11006,6 +10659,20 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Check that ``assignop'`` is equal to ``assignop``.
 . Result in ``typedLvalueIR`` ``assignop`` ``typedExpressionIR``.
 
+<<ForUpdateStmtList_ok, ForUpdateStmtList_ok: ``TC`` ``|-`` ``forUpdateStatementList`` ``:`` ``%``>>
+
+<<ForUpdateStmtList_ok, ``TC`` ``|-`` ``forUpdateStatementList`` ``:`` ``%``>>:
+
+. Let ``forUpdateStatement^{asterisk}^`` be ``<<flatten_forUpdateStatementList,`` ``flatten_forUpdateStatementList(forUpdateStatementList)>>``.
+. Let ``forUpdateStatementIR^{asterisk}^`` be the list of ``forUpdateStatementIR``, obtained by repeating:
++
+--
+ ** Let <<ForUpdateStmt_ok, TC |- forUpdateStatement : forUpdateStatementIR>>.
+--
++
+for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
+. Result in ``forUpdateStatementIR^{asterisk}^``.
+
 <<ForInitStmt_ok, ForInitStmt_ok: ``TC~0~`` ``|-`` ``forInitStatement`` ``:`` ``%`` ``%``>>
 
 <<ForInitStmt_ok, ``TC~0~`` ``|-`` ``annotationList`` ``type`` ``name`` ``initializerOpt`` ``:`` ``%`` ``%``>>:
@@ -11043,17 +10710,24 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let <<ForUpdateStmt_ok, TC~0~ |- forUpdateStatement : forUpdateStatementIR>>.
 . Result in ``TC~0~`` and ``forUpdateStatementIR``.
 
-<<ForInitStmts_ok, ForInitStmts_ok: ``TC`` ``|-`` ``forInitStatement^{asterisk}^`` ``:`` ``%`` ``%``>>
+<<ForInitStmts_ok, ForInitStmts_ok: ``typingContext`` ``|-`` ``forInitStatement^{asterisk}^`` ``:`` ``%`` ``%``>>
 
-<<ForInitStmts_ok, ``TC`` ``|-`` ``·`` ``:`` ``%`` ``%``>>:
+<<ForInitStmts_ok, ``typingContext`` ``|-`` ``forInitStatement^{asterisk}^`` ``:`` ``%`` ``%``>>:
 
-. Result in ``TC`` and ``·``.
+. If ``forInitStatement^{asterisk}^`` is equal to ``·``:
+ .. Result in ``typingContext`` and ``·``.
+. If let ``forInitStatement~h~`` ``{two-colons}`` ``forInitStatement~t~^{asterisk}^`` be ``forInitStatement^{asterisk}^``:
+ .. Let <<ForInitStmt_ok, typingContext |- forInitStatement~h~ : TC~1~ forInitStatementIR~h~>>.
+ .. Let <<ForInitStmts_ok, TC~1~ |- forInitStatement~t~^{asterisk}^ : TC~2~ forInitStatementIR~t~^{asterisk}^>>.
+ .. Result in ``TC~2~`` and ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^``.
 
-<<ForInitStmts_ok, ``TC`` ``|-`` ``forInitStatement~h~`` ``{two-colons}`` ``forInitStatement~t~^{asterisk}^`` ``:`` ``%`` ``%``>>:
+<<ForInitStmtList_ok, ForInitStmtList_ok: ``TC~0~`` ``|-`` ``forInitStatementList`` ``:`` ``%`` ``%``>>
 
-. Let <<ForInitStmt_ok, TC |- forInitStatement~h~ : TC~1~ forInitStatementIR~h~>>.
-. Let <<ForInitStmts_ok, TC~1~ |- forInitStatement~t~^{asterisk}^ : TC~2~ forInitStatementIR~t~^{asterisk}^>>.
-. Result in ``TC~2~`` and ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^``.
+<<ForInitStmtList_ok, ``TC~0~`` ``|-`` ``forInitStatementList`` ``:`` ``%`` ``%``>>:
+
+. Let ``forInitStatement^{asterisk}^`` be ``<<flatten_forInitStatementList,`` ``flatten_forInitStatementList(forInitStatementList)>>``.
+. Let <<ForInitStmts_ok, TC~0~ |- forInitStatement^{asterisk}^ : TC~1~ forInitStatementIR^{asterisk}^>>.
+. Result in ``TC~1~`` and ``forInitStatementIR^{asterisk}^``.
 
 <<ForCollectionExpr_ok, ForCollectionExpr_ok: ``TC`` ``typeIR~var~`` ``|-`` ``forCollectionExpression`` ``:`` ``%``>>
 
@@ -11139,16 +10813,23 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 <<SwitchCases_table_ok, SwitchCases_table_ok: ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-<<SwitchCases_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``·`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+<<SwitchCases_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
 
-. Result in ``f``, ``·``, and ``·``.
+. If ``switchCase^{asterisk}^`` is equal to ``·``:
+ .. Result in ``f``, ``·``, and ``·``.
+. If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
+ .. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
+ .. Let <<SwitchCase_table_ok, TC f l typeId~table~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
+ .. Let <<SwitchCases_table_ok, TC f~h~ l typeId~table~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
+ .. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
 
-<<SwitchCases_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+<<SwitchCaseList_table_ok, SwitchCaseList_table_ok: ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
-. Let <<SwitchCase_table_ok, TC f l typeId~table~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
-. Let <<SwitchCases_table_ok, TC f~h~ l typeId~table~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
-. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
+<<SwitchCaseList_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+
+. Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
+. Let <<SwitchCases_table_ok, TC f l typeId~table~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Result in ``f~post~``, ``switchCaseIR^{asterisk}^``, and ``switchLabel^{asterisk}^``.
 
 <<SwitchLabel_general_ok, SwitchLabel_general_ok: ``TC`` ``typeIR`` ``bool`` ``|-`` ``switchLabel`` ``:`` ``%``>>
 
@@ -11186,16 +10867,23 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 <<SwitchCases_general_ok, SwitchCases_general_ok: ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-<<SwitchCases_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``·`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+<<SwitchCases_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
 
-. Result in ``f``, ``·``, and ``·``.
+. If ``switchCase^{asterisk}^`` is equal to ``·``:
+ .. Result in ``f``, ``·``, and ``·``.
+. If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
+ .. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
+ .. Let <<SwitchCase_general_ok, TC f l typeIR~switch~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
+ .. Let <<SwitchCases_general_ok, TC f~h~ l typeIR~switch~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
+ .. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
 
-<<SwitchCases_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+<<SwitchCaseList_general_ok, SwitchCaseList_general_ok: ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
-. Let <<SwitchCase_general_ok, TC f l typeIR~switch~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
-. Let <<SwitchCases_general_ok, TC f~h~ l typeIR~switch~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
-. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
+<<SwitchCaseList_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+
+. Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
+. Let <<SwitchCases_general_ok, TC f l typeIR~switch~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Result in ``f~post~``, ``switchCaseIR^{asterisk}^``, and ``switchLabel^{asterisk}^``.
 
 <<compat_switch, compat_switch(typeIR'')>>:
 [cols="2", options="header"]
@@ -11211,23 +10899,46 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 
 |===
 
+<<BlockElementStmts_ok, BlockElementStmts_ok>>:
+
+* Typing ``blockElementStatement^{asterisk}^``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
+* Results in 
+ ** the typing context ``typingContext'``,
+ ** the abstract control flow ``flow'``,
+ ** and the typed block element statements ``blockElementStatementIR^{asterisk}^``.
+
+<<BlockElementStmts_ok, Typing ``blockElementStatement^{asterisk}^``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``l``>>:
+
+. If ``blockElementStatement^{asterisk}^`` is equal to ``·``:
+ .. Result in 
+* the typing context ``typingContext``,
+* the abstract control flow ``flow``,
+* and the typed block element statements ``·``.
+. If let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``:
+ .. Let 
+* the typing context ``TC~1~``,the abstract control flow ``f~1~``,and the typed block element statement ``blockElementStatementIR~h~`` be
+* the result of <<BlockElementStmt_ok, typing ``blockElementStatement~h~``, under typing context ``typingContext``, abstract control flow ``flow``, and loop context ``l``>>.
+ .. Let 
+* the typing context ``TC~2~``,the abstract control flow ``f~2~``,and the typed block element statements ``blockElementStatementIR~t~^{asterisk}^`` be
+* the result of <<BlockElementStmts_ok, typing ``blockElementStatement~t~^{asterisk}^``, under typing context ``TC~1~``, abstract control flow ``f~1~``, and loop context ``l``>>.
+ .. Result in 
+* the typing context ``TC~2~``,
+* the abstract control flow ``f~2~``,
+* and the typed block element statements ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^``.
+
 <<InstDecl_non_objectInitializer_ok, InstDecl_non_objectInitializer_ok>>:
 
-* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``cursor`` and typing context ``typingContext``:
+* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` ; under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and ``instantiationIR``.
 
-<<InstDecl_non_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>:
+<<InstDecl_non_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` ; under cursor ``p`` and typing context ``TC~0~``>>:
 
 . Let 
 * ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
-. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
- ** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
 . Let 
 * ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
@@ -11247,46 +10958,30 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 . Let ``TC~1~`` be ``TC~0~[BLOCK.KIND`` ``=`` ``EXTERN]``.
 . Let ``TC~2~`` be ``TC~1~[BLOCK.FRAME`` ``=`` ``typeFrame]``.
-. Let ``typeParameter^{asterisk}^`` be <<flatten_typeParameterListOpt, the list of type parameters in ``typeParameterListOpt``>>.
-. Let ``typeId~expl~^{asterisk}^`` be the list of ``typeId~expl~``, obtained by repeating:
-+
---
- ** Let ``typeId~expl~`` be <<name, the name of ``typeParameter``>>.
---
-+
-for each ``typeParameter`` in ``typeParameter^{asterisk}^``
-. Let ``TC~3~`` be <<add_typeParameters_t, type parameters ``typeId~expl~^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~2~``>>.
+. Let 
+* the updated typing context ``TC~3~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let 
 * ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
 . Let 
 * the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
 . Let ``TC~4~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~3~``>>.
 . Let ``TC~5~`` be ``TC~4~[LOCAL.KIND`` ``=`` ``EXTERN_METHOD`` ``:`` ``typeIR~ret~]``.
 . Let 
 * the typing context ``++_++``,the abstract control flow ``f``,and the typed block statement ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~5~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
-. If ``f`` is ``RET``:
- .. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
- .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
- .. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
- .. Let ``externMethodTypeDefEnv~init~`` be <<update_map, the map ``externMethodTypeDefEnv`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR``>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
- .. Result in ``typeFrame``, ``externMethodTypeDefEnv~init~``, and ``functionDeclarationIR``.
-. If ``typeIR~ret~`` is equal to ``VOID``:
- .. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
- .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
- .. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
- .. Let ``externMethodTypeDefEnv~init~`` be <<update_map, the map ``externMethodTypeDefEnv`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR``>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
- .. Result in ``typeFrame``, ``externMethodTypeDefEnv~init~``, and ``functionDeclarationIR``.
+. Check that ``f`` ``=`` ``RET`` *or* ``typeIR~ret~`` ``=`` ``VOID``.
+. Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
+. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
+. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
+. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
+. Let ``externMethodTypeDefEnv~init~`` be <<update_map, the map ``externMethodTypeDefEnv`` with the value for key ``callableId`` updated to ``externMethodTypeDefIR``>>.
+. Let ``nameIR`` be <<name, the name of ``name``>>.
+. Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``blockStatementIR``.
+. Result in ``typeFrame``, ``externMethodTypeDefEnv~init~``, and ``functionDeclarationIR``.
 
 <<ObjectDecl_ok, ``p`` ``TC~0~`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``instantiation`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -11298,27 +10993,28 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . Let ``typeFrame~init~`` be <<update_map, the map ``typeFrame`` with the value for key ``nameIR`` updated to ``varTypeIR'``>>.
 . Result in ``typeFrame~init~``, ``externMethodTypeDefEnv``, and ``instantiationIR``.
 
-<<ObjectDecls_ok_inner, ObjectDecls_ok_inner: ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``objectDeclaration^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
+<<ObjectDecls_ok, ObjectDecls_ok: ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``objectDeclaration^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
 
-<<ObjectDecls_ok_inner, ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``·`` ``:`` ``%`` ``%`` ``%``>>:
+<<ObjectDecls_ok, ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``·`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Result in ``typeFrame``, ``externMethodTypeDefEnv``, and ``·``.
 
-<<ObjectDecls_ok_inner, ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``objectDeclaration~h~`` ``{two-colons}`` ``objectDeclaration~t~^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>:
+<<ObjectDecls_ok, ``p`` ``TC`` ``typeFrame`` ``externMethodTypeDefEnv`` ``|-`` ``objectDeclaration~h~`` ``{two-colons}`` ``objectDeclaration~t~^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let <<ObjectDecl_ok, p TC typeFrame externMethodTypeDefEnv |- objectDeclaration~h~ : typeFrame~1~ externMethodTypeDefEnv~1~ objectDeclarationIR~h~>>.
-. Let <<ObjectDecls_ok_inner, p TC typeFrame~1~ externMethodTypeDefEnv~1~ |- objectDeclaration~t~^{asterisk}^ : typeFrame~2~ externMethodTypeDefEnv~2~ objectDeclarationIR~t~^{asterisk}^>>.
+. Let <<ObjectDecls_ok, p TC typeFrame~1~ externMethodTypeDefEnv~1~ |- objectDeclaration~t~^{asterisk}^ : typeFrame~2~ externMethodTypeDefEnv~2~ objectDeclarationIR~t~^{asterisk}^>>.
 . Result in ``typeFrame~2~``, ``externMethodTypeDefEnv~2~``, and ``objectDeclarationIR~h~`` ``{two-colons}`` ``objectDeclarationIR~t~^{asterisk}^``.
 
-<<ObjectDecls_ok, ObjectDecls_ok>>:
+<<ObjectDeclList_ok, ObjectDeclList_ok>>:
 
-* Typing ``objectDeclaration^{asterisk}^`` under cursor ``cursor`` and typing context ``typingContext``:
-* Results in ``typeFrame`` and ``externMethodTypeDefEnv`` local to the object declaration block, and typed ``objectDeclarationListIR``.
+* Typing ``objectDeclarationList`` under cursor ``cursor`` and typing context ``typingContext``:
+* Results in ``typeFrame`` and ``externMethodTypeDefEnv`` of the object declaration block and ``objectDeclarationListIR``.
 
-<<ObjectDecls_ok, Typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC``>>:
+<<ObjectDeclList_ok, Typing ``objectDeclarationList`` under cursor ``p`` and typing context ``TC``>>:
 
-. Let <<ObjectDecls_ok_inner, p TC { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame externMethodTypeDefEnv objectDeclarationListIR>>.
-. Result in ``typeFrame`` and ``externMethodTypeDefEnv`` local to the object declaration block, and typed ``objectDeclarationListIR``.
+. Let ``objectDeclaration^{asterisk}^`` be <<flatten_objectDeclarationList, the list of object declarations in ``objectDeclarationList``>>.
+. Let <<ObjectDecls_ok, p TC { · } { · } |- objectDeclaration^{asterisk}^ : typeFrame externMethodTypeDefEnv objectDeclarationListIR>>.
+. Result in ``typeFrame`` and ``externMethodTypeDefEnv`` of the object declaration block and ``objectDeclarationListIR``.
 
 <<subst_externMethodTypeDefEnv, Substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``set<pair<callableId,`` ``externMethodTypeDefIR>>``>>
 
@@ -11338,21 +11034,17 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 <<InstDecl_objectInitializer_ok, InstDecl_objectInitializer_ok>>:
 
-* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``cursor`` and typing context ``typingContext``:
+* Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` = ``{`` ``objectDeclarationList`` ``}`` ; under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the updated typing context ``typingContext'`` and ``instantiationIR``.
 
-<<InstDecl_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgument^{asterisk}^`` ``>`` ``(`` ``argument^{asterisk}^`` ``)`` ``name`` = ``{`` ``objectDeclaration^{asterisk}^`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>:
+<<InstDecl_objectInitializer_ok, Typing ``annotationList`` ``prefixedTypeName`` ``<`` ``typeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` ``name`` = ``{`` ``objectDeclarationList`` ``}`` ; under cursor ``p`` and typing context ``TC~0~``>>:
 
 . Let 
 * ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC~0~``>>.
-. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
-+
---
- ** Let ``argumentIR`` be the result of <<Argument_ok, typing ``argument``, under cursor ``p`` and typing context ``TC~0~``>>.
---
-+
-for each ``argument`` in ``argument^{asterisk}^``
+* the result of <<TypeArgumentList_ok, typing ``typeArgumentList``, under cursor ``p`` and typing context ``TC~0~``>>.
+. Let 
+* ``argumentIR^{asterisk}^`` be
+* the result of <<ArgumentList_ok, typing ``argumentList``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``prefixedNameIR`` be <<prefixedTypeName, the prefixed name of  ``prefixedTypeName``>>.
 . Let 
 * ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^`` and default parameter ids ``id~default~^{asterisk}^`` be
@@ -11366,8 +11058,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~extern~`` be ``typeIR``.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``"this"`` to ```EMPTY`` ``typeIR~object~`` ``CTK`` ``·`` is added to the ``LOCAL`` layer>>.
 . Let 
-* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` local to the object declaration block, and typed ``objectDeclarationIR^{asterisk}^`` be
-* the result of <<ObjectDecls_ok, typing ``objectDeclaration^{asterisk}^`` under cursor ``p`` and typing context ``TC~1~``>>.
+* ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` of the object declaration block and ``objectDeclarationIR^{asterisk}^`` be
+* the result of <<ObjectDeclList_ok, typing ``objectDeclarationList`` under cursor ``p`` and typing context ``TC~1~``>>.
 . Let ``externMethodTypeDefEnv~init_subst~`` be <<subst_externMethodTypeDefEnv, substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``>>.
 . Let ``typeIR~object_init~`` be ``EXTERN`` ``typeId~extern~`` ``<`` ``typeIR~arg~^{asterisk}^`` ``>`` ``externMethodTypeDefEnv~init_subst~``.
 . Check that <<is_concrete_extern_object, ``typeIR~object_init~`` is an extern object type without abstract methods>>.
@@ -11609,6 +11301,42 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 . Check that ``nameIR`` is in ``nameIR~state~^{asterisk}^``.
 . Result in ``keysetExpressionIR`` ``:`` ``nameIR`` ``;``.
 
+<<ParserStmts_ok, ParserStmts_ok>>:
+
+* Typing ``parserStatement^{asterisk}^``, under typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and the typed parser statements ``parserStatementIR^{asterisk}^``.
+
+<<ParserStmts_ok, Typing ``parserStatement^{asterisk}^``, under typing context ``typingContext``>>:
+
+. If ``parserStatement^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated typing context ``typingContext`` and the typed parser statements ``·``.
+. If let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``:
+ .. Let 
+* the updated typing context ``TC~1~`` and the typed parser statement ``parserStatementIR~h~`` be
+* the result of <<ParserStmt_ok, typing ``parserStatement~h~``, under typing context ``typingContext``>>.
+ .. Let 
+* the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR~t~^{asterisk}^`` be
+* the result of <<ParserStmts_ok, typing ``parserStatement~t~^{asterisk}^``, under typing context ``TC~1~``>>.
+ .. Result in the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^``.
+
+<<ParserLocalDecls_ok, ParserLocalDecls_ok>>:
+
+* Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^``.
+
+<<ParserLocalDecls_ok, Typing ``parserLocalDeclaration^{asterisk}^``, under typing context ``typingContext``>>:
+
+. If ``parserLocalDeclaration^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated typing context ``typingContext`` and the typed parser local declarations ``·``.
+. If let ``parserLocalDeclaration~h~`` ``{two-colons}`` ``parserLocalDeclaration~t~^{asterisk}^`` be ``parserLocalDeclaration^{asterisk}^``:
+ .. Let 
+* the updated typing context ``TC~1~`` and the typed parser local declaration ``parserLocalDeclarationIR~h~`` be
+* the result of <<ParserLocalDecl_ok, typing ``parserLocalDeclaration~h~``, under typing context ``typingContext``>>.
+ .. Let 
+* the updated typing context ``TC~2~`` and the typed parser local declarations ``parserLocalDeclarationIR~t~^{asterisk}^`` be
+* the result of <<ParserLocalDecls_ok, typing ``parserLocalDeclaration~t~^{asterisk}^``, under typing context ``TC~1~``>>.
+ .. Result in the updated typing context ``TC~2~`` and the typed parser local declarations ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationIR~t~^{asterisk}^``.
+
 <<compat_table_exact_optional_key, compat_table_exact_optional_key(typeIR'')>>:
 [cols="2", options="header"]
 |===
@@ -11643,19 +11371,10 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 <<compat_table_key, compat_table_key(nameIR, typeIR)>>
 
 
-. If ``nameIR`` is equal to ``"exact"``:
+. If ``nameIR`` ``=`` ``"exact"`` *or* ``nameIR`` ``=`` ``"optional"``:
  .. Check that ``<<compat_table_exact_optional_key,`` ``compat_table_exact_optional_key(typeIR)>>``.
  .. Return ``true``.
-. Else if ``nameIR`` is equal to ``"optional"``:
- .. Check that ``<<compat_table_exact_optional_key,`` ``compat_table_exact_optional_key(typeIR)>>``.
- .. Return ``true``.
-. Else if ``nameIR`` is equal to ``"lpm"``:
- .. Check that ``<<compat_table_lpm_ternary_range_key,`` ``compat_table_lpm_ternary_range_key(typeIR)>>``.
- .. Return ``true``.
-. Else if ``nameIR`` is equal to ``"ternary"``:
- .. Check that ``<<compat_table_lpm_ternary_range_key,`` ``compat_table_lpm_ternary_range_key(typeIR)>>``.
- .. Return ``true``.
-. Else:
+. If ``nameIR`` ``=`` ``"lpm"`` ``\/`` ``nameIR`` ``=`` ``"ternary"`` *or* ``nameIR`` ``=`` ``"range"``:
  .. Check that ``<<compat_table_lpm_ternary_range_key,`` ``compat_table_lpm_ternary_range_key(typeIR)>>``.
  .. Return ``true``.
 . Otherwise: return ``false``.
@@ -11903,16 +11622,32 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
  .. Let ``(TBLC~1~,`` ``tablePropertyIR~t_updated~^{asterisk}^)`` be ``<<insert_NoAction_tablePropertyIR,`` ``insert_NoAction_tablePropertyIR(TBLC,`` ``tablePropertyIR~t~^{asterisk}^)>>``.
  .. Return ``(TBLC~1~,`` ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t_updated~^{asterisk}^)``.
 
+<<ControlLocalDecls_ok, ControlLocalDecls_ok>>:
+
+* Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``typingContext``:
+* Results in the updated typing context ``typingContext'`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^``.
+
+<<ControlLocalDecls_ok, Typing ``controlLocalDeclaration^{asterisk}^``, under typing context ``typingContext``>>:
+
+. If ``controlLocalDeclaration^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated typing context ``typingContext`` and the typed control local declarations ``·``.
+. If let ``controlLocalDeclaration~h~`` ``{two-colons}`` ``controlLocalDeclaration~t~^{asterisk}^`` be ``controlLocalDeclaration^{asterisk}^``:
+ .. Let 
+* the updated typing context ``TC~1~`` and the typed control local declaration ``controlLocalDeclarationIR~h~`` be
+* the result of <<ControlLocalDecl_ok, typing ``controlLocalDeclaration~h~``, under typing context ``typingContext``>>.
+ .. Let 
+* the updated typing context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~t~^{asterisk}^`` be
+* the result of <<ControlLocalDecls_ok, typing ``controlLocalDeclaration~t~^{asterisk}^``, under typing context ``TC~1~``>>.
+ .. Result in the updated typing context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationIR~t~^{asterisk}^``.
+
 <<Expr_lvalue_ok, Expr_lvalue_ok: ``p`` ``TC`` ``|-`` ``expressionIR`` ``#`` ``(`` ``typeIR`` ``ctk`` ``)``>>
 
 <<Expr_lvalue_ok, ``p`` ``TC`` ``|-`` ``prefixedNameIR`` ``#`` ``(`` ``typeIR`` ``ctk`` ``)``>>:
 
 . Let ``direction`` ``++_++`` ``ctk'`` ``++_++^?^`` be <<option_get, *!*>> <<find_var_t, the type of variable ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
 . Check that ``ctk'`` is ``DYN``.
-. If ``direction`` is ``OUT``:
- .. The relation holds.
-. Else if ``direction`` is ``INOUT``:
- .. The relation holds.
+. Check that ``direction`` ``=`` ``OUT`` *or* ``direction`` ``=`` ``INOUT``.
+. The relation holds.
 
 <<Expr_lvalue_ok, ``p`` ``TC`` ``|-`` ``typedExpressionIR~base~`` ``.`` ``nameIR`` ``#`` ``(`` ``typeIR`` ``ctk`` ``)``>>:
 
@@ -11920,16 +11655,9 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . If ``typeIR'`` has type ``headerStackTypeIR``:
- .. If ``nameIR`` is equal to ``"next"``:
-  ... If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-   .... The relation holds.
-  ... If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-   .... The relation holds.
- .. Else if ``nameIR`` is equal to ``"last"``:
-  ... If ``p`` ``=`` ``BLOCK`` *and* ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``:
-   .... The relation holds.
-  ... If ``p`` ``=`` ``LOCAL`` *and* ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``:
-   .... The relation holds.
+ .. Check that ``nameIR`` ``=`` ``"next"`` *or* ``nameIR`` ``=`` ``"last"``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` *or* ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. The relation holds.
 . If ``~<<is_headerStackTypeIR,`` ``is_headerStackTypeIR(unroll_typeIR(typeIR~base~))>>``:
  .. The relation holds.
 
@@ -16328,22 +16056,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 <<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
 
-. If ``direction`` is ```EMPTY``:
- .. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
- .. If let ``abortResult`` be ``expressionResult``:
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
- .. Else:
-  ... Let ``value`` be ``expressionResult``.
-  ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
-. Else if ``direction`` is ``IN``:
- .. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
- .. If let ``abortResult`` be ``expressionResult``:
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
- .. Else:
-  ... Let ``value`` be ``expressionResult``.
-  ... Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
-  ... Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
+. Check that ``direction`` ``=`` ```EMPTY`` *or* ``direction`` ``=`` ``IN``.
+. Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
+. Else:
+ .. Let ``value`` be ``expressionResult``.
+ .. Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
+ .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
 
 <<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``INOUT`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
 
@@ -16414,28 +16134,20 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``·`` ``~>`` ``%``>>:
 
-. If ``direction`` is ``IN``:
- .. Result in ``EC~caller_0~``.
-. Else if ``direction`` is ```EMPTY``:
- .. Result in ``EC~caller_0~``.
+. Check that ``direction`` ``=`` ``IN`` *or* ``direction`` ``=`` ```EMPTY``.
+. Result in ``EC~caller_0~``.
 
 <<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``~>`` ``%``>>:
 
 . If ``storageReference^?^`` is none:
- .. If ``direction`` is ``OUT``:
-  ... Result in ``EC~caller_0~``.
- .. Else if ``direction`` is ``INOUT``:
-  ... Result in ``EC~caller_0~``.
+ .. Check that ``direction`` ``=`` ``OUT`` *or* ``direction`` ``=`` ``INOUT``.
+ .. Result in ``EC~caller_0~``.
 . Else:
  .. Let ``storageReference'`` be ``storageReference^?^``.
- .. If ``direction`` is ``OUT``:
-  ... Let ``value`` be <<find_var_e, the value of ``nameIR`` in ``EC~callee~`` at ``p~callee~``>>.
-  ... Let <<Lvalue_write, p~caller~ EC~caller_0~ STO |- storageReference' -> value : EC~caller_1~>>.
-  ... Result in ``EC~caller_1~``.
- .. Else if ``direction`` is ``INOUT``:
-  ... Let ``value`` be <<find_var_e, the value of ``nameIR`` in ``EC~callee~`` at ``p~callee~``>>.
-  ... Let <<Lvalue_write, p~caller~ EC~caller_0~ STO |- storageReference' -> value : EC~caller_1~>>.
-  ... Result in ``EC~caller_1~``.
+ .. Check that ``direction`` ``=`` ``OUT`` *or* ``direction`` ``=`` ``INOUT``.
+ .. Let ``value`` be <<find_var_e, the value of ``nameIR`` in ``EC~callee~`` at ``p~callee~``>>.
+ .. Let <<Lvalue_write, p~caller~ EC~caller_0~ STO |- storageReference' -> value : EC~caller_1~>>.
+ .. Result in ``EC~caller_1~``.
 
 <<Copy_out, Copy_out: ``p~shared~`` ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``parameterListIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``(storageReference^?^)^{asterisk}^`` ``~>`` ``%``>>
 
@@ -16847,12 +16559,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Expr_eval_keyset_simple, ``EC~0~`` ``STO~0~`` ``|-`` ``simpleKeysetExpressionIR`` ``:`` ``%`` ``%`` ``%``>>:
 
-. If ``simpleKeysetExpressionIR`` is ``DEFAULT``:
- .. Let ``setValue`` be ``SET`` ``{`` ``...`` ``}``.
- .. Result in ``EC~0~``, ``STO~0~``, and ``setValue``.
-. Else if ``simpleKeysetExpressionIR`` is ``_``:
- .. Let ``setValue`` be ``SET`` ``{`` ``...`` ``}``.
- .. Result in ``EC~0~``, ``STO~0~``, and ``setValue``.
+. Check that ``simpleKeysetExpressionIR`` ``=`` ``DEFAULT`` *or* ``simpleKeysetExpressionIR`` ``=`` ``_``.
+. Let ``setValue`` be ``SET`` ``{`` ``...`` ``}``.
+. Result in ``EC~0~``, ``STO~0~``, and ``setValue``.
 
 <<Exprs_eval_keyset_simple, Exprs_eval_keyset_simple: ``evalContext`` ``store`` ``|-`` ``simpleKeysetExpressionIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
 

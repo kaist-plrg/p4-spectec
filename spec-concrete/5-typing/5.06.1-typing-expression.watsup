@@ -629,7 +629,6 @@ rulegroup Expr_ok/dataExpression-sequence {
     -- if expression_e* = $flatten_expressionList(expressionList)
     -- if ~(`... <- expression_e*)
     ---- ;; check each expression
-    -- if expression_e* = $flatten_expressionList(expressionList)
     -- (Expr_ok: p TC |- expression_e : typedExpressionIR_e)*
     ---- ;; fetch annotations
     -- if (typeIR_e = $type_of_typedExpressionIR(typedExpressionIR_e))*
@@ -1162,8 +1161,8 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; check callable target
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
     ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*
+    -- ArgumentList_ok:
+        p TC |- argumentList : argumentIR*
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
@@ -1187,10 +1186,11 @@ rulegroup Expr_ok/callExpression-callable {
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
     ---- ;; check type arguments
     -- if realTypeArgument* = $flatten_realTypeArgumentList(realTypeArgumentList)
-    -- TypeArguments_ok: p TC |- realTypeArgument* : typeArgumentIR* `# typeId_impl*
+    -- TypeArguments_ok:
+        p TC |- realTypeArgument* : typeArgumentIR* `# typeId_impl*
     ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*
+    -- ArgumentList_ok:
+        p TC |- argumentList : argumentIR*
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
@@ -1246,8 +1246,8 @@ rulegroup Expr_ok/callExpression-constructor {
     p TC |- prefixedTypeName `( argumentList )
           : callExpressionIR `# expressionNoteIR
     ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*
+    -- ArgumentList_ok:
+        p TC |- argumentList : argumentIR*
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok: p TC |- prefixedNameIR `< eps > `( argumentIR* )
@@ -1268,11 +1268,11 @@ rulegroup Expr_ok/callExpression-constructor {
     p TC |- (prefixedTypeName `< typeArgumentList >) `( argumentList )
           : callExpressionIR `# expressionNoteIR
     ---- ;; check type arguments
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- TypeArguments_ok: p TC |- typeArgument* : typeArgumentIR* `# typeId_impl*
+    -- TypeArgumentList_ok:
+        p TC |- typeArgumentList : typeArgumentIR* `# typeId_impl*
     ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*
+    -- ArgumentList_ok:
+        p TC |- argumentList : argumentIR*
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok:
