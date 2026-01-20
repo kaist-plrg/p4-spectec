@@ -23,6 +23,15 @@ def $tableObject_create_entry_priority(eps) = eps
 def $tableObject_create_entry_priority(n_priority)
   = PRIORITY `= (D n_priority) `: 
 
+;;; Explicit priority requirement check
+
+dec $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool
+def $needs_priority_tableKeysPropertyIR(KEY `= `{ tableKeyIR* }) = true
+  -- (if _ `: nameIR_matchKind _ `; = tableKeyIR)*
+  -- if $exists_((nameIR_matchKind = "ternary")*)
+def $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) = false
+  -- otherwise
+
 ;;; Table entry keyset creation
 
 ;;;; Table key name extraction from annotations
@@ -271,6 +280,8 @@ def $tableObject_add_entry(
   ---- ;; create a table entry from the interface
   -- if tableEntryPriorityOptIR
       = $tableObject_create_entry_priority(tableEntryPriorityInterface)
+  -- if $needs_priority_tableKeysPropertyIR(TBL.KEYS)
+      => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)
   -- if keysetExpressionIR
       = $tableObject_create_entry_keyset(TBL.KEYS, tableKeysetInterface)
   -- if tableActionReferenceIR

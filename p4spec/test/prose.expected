@@ -67,6 +67,57 @@
 
 <<strip_all_whitespace, The text ``text`` with all whitespace removed>>
 
+<<starts_with, starts_with(t, t~prefix~)>>
+
+
+. If the length of ``t~prefix~`` is less than or equal to the length of ``t``:
+ .. Check that ``t[0`` ``:`` ``the`` ``length`` ``of`` ``t~prefix~]`` is equal to ``t~prefix~``.
+ .. Return ``true``.
+. Otherwise: return ``false``.
+
+<<ends_with, ends_with(t, t~suffix~)>>
+
+
+. If the length of ``t~suffix~`` is less than or equal to the length of ``t``:
+ .. Let ``int`` be ``the`` ``length`` ``of`` ``t`` ``-`` ``the`` ``length`` ``of`` ``t~suffix~``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~start~`` be ``int``.
+ .. Check that ``t[n~start~`` ``:`` ``the`` ``length`` ``of`` ``t~suffix~]`` is equal to ``t~suffix~``.
+ .. Return ``true``.
+. Otherwise: return ``false``.
+
+<<strip_prefix_rec, The text ``t`` with the prefix ``t~prefix~`` removed many times as possible>>
+
+
+. If ``<<starts_with,`` ``starts_with(t,`` ``t~prefix~)>>``:
+ .. Let ``t~stripped~`` be <<strip_prefix, the text ``t`` with the prefix ``t~prefix~`` removed>>.
+ .. Return ``<<strip_prefix_rec,`` ``strip_prefix_rec(t~stripped~,`` ``t~prefix~)>>``.
+. Else:
+ .. Return ``t``.
+
+<<strip_suffix_rec, The text ``t`` with the suffix ``t~suffix~`` removed many times as possible>>
+
+
+. If ``<<ends_with,`` ``ends_with(t,`` ``t~suffix~)>>``:
+ .. Let ``t~stripped~`` be <<strip_suffix, the text ``t`` with the suffix ``t~suffix~`` removed>>.
+ .. Return ``<<strip_suffix_rec,`` ``strip_suffix_rec(t~stripped~,`` ``t~suffix~)>>``.
+. Else:
+ .. Return ``t``.
+
+<<contains, contains(t, t~c~)>>
+
+
+. Return ``<<contains',`` ``contains'(0,`` ``the`` ``length`` ``of`` ``t,`` ``t,`` ``t~c~)>>``.
+
+<<contains', contains'(n~len~, n~len'~, t, t~c~)>>
+
+
+. If ``n~len~`` is equal to ``n~len'~``: return ``false``.
+. If ``n~len~`` is less than ``n~len'~``:
+ .. If ``t[n~len~]`` is equal to ``t~c~``: return ``true``.
+ .. Else:
+  ... Return ``<<contains',`` ``contains'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t,`` ``t~c~)>>``.
+
 <<is_some_, is_some_<X>(X^?^)>>
 
 
@@ -12431,6 +12482,20 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``n~priority~`` be ``int'``.
  .. Return ``PRIORITY`` ``=`` ``D`` ``n~priority~`` ``:``.
 
+<<needs_priority_tableKeysPropertyIR, needs_priority_tableKeysPropertyIR(tableKeysPropertyIR)>>
+
+
+. Let ``KEY`` ``=`` ``{`` ``tableKeyIR^{asterisk}^`` ``}`` be ``tableKeysPropertyIR``.
+. Let ``nameIR~matchKind~^{asterisk}^`` be the list of ``nameIR~matchKind~``, obtained by repeating:
++
+--
+ ** Let ``++_++`` ``:`` ``nameIR~matchKind~`` ``++_++`` ``;`` be ``tableKeyIR``.
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+. If ``<<exists_,`` ``exists_((nameIR~matchKind~`` ``=`` ``"ternary")^{asterisk}^)>>``: return ``true``.
+. Otherwise: return ``false``.
+
 <<name_annotation_of_tableKeyIR, name_annotation_of_tableKeyIR(annotationList)>>
 
 
@@ -12480,15 +12545,19 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 
 
 . If ``text`` is equal to ``"exact"``:
- .. Let ``text~key_value~`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``text>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
+ .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
+ .. Check that ``tableKeyValueInterface'`` matches pattern ```NUM`` ``%``.
+ .. Let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``.
  .. Let ``i~key_value~`` be ``<<text_to_int,`` ``text_to_int(text~key_value~)>>``.
  .. Let ``typedExpressionIR`` be <<typedExpressionIR, ``D`` ``i~key_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR`` ``>``.
  .. Let ``simpleKeysetExpressionIR`` be ``(`` ``typeIR~set~`` ``)`` ``typedExpressionIR`` ``#`` ``(`` ``typeIR~set~`` ``DYN`` ``)``.
  .. Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"ternary"``:
- .. Let ``text~key_value~`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``text>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
- .. Check that ``text~key_value~[0`` ``:`` ``2]`` is equal to ``"0x"``.
+ .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
+ .. Check that ``tableKeyValueInterface'`` matches pattern ```NUM`` ``%``.
+ .. Let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``.
+ .. Check that ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0x")>>``.
  .. Let ``text~key_value'~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0x"`` removed>>.
  .. Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value'~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
  .. Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
@@ -12501,6 +12570,42 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
  .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
  .. Return ``simpleKeysetExpressionIR``.
+. Else if ``text`` is equal to ``"lpm"``:
+ .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
+ .. If let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``:
+  ... Check that ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0x")>>``.
+  ... Let ``text~key_value'~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0x"`` removed>>.
+  ... Let ``text~key_value'_prefix~`` be <<strip_suffix_rec, the text ``text~key_value'~`` with the suffix ``"*"`` removed many times as possible>>.
+  ... Check that ``~<<contains,`` ``contains(text~key_value'_prefix~,`` ``"*")>>``.
+  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value'~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
+  ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value'~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
+  ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
+  ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
+  ... Return ``simpleKeysetExpressionIR``.
+ .. Else:
+  ... Let ``text~key_prefix_value~`` ```SLASH`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``.
+  ... Let ``i~key_prefix_value~`` be ``<<text_to_int,`` ``text_to_int(text~key_prefix_value~)>>``.
+  ... Let ``n~key_type_width~`` be ``<<sizeof_maxSizeInBits',`` ``sizeof_maxSizeInBits'(typeIR)>>``.
+  ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
+  ... Let ``int`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~key_remaining_width~`` be ``int``.
+  ... Let ``i~key_base_value~`` be ``<<shl,`` ``shl(i~key_prefix_value~,`` ``n~key_remaining_width~)>>``.
+  ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``int'`` be ``<<pow2,`` ``pow2(n~key_type_width~)>>``.
+  ... Let ``int''`` be ``<<pow2,`` ``pow2(n~key_remaining_width~)>>``.
+  ... Let ``i~key_mask_value~`` be ``int'`` ``-`` ``int''``.
+  ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
+  ... Return ``simpleKeysetExpressionIR``.
 
 <<tableObject_create_entry_keys, tableObject_create_entry_keys((nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)>>
 
@@ -12522,10 +12627,10 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 --
 +
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
-. Let ``nameIR~key_update~^{asterisk}^`` be the list of ``nameIR~key_update~`` and ``text~key_value_update~^{asterisk}^`` be the list of ``text~key_value_update~``, obtained by repeating:
+. Let ``nameIR~key_update~^{asterisk}^`` be the list of ``nameIR~key_update~`` and ``tableKeyValueInterface~update~^{asterisk}^`` be the list of ``tableKeyValueInterface~update~``, obtained by repeating:
 +
 --
- ** Let ``(nameIR~key_update~,`` ``text~key_value_update~)`` be ``tableKeyInterface``.
+ ** Let ``(nameIR~key_update~,`` ``tableKeyValueInterface~update~)`` be ``tableKeyInterface``.
 --
 +
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
@@ -12613,6 +12718,7 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 
 
 . Let ``tableEntryPriorityOptIR`` be ``<<tableObject_create_entry_priority,`` ``tableObject_create_entry_priority(tableEntryPriorityInterface)>>``.
+. Check that ``<<needs_priority_tableKeysPropertyIR,`` ``needs_priority_tableKeysPropertyIR(TBL.KEYS)>>`` *implies* ``<<is_some_,`` ``is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)>>``.
 . Let ``keysetExpressionIR`` be ``<<tableObject_create_entry_keyset,`` ``tableObject_create_entry_keyset(TBL.KEYS,`` ``tableKeysetInterface)>>``.
 . Let ``tableActionReferenceIR`` be ``<<tableObject_create_entry_action,`` ``tableObject_create_entry_action(TBL.ACTIONS,`` ``tableActionInterface)>>``.
 . Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``:`` ``tableActionReferenceIR`` ```EMPTY`` ``;``.
