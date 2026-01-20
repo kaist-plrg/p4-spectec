@@ -145,9 +145,16 @@ module Make
                  let value_table_key_name = wrap_text_v table_key_name in
                  let value_table_key_value =
                    match table_key_value with
-                   | Num number -> wrap_text_v number
-                   | Slash _ ->
-                       error_stf "slash notation for table keys not supported"
+                   | Num number ->
+                       wrap_case_v [ Term "`NUM"; NT (wrap_text_v number) ]
+                       |> with_typ (wrap_var_t "tableKeyValueInterface")
+                   | Slash (prefix, mask) ->
+                       let value_prefix = wrap_text_v prefix in
+                       let mask = Bigint.of_int (int_of_string mask) in
+                       let value_mask = wrap_num_v_nat mask in
+                       wrap_case_v
+                         [ NT value_prefix; Term "`SLASH"; NT value_mask ]
+                       |> with_typ (wrap_var_t "tableKeyValueInterface")
                  in
                  wrap_tuple_v "tableKeyInterface"
                    [ value_table_key_name; value_table_key_value ])
@@ -213,7 +220,8 @@ module Make
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left
-        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf ->
+        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf
+           ->
           run_stf_stmt value_ctx value_sto tx_output_queue tx_expect_queue
             stmt_stf)
         (value_ctx, value_sto, [], [])

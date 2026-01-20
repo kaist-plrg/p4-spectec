@@ -88,6 +88,54 @@ builtin dec $strip_suffix(text, text) : text
 builtin dec $strip_all_whitespace(text) : text
   hint(prose_in "the text" %0 "with all whitespace removed")
 
+dec $starts_with(text, text) : bool
+  hint(prose_in "the text" %0 "starts with" %1)
+def $starts_with(t, t_prefix) = true
+  -- if $(|t_prefix| <= |t|)
+  -- if t[0 : |t_prefix|] = t_prefix
+def $starts_with(t, t_prefix) = false
+  -- otherwise
+
+dec $ends_with(text, text) : bool
+  hint(prose_in "the text" %0 "ends with" %1)
+def $ends_with(t, t_suffix) = true
+  -- if $(|t_suffix| <= |t|)
+  -- if n_start = $(|t| - |t_suffix|)
+  -- if t[n_start : |t_suffix|] = t_suffix
+def $ends_with(t, t_suffix) = false
+  -- otherwise
+
+dec $strip_prefix_rec(text, text) : text
+  hint(prose_in "the text" %0 "with the prefix" %1 "removed many times as possible")
+def $strip_prefix_rec(t, t_prefix)
+  = $strip_prefix_rec(t_stripped, t_prefix)
+  -- if $starts_with(t, t_prefix)
+  -- if t_stripped = $strip_prefix(t, t_prefix)
+def $strip_prefix_rec(t, t_prefix) = t
+  -- if ~$starts_with(t, t_prefix)
+
+dec $strip_suffix_rec(text, text) : text
+  hint(prose_in "the text" %0 "with the suffix" %1 "removed many times as possible")
+def $strip_suffix_rec(t, t_suffix)
+  = $strip_suffix_rec(t_stripped, t_suffix)
+  -- if $ends_with(t, t_suffix)
+  -- if t_stripped = $strip_suffix(t, t_suffix)
+def $strip_suffix_rec(t, t_suffix) = t
+  -- if ~$ends_with(t, t_suffix)
+
+dec $contains(text, text) : bool
+  hint(prose_in "the text" %0 "contains" %1)
+dec $contains'(nat, nat, text, text) : bool
+def $contains(t, t_c) = $contains'(0, |t|, t, t_c)
+def $contains'(n_len, n_len, t, t_c) = false
+def $contains'(n, n_len, t, t_c) = true
+  -- if $(n < n_len)
+  -- if t[n] = t_c
+def $contains'(n, n_len, t, t_c)
+  = $contains'($(n + 1), n_len, t, t_c)
+  -- if $(n < n_len)
+  -- if t[n] =/= t_c
+
 ;;
 ;; General option functions
 ;;
