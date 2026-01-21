@@ -4,14 +4,22 @@
 
 syntax tableEntryPriorityInterface = int?
 
-syntax tableKeyValueInterface =
-  | `NUM text
+syntax tableKeyValueInterface =  
+  | `BIN text
+  | `HEX text
+  | `DEC text
   | text `SLASH nat
 syntax tableKeyInterface = (nameIR, tableKeyValueInterface)
 syntax tableKeysetInterface = tableKeyInterface*
 
 syntax tableActionArgumentInterface = (nameIR, int)
 syntax tableActionInterface = (nameIR, tableActionArgumentInterface*)
+
+dec $text_of_number_tableKeyValueInterface(tableKeyValueInterface) : text?
+def $text_of_number_tableKeyValueInterface(`BIN t) = "0b" ++ t
+def $text_of_number_tableKeyValueInterface(`HEX t) = "0x" ++ t
+def $text_of_number_tableKeyValueInterface(`DEC t) = t
+def $text_of_number_tableKeyValueInterface(_ `SLASH _) = eps
 
 ;;; Table entry priority creation
 
@@ -26,11 +34,9 @@ def $tableObject_create_entry_priority(n_priority)
 ;;; Explicit priority requirement check
 
 dec $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool
-def $needs_priority_tableKeysPropertyIR(KEY `= `{ tableKeyIR* }) = true
-  -- (if _ `: nameIR_matchKind _ `; = tableKeyIR)*
-  -- if $exists_((nameIR_matchKind = "ternary")*)
-def $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) = false
-  -- otherwise
+def $needs_priority_tableKeysPropertyIR(KEY `= `{ tableKeyIR* })  
+    = $exists_((nameIR_matchKind = "ternary")*)  
+  -- (if _ `: nameIR_matchKind _ `; = tableKeyIR)*  
 
 ;;; Table entry keyset creation
 
@@ -93,8 +99,9 @@ def $tableObject_create_entry_key(
     tableKeyInterface*)
   = simpleKeysetExpressionIR
   ---- ;; fetch key value from interface
-  -- if `NUM text_key_value
+  -- if tableKeyValueInterface
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
+  -- if text_key_value = $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
   ---- ;; create exact match expression
   -- if i_key_value = $text_to_int(text_key_value)
   -- if typedExpressionIR = (D i_key_value) `# `( INT DYN )
@@ -106,19 +113,17 @@ def $tableObject_create_entry_key(
     (nameIR_key, "ternary", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
-  -- if `NUM text_key_value
-      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in hex format
-  -- if $starts_with(text_key_value, "0x")
-  -- if text_key_value' = $strip_prefix(text_key_value, "0x")
+  -- if `HEX text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; create base expression
-  -- if text_key_base_value = $replace_text(text_key_value', "*", "0")
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
   -- if typedExpressionIR_base_cast
       = $coerce_unary(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
-  -- if text_key_mask_value = $replace_text_except(text_key_value', "*", "F")
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
@@ -132,19 +137,17 @@ def $tableObject_create_entry_key(
     (nameIR_key, "ternary", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
-  -- if `NUM text_key_value
-      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in binary format
-  -- if $starts_with(text_key_value, "0b")
-  -- if text_key_value' = $strip_prefix(text_key_value, "0b")
+  -- if `BIN text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; create base expression
-  -- if text_key_base_value = $replace_text(text_key_value', "*", "0")
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
   -- if typedExpressionIR_base_cast
       = $coerce_unary(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
-  -- if text_key_mask_value = $replace_text_except(text_key_value', "*", "1")
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
@@ -158,22 +161,20 @@ def $tableObject_create_entry_key(
     (nameIR_key, "lpm", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
-  -- if `NUM text_key_value
-      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in hex format
-  -- if $starts_with(text_key_value, "0x")
-  -- if text_key_value' = $strip_prefix(text_key_value, "0x")
+  -- if `HEX text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in lpm format
-  -- if text_key_value'_prefix = $strip_suffix_rec(text_key_value', "*")
-  -- if ~$contains(text_key_value'_prefix, "*")
+  -- if text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
+  -- if ~$contains(text_key_value_prefix, "*")
   ---- ;; create base expression
-  -- if text_key_base_value = $replace_text(text_key_value', "*", "0")
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
   -- if typedExpressionIR_base_cast
       = $coerce_unary(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
-  -- if text_key_mask_value = $replace_text_except(text_key_value', "*", "F")
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
@@ -187,22 +188,20 @@ def $tableObject_create_entry_key(
     (nameIR_key, "lpm", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
-  -- if `NUM text_key_value
-      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in binary format
-  -- if $starts_with(text_key_value, "0b")
-  -- if text_key_value' = $strip_prefix(text_key_value, "0b")
+  -- if `BIN text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; check that the value is in lpm format
-  -- if text_key_value'_prefix = $strip_suffix_rec(text_key_value', "*")
-  -- if ~$contains(text_key_value'_prefix, "*")
+  -- if text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
+  -- if ~$contains(text_key_value_prefix, "*")
   ---- ;; create base expression
-  -- if text_key_base_value = $replace_text(text_key_value', "*", "0")
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
   -- if typedExpressionIR_base_cast
       = $coerce_unary(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
-  -- if text_key_mask_value = $replace_text_except(text_key_value', "*", "1")
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )

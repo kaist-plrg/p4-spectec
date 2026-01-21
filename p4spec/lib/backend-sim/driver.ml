@@ -146,7 +146,25 @@ module Make
                  let value_table_key_value =
                    match table_key_value with
                    | Num number ->
-                       wrap_case_v [ Term "`NUM"; NT (wrap_text_v number) ]
+                       let value_number =
+                         if String.starts_with ~prefix:"0x" number then
+                           let number_base_len = String.length number - 2 in
+                           let number_base =
+                             String.sub number 2 number_base_len
+                           in
+                           wrap_case_v
+                             [ Term "`HEX"; NT (wrap_text_v number_base) ]
+                         else if String.starts_with ~prefix:"0b" number then
+                           let number_base_len = String.length number - 2 in
+                           let number_base =
+                             String.sub number 2 number_base_len
+                           in
+                           wrap_case_v
+                             [ Term "`BIN"; NT (wrap_text_v number_base) ]
+                         else
+                           wrap_case_v [ Term "`DEC"; NT (wrap_text_v number) ]
+                       in
+                       value_number
                        |> with_typ (wrap_var_t "tableKeyValueInterface")
                    | Slash (prefix, mask) ->
                        let value_prefix = wrap_text_v prefix in

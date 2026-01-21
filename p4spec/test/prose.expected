@@ -12527,6 +12527,18 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``object`` has type ``externObject``: return ``true``.
 . Otherwise: return ``false``.
 
+<<text_of_number_tableKeyValueInterface, text_of_number_tableKeyValueInterface(tableKeyValueInterface)>>
+
+
+. If let ```BIN`` ``t`` be ``tableKeyValueInterface``:
+ .. Return ``"0b"`` ``{pp}`` ``t``.
+. Else if let ```HEX`` ``t`` be ``tableKeyValueInterface``:
+ .. Return ``"0x"`` ``{pp}`` ``t``.
+. Else if let ```DEC`` ``t`` be ``tableKeyValueInterface``:
+ .. Return ``t``.
+. Else:
+ .. Return ``·``.
+
 <<tableObject_create_entry_priority, tableObject_create_entry_priority(tableEntryPriorityInterface)>>
 
 
@@ -12538,10 +12550,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``n~priority~`` be ``int'``.
  .. Return ``PRIORITY`` ``=`` ``D`` ``n~priority~`` ``:``.
 
-<<needs_priority_tableKeysPropertyIR, needs_priority_tableKeysPropertyIR(tableKeysPropertyIR)>>
+<<needs_priority_tableKeysPropertyIR, needs_priority_tableKeysPropertyIR(KEY = { tableKeyIR^{asterisk}^ })>>
 
 
-. Let ``KEY`` ``=`` ``{`` ``tableKeyIR^{asterisk}^`` ``}`` be ``tableKeysPropertyIR``.
 . Let ``nameIR~matchKind~^{asterisk}^`` be the list of ``nameIR~matchKind~``, obtained by repeating:
 +
 --
@@ -12549,8 +12560,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 --
 +
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
-. If ``<<exists_,`` ``exists_((nameIR~matchKind~`` ``=`` ``"ternary")^{asterisk}^)>>``: return ``true``.
-. Otherwise: return ``false``.
+. Return ``<<exists_,`` ``exists_((nameIR~matchKind~`` ``=`` ``"ternary")^{asterisk}^)>>``.
 
 <<name_annotation_of_tableKeyIR, name_annotation_of_tableKeyIR(annotationList)>>
 
@@ -12611,8 +12621,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 
 . If ``text`` is equal to ``"exact"``:
  .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
- .. Check that ``tableKeyValueInterface'`` matches pattern ```NUM`` ``%``.
- .. Let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``.
+ .. Let ``text~key_value~`` be <<option_get, *!*>> ``<<text_of_number_tableKeyValueInterface,`` ``text_of_number_tableKeyValueInterface(tableKeyValueInterface')>>``.
  .. Let ``i~key_value~`` be ``<<text_to_int,`` ``text_to_int(text~key_value~)>>``.
  .. Let ``typedExpressionIR`` be <<typedExpressionIR, ``D`` ``i~key_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR`` ``>``.
@@ -12620,69 +12629,61 @@ for each ``annotation`` in ``annotation^{asterisk}^``
  .. Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"ternary"``:
  .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
- .. Check that ``tableKeyValueInterface'`` matches pattern ```NUM`` ``%``.
- .. Let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``.
- .. If ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0x")>>``:
-  ... Let ``text~key_value'~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0x"`` removed>>.
-  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value'~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+ .. If let ```HEX`` ``text~key_value~`` be ``tableKeyValueInterface'``:
+  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
   ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
-  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value'~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
+  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
   ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
- .. If ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0b")>>``:
-  ... Let ``text~key_value''~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0b"`` removed>>.
-  ... Let ``text~key_base_value'~`` be <<replace_text, the text ``text~key_value''~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-  ... Let ``i~key_base_value'~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value'~)>>``.
-  ... Let ``typedExpressionIR~base'~`` be <<typedExpressionIR, ``D`` ``i~key_base_value'~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast'~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base'~`` implicitly cast to ``typeIR``>>.
-  ... Let ``text~key_mask_value''~`` be <<replace_text_except, the text ``text~key_value''~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
-  ... Let ``text~key_mask_value~`` be <<replace_text, the text ``text~key_mask_value''~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-  ... Let ``i~key_mask_value'~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value~)>>``.
-  ... Let ``typedExpressionIR~mask'~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value'~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast'~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask'~`` implicitly cast to ``typeIR``>>.
-  ... Let ``simpleKeysetExpressionIR'`` be ``typedExpressionIR~base_cast'~`` ``&&&`` ``typedExpressionIR~mask_cast'~``.
-  ... Return ``simpleKeysetExpressionIR'``.
+ .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
+  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
+  ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
+  ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
+  ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
+  ... Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"lpm"``:
  .. Let ``tableKeyValueInterface'`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``tableKeyValueInterface>(nameIR~key~,`` ``tableKeyInterface^{asterisk}^)>>``.
- .. If let ```NUM`` ``text~key_value~`` be ``tableKeyValueInterface'``:
-  ... If ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0x")>>``:
-   .... Let ``text~key_value'~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0x"`` removed>>.
-   .... Let ``text~key_value'_prefix~`` be <<strip_suffix_rec, the text ``text~key_value'~`` with the suffix ``"*"`` removed many times as possible>>.
-   .... Check that ``~<<contains,`` ``contains(text~key_value'_prefix~,`` ``"*")>>``.
-   .... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value'~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-   .... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
-   .... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-   .... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
-   .... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value'~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
-   .... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-   .... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
-   .... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-   .... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
-   .... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
-   .... Return ``simpleKeysetExpressionIR``.
-  ... If ``<<starts_with,`` ``starts_with(text~key_value~,`` ``"0b")>>``:
-   .... Let ``text~key_value''~`` be <<strip_prefix, the text ``text~key_value~`` with the prefix ``"0b"`` removed>>.
-   .... Let ``text~key_value'_prefix'~`` be <<strip_suffix_rec, the text ``text~key_value''~`` with the suffix ``"*"`` removed many times as possible>>.
-   .... Check that ``~<<contains,`` ``contains(text~key_value'_prefix'~,`` ``"*")>>``.
-   .... Let ``text~key_base_value'~`` be <<replace_text, the text ``text~key_value''~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-   .... Let ``i~key_base_value'~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value'~)>>``.
-   .... Let ``typedExpressionIR~base'~`` be <<typedExpressionIR, ``D`` ``i~key_base_value'~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-   .... Let ``typedExpressionIR~base_cast'~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base'~`` implicitly cast to ``typeIR``>>.
-   .... Let ``text~key_mask_value''~`` be <<replace_text_except, the text ``text~key_value''~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
-   .... Let ``text~key_mask_value~`` be <<replace_text, the text ``text~key_mask_value''~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
-   .... Let ``i~key_mask_value'~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value~)>>``.
-   .... Let ``typedExpressionIR~mask'~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value'~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-   .... Let ``typedExpressionIR~mask_cast'~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask'~`` implicitly cast to ``typeIR``>>.
-   .... Let ``simpleKeysetExpressionIR'`` be ``typedExpressionIR~base_cast'~`` ``&&&`` ``typedExpressionIR~mask_cast'~``.
-   .... Return ``simpleKeysetExpressionIR'``.
- .. Else:
-  ... Let ``text~key_prefix_value~`` ```SLASH`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``.
+ .. If let ```HEX`` ``text~key_value~`` be ``tableKeyValueInterface'``:
+  ... Let ``text~key_value_prefix~`` be <<strip_suffix_rec, the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible>>.
+  ... Check that ``~<<contains,`` ``contains(text~key_value_prefix~,`` ``"*")>>``.
+  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
+  ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
+  ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
+  ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
+  ... Return ``simpleKeysetExpressionIR``.
+ .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
+  ... Let ``text~key_value_prefix~`` be <<strip_suffix_rec, the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible>>.
+  ... Check that ``~<<contains,`` ``contains(text~key_value_prefix~,`` ``"*")>>``.
+  ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
+  ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
+  ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
+  ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
+  ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
+  ... Return ``simpleKeysetExpressionIR``.
+ .. Else if let ``text~key_prefix_value~`` ```SLASH`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
   ... Let ``i~key_prefix_value~`` be ``<<text_to_int,`` ``text_to_int(text~key_prefix_value~)>>``.
   ... Let ``n~key_type_width~`` be ``<<sizeof_maxSizeInBits',`` ``sizeof_maxSizeInBits'(typeIR)>>``.
   ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
