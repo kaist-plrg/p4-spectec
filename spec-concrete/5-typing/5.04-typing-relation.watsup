@@ -497,6 +497,14 @@ def $is_static_callableTarget(TYPE _ `. nameIR) = LCTK
 def $is_static_callableTarget(_) = DYN
   -- otherwise
 
+dec $is_static_assert_callableTarget(callableTargetIR) : bool
+def $is_static_assert_callableTarget(`. "static_assert") = true
+def $is_static_assert_callableTarget(`` "static_assert") = true
+def $is_static_assert_callableTarget(`( callableTargetIR ))
+  = $is_static_assert_callableTarget(callableTargetIR)
+def $is_static_assert_callableTarget(_) = false
+  -- otherwise
+
 relation CallableTarget_ok:
   cursor typingContext |- callableTarget : callableTargetIR
   hint(input %0 %1 %2)
