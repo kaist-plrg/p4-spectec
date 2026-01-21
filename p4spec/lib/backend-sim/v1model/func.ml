@@ -37,7 +37,8 @@ let _random (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    value of the receiver parameter.
 
    extern void digest<T>(in bit<32> receiver, in T data); *)
-let digest (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t * Value.t =
+let digest (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
   (* no-op *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
@@ -522,14 +523,12 @@ let _assume (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
 
 let log_msg (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
-  let msg =
-    Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string
-  in
+  let msg = Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string in
   print_endline msg;
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -540,21 +539,23 @@ let format_braces (fmt : string) (args : Value.t list) =
     if i >= n then
       match args with
       | [] -> Buffer.contents buf
-      | _ -> invalid_arg "format_braces: too many arguments"
+      | _ -> error_no_region "too many arguments for format string in log_msg"
     else
       match fmt.[i] with
       | '{' when i + 1 < n && fmt.[i + 1] = '{' ->
-        Buffer.add_char buf '{';
-        walk (i + 2) args
+          Buffer.add_char buf '{';
+          walk (i + 2) args
       | '}' when i + 1 < n && fmt.[i + 1] = '}' ->
-        Buffer.add_char buf '}';
-        walk (i + 2) args
+          Buffer.add_char buf '}';
+          walk (i + 2) args
       | '{' when i + 1 < n && fmt.[i + 1] = '}' -> (
           match args with
           | a :: rest ->
               Buffer.add_string buf (Value.to_string a);
               walk (i + 2) rest
-          | [] -> invalid_arg "format_braces: not enough arguments")
+          | [] ->
+              error_no_region
+                "not enough arguments for format string in log_msg")
       | c ->
           Buffer.add_char buf c;
           walk (i + 1) args
@@ -563,16 +564,12 @@ let format_braces (fmt : string) (args : Value.t list) =
 
 let log_msg_format (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
-  let msg =
-    Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string
-  in
-  let data =
-    Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
-  in
+  let msg = Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string in
+  let data = Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple in
   format_braces msg data |> print_endline;
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
   in
   (value_ctx, value_sto, value_callResult)

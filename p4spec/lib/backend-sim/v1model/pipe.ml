@@ -143,6 +143,7 @@ struct
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
           Core.Func.verify value_ctx value_sto
+      | "digest", [ "receiver"; "data" ] -> Func.digest value_ctx value_sto
       | "mark_to_drop", [ "standard_metadata" ] ->
           Func.mark_to_drop value_ctx value_sto
       | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
@@ -159,12 +160,8 @@ struct
           Func.update_checksum_with_payload value_ctx value_sto packet_in
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
-      | "log_msg", [ "msg" ] ->
-          Func.log_msg value_ctx value_sto
-      | "log_msg", [ "msg"; "data" ] ->
-          Func.log_msg_format value_ctx value_sto
-      | "digest", [ "receiver"; "data" ] ->
-          Func.digest value_ctx value_sto
+      | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_sto
+      | "log_msg", [ "msg"; "data" ] -> Func.log_msg_format value_ctx value_sto
       | _ ->
           error_no_region
             ("unsupported extern function call: " ^ name_func ^ "("

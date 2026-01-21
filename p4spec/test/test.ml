@@ -566,7 +566,7 @@ let cover_sim mode arch specdir includes_p4 excludesdir testdirs_p4 testdirs_stf
   let filenames_p4, filenames_stf =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
     |> List.filter (fun (filename_p4, filename_stf) ->
-        not (Test.should_exclude_pair filename_p4 filename_stf excludes))
+           not (Test.should_exclude_pair filename_p4 filename_stf excludes))
     |> List.split
   in
   match mode with

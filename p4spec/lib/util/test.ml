@@ -61,7 +61,7 @@ let should_exclude_pair (filename_p4 : string) (filename_stf : string)
     (excludes : string list) =
   excludes
   |> List.exists (fun exclude ->
-      String.equal filename_p4 exclude || String.equal filename_stf exclude)
+         String.equal filename_p4 exclude || String.equal filename_stf exclude)
 
 (* Collector for P4-STF pairing *)
 
