@@ -37,8 +37,13 @@ let _random (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    value of the receiver parameter.
 
    extern void digest<T>(in bit<32> receiver, in T data); *)
-let _digest (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
-  error_no_region "extern function digest is not implemented"
+let digest (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t * Value.t =
+  (* no-op *)
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
 
 (* mark_to_drop(standard_metadata) is a primitive action that modifies
    standard_metadata.egress_spec to an implementation-specific special
