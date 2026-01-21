@@ -87,12 +87,10 @@ end
 (* Splice anchor *)
 
 let prefix_source =
-  (* "ifeval::[\"{backend}\" == \"html5\"]\n" ^ *)
-  ".Click to view the specification source\n[%collapsible]\n====\n----\n"
+  "ifdef::backend-html5[]\n"
+  ^ ".Click to view the specification source\n[%collapsible]\n====\n----\n"
 
-let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n"
-(* ^ "endif::[]\n" *)
-
+let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
 let prefix_prose = "****\n"
 let suffix_prose = "\n****"
 
