@@ -360,7 +360,6 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
   let spec_sim, (module Driver) = driver mode specdir in
-  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
@@ -476,7 +475,6 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
   let spec_sim, (module Driver) = driver ~arch mode specdir in
-  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->

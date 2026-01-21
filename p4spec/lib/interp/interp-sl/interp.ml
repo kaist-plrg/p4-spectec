@@ -30,7 +30,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
     let note = value.note.typ in
     match (exp.it, value.it) with
-    | VarE id, _ -> Ctx.add_value Local ctx (id, []) value
+    | VarE id, _ -> Ctx.add_value ctx (id, []) value
     | TupleE exps_inner, TupleV values_inner ->
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
@@ -85,7 +85,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value Local ctx (id, iters @ [ Il.Opt ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
     | IterE (exp, (Opt, vars)), OptV (Some value) ->
         (* Assign the value to the iterated expression *)
@@ -94,14 +94,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let value_sub =
-              let value = Ctx.find_value Local ctx (id, iters) in
+              let value = Ctx.find_value ctx (id, iters) in
               let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
               Il.(OptV (Some value) $$$ { vid; typ = typ.it })
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value Local ctx (id, iters @ [ Il.Opt ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
@@ -118,7 +118,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let values =
-              List.map (fun ctx -> Ctx.find_value Local ctx (id, iters)) ctxs
+              List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
             in
             let value_sub =
               let vid = Value.fresh () in
@@ -127,7 +127,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value Local ctx (id, iters @ [ Il.List ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
           ctx vars
     | _ ->
         back exp.at
@@ -172,8 +172,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (value : value) : Ctx.t =
     match value.it with
     | FuncV id_f ->
-        let func = Ctx.find_func Local ctx_caller id_f in
-        Ctx.add_func Local ctx_callee id func
+        let func = Ctx.find_func ctx_caller id_f in
+        Ctx.add_func ctx_callee id func
     | _ ->
         back id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
@@ -248,7 +248,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.iter
       (fun value_input ->
         Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input Ctx.Local ctx);
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Numeric expression evaluation *)
@@ -263,7 +263,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.iter
       (fun value_input ->
         Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input Ctx.Local ctx);
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Text expression evaluation *)
@@ -278,13 +278,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.iter
       (fun value_input ->
         Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input Ctx.Local ctx);
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Variable expression evaluation *)
 
   and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value =
-    Ctx.find_value Local ctx (id, [])
+    Ctx.find_value ctx (id, [])
 
   (* Unary expression evaluation *)
 
@@ -406,7 +406,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int _) -> value
         | _ -> error_backtrace_upcast ())
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -457,7 +457,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             value_res
         | _ -> error_backtrace_downcast ())
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
@@ -494,7 +494,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | NumV (`Int i) -> Bigint.(i >= zero)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match (deftyp.it, value.it) with
         | PlainT typ, _ ->
@@ -568,7 +568,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       List.iter
         (fun value_input ->
           Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input Ctx.Local ctx);
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Case expression evaluation *)
@@ -586,7 +586,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       List.iter
         (fun value_input ->
           Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input Ctx.Local ctx);
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Struct expression evaluation *)
@@ -606,7 +606,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       List.iter
         (fun value_input ->
           Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input Ctx.Local ctx);
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Option expression evaluation *)
@@ -623,7 +623,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       List.iter
         (fun value_input ->
           Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input Ctx.Local ctx);
+        (Ctx.find_values_input ctx);
     value_res
 
   (* List expression evaluation *)
@@ -640,7 +640,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       List.iter
         (fun value_input ->
           Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input Ctx.Local ctx);
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Cons expression evaluation *)
@@ -1080,7 +1080,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Hook.on_value value_res;
     List.iter
       (fun (id, _typ, iters) ->
-        let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.Opt ]) in
+        let value_sub = Ctx.find_value ctx (id, iters @ [ Il.Opt ]) in
         Hook.on_value_dependency value_res value_sub Dep.Edges.Iter)
       vars;
     value_res
@@ -1097,7 +1097,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Hook.on_value value_res;
     List.iter
       (fun (id, _typ, iters) ->
-        let value_sub = Ctx.find_value Local ctx (id, iters @ [ Il.List ]) in
+        let value_sub = Ctx.find_value ctx (id, iters @ [ Il.List ]) in
         Hook.on_value_dependency value_res value_sub Dep.Edges.Iter)
       vars;
     value_res
@@ -1216,9 +1216,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value value_cond;
             List.iter
               (fun (id, _typ, iters) ->
-                let value_sub =
-                  Ctx.find_value Local ctx (id, iters @ [ Il.List ])
-                in
+                let value_sub = Ctx.find_value ctx (id, iters @ [ Il.List ]) in
                 Hook.on_value_dependency value_cond value_sub Dep.Edges.Iter)
               vars_h;
             (cond, value_cond))
@@ -1300,9 +1298,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value value_cond;
             List.iter
               (fun (id, _typ, iters) ->
-                let value_sub =
-                  Ctx.find_value Local ctx (id, iters @ [ Il.List ])
-                in
+                let value_sub = Ctx.find_value ctx (id, iters @ [ Il.List ]) in
                 Hook.on_value_dependency value_cond value_sub Dep.Edges.Iter)
               vars_h;
             (cond, value_cond))
@@ -1429,7 +1425,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 List.iter
                   (fun (id, _typ, iters) ->
                     let value_sub =
-                      Ctx.find_value Local ctx (id, iters @ [ Il.Opt ])
+                      Ctx.find_value ctx (id, iters @ [ Il.Opt ])
                     in
                     Hook.on_value_dependency value_binding value_sub
                       Dep.Edges.Iter)
@@ -1445,7 +1441,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             List.map
               (fun (id_binding, typ_binding, iters_binding) ->
                 let value_binding =
-                  Ctx.find_value Local ctx_sub (id_binding, iters_binding)
+                  Ctx.find_value ctx_sub (id_binding, iters_binding)
                 in
                 let value_binding =
                   let vid = Value.fresh () in
@@ -1458,7 +1454,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 List.iter
                   (fun (id, _typ, iters) ->
                     let value_sub =
-                      Ctx.find_value Local ctx (id, iters @ [ Il.Opt ])
+                      Ctx.find_value ctx (id, iters @ [ Il.Opt ])
                     in
                     Hook.on_value_dependency value_binding value_sub
                       Dep.Edges.Iter)
@@ -1471,9 +1467,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Finally, bind the resulting values *)
     List.fold_left2
       (fun ctx (id_binding, _typ_binding, iters_binding) value_binding ->
-        Ctx.add_value Local ctx
-          (id_binding, iters_binding @ [ Il.Opt ])
-          value_binding)
+        Ctx.add_value ctx (id_binding, iters_binding @ [ Il.Opt ]) value_binding)
       ctx vars_bind values_binding
 
   and eval_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
@@ -1495,7 +1489,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 let ctx_sub = eval_let_iter' ctx_sub exp_l exp_r iterinstrs in
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
-                    Ctx.find_value Local ctx_sub (id_binding, iters_binding))
+                    Ctx.find_value ctx_sub (id_binding, iters_binding))
                   vars_bind)
               ctxs_sub
           in
@@ -1512,12 +1506,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value_binding;
         List.iter
           (fun (id, _typ, iters) ->
-            let value_sub =
-              Ctx.find_value Local ctx (id, iters @ [ Il.List ])
-            in
+            let value_sub = Ctx.find_value ctx (id, iters @ [ Il.List ]) in
             Hook.on_value_dependency value_binding value_sub Dep.Edges.Iter)
           vars_bound;
-        Ctx.add_value Local ctx
+        Ctx.add_value ctx
           (id_binding, iters_binding @ [ Il.List ])
           value_binding)
       ctx vars_bind values_binding
@@ -1580,7 +1572,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 in
                 List.map
                   (fun (id_binding, _typ_binding, iters_binding) ->
-                    Ctx.find_value Local ctx_sub (id_binding, iters_binding))
+                    Ctx.find_value ctx_sub (id_binding, iters_binding))
                   vars_bind)
               ctxs_sub
           in
@@ -1597,12 +1589,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value_binding;
         List.iter
           (fun (id, _typ, iters) ->
-            let value_sub =
-              Ctx.find_value Local ctx (id, iters @ [ Il.List ])
-            in
+            let value_sub = Ctx.find_value ctx (id, iters @ [ Il.List ]) in
             Hook.on_value_dependency value_binding value_sub Dep.Edges.Iter)
           vars_bound;
-        Ctx.add_value Local ctx
+        Ctx.add_value ctx
           (id_binding, iters_binding @ [ Il.List ])
           value_binding)
       ctx vars_bind values_binding
@@ -1668,7 +1658,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
       value list =
-    let rel = Ctx.find_rel Local ctx id in
+    let rel = Ctx.find_rel ctx id in
     match rel with
     | Rel.Extern -> invoke_extern_rel ctx id values_input
     | Rel.Defined (exps_input, instrs) ->
@@ -1754,7 +1744,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
-      let func = Ctx.find_func Local ctx id in
+      let func = Ctx.find_func ctx id in
       let value_output =
         match func with
         | Func.Extern -> invoke_extern_func id targs values_input
@@ -1802,7 +1792,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
       (tablerows : tablerow list) (values_input : value list) : value =
-    let ctx_local = Ctx.localize_func ctx id values_input ctx.global.tdenv in
+    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
     let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
@@ -1853,66 +1843,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output)
     else invoke_defined_func' ()
 
-  (* Globals *)
-
-  type global = Global of Ctx.t | Empty
-
-  let global : global ref = ref Empty
-
-  let ctx_global () : Ctx.t =
-    match !global with
-    | Global ctx -> ctx
-    | Empty -> back no_region "interpreter not initialized"
-
-  let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
-    match def.it with
-    | ExternTypD (id, _) ->
-        let td = Typdef.Extern in
-        Ctx.add_typdef Global ctx id td
-    | TypD (id, tparams, deftyp, _) ->
-        let td = Typdef.Defined (tparams, deftyp) in
-        Ctx.add_typdef Global ctx id td
-    | ExternRelD (id, _, _, _) ->
-        let rel = Rel.Extern in
-        Ctx.add_rel Global ctx id rel
-    | RelD (id, _, relmatch, relpaths, _) ->
-        let rel = Rel.Defined (relmatch, relpaths) in
-        Ctx.add_rel Global ctx id rel
-    | ExternDecD (id, _, _, _, _) ->
-        let func = Func.Extern in
-        Ctx.add_func Global ctx id func
-    | BuiltinDecD (id, _, _, _, _) ->
-        let func = Func.Builtin in
-        Ctx.add_func Global ctx id func
-    | TableDecD (id, params, _typ, tablerows, _) ->
-        let func = Func.Table (params, tablerows) in
-        Ctx.add_func Global ctx id func
-    | FuncDecD (id, tparams, params, _typ, instrs, _) ->
-        let func = Func.Defined (tparams, params, instrs) in
-        Ctx.add_func Global ctx id func
-
-  let init (spec : spec) : unit =
-    let printer value =
-      Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
-    in
-    Builtin.Call.init printer;
-    let ctx = Ctx.empty () in
-    let ctx = List.fold_left load_def ctx spec in
-    global := Global ctx
-
   (* Entry points for evaluation *)
 
-  let do_init () : unit =
+  let clear () : unit =
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
-      let ctx_global = ctx_global () in
-      let values_ouput =
-        invoke_rel ctx_global (relname $ no_region) values_input
-      in
+      let ctx = Ctx.empty () in
+      let values_ouput = invoke_rel ctx (relname $ no_region) values_input in
       values_ouput
     with Backtrace traces ->
       let failtraces = back_failtraces traces in
@@ -1922,10 +1863,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value =
     try
-      let ctx_global = ctx_global () in
+      let ctx = Ctx.empty () in
       let value_output =
-        invoke_func_with_values ctx_global (funcname $ no_region) targs
-          values_input
+        invoke_func_with_values ctx (funcname $ no_region) targs values_input
       in
       value_output
     with Backtrace traces ->
@@ -1935,7 +1875,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    do_init ();
+    clear ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       Hook.on_program value_program;
@@ -1947,7 +1887,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Sim.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
-    do_init ();
+    clear ();
     try
       let values_output = do_eval_rel relname values_input in
       Sim.Pass values_output
@@ -1956,10 +1896,19 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    do_init ();
+    clear ();
     try
       let value_output = do_eval_func funcname targs values_input in
       Sim.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
       Sim.Fail (at, msg)
+
+  (* Initialization *)
+
+  let init (spec : spec) : unit =
+    let printer value =
+      Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
+    in
+    Builtin.Call.init printer;
+    Ctx.init spec
 end
