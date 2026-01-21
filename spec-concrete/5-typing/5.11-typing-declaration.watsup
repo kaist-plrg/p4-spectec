@@ -132,91 +132,102 @@ relation ObjectDecl_ok:
   |- objectDeclaration
    : typeFrame externMethodTypeDefEnv objectDeclarationIR
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" %4 "under cursor" %0 "and typing context" %1
+                "with" %2 "and" %3)
+  hint(prose_out %5 "and" %6
+                 "of the object declaration and" %7)
 
 ;;;;; syntax objectDeclaration
 
 ;;;;;; instantiation
-
-rule ObjectDecl_ok/instantiation:
-  p TC_0 typeFrame
-  externMethodTypeDefEnv |- instantiation
-                          : typeFrame_init externMethodTypeDefEnv instantiationIR
-  ---- ;; check instantiation
-  -- InstDecl_ok: p TC_0 |- instantiation
-                          : TC_1 instantiationIR
-  ---- ;; add instance
-  -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
-  -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
-  -- if typeFrame_init
-      = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
-
 ;;;;;; functionDeclaration
-;;;;;; syntax functionDeclaration =
-;;;;;;   annotationList functionPrototype blockStatement
-;;;;;;; syntax functionPrototype =
-;;;;;;;   typeOrVoid name typeParameterListOpt `( parameterList )
 
-rule ObjectDecl_ok/functionDeclaration:
-  p TC_0 typeFrame externMethodTypeDefEnv
-  |- annotationList
-      (typeOrVoid name typeParameterListOpt `( parameterList ))
-      blockStatement
-   : typeFrame externMethodTypeDefEnv_init functionDeclarationIR
-  ---- ;; set dummy context for enclosing extern block
-  -- if TC_1 = TC_0[ .BLOCK.KIND = EXTERN ]
-  -- if TC_2 = TC_1[ .BLOCK.FRAME = typeFrame ]
-  ---- ;; check type parameters
-  -- TypeParameterListOpt_ok:
-      LOCAL TC_2 |- typeParameterListOpt : TC_3 typeId_expl*
-  ---- ;; check return type
-  -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
-  ---- ;; check parameters
-  -- ParameterList_ok:
-      LOCAL TC_3 |- parameterList : parameterIR* `# typeId_impl*
-  -- if TC_4 = $add_parameters_t(LOCAL, TC_3, parameterIR*)
-  ---- ;; check body
-  -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `: typeIR_ret) ]
-  -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
-  ---- ;; check that the function returns on all paths, if it is not void
-  -- if f = RET \/ typeIR_ret = VOID
-  ---- ;; add function
-  -- if callableId = $callableId(name, parameterList)
-  -- if externMethodTypeDefIR
-      = EXTERN_METHOD `< typeId_expl* `, typeId_impl* > `( parameterIR* ) `: typeIR_ret
-  -- CallableTypeDef_wf: $bound(p, TC_0) |- externMethodTypeDefIR
-  -- if externMethodTypeDefEnv_init
-      = $update_map<callableId, externMethodTypeDefIR>(
-          externMethodTypeDefEnv,
-          callableId, externMethodTypeDefIR)
-  ---- ;; create IR
-  -- if nameIR = $name(name)
-  -- if functionDeclarationIR
-      = annotationList
-          (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
-          blockStatementIR
+rulegroup ObjectDecl_ok {
+
+  rule ObjectDecl_ok/instantiation:
+    p TC_0 typeFrame
+    externMethodTypeDefEnv |- instantiation
+                            : typeFrame_init externMethodTypeDefEnv instantiationIR
+    ---- ;; check instantiation
+    -- InstDecl_ok: p TC_0 |- instantiation
+                            : TC_1 instantiationIR
+    ---- ;; add instance
+    -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
+    -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
+    -- if typeFrame_init
+        = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
+
+  rule ObjectDecl_ok/functionDeclaration:
+    p TC_0 typeFrame externMethodTypeDefEnv
+    |- annotationList
+        (typeOrVoid name typeParameterListOpt `( parameterList ))
+        blockStatement
+     : typeFrame externMethodTypeDefEnv_init functionDeclarationIR
+    ---- ;; set dummy context for enclosing extern block
+    -- if TC_1 = TC_0[ .BLOCK.KIND = EXTERN ]
+    -- if TC_2 = TC_1[ .BLOCK.FRAME = typeFrame ]
+    ---- ;; check type parameters
+    -- TypeParameterListOpt_ok:
+        LOCAL TC_2 |- typeParameterListOpt : TC_3 typeId_expl*
+    ---- ;; check return type
+    -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
+    ---- ;; check parameters
+    -- ParameterList_ok:
+        LOCAL TC_3 |- parameterList : parameterIR* `# typeId_impl*
+    -- if TC_4 = $add_parameters_t(LOCAL, TC_3, parameterIR*)
+    ---- ;; check body
+    -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `: typeIR_ret) ]
+    -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
+    ---- ;; check that the function returns on all paths, if it is not void
+    -- if f = RET \/ typeIR_ret = VOID
+    ---- ;; add function
+    -- if callableId = $callableId(name, parameterList)
+    -- if externMethodTypeDefIR
+        = EXTERN_METHOD `< typeId_expl* `, typeId_impl* > `( parameterIR* ) `: typeIR_ret
+    -- CallableTypeDef_wf: $bound(p, TC_0) |- externMethodTypeDefIR
+    -- if externMethodTypeDefEnv_init
+        = $update_map<callableId, externMethodTypeDefIR>(
+            externMethodTypeDefEnv,
+            callableId, externMethodTypeDefIR)
+    ---- ;; create IR
+    -- if nameIR = $name(name)
+    -- if functionDeclarationIR
+        = annotationList
+            (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
+            blockStatementIR
+
+}
 
 relation ObjectDecls_ok:
   cursor typingContext typeFrame externMethodTypeDefEnv
   |- objectDeclaration*
    : typeFrame externMethodTypeDefEnv objectDeclarationListIR
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" %4 "under cursor" %0 "and typing context" %1
+                "with" %2 "and" %3)
+  hint(prose_out %5 "and" %6
+                 "of the object declaration block and" %7)
 
-rule ObjectDecls_ok/nil:
-  p TC typeFrame externMethodTypeDefEnv
-  |- eps : typeFrame externMethodTypeDefEnv eps
+rulegroup ObjectDecls_ok {
 
-rule ObjectDecls_ok/cons:
-  p TC typeFrame_0 externMethodTypeDefEnv_0
-  |- objectDeclaration_h :: objectDeclaration_t*
-   : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_h :: objectDeclarationIR_t*)
-  -- ObjectDecl_ok:
-      p TC typeFrame_0 externMethodTypeDefEnv_0
-      |- objectDeclaration_h
-       : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h
-  -- ObjectDecls_ok:
-      p TC typeFrame_1 externMethodTypeDefEnv_1
-      |- objectDeclaration_t*
-       : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
+  rule ObjectDecls_ok/nil:
+    p TC typeFrame externMethodTypeDefEnv
+    |- eps : typeFrame externMethodTypeDefEnv eps
+
+  rule ObjectDecls_ok/cons:
+    p TC typeFrame_0 externMethodTypeDefEnv_0
+    |- objectDeclaration_h :: objectDeclaration_t*
+     : typeFrame_2 externMethodTypeDefEnv_2 (objectDeclarationIR_h :: objectDeclarationIR_t*)
+    -- ObjectDecl_ok:
+        p TC typeFrame_0 externMethodTypeDefEnv_0
+        |- objectDeclaration_h
+         : typeFrame_1 externMethodTypeDefEnv_1 objectDeclarationIR_h
+    -- ObjectDecls_ok:
+        p TC typeFrame_1 externMethodTypeDefEnv_1
+        |- objectDeclaration_t*
+         : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_t*
+
+}
 
 relation ObjectDeclList_ok:
   cursor typingContext |- objectDeclarationList

@@ -160,7 +160,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
         p EC_1 STO_1 |- storageReference : (REF objectId)
     ---- ;; if the value is an object reference to an extern
     -- if EXTERN _ `< theta > `{ _ frame externMethodDefEnv } 
-        = $find_map<objectId, object>(STO_1, objectId)
+        = $find_store(STO_1, objectId)
     ---- ;; find the method being called
     -- if callTargetKey = $callTargetKey(nameIR, argumentListIR)
     -- if (_, externMethodDef, id_default*)
@@ -207,7 +207,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
         p EC_1 STO_1 |- storageReference : (REF objectId)
     -- if PARSER `( parameterListIR )
             `{ frame parserLocalDeclarationListIR stateEnv }
-        = $find_map<objectId, object>(STO_1, objectId)
+        = $find_store(STO_1, objectId)
     ---- ;; perform default resolution
     -- if callableId = $callableId_IR("apply", parameterListIR)
     -- if parserApplyMethodDef
@@ -255,7 +255,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
     -- if CONTROL `( parameterListIR )
             `{ frame controlLocalDeclarationListIR
                actionDefEnv controlBodyIR }
-        = $find_map<objectId, object>(STO_1, objectId)
+        = $find_store(STO_1, objectId)
     ---- ;; perform default resolution
     -- if callableId = $callableId_IR("apply", parameterListIR)
     -- if controlApplyMethodDef
@@ -302,7 +302,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-table-apply-method {
         p EC_1 STO_1 |- storageReference : (REF objectId)
     ---- ;; if the value is an object reference to a table
     -- if TABLE typeId `{ frame TBL }
-        = $find_map<objectId, object>(STO_1, objectId)
+        = $find_store(STO_1, objectId)
     ---- ;; prepare the callee
     -- if tableApplyMethodCallee
         = TABLE objectId `. APPLY `{ frame `; TBL }

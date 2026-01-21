@@ -63,23 +63,29 @@ def $merge_externMethodDefEnvs(
 relation ObjectDecl_inst:
   instContext store |- objectDeclarationIR : instContext store
   hint(input %0 %1 %2)
+  hint(prose_in "loading" %2 "under instantiation context" %0 "and store" %1)
+  hint(prose_out "the updated instantiation context" %3 "and store" %4)
 
-rule ObjectDecl_inst/functionDeclarationIR:
-  IC_0 STO |- functionDeclarationIR : IC_1 STO
-  -- FuncDecl_inst:
-      BLOCK IC_0 |- functionDeclarationIR : IC_1
+rulegroup ObjectDecl_inst {
 
-rule ObjectDecl_inst/instantiationIR:
-  IC_0 STO_0 |- instantiationIR
-              : IC_1 STO_1
-  -- InstDecl_inst:
-      GLOBAL IC_0 STO_0 |- instantiationIR
-                         : IC_1 STO_1 _
+  rule ObjectDecl_inst/functionDeclarationIR:
+    IC_0 STO |- functionDeclarationIR : IC_1 STO
+    -- FuncDecl_inst:
+        BLOCK IC_0 |- functionDeclarationIR : IC_1
+
+  rule ObjectDecl_inst/instantiationIR:
+    IC_0 STO_0 |- instantiationIR
+                : IC_1 STO_1
+    -- InstDecl_inst:
+        GLOBAL IC_0 STO_0 |- instantiationIR
+                           : IC_1 STO_1 _
+
+}
 
 relation ObjectDecls_inst:
   instContext store |- objectDeclarationListIR : instContext store
   hint(input %0 %1 %2)
-  hint(prose_in "instantiating" %2 "under instantiation context" %0 "and store" %1)
+  hint(prose_in "loading" %2 "under instantiation context" %0 "and store" %1)
   hint(prose_out "the updated instantiation context" %3 "and store" %4)
 
 rulegroup ObjectDecls_inst {
@@ -131,7 +137,7 @@ rulegroup InstDecl_inst {
         = EXTERN typeId `< theta > `{ externState frame_merged externMethodDefEnv_merged }
     ---- ;; add object to store
     -- if objectId = IC_0.PATH ++ nameIR
-    -- if STO_3 = $add_map<objectId, object>(STO_2, objectId, object_merged)
+    -- if STO_3 = $add_store(STO_2, objectId, object_merged)
     ---- ;; add reference to object in value environment
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
@@ -155,7 +161,7 @@ rulegroup InstDecl_inst {
     -- if ~$is_externObject(object)
     ---- ;; bind object to store
     -- if objectId = IC_0.PATH ++ nameIR
-    -- if STO_2 = $add_map<objectId, object>(STO_1, objectId, object)
+    -- if STO_2 = $add_store(STO_1, objectId, object)
     ---- ;; add reference to object in value environment
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
@@ -177,14 +183,16 @@ rule Decl_inst/instantiationIR:
 
 rule FuncDecl_inst:
   p IC_0 |- annotationList (typeIR nameIR
-              (`< typeParameterListIR `, typeParameterListIR_inferred >)
+              (`< typeParameterListIR_expl `, typeParameterListIR_impl >)
                `( parameterListIR ))
                blockStatementIR
           : IC_1
   ---- ;; bind function definition to callable environment
   -- if callableId = $callableId_IR(nameIR, parameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if definedFunctionDef
-      = FUNCTION nameIR `< typeParameterListIR ++ typeParameterListIR_inferred >
+      = FUNCTION nameIR `< typeParameterListIR >
           `( parameterListIR ) blockStatementIR
   -- if IC_1 = $add_callableDef_overload_i(p, IC_0, callableId, definedFunctionDef)
 

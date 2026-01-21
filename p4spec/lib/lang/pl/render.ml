@@ -319,7 +319,8 @@ and render_exp ctx exp : string =
       render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t
       |> adoc_as_code ctx
   | CatE (exp_l, exp_r) ->
-      render_exp ctx exp_l ^ " concatenated with " ^ render_exp ctx exp_r
+      if ctx.in_code then render_exp ctx exp_l ^ " {pp} " ^ render_exp ctx exp_r
+      else render_exp ctx exp_l ^ " concatenated with " ^ render_exp ctx exp_r
   | MemE (exp_e, exp_s) ->
       render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
   | LenE exp -> "the length of " ^ render_exp ctx exp
@@ -334,10 +335,16 @@ and render_exp ctx exp : string =
       ^ render_exp in_code exp_h ^ "]"
       |> adoc_as_code ctx
   | UpdE (exp_b, path, exp_f) ->
-      (* always print as code *)
-      render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
-      ^ render_exp in_code exp_f ^ "]"
-      |> adoc_as_code ctx
+      if ctx.in_code then
+        render_exp in_code exp_b ^ "[" ^ render_path in_code path ^ " = "
+        ^ render_exp in_code exp_f ^ "]"
+        |> adoc_as_code ctx
+      else
+        (render_exp in_code exp_b |> adoc_as_code ctx)
+        ^ " with "
+        ^ (render_path in_code path |> adoc_as_code ctx)
+        ^ " set to "
+        ^ (render_exp in_code exp_f |> adoc_as_code ctx)
   | CallE func_call when ctx.in_code ->
       let id, targs, args =
         match func_call with

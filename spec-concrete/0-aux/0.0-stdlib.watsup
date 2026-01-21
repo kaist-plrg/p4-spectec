@@ -194,6 +194,7 @@ syntax pair<K, V> = K `: V
 syntax map<K, V> = set<pair<K, V>>
 
 dec $empty_map<K, V> : map<K, V>
+  hint(prose_in "an empty map")
 def $empty_map<K, V> = `{ eps }
 
 dec $dom_map<K, V>(map<K, V>) : set<K>
@@ -201,18 +202,19 @@ dec $dom_map<K, V>(map<K, V>) : set<K>
 def $dom_map<K, V>(`{ (K `: V)* }) = `{ K* }
 
 builtin dec $find_map<K, V>(map<K, V>, K) : V?
-  hint(prose_in %0#"["#%1#"]")
+  hint(prose_in %1 "in map" %0)
 
 builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
-  hint(prose_in %0#"["#%1#"]")
+  hint(prose_in %1 "in maps" %0)
 
 builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
-  hint(prose_in %0#"["#%1 ":=" %2#"]")
+  hint(prose_in %0 "where" %1 "to" %2 "is added")
 
 builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  hint(prose_in %0 "where each of" %1 "to" %2 "are added")
 
 builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
-  hint(prose_in "the map" %0 "with the value for key" %1 "updated to" %2)
+  hint(prose_in "the map" %0 "with the value for" %1 "is updated to" %2)
 
 dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
 def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })

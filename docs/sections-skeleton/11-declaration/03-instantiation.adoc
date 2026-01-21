@@ -61,7 +61,7 @@ because control `c1` is instantiated at the top-level. Note that top-level
 declarations of constants and instantiations of extern objects are permitted.
 
 [#sec-instantiation-abstract-method]
-==== Instantiating objects with abstract methods
+==== Objects with abstract methods
 
 // Section 11.3.1 of the P4-16 Language Specification
 When instantiating an extern type that has ``abstract`` methods users have to
@@ -114,39 +114,43 @@ values is; target architectures may impose additional constraints on abstract
 methods.
 
 // Added
-[discrete]
-====== § Type checking object initializers
+===== Type checking
 
-${relation-title-source: ObjectDeclList_ok}
-${relation-title-prose: ObjectDeclList_ok}
+An object declaration is type checked with the relation:
 
 ${relation-title-source: ObjectDecl_ok}
 ${relation-title-prose: ObjectDecl_ok}
 
-${rulegroup-source: ObjectDecl_ok/instantiation}
-${rulegroup-prose: ObjectDecl_ok/instantiation}
+It is defined by the following rules:
 
-${rulegroup-source: ObjectDecl_ok/functionDeclaration}
-${rulegroup-prose: ObjectDecl_ok/functionDeclaration}
+${rulegroup-source: ObjectDecl_ok}
+${rulegroup-prose: ObjectDecl_ok}
+
+A list of object declarations is type checked with the relation:
+
+${relation-title-source: ObjectDeclList_ok}
+${relation-title-prose: ObjectDeclList_ok}
 
 // Added
-[discrete]
-====== § Compile-time evaluation of object initializers
+===== Compile-time evaluation
 
-${relation-title-source: ObjectDecls_inst}
-${relation-title-prose: ObjectDecls_inst}
+At compile-time, an object declaration is loaded with the relation:
 
 ${relation-title-source: ObjectDecl_inst}
 ${relation-title-prose: ObjectDecl_inst}
 
-${rulegroup-source: ObjectDecl_inst/instantiationIR}
-${rulegroup-prose: ObjectDecl_inst/instantiationIR}
+It is defined by the following rules:
 
-${rulegroup-source: ObjectDecl_inst/functionDeclarationIR}
-${rulegroup-prose: ObjectDecl_inst/functionDeclarationIR}
+${rulegroup-source: ObjectDecl_inst}
+${rulegroup-prose: ObjectDecl_inst}
 
-[discrete]
-====== § Type checking instantiations
+A list of object declarations is loaded with the relation:
+
+${relation-title-source: ObjectDecls_inst}
+${relation-title-prose: ObjectDecls_inst}
+
+// Added
+==== Type checking
 
 When used as a top-level declaration, instantiations are typed with:
 
@@ -164,7 +168,8 @@ ${rulegroup-prose: InstDecl_ok}
 There are two sub-relations, depending on whether object initializers were
 provided or not.
 
-**§.a When object initializers are absent:**
+[discrete]
+===== When object initializers are absent
 
 ${relation-title-source: InstDecl_non_objectInitializer_ok}
 ${relation-title-prose: InstDecl_non_objectInitializer_ok}
@@ -172,7 +177,8 @@ ${relation-title-prose: InstDecl_non_objectInitializer_ok}
 ${rulegroup-source: InstDecl_non_objectInitializer_ok}
 ${rulegroup-prose: InstDecl_non_objectInitializer_ok}
 
-**§.b When object initializers are present:**
+[discrete]
+===== When object initializers are present
 
 ${relation-title-source: InstDecl_objectInitializer_ok}
 ${relation-title-prose: InstDecl_objectInitializer_ok}
@@ -180,8 +186,7 @@ ${relation-title-prose: InstDecl_objectInitializer_ok}
 ${rulegroup-source: InstDecl_objectInitializer_ok}
 ${rulegroup-prose: InstDecl_objectInitializer_ok}
 
-[discrete]
-====== § Compile-time evaluation of instantiations
+==== Compile-time evaluation
 
 When used as a top-level declaration, instantiations are evaluated with:
 
