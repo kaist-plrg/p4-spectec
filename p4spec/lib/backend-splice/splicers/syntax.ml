@@ -29,7 +29,7 @@ module Source = struct
                | DefinedS (id, tparams, deftyp, hints) ->
                    El.TypD (id, tparams, deftyp, hints) $ no_region
              in
-             El.Print.string_of_def def)
+             El.Render.render_def def)
       |> String.concat "\n\n"
   end
 

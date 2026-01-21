@@ -2744,10 +2744,11 @@ the grammar:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax p4program =
-   | `EMPTY
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">p4program
+   : /* empty */
    | p4program declaration
-   | p4program ;</code></pre>
+   | p4program ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -3104,11 +3105,12 @@ value; its type may vary depending on the context. Certain keywords (e.g.,
 </div>
 <div id="name" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax identifier =
-   | `ID text
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">identifier
+   : `ID text
+   ;
 
-syntax nonTypeName =
-   | identifier
+nonTypeName
+   : identifier
    | APPLY
    | KEY
    | ACTIONS
@@ -3116,16 +3118,19 @@ syntax nonTypeName =
    | ENTRIES
    | TYPE
    | PRIORITY
+   ;
 
-syntax typeIdentifier =
-   | `TID text
+typeIdentifier
+   : `TID text
+   ;
 
-syntax typeName = typeIdentifier
+typeName = typeIdentifier
 
-syntax name =
-   | nonTypeName
+name
+   : nonTypeName
    | typeName
-   | LIST</code></pre>
+   | LIST
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -3135,9 +3140,10 @@ syntax name =
 <h5 id="syn-booleanLiteral">6.2.2.1. Boolean literals</h5>
 <div id="booleanLiteral" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax booleanLiteral =
-   | TRUE
-   | FALSE</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">booleanLiteral
+   : TRUE
+   | FALSE
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3148,10 +3154,11 @@ syntax name =
 <h5 id="syn-integerLiteral">6.2.2.2. Integer literals</h5>
 <div id="integerLiteral" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax integerLiteral =
-   | D int
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerLiteral
+   : D int
    | nat W int
-   | nat S int</code></pre>
+   | nat S int
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3217,8 +3224,9 @@ within a literal. Here are some examples of numeric literals:</p>
 <h5 id="syn-stringLiteral">6.2.2.3. String literals</h5>
 <div id="stringLiteral" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax stringLiteral =
-   | " text "</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">stringLiteral
+   : " text "
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3307,9 +3315,10 @@ optional comma.</p>
 </div>
 <div id="trailingCommaOpt" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax trailingCommaOpt =
-   | `EMPTY
-   | ,</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">trailingCommaOpt
+   : /* empty */
+   | ,
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3383,10 +3392,11 @@ Local namespaces can be nested within other local namespaces.</p>
 </div>
 <div id="cursor" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax cursor =
-   | GLOBAL
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">cursor
+   : GLOBAL
    | BLOCK
-   | LOCAL</code></pre>
+   | LOCAL
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -3409,13 +3419,15 @@ Maybe add more explanation here later. Also introduce a metavariable for <code>c
 </div>
 <div id="prefixedTypeName" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax prefixedNonTypeName =
-   | nonTypeName
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">prefixedNonTypeName
+   : nonTypeName
    | `ID . nonTypeName
+   ;
 
-syntax prefixedTypeName =
-   | typeName
-   | `TID . typeName</code></pre>
+prefixedTypeName
+   : typeName
+   | `TID . typeName
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3534,22 +3546,26 @@ in standard general-purpose programming languages:</p>
 </div>
 <div id="nonEmptyParameterList" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parameterList =
-   | `EMPTY
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterList
+   : /* empty */
    | nonEmptyParameterList
+   ;
 
-syntax nonEmptyParameterList =
-   | parameter
+nonEmptyParameterList
+   : parameter
    | nonEmptyParameterList , parameter
+   ;
 
-syntax parameter =
-   | annotationList direction type name initializerOpt
+parameter
+   : annotationList direction type name initializerOpt
+   ;
 
-syntax direction =
-   | `EMPTY
+direction
+   : /* empty */
    | IN
    | OUT
-   | INOUT</code></pre>
+   | INOUT
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4095,8 +4111,8 @@ This makes it easy to relate P4<sub>IR</sub> programs to their source P4<sub>16<
 </div>
 <div id="typedExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax expression =
-   | literalExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expression
+   : literalExpression
    | referenceExpression
    | defaultExpression
    | unaryExpression
@@ -4107,9 +4123,10 @@ This makes it easy to relate P4<sub>IR</sub> programs to their source P4<sub>16<
    | accessExpression
    | callExpression
    | parenthesizedExpression
+   ;
 
-syntax expressionIR =
-   | literalExpressionIR
+expressionIR
+   : literalExpressionIR
    | referenceExpressionIR
    | defaultExpressionIR
    | unaryExpressionIR
@@ -4120,12 +4137,15 @@ syntax expressionIR =
    | accessExpressionIR
    | callExpressionIR
    | parenthesizedExpressionIR
+   ;
 
-syntax expressionNoteIR =
-   | `(typeIR ctk)
+expressionNoteIR
+   : `( typeIR ctk )
+   ;
 
-syntax typedExpressionIR =
-   | expressionIR # expressionNoteIR</code></pre>
+typedExpressionIR
+   : expressionIR # expressionNoteIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4135,11 +4155,13 @@ structure of the grammar mostly stays the same.</p>
 </div>
 <div id="binaryExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax binaryExpression =
-   | expression binop expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">binaryExpression
+   : expression binop expression
+   ;
 
-syntax binaryExpressionIR =
-   | typedExpressionIR binop typedExpressionIR</code></pre>
+binaryExpressionIR
+   : typedExpressionIR binop typedExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4166,10 +4188,11 @@ Added explanation for P4<sub>IR</sub>. More explanation needed?
 </div>
 <div id="p4program" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax p4program =
-   | `EMPTY
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">p4program
+   : /* empty */
    | p4program declaration
-   | p4program ;</code></pre>
+   | p4program ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4178,8 +4201,9 @@ program, <code>p4programIR</code>:</p>
 </div>
 <div id="p4programIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax p4programIR =
-   | declarationIR* ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">p4programIR
+   : declarationIR* ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4241,13 +4265,13 @@ meta-variable means are provided in the subsequent sections.</p>
 <h4 id="_typing_context">7.2.3. Typing context</h4>
 <div id="typingContext" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax globalTypingLayer = {CONSTRUCTOR constructorTypeDefEnv, TYPE typeDefEnv, CALLABLE callableTypeDefEnv, FRAME typeFrame}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalTypingLayer = {CONSTRUCTOR constructorTypeDefEnv, TYPE typeDefEnv, CALLABLE callableTypeDefEnv, FRAME typeFrame}
 
-syntax blockTypingLayer = {KIND blockKind, TYPE typeDefEnv, CALLABLE callableTypeDefEnv, FRAME typeFrame}
+blockTypingLayer = {KIND blockKind, TYPE typeDefEnv, CALLABLE callableTypeDefEnv, FRAME typeFrame}
 
-syntax localTypingLayer = {KIND localKind, TYPE typeDefEnv, FRAMES typeFrame*}
+localTypingLayer = {KIND localKind, TYPE typeDefEnv, FRAMES typeFrame*}
 
-syntax typingContext = {GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}</code></pre>
+typingContext = {GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4275,10 +4299,11 @@ scope.</p>
 </div>
 <div id="typeFrame" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax varTypeIR =
-   | direction typeIR ctk value?
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">varTypeIR
+   : direction typeIR ctk value?
+   ;
 
-syntax typeFrame = map&lt;id, varTypeIR&gt;</code></pre>
+typeFrame = map&lt;id, varTypeIR&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4296,13 +4321,14 @@ local scope can be nested with block statements.</p>
 </div>
 <div id="typeDefEnv" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeDefIR =
-   | nameTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeDefIR
+   : nameTypeDefIR
    | aliasTypeDefIR
    | dataTypeDefIR
    | objectTypeDefIR
+   ;
 
-syntax typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
+typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4311,12 +4337,13 @@ syntax typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
 </div>
 <div id="callableTypeDefEnv" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableTypeDefIR =
-   | actionTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableTypeDefIR
+   : actionTypeDefIR
    | functionTypeDefIR
    | methodTypeDefIR
+   ;
 
-syntax callableTypeDefEnv = map&lt;callableId, callableTypeDefIR&gt;</code></pre>
+callableTypeDefEnv = map&lt;callableId, callableTypeDefIR&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4326,10 +4353,11 @@ names to their type definitions, <code>callableTypeDefIR</code>.</p>
 </div>
 <div id="constructorTypeDefEnv" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constructorTypeDefIR =
-   | CONSTRUCTOR `&lt;typeParameterIR* , typeParameterIR*&gt; `(constructorParameterIR*) : typeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorTypeDefIR
+   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt; `( constructorParameterIR* ) : typeIR
+   ;
 
-syntax constructorTypeDefEnv = map&lt;constructorId, constructorTypeDefIR&gt;</code></pre>
+constructorTypeDefEnv = map&lt;constructorId, constructorTypeDefIR&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4881,15 +4909,16 @@ instances with that name.</p>
 <h4 id="_instantiating_a_p4_program">7.3.2. Instantiating a P4 program</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectId = nameIR*
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectId = nameIR*
 
-syntax object =
-   | externObject
+object
+   : externObject
    | parserObject
    | controlObject
    | packageObject
    | tableObject
-   | valueSetObject</code></pre>
+   | valueSetObject
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4898,7 +4927,7 @@ objects are identified by their fully-qualified names (<code>objectId</code>).</
 </div>
 <div id="store" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax store = map&lt;objectId, object&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">store = map&lt;objectId, object&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4967,13 +4996,13 @@ instantiated to create a <code>store</code>, which maps <code>objectId</code>s t
 <h4 id="_instantiation_context">7.3.3. Instantiation context</h4>
 <div id="instContext" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax globalInstLayer = {CONSTRUCTOR constructorDefEnv, TYPE typeDefEnv, CALLABLE callableDefEnv, FRAME frame}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalInstLayer = {CONSTRUCTOR constructorDefEnv, TYPE typeDefEnv, CALLABLE callableDefEnv, FRAME frame}
 
-syntax blockInstLayer = {TYPE theta, CALLABLE callableDefEnv, STATE stateEnv, FRAME frame}
+blockInstLayer = {TYPE theta, CALLABLE callableDefEnv, STATE stateEnv, FRAME frame}
 
-syntax localInstLayer = {TYPE theta, FRAMES frame*}
+localInstLayer = {TYPE theta, FRAMES frame*}
 
-syntax instContext = {PATH objectId, GLOBAL globalInstLayer, BLOCK blockInstLayer, LOCAL localInstLayer}</code></pre>
+instContext = {PATH objectId, GLOBAL globalInstLayer, BLOCK blockInstLayer, LOCAL localInstLayer}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -4998,13 +5027,14 @@ scope.</p>
 </div>
 <div id="frame" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax value =
-   | baseValue
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">value
+   : baseValue
    | dataValue
    | objectReferenceValue
    | synthesizedValue
+   ;
 
-syntax frame = map&lt;id, value&gt;</code></pre>
+frame = map&lt;id, value&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5014,13 +5044,14 @@ syntax frame = map&lt;id, value&gt;</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeDefIR =
-   | nameTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeDefIR
+   : nameTypeDefIR
    | aliasTypeDefIR
    | dataTypeDefIR
    | objectTypeDefIR
+   ;
 
-syntax typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
+typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5029,12 +5060,13 @@ syntax typeDefEnv = map&lt;typeId, typeDefIR&gt;</code></pre>
 </div>
 <div id="callableDefEnv" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableDef =
-   | actionDef
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableDef
+   : actionDef
    | functionDef
    | methodDef
+   ;
 
-syntax callableDefEnv = map&lt;callableId, callableDef&gt;</code></pre>
+callableDefEnv = map&lt;callableId, callableDef&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5043,13 +5075,14 @@ syntax callableDefEnv = map&lt;callableId, callableDef&gt;</code></pre>
 </div>
 <div id="constructorDefEnv" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constructorDef =
-   | externObjectConstructorDef
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorDef
+   : externObjectConstructorDef
    | parserObjectConstructorDef
    | controlObjectConstructorDef
    | packageObjectConstructorDef
+   ;
 
-syntax constructorDefEnv = map&lt;callableId, constructorDef&gt;</code></pre>
+constructorDefEnv = map&lt;callableId, constructorDef&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5167,13 +5200,13 @@ Edited contents from Section 18.4.
 <h4 id="_evaluation_context">7.4.2. Evaluation context</h4>
 <div id="evalContext" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax globalEvalLayer = globalInstLayer
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">globalEvalLayer = globalInstLayer
 
-syntax blockEvalLayer = blockInstLayer
+blockEvalLayer = blockInstLayer
 
-syntax localEvalLayer = localInstLayer
+localEvalLayer = localInstLayer
 
-syntax evalContext = {GLOBAL globalEvalLayer, BLOCK blockEvalLayer, LOCAL localEvalLayer}</code></pre>
+evalContext = {GLOBAL globalEvalLayer, BLOCK blockEvalLayer, LOCAL localEvalLayer}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5529,10 +5562,11 @@ compile-time known, compile-time known, or neither.</p>
 </div>
 <div id="ctk" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax ctk =
-   | LCTK
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">ctk
+   : LCTK
    | CTK
-   | DYN</code></pre>
+   | DYN
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5542,11 +5576,13 @@ compile-time known status.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax expressionNoteIR =
-   | `(typeIR ctk)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expressionNoteIR
+   : `( typeIR ctk )
+   ;
 
-syntax typedExpressionIR =
-   | expressionIR # expressionNoteIR</code></pre>
+typedExpressionIR
+   : expressionIR # expressionNoteIR
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -5565,17 +5601,19 @@ number of base types as well as type operators that construct derived types.</p>
 </div>
 <div id="type" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax type =
-   | baseType
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">type
+   : baseType
    | namedType
    | headerStackType
    | listType
    | tupleType
+   ;
 
-syntax typeOrVoid =
-   | type
+typeOrVoid
+   : type
    | VOID
-   | identifier</code></pre>
+   | identifier
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5583,13 +5621,14 @@ syntax typeOrVoid =
 </div>
 <div id="typeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeIR =
-   | baseTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeIR
+   : baseTypeIR
    | nameTypeIR
    | aliasTypeIR
    | dataTypeIR
    | objectTypeIR
-   | synthesizedTypeIR</code></pre>
+   | synthesizedTypeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5638,11 +5677,12 @@ runtime representation of P4 values is as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax value =
-   | baseValue
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">value
+   : baseValue
    | dataValue
    | objectReferenceValue
-   | synthesizedValue</code></pre>
+   | synthesizedValue
+   ;</code></pre>
 </div>
 </div>
 <div class="sect2">
@@ -5652,19 +5692,20 @@ runtime representation of P4 values is as follows:</p>
 </div>
 <div id="baseType" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax baseType =
-   | BOOL
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseType
+   : BOOL
    | ERROR
    | MATCH_KIND
    | STRING
    | INT
-   | INT `&lt;int&gt;
-   | INT `&lt;`(expression)&gt;
+   | INT `&lt; int &gt;
+   | INT `&lt; `( expression ) &gt;
    | BIT
-   | BIT `&lt;int&gt;
-   | BIT `&lt;`(expression)&gt;
-   | VARBIT `&lt;int&gt;
-   | VARBIT `&lt;`(expression)&gt;</code></pre>
+   | BIT `&lt; int &gt;
+   | BIT `&lt; `( expression ) &gt;
+   | VARBIT `&lt; int &gt;
+   | VARBIT `&lt; `( expression ) &gt;
+   ;</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -5703,10 +5744,11 @@ values of type string.</p>
 </div>
 <div id="typeOrVoid" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeOrVoid =
-   | type
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeOrVoid
+   : type
    | VOID
-   | identifier</code></pre>
+   | identifier
+   ;</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -5722,13 +5764,14 @@ restricted circumstances.</p>
 </div>
 <div id="baseTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax baseTypeIR =
-   | voidTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseTypeIR
+   : voidTypeIR
    | boolTypeIR
    | errorTypeIR
    | matchKindTypeIR
    | stringTypeIR
-   | integerTypeIR</code></pre>
+   | integerTypeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5736,12 +5779,13 @@ restricted circumstances.</p>
 </div>
 <div id="baseValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax baseValue =
-   | boolValue
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">baseValue
+   : boolValue
    | errorValue
    | matchKindValue
    | stringValue
-   | integerValue</code></pre>
+   | integerValue
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -5785,8 +5829,9 @@ restricted circumstances.</p>
 <h4 id="_the_void_type">8.1.2. The void type</h4>
 <div id="voidTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax voidTypeIR =
-   | VOID</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">voidTypeIR
+   : VOID
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5836,11 +5881,13 @@ in P4 programs.</p>
 <h4 id="_booleans">8.1.3. Booleans</h4>
 <div id="boolValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax boolTypeIR =
-   | BOOL
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">boolTypeIR
+   : BOOL
+   ;
 
-syntax boolValue =
-   | `B bool</code></pre>
+boolValue
+   : `B bool
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5886,11 +5933,13 @@ values are not integers or bit-strings.</p>
 <h4 id="sec-error">8.1.4. Errors</h4>
 <div id="errorValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax errorTypeIR =
-   | ERROR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorTypeIR
+   : ERROR
+   ;
 
-syntax errorValue =
-   | ERROR . nameIR</code></pre>
+errorValue
+   : ERROR . nameIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5900,8 +5949,9 @@ are defined with the following syntax:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax errorDeclaration =
-   | ERROR `{nameList}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorDeclaration
+   : ERROR `{ nameList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5965,11 +6015,13 @@ type (these errors are declared in the P4 core library):</p>
 <h4 id="sec-match-kind">8.1.5. Match kinds</h4>
 <div id="matchKindValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax matchKindTypeIR =
-   | MATCH_KIND
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindTypeIR
+   : MATCH_KIND
+   ;
 
-syntax matchKindValue =
-   | MATCH_KIND . nameIR</code></pre>
+matchKindValue
+   : MATCH_KIND . nameIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -5981,8 +6033,9 @@ multiple times.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax matchKindDeclaration =
-   | MATCH_KIND `{nameList trailingCommaOpt}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindDeclaration
+   : MATCH_KIND `{ nameList trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6045,10 +6098,11 @@ cannot declare new match kinds.</p>
 <h4 id="_strings">8.1.6. Strings</h4>
 <div id="stringValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax stringTypeIR =
-   | STRING
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">stringTypeIR
+   : STRING
+   ;
 
-syntax stringValue = stringLiteral</code></pre>
+stringValue = stringLiteral</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6117,20 +6171,23 @@ should be used for a given table in the generated control-plane API:</p>
 <h4 id="_integer_types_and_values_signed_and_unsigned">8.1.7. Integer types and values (signed and unsigned)</h4>
 <div id="integerValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax integerTypeIR =
-   | INT
-   | INT `&lt;nat&gt;
-   | BIT `&lt;nat&gt;
-   | VARBIT `&lt;nat&gt;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerTypeIR
+   : INT
+   | INT `&lt; nat &gt;
+   | BIT `&lt; nat &gt;
+   | VARBIT `&lt; nat &gt;
+   ;
 
-syntax integerLiteral =
-   | D int
+integerLiteral
+   : D int
    | nat W int
    | nat S int
+   ;
 
-syntax integerValue =
-   | integerLiteral
-   | nat . nat V int</code></pre>
+integerValue
+   : integerLiteral
+   | nat . nat V int
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6676,16 +6733,19 @@ to always contain an integer number of bytes at runtime.</p>
 <h3 id="sec-named-types">8.2. Named types</h3>
 <div id="namedType" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax prefixedTypeName =
-   | typeName
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">prefixedTypeName
+   : typeName
    | `TID . typeName
+   ;
 
-syntax specializedType =
-   | prefixedTypeName `&lt;typeArgumentList&gt;
+specializedType
+   : prefixedTypeName `&lt; typeArgumentList &gt;
+   ;
 
-syntax namedType =
-   | prefixedTypeName
-   | specializedType</code></pre>
+namedType
+   : prefixedTypeName
+   | specializedType
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6760,12 +6820,13 @@ arguments. For example,</p>
 <h4 id="sec-type-definitions">8.2.1. Type definitions (type constructors)</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeDeclaration =
-   | derivedTypeDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeDeclaration
+   : derivedTypeDeclaration
    | typedefDeclaration
    | parserTypeDeclaration
    | controlTypeDeclaration
-   | packageTypeDeclaration</code></pre>
+   | packageTypeDeclaration
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6778,28 +6839,31 @@ arguments to produce a type instance.</p>
 </div>
 <div id="objectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax nameTypeDefIR = nameTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">nameTypeDefIR = nameTypeIR
 
-syntax aliasTypeDefIR = aliasTypeIR
+aliasTypeDefIR = aliasTypeIR
 
-syntax dataTypeDefIR =
-   | structTypeDefIR
+dataTypeDefIR
+   : structTypeDefIR
    | headerTypeDefIR
    | headerUnionTypeDefIR
    | enumTypeDefIR
+   ;
 
-syntax objectTypeDefIR =
-   | externObjectTypeDefIR
+objectTypeDefIR
+   : externObjectTypeDefIR
    | parserObjectTypeDefIR
    | controlObjectTypeDefIR
    | packageObjectTypeDefIR
    | tableObjectTypeDefIR
+   ;
 
-syntax typeDefIR =
-   | nameTypeDefIR
+typeDefIR
+   : nameTypeDefIR
    | aliasTypeDefIR
    | dataTypeDefIR
-   | objectTypeDefIR</code></pre>
+   | objectTypeDefIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6808,11 +6872,13 @@ syntax typeDefIR =
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax structTypeDefIR =
-   | STRUCT typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `{fieldTypeIR*}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeDefIR
+   : STRUCT typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   ;
 
-syntax structTypeDeclaration =
-   | annotationList STRUCT name typeParameterListOpt `{typeFieldList}</code></pre>
+structTypeDeclaration
+   : annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6857,8 +6923,9 @@ representation of types contain representations for the referred types.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax structTypeIR =
-   | STRUCT typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeIR
+   : STRUCT typeId `&lt; typeArgumentIR* &gt; `{ fieldTypeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -6949,9 +7016,10 @@ type is simply the type defined by the type definition.</p>
 <h4 id="_prefixed_type_names">8.2.4. Prefixed type names</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax prefixedTypeName =
-   | typeName
-   | `TID . typeName</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">prefixedTypeName
+   : typeName
+   | `TID . typeName
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7063,8 +7131,9 @@ specialization, where it only performs inference for function and method calls.
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax specializedType =
-   | prefixedTypeName `&lt;typeArgumentList&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">specializedType
+   : prefixedTypeName `&lt; typeArgumentList &gt;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7161,23 +7230,25 @@ specialized with the <code>bit&lt;32&gt;</code> bound to the <code>T</code> type
 <h3 id="_data_types_and_values">8.3. Data types and values</h3>
 <div id="dataValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax dataTypeIR =
-   | listTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataTypeIR
+   : listTypeIR
    | tupleTypeIR
    | headerStackTypeIR
    | structTypeIR
    | headerTypeIR
    | headerUnionTypeIR
    | enumTypeIR
+   ;
 
-syntax dataValue =
-   | listValue
+dataValue
+   : listValue
    | tupleValue
    | headerStackValue
    | structValue
    | headerValue
    | headerUnionValue
-   | enumValue</code></pre>
+   | enumValue
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7197,14 +7268,17 @@ The type of a list where all elements have type <code>T</code> is written as</p>
 </div>
 <div id="listValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax listType =
-   | LIST `&lt;typeArgument&gt;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">listType
+   : LIST `&lt; typeArgument &gt;
+   ;
 
-syntax listTypeIR =
-   | LIST `&lt;typeIR&gt;
+listTypeIR
+   : LIST `&lt; typeIR &gt;
+   ;
 
-syntax listValue =
-   | LIST `[value*]</code></pre>
+listValue
+   : LIST `[ value* ]
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -7308,14 +7382,17 @@ tuples with <code>n</code> component types <code>T1</code>, &#8230;&#8203;, <cod
 </div>
 <div id="tupleValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tupleType =
-   | TUPLE `&lt;typeArgumentList&gt;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tupleType
+   : TUPLE `&lt; typeArgumentList &gt;
+   ;
 
-syntax tupleTypeIR =
-   | TUPLE `&lt;typeIR*&gt;
+tupleTypeIR
+   : TUPLE `&lt; typeIR* &gt;
+   ;
 
-syntax tupleValue =
-   | TUPLE `(value*)</code></pre>
+tupleValue
+   : TUPLE `( value* )
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -7414,11 +7491,13 @@ type is defined as:</p>
 </div>
 <div id="headerStackTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerStackType =
-   | namedType `[expression]
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerStackType
+   : namedType `[ expression ]
+   ;
 
-syntax headerStackTypeIR =
-   | typeIR `[nat]</code></pre>
+headerStackTypeIR
+   : typeIR `[ nat ]
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7429,8 +7508,9 @@ not supported.</p>
 </div>
 <div id="headerStackValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerStackValue =
-   | HEADER_STACK `[value* `(nat ; nat)]</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerStackValue
+   : HEADER_STACK `[ value* `( nat ; nat ) ]
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7611,11 +7691,13 @@ This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
 </div>
 <div id="structTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeField =
-   | annotationList type name ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeField
+   : annotationList type name ;
+   ;
 
-syntax structTypeDeclaration =
-   | annotationList STRUCT name typeParameterListOpt `{typeFieldList}</code></pre>
+structTypeDeclaration
+   : annotationList STRUCT name typeParameterListOpt `{ typeFieldList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7625,8 +7707,9 @@ name in the current scope. Field names have to be distinct. An empty struct
 </div>
 <div id="structTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax structTypeDefIR =
-   | STRUCT typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `{fieldTypeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeDefIR
+   : STRUCT typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7652,17 +7735,21 @@ struct types and values are represented as follows:</p>
 </div>
 <div id="structValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax fieldTypeIR =
-   | typeIR nameIR ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">fieldTypeIR
+   : typeIR nameIR ;
+   ;
 
-syntax structTypeIR =
-   | STRUCT typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}
+structTypeIR
+   : STRUCT typeId `&lt; typeArgumentIR* &gt; `{ fieldTypeIR* }
+   ;
 
-syntax fieldValue =
-   | value nameIR ;
+fieldValue
+   : value nameIR ;
+   ;
 
-syntax structValue =
-   | STRUCT typeId `{fieldValue*}</code></pre>
+structValue
+   : STRUCT typeId `{ fieldValue* }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -7728,11 +7815,13 @@ as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div id="headerTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeField =
-   | annotationList type name ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeField
+   : annotationList type name ;
+   ;
 
-syntax headerTypeDeclaration =
-   | annotationList HEADER name typeParameterListOpt `{typeFieldList}</code></pre>
+headerTypeDeclaration
+   : annotationList HEADER name typeParameterListOpt `{ typeFieldList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7750,8 +7839,9 @@ definition can be referred to using this identifier.</p>
 </div>
 <div id="headerTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerTypeDefIR =
-   | HEADER typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `{fieldTypeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerTypeDefIR
+   : HEADER typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7869,11 +7959,13 @@ valid header field names.</p>
 </div>
 <div id="headerValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerTypeIR =
-   | HEADER typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerTypeIR
+   : HEADER typeId `&lt; typeArgumentIR* &gt; `{ fieldTypeIR* }
+   ;
 
-syntax headerValue =
-   | HEADER typeId `{bool ; fieldValue*}</code></pre>
+headerValue
+   : HEADER typeId `{ bool ; fieldValue* }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -7945,11 +8037,13 @@ one alternative will be present, allowing them to conserve storage resources.</p
 </div>
 <div id="headerUnionTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeField =
-   | annotationList type name ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeField
+   : annotationList type name ;
+   ;
 
-syntax headerUnionTypeDeclaration =
-   | annotationList HEADER_UNION name typeParameterListOpt `{typeFieldList}</code></pre>
+headerUnionTypeDeclaration
+   : annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7958,8 +8052,9 @@ the current scope.</p>
 </div>
 <div id="headerUnionTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerUnionTypeDefIR =
-   | HEADER_UNION typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `{fieldTypeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerUnionTypeDefIR
+   : HEADER_UNION typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -7986,11 +8081,13 @@ headers:</p>
 </div>
 <div id="headerUnionValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax headerUnionTypeIR =
-   | HEADER_UNION typeId `&lt;typeArgumentIR*&gt; `{fieldTypeIR*}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerUnionTypeIR
+   : HEADER_UNION typeId `&lt; typeArgumentIR* &gt; `{ fieldTypeIR* }
+   ;
 
-syntax headerUnionValue =
-   | HEADER_UNION typeId `{fieldValue*}</code></pre>
+headerUnionValue
+   : HEADER_UNION typeId `{ fieldValue* }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8056,16 +8153,19 @@ obtained from named types, as illustrated in <a href="#sec-named-types">Section 
 </div>
 <div id="namedExpressionList" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax namedExpression =
-   | name = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">namedExpression
+   : name = expression
+   ;
 
-syntax namedExpressionList =
-   | namedExpression
+namedExpressionList
+   : namedExpression
    | namedExpressionList , namedExpression
+   ;
 
-syntax enumTypeDeclaration =
-   | annotationList ENUM name `{nameList trailingCommaOpt}
-   | annotationList ENUM type name `{namedExpressionList trailingCommaOpt}</code></pre>
+enumTypeDeclaration
+   : annotationList ENUM name `{ nameList trailingCommaOpt }
+   | annotationList ENUM type name `{ namedExpressionList trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8077,7 +8177,7 @@ underlying representation type is provided. The two forms are described below.</
 </div>
 <div id="enumTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax enumTypeDefIR = enumTypeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">enumTypeDefIR = enumTypeIR</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8085,16 +8185,19 @@ underlying representation type is provided. The two forms are described below.</
 </div>
 <div id="enumValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueFieldIR =
-   | nameIR = value ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">valueFieldIR
+   : nameIR = value ;
+   ;
 
-syntax enumTypeIR =
-   | ENUM typeId `{nameIR*}
-   | ENUM typeId `&lt;typeIR&gt; `{valueFieldIR*}
+enumTypeIR
+   : ENUM typeId `{ nameIR* }
+   | ENUM typeId `&lt; typeIR &gt; `{ valueFieldIR* }
+   ;
 
-syntax enumValue =
-   | typeId . nameIR
-   | typeId . nameIR . value</code></pre>
+enumValue
+   : typeId . nameIR
+   | typeId . nameIR . value
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8267,15 +8370,17 @@ names. Thus enum types can be obtained from named types, as illustrated in
 <h3 id="_object_types_and_values">8.4. Object types and values</h3>
 <div id="objectReferenceValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectTypeIR =
-   | externObjectTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectTypeIR
+   : externObjectTypeIR
    | parserObjectTypeIR
    | controlObjectTypeIR
    | packageObjectTypeIR
    | tableObjectTypeIR
+   ;
 
-syntax objectReferenceValue =
-   | REF objectId</code></pre>
+objectReferenceValue
+   : REF objectId
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8293,19 +8398,23 @@ specific to a target.</p>
 </div>
 <div id="externConstructorOrMethodPrototype" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externConstructorPrototype =
-   | annotationList typeIdentifier `(parameterList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externConstructorPrototype
+   : annotationList typeIdentifier `( parameterList ) ;
+   ;
 
-syntax externMethodPrototype =
-   | annotationList functionPrototype ;
+externMethodPrototype
+   : annotationList functionPrototype ;
    | annotationList ABSTRACT functionPrototype ;
+   ;
 
-syntax externConstructorOrMethodPrototype =
-   | externConstructorPrototype
+externConstructorOrMethodPrototype
+   : externConstructorPrototype
    | externMethodPrototype
+   ;
 
-syntax externObjectDeclaration =
-   | annotationList EXTERN nonTypeName typeParameterListOpt `{externConstructorOrMethodPrototypeList}</code></pre>
+externObjectDeclaration
+   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8331,8 +8440,9 @@ objects can be invoked on a packet:</p>
 </div>
 <div id="externObjectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObjectTypeDefIR =
-   | EXTERN typeId `&lt;typeParameterIR* , typeParameterIR*&gt; externMethodTypeDefEnv</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectTypeDefIR
+   : EXTERN typeId `&lt; typeParameterIR* , typeParameterIR* &gt; externMethodTypeDefEnv
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8341,8 +8451,9 @@ object types are represented as:</p>
 </div>
 <div id="externObjectTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObjectTypeIR =
-   | EXTERN typeId `&lt;typeArgumentIR*&gt; externMethodTypeDefEnv</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectTypeIR
+   : EXTERN typeId `&lt; typeArgumentIR* &gt; externMethodTypeDefEnv
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8402,8 +8513,9 @@ packet that is processed.</p>
 </div>
 <div id="parserTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserTypeDeclaration =
-   | annotationList PARSER name typeParameterListOpt `(parameterList) ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserTypeDeclaration
+   : annotationList PARSER name typeParameterListOpt `( parameterList ) ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8434,8 +8546,9 @@ that is parameterized on a type variable <code>H</code>. That parser receives as
 </div>
 <div id="parserObjectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserObjectTypeDefIR =
-   | PARSER typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectTypeDefIR
+   : PARSER typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8444,8 +8557,9 @@ Internally, parser types are represented as:</p>
 </div>
 <div id="parserObjectTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserObjectTypeIR =
-   | PARSER typeId `&lt;typeArgumentIR*&gt; `(parameterIR*)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectTypeIR
+   : PARSER typeId `&lt; typeArgumentIR* &gt; `( parameterIR* )
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8503,8 +8617,9 @@ types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div id="controlTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlTypeDeclaration =
-   | annotationList CONTROL name typeParameterListOpt `(parameterList) ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlTypeDeclaration
+   : annotationList CONTROL name typeParameterListOpt `( parameterList ) ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8515,8 +8630,9 @@ types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div id="controlObjectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlObjectTypeDefIR =
-   | CONTROL typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectTypeDefIR
+   : CONTROL typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8525,8 +8641,9 @@ Internally, control types are represented as:</p>
 </div>
 <div id="controlObjectTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlObjectTypeIR =
-   | CONTROL typeId `&lt;typeArgumentIR*&gt; `(parameterIR*)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectTypeIR
+   : CONTROL typeId `&lt; typeArgumentIR* &gt; `( parameterIR* )
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8584,8 +8701,9 @@ named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageTypeDeclaration =
-   | annotationList PACKAGE name typeParameterListOpt `(parameterList) ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageTypeDeclaration
+   : annotationList PACKAGE name typeParameterListOpt `( parameterList ) ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8593,8 +8711,9 @@ named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div id="packageObjectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageObjectTypeDefIR =
-   | PACKAGE typeId `&lt;typeParameterIR* , typeParameterIR*&gt; `{typeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObjectTypeDefIR
+   : PACKAGE typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ typeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8603,8 +8722,9 @@ Internally, package types are represented as:</p>
 </div>
 <div id="packageObjectTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageObjectTypeIR =
-   | PACKAGE typeId `&lt;typeArgumentIR*&gt; `{typeIR*}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObjectTypeIR
+   : PACKAGE typeId `&lt; typeArgumentIR* &gt; `{ typeIR* }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8662,10 +8782,11 @@ named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
 <div id="tableObjectTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableDeclaration =
-   | annotationList TABLE name `{tablePropertyList}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableDeclaration
+   : annotationList TABLE name `{ tablePropertyList }
+   ;
 
-syntax tableObjectTypeDefIR = tableObjectTypeIR</code></pre>
+tableObjectTypeDefIR = tableObjectTypeIR</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8673,8 +8794,9 @@ syntax tableObjectTypeDefIR = tableObjectTypeIR</code></pre>
 </div>
 <div id="tableObjectTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableObjectTypeIR =
-   | TABLE typeId `{tableMetadataStructTypeIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableObjectTypeIR
+   : TABLE typeId `{ tableMetadataStructTypeIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8727,10 +8849,11 @@ allocated in the global store.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectId = nameIR*
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectId = nameIR*
 
-syntax objectReferenceValue =
-   | REF objectId</code></pre>
+objectReferenceValue
+   : REF objectId
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8745,13 +8868,15 @@ syntax objectReferenceValue =
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typedef =
-   | type
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedef
+   : type
    | derivedTypeDeclaration
+   ;
 
-syntax typedefDeclaration =
-   | annotationList TYPEDEF typedef name ;
-   | annotationList TYPE type name ;</code></pre>
+typedefDeclaration
+   : annotationList TYPEDEF typedef name ;
+   | annotationList TYPE type name ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -8759,9 +8884,10 @@ syntax typedefDeclaration =
 </div>
 <div id="aliasTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax aliasTypeIR =
-   | typedefTypeIR
-   | newTypeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">aliasTypeIR
+   : typedefTypeIR
+   | newTypeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -8796,8 +8922,9 @@ suitable number of type arguments:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typedefTypeIR =
-   | TYPEDEF typeId typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedefTypeIR
+   : TYPEDEF typeId typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8897,8 +9024,9 @@ with the control-plane software).</p>
 </div>
 <div id="newTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax newTypeIR =
-   | TYPE typeId typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">newTypeIR
+   : TYPE typeId typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -8965,21 +9093,23 @@ representations which cannot be directly expressed by users.</p>
 </div>
 <div id="synthesizedValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax synthesizedTypeIR =
-   | defaultTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">synthesizedTypeIR
+   : defaultTypeIR
    | invalidHeaderTypeIR
    | sequenceTypeIR
    | recordTypeIR
    | setTypeIR
    | tableMetadataTypeIR
+   ;
 
-syntax synthesizedValue =
-   | defaultValue
+synthesizedValue
+   : defaultValue
    | invalidHeaderValue
    | sequenceValue
    | recordValue
    | setValue
-   | tableMetadataValue</code></pre>
+   | tableMetadataValue
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -8990,8 +9120,9 @@ suitable type using:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax defaultExpression =
-   | ...</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">defaultExpression
+   : ...
+   ;</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -9021,11 +9152,13 @@ S s0 <span style="color: #0550ae">=</span> <span style="color: #0550ae">...</spa
 </div>
 <div id="defaultValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax defaultTypeIR =
-   | DEFAULT
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">defaultTypeIR
+   : DEFAULT
+   ;
 
-syntax defaultValue =
-   | DEFAULT</code></pre>
+defaultValue
+   : DEFAULT
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -9080,9 +9213,10 @@ a type and value, we need to represent those of <code>...</code>.
 <h4 id="_invalid_header_types_and_values">8.6.2. Invalid header types and values</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax dataExpression =
-   | {#}
-   | `{dataElementExpression trailingCommaOpt}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataExpression
+   : {#}
+   | `{ dataElementExpression trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9112,11 +9246,13 @@ whitespace or any other characters between those shown.</p>
 </div>
 <div id="invalidHeaderValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax invalidHeaderTypeIR =
-   | HEADER_INVALID
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">invalidHeaderTypeIR
+   : HEADER_INVALID
+   ;
 
-syntax invalidHeaderValue =
-   | {#}</code></pre>
+invalidHeaderValue
+   : {#}
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -9175,15 +9311,17 @@ separated by a comma:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax sequenceElementExpression = expressionList
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sequenceElementExpression = expressionList
 
-syntax dataElementExpression =
-   | sequenceElementExpression
+dataElementExpression
+   : sequenceElementExpression
    | recordElementExpression
+   ;
 
-syntax dataExpression =
-   | {#}
-   | `{dataElementExpression trailingCommaOpt}</code></pre>
+dataExpression
+   : {#}
+   | `{ dataElementExpression trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9242,13 +9380,15 @@ value.</p>
 </div>
 <div id="sequenceValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax sequenceTypeIR =
-   | SEQ `&lt;typeIR*&gt;
-   | SEQ `&lt;typeIR* , ...&gt;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sequenceTypeIR
+   : SEQ `&lt; typeIR* &gt;
+   | SEQ `&lt; typeIR* , ... &gt;
+   ;
 
-syntax sequenceValue =
-   | SEQ `(value*)
-   | SEQ `(value* , ...)</code></pre>
+sequenceValue
+   : SEQ `( value* )
+   | SEQ `( value* , ... )
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -9341,19 +9481,22 @@ syntax of these expressions is given by:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax recordElementExpression =
-   | name = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">recordElementExpression
+   : name = expression
    | name = expression , ...
    | name = expression , namedExpressionList
    | name = expression , namedExpressionList , ...
+   ;
 
-syntax dataElementExpression =
-   | sequenceElementExpression
+dataElementExpression
+   : sequenceElementExpression
    | recordElementExpression
+   ;
 
-syntax dataExpression =
-   | {#}
-   | `{dataElementExpression trailingCommaOpt}</code></pre>
+dataExpression
+   : {#}
+   | `{ dataElementExpression trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9404,13 +9547,15 @@ structure-valued expression.</p>
 </div>
 <div id="recordValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax recordTypeIR =
-   | RECORD `{fieldTypeIR*}
-   | RECORD `{fieldTypeIR* , ...}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">recordTypeIR
+   : RECORD `{ fieldTypeIR* }
+   | RECORD `{ fieldTypeIR* , ... }
+   ;
 
-syntax recordValue =
-   | RECORD `{fieldValue*}
-   | RECORD `{fieldValue* , ...}</code></pre>
+recordValue
+   : RECORD `{ fieldValue* }
+   | RECORD `{ fieldValue* , ... }
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -9504,8 +9649,9 @@ optTrailingComma }</code>.
 <h4 id="_set_types_and_values">8.6.5. Set types and values</h4>
 <div id="setTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax setTypeIR =
-   | SET `&lt;typeIR&gt;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">setTypeIR
+   : SET `&lt; typeIR &gt;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9522,12 +9668,13 @@ by the compiler internally and used for type-checking.</p>
 </div>
 <div id="setValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax setValue =
-   | SET `{value}
-   | SET `{value* `(nat)}
-   | SET `{value &amp;&amp;&amp; value}
-   | SET `{value .. value}
-   | SET `{...}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">setValue
+   : SET `{ value }
+   | SET `{ value* `( nat ) }
+   | SET `{ value &amp;&amp;&amp; value }
+   | SET `{ value .. value }
+   | SET `{ ... }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -9631,13 +9778,15 @@ statement:</p>
 </div>
 <div id="tableMetadataValue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableMetadataTypeIR =
-   | tableMetadataEnumTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableMetadataTypeIR
+   : tableMetadataEnumTypeIR
    | tableMetadataStructTypeIR
+   ;
 
-syntax tableMetadataValue =
-   | tableMetadataEnumValue
-   | tableMetadataStructValue</code></pre>
+tableMetadataValue
+   : tableMetadataEnumValue
+   | tableMetadataStructValue
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -9707,8 +9856,9 @@ syntax tableMetadataValue =
 <h3 id="_unrolling">8.7. Unrolling</h3>
 <div id="typedefTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typedefTypeIR =
-   | TYPEDEF typeId typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedefTypeIR
+   : TYPEDEF typeId typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9927,10 +10077,11 @@ constructor for the callable type:</p>
 </div>
 <div id="callableTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableTypeDefIR =
-   | actionTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableTypeDefIR
+   : actionTypeDefIR
    | functionTypeDefIR
-   | methodTypeDefIR</code></pre>
+   | methodTypeDefIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9939,10 +10090,11 @@ specialization:</p>
 </div>
 <div id="callableTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableTypeIR =
-   | actionTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableTypeIR
+   : actionTypeIR
    | functionTypeIR
-   | methodTypeIR</code></pre>
+   | methodTypeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9967,24 +10119,27 @@ specialization:</p>
 </div>
 <div id="callableDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableDef =
-   | actionDef
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableDef
+   : actionDef
    | functionDef
-   | methodDef</code></pre>
+   | methodDef
+   ;</code></pre>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_parameters">9.1. Parameters</h3>
 <div id="parameter" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax direction =
-   | `EMPTY
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">direction
+   : /* empty */
    | IN
    | OUT
    | INOUT
+   ;
 
-syntax parameter =
-   | annotationList direction type name initializerOpt</code></pre>
+parameter
+   : annotationList direction type name initializerOpt
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -9996,8 +10151,9 @@ name, and an optional default value.</p>
 </div>
 <div id="parameterIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parameterIR =
-   | annotationList direction typeIR id constantInitializerOptIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterIR
+   : annotationList direction typeIR id constantInitializerOptIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10287,22 +10443,25 @@ by type parameters (if any).</p>
 </div>
 <div id="methodTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionTypeDefIR = actionTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionTypeDefIR = actionTypeIR
 
-syntax functionTypeDefIR =
-   | definedFunctionTypeDefIR
+functionTypeDefIR
+   : definedFunctionTypeDefIR
    | externFunctionTypeDefIR
+   ;
 
-syntax methodTypeDefIR =
-   | externMethodTypeDefIR
+methodTypeDefIR
+   : externMethodTypeDefIR
    | parserApplyMethodTypeDefIR
    | controlApplyMethodTypeDefIR
    | tableApplyMethodTypeDefIR
+   ;
 
-syntax callableTypeDefIR =
-   | actionTypeDefIR
+callableTypeDefIR
+   : actionTypeDefIR
    | functionTypeDefIR
-   | methodTypeDefIR</code></pre>
+   | methodTypeDefIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10310,24 +10469,28 @@ syntax callableTypeDefIR =
 </div>
 <div id="methodTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionTypeIR =
-   | ACTION `(parameterIR*)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionTypeIR
+   : ACTION `( parameterIR* )
+   ;
 
-syntax functionTypeIR =
-   | definedFunctionTypeIR
+functionTypeIR
+   : definedFunctionTypeIR
    | externFunctionTypeIR
+   ;
 
-syntax methodTypeIR =
-   | builtinMethodTypeIR
+methodTypeIR
+   : builtinMethodTypeIR
    | externMethodTypeIR
    | parserApplyMethodTypeIR
    | controlApplyMethodTypeIR
    | tableApplyMethodTypeIR
+   ;
 
-syntax callableTypeIR =
-   | actionTypeIR
+callableTypeIR
+   : actionTypeIR
    | functionTypeIR
-   | methodTypeIR</code></pre>
+   | methodTypeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10343,8 +10506,9 @@ syntax callableTypeIR =
 </div>
 <div id="definedFunctionTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax definedFunctionTypeDefIR =
-   | FUNCTION `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*) : typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeDefIR
+   : FUNCTION `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10355,8 +10519,9 @@ proper type argument(s), it yields a function type:</p>
 </div>
 <div id="definedFunctionTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax definedFunctionTypeIR =
-   | FUNCTION `(parameterIR*) : typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeIR
+   : FUNCTION `( parameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -10387,8 +10552,9 @@ shows the abstract model of an <code>action</code>.</p>
 </div>
 <div id="actionDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDeclaration =
-   | annotationList ACTION name `(parameterList) blockStatement</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclaration
+   : annotationList ACTION name `( parameterList ) blockStatement
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10445,7 +10611,7 @@ definition:</p>
 </div>
 <div id="actionTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionTypeDefIR = actionTypeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionTypeDefIR = actionTypeIR</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10454,8 +10620,9 @@ type definition:</p>
 </div>
 <div id="actionTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionTypeIR =
-   | ACTION `(parameterIR*)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionTypeIR
+   : ACTION `( parameterIR* )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10463,8 +10630,9 @@ type definition:</p>
 </div>
 <div id="actionDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDef =
-   | ACTION nameIR `(parameterListIR) blockStatementIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDef
+   : ACTION nameIR `( parameterListIR ) blockStatementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -10545,17 +10713,20 @@ externally by the target architecture.</p>
 </div>
 <div id="functionDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionTypeDefIR =
-   | definedFunctionTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionTypeDefIR
+   : definedFunctionTypeDefIR
    | externFunctionTypeDefIR
+   ;
 
-syntax functionTypeIR =
-   | definedFunctionTypeIR
+functionTypeIR
+   : definedFunctionTypeIR
    | externFunctionTypeIR
+   ;
 
-syntax functionDef =
-   | definedFunctionDef
-   | externFunctionDef</code></pre>
+functionDef
+   : definedFunctionDef
+   | externFunctionDef
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -10567,11 +10738,13 @@ programming languages, but the language does not permit recursive functions.</p>
 </div>
 <div id="functionDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototype =
-   | typeOrVoid name typeParameterListOpt `(parameterList)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototype
+   : typeOrVoid name typeParameterListOpt `( parameterList )
+   ;
 
-syntax functionDeclaration =
-   | annotationList functionPrototype blockStatement</code></pre>
+functionDeclaration
+   : annotationList functionPrototype blockStatement
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10597,11 +10770,13 @@ can be specialized to a function type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax definedFunctionTypeDefIR =
-   | FUNCTION `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*) : typeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeDefIR
+   : FUNCTION `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   ;
 
-syntax definedFunctionTypeIR =
-   | FUNCTION `(parameterIR*) : typeIR</code></pre>
+definedFunctionTypeIR
+   : FUNCTION `( parameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10609,8 +10784,9 @@ syntax definedFunctionTypeIR =
 </div>
 <div id="definedFunctionDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax definedFunctionDef =
-   | FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) blockStatementIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionDef
+   : FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -10686,9 +10862,10 @@ function, but not its implementation.</p>
 </div>
 <div id="externDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externDeclaration =
-   | externFunctionDeclaration
-   | externObjectDeclaration</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externDeclaration
+   : externFunctionDeclaration
+   | externObjectDeclaration
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10697,11 +10874,13 @@ specialized to extern function types.</p>
 </div>
 <div id="externFunctionTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externFunctionTypeDefIR =
-   | EXTERN_FUNCTION `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*) : typeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionTypeDefIR
+   : EXTERN_FUNCTION `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   ;
 
-syntax externFunctionTypeIR =
-   | EXTERN_FUNCTION `(parameterIR*) : typeIR</code></pre>
+externFunctionTypeIR
+   : EXTERN_FUNCTION `( parameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10709,8 +10888,9 @@ syntax externFunctionTypeIR =
 </div>
 <div id="externFunctionDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externFunctionDef =
-   | EXTERN_FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionDef
+   : EXTERN_FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -10799,24 +10979,27 @@ and <code>setValid()</code> methods for header types.</p>
 </div>
 <div id="methodDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax methodTypeDefIR =
-   | externMethodTypeDefIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">methodTypeDefIR
+   : externMethodTypeDefIR
    | parserApplyMethodTypeDefIR
    | controlApplyMethodTypeDefIR
    | tableApplyMethodTypeDefIR
+   ;
 
-syntax methodTypeIR =
-   | builtinMethodTypeIR
+methodTypeIR
+   : builtinMethodTypeIR
    | externMethodTypeIR
    | parserApplyMethodTypeIR
    | controlApplyMethodTypeIR
    | tableApplyMethodTypeIR
+   ;
 
-syntax methodDef =
-   | externMethodDef
+methodDef
+   : externMethodDef
    | parserApplyMethodDef
    | controlApplyMethodDef
-   | tableApplyMethodDef</code></pre>
+   | tableApplyMethodDef
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -10849,17 +11032,20 @@ showing how the methods of these objects can be invoked on a packet:</p>
 </div>
 <div id="externMethodDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externMethodTypeDefIR =
-   | EXTERN_METHOD `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*) : typeIR
-   | EXTERN_METHOD ABSTRACT `&lt;typeParameterIR* , typeParameterIR*&gt; `(parameterIR*) : typeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodTypeDefIR
+   : EXTERN_METHOD `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   | EXTERN_METHOD ABSTRACT `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   ;
 
-syntax externMethodTypeIR =
-   | EXTERN_METHOD `(parameterIR*) : typeIR
-   | EXTERN_METHOD ABSTRACT `(parameterIR*) : typeIR
+externMethodTypeIR
+   : EXTERN_METHOD `( parameterIR* ) : typeIR
+   | EXTERN_METHOD ABSTRACT `( parameterIR* ) : typeIR
+   ;
 
-syntax externMethodDef =
-   | EXTERN_METHOD nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) blockStatementIR?
-   | EXTERN_METHOD ABSTRACT nameIR `&lt;typeParameterListIR&gt; `(parameterListIR)</code></pre>
+externMethodDef
+   : EXTERN_METHOD nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
+   | EXTERN_METHOD ABSTRACT nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11037,13 +11223,15 @@ represented internally as follows:</p>
 </div>
 <div id="parserApplyMethodDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserApplyMethodTypeDefIR = parserApplyMethodTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserApplyMethodTypeDefIR = parserApplyMethodTypeIR
 
-syntax parserApplyMethodTypeIR =
-   | PARSER_APPLY `(parameterIR*)
+parserApplyMethodTypeIR
+   : PARSER_APPLY `( parameterIR* )
+   ;
 
-syntax parserApplyMethodDef =
-   | PARSER_APPLY `(parameterListIR) `{parserLocalDeclarationListIR ; stateEnv}</code></pre>
+parserApplyMethodDef
+   : PARSER_APPLY `( parameterListIR ) `{ parserLocalDeclarationListIR ; stateEnv }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -11139,13 +11327,15 @@ represented internally as follows:</p>
 </div>
 <div id="controlApplyMethodDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlApplyMethodTypeDefIR = controlApplyMethodTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlApplyMethodTypeDefIR = controlApplyMethodTypeIR
 
-syntax controlApplyMethodTypeIR =
-   | CONTROL_APPLY `(parameterIR*)
+controlApplyMethodTypeIR
+   : CONTROL_APPLY `( parameterIR* )
+   ;
 
-syntax controlApplyMethodDef =
-   | CONTROL_APPLY `(parameterListIR) `{controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR}</code></pre>
+controlApplyMethodDef
+   : CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -11226,13 +11416,15 @@ represented internally as follows:</p>
 </div>
 <div id="tableApplyMethodDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableApplyMethodTypeDefIR = tableApplyMethodTypeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableApplyMethodTypeDefIR = tableApplyMethodTypeIR
 
-syntax tableApplyMethodTypeIR =
-   | TABLE_APPLY : tableMetadataStructTypeIR
+tableApplyMethodTypeIR
+   : TABLE_APPLY : tableMetadataStructTypeIR
+   ;
 
-syntax tableApplyMethodDef =
-   | TABLE_APPLY `{tablePropertyListIR}</code></pre>
+tableApplyMethodDef
+   : TABLE_APPLY `{ tablePropertyListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -11279,8 +11471,9 @@ types. The internal representations are:</p>
 </div>
 <div id="builtinMethodTypeIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax builtinMethodTypeIR =
-   | BUILTIN_METHOD `(parameterIR*) : typeIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinMethodTypeIR
+   : BUILTIN_METHOD `( parameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -11315,13 +11508,14 @@ objects, thus they must also be instantiated.</p>
 </div>
 <div id="object" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax object =
-   | externObject
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">object
+   : externObject
    | parserObject
    | controlObject
    | packageObject
    | tableObject
-   | valueSetObject</code></pre>
+   | valueSetObject
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11340,7 +11534,7 @@ how a fully-qualified name is constructed.</p>
 </div>
 <div id="objectId" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectId = nameIR*</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectId = nameIR*</code></pre>
 </div>
 </div>
 </div>
@@ -11384,12 +11578,14 @@ use of constructor parameters.</p>
 </div>
 <div id="constructorParameterListOpt" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constructorParameterListOpt =
-   | `EMPTY
-   | `(parameterList)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorParameterListOpt
+   : /* empty */
+   | `( parameterList )
+   ;
 
-syntax parserDeclaration =
-   | annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList}</code></pre>
+parserDeclaration
+   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11459,10 +11655,11 @@ the <code>udpSupport</code> parameter, as in the following example:</p>
 </div>
 <div id="constructorParameterIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parameterIR =
-   | annotationList direction typeIR id constantInitializerOptIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterIR
+   : annotationList direction typeIR id constantInitializerOptIR
+   ;
 
-syntax constructorParameterIR = parameterIR</code></pre>
+constructorParameterIR = parameterIR</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -11539,11 +11736,12 @@ specialized with specific type arguments.</p>
 </div>
 <div id="constructorDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constructorDef =
-   | externObjectConstructorDef
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorDef
+   : externObjectConstructorDef
    | parserObjectConstructorDef
    | controlObjectConstructorDef
-   | packageObjectConstructorDef</code></pre>
+   | packageObjectConstructorDef
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11557,11 +11755,13 @@ constructors.</p>
 </div>
 <div id="constructorTypeDefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constructorTypeIR =
-   | CONSTRUCTOR `(constructorParameterIR*) : typeIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorTypeIR
+   : CONSTRUCTOR `( constructorParameterIR* ) : typeIR
+   ;
 
-syntax constructorTypeDefIR =
-   | CONSTRUCTOR `&lt;typeParameterIR* , typeParameterIR*&gt; `(constructorParameterIR*) : typeIR</code></pre>
+constructorTypeDefIR
+   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt; `( constructorParameterIR* ) : typeIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -11644,15 +11844,18 @@ type, no type parameters, and no return type.</p>
 </div>
 <div id="externObjectDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externConstructorPrototype =
-   | annotationList typeIdentifier `(parameterList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externConstructorPrototype
+   : annotationList typeIdentifier `( parameterList ) ;
+   ;
 
-syntax externMethodPrototype =
-   | annotationList functionPrototype ;
+externMethodPrototype
+   : annotationList functionPrototype ;
    | annotationList ABSTRACT functionPrototype ;
+   ;
 
-syntax externObjectDeclaration =
-   | annotationList EXTERN nonTypeName typeParameterListOpt `{externConstructorOrMethodPrototypeList}</code></pre>
+externObjectDeclaration
+   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11660,12 +11863,14 @@ syntax externObjectDeclaration =
 </div>
 <div id="externObjectConstructorDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externMethodPrototypeIR =
-   | annotationList functionPrototypeIR ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodPrototypeIR
+   : annotationList functionPrototypeIR ;
    | annotationList ABSTRACT functionPrototypeIR ;
+   ;
 
-syntax externObjectConstructorDef =
-   | EXTERN nameIR `&lt;typeParameterListIR&gt; `(constructorParameterListIR) `{externMethodPrototypeListIR}</code></pre>
+externObjectConstructorDef
+   : EXTERN nameIR `&lt; typeParameterListIR &gt; `( constructorParameterListIR ) `{ externMethodPrototypeListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11673,8 +11878,9 @@ syntax externObjectConstructorDef =
 </div>
 <div id="externObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObject =
-   | EXTERN typeId `&lt;theta&gt; `{externState frame externMethodDefEnv}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObject
+   : EXTERN typeId `&lt; theta &gt; `{ externState frame externMethodDefEnv }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -11989,17 +12195,20 @@ optional annotations).</p>
 </div>
 <div id="parserDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | valueSetDeclaration
+   ;
 
-syntax parserState =
-   | annotationList STATE name `{parserStatementList transitionStatement}
+parserState
+   : annotationList STATE name `{ parserStatementList transitionStatement }
+   ;
 
-syntax parserDeclaration =
-   | annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList}</code></pre>
+parserDeclaration
+   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12057,8 +12266,9 @@ as:</p>
 </div>
 <div id="parserObjectConstructorDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserObjectConstructorDef =
-   | PARSER `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectConstructorDef
+   : PARSER `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12066,8 +12276,9 @@ as:</p>
 </div>
 <div id="parserObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserObject =
-   | PARSER `(parameterListIR) `{frame parserLocalDeclarationListIR stateEnv}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
+   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -12296,17 +12507,19 @@ type parameters, and a sequence of declarations of constants, variables,
 </div>
 <div id="controlDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | actionDeclaration
    | tableDeclaration
+   ;
 
-syntax controlBody = blockStatement
+controlBody = blockStatement
 
-syntax controlDeclaration =
-   | annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody}</code></pre>
+controlDeclaration
+   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12334,8 +12547,9 @@ as:</p>
 </div>
 <div id="controlObjectConstructorDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlObjectConstructorDef =
-   | CONTROL `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectConstructorDef
+   : CONTROL `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12343,8 +12557,9 @@ as:</p>
 </div>
 <div id="controlObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlObject =
-   | CONTROL `(parameterListIR) `{frame controlLocalDeclarationListIR actionDefEnv controlBodyIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
+   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -12629,14 +12844,16 @@ properties are invalid and the compiler should reject them.</p>
 </div>
 <div id="tableDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableProperty =
-   | KEY = `{tableKeyList}
-   | ACTIONS = `{tableActionList}
-   | annotationList constOpt ENTRIES = `{tableEntryList}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableProperty
+   : KEY = `{ tableKeyList }
+   | ACTIONS = `{ tableActionList }
+   | annotationList constOpt ENTRIES = `{ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
+   ;
 
-syntax tableDeclaration =
-   | annotationList TABLE name `{tablePropertyList}</code></pre>
+tableDeclaration
+   : annotationList TABLE name `{ tablePropertyList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12701,17 +12918,19 @@ defined in P4<sub>IR</sub>. Table objects are defined as:</p>
 </div>
 <div id="tableObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tablePropertyIR =
-   | tableKeysPropertyIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tablePropertyIR
+   : tableKeysPropertyIR
    | tableActionsPropertyIR
    | tableDefaultActionPropertyIR
    | tableEntriesPropertyIR
    | tableCustomPropertyIR
+   ;
 
-syntax tableObjectProperty = {KEYS tableKeysPropertyIR, ACTIONS tableActionsPropertyIR, DEFAULT_ACTION tableDefaultActionPropertyIR, ENTRIES tableEntriesPropertyIR, CUSTOMS tableCustomPropertyIR*}
+tableObjectProperty = {KEYS tableKeysPropertyIR, ACTIONS tableActionsPropertyIR, DEFAULT_ACTION tableDefaultActionPropertyIR, ENTRIES tableEntriesPropertyIR, CUSTOMS tableCustomPropertyIR*}
 
-syntax tableObject =
-   | TABLE typeId `{frame tableObjectProperty}</code></pre>
+tableObject
+   : TABLE typeId `{ frame tableObjectProperty }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -12780,13 +12999,15 @@ select expression.</p>
 </div>
 <div id="valueSetDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueSetType =
-   | baseType
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">valueSetType
+   : baseType
    | tupleType
    | prefixedTypeName
+   ;
 
-syntax valueSetDeclaration =
-   | annotationList VALUE_SET `&lt;valueSetType&gt; `(expression) name ;</code></pre>
+valueSetDeclaration
+   : annotationList VALUE_SET `&lt; valueSetType &gt; `( expression ) name ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12823,8 +13044,9 @@ as:</p>
 </div>
 <div id="valueSetObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueSetObject =
-   | VALUE_SET `{value* `(nat)}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">valueSetObject
+   : VALUE_SET `{ value* `( nat ) }
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -12835,8 +13057,9 @@ as:</p>
 </div>
 <div id="packageTypeDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageTypeDeclaration =
-   | annotationList PACKAGE name typeParameterListOpt `(parameterList) ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageTypeDeclaration
+   : annotationList PACKAGE name typeParameterListOpt `( parameterList ) ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12851,8 +13074,9 @@ with them.</p>
 </div>
 <div id="packageObjectConstructorDef" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageObjectConstructorDef =
-   | PACKAGE `&lt;typeParameterListIR&gt; `(constructorParameterListIR)</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObjectConstructorDef
+   : PACKAGE `&lt; typeParameterListIR &gt; `( constructorParameterListIR )
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12860,8 +13084,9 @@ with them.</p>
 </div>
 <div id="packageObject" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax packageObject =
-   | PACKAGE `&lt;theta&gt; `{frame}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageObject
+   : PACKAGE `&lt; theta &gt; `{ frame }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -13065,8 +13290,8 @@ with them.</p>
 </div>
 <div id="declaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax declaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">declaration
+   : constantDeclaration
    | instantiation
    | functionDeclaration
    | actionDeclaration
@@ -13075,7 +13300,8 @@ with them.</p>
    | externDeclaration
    | parserDeclaration
    | controlDeclaration
-   | typeDeclaration</code></pre>
+   | typeDeclaration
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13120,8 +13346,8 @@ instantiated at compile time, and evaluated at runtime.</p>
 </div>
 <div id="declarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax declarationIR =
-   | constantDeclarationIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">declarationIR
+   : constantDeclarationIR
    | instantiationIR
    | functionDeclarationIR
    | actionDeclarationIR
@@ -13130,7 +13356,8 @@ instantiated at compile time, and evaluated at runtime.</p>
    | externDeclarationIR
    | parserDeclarationIR
    | controlDeclarationIR
-   | typeDeclarationIR</code></pre>
+   | typeDeclarationIR
+   ;</code></pre>
 </div>
 </div>
 <h6 id="_compile_time_evaluation_of_declarations" class="discrete">§ Compile-time evaluation of declarations</h6>
@@ -13189,15 +13416,18 @@ evaluation of constant declarations.</p>
 </div>
 <div id="variableDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax initializer =
-   | = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">initializer
+   : = expression
+   ;
 
-syntax initializerOpt =
-   | `EMPTY
+initializerOpt
+   : /* empty */
    | initializer
+   ;
 
-syntax variableDeclaration =
-   | annotationList type name initializerOpt ;</code></pre>
+variableDeclaration
+   : annotationList type name initializerOpt ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13217,11 +13447,13 @@ instantiations (see <a href="#sec-instantiation-declaration">Section 11.3</a>).<
 </div>
 <div id="variableDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax initializerIR =
-   | = typedExpressionIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">initializerIR
+   : = typedExpressionIR
+   ;
 
-syntax variableDeclarationIR =
-   | annotationList typeIR nameIR initializerOptIR ;</code></pre>
+variableDeclarationIR
+   : annotationList typeIR nameIR initializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13512,19 +13744,23 @@ be used to maintain state between different network packets.</p>
 </div>
 <div id="declarationResult" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax continueEmptyResult =
-   | `EMPTY
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">continueEmptyResult
+   : /* empty */
+   ;
 
-syntax exitResult =
-   | EXIT
+exitResult
+   : EXIT
+   ;
 
-syntax abortResult =
-   | exitResult
+abortResult
+   : exitResult
    | rejectTransitionResult
+   ;
 
-syntax declarationResult =
-   | continueEmptyResult
-   | abortResult</code></pre>
+declarationResult
+   : continueEmptyResult
+   | abortResult
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13687,11 +13923,13 @@ side, initializer expression. Ideally, revisit this.
 </div>
 <div id="constantDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax initializer =
-   | = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">initializer
+   : = expression
+   ;
 
-syntax constantDeclaration =
-   | annotationList CONST type name initializer ;</code></pre>
+constantDeclaration
+   : annotationList CONST type name initializer ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -13700,11 +13938,13 @@ constant declarations have the syntax:</p>
 </div>
 <div id="constantDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constantInitializerIR =
-   | = value
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantInitializerIR
+   : = value
+   ;
 
-syntax constantDeclarationIR =
-   | annotationList CONST typeIR nameIR constantInitializerIR ;</code></pre>
+constantDeclarationIR
+   : annotationList CONST typeIR nameIR constantInitializerIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -14117,9 +14357,10 @@ and <code>package</code>s):</p>
 </div>
 <div id="instantiation" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax instantiation =
-   | annotationList type `(argumentList) name ;
-   | annotationList type `(argumentList) name objectInitializer ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiation
+   : annotationList type `( argumentList ) name ;
+   | annotationList type `( argumentList ) name objectInitializer ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -14128,8 +14369,9 @@ P4<sub>IR</sub>, instantiations have the syntax:</p>
 </div>
 <div id="instantiationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax instantiationIR =
-   | annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiationIR
+   : annotationList typeIR prefixedNameIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) nameIR objectInitializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -14187,16 +14429,19 @@ initializers:</p>
 </div>
 <div id="objectInitializer" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectDeclaration =
-   | functionDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectDeclaration
+   : functionDeclaration
    | instantiation
+   ;
 
-syntax objectDeclarationList =
-   | `EMPTY
+objectDeclarationList
+   : /* empty */
    | objectDeclarationList objectDeclaration
+   ;
 
-syntax objectInitializer =
-   | = `{objectDeclarationList}</code></pre>
+objectInitializer
+   : = `{ objectDeclarationList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -14204,14 +14449,16 @@ syntax objectInitializer =
 </div>
 <div id="objectInitializerIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax objectDeclarationIR =
-   | functionDeclarationIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">objectDeclarationIR
+   : functionDeclarationIR
    | instantiationIR
+   ;
 
-syntax objectDeclarationListIR = objectDeclarationIR*
+objectDeclarationListIR = objectDeclarationIR*
 
-syntax objectInitializerIR =
-   | = `{objectDeclarationListIR}</code></pre>
+objectInitializerIR
+   : = `{ objectDeclarationListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15423,11 +15670,13 @@ provided or not.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototype =
-   | typeOrVoid name typeParameterListOpt `(parameterList)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototype
+   : typeOrVoid name typeParameterListOpt `( parameterList )
+   ;
 
-syntax functionDeclaration =
-   | annotationList functionPrototype blockStatement</code></pre>
+functionDeclaration
+   : annotationList functionPrototype blockStatement
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15436,11 +15685,13 @@ After type checking, function declarations are represented in P4<sub>IR</sub> as
 </div>
 <div id="functionDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax functionPrototypeIR =
-   | typeIR nameIR `&lt;typeParameterListIR , typeParameterListIR&gt; `(parameterListIR)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototypeIR
+   : typeIR nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR )
+   ;
 
-syntax functionDeclarationIR =
-   | annotationList functionPrototypeIR blockStatementIR</code></pre>
+functionDeclarationIR
+   : annotationList functionPrototypeIR blockStatementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -15787,8 +16038,9 @@ syntax functionDeclarationIR =
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDeclaration =
-   | annotationList ACTION name `(parameterList) blockStatement</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclaration
+   : annotationList ACTION name `( parameterList ) blockStatement
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15797,8 +16049,9 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="actionDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDeclarationIR =
-   | annotationList ACTION nameIR `(parameterListIR) blockStatementIR</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclarationIR
+   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -16115,8 +16368,9 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="errorDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax errorDeclaration =
-   | ERROR `{nameList}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorDeclaration
+   : ERROR `{ nameList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16125,8 +16379,9 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="errorDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax errorDeclarationIR =
-   | ERROR `{nameListIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorDeclarationIR
+   : ERROR `{ nameListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -16332,8 +16587,9 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="matchKindDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax matchKindDeclaration =
-   | MATCH_KIND `{nameList trailingCommaOpt}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindDeclaration
+   : MATCH_KIND `{ nameList trailingCommaOpt }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16342,8 +16598,9 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="matchKindDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax matchKindDeclarationIR =
-   | MATCH_KIND `{nameListIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindDeclarationIR
+   : MATCH_KIND `{ nameListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -16514,9 +16771,10 @@ the following syntax.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externDeclaration =
-   | externFunctionDeclaration
-   | externObjectDeclaration</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externDeclaration
+   : externFunctionDeclaration
+   | externObjectDeclaration
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -16526,8 +16784,9 @@ the following syntax.</p>
 </div>
 <div id="externFunctionDeclaration" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externFunctionDeclaration =
-   | annotationList EXTERN functionPrototype ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionDeclaration
+   : annotationList EXTERN functionPrototype ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16536,8 +16795,9 @@ as:</p>
 </div>
 <div id="externFunctionDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externFunctionDeclarationIR =
-   | annotationList EXTERN functionPrototypeIR ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionDeclarationIR
+   : annotationList EXTERN functionPrototypeIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16707,8 +16967,9 @@ represented.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObjectDeclaration =
-   | annotationList EXTERN nonTypeName typeParameterListOpt `{externConstructorOrMethodPrototypeList}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclaration
+   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -16717,8 +16978,9 @@ as:</p>
 </div>
 <div id="externObjectDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax externObjectDeclarationIR =
-   | annotationList EXTERN nameIR `&lt;typeParameterListIR ,&gt; `{externConstructorPrototypeListIR externMethodPrototypeListIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclarationIR
+   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt; `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17066,17 +17328,20 @@ represented.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | valueSetDeclaration
+   ;
 
-syntax parserState =
-   | annotationList STATE name `{parserStatementList transitionStatement}
+parserState
+   : annotationList STATE name `{ parserStatementList transitionStatement }
+   ;
 
-syntax parserDeclaration =
-   | annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList}</code></pre>
+parserDeclaration
+   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17084,17 +17349,20 @@ syntax parserDeclaration =
 </div>
 <div id="parserDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserLocalDeclarationIR =
-   | constantDeclarationIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserLocalDeclarationIR
+   : constantDeclarationIR
    | instantiationIR
    | variableDeclarationIR
    | valueSetDeclarationIR
+   ;
 
-syntax parserStateIR =
-   | annotationList STATE nameIR `{parserStatementListIR transitionStatementIR}
+parserStateIR
+   : annotationList STATE nameIR `{ parserStatementListIR transitionStatementIR }
+   ;
 
-syntax parserDeclarationIR =
-   | annotationList PARSER nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR}</code></pre>
+parserDeclarationIR
+   : annotationList PARSER nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17102,8 +17370,9 @@ syntax parserDeclarationIR =
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserObject =
-   | PARSER `(parameterListIR) `{frame parserLocalDeclarationListIR stateEnv}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
+   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17309,17 +17578,19 @@ object constructors.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | actionDeclaration
    | tableDeclaration
+   ;
 
-syntax controlBody = blockStatement
+controlBody = blockStatement
 
-syntax controlDeclaration =
-   | annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody}</code></pre>
+controlDeclaration
+   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17327,17 +17598,19 @@ syntax controlDeclaration =
 </div>
 <div id="controlDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlLocalDeclarationIR =
-   | constantDeclarationIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclarationIR
+   : constantDeclarationIR
    | instantiationIR
    | variableDeclarationIR
    | actionDeclarationIR
    | tableDeclarationIR
+   ;
 
-syntax controlBodyIR = blockStatementIR
+controlBodyIR = blockStatementIR
 
-syntax controlDeclarationIR =
-   | annotationList CONTROL nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR}</code></pre>
+controlDeclarationIR
+   : annotationList CONTROL nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17345,8 +17618,9 @@ syntax controlDeclarationIR =
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlObject =
-   | CONTROL `(parameterListIR) `{frame controlLocalDeclarationListIR actionDefEnv controlBodyIR}</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
+   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -17549,39 +17823,45 @@ object constructors.</p>
 <h3 id="sec-typeDeclaration">11.11. Type declaration</h3>
 <div id="typeDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax derivedTypeDeclaration =
-   | enumTypeDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">derivedTypeDeclaration
+   : enumTypeDeclaration
    | structTypeDeclaration
    | headerTypeDeclaration
    | headerUnionTypeDeclaration
+   ;
 
-syntax typedefDeclaration =
-   | annotationList TYPEDEF typedef name ;
+typedefDeclaration
+   : annotationList TYPEDEF typedef name ;
    | annotationList TYPE type name ;
+   ;
 
-syntax typeDeclaration =
-   | derivedTypeDeclaration
+typeDeclaration
+   : derivedTypeDeclaration
    | typedefDeclaration
    | parserTypeDeclaration
    | controlTypeDeclaration
    | packageTypeDeclaration
+   ;
 
-syntax derivedTypeDeclarationIR =
-   | enumTypeDeclarationIR
+derivedTypeDeclarationIR
+   : enumTypeDeclarationIR
    | structTypeDeclarationIR
    | headerTypeDeclarationIR
    | headerUnionTypeDeclarationIR
+   ;
 
-syntax typedefDeclarationIR =
-   | annotationList TYPEDEF typedefIR nameIR ;
+typedefDeclarationIR
+   : annotationList TYPEDEF typedefIR nameIR ;
    | annotationList TYPE typeIR nameIR ;
+   ;
 
-syntax typeDeclarationIR =
-   | derivedTypeDeclarationIR
+typeDeclarationIR
+   : derivedTypeDeclarationIR
    | typedefDeclarationIR
    | parserTypeDeclarationIR
    | controlTypeDeclarationIR
-   | packageTypeDeclarationIR</code></pre>
+   | packageTypeDeclarationIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -17591,13 +17871,15 @@ syntax typeDeclarationIR =
 </div>
 <div id="enumTypeDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax enumTypeDeclaration =
-   | annotationList ENUM name `{nameList trailingCommaOpt}
-   | annotationList ENUM type name `{namedExpressionList trailingCommaOpt}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">enumTypeDeclaration
+   : annotationList ENUM name `{ nameList trailingCommaOpt }
+   | annotationList ENUM type name `{ namedExpressionList trailingCommaOpt }
+   ;
 
-syntax enumTypeDeclarationIR =
-   | annotationList ENUM nameIR `{nameListIR}
-   | annotationList ENUM typeIR nameIR `{namedExpressionListIR}</code></pre>
+enumTypeDeclarationIR
+   : annotationList ENUM nameIR `{ nameListIR }
+   | annotationList ENUM typeIR nameIR `{ namedExpressionListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -18679,21 +18961,25 @@ syntax enumTypeDeclarationIR =
 <h4 id="_typedef_declaration_2">11.11.5. Typedef declaration</h4>
 <div id="typedefIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typedef =
-   | type
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedef
+   : type
    | derivedTypeDeclaration
+   ;
 
-syntax typedefDeclaration =
-   | annotationList TYPEDEF typedef name ;
+typedefDeclaration
+   : annotationList TYPEDEF typedef name ;
    | annotationList TYPE type name ;
+   ;
 
-syntax typedefIR =
-   | typeIR
+typedefIR
+   : typeIR
    | derivedTypeDeclarationIR
+   ;
 
-syntax typedefDeclarationIR =
-   | annotationList TYPEDEF typedefIR nameIR ;
-   | annotationList TYPE typeIR nameIR ;</code></pre>
+typedefDeclarationIR
+   : annotationList TYPEDEF typedefIR nameIR ;
+   | annotationList TYPE typeIR nameIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -19646,8 +19932,8 @@ syntax typedefDeclarationIR =
 <div class="sectionbody">
 <div id="statementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax statement =
-   | emptyStatement
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">statement
+   : emptyStatement
    | assignmentStatement
    | callStatement
    | directApplicationStatement
@@ -19659,9 +19945,10 @@ syntax typedefDeclarationIR =
    | breakStatement
    | continueStatement
    | switchStatement
+   ;
 
-syntax statementIR =
-   | emptyStatementIR
+statementIR
+   : emptyStatementIR
    | assignmentStatementIR
    | callStatementIR
    | directApplicationStatementIR
@@ -19672,15 +19959,17 @@ syntax statementIR =
    | forStatementIR
    | breakStatementIR
    | continueStatementIR
-   | switchStatementIR</code></pre>
+   | switchStatementIR
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_48" class="discrete">Type checking</h5>
 <div id="flow" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax flow =
-   | CONT
-   | RET</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">flow
+   : CONT
+   | RET
+   ;</code></pre>
 </div>
 </div>
 <div id="Stmt_ok" class="sidebarblock">
@@ -19779,10 +20068,11 @@ syntax statementIR =
 <h3 id="sec-emptyStatement">12.1. Empty statements</h3>
 <div id="emptyStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax emptyStatement =
-   | ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">emptyStatement
+   : ;
+   ;
 
-syntax emptyStatementIR = emptyStatement</code></pre>
+emptyStatementIR = emptyStatement</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -19883,8 +20173,8 @@ syntax emptyStatementIR = emptyStatement</code></pre>
 <h3 id="sec-assignmentStatement">12.2. Assignment statements</h3>
 <div id="assignmentStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax assignop =
-   | =
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">assignop
+   : =
    | +=
    | -=
    | |+|=
@@ -19897,12 +20187,15 @@ syntax emptyStatementIR = emptyStatement</code></pre>
    | &amp;=
    | ^=
    | |=
+   ;
 
-syntax assignmentStatement =
-   | lvalue assignop expression ;
+assignmentStatement
+   : lvalue assignop expression ;
+   ;
 
-syntax assignmentStatementIR =
-   | typedLvalueIR assignop typedExpressionIR ;</code></pre>
+assignmentStatementIR
+   : typedLvalueIR assignop typedExpressionIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -20087,12 +20380,13 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <h5 id="sec-assignmentStatement-lvalue">12.2.1. L-values</h5>
 <div id="lvalue" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax lvalue =
-   | referenceExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">lvalue
+   : referenceExpression
    | lvalue . member
-   | lvalue `[expression]
-   | lvalue `[expression : expression]
-   | `(lvalue)</code></pre>
+   | lvalue `[ expression ]
+   | lvalue `[ expression : expression ]
+   | `( lvalue )
+   ;</code></pre>
 </div>
 </div>
 <div id="Lvalue_ok" class="sidebarblock">
@@ -20729,12 +21023,14 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 <h3 id="sec-callStatement">12.3. Call statements</h3>
 <div id="callStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callStatement =
-   | lvalue `(argumentList) ;
-   | lvalue `&lt;typeArgumentList&gt; `(argumentList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callStatement
+   : lvalue `( argumentList ) ;
+   | lvalue `&lt; typeArgumentList &gt; `( argumentList ) ;
+   ;
 
-syntax callStatementIR =
-   | callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentListIR) ;</code></pre>
+callStatementIR
+   : callableTargetIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) ;
+   ;</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_51" class="discrete">Type checking</h4>
@@ -21024,12 +21320,13 @@ syntax callStatementIR =
 <h5 id="sec-callStatement-lvalue">12.3.1. L-values</h5>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax lvalue =
-   | referenceExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">lvalue
+   : referenceExpression
    | lvalue . member
-   | lvalue `[expression]
-   | lvalue `[expression : expression]
-   | `(lvalue)</code></pre>
+   | lvalue `[ expression ]
+   | lvalue `[ expression : expression ]
+   | `( lvalue )
+   ;</code></pre>
 </div>
 </div>
 <div id="CallableTarget_ok" class="sidebarblock">
@@ -21339,11 +21636,13 @@ syntax callStatementIR =
 <h3 id="sec-direct-application-statement">12.4. Direct application statements</h3>
 <div id="directApplicationStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax directApplicationStatement =
-   | namedType . APPLY `(argumentList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">directApplicationStatement
+   : namedType . APPLY `( argumentList ) ;
+   ;
 
-syntax directApplicationStatementIR =
-   | prefixedNameIR . APPLY `(argumentListIR) ;</code></pre>
+directApplicationStatementIR
+   : prefixedNameIR . APPLY `( argumentListIR ) ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -21669,13 +21968,15 @@ invoked.</p>
 <h3 id="sec-returnStatement">12.5. Return statements</h3>
 <div id="returnStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax returnStatement =
-   | RETURN ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">returnStatement
+   : RETURN ;
    | RETURN expression ;
+   ;
 
-syntax returnStatementIR =
-   | RETURN ;
-   | RETURN typedExpressionIR ;</code></pre>
+returnStatementIR
+   : RETURN ;
+   | RETURN typedExpressionIR ;
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -21843,10 +22144,11 @@ still performed after the execution of the <code>return</code> statement.  See
 <h3 id="sec-exit-statement">12.6. Exit statements</h3>
 <div id="exitStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax exitStatement =
-   | EXIT ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">exitStatement
+   : EXIT ;
+   ;
 
-syntax exitStatementIR = exitStatement</code></pre>
+exitStatementIR = exitStatement</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -22042,21 +22344,25 @@ call, then the function/method call does not occur.</p>
 <h3 id="sec-blockStatement">12.7. Block statements</h3>
 <div id="blockStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax blockElementStatement =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">blockElementStatement
+   : constantDeclaration
    | variableDeclaration
    | statement
+   ;
 
-syntax blockStatement =
-   | annotationList `{blockElementStatementList}
+blockStatement
+   : annotationList `{ blockElementStatementList }
+   ;
 
-syntax blockElementStatementIR =
-   | constantDeclarationIR
+blockElementStatementIR
+   : constantDeclarationIR
    | variableDeclarationIR
    | statementIR
+   ;
 
-syntax blockStatementIR =
-   | annotationList `{blockElementStatementListIR}</code></pre>
+blockStatementIR
+   : annotationList `{ blockElementStatementListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -22515,13 +22821,15 @@ are only visible within the block.</p>
 <h3 id="sec-conditionalStatement">12.8. Conditional statements</h3>
 <div id="conditionalStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax conditionalStatement =
-   | IF `(expression) statement
-   | IF `(expression) statement ELSE statement
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">conditionalStatement
+   : IF `( expression ) statement
+   | IF `( expression ) statement ELSE statement
+   ;
 
-syntax conditionalStatementIR =
-   | IF `(typedExpressionIR) statementIR
-   | IF `(typedExpressionIR) statementIR ELSE statementIR</code></pre>
+conditionalStatementIR
+   : IF `( typedExpressionIR ) statementIR
+   | IF `( typedExpressionIR ) statementIR ELSE statementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -23061,40 +23369,48 @@ innermost <code>if</code> statement that does not have an <code>else</code> stat
 <h3 id="sec-for-statement">12.9. For statements</h3>
 <div id="forStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax forInitStatement =
-   | annotationList type name initializerOpt
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forInitStatement
+   : annotationList type name initializerOpt
    | forUpdateStatement
+   ;
 
-syntax forUpdateStatement =
-   | lvalue `(argumentList)
-   | lvalue `&lt;typeArgumentList&gt; `(argumentList)
+forUpdateStatement
+   : lvalue `( argumentList )
+   | lvalue `&lt; typeArgumentList &gt; `( argumentList )
    | lvalue assignop expression
+   ;
 
-syntax forCollectionExpression =
-   | expression
+forCollectionExpression
+   : expression
    | expression .. expression
+   ;
 
-syntax forStatement =
-   | annotationList FOR `(forInitStatementList ; expression ; forUpdateStatementList) statement
-   | annotationList FOR `(type name IN forCollectionExpression) statement
-   | annotationList FOR `(annotationListNonEmpty type name IN forCollectionExpression) statement
+forStatement
+   : annotationList FOR `( forInitStatementList ; expression ; forUpdateStatementList ) statement
+   | annotationList FOR `( type name IN forCollectionExpression ) statement
+   | annotationList FOR `( annotationListNonEmpty type name IN forCollectionExpression ) statement
+   ;
 
-syntax forInitStatementIR =
-   | annotationList typeIR nameIR initializerOptIR
+forInitStatementIR
+   : annotationList typeIR nameIR initializerOptIR
    | forUpdateStatementIR
+   ;
 
-syntax forUpdateStatementIR =
-   | callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentListIR)
+forUpdateStatementIR
+   : callableTargetIR `&lt; typeArgumentListIR &gt; `( argumentListIR )
    | typedLvalueIR assignop typedExpressionIR
+   ;
 
-syntax forCollectionExpressionIR =
-   | typedExpressionIR
+forCollectionExpressionIR
+   : typedExpressionIR
    | typedExpressionIR .. typedExpressionIR
+   ;
 
-syntax forStatementIR =
-   | annotationList FOR `(forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR) statementIR
-   | annotationList FOR `(typeIR nameIR IN forCollectionExpressionIR) statementIR
-   | annotationList FOR `(annotationList typeIR nameIR IN forCollectionExpressionIR) statementIR</code></pre>
+forStatementIR
+   : annotationList FOR `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
+   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR
+   | annotationList FOR `( annotationList typeIR nameIR IN forCollectionExpressionIR ) statementIR
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -23102,10 +23418,11 @@ syntax forStatementIR =
 <h3 id="sec-break-statement">12.10. Break statements</h3>
 <div id="breakStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax breakStatement =
-   | BREAK ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">breakStatement
+   : BREAK ;
+   ;
 
-syntax breakStatementIR = breakStatement</code></pre>
+breakStatementIR = breakStatement</code></pre>
 </div>
 </div>
 </div>
@@ -23113,10 +23430,11 @@ syntax breakStatementIR = breakStatement</code></pre>
 <h3 id="sec-continue-statement">12.11. Continue statements</h3>
 <div id="continueStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax continueStatement =
-   | CONTINUE ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">continueStatement
+   : CONTINUE ;
+   ;
 
-syntax continueStatementIR = continueStatement</code></pre>
+continueStatementIR = continueStatement</code></pre>
 </div>
 </div>
 </div>
@@ -23124,27 +23442,33 @@ syntax continueStatementIR = continueStatement</code></pre>
 <h3 id="sec-switchStatement">12.12. Switch statements</h3>
 <div id="switchStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax switchLabel =
-   | DEFAULT
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">switchLabel
+   : DEFAULT
    | expressionNonBrace
+   ;
 
-syntax switchCase =
-   | switchLabel : blockStatement
+switchCase
+   : switchLabel : blockStatement
    | switchLabel :
+   ;
 
-syntax switchStatement =
-   | SWITCH `(expression) `{switchCaseList}
+switchStatement
+   : SWITCH `( expression ) `{ switchCaseList }
+   ;
 
-syntax switchLabelIR =
-   | DEFAULT
+switchLabelIR
+   : DEFAULT
    | typedExpressionIR
+   ;
 
-syntax switchCaseIR =
-   | switchLabelIR : blockStatementIR
+switchCaseIR
+   : switchLabelIR : blockStatementIR
    | switchLabelIR :
+   ;
 
-syntax switchStatementIR =
-   | SWITCH `(typedExpressionIR) `{switchCaseListIR}</code></pre>
+switchStatementIR
+   : SWITCH `( typedExpressionIR ) `{ switchCaseListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -23931,8 +24255,8 @@ ambiguity with a block statement.</p>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax expression =
-   | literalExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expression
+   : literalExpression
    | referenceExpression
    | defaultExpression
    | unaryExpression
@@ -23942,13 +24266,14 @@ ambiguity with a block statement.</p>
    | dataExpression
    | accessExpression
    | callExpression
-   | parenthesizedExpression</code></pre>
+   | parenthesizedExpression
+   ;</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax expressionIR =
-   | literalExpressionIR
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expressionIR
+   : literalExpressionIR
    | referenceExpressionIR
    | defaultExpressionIR
    | unaryExpressionIR
@@ -23959,12 +24284,15 @@ ambiguity with a block statement.</p>
    | accessExpressionIR
    | callExpressionIR
    | parenthesizedExpressionIR
+   ;
 
-syntax expressionNoteIR =
-   | `(typeIR ctk)
+expressionNoteIR
+   : `( typeIR ctk )
+   ;
 
-syntax typedExpressionIR =
-   | expressionIR # expressionNoteIR</code></pre>
+typedExpressionIR
+   : expressionIR # expressionNoteIR
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_57" class="discrete">Type checking</h5>
@@ -24047,21 +24375,23 @@ syntax typedExpressionIR =
 <h3 id="sec-literal-expression">13.1. Literal expressions</h3>
 <div id="literalExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax literalExpression =
-   | booleanLiteral
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">literalExpression
+   : booleanLiteral
    | integerLiteral
    | stringLiteral
+   ;
 
-syntax literalExpressionIR = literalExpression</code></pre>
+literalExpressionIR = literalExpression</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-Boolean-literal-expressions">13.1.1. Boolean literal expressions</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax booleanLiteral =
-   | TRUE
-   | FALSE</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">booleanLiteral
+   : TRUE
+   | FALSE
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_58" class="discrete">Type checking</h5>
@@ -24230,10 +24560,11 @@ syntax literalExpressionIR = literalExpression</code></pre>
 <h4 id="sec-numeric-literal-expressions">13.1.2. Numeric literal expressions</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax integerLiteral =
-   | D int
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerLiteral
+   : D int
    | nat W int
-   | nat S int</code></pre>
+   | nat S int
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -24511,8 +24842,9 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 <h4 id="sec-string-literal-expressions">13.1.3. String literal expressions</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax stringLiteral =
-   | " text "</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">stringLiteral
+   : " text "
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_60" class="discrete">Type checking</h5>
@@ -24621,11 +24953,12 @@ types. For additional examples of literals see <a href="#sec-literals">[sec-lite
 <h3 id="sec-referenceExpression">13.2. Reference expressions</h3>
 <div id="referenceExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax referenceExpression =
-   | prefixedNonTypeName
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">referenceExpression
+   : prefixedNonTypeName
    | THIS
+   ;
 
-syntax referenceExpressionIR = prefixedNameIR</code></pre>
+referenceExpressionIR = prefixedNameIR</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_61" class="discrete">Type checking</h4>
@@ -24780,10 +25113,11 @@ syntax referenceExpressionIR = prefixedNameIR</code></pre>
 <h3 id="sec-default-expression">13.3. Default expressions</h3>
 <div id="defaultExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax defaultExpression =
-   | ...
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">defaultExpression
+   : ...
+   ;
 
-syntax defaultExpressionIR = defaultExpression</code></pre>
+defaultExpressionIR = defaultExpression</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_62" class="discrete">Type checking</h4>
@@ -24891,17 +25225,20 @@ syntax defaultExpressionIR = defaultExpression</code></pre>
 <h3 id="sec-unaryExpression">13.4. Unary expressions</h3>
 <div id="unaryExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax unop =
-   | !
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">unop
+   : !
    | ~
    | -
    | +
+   ;
 
-syntax unaryExpression =
-   | unop expression
+unaryExpression
+   : unop expression
+   ;
 
-syntax unaryExpressionIR =
-   | unop typedExpressionIR</code></pre>
+unaryExpressionIR
+   : unop typedExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -25178,8 +25515,8 @@ syntax unaryExpressionIR =
 <h3 id="sec-binaryExpression">13.5. Binary expressions</h3>
 <div id="binop" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax binop =
-   | *
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">binop
+   : *
    | /
    | %
    | +
@@ -25200,12 +25537,15 @@ syntax unaryExpressionIR =
    | ++
    | &amp;&amp;
    | ||
+   ;
 
-syntax binaryExpression =
-   | expression binop expression
+binaryExpression
+   : expression binop expression
+   ;
 
-syntax binaryExpressionIR =
-   | typedExpressionIR binop typedExpressionIR</code></pre>
+binaryExpressionIR
+   : typedExpressionIR binop typedExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -26426,11 +26766,13 @@ syntax binaryExpressionIR =
 <h3 id="sec-ternaryExpression">13.6. Ternary expressions</h3>
 <div id="ternaryExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax ternaryExpression =
-   | expression ? expression : expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">ternaryExpression
+   : expression ? expression : expression
+   ;
 
-syntax ternaryExpressionIR =
-   | typedExpressionIR ? typedExpressionIR : typedExpressionIR</code></pre>
+ternaryExpressionIR
+   : typedExpressionIR ? typedExpressionIR : typedExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_75" class="discrete">Type checking</h4>
@@ -26690,11 +27032,13 @@ syntax ternaryExpressionIR =
 <h3 id="sec-castExpression">13.7. Cast expressions</h3>
 <div id="castExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax castExpression =
-   | `(type) expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">castExpression
+   : `( type ) expression
+   ;
 
-syntax castExpressionIR =
-   | `(typeIR) typedExpressionIR</code></pre>
+castExpressionIR
+   : `( typeIR ) typedExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_76" class="discrete">Type checking</h4>
@@ -26869,20 +27213,23 @@ syntax castExpressionIR =
 <h3 id="sec-dataExpression">13.8. Data expressions</h3>
 <div id="dataExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax dataElementExpression =
-   | sequenceElementExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataElementExpression
+   : sequenceElementExpression
    | recordElementExpression
+   ;
 
-syntax dataExpression =
-   | {#}
-   | `{dataElementExpression trailingCommaOpt}
+dataExpression
+   : {#}
+   | `{ dataElementExpression trailingCommaOpt }
+   ;
 
-syntax dataExpressionIR =
-   | {#}
-   | SEQ `{typedExpressionListIR}
-   | SEQ `{typedExpressionListIR , ...}
-   | RECORD `{namedExpressionListIR}
-   | RECORD `{namedExpressionListIR , ...}</code></pre>
+dataExpressionIR
+   : {#}
+   | SEQ `{ typedExpressionListIR }
+   | SEQ `{ typedExpressionListIR , ... }
+   | RECORD `{ namedExpressionListIR }
+   | RECORD `{ namedExpressionListIR , ... }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -26992,7 +27339,7 @@ syntax dataExpressionIR =
 <h4 id="sec-sequence-data-expression">13.8.2. Sequence expressions</h4>
 <div id="sequenceElementExpression" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax sequenceElementExpression = expressionList</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sequenceElementExpression = expressionList</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_78" class="discrete">Type checking</h5>
@@ -27388,11 +27735,12 @@ syntax dataExpressionIR =
 <h4 id="sec-record-data-expression">13.8.3. Record expressions</h4>
 <div id="recordElementExpression" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax recordElementExpression =
-   | name = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">recordElementExpression
+   : name = expression
    | name = expression , ...
    | name = expression , namedExpressionList
-   | name = expression , namedExpressionList , ...</code></pre>
+   | name = expression , namedExpressionList , ...
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_79" class="discrete">Type checking</h5>
@@ -27907,28 +28255,32 @@ syntax dataExpressionIR =
 <h3 id="sec-accessExpression">13.9. Access expressions</h3>
 <div id="accessExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax accessExpression =
-   | errorAccessExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">accessExpression
+   : errorAccessExpression
    | memberAccessExpression
    | indexAccessExpression
    | sliceAccessExpression
+   ;
 
-syntax accessExpressionIR =
-   | errorAccessExpressionIR
+accessExpressionIR
+   : errorAccessExpressionIR
    | memberAccessExpressionIR
    | indexAccessExpressionIR
-   | sliceAccessExpressionIR</code></pre>
+   | sliceAccessExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-errorAccessExpression">13.9.1. Error access expressions</h4>
 <div id="errorAccessExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax errorAccessExpression =
-   | ERROR . member
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorAccessExpression
+   : ERROR . member
+   ;
 
-syntax errorAccessExpressionIR =
-   | ERROR . nameIR</code></pre>
+errorAccessExpressionIR
+   : ERROR . nameIR
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_80" class="discrete">Type checking</h5>
@@ -28064,19 +28416,23 @@ syntax errorAccessExpressionIR =
 <h4 id="sec-memberAccessExpression">13.9.2. Member access expressions</h4>
 <div id="memberAccessExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax memberAccessBase =
-   | prefixedTypeName
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">memberAccessBase
+   : prefixedTypeName
    | expression
+   ;
 
-syntax memberAccessExpression =
-   | memberAccessBase . member
+memberAccessExpression
+   : memberAccessBase . member
+   ;
 
-syntax memberAccessBaseIR =
-   | TYPE prefixedNameIR
+memberAccessBaseIR
+   : TYPE prefixedNameIR
    | typedExpressionIR
+   ;
 
-syntax memberAccessExpressionIR =
-   | memberAccessBaseIR . nameIR</code></pre>
+memberAccessExpressionIR
+   : memberAccessBaseIR . nameIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect4">
@@ -28978,11 +29334,13 @@ syntax memberAccessExpressionIR =
 <h4 id="sec-indexAccessExpression">13.9.3. Index access expressions</h4>
 <div id="indexAccessExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax indexAccessExpression =
-   | expression `[expression]
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">indexAccessExpression
+   : expression `[ expression ]
+   ;
 
-syntax indexAccessExpressionIR =
-   | typedExpressionIR `[typedExpressionIR]</code></pre>
+indexAccessExpressionIR
+   : typedExpressionIR `[ typedExpressionIR ]
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_83" class="discrete">Type checking</h5>
@@ -29203,11 +29561,13 @@ syntax indexAccessExpressionIR =
 <h4 id="sec-sliceAccessExpression">13.9.4. Bitslice access expressions</h4>
 <div id="sliceAccessExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax sliceAccessExpression =
-   | expression `[expression : expression]
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sliceAccessExpression
+   : expression `[ expression : expression ]
+   ;
 
-syntax sliceAccessExpressionIR =
-   | typedExpressionIR `[typedExpressionIR : typedExpressionIR]</code></pre>
+sliceAccessExpressionIR
+   : typedExpressionIR `[ typedExpressionIR : typedExpressionIR ]
+   ;</code></pre>
 </div>
 </div>
 <h5 id="_type_checking_84" class="discrete">Type checking</h5>
@@ -29504,30 +29864,35 @@ syntax sliceAccessExpressionIR =
 <h3 id="sec-callExpression">13.10. Call expressions</h3>
 <div id="callExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callableTarget = expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callableTarget = expression
 
-syntax constructorTarget = namedType
+constructorTarget = namedType
 
-syntax callTarget =
-   | callableTarget
+callTarget
+   : callableTarget
    | constructorTarget
+   ;
 
-syntax callExpression =
-   | callTarget `(argumentList)
-   | callableTarget `&lt;realTypeArgumentList&gt; `(argumentList)
+callExpression
+   : callTarget `( argumentList )
+   | callableTarget `&lt; realTypeArgumentList &gt; `( argumentList )
+   ;
 
-syntax callableTargetIR =
-   | referenceExpressionIR
+callableTargetIR
+   : referenceExpressionIR
    | typedExpressionIR . nameIR
    | TYPE prefixedNameIR . nameIR
-   | `(callableTargetIR)
+   | `( callableTargetIR )
+   ;
 
-syntax constructorTargetIR =
-   | prefixedNameIR `&lt;typeArgumentListIR&gt;
+constructorTargetIR
+   : prefixedNameIR `&lt; typeArgumentListIR &gt;
+   ;
 
-syntax callExpressionIR =
-   | constructorTargetIR `(argumentListIR)
-   | callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentListIR)</code></pre>
+callExpressionIR
+   : constructorTargetIR `( argumentListIR )
+   | callableTargetIR `&lt; typeArgumentListIR &gt; `( argumentListIR )
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -30447,11 +30812,13 @@ syntax callExpressionIR =
 <h3 id="sec-parenthesizedExpression">13.11. Parenthesized expressions</h3>
 <div id="parenthesizedExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parenthesizedExpression =
-   | `(expression)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parenthesizedExpression
+   : `( expression )
+   ;
 
-syntax parenthesizedExpressionIR =
-   | `(typedExpressionIR)</code></pre>
+parenthesizedExpressionIR
+   : `( typedExpressionIR )
+   ;</code></pre>
 </div>
 </div>
 <h4 id="_type_checking_87" class="discrete">Type checking</h4>
@@ -30615,28 +30982,32 @@ syntax parenthesizedExpressionIR =
 <h3 id="sec-parser-local-declaration">15.1. Parser local declarations</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | valueSetDeclaration
+   ;
 
-syntax parserLocalDeclarationIR =
-   | constantDeclarationIR
+parserLocalDeclarationIR
+   : constantDeclarationIR
    | instantiationIR
    | variableDeclarationIR
-   | valueSetDeclarationIR</code></pre>
+   | valueSetDeclarationIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-parser-local-constant-declaration">15.1.1. Constant declarations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constantDeclaration =
-   | annotationList CONST type name initializer ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantDeclaration
+   : annotationList CONST type name initializer ;
+   ;
 
-syntax constantDeclarationIR =
-   | annotationList CONST typeIR nameIR constantInitializerIR ;</code></pre>
+constantDeclarationIR
+   : annotationList CONST typeIR nameIR constantInitializerIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30644,12 +31015,14 @@ syntax constantDeclarationIR =
 <h4 id="sec-parser-local-instantiation">15.1.2. Instantiations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax instantiation =
-   | annotationList type `(argumentList) name ;
-   | annotationList type `(argumentList) name objectInitializer ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiation
+   : annotationList type `( argumentList ) name ;
+   | annotationList type `( argumentList ) name objectInitializer ;
+   ;
 
-syntax instantiationIR =
-   | annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ;</code></pre>
+instantiationIR
+   : annotationList typeIR prefixedNameIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) nameIR objectInitializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30657,11 +31030,13 @@ syntax instantiationIR =
 <h4 id="sec-parser-local-variable-declaration">15.1.3. Variable declarations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax variableDeclaration =
-   | annotationList type name initializerOpt ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">variableDeclaration
+   : annotationList type name initializerOpt ;
+   ;
 
-syntax variableDeclarationIR =
-   | annotationList typeIR nameIR initializerOptIR ;</code></pre>
+variableDeclarationIR
+   : annotationList typeIR nameIR initializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30669,16 +31044,19 @@ syntax variableDeclarationIR =
 <h4 id="sec-parser-local-value-set-declaration">15.1.4. Parser value set declarations</h4>
 <div id="valueSetDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax valueSetType =
-   | baseType
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">valueSetType
+   : baseType
    | tupleType
    | prefixedTypeName
+   ;
 
-syntax valueSetDeclaration =
-   | annotationList VALUE_SET `&lt;valueSetType&gt; `(expression) name ;
+valueSetDeclaration
+   : annotationList VALUE_SET `&lt; valueSetType &gt; `( expression ) name ;
+   ;
 
-syntax valueSetDeclarationIR =
-   | annotationList VALUE_SET `&lt;typeIR&gt; `(typedExpressionIR) nameIR ;</code></pre>
+valueSetDeclarationIR
+   : annotationList VALUE_SET `&lt; typeIR &gt; `( typedExpressionIR ) nameIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30687,11 +31065,13 @@ syntax valueSetDeclarationIR =
 <h3 id="sec-parser-state">15.2. Parser states</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserState =
-   | annotationList STATE name `{parserStatementList transitionStatement}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserState
+   : annotationList STATE name `{ parserStatementList transitionStatement }
+   ;
 
-syntax parserStateIR =
-   | annotationList STATE nameIR `{parserStatementListIR transitionStatementIR}</code></pre>
+parserStateIR
+   : annotationList STATE nameIR `{ parserStatementListIR transitionStatementIR }
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30699,8 +31079,8 @@ syntax parserStateIR =
 <h3 id="sec-parser-statement">15.3. Parser statements</h3>
 <div id="parserStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax parserStatement =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserStatement
+   : constantDeclaration
    | variableDeclaration
    | emptyStatement
    | assignmentStatement
@@ -30708,27 +31088,31 @@ syntax parserStateIR =
    | directApplicationStatement
    | parserBlockStatement
    | parserConditionalStatement
+   ;
 
-syntax parserStatementIR =
-   | constantDeclarationIR
+parserStatementIR
+   : constantDeclarationIR
    | variableDeclarationIR
    | emptyStatementIR
    | assignmentStatementIR
    | callStatementIR
    | directApplicationStatementIR
    | parserBlockStatementIR
-   | parserConditionalStatementIR</code></pre>
+   | parserConditionalStatementIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-parser-constant-declaration-statement">15.3.1. Constant declaration</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constantDeclaration =
-   | annotationList CONST type name initializer ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantDeclaration
+   : annotationList CONST type name initializer ;
+   ;
 
-syntax constantDeclarationIR =
-   | annotationList CONST typeIR nameIR constantInitializerIR ;</code></pre>
+constantDeclarationIR
+   : annotationList CONST typeIR nameIR constantInitializerIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30736,11 +31120,13 @@ syntax constantDeclarationIR =
 <h4 id="sec-parser-variable-declaration-statement">15.3.2. Variable declaration</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax variableDeclaration =
-   | annotationList type name initializerOpt ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">variableDeclaration
+   : annotationList type name initializerOpt ;
+   ;
 
-syntax variableDeclarationIR =
-   | annotationList typeIR nameIR initializerOptIR ;</code></pre>
+variableDeclarationIR
+   : annotationList typeIR nameIR initializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30748,10 +31134,11 @@ syntax variableDeclarationIR =
 <h4 id="sec-parser-empty-statement">15.3.3. Empty statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax emptyStatement =
-   | ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">emptyStatement
+   : ;
+   ;
 
-syntax emptyStatementIR = emptyStatement</code></pre>
+emptyStatementIR = emptyStatement</code></pre>
 </div>
 </div>
 </div>
@@ -30759,11 +31146,13 @@ syntax emptyStatementIR = emptyStatement</code></pre>
 <h4 id="sec-parser-assignment-statement">15.3.4. Assignment statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax assignmentStatement =
-   | lvalue assignop expression ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">assignmentStatement
+   : lvalue assignop expression ;
+   ;
 
-syntax assignmentStatementIR =
-   | typedLvalueIR assignop typedExpressionIR ;</code></pre>
+assignmentStatementIR
+   : typedLvalueIR assignop typedExpressionIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30771,12 +31160,14 @@ syntax assignmentStatementIR =
 <h4 id="sec-parser-call-statement">15.3.5. Call statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax callStatement =
-   | lvalue `(argumentList) ;
-   | lvalue `&lt;typeArgumentList&gt; `(argumentList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callStatement
+   : lvalue `( argumentList ) ;
+   | lvalue `&lt; typeArgumentList &gt; `( argumentList ) ;
+   ;
 
-syntax callStatementIR =
-   | callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentListIR) ;</code></pre>
+callStatementIR
+   : callableTargetIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30784,11 +31175,13 @@ syntax callStatementIR =
 <h4 id="sec-parser-direct-application-statement">15.3.6. Direct application statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax directApplicationStatement =
-   | namedType . APPLY `(argumentList) ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">directApplicationStatement
+   : namedType . APPLY `( argumentList ) ;
+   ;
 
-syntax directApplicationStatementIR =
-   | prefixedNameIR . APPLY `(argumentListIR) ;</code></pre>
+directApplicationStatementIR
+   : prefixedNameIR . APPLY `( argumentListIR ) ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30796,11 +31189,13 @@ syntax directApplicationStatementIR =
 <h4 id="sec-parser-block-statement">15.3.7. Block statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax blockStatement =
-   | annotationList `{blockElementStatementList}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">blockStatement
+   : annotationList `{ blockElementStatementList }
+   ;
 
-syntax blockStatementIR =
-   | annotationList `{blockElementStatementListIR}</code></pre>
+blockStatementIR
+   : annotationList `{ blockElementStatementListIR }
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30808,13 +31203,15 @@ syntax blockStatementIR =
 <h4 id="sec-parser-conditional-statement">15.3.8. Conditional statement</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax conditionalStatement =
-   | IF `(expression) statement
-   | IF `(expression) statement ELSE statement
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">conditionalStatement
+   : IF `( expression ) statement
+   | IF `( expression ) statement ELSE statement
+   ;
 
-syntax conditionalStatementIR =
-   | IF `(typedExpressionIR) statementIR
-   | IF `(typedExpressionIR) statementIR ELSE statementIR</code></pre>
+conditionalStatementIR
+   : IF `( typedExpressionIR ) statementIR
+   | IF `( typedExpressionIR ) statementIR ELSE statementIR
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30823,45 +31220,55 @@ syntax conditionalStatementIR =
 <h3 id="sec-parser-transition-statement">15.4. Parser transition statements</h3>
 <div id="transitionStatementIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax stateExpression =
-   | name ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">stateExpression
+   : name ;
    | selectExpression
+   ;
 
-syntax transitionStatement =
-   | `EMPTY
+transitionStatement
+   : /* empty */
    | TRANSITION stateExpression
+   ;
 
-syntax stateExpressionIR =
-   | nameIR ;
+stateExpressionIR
+   : nameIR ;
    | selectExpressionIR
+   ;
 
-syntax transitionStatementIR =
-   | TRANSITION stateExpressionIR</code></pre>
+transitionStatementIR
+   : TRANSITION stateExpressionIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="_parser_select_expression">15.4.1. Parser select expression</h4>
 <div id="selectExpressionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax keysetExpression =
-   | simpleKeysetExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpression
+   : simpleKeysetExpression
    | tupleKeysetExpression
+   ;
 
-syntax selectCase =
-   | keysetExpression : name ;
+selectCase
+   : keysetExpression : name ;
+   ;
 
-syntax selectExpression =
-   | SELECT `(expressionList) `{selectCaseList}
+selectExpression
+   : SELECT `( expressionList ) `{ selectCaseList }
+   ;
 
-syntax keysetExpressionIR =
-   | simpleKeysetExpressionIR
+keysetExpressionIR
+   : simpleKeysetExpressionIR
    | tupleKeysetExpressionIR
+   ;
 
-syntax selectCaseIR =
-   | keysetExpressionIR : nameIR ;
+selectCaseIR
+   : keysetExpressionIR : nameIR ;
+   ;
 
-syntax selectExpressionIR =
-   | SELECT `(typedExpressionListIR) `{selectCaseListIR}</code></pre>
+selectExpressionIR
+   : SELECT `( typedExpressionListIR ) `{ selectCaseListIR }
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30875,30 +31282,34 @@ syntax selectExpressionIR =
 <h3 id="sec-control-local-declaration">16.1. Control local declarations</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax controlLocalDeclaration =
-   | constantDeclaration
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclaration
+   : constantDeclaration
    | instantiation
    | variableDeclaration
    | actionDeclaration
    | tableDeclaration
+   ;
 
-syntax controlLocalDeclarationIR =
-   | constantDeclarationIR
+controlLocalDeclarationIR
+   : constantDeclarationIR
    | instantiationIR
    | variableDeclarationIR
    | actionDeclarationIR
-   | tableDeclarationIR</code></pre>
+   | tableDeclarationIR
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-control-local-constant-declaration">16.1.1. Constant declarations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax constantDeclaration =
-   | annotationList CONST type name initializer ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantDeclaration
+   : annotationList CONST type name initializer ;
+   ;
 
-syntax constantDeclarationIR =
-   | annotationList CONST typeIR nameIR constantInitializerIR ;</code></pre>
+constantDeclarationIR
+   : annotationList CONST typeIR nameIR constantInitializerIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30906,12 +31317,14 @@ syntax constantDeclarationIR =
 <h4 id="sec-control-local-instantiation">16.1.2. Instantiations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax instantiation =
-   | annotationList type `(argumentList) name ;
-   | annotationList type `(argumentList) name objectInitializer ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiation
+   : annotationList type `( argumentList ) name ;
+   | annotationList type `( argumentList ) name objectInitializer ;
+   ;
 
-syntax instantiationIR =
-   | annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ;</code></pre>
+instantiationIR
+   : annotationList typeIR prefixedNameIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) nameIR objectInitializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30919,11 +31332,13 @@ syntax instantiationIR =
 <h4 id="sec-control-local-variable-declaration">16.1.3. Variable declarations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax variableDeclaration =
-   | annotationList type name initializerOpt ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">variableDeclaration
+   : annotationList type name initializerOpt ;
+   ;
 
-syntax variableDeclarationIR =
-   | annotationList typeIR nameIR initializerOptIR ;</code></pre>
+variableDeclarationIR
+   : annotationList typeIR nameIR initializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30931,11 +31346,13 @@ syntax variableDeclarationIR =
 <h4 id="sec-control-local-action-declaration">16.1.4. Action declarations</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax actionDeclaration =
-   | annotationList ACTION name `(parameterList) blockStatement
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclaration
+   : annotationList ACTION name `( parameterList ) blockStatement
+   ;
 
-syntax actionDeclarationIR =
-   | annotationList ACTION nameIR `(parameterListIR) blockStatementIR</code></pre>
+actionDeclarationIR
+   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30943,11 +31360,13 @@ syntax actionDeclarationIR =
 <h4 id="sec-control-local-table-declaration">16.1.5. Table declarations</h4>
 <div id="tableDeclarationIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableDeclaration =
-   | annotationList TABLE name `{tablePropertyList}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableDeclaration
+   : annotationList TABLE name `{ tablePropertyList }
+   ;
 
-syntax tableDeclarationIR =
-   | annotationList TABLE typeIR nameIR `{tablePropertyListIR}</code></pre>
+tableDeclarationIR
+   : annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30956,35 +31375,41 @@ syntax tableDeclarationIR =
 <h3 id="sec-match-action-table">16.2. Match-action tables</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableProperty =
-   | KEY = `{tableKeyList}
-   | ACTIONS = `{tableActionList}
-   | annotationList constOpt ENTRIES = `{tableEntryList}
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableProperty
+   : KEY = `{ tableKeyList }
+   | ACTIONS = `{ tableActionList }
+   | annotationList constOpt ENTRIES = `{ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
+   ;
 
-syntax tableDeclaration =
-   | annotationList TABLE name `{tablePropertyList}
+tableDeclaration
+   : annotationList TABLE name `{ tablePropertyList }
+   ;
 
-syntax tablePropertyIR =
-   | tableKeysPropertyIR
+tablePropertyIR
+   : tableKeysPropertyIR
    | tableActionsPropertyIR
    | tableDefaultActionPropertyIR
    | tableEntriesPropertyIR
    | tableCustomPropertyIR
+   ;
 
-syntax tableDeclarationIR =
-   | annotationList TABLE typeIR nameIR `{tablePropertyListIR}</code></pre>
+tableDeclarationIR
+   : annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
+   ;</code></pre>
 </div>
 </div>
 <div class="sect3">
 <h4 id="sec-match-action-table-key">16.2.1. Table keys</h4>
 <div id="tableKeyIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableKey =
-   | expression : name annotationList ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKey
+   : expression : name annotationList ;
+   ;
 
-syntax tableKeyIR =
-   | typedExpressionIR : nameIR annotationList ;</code></pre>
+tableKeyIR
+   : typedExpressionIR : nameIR annotationList ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -30992,18 +31417,22 @@ syntax tableKeyIR =
 <h4 id="sec-match-action-table-action">16.2.2. Table actions</h4>
 <div id="tableActionIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax tableActionReference =
-   | prefixedNonTypeName
-   | prefixedNonTypeName `(argumentList)
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableActionReference
+   : prefixedNonTypeName
+   | prefixedNonTypeName `( argumentList )
+   ;
 
-syntax tableAction =
-   | annotationList tableActionReference ;
+tableAction
+   : annotationList tableActionReference ;
+   ;
 
-syntax tableActionReferenceIR =
-   | prefixedNameIR `(argumentListIR)
+tableActionReferenceIR
+   : prefixedNameIR `( argumentListIR )
+   ;
 
-syntax tableActionIR =
-   | annotationList tableActionReferenceIR # `(parameterListIR , parameterListIR) ;</code></pre>
+tableActionIR
+   : annotationList tableActionReferenceIR # `( parameterListIR , parameterListIR ) ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -31015,28 +31444,34 @@ syntax tableActionIR =
 <h4 id="sec-match-action-table-entry">16.2.4. Table entries</h4>
 <div id="tableEntryIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax keysetExpression =
-   | simpleKeysetExpression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpression
+   : simpleKeysetExpression
    | tupleKeysetExpression
+   ;
 
-syntax tableEntryPriority =
-   | PRIORITY = integerLiteral :
-   | PRIORITY = `(expression) :
+tableEntryPriority
+   : PRIORITY = integerLiteral :
+   | PRIORITY = `( expression ) :
+   ;
 
-syntax tableEntry =
-   | constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
+tableEntry
+   : constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
+   ;
 
-syntax keysetExpressionIR =
-   | simpleKeysetExpressionIR
+keysetExpressionIR
+   : simpleKeysetExpressionIR
    | tupleKeysetExpressionIR
+   ;
 
-syntax tableEntryPriorityIR =
-   | PRIORITY = integerLiteral :
-   | PRIORITY = `(typedExpressionIR) :
+tableEntryPriorityIR
+   : PRIORITY = integerLiteral :
+   | PRIORITY = `( typedExpressionIR ) :
+   ;
 
-syntax tableEntryIR =
-   | constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;</code></pre>
+tableEntryIR
+   : constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -31056,17 +31491,19 @@ syntax tableEntryIR =
 <h4 id="sec-def-argument">17.1.1. Arguments</h4>
 <div id="argumentIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax argument =
-   | expression
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">argument
+   : expression
    | name = expression
    | name = _
    | _
+   ;
 
-syntax argumentIR =
-   | typedExpressionIR
+argumentIR
+   : typedExpressionIR
    | nameIR = typedExpressionIR
    | nameIR = _
-   | _</code></pre>
+   | _
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -31074,16 +31511,18 @@ syntax argumentIR =
 <h4 id="sec-def-type-argument">17.1.2. Type arguments</h4>
 <div id="typeArgumentIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax typeArgument =
-   | realTypeArgument
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typeArgument
+   : realTypeArgument
    | nonTypeName
+   ;
 
-syntax realTypeArgument =
-   | type
+realTypeArgument
+   : type
    | VOID
    | _
+   ;
 
-syntax typeArgumentIR = typeIR</code></pre>
+typeArgumentIR = typeIR</code></pre>
 </div>
 </div>
 </div>
@@ -31131,8 +31570,8 @@ is not allowed:</p>
 <div class="sectionbody">
 <div id="annotation" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">syntax annotationToken =
-   | UNEXPECTED_TOKEN
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">annotationToken
+   : UNEXPECTED_TOKEN
    | ABSTRACT
    | ACTION
    | ACTIONS
@@ -31221,19 +31660,23 @@ is not allowed:</p>
    | =
    | ;
    | @
+   ;
 
-syntax annotationBody =
-   | `EMPTY
-   | annotationBody `(annotationBody)
+annotationBody
+   : /* empty */
+   | annotationBody `( annotationBody )
    | annotationBody annotationToken
+   ;
 
-syntax structuredAnnotationBody =
-   | dataElementExpression trailingCommaOpt
+structuredAnnotationBody
+   : dataElementExpression trailingCommaOpt
+   ;
 
-syntax annotation =
-   | @ name
-   | @ name `(annotationBody)
-   | @ name `[structuredAnnotationBody]</code></pre>
+annotation
+   : @ name
+   | @ name `( annotationBody )
+   | @ name `[ structuredAnnotationBody ]
+   ;</code></pre>
 </div>
 </div>
 </div>
