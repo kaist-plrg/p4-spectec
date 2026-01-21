@@ -660,7 +660,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-15</span>
+<span id="revdate">2026-01-21</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -20367,6 +20367,18 @@ syntax callStatementIR =
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup Stmt_ok/callStatement:
+  rule Stmt_ok/callStatement-no-typeArgumentList-static_assert:
+  p TC f l |- lvalue_callable `(argumentList) ; : TC f emptyStatementIR
+ -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if $is_static_assert_callableTarget(callableTargetIR)
+ -- if callExpressionIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if expressionNoteIR = `(typeIR_ret LCTK)
+ -- Expr_eval_lctk: p TC |- (callExpressionIR # expressionNoteIR) ~&gt; (`B true)
+ -- if emptyStatementIR = ;
   rule Stmt_ok/callStatement-no-typeArgumentList:
   p TC f l |- lvalue_callable `(argumentList) ; : TC f callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
@@ -20374,6 +20386,7 @@ syntax callStatementIR =
  -- (Argument_ok: p TC |- argument : argumentIR)*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
  -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if ~$is_static_assert_callableTarget(callableTargetIR)
  -- if callStatementIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) ;
   rule Stmt_ok/callStatement-typeArgumentList:
   p TC f l |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : TC f callStatementIR
@@ -20466,6 +20479,48 @@ syntax callStatementIR =
 </div>
 </li>
 <li>
+<p>If <code><a href="#is_static_assert_callableTarget"></code> <code>is_static_assert_callableTarget(callableTargetIR)</a></code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
+</li>
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
+</li>
+<li>
+<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>callExpressionIR</code> annotated with <code>expressionNoteIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>value</code> is equal to <code>`B</code> <code>true</code>.</p>
+</li>
+<li>
+<p>Let <code>emptyStatementIR</code> be <code>;</code>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the typing context <code>TC</code>,</p>
+</li>
+<li>
+<p>the abstract control flow <code>f</code>,</p>
+</li>
+<li>
+<p>and the typed statement <code>emptyStatementIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
 <p>Let <code>callStatementIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
@@ -20482,6 +20537,9 @@ syntax callStatementIR =
 <p>and the typed statement <code>callStatementIR</code>.</p>
 </li>
 </ul>
+</div>
+</li>
+</ol>
 </div>
 </li>
 </ol>
@@ -21150,12 +21208,13 @@ invoked.</p>
   rule Stmt_inst/directApplicationStatementIR:
   p IC STO_0 |- prefixedNameIR . APPLY `(argumentListIR) ; : IC STO_2 blockStatementIR
  -- Constructor_inst: p IC |- prefixedNameIR `&lt;eps&gt; `(eps) : constructorDef `&lt;eps&gt; `(# eps)
- -- Constructor_call: p IC STO_0 |- constructorDef `&lt;eps&gt; `(eps # eps) : STO_1 object
- -- if typeId_fresh = $fresh_typeId
  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
+ -- if IC_callee = $enter_path_i(IC, typeId)
+ -- Constructor_call: p IC_callee STO_0 |- constructorDef `&lt;eps&gt; `(eps # eps) : STO_1 object
+ -- if typeId_fresh = $fresh_typeId
  -- if typeIR = ` typeId
  -- if nameIR = $concat_text([typeId, "_", typeId_fresh])
- -- if objectId = IC.PATH ++ nameIR
+ -- if objectId = IC.PATH ++ typeId
  -- if STO_2 = $add_map&lt;objectId, object&gt;(STO_1, objectId, object)
  -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;
  -- if callableTargetIR = ((` nameIR) # `(typeIR CTK)) . "apply"
@@ -21197,6 +21256,12 @@ invoked.</p>
 <p>Check that <code>id<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
+<p>Let <code>typeId</code> be <a href="#flatten_prefixedNameIR">the string form of  <code>prefixedNameIR</code></a>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>callee</sub></code> be <a href="#enter_path_i"><code>IC</code> with <code>typeId</code> added to the path</a>.</p>
+</li>
+<li>
 <p>Let</p>
 <div class="ulist">
 <ul>
@@ -21204,7 +21269,7 @@ invoked.</p>
 <p>the updated store <code>STO<sub>1</sub></code>,and the constructed <code>object</code> be</p>
 </li>
 <li>
-<p>the result of <a href="#Constructor_call">instantiating <code>constructorDef</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with default parameters <code>·</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
+<p>the result of <a href="#Constructor_call">instantiating <code>constructorDef</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with default parameters <code>·</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>callee</sub></code>, and store <code>STO</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -21213,16 +21278,13 @@ invoked.</p>
 <p>Let <code>typeId<sub>fresh</sub></code> be <a href="#fresh_typeId">a fresh type variable</a>.</p>
 </li>
 <li>
-<p>Let <code>typeId</code> be <a href="#flatten_prefixedNameIR">the string form of  <code>prefixedNameIR</code></a>.</p>
-</li>
-<li>
 <p>Let <code>typeIR</code> be <code>typeId</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#concat_text">the concatenation of <code>[typeId,</code> <code>"_",</code> <code>typeId<sub>fresh</sub>]</code></a>.</p>
 </li>
 <li>
-<p>Let <code>objectId</code> be <code>IC.PATH</code> <code>&#43;&#43;</code> <code>[nameIR]</code>.</p>
+<p>Let <code>objectId</code> be <code>IC.PATH</code> <code>&#43;&#43;</code> <code>[typeId]</code>.</p>
 </li>
 <li>
 <p>Let <code>STO<sub>2</sub></code> be <a href="#add_map"><code>STO<sub>1</sub></code>[<code>objectId</code> := <code>object</code>]</a>.</p>
@@ -29367,6 +29429,20 @@ syntax callExpressionIR =
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup Expr_ok/callExpression-callable:
+  rule Expr_ok/non-typeArgumentList-static_assert:
+  p TC |- callableTarget `(argumentList) : literalExpressionIR # expressionNoteIR
+ -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- (Argument_ok: p TC |- argument : argumentIR)*
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if typeIR_ret =/= VOID
+ -- if ctk = $is_static_callableTarget(callableTargetIR)
+ -- if $is_static_assert_callableTarget(callableTargetIR)
+ -- if callExpressionIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if expressionNoteIR = `(typeIR_ret ctk)
+ -- Expr_eval_lctk: p TC |- (callExpressionIR # expressionNoteIR) ~&gt; (`B true)
+ -- if literalExpressionIR = TRUE
   rule Expr_ok/non-typeArgumentList:
   p TC |- callableTarget `(argumentList) : callExpressionIR # expressionNoteIR
  -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
@@ -29376,6 +29452,7 @@ syntax callExpressionIR =
  -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if typeIR_ret =/= VOID
  -- if ctk = $is_static_callableTarget(callableTargetIR)
+ -- if ~$is_static_assert_callableTarget(callableTargetIR)
  -- if callExpressionIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if expressionNoteIR = `(typeIR_ret ctk)
   rule Expr_ok/typeArgumentList:
@@ -29484,6 +29561,35 @@ syntax callExpressionIR =
 <p>Let <code>ctk''</code> be <code><a href="#is_static_callableTarget"></code> <code>is_static_callableTarget(callableTargetIR)</a></code>.</p>
 </li>
 <li>
+<p>If <code><a href="#is_static_assert_callableTarget"></code> <code>is_static_assert_callableTarget(callableTargetIR)</a></code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
+</li>
+<li>
+<p>Let <code>expressionNoteIR'''</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk''</code></a>.</p>
+</li>
+<li>
+<p>Let <code>value</code> be the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>callExpressionIR</code> annotated with <code>expressionNoteIR'''</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>value</code> is equal to <code>`B</code> <code>true</code>.</p>
+</li>
+<li>
+<p>Let <code>literalExpressionIR</code> be <code>TRUE</code>.</p>
+</li>
+<li>
+<p>Result in <a href="#typedExpressionIR"><code>literalExpressionIR</code> annotated with <code>expressionNoteIR'''</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
 <p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
@@ -29491,6 +29597,9 @@ syntax callExpressionIR =
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR'''</code></a>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
@@ -31858,7 +31967,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-15 21:39:46 +0900
+Last updated 2026-01-21 13:57:41 +0900
 </div>
 </div>
 </body>

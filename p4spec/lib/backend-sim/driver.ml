@@ -126,7 +126,7 @@ module Make
           table_entry_action,
           _ ) ->
         (* Encode name *)
-        let value_tableName = wrap_text_v table_name in
+        let value_tableName = table_name |> String.escaped |> wrap_text_v in
         (* Encode priority *)
         let value_tableEntryPriorityInterface =
           table_entry_priority_opt

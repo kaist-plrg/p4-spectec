@@ -875,6 +875,9 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Let ``typeId`` ``.`` ``nameIR`` ``.`` ``value'`` be ``enumValue``.
  .. Let ``(value~updated~,`` ``b~rest~^{asterisk}^)`` be ``<<write_value_from_bits',`` ``write_value_from_bits'(value',`` ``n~var~,`` ``bool^{asterisk}^)>>``.
  .. Return ``(typeId`` ``.`` ``"__UNSPECIFIED"`` ``.`` ``value~updated~,`` ``b~rest~^{asterisk}^)``.
+. Else if let ``HEADER_STACK`` ``[`` ``value'^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value``:
+ .. Let ``(value~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)`` be ``<<write_values_from_bits',`` ``write_values_from_bits'(value'^{asterisk}^,`` ``n~var~,`` ``bool^{asterisk}^)>>``.
+ .. Return ``(HEADER_STACK`` ``[`` ``value~updated~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``],`` ``b~rest~^{asterisk}^)``.
 . If let ``integerValue`` be ``value``:
  .. Check that ``integerValue`` matches pattern ``%`` ``.`` ``%`` ``V`` ``%``.
  .. Let ``n~max~`` ``.`` ``++_++`` ``V`` ``i'`` be ``integerValue``.
@@ -889,6 +892,17 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
   ... Let ``int''`` be ``<<bits_to_int_signed,`` ``bits_to_int_signed(b~h'~^{asterisk}^)>>``.
   ... Let ``i`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n~var~,`` ``int'')>>``.
   ... Return ``(n~max~`` ``.`` ``n~var~`` ``V`` ``i,`` ``b~t'~^{asterisk}^)``.
+
+<<write_values_from_bits', write_values_from_bits'(value^{asterisk}^, n~var~, b^{asterisk}^)>>
+
+
+. If ``value^{asterisk}^`` is an empty list:
+ .. Return ``(·,`` ``b^{asterisk}^)``.
+. Else:
+ .. Let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``.
+ .. Let ``(value~h_updated~,`` ``b~t~^{asterisk}^)`` be ``<<write_value_from_bits',`` ``write_value_from_bits'(value~h~,`` ``n~var~,`` ``b^{asterisk}^)>>``.
+ .. Let ``(value~t_updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)`` be ``<<write_values_from_bits',`` ``write_values_from_bits'(value~t~^{asterisk}^,`` ``n~var~,`` ``b~t~^{asterisk}^)>>``.
+ .. Return ``(value~h_updated~`` ``{two-colons}`` ``value~t_updated~^{asterisk}^,`` ``b~rest~^{asterisk}^)``.
 
 <<write_value_fields_from_bits', write_value_fields_from_bits'(fieldValue^{asterisk}^, n~var~, b^{asterisk}^)>>
 
@@ -3243,9 +3257,11 @@ for each ``typeId~fresh'~`` in ``typeId~fresh'~^{asterisk}^``
 . Else if let ``HEADER_STACK`` ``[`` ``value'^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value``:
  .. Return ``<<cast_header_stack,`` ``cast_header_stack(typeIR,`` ``value'^{asterisk}^,`` ``n~size~)>>``.
 . Else if let ``enumValue`` be ``value``:
- .. Check that ``enumValue`` matches pattern ``%`` ``.`` ``%`` ``.`` ``%``.
- .. Let ``++_++`` ``.`` ``++_++`` ``.`` ``value'`` be ``enumValue``.
- .. Return ``<<cast_op,`` ``cast_op(typeIR,`` ``value')>>``.
+ .. If let ``++_++`` ``.`` ``++_++`` ``.`` ``value'`` be ``enumValue``:
+  ... Return ``<<cast_op,`` ``cast_op(typeIR,`` ``value')>>``.
+ .. Else:
+  ... Let ``typeId`` ``.`` ``nameIR`` be ``enumValue``.
+  ... Return ``<<cast_enum,`` ``cast_enum(typeIR,`` ``typeId`` ``.`` ``nameIR)>>``.
 . Else if let ``sequenceValue`` be ``value``:
  .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
  .. Let ``SEQ`` ``(`` ``value'^{asterisk}^`` ``)`` be ``sequenceValue``.
@@ -3363,9 +3379,9 @@ for each ``typeId~fresh'~`` in ``typeId~fresh'~^{asterisk}^``
 
 
 . If ``valueFieldIR^{asterisk}^`` is an empty list:
- .. Let ``value~zero~`` be ``<<cast_arbint,`` ``cast_arbint(typeIR,`` ``0)>>``.
- .. Let ``id~zero~`` be ``"__UNSPECIFIED"``.
- .. Return ``typeId`` ``.`` ``id~zero~`` ``.`` ``value~zero~``.
+ .. Let ``value~idx~`` be <<cast_op, cast ``value~target~`` to type ``typeIR``>>.
+ .. Let ``id~unnamed~`` be ``"__UNSPECIFIED"``.
+ .. Return ``typeId`` ``.`` ``id~unnamed~`` ``.`` ``value~idx~``.
 . Else:
  .. Let ``valueFieldIR~h~`` ``{two-colons}`` ``valueFieldIR~t~^{asterisk}^`` be ``valueFieldIR^{asterisk}^``.
  .. Let ``nameIR`` ``=`` ``value`` ``;`` be ``valueFieldIR~h~``.
@@ -3493,6 +3509,18 @@ for each ``id`` in ``id^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
 . Let ``typeIR'`` ``[`` ``n~size'~`` ``]`` be ``typeIR``.
 . Check that ``n~size'~`` is equal to ``n~size'~``.
 . Return ``HEADER_STACK`` ``[`` ``value^{asterisk}^`` ``(`` ``0`` ``;`` ``n~size'~`` ``)`` ``]``.
+
+<<cast_enum, cast_enum(typeIR, enumValue)>>
+
+
+. Check that ``typeIR`` has type ``enumTypeIR``.
+. Let ``enumTypeIR`` be ``typeIR``.
+. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``{`` ``%`` ``}``.
+. Let ``ENUM`` ``typeId~t~`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
+. Check that ``enumValue`` matches pattern ``%`` ``.`` ``%``.
+. Let ``typeId~v~`` ``.`` ``nameIR`` be ``enumValue``.
+. Check that ``typeId~t~`` is equal to ``typeId~v~``.
+. Return ``typeId~v~`` ``.`` ``nameIR``.
 
 <<cast_sequence, cast_sequence(typeIR, value^{asterisk}^)>>
 
@@ -7356,9 +7384,17 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Call_ok, typing the invocation ``callableTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``typeIR~ret~`` is not equal to ``VOID``.
  .. Let ``ctk''`` be ``<<is_static_callableTarget,`` ``is_static_callableTarget(callableTargetIR)>>``.
- .. Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
- .. Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
- .. Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR'''``>>.
+ .. If ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR)>>``:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
+  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callExpressionIR`` annotated with ``expressionNoteIR'''``, under cursor ``p`` and typing context ``TC``>>.
+  ... Check that ``value`` is equal to ```B`` ``true``.
+  ... Let ``literalExpressionIR`` be ``TRUE``.
+  ... Result in <<typedExpressionIR, ``literalExpressionIR`` annotated with ``expressionNoteIR'''``>>.
+ .. Else:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR'''`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``ctk''``>>.
+  ... Result in <<typedExpressionIR, ``callExpressionIR`` annotated with ``expressionNoteIR'''``>>.
 . Else:
  .. Let ``callableTarget`` ``<`` ``realTypeArgumentList`` ``>`` ``(`` ``argumentList`` ``)`` be ``callExpression``.
  .. Let 
@@ -7673,8 +7709,19 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let 
 * the return type ``typeIR~ret~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^`` be
 * the result of <<Call_ok, typing the invocation ``callableTypeIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~impl~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``p`` and typing context ``TC``>>.
- .. Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``;``.
- .. Result in 
+ .. If ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR)>>``:
+  ... Let ``callExpressionIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)``.
+  ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~ret~`` and compile-time known-ness ``LCTK``>>.
+  ... Let ``value`` be the result of <<Expr_eval_lctk, local compile-time evaluation of ``callExpressionIR`` annotated with ``expressionNoteIR``, under cursor ``p`` and typing context ``TC``>>.
+  ... Check that ``value`` is equal to ```B`` ``true``.
+  ... Let ``emptyStatementIR`` be ``;``.
+  ... Result in 
+* the typing context ``TC``,
+* the abstract control flow ``f``,
+* and the typed statement ``emptyStatementIR``.
+ .. Else:
+  ... Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentIR~inferred~^{asterisk}^`` ``>`` ``(`` ``argumentIR~cast~^{asterisk}^`` ``)`` ``;``.
+  ... Result in 
 * the typing context ``TC``,
 * the abstract control flow ``f``,
 * and the typed statement ``callStatementIR``.
@@ -10162,6 +10209,15 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Otherwise:
  .. Return ``DYN``.
 
+<<is_static_assert_callableTarget, is_static_assert_callableTarget(callableTargetIR)>>
+
+
+. If ``callableTargetIR`` is equal to ``.`` ``"static_assert"``: return ``true``.
+. If ``callableTargetIR`` is equal to ``"static_assert"``: return ``true``.
+. If let ``(`` ``callableTargetIR'`` ``)`` be ``callableTargetIR``:
+ .. Return ``<<is_static_assert_callableTarget,`` ``is_static_assert_callableTarget(callableTargetIR')>>``.
+. Otherwise: return ``false``.
+
 <<CallableTarget_ok, CallableTarget_ok>>:
 
 * Typing ``callableTarget``, under cursor ``cursor`` and typing context ``typingContext``:
@@ -12528,6 +12584,15 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Otherwise:
  .. Return ``·``.
 
+<<name_annotation_default, name_annotation_default(annotationList, nameIR)>>
+
+
+. Let ``nameIR'^?^`` be ``<<name_annotation_of_tableKeyIR,`` ``name_annotation_of_tableKeyIR(annotationList)>>``.
+. If let ``nameIR~found~`` be ``nameIR'^?^``:
+ .. Return ``nameIR~found~``.
+. If ``·`` is equal to ``<<name_annotation_of_tableKeyIR,`` ``name_annotation_of_tableKeyIR(annotationList)>>``:
+ .. Return ``nameIR``.
+
 <<interface_of_tableKeyIR, interface_of_tableKeyIR(typedExpressionIR : nameIR~matchKind~ annotationList ;)>>
 
 
@@ -13335,14 +13400,15 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 * the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
+. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
+. Let ``IC~callee~`` be <<enter_path_i, ``IC`` with ``typeId`` added to the path>>.
 . Let 
 * the updated store ``STO~1~``,and the constructed ``object`` be
-* the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>.
+* the result of <<Constructor_call, instantiating ``constructorDef`` ``<`` ``·`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC~callee~``, and store ``STO``>>.
 . Let ``typeId~fresh~`` be <<fresh_typeId, a fresh type variable>>.
-. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
 . Let ``typeIR`` be ``typeId``.
 . Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
-. Let ``objectId`` be ``IC.PATH`` ``{pp}`` ``[nameIR]``.
+. Let ``objectId`` be ``IC.PATH`` ``{pp}`` ``[typeId]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
 . Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
@@ -13595,7 +13661,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object``]>>.
 . Let ``typeIR`` be ``typeId``.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
-. Let ``callableTargetIR`` be ``typeId`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
+. Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
 . Let ``parserBlockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
 . Result in ``IC~0~``, ``STO~2~``, and ``parserBlockStatementIR``.
@@ -13799,7 +13865,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Check that ``frame^{asterisk}^`` is a non-empty list.
 . Let ``frame'`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``frame^{asterisk}^``.
 . Let ``object~table~`` be ``TABLE`` ``nameIR`` ``{`` ``frame'`` ``TBL`` ``}``.
-. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
+. Let ``nameIR~object~`` be ``<<name_annotation_default,`` ``name_annotation_default(annotationList,`` ``nameIR)>>``.
+. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR~object~]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object~table~``]>>.
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``BLOCK`` layer>>.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
@@ -15186,13 +15253,18 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``expressionResult`` has type ``continueResult<value>``.
  .. Let ``value~base'~`` be ``expressionResult``.
  .. Check that ``value~base'~`` has type ``headerStackValue``.
- .. Let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base'~``.
- .. Let ``int`` be ``n~idx~`` ``-`` ``1``.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~idx_last~`` be ``int``.
- .. Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.
- .. Let ``expressionResult''`` be ``value~last~``.
- .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult''``.
+ .. Let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base'~``.
+ .. Let ``b~out_of_bounds~`` be ``n~idx~`` ``<`` ``1`` *or* ``n~idx~`` ``>`` ``n~size~``.
+ .. If ``b~out_of_bounds~``:
+  ... Let ``rejectTransitionResult`` be ``REJECT`` ``ERROR`` ``.`` ``"StackOutOfBounds"``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``rejectTransitionResult``.
+ .. Else:
+  ... Let ``int`` be ``n~idx~`` ``-`` ``1``.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~idx_last~`` be ``int``.
+  ... Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.
+  ... Let ``expressionResult''`` be ``value~last~``.
+  ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult''``.
 . Else if ``nameIR`` is equal to ``"lastIndex"``:
  .. Check that ``expressionResult`` has type ``continueResult<value>``.
  .. Let ``value~base'~`` be ``expressionResult``.
@@ -15386,7 +15458,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 
 . Result in ``EC``, ``STO``, and ``referenceExpressionIR``.
 
-<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``nameIR`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
+<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``"next"`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1~ STO~1~ storageReferenceResult>>.
 . If let ``abortResult`` be ``storageReferenceResult``:
@@ -15395,8 +15467,28 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference^?^`` is defined.
  .. Let ``storageReference'`` be ``storageReference^?^``.
- .. Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``nameIR``.
- .. Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult'``.
+ .. Let <<Lvalue_read, p EC~1~ STO~1~ |- storageReference' : value>>.
+ .. Check that ``value`` has type ``headerStackValue``.
+ .. Let ``headerStackValue`` be ``value``.
+ .. Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``headerStackValue``.
+ .. If ``n~idx~`` is greater than or equal to ``n~size~``:
+  ... Let ``rejectTransitionResult`` be ``REJECT`` ``ERROR`` ``.`` ``"StackOutOfBounds"``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
+ .. If ``n~idx~`` is less than ``n~size~``:
+  ... Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``"next"``.
+  ... Result in ``EC~1~``, ``STO~1~``, and ``storageReferenceResult'``.
+
+<<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``.`` ``text`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
+
+. Let <<Lvalue_eval, p EC STO |- typedLvalueIR : EC~1'~ STO~1'~ storageReferenceResult''>>.
+. If let ``abortResult'`` be ``storageReferenceResult''``:
+ .. Result in ``EC~1'~``, ``STO~1'~``, and ``abortResult'``.
+. Else:
+ .. Let ``storageReference''^?^`` be ``storageReferenceResult''``.
+ .. Check that ``storageReference''^?^`` is defined.
+ .. Let ``storageReference'`` be ``storageReference''^?^``.
+ .. Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``text``.
+ .. Result in ``EC~1'~``, ``STO~1'~``, and ``storageReferenceResult'``.
 
 <<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``[`` ``typedExpressionIR`` ``]`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -15414,7 +15506,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value`` be ``expressionResult``.
-  ... Let ``storageReferenceResult'`` be ``storageReference'`` ``[`` ``value`` ``]``.
+  ... Check that ``value`` has type ``integerValue``.
+  ... Let ``integerValue~index~`` be ``value``.
+  ... Let ``storageReferenceResult'`` be ``storageReference'`` ``[`` ``integerValue~index~`` ``]``.
   ... Result in ``EC~2~``, ``STO~2~``, and ``storageReferenceResult'``.
 
 <<Lvalue_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedLvalueIR`` ``[`` ``typedExpressionIR~hi~`` ``:`` ``typedExpressionIR~lo~`` ``]`` ``#`` ``lvalueNoteIR`` ``:`` ``%`` ``%`` ``%``>>:
@@ -15981,6 +16075,13 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+
+<<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``annotationList`` ``{`` ``parserStatementListIR`` ``}`` ``:`` ``%`` ``%`` ``%``>>:
+
+. Let ``EC~1~`` be ``<<enter_e,`` ``enter_e(EC~0~)>>``.
+. Let <<ParserStmts_eval, EC~1~ STO |- parserStatementListIR : EC~2~ STO~1~ parserStatementResult>>.
+. Let ``EC~3~`` be ``<<exit_e,`` ``exit_e(EC~2~)>>``.
+. Result in ``EC~3~``, ``STO~1~``, and ``parserStatementResult``.
 
 <<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``parserConditionalStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
