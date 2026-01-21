@@ -29,7 +29,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let note = value.note.typ in
     match (exp.it, value.it) with
     | VarE id, _ ->
-        let ctx = Ctx.add_value Local ctx (id, []) value in
+        let ctx = Ctx.add_value ctx (id, []) value in
         ctx
     | TupleE exps, TupleV values -> assign_exps ctx exps values
     | CaseE notexp, CaseV (_mixop_value, values) ->
@@ -59,7 +59,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               let typ = Typ.iterate typ (iters @ [ Opt ]) in
               OptV None $$$ { vid; typ = typ.it }
             in
-            Ctx.add_value Local ctx (id, iters @ [ Opt ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
           ctx vars
     | IterE (exp, (Opt, vars)), OptV (Some value) ->
         (* Assign the value to the iterated expression *)
@@ -68,12 +68,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let value_sub =
-              let value = Ctx.find_value Local ctx (id, iters) in
+              let value = Ctx.find_value ctx (id, iters) in
               let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ Opt ]) in
               OptV (Some value) $$$ { vid; typ = typ.it }
             in
-            Ctx.add_value Local ctx (id, iters @ [ Opt ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
           ctx vars
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
@@ -93,14 +93,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let values =
-              List.map (fun ctx -> Ctx.find_value Local ctx (id, iters)) ctxs
+              List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
             in
             let value_sub =
               let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ List ]) in
               ListV values $$$ { vid; typ = typ.it }
             in
-            Ctx.add_value Local ctx (id, iters @ [ List ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ List ]) value_sub)
           ctx vars
     | _ ->
         error exp.at
@@ -145,8 +145,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (value : value) : Ctx.t =
     match value.it with
     | FuncV id_f ->
-        let func = Ctx.find_func Local ctx_caller id_f in
-        Ctx.add_func Local ctx_callee id func
+        let func = Ctx.find_func ctx_caller id_f in
+        Ctx.add_func ctx_callee id func
     | _ ->
         error id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
@@ -240,7 +240,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Variable expression evaluation *)
 
   and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value =
-    Ctx.find_value Local ctx (id, [])
+    Ctx.find_value ctx (id, [])
 
   (* Unary expression evaluation *)
 
@@ -346,7 +346,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | NumV (`Int _) -> value
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match deftyp.it with
         | PlainT typ ->
@@ -394,7 +394,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             value_res
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match deftyp.it with
         | PlainT typ ->
@@ -436,7 +436,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | NumV (`Int i) -> Bigint.(i >= zero)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef Local ctx tid in
+        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = List.combine tparams targs |> TIdMap.of_list in
         match (deftyp.it, value.it) with
         | PlainT typ, _ ->
@@ -1147,7 +1147,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                 let value_binding_batch =
                   List.map
                     (fun (id_binding, _typ_binding, iters_binding) ->
-                      Ctx.find_value Local ctx_sub (id_binding, iters_binding))
+                      Ctx.find_value ctx_sub (id_binding, iters_binding))
                     vars_bind
                 in
                 let values_binding_batch =
@@ -1169,9 +1169,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             let typ = Typ.iterate typ_binding (iters_binding @ [ List ]) in
             ListV values_binding $$$ { vid; typ = typ.it }
           in
-          Ctx.add_value Local ctx
-            (id_binding, iters_binding @ [ List ])
-            value_binding)
+          Ctx.add_value ctx (id_binding, iters_binding @ [ List ]) value_binding)
         ctx vars_bind values_binding
     in
     Ok ctx
@@ -1212,7 +1210,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
       (Ctx.t * value list) attempt_reason =
-    let rel = Ctx.find_rel Local ctx id in
+    let rel = Ctx.find_rel ctx id in
     match rel with
     | Rel.Extern -> invoke_extern_rel ctx id values_input
     | Rel.Defined rulegroups ->
@@ -1325,7 +1323,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (values_input : value list) : (Ctx.t * value) attempt_reason =
     Hook.on_func_enter id values_input;
     (* Find the function *)
-    let func = Ctx.find_func Local ctx id in
+    let func = Ctx.find_func ctx id in
     (* Invoke the function *)
     let result =
       match func with
@@ -1469,7 +1467,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                 List.fold_left2
                   (fun ctx_local tparam targ ->
                     let td = Typdef.Defined ([], PlainT targ $ targ.at) in
-                    Ctx.add_typdef Local ctx_local tparam td)
+                    Ctx.add_typdef ctx_local tparam td)
                   ctx_local tparams targs
               in
               (* Try to match the clause *)
@@ -1497,75 +1495,26 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Ok (ctx, value_output))
     else attempt_clauses ()
 
-  (* Globals *)
-
-  (* Globals *)
-
-  type global = Global of Ctx.t | Empty
-
-  let global : global ref = ref Empty
-
-  let ctx_global () : Ctx.t =
-    match !global with
-    | Global ctx -> ctx
-    | Empty -> error no_region "interpreter not initialized"
-
-  let load_def (ctx : Ctx.t) (def : def) : Ctx.t =
-    match def.it with
-    | ExternTypD (id, _) ->
-        let td = Typdef.Extern in
-        Ctx.add_typdef Global ctx id td
-    | TypD (id, tparams, deftyp, _) ->
-        let td = Typdef.Defined (tparams, deftyp) in
-        Ctx.add_typdef Global ctx id td
-    | ExternRelD (id, _, _, _) ->
-        let rel = Rel.Extern in
-        Ctx.add_rel Global ctx id rel
-    | RelD (id, _, _, rulegroups, _) ->
-        let rel = Rel.Defined rulegroups in
-        Ctx.add_rel Global ctx id rel
-    | ExternDecD (id, _, _, _, _) ->
-        let func = Func.Extern in
-        Ctx.add_func Global ctx id func
-    | BuiltinDecD (id, _, _, _, _) ->
-        let func = Func.Builtin in
-        Ctx.add_func Global ctx id func
-    | TableDecD (id, params, _, tablerows, _) ->
-        let func = Func.Table (params, tablerows) in
-        Ctx.add_func Global ctx id func
-    | FuncDecD (id, tparams, _, _, clauses, _) ->
-        let func = Func.Defined (tparams, clauses) in
-        Ctx.add_func Global ctx id func
-
-  let init (spec : spec) : unit =
-    let printer value =
-      Format.asprintf "%a" (Interface.Unparse.pp_program_il spec) value
-    in
-    Builtin.Call.init printer;
-    let ctx = Ctx.empty ~debug:false in
-    let ctx = List.fold_left load_def ctx spec in
-    global := Global ctx
-
   (* Entry points for evaluation *)
 
-  let do_init () : unit =
+  let clear () : unit =
     Value.refresh ();
     Cache.Cache.clear !func_cache;
     Cache.Cache.clear !rule_cache
 
   let do_eval_rel (relname : string) (values_input : value list) :
       (Ctx.t * value list) attempt_reason =
-    let ctx_global = ctx_global () in
-    invoke_rel ctx_global (relname $ no_region) values_input
+    let ctx = Ctx.empty ~debug:false in
+    invoke_rel ctx (relname $ no_region) values_input
 
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt_reason =
-    let ctx_global = ctx_global () in
-    invoke_func_with_values ctx_global (funcname $ no_region) targs values_input
+    let ctx = Ctx.empty ~debug:false in
+    invoke_func_with_values ctx (funcname $ no_region) targs values_input
 
   let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
-    do_init ();
+    clear ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
       let+ _ctx, values_output = do_eval_rel relname [ value_program ] in
@@ -1575,7 +1524,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | Util.Error.InterpError (at, msg) -> Sim.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
-    do_init ();
+    clear ();
     try
       let+ _ctx, values_output = do_eval_rel relname values_input in
       (Sim.Pass values_output : Sim.rel_result)
@@ -1583,9 +1532,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Sim.func_result =
-    do_init ();
+    clear ();
     try
       let+ _ctx, value_output = do_eval_func funcname targs values_input in
       (Sim.Pass value_output : Sim.func_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
+
+  (* Initialization *)
+
+  let init (spec : spec) : unit =
+    let printer value =
+      Format.asprintf "%a" (Interface.Unparse.pp_program_il spec) value
+    in
+    Builtin.Call.init printer;
+    Ctx.init spec
 end

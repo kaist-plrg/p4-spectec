@@ -1155,6 +1155,34 @@ rule Expr_ok/sliceAccessExpression:
 
 rulegroup Expr_ok/callExpression-callable {
 
+  rule Expr_ok/non-typeArgumentList-static_assert:
+    p TC |- callableTarget `( argumentList )
+          : literalExpressionIR `# expressionNoteIR
+    ---- ;; check callable target
+    -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
+    ---- ;; check arguments
+    -- if argument* = $flatten_argumentList(argumentList)
+    -- (Argument_ok: p TC |- argument : argumentIR)*
+    ---- ;; check callable
+    -- CallableType_ok:
+        p TC |- callableTargetIR `< eps > `( argumentIR* )
+             : callableTypeIR `< `# typeId_infer* > `( `# id_default* )
+    ---- ;; check calling convention
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_default* )
+                      : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    ---- ;; call must not return void on expression level
+    -- if typeIR_ret =/= VOID
+    ---- ;; check whether the call is static
+    -- if ctk = $is_static_callableTarget(callableTargetIR)
+    -- if $is_static_assert_callableTarget(callableTargetIR)
+    ---- ;; create IR
+    -- if callExpressionIR
+        = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if expressionNoteIR = `( typeIR_ret ctk )
+    -- Expr_eval_lctk:
+        p TC |- (callExpressionIR `# expressionNoteIR) ~> (`B true)
+    -- if literalExpressionIR = TRUE
+
   rule Expr_ok/non-typeArgumentList:
     p TC |- callableTarget `( argumentList )
           : callExpressionIR `# expressionNoteIR
@@ -1174,6 +1202,7 @@ rulegroup Expr_ok/callExpression-callable {
     -- if typeIR_ret =/= VOID
     ---- ;; check whether the call is static
     -- if ctk = $is_static_callableTarget(callableTargetIR)
+    -- if ~$is_static_assert_callableTarget(callableTargetIR)
     ---- ;; create IR
     -- if callExpressionIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )

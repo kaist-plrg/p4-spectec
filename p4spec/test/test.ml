@@ -360,7 +360,6 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
   let spec_sim, (module Driver) = driver mode specdir in
-  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
@@ -414,9 +413,9 @@ let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
   | TestRunErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes_p4
+let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
     filename_p4 filename_stf =
-  if List.exists (String.equal filename_p4) excludes_p4 then (
+  if Test.should_exclude_pair filename_p4 filename_stf excludes then (
     let log = Format.asprintf "Excluding file: %s" filename_stf in
     log |> print_endline;
     {
@@ -476,7 +475,6 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
   let spec_sim, (module Driver) = driver ~arch mode specdir in
-  Driver.init spec_sim;
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->
@@ -557,16 +555,16 @@ let cover_run_command =
 
 (* Instruction coverage test - on simulation *)
 
-let cover_sim mode arch specdir includes_p4 excludes_p4 testdirs_p4 testdirs_stf
+let cover_sim mode arch specdir includes_p4 excludesdir testdirs_p4 testdirs_stf
     patchdir =
-  let excludes_p4 =
-    excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
+  let excludes =
+    excludesdir |> Test.collect_excludes
+    |> List.map (fun exclude -> "../../../../" ^ exclude)
   in
   let filenames_p4, filenames_stf =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
-    |> List.filter (fun (filename_p4, _) ->
-           not (List.exists (String.equal filename_p4) excludes_p4))
+    |> List.filter (fun (filename_p4, filename_stf) ->
+           not (Test.should_exclude_pair filename_p4 filename_stf excludes))
     |> List.split
   in
   match mode with

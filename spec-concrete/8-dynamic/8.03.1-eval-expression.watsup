@@ -356,13 +356,26 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if HEADER_STACK `[ _ `( _; n_size ) ] = value_base
     -- if expressionResult = `` (D n_size)
 
-  rule Expr_eval/stack-last:
+  rule Expr_eval/stack-last-out-of-bounds:
+    p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
+                  : EC_1 STO_1 rejectTransitionResult
+    -- Expr_eval:
+        p EC_0 STO_0 |- typedExpressionIR_base
+                      : EC_1 STO_1 (`` value_base)
+    -- if HEADER_STACK `[ value_elem* `( n_idx; n_size ) ] = value_base
+    -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
+    -- if b_out_of_bounds
+    -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
+
+  rule Expr_eval/stack-last-in-bounds:
     p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
-                      : EC_1 STO_1 (`` value_base) 
-    -- if HEADER_STACK `[ value_elem* `( n_idx; _ ) ] = value_base
+                      : EC_1 STO_1 (`` value_base)
+    -- if HEADER_STACK `[ value_elem* `( n_idx; n_size ) ] = value_base
+    -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
+    -- if ~b_out_of_bounds
     -- if n_idx_last = $(n_idx - 1)
     -- if value_last = value_elem* [ n_idx_last ]
     -- if expressionResult = `` value_last

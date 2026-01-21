@@ -55,8 +55,10 @@ rule ControlLocalDecl_inst/tableDeclarationIR:
   ---- ;; create table object with table frame
   -- if frame :: _ = IC_frame.LOCAL.FRAMES
   -- if object_table = TABLE nameIR `{ frame TBL }
+  ---- ;; use name annotation if exists
+  -- if nameIR_object = $name_annotation_default(annotationList, nameIR)
   ---- ;; bind object to store
-  -- if objectId = IC_0.PATH ++ nameIR
+  -- if objectId = IC_0.PATH ++ nameIR_object
   -- if STO_2 = $add_store(STO_1, objectId, object_table)
   ---- ;; add reference to object in value environment
   -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)

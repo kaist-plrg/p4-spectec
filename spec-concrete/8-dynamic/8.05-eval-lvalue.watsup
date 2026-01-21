@@ -14,6 +14,42 @@ rule Lvalue_eval/referenceExpressionIR:
 
 ;;;; typedLvalueIR `. nameIR
 
+rulegroup Lvalue_eval/typedLvalueIR-next {
+
+  rule Lvalue_eval/stack-next-abort:
+    p EC_0 STO_0 |- (typedLvalueIR `. "next") `# _
+                  : EC_1 STO_1 abortResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 abortResult
+
+  rule Lvalue_eval/stack-next-out-of-bounds:
+    p EC_0 STO_0 |- (typedLvalueIR `. "next") `# _
+                  : EC_1 STO_1 rejectTransitionResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Lvalue_read:
+        p EC_1 STO_1 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = headerStackValue
+    -- if $(n_idx >= n_size)
+    -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
+
+  rule Lvalue_eval/stack-next-in-bounds:
+    p EC_0 STO_0 |- (typedLvalueIR `. "next") `# _
+                  : EC_1 STO_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 STO_0 |- typedLvalueIR
+                      : EC_1 STO_1 (`` storageReference)
+    -- Lvalue_read:
+        p EC_1 STO_1 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = headerStackValue
+    -- if $(n_idx < n_size)
+    -- if storageReferenceResult
+        = `` (storageReference `. "next")
+
+}
+
 rulegroup Lvalue_eval/typedLvalueIR-nameIR {
 
   rule Lvalue_eval/abort:
@@ -63,9 +99,9 @@ rulegroup Lvalue_eval/typedLvalueIR-indexAccess {
                       : EC_1 STO_1 (`` storageReference)
     -- Expr_eval:
         p EC_1 STO_1 |- typedExpressionIR
-                      : EC_2 STO_2 (`` value)
+                      : EC_2 STO_2 (`` integerValue_index)
     -- if storageReferenceResult
-        = `` (storageReference `[ value ])
+        = `` (storageReference `[ integerValue_index ])
 
 }
 

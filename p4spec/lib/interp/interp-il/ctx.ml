@@ -29,11 +29,11 @@ type config = { debug : bool }
 
 type global = {
   (* Map from syntax ids to type definitions *)
-  tdenv : TDEnv.t;
+  mutable tdenv : TDEnv.t;
   (* Map from relation ids to relations *)
-  renv : REnv.t;
+  mutable renv : REnv.t;
   (* Map from function ids to functions *)
-  fenv : FEnv.t;
+  mutable fenv : FEnv.t;
 }
 
 (* Local layer *)
@@ -53,7 +53,7 @@ type t = {
   (* Execution trace *)
   trace : Trace.t;
   (* Global layer *)
-  global : global;
+  global : global ref;
   (* Local layer *)
   local : local;
 }
@@ -109,133 +109,62 @@ let trace_commit (ctx : t) (trace : Trace.t) : t =
   let trace = Trace.commit ctx.trace trace in
   { ctx with trace }
 
-(* Finders *)
-
-(* Finders for values *)
-
-let find_value_opt (cursor : cursor) (ctx : t) (var : Var.t) : Value.t option =
-  match cursor with Global -> None | Local -> VEnv.find_opt var ctx.local.venv
-
-let find_value (cursor : cursor) (ctx : t) (var : Var.t) : Value.t =
-  match find_value_opt cursor ctx var with
-  | Some value -> value
-  | None ->
-      let id, _ = var in
-      error_undef id.at "value" (Var.to_string var)
-
-let bound_value (cursor : cursor) (ctx : t) (var : Var.t) : bool =
-  find_value_opt cursor ctx var |> Option.is_some
-
-(* Finders for type definitions *)
-
-let rec find_typdef_opt (cursor : cursor) (ctx : t) (tid : TId.t) :
-    Typdef.t option =
-  match cursor with
-  | Global -> TDEnv.find_opt tid ctx.global.tdenv
-  | Local -> (
-      match TDEnv.find_opt tid ctx.local.tdenv with
-      | Some td -> Some td
-      | None -> find_typdef_opt Global ctx tid)
-
-let find_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : Typdef.t =
-  match find_typdef_opt cursor ctx tid with
-  | Some td -> td
-  | None -> error_undef tid.at "type" tid.it
-
-let find_defined_typdef (cursor : cursor) (ctx : t) (tid : TId.t) :
-    tparam list * deftyp =
-  match find_typdef cursor ctx tid with
-  | Param | Extern -> error_undef tid.at "defined type" tid.it
-  | Defined (tparams, deftyp) -> (tparams, deftyp)
-
-let bound_typdef (cursor : cursor) (ctx : t) (tid : TId.t) : bool =
-  find_typdef_opt cursor ctx tid |> Option.is_some
-
-(* Finders for rules *)
-
-let find_rel_opt (_cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t option =
-  REnv.find_opt rid ctx.global.renv
-
-let find_rel (cursor : cursor) (ctx : t) (rid : RId.t) : Rel.t =
-  match find_rel_opt cursor ctx rid with
-  | Some rel -> rel
-  | None -> error_undef rid.at "relation" rid.it
-
-let bound_rel (cursor : cursor) (ctx : t) (rid : RId.t) : bool =
-  find_rel_opt cursor ctx rid |> Option.is_some
-
-(* Finders for definitions *)
-
-let rec find_func_opt (cursor : cursor) (ctx : t) (fid : FId.t) : Func.t option
-    =
-  match cursor with
-  | Global -> FEnv.find_opt fid ctx.global.fenv
-  | Local -> (
-      match FEnv.find_opt fid ctx.local.fenv with
-      | Some func -> Some func
-      | None -> find_func_opt Global ctx fid)
-
-let find_func (cursor : cursor) (ctx : t) (fid : FId.t) : Func.t =
-  match find_func_opt cursor ctx fid with
-  | Some func -> func
-  | None -> error_undef fid.at "function" fid.it
-
-let bound_func (cursor : cursor) (ctx : t) (fid : FId.t) : bool =
-  find_func_opt cursor ctx fid |> Option.is_some
-
-(* Adders *)
-
-(* Adders for values *)
-
-let add_value ?(shadow = false) (cursor : cursor) (ctx : t) (var : Var.t)
-    (value : Value.t) : t =
-  (if cursor = Global then
-     let id, _ = var in
-     error id.at "cannot add value to global context");
-  (if (not shadow) && bound_value cursor ctx var then
-     let id, _ = var in
-     error_dup id.at "value" (Var.to_string var));
-  let venv = VEnv.add var value ctx.local.venv in
-  { ctx with local = { ctx.local with venv } }
-
-(* Adders for type definitions *)
-
-let add_typdef (cursor : cursor) (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
-  if bound_typdef cursor ctx tid then error_dup tid.at "type" tid.it;
-  match cursor with
-  | Global ->
-      let tdenv = TDEnv.add tid td ctx.global.tdenv in
-      { ctx with global = { ctx.global with tdenv } }
-  | Local ->
-      let tdenv = TDEnv.add tid td ctx.local.tdenv in
-      { ctx with local = { ctx.local with tdenv } }
-
-(* Adders for relations *)
-
-let add_rel (cursor : cursor) (ctx : t) (rid : RId.t) (rel : Rel.t) : t =
-  if cursor = Local then error rid.at "cannot add relation to local context";
-  if bound_rel cursor ctx rid then error_dup rid.at "relation" rid.it;
-  let renv = REnv.add rid rel ctx.global.renv in
-  { ctx with global = { ctx.global with renv } }
-
-(* Adders for functions *)
-
-let add_func (cursor : cursor) (ctx : t) (fid : FId.t) (func : Func.t) : t =
-  if bound_func cursor ctx fid then error_dup fid.at "function" fid.it;
-  match cursor with
-  | Global ->
-      let fenv = FEnv.add fid func ctx.global.fenv in
-      { ctx with global = { ctx.global with fenv } }
-  | Local ->
-      let fenv = FEnv.add fid func ctx.local.fenv in
-      { ctx with local = { ctx.local with fenv } }
-
-(* Constructors *)
-
-(* Constructing an empty context *)
+(* Global constructor *)
 
 let empty_global () : global =
   { tdenv = TDEnv.empty; renv = REnv.empty; fenv = FEnv.empty }
+
+let global : global ref = ref (empty_global ())
+
+(* Adders for globals *)
+
+let add_typdef_global (tid : TId.t) (td : Typdef.t) : unit =
+  if TDEnv.find_opt tid !global.tdenv |> Option.is_some then
+    error_dup tid.at "type" tid.it;
+  !global.tdenv <- TDEnv.add tid td !global.tdenv
+
+let add_rel_global (rid : RId.t) (rel : Rel.t) : unit =
+  if REnv.find_opt rid !global.renv |> Option.is_some then
+    error_dup rid.at "relation" rid.it;
+  !global.renv <- REnv.add rid rel !global.renv
+
+let add_func_global (fid : FId.t) (func : Func.t) : unit =
+  if FEnv.find_opt fid !global.fenv |> Option.is_some then
+    error_dup fid.at "function" fid.it;
+  !global.fenv <- FEnv.add fid func !global.fenv
+
+(* Global initializer *)
+
+let load_def (def : def) : unit =
+  match def.it with
+  | ExternTypD (id, _) ->
+      let td = Typdef.Extern in
+      add_typdef_global id td
+  | TypD (id, tparams, deftyp, _) ->
+      let td = Typdef.Defined (tparams, deftyp) in
+      add_typdef_global id td
+  | ExternRelD (id, _, _, _) ->
+      let rel = Rel.Extern in
+      add_rel_global id rel
+  | RelD (id, _, _, rulegroups, _) ->
+      let rel = Rel.Defined rulegroups in
+      add_rel_global id rel
+  | ExternDecD (id, _, _, _, _) ->
+      let func = Func.Extern in
+      add_func_global id func
+  | BuiltinDecD (id, _, _, _, _) ->
+      let func = Func.Builtin in
+      add_func_global id func
+  | TableDecD (id, params, _, tablerows, _) ->
+      let func = Func.Table (params, tablerows) in
+      add_func_global id func
+  | FuncDecD (id, tparams, _, _, clauses, _) ->
+      let func = Func.Defined (tparams, clauses) in
+      add_func_global id func
+
+let init (spec : spec) : unit = List.iter load_def spec
+
+(* Constructor *)
 
 let empty_local () : local =
   { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
@@ -243,9 +172,96 @@ let empty_local () : local =
 let empty ~(debug : bool) : t =
   let config = { debug } in
   let trace = Trace.Empty in
-  let global = empty_global () in
-  let local = empty_local () in
-  { config; trace; global; local }
+  { config; trace; global; local = empty_local () }
+
+(* Finders *)
+
+(* Finders for values *)
+
+let find_value_opt (ctx : t) (var : Var.t) : Value.t option =
+  VEnv.find_opt var ctx.local.venv
+
+let find_value (ctx : t) (var : Var.t) : Value.t =
+  match find_value_opt ctx var with
+  | Some value -> value
+  | None ->
+      let id, _ = var in
+      error_undef id.at "value" (Var.to_string var)
+
+let bound_value (ctx : t) (var : Var.t) : bool =
+  find_value_opt ctx var |> Option.is_some
+
+(* Finders for type definitions *)
+
+let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
+  match TDEnv.find_opt tid ctx.local.tdenv with
+  | Some td -> Some td
+  | None -> TDEnv.find_opt tid !(ctx.global).tdenv
+
+let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
+  match find_typdef_opt ctx tid with
+  | Some td -> td
+  | None -> error_undef tid.at "type" tid.it
+
+let find_defined_typdef (ctx : t) (tid : TId.t) : tparam list * deftyp =
+  match find_typdef ctx tid with
+  | Param | Extern -> error_undef tid.at "defined type" tid.it
+  | Defined (tparams, deftyp) -> (tparams, deftyp)
+
+let bound_typdef (ctx : t) (tid : TId.t) : bool =
+  find_typdef_opt ctx tid |> Option.is_some
+
+(* Finders for rules *)
+
+let find_rel_opt (ctx : t) (rid : RId.t) : Rel.t option =
+  REnv.find_opt rid !(ctx.global).renv
+
+let find_rel (ctx : t) (rid : RId.t) : Rel.t =
+  match find_rel_opt ctx rid with
+  | Some rel -> rel
+  | None -> error_undef rid.at "relation" rid.it
+
+let bound_rel (ctx : t) (rid : RId.t) : bool =
+  find_rel_opt ctx rid |> Option.is_some
+
+(* Finders for definitions *)
+
+let find_func_opt (ctx : t) (fid : FId.t) : Func.t option =
+  match FEnv.find_opt fid ctx.local.fenv with
+  | Some func -> Some func
+  | None -> FEnv.find_opt fid !(ctx.global).fenv
+
+let find_func (ctx : t) (fid : FId.t) : Func.t =
+  match find_func_opt ctx fid with
+  | Some func -> func
+  | None -> error_undef fid.at "function" fid.it
+
+let bound_func (ctx : t) (fid : FId.t) : bool =
+  find_func_opt ctx fid |> Option.is_some
+
+(* Adders *)
+
+(* Adders for values *)
+
+let add_value (ctx : t) (var : Var.t) (value : Value.t) : t =
+  let venv = VEnv.add var value ctx.local.venv in
+  { ctx with local = { ctx.local with venv } }
+
+(* Adders for type definitions *)
+
+let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
+  if bound_typdef ctx tid then error_dup tid.at "type" tid.it;
+  let tdenv = TDEnv.add tid td ctx.local.tdenv in
+  { ctx with local = { ctx.local with tdenv } }
+
+(* Adders for functions *)
+
+let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t =
+  if bound_func ctx fid then error_dup fid.at "function" fid.it;
+  let fenv = FEnv.add fid func ctx.local.fenv in
+  { ctx with local = { ctx.local with fenv } }
+
+(* Constructors *)
 
 (* Constructing a local context *)
 
@@ -283,7 +299,7 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
   let values =
     List.map
       (fun (id, _typ, iters) ->
-        find_value Local ctx (id, iters @ [ Opt ]) |> Value.get_opt)
+        find_value ctx (id, iters @ [ Opt ]) |> Value.get_opt)
       vars
   in
   (* Iteration is valid when all variables agree on their optionality *)
@@ -292,7 +308,7 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
     let ctx_sub =
       List.fold_left2
         (fun ctx_sub (id, _typ, iters) value ->
-          add_value ~shadow:true Local ctx_sub (id, iters) value)
+          add_value ctx_sub (id, iters) value)
         ctx vars values
     in
     Ok (Some ctx_sub)
@@ -307,7 +323,7 @@ let sub_list (ctx : t) (vars : var list) : t list attempt_reason =
   let* values_batch =
     List.map
       (fun (id, _typ, iters) ->
-        find_value Local ctx (id, iters @ [ List ]) |> Value.get_list)
+        find_value ctx (id, iters @ [ List ]) |> Value.get_list)
       vars
     |> transpose
   in
@@ -318,7 +334,7 @@ let sub_list (ctx : t) (vars : var list) : t list attempt_reason =
         let ctx_sub =
           List.fold_left2
             (fun ctx_sub (id, _typ, iters) value ->
-              add_value ~shadow:true Local ctx_sub (id, iters) value)
+              add_value ctx_sub (id, iters) value)
             ctx vars value_batch
         in
         ctxs_sub @ [ ctx_sub ])
