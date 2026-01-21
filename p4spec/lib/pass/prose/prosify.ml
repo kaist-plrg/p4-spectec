@@ -699,21 +699,22 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
   | Some prose_in, Some prose_out ->
       let nottyp, inputs = rel_signature in
       let _, typs = nottyp.it in
+      let typs_input, typs_output = Hints.Input.split inputs typs in
       Ctx.validate_hint_alter id_rel.at prose_in exps_input;
       let prose_out_aligned = Hints.Alter.realign prose_out inputs in
-      let exps_input_pl, exps_output_pl =
-        typs
-        |> List.fold_left
-             (fun (frees, exps_pl) typ ->
-               let exp, frees = Il.Fresh.fresh_exp_from_typ frees typ in
-               let exp_pl = prosify_exp ctx exp in
-               (frees, exps_pl @ [ exp_pl ]))
-             (IdSet.empty, [])
-        |> snd
-        |> List.mapi (fun idx exp_pl -> (idx, exp_pl))
-        |> List.partition (fun (idx, _) -> List.mem idx inputs)
-        |> fun (exps_input_pl_indexed, exps_output_pl_indexed) ->
-        (List.map snd exps_input_pl_indexed, List.map snd exps_output_pl_indexed)
+      let exps_input_pl =
+        List.map
+          (fun typ ->
+            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            prosify_exp ctx exp)
+          typs_input
+      in
+      let exps_output_pl =
+        List.map
+          (fun typ ->
+            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            prosify_exp ctx exp)
+          typs_output
       in
       Ctx.validate_hint_alter id_rel.at prose_out_aligned exps_output_pl;
       Pl.ProseRelTitle
