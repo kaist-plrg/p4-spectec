@@ -1,38 +1,34 @@
-[#sec-errorDeclaration]
-=== Error declaration
+[#sec-error-declaration]
+=== Error declarations
 
-The error type contains opaque distinct values that can be used to signal
-errors. It is written as `error`. New elements of the error type are defined
-with the syntax:
+// Added
+``error`` declarations introduce error elements.
 
-${syntax: errorDeclaration
-          errorDeclarationIR}
+// Added
+${syntax: errorDeclaration}
 
-All elements of the `error` type are inserted into the `error` namespace,
-irrespective of the place where an error is defined. `error` is similar to an
-enumeration (`enum`) type in other languages. A program can contain multiple
-`error` declarations, which the compiler will merge together. It is an error to
-declare the same identifier multiple times. Expressions of type `error` are
-described in <<sec-error-exprs>>.
+// Added
+See <<sec-error>> for more details on error elements. After type checking, an
+`error` declaration is represented as:
 
-For example, the following declaration creates two elements of the `error` type
-(these errors are declared in the P4 core library):
+// Added
+${syntax: errorDeclarationIR}
 
-[source,p4]
-----
-error { ParseError, PacketTooShort }
-----
-
-The underlying representation of errors is target-dependent.
-
+// Added
 [discrete]
-==== Type checking
+====== § Type checking error declarations
 
+// Added
 ${rulegroup-source: Decl_ok/errorDeclaration}
 ${rulegroup-prose: Decl_ok/errorDeclaration}
 
+// Added
 [discrete]
-==== Compile-time evaluation
+====== § Compile-time evaluation of error declarations
 
+// Added
+At comile-time, error declarations are loaded into the context by:
+
+// Added
 ${rulegroup-source: Decl_inst/errorDeclarationIR}
 ${rulegroup-prose: Decl_inst/errorDeclarationIR}

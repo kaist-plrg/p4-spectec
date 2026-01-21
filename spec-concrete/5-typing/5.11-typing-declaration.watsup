@@ -151,7 +151,7 @@ rule ObjectDecl_ok/functionDeclaration:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_3 = $add_typeDefs_t(LOCAL, TC_2, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_3 = $add_typeParameters_t(LOCAL, TC_2, typeId_expl*)
   ---- ;; check return type
   -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; check parameters
@@ -394,7 +394,7 @@ rule FuncDecl_ok:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; check parameters
@@ -504,7 +504,7 @@ rule Decl_ok/externFunctionDeclaration:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(LOCAL, TC_0, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_1 = $add_typeParameters_t(LOCAL, TC_0, typeId_expl*)
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; set local context
@@ -542,12 +542,16 @@ def $is_externMethodPrototype(externMethodPrototype) = true
 def $is_externMethodPrototype(externConstructorOrMethodPrototype) = false
   -- otherwise
 
-rule Decl_ok/externObjectDeclaration:
-  TC_0 |- annotationList EXTERN nonTypeName
-            typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
-        : TC_8 externObjectDeclarationIR
-  ---- ;; split methods and constructors
-  -- if externConstructorOrMethodPrototype*
+dec $split_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList)
+  : (externConstructorPrototype* , externMethodPrototype*)
+  hint(prose_in %0 "split into constructors and methods")
+
+def $split_externConstructorOrMethodPrototypeList(
+    externConstructorOrMethodPrototypeList)
+  = (externConstructorPrototype* ,
+     externMethodPrototype*)
+  -- if externConstructorOrMethodPrototype* 
       = $flatten_externConstructorOrMethodPrototypeList(
           externConstructorOrMethodPrototypeList)
   -- if externConstructorPrototype*
@@ -558,12 +562,22 @@ rule Decl_ok/externObjectDeclaration:
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
           def $is_externMethodPrototype)
+
+rule Decl_ok/externObjectDeclaration:
+  TC_0 |- annotationList EXTERN nonTypeName
+            typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+        : TC_8 externObjectDeclarationIR
+  ---- ;; split methods and constructors
+  -- if (externConstructorPrototype* ,
+          externMethodPrototype*)
+      = $split_externConstructorOrMethodPrototypeList(
+          externConstructorOrMethodPrototypeList)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = EXTERN ]
   ---- ;; check type parameters and add to context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
   ---- ;; check methods
   -- if nameIR = $name(nonTypeName)
   -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype*
@@ -576,7 +590,7 @@ rule Decl_ok/externObjectDeclaration:
   ---- ;; set block context again
   -- if TC_5 = TC_4 [ .BLOCK.KIND = EXTERN ]
   ---- ;; add type parameters to context again
-  -- if TC_6 = $add_typeDefs_t(BLOCK, TC_5, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_6 = $add_typeParameters_t(BLOCK, TC_5, typeId_expl*)
   ---- ;; check constructors and add to context
   -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype*
                                          : TC_7 externConstructorPrototypeIR*
@@ -802,7 +816,7 @@ rule Decl_ok/structTypeDeclaration:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
   ---- ;; check type fields
   -- if (annotationList_field type_field name_field `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -830,7 +844,7 @@ rule Decl_ok/headerTypeDeclaration:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -858,7 +872,7 @@ rule Decl_ok/headerUnionTypeDeclaration:
   ---- ;; check type parameters
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_1 = $add_typeDefs_t(BLOCK, TC_0, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_1 = $add_typeParameters_t(BLOCK, TC_0, typeId_expl*)
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
@@ -980,7 +994,7 @@ rule Decl_ok/parserTypeDeclaration:
   ---- ;; add type parameters to the context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# typeId_impl*
@@ -1006,7 +1020,7 @@ rule Decl_ok/controlTypeDeclaration:
   ---- ;; add type parameters to the context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
   ---- ;; check parameters to apply method
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok: BLOCK TC_2 |- parameter* : parameterIR* `# typeId_impl*
@@ -1032,7 +1046,7 @@ rule Decl_ok/packageTypeDeclaration:
   ---- ;; add type parameters to the context
   -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
   -- if (typeId_expl = $name(typeParameter))*
-  -- if TC_2 = $add_typeDefs_t(BLOCK, TC_1, typeId_expl*, (`` typeId_expl)*)
+  -- if TC_2 = $add_typeParameters_t(BLOCK, TC_1, typeId_expl*)
   ---- ;; check constructor parameters
   -- if constructorParameter* = $flatten_parameterList(parameterList)
   -- ConstructorParameters_ok: BLOCK TC_2 |- constructorParameter*
