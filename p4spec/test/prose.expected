@@ -1116,11 +1116,11 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Return ``typeId``.
 . Else if let ``TYPE`` ``typeId`` ``++_++`` be ``typeDefIR``:
  .. Return ``typeId``.
-. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``,`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``typeId``.
-. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``,`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``typeId``.
-. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``,`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``typeId``.
 . Else if let ``enumTypeIR`` be ``typeDefIR``:
  .. If let ``ENUM`` ``typeId`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``:
@@ -1147,14 +1147,11 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Return ``nameTypeDefIR``.
 . Else if let ``aliasTypeDefIR`` be ``typeDefIR``:
  .. Return ``aliasTypeDefIR``.
-. Else if let ``STRUCT`` ``typeId`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Else if let ``STRUCT`` ``typeId`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``STRUCT`` ``typeId`` ``<`` ``(typeParameterIR)^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}``.
-. Else if let ``HEADER`` ``typeId`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Else if let ``HEADER`` ``typeId`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``HEADER`` ``typeId`` ``<`` ``(typeParameterIR)^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}``.
-. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeDefIR``:
  .. Return ``HEADER_UNION`` ``typeId`` ``<`` ``(typeParameterIR)^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}``.
 . Else if let ``enumTypeDefIR`` be ``typeDefIR``:
  .. Return ``enumTypeDefIR``.
@@ -1181,12 +1178,12 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Return ``(·,`` ``·)``.
 . Else if ``typeDefIR`` has type ``aliasTypeDefIR``:
  .. Return ``(·,`` ``·)``.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Return ``(typeParameterIR~expl~^{asterisk}^,`` ``typeParameterIR~impl~^{asterisk}^)``.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Return ``(typeParameterIR~expl~^{asterisk}^,`` ``typeParameterIR~impl~^{asterisk}^)``.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
- .. Return ``(typeParameterIR~expl~^{asterisk}^,`` ``typeParameterIR~impl~^{asterisk}^)``.
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+ .. Return ``(typeParameterIR^{asterisk}^,`` ``·)``.
+. Else if let ``HEADER`` ``++_++`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+ .. Return ``(typeParameterIR^{asterisk}^,`` ``·)``.
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
+ .. Return ``(typeParameterIR^{asterisk}^,`` ``·)``.
 . Else if ``typeDefIR`` has type ``enumTypeDefIR``:
  .. Return ``(·,`` ``·)``.
 . Else if let ``EXTERN`` ``++_++`` ``<`` ``typeParameterIR~expl~^{asterisk}^`` ``,`` ``typeParameterIR~impl~^{asterisk}^`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeDefIR``:
@@ -9312,18 +9309,18 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 
 <<Decl_ok, Typing ``annotationList`` ``STRUCT`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+. Let the updated typing context ``TC~1~`` and type parameters ``typeId^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~field~`` ``type~field~`` ``name~field~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
-. Let ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~`` and ``typeId~impl_field~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_field~^{asterisk}^``, obtained by repeating:
+. Let ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~`` and ``typeId'^{asterisk}^^{asterisk}^`` be the list of ``typeId'^{asterisk}^``, obtained by repeating:
 +
 --
- ** Let ``typeIR~field~`` and a set of fresh type variables ``typeId~impl_field~^{asterisk}^`` be
+ ** Let ``typeIR~field~`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type~field~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 --
 +
 for each ``type~field~`` in ``type~field~^{asterisk}^``
-. Let ``typeId~impl~^{asterisk}^`` be ``<<concat_,`` ``concat_<typeId>((typeId~impl_field~^{asterisk}^)^{asterisk}^)>>``.
+. Check that ``typeId'^{asterisk}^`` is an empty list, for all ``typeId'^{asterisk}^`` in ``typeId'^{asterisk}^^{asterisk}^``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``nameIR~field~^{asterisk}^`` be the list of ``nameIR~field~``, obtained by repeating:
 +
@@ -9332,27 +9329,27 @@ for each ``type~field~`` in ``type~field~^{asterisk}^``
 --
 +
 for each ``name~field~`` in ``name~field~^{asterisk}^``
-. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``structTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``structTypeDefIR`` is added to the ``GLOBAL`` layer>>.
-. Let ``structTypeDeclarationIR`` be ``annotationList`` ``STRUCT`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``structTypeDeclarationIR`` be ``annotationList`` ``STRUCT`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~2~`` and ``structTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``HEADER`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+. Let the updated typing context ``TC~1~`` and type parameters ``typeId^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~f~`` ``type~f~`` ``name~f~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
-. Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId~impl_f~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_f~^{asterisk}^``, obtained by repeating:
+. Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId'^{asterisk}^^{asterisk}^`` be the list of ``typeId'^{asterisk}^``, obtained by repeating:
 +
 --
- ** Let ``typeIR~f~`` and a set of fresh type variables ``typeId~impl_f~^{asterisk}^`` be
+ ** Let ``typeIR~f~`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type~f~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 --
 +
 for each ``type~f~`` in ``type~f~^{asterisk}^``
-. Let ``typeId~impl~^{asterisk}^`` be ``<<concat_,`` ``concat_<typeId>((typeId~impl_f~^{asterisk}^)^{asterisk}^)>>``.
+. Check that ``typeId'^{asterisk}^`` is an empty list, for all ``typeId'^{asterisk}^`` in ``typeId'^{asterisk}^^{asterisk}^``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``nameIR~f~^{asterisk}^`` be the list of ``nameIR~f~``, obtained by repeating:
 +
@@ -9361,27 +9358,27 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 --
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
-. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``headerTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``headerTypeDefIR`` is added to the ``GLOBAL`` layer>>.
-. Let ``headerTypeDeclarationIR`` be ``annotationList`` ``HEADER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerTypeDeclarationIR`` be ``annotationList`` ``HEADER`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~2~`` and ``headerTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``HEADER_UNION`` ``name`` ``typeParameterListOpt`` ``{`` ``typeFieldList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+. Let the updated typing context ``TC~1~`` and type parameters ``typeId^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
 . Let ``(annotationList~f~`` ``type~f~`` ``name~f~`` ``;)^{asterisk}^`` be <<flatten_typeFieldList, the list of type fields in ``typeFieldList``>>.
-. Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId~impl_f~^{asterisk}^^{asterisk}^`` be the list of ``typeId~impl_f~^{asterisk}^``, obtained by repeating:
+. Let ``typeIR~f~^{asterisk}^`` be the list of ``typeIR~f~`` and ``typeId'^{asterisk}^^{asterisk}^`` be the list of ``typeId'^{asterisk}^``, obtained by repeating:
 +
 --
- ** Let ``typeIR~f~`` and a set of fresh type variables ``typeId~impl_f~^{asterisk}^`` be
+ ** Let ``typeIR~f~`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
 * the result of <<Type_ok, typing ``type~f~``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
 --
 +
 for each ``type~f~`` in ``type~f~^{asterisk}^``
-. Let ``typeId~impl~^{asterisk}^`` be ``<<concat_,`` ``concat_<typeId>((typeId~impl_f~^{asterisk}^)^{asterisk}^)>>``.
+. Check that ``typeId'^{asterisk}^`` is an empty list, for all ``typeId'^{asterisk}^`` in ``typeId'^{asterisk}^^{asterisk}^``.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``nameIR~f~^{asterisk}^`` be the list of ``nameIR~f~``, obtained by repeating:
 +
@@ -9390,11 +9387,11 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 --
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
-. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``headerUnionTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``headerUnionTypeDefIR`` is added to the ``GLOBAL`` layer>>.
-. Let ``headerUnionTypeDeclarationIR`` be ``annotationList`` ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerUnionTypeDeclarationIR`` be ``annotationList`` ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~2~`` and ``headerUnionTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``TYPEDEF`` ``typedef`` ``name`` ``;`` under typing context ``TC~0~``>>:
@@ -13564,7 +13561,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~``
 . Let ``IC~2~`` be <<add_typeDef_i, ``IC~1~`` where ``nameIR`` to ``enumTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~2~`` and the store ``STO``.
 
-<<Decl_inst, Loading ``annotationList`` ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
+<<Decl_inst, Loading ``annotationList`` ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``annotationList~field~^{asterisk}^`` be the list of ``annotationList~field~``, ``nameIR~field~^{asterisk}^`` be the list of ``nameIR~field~``, and ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~``, obtained by repeating:
 +
@@ -13573,11 +13570,11 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``structTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
-<<Decl_inst, Loading ``annotationList`` ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
+<<Decl_inst, Loading ``annotationList`` ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``annotationList~field~^{asterisk}^`` be the list of ``annotationList~field~``, ``nameIR~field~^{asterisk}^`` be the list of ``nameIR~field~``, and ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~``, obtained by repeating:
 +
@@ -13586,11 +13583,11 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``headerTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
-<<Decl_inst, Loading ``annotationList`` ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
+<<Decl_inst, Loading ``annotationList`` ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``typeFieldIR^{asterisk}^`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``annotationList~field~^{asterisk}^`` be the list of ``annotationList~field~``, ``nameIR~field~^{asterisk}^`` be the list of ``nameIR~field~``, and ``typeIR~field~^{asterisk}^`` be the list of ``typeIR~field~``, obtained by repeating:
 +
@@ -13599,7 +13596,7 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``,`` ``typeParameterListIR~inferred~`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``headerUnionTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 

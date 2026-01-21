@@ -27,9 +27,9 @@ def $typeId_of_typeDefIR(TYPE typeId _) = typeId
 
 ;;; Data type definitions
 
-def $typeId_of_typeDefIR(STRUCT typeId `< _ `, _ > `{ _ }) = typeId
-def $typeId_of_typeDefIR(HEADER typeId `< _ `, _ > `{ _ }) = typeId
-def $typeId_of_typeDefIR(HEADER_UNION typeId `< _ `, _ > `{ _ }) = typeId
+def $typeId_of_typeDefIR(STRUCT typeId `< _ > `{ _ }) = typeId
+def $typeId_of_typeDefIR(HEADER typeId `< _ > `{ _ }) = typeId
+def $typeId_of_typeDefIR(HEADER_UNION typeId `< _ > `{ _ }) = typeId
 def $typeId_of_typeDefIR(ENUM typeId `{ _ }) = typeId
 def $typeId_of_typeDefIR(ENUM typeId `< _ > `{ _ }) = typeId
 
@@ -59,19 +59,16 @@ def $typeIR_of_typeDefIR(aliasTypeDefIR) = aliasTypeDefIR
 ;;; Data type definitions
 
 def $typeIR_of_typeDefIR(
-    STRUCT typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+    STRUCT typeId `< typeParameterIR* > `{ fieldTypeIR* })
   = STRUCT typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
-  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $typeIR_of_typeDefIR(
-    HEADER typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+    HEADER typeId `< typeParameterIR* > `{ fieldTypeIR* })
   = HEADER typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
-  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $typeIR_of_typeDefIR(
-    HEADER_UNION typeId `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ fieldTypeIR* })
+    HEADER_UNION typeId `< typeParameterIR* > `{ fieldTypeIR* })
   = HEADER_UNION typeId `< (`` typeParameterIR)* > `{ fieldTypeIR* }
-  -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
 
 def $typeIR_of_typeDefIR(enumTypeDefIR) = enumTypeDefIR
 
@@ -119,16 +116,16 @@ def $typeParameterListIR_of_typeDefIR(aliasTypeDefIR) = (eps, eps)
 ;;; Data type definitions
 
 def $typeParameterListIR_of_typeDefIR(
-    STRUCT _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
-  = (typeParameterIR_expl* , typeParameterIR_impl*)
+    STRUCT _ `< typeParameterIR* > `{ _ })
+  = (typeParameterIR* , eps)
 
 def $typeParameterListIR_of_typeDefIR(
-    HEADER _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
-  = (typeParameterIR_expl* , typeParameterIR_impl*)
+    HEADER _ `< typeParameterIR* > `{ _ })
+  = (typeParameterIR* , eps)
 
 def $typeParameterListIR_of_typeDefIR(
-    HEADER_UNION _ `< typeParameterIR_expl* `, typeParameterIR_impl* > `{ _ })
-  = (typeParameterIR_expl* , typeParameterIR_impl*)
+    HEADER_UNION _ `< typeParameterIR* > `{ _ })
+  = (typeParameterIR* , eps)
 
 def $typeParameterListIR_of_typeDefIR(enumTypeDefIR) = (eps, eps)
 

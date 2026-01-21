@@ -836,22 +836,21 @@ rule Decl_ok/structTypeDeclaration:
         : TC_2 structTypeDeclarationIR
   ---- ;; check type parameters
   -- TypeParameterListOpt_ok:
-      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
   ---- ;; check type fields
   -- if (annotationList_field type_field name_field `;)*
       = $flatten_typeFieldList(typeFieldList)
-  -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field `# typeId_impl_field*)*
-  -- if typeId_impl* = $concat_<typeId>(typeId_impl_field**)
+  -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field `# eps)*
   ---- ;; create struct type and add to context
   -- if nameIR = $name(name)
   -- if (nameIR_field = $name(name_field))*
   -- if structTypeDefIR
-      = STRUCT nameIR `< typeId_expl* `, typeId_impl* > `{ (typeIR_field nameIR_field `;)* }
+      = STRUCT nameIR `< typeId* > `{ (typeIR_field nameIR_field `;)* }
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- structTypeDefIR
   -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, structTypeDefIR)
   ---- ;; create IR
   -- if structTypeDeclarationIR
-      = annotationList STRUCT nameIR `< typeId_expl* `, typeId_impl* >
+      = annotationList STRUCT nameIR `< typeId* >
         `{ (annotationList_field typeIR_field nameIR_field `;)* }
 
 ;;;;; headerTypeDeclaration
@@ -863,22 +862,21 @@ rule Decl_ok/headerTypeDeclaration:
         : TC_2 headerTypeDeclarationIR
   ---- ;; check type parameters
   -- TypeParameterListOpt_ok:
-      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
-  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f `# typeId_impl_f*)*
-  -- if typeId_impl* = $concat_<typeId>(typeId_impl_f**)
+  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f `# eps)*
   ---- ;; create struct type and add to context
   -- if nameIR = $name(name)
   -- if (nameIR_f = $name(name_f))*
   -- if headerTypeDefIR
-      = HEADER nameIR `< typeId_expl* `, typeId_impl* > `{ (typeIR_f nameIR_f `;)* }
+      = HEADER nameIR `< typeId* > `{ (typeIR_f nameIR_f `;)* }
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerTypeDefIR
   -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerTypeDefIR)
   ---- ;; create IR
   -- if headerTypeDeclarationIR
-      = annotationList HEADER nameIR `< typeId_expl* `, typeId_impl* >
+      = annotationList HEADER nameIR `< typeId* >
         `{ (annotationList_f typeIR_f nameIR_f `;)* }
 
 ;;;;; headerUnionDeclaration
@@ -890,22 +888,21 @@ rule Decl_ok/headerUnionTypeDeclaration:
         : TC_2 headerUnionTypeDeclarationIR
   ---- ;; check type parameters
   -- TypeParameterListOpt_ok:
-      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+      BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
   ---- ;; check type fields
   -- if (annotationList_f type_f name_f `;)*
       = $flatten_typeFieldList(typeFieldList)
-  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f `# typeId_impl_f*)*
-  -- if typeId_impl* = $concat_<typeId>(typeId_impl_f**)
+  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f `# eps)*
   ---- ;; create struct type and add to context
   -- if nameIR = $name(name)
   -- if (nameIR_f = $name(name_f))*
   -- if headerUnionTypeDefIR
-      = HEADER_UNION nameIR `< typeId_expl* `, typeId_impl* > `{ (typeIR_f nameIR_f `;)* }
+      = HEADER_UNION nameIR `< typeId* > `{ (typeIR_f nameIR_f `;)* }
   -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerUnionTypeDefIR
   -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerUnionTypeDefIR)
   ---- ;; create IR
   -- if headerUnionTypeDeclarationIR
-      = annotationList HEADER_UNION nameIR `< typeId_expl* `, typeId_impl* >
+      = annotationList HEADER_UNION nameIR `< typeId* >
         `{ (annotationList_f typeIR_f nameIR_f `;)* }
 
 ;;;; typedefDeclaration

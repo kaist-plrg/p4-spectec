@@ -3605,26 +3605,26 @@ syntax nameTypeDefIR = nameTypeIR
 ;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:17.25-17.36
 syntax aliasTypeDefIR = aliasTypeIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:24.3-24.76
+;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:24.3-24.56
 syntax structTypeDefIR = 
-   | struct typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
+   | struct typeId < typeParameterIR* >{ fieldTypeIR* }
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:26.3-26.76
+;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:26.3-26.56
 syntax headerTypeDefIR = 
-   | header typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
+   | header typeId < typeParameterIR* >{ fieldTypeIR* }
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:28.3-28.82
+;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:28.3-28.62
 syntax headerUnionTypeDefIR = 
-   | header_union typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
+   | header_union typeId < typeParameterIR* >{ fieldTypeIR* }
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:30.24-30.34
 syntax enumTypeDefIR = enumTypeIR
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:33.1-36.18
 syntax dataTypeDefIR = 
-   | struct typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
-   | header typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
-   | header_union typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
+   | struct typeId < typeParameterIR* >{ fieldTypeIR* }
+   | header typeId < typeParameterIR* >{ fieldTypeIR* }
+   | header_union typeId < typeParameterIR* >{ fieldTypeIR* }
    | enum typeId { nameIR* } hint(print %0)
    | enum typeId < typeIR >{ valueFieldIR* } hint(print %0)
 
@@ -3660,9 +3660,9 @@ syntax typeDefIR =
    | ` typeId hint(print %0)
    | typedef typeId typeIR hint(print %0)
    | type typeId typeIR hint(print %0)
-   | struct typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
-   | header typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
-   | header_union typeId < typeParameterIR* , typeParameterIR* >{ fieldTypeIR* }
+   | struct typeId < typeParameterIR* >{ fieldTypeIR* }
+   | header typeId < typeParameterIR* >{ fieldTypeIR* }
+   | header_union typeId < typeParameterIR* >{ fieldTypeIR* }
    | enum typeId { nameIR* } hint(print %0)
    | enum typeId < typeIR >{ valueFieldIR* } hint(print %0)
    | extern typeId < typeParameterIR* , typeParameterIR* > externMethodTypeDefEnv
@@ -4175,20 +4175,20 @@ def $typeId_of_typeDefIR(typeDefIR) : typeId =
   -- if typeDefIR <: newTypeIR
   -- let type typeId _typeIR = typeDefIR as newTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:30.1-30.68
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:30.1-30.63
   clause 3 : (typeDefIR) = typeId
   -- if typeDefIR <: structTypeDefIR
-  -- let struct typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as structTypeDefIR
+  -- let struct typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as structTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:31.1-31.68
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:31.1-31.63
   clause 4 : (typeDefIR) = typeId
   -- if typeDefIR <: headerTypeDefIR
-  -- let header typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerTypeDefIR
+  -- let header typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:32.1-32.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:32.1-32.69
   clause 5 : (typeDefIR) = typeId
   -- if typeDefIR <: headerUnionTypeDefIR
-  -- let header_union typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
+  -- let header_union typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:33.1-33.54
   clause 6 : (typeDefIR) = typeId
@@ -4242,147 +4242,144 @@ def $typeIR_of_typeDefIR(typeDefIR) : typeIR =
   -- if typeDefIR <: aliasTypeDefIR
   -- let aliasTypeDefIR = typeDefIR as aliasTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:61.1-64.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:61.1-63.63
   clause 2 : (typeDefIR) = struct typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } as typeIR
   -- if typeDefIR <: structTypeDefIR
-  -- let struct typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as structTypeDefIR
-  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let struct typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as structTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:66.1-69.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:65.1-67.63
   clause 3 : (typeDefIR) = header typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } as typeIR
   -- if typeDefIR <: headerTypeDefIR
-  -- let header typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as headerTypeDefIR
-  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let header typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as headerTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:71.1-74.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:69.1-71.69
   clause 4 : (typeDefIR) = header_union typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } as typeIR
   -- if typeDefIR <: headerUnionTypeDefIR
-  -- let header_union typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
-  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let header_union typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:76.1-76.56
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:73.1-73.56
   clause 5 : (typeDefIR) = enumTypeDefIR as typeIR
   -- if typeDefIR <: enumTypeDefIR
   -- let enumTypeDefIR = typeDefIR as enumTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:80.1-84.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:77.1-81.74
   clause 6 : (typeDefIR) = extern typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} > { callableId : externMethodTypeDefIR*{callableId <- callableId*, externMethodTypeDefIR <- externMethodTypeDefIR*} } as typeIR
   -- if typeDefIR <: externObjectTypeDefIR
   -- let extern typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > { callableId : externMethodTypeDefIR*{callableId <- callableId*, externMethodTypeDefIR <- externMethodTypeDefIR*} } = typeDefIR as externObjectTypeDefIR
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:86.1-89.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:83.1-86.74
   clause 7 : (typeDefIR) = parser typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} ) as typeIR
   -- if typeDefIR <: parserObjectTypeDefIR
   -- let parser typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) = typeDefIR as parserObjectTypeDefIR
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:91.1-94.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:88.1-91.74
   clause 8 : (typeDefIR) = control typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} ) as typeIR
   -- if typeDefIR <: controlObjectTypeDefIR
   -- let control typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) = typeDefIR as controlObjectTypeDefIR
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:96.1-99.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:93.1-96.74
   clause 9 : (typeDefIR) = package typeId < ` typeParameterIR as typeArgumentIR*{typeParameterIR <- typeParameterIR*} >{ typeIR*{typeIR <- typeIR*} } as typeIR
   -- if typeDefIR <: packageObjectTypeDefIR
   -- let package typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ typeIR*{typeIR <- typeIR*} } = typeDefIR as packageObjectTypeDefIR
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:101.1-101.70
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:98.1-98.70
   clause 10 : (typeDefIR) = tableObjectTypeDefIR as typeIR
   -- if typeDefIR <: tableObjectTypeDefIR
   -- let tableObjectTypeDefIR = typeDefIR as tableObjectTypeDefIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:107.1-109.45
+;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:104.1-106.45
 def $typeParameterListIR_of_typeDefIR(typeDefIR) : (typeParameterIR*, typeParameterIR*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:113.1-113.66
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:110.1-110.66
   clause 0 : (typeDefIR) = ([], [])
   -- if typeDefIR <: nameTypeDefIR
   -- let nameTypeDefIR = typeDefIR as nameTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:117.1-117.67
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:114.1-114.67
   clause 1 : (typeDefIR) = ([], [])
   -- if typeDefIR <: aliasTypeDefIR
   -- let aliasTypeDefIR = typeDefIR as aliasTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:121.1-123.52
-  clause 2 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:118.1-120.29
+  clause 2 : (typeDefIR) = (typeParameterIR*{typeParameterIR <- typeParameterIR*}, [])
   -- if typeDefIR <: structTypeDefIR
-  -- let struct _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as structTypeDefIR
+  -- let struct _typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as structTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:125.1-127.52
-  clause 3 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:122.1-124.29
+  clause 3 : (typeDefIR) = (typeParameterIR*{typeParameterIR <- typeParameterIR*}, [])
   -- if typeDefIR <: headerTypeDefIR
-  -- let header _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerTypeDefIR
+  -- let header _typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:129.1-131.52
-  clause 4 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:126.1-128.29
+  clause 4 : (typeDefIR) = (typeParameterIR*{typeParameterIR <- typeParameterIR*}, [])
   -- if typeDefIR <: headerUnionTypeDefIR
-  -- let header_union _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
+  -- let header_union _typeId < typeParameterIR*{typeParameterIR <- typeParameterIR*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:133.1-133.66
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:130.1-130.66
   clause 5 : (typeDefIR) = ([], [])
   -- if typeDefIR <: enumTypeDefIR
   -- let enumTypeDefIR = typeDefIR as enumTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:137.1-139.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:134.1-136.52
   clause 6 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
   -- if typeDefIR <: externObjectTypeDefIR
   -- let extern _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > { _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} } = typeDefIR as externObjectTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:141.1-143.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:138.1-140.52
   clause 7 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
   -- if typeDefIR <: parserObjectTypeDefIR
   -- let parser _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeDefIR as parserObjectTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:145.1-147.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:142.1-144.52
   clause 8 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
   -- if typeDefIR <: controlObjectTypeDefIR
   -- let control _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeDefIR as controlObjectTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:149.1-151.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:146.1-148.52
   clause 9 : (typeDefIR) = (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
   -- if typeDefIR <: packageObjectTypeDefIR
   -- let package _typeId < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >{ _typeIR*{_typeIR <- _typeIR*} } = typeDefIR as packageObjectTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:153.1-153.73
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:150.1-150.73
   clause 10 : (typeDefIR) = ([], [])
   -- if typeDefIR <: tableObjectTypeDefIR
   -- let tableObjectTypeDefIR = typeDefIR as tableObjectTypeDefIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:159.1-161.44
+;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:156.1-158.44
 def $is_monomorphic_typeDefIR(typeDefIR) : bool =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:166.1-166.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:163.1-163.52
   clause 0 : (typeDefIR) = true
   -- if typeDefIR <: nameTypeDefIR
   -- let nameTypeDefIR = typeDefIR as nameTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:167.1-167.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:164.1-164.53
   clause 1 : (typeDefIR) = true
   -- if typeDefIR <: aliasTypeDefIR
   -- let aliasTypeDefIR = typeDefIR as aliasTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:168.1-168.52
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:165.1-165.52
   clause 2 : (typeDefIR) = true
   -- if typeDefIR <: enumTypeDefIR
   -- let enumTypeDefIR = typeDefIR as enumTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:169.1-169.59
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:166.1-166.59
   clause 3 : (typeDefIR) = true
   -- if typeDefIR <: tableObjectTypeDefIR
   -- let tableObjectTypeDefIR = typeDefIR as tableObjectTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:170.1-171.15
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:167.1-168.15
   clause 4 : (typeDefIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:162.1-164.44
+;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:159.1-161.44
 def $is_polymorphic_typeDefIR(typeDefIR) : bool =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:173.1-174.42
+  ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:170.1-171.42
   clause 0 : (typeDefIR) = ~$is_monomorphic_typeDefIR(typeDefIR)
 
 ;; ../../../../spec-concrete/2-static-runtime/2.3.1-type-callable.watsup:9.32-9.40
@@ -8943,25 +8940,25 @@ syntax typeFieldIR =
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:566.26-566.38
 syntax typeFieldListIR = typeFieldIR*
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:569.3-570.73
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:569.3-570.50
 syntax structTypeDeclarationIR = 
-   | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList struct nameIR < typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:573.3-574.73
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:573.3-574.50
 syntax headerTypeDeclarationIR = 
-   | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList header nameIR < typeParameterListIR >{ typeFieldListIR }
 
-;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:577.3-578.73
+;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:577.3-578.50
 syntax headerUnionTypeDeclarationIR = 
-   | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList header_union nameIR < typeParameterListIR >{ typeFieldListIR }
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:581.1-584.33
 syntax derivedTypeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedValueListIR }
-   | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList struct nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header_union nameIR < typeParameterListIR >{ typeFieldListIR }
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:591.1-592.29
 syntax typedefIR = 
@@ -9001,9 +8998,9 @@ syntax typedefIR =
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedValueListIR }
-   | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList struct nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header_union nameIR < typeParameterListIR >{ typeFieldListIR }
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:595.1-596.41
 syntax typedefDeclarationIR = 
@@ -9217,9 +9214,9 @@ syntax packageTypeDeclarationIR =
 syntax typeDeclarationIR = 
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedValueListIR }
-   | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList struct nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header_union nameIR < typeParameterListIR >{ typeFieldListIR }
    | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
@@ -9240,9 +9237,9 @@ syntax declarationIR =
    | annotationList control nameIR < typeParameterListIR >( parameterListIR )( constructorParameterListIR ){ controlLocalDeclarationListIR apply controlBodyIR }
    | annotationList enum nameIR { nameListIR }
    | annotationList enum typeIR nameIR { namedValueListIR }
-   | annotationList struct nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
-   | annotationList header_union nameIR < typeParameterListIR , typeParameterListIR >{ typeFieldListIR }
+   | annotationList struct nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header nameIR < typeParameterListIR >{ typeFieldListIR }
+   | annotationList header_union nameIR < typeParameterListIR >{ typeFieldListIR }
    | annotationList typedef typedefIR nameIR ;
    | annotationList type typeIR nameIR ;
    | annotationList parser nameIR < typeParameterListIR , typeParameterListIR >( parameterListIR );
@@ -18286,7 +18283,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let enumTypeDeclarationIR = annotationList enum typeIR nameIR { namedValueIR_field*{namedValueIR_field <- namedValueIR_field*} }
     -- output: % |- % : TC_3 enumTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:834.1-855.66
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:834.1-854.66
   rulegroup structTypeDeclaration
 
    match
@@ -18299,19 +18296,19 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
    paths
 
     rulepath structTypeDeclaration
-    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId_expl*{typeId_expl <- typeId_expl*}
+    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId*{typeId <- typeId*}
     -- let annotationList_field type_field name_field ;*{annotationList_field <- annotationList_field*, name_field <- name_field*, type_field <- type_field*} = $flatten_typeFieldList(typeFieldList)
-    -- (Type_ok: block TC_1 |- type_field as typeOrVoid : typeIR_field # typeId_impl_field*{typeId_impl_field <- typeId_impl_field*})*{type_field <- type_field*, typeIR_field -> typeIR_field*, typeId_impl_field* -> typeId_impl_field**}
-    -- let typeId_impl*{typeId_impl <- typeId_impl*} = $concat_<typeId>(typeId_impl_field*{typeId_impl_field <- typeId_impl_field*}*{typeId_impl_field* <- typeId_impl_field**})
+    -- (Type_ok: block TC_1 |- type_field as typeOrVoid : typeIR_field # typeId'*{typeId' <- typeId'*})*{type_field <- type_field*, typeIR_field -> typeIR_field*, typeId'* -> typeId'**}
+    -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_field = $name(name_field))*{name_field <- name_field*, nameIR_field -> nameIR_field*}
-    -- let structTypeDefIR = struct nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let structTypeDefIR = struct nameIR < typeId*{typeId <- typeId*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- structTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, structTypeDefIR as typeDefIR)
-    -- let structTypeDeclarationIR = annotationList struct nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let structTypeDeclarationIR = annotationList struct nameIR < typeId*{typeId <- typeId*} >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- output: % |- % : TC_2 structTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:861.1-882.54
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:860.1-880.54
   rulegroup headerTypeDeclaration
 
    match
@@ -18324,19 +18321,19 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
    paths
 
     rulepath headerTypeDeclaration
-    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId_expl*{typeId_expl <- typeId_expl*}
+    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId*{typeId <- typeId*}
     -- let annotationList_f type_f name_f ;*{annotationList_f <- annotationList_f*, name_f <- name_f*, type_f <- type_f*} = $flatten_typeFieldList(typeFieldList)
-    -- (Type_ok: block TC_1 |- type_f as typeOrVoid : typeIR_f # typeId_impl_f*{typeId_impl_f <- typeId_impl_f*})*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId_impl_f* -> typeId_impl_f**}
-    -- let typeId_impl*{typeId_impl <- typeId_impl*} = $concat_<typeId>(typeId_impl_f*{typeId_impl_f <- typeId_impl_f*}*{typeId_impl_f* <- typeId_impl_f**})
+    -- (Type_ok: block TC_1 |- type_f as typeOrVoid : typeIR_f # typeId'*{typeId' <- typeId'*})*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId'* -> typeId'**}
+    -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_f = $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
-    -- let headerTypeDefIR = header nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerTypeDefIR = header nameIR < typeId*{typeId <- typeId*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- headerTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, headerTypeDefIR as typeDefIR)
-    -- let headerTypeDeclarationIR = annotationList header nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerTypeDeclarationIR = annotationList header nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- output: % |- % : TC_2 headerTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:888.1-909.54
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:886.1-906.54
   rulegroup headerUnionTypeDeclaration
 
    match
@@ -18349,19 +18346,19 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
    paths
 
     rulepath headerUnionTypeDeclaration
-    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId_expl*{typeId_expl <- typeId_expl*}
+    -- TypeParameterListOpt_ok: block TC_0 |- typeParameterListOpt : TC_1 typeId*{typeId <- typeId*}
     -- let annotationList_f type_f name_f ;*{annotationList_f <- annotationList_f*, name_f <- name_f*, type_f <- type_f*} = $flatten_typeFieldList(typeFieldList)
-    -- (Type_ok: block TC_1 |- type_f as typeOrVoid : typeIR_f # typeId_impl_f*{typeId_impl_f <- typeId_impl_f*})*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId_impl_f* -> typeId_impl_f**}
-    -- let typeId_impl*{typeId_impl <- typeId_impl*} = $concat_<typeId>(typeId_impl_f*{typeId_impl_f <- typeId_impl_f*}*{typeId_impl_f* <- typeId_impl_f**})
+    -- (Type_ok: block TC_1 |- type_f as typeOrVoid : typeIR_f # typeId'*{typeId' <- typeId'*})*{type_f <- type_f*, typeIR_f -> typeIR_f*, typeId'* -> typeId'**}
+    -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_f = $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
-    -- let headerUnionTypeDefIR = header_union nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerUnionTypeDefIR = header_union nameIR < typeId*{typeId <- typeId*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- headerUnionTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, headerUnionTypeDefIR as typeDefIR)
-    -- let headerUnionTypeDeclarationIR = annotationList header_union nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerUnionTypeDeclarationIR = annotationList header_union nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- output: % |- % : TC_2 headerUnionTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:920.1-984.2
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:917.1-981.2
   rulegroup typedefDeclaration-typedef
 
    match
@@ -18434,7 +18431,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let typedefDeclarationIR = annotationList typedef derivedTypeDeclarationIR as typedefIR nameIR ;
     -- output: % |- % : TC_1 typedefDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:988.1-1001.45
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:985.1-998.45
   rulegroup typedefDeclaration-newtype
 
    match
@@ -18459,7 +18456,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let typedefDeclarationIR = annotationList type typeIR nameIR ;
     -- output: % |- % : TC_1 typedefDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1007.1-1026.92
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1004.1-1023.92
   rulegroup parserTypeDeclaration
 
    match
@@ -18482,7 +18479,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let parserTypeDeclarationIR = annotationList parser nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} );
     -- output: % |- % : TC_3 parserTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1032.1-1051.93
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1029.1-1048.93
   rulegroup controlTypeDeclaration
 
    match
@@ -18505,7 +18502,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let controlTypeDeclarationIR = annotationList control nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} );
     -- output: % |- % : TC_3 controlTypeDeclarationIR as declarationIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1057.1-1087.40
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1054.1-1084.40
   rulegroup packageTypeDeclaration
 
    match
@@ -18537,7 +18534,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:447.1-451.59
 relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1093.1-1106.2
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1090.1-1103.2
   rulegroup 
 
    match
@@ -18564,7 +18561,7 @@ relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:453.1-457.44
 relation Program_ok: |- p4program : p4programIR
 
-  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1112.1-1116.58
+  ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1109.1-1113.58
   rulegroup 
 
    match
@@ -26018,61 +26015,61 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_2 = $add_typeDef_i(global, IC_1, nameIR, enumTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_2 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:456.1-466.69
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:455.1-464.69
   rulegroup structTypeDeclarationIR
 
    match
 
-    (signature) IC_0 STO |- annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
+    (signature) IC_0 STO |- annotationList struct nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
     IC_0 STO |- declarationIR : % %
     -- if declarationIR <: structTypeDeclarationIR
-    -- let annotationList struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as structTypeDeclarationIR
+    -- let annotationList struct nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as structTypeDeclarationIR
 
    paths
 
     rulepath structTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let structTypeDefIR = struct nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let structTypeDefIR = struct nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, structTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:474.1-484.69
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:471.1-480.69
   rulegroup headerTypeDeclarationIR
 
    match
 
-    (signature) IC_0 STO |- annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
+    (signature) IC_0 STO |- annotationList header nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
     IC_0 STO |- declarationIR : % %
     -- if declarationIR <: headerTypeDeclarationIR
-    -- let annotationList header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as headerTypeDeclarationIR
+    -- let annotationList header nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as headerTypeDeclarationIR
 
    paths
 
     rulepath headerTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let headerTypeDefIR = header nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let headerTypeDefIR = header nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, headerTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:492.1-502.74
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:487.1-496.74
   rulegroup headerUnionTypeDeclarationIR
 
    match
 
-    (signature) IC_0 STO |- annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
+    (signature) IC_0 STO |- annotationList header_union nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } as declarationIR : % %
     IC_0 STO |- declarationIR : % %
     -- if declarationIR <: headerUnionTypeDeclarationIR
-    -- let annotationList header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as headerUnionTypeDeclarationIR
+    -- let annotationList header_union nameIR < typeParameterListIR >{ typeFieldIR*{typeFieldIR <- typeFieldIR*} } = declarationIR as headerUnionTypeDeclarationIR
 
    paths
 
     rulepath headerUnionTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let headerUnionTypeDefIR = header_union nameIR < typeParameterListIR , typeParameterListIR_inferred >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let headerUnionTypeDefIR = header_union nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, headerUnionTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:513.1-561.2
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:507.1-555.2
   rulegroup typedefDeclarationIR-typedef
 
    match
@@ -26129,7 +26126,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, typedefTypeIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:565.1-570.68
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:559.1-564.68
   rulegroup typedefDeclarationIR-newtype
 
    match
@@ -26148,7 +26145,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, aliasTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:578.1-587.75
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:572.1-581.75
   rulegroup parserTypeDeclarationIR
 
    match
@@ -26165,7 +26162,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, parserObjectTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:595.1-604.76
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:589.1-598.76
   rulegroup controlTypeDeclarationIR
 
    match
@@ -26182,7 +26179,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, controlObjectTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:612.1-626.71
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:606.1-620.71
   rulegroup packageTypeDeclarationIR
 
    match
@@ -26206,7 +26203,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:188.1-195.37
 relation Decls_inst: instContext store |- declarationIR* : instContext store
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:632.1-643.2
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:626.1-637.2
   rulegroup 
 
    match
@@ -26235,7 +26232,7 @@ relation Decls_inst: instContext store |- declarationIR* : instContext store
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:197.1-202.37
 relation Program_inst: |- p4program : globalInstLayer store
 
-  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:649.1-656.59
+  ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:643.1-650.59
   rulegroup 
 
    match

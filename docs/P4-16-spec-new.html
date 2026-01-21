@@ -6873,7 +6873,7 @@ typeDefIR
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeDefIR
-   : STRUCT typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   : STRUCT typeId `&lt; typeParameterIR* &gt; `{ fieldTypeIR* }
    ;
 
 structTypeDeclaration
@@ -7708,7 +7708,7 @@ name in the current scope. Field names have to be distinct. An empty struct
 <div id="structTypeDefIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structTypeDefIR
-   : STRUCT typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   : STRUCT typeId `&lt; typeParameterIR* &gt; `{ fieldTypeIR* }
    ;</code></pre>
 </div>
 </div>
@@ -7840,7 +7840,7 @@ definition can be referred to using this identifier.</p>
 <div id="headerTypeDefIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerTypeDefIR
-   : HEADER typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   : HEADER typeId `&lt; typeParameterIR* &gt; `{ fieldTypeIR* }
    ;</code></pre>
 </div>
 </div>
@@ -8053,7 +8053,7 @@ the current scope.</p>
 <div id="headerUnionTypeDefIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerUnionTypeDefIR
-   : HEADER_UNION typeId `&lt; typeParameterIR* , typeParameterIR* &gt; `{ fieldTypeIR* }
+   : HEADER_UNION typeId `&lt; typeParameterIR* &gt; `{ fieldTypeIR* }
    ;</code></pre>
 </div>
 </div>
@@ -17847,7 +17847,7 @@ object constructors.</p>
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">enumTypeDeclarationIR
    : annotationList ENUM nameIR `{ nameListIR }
-   | annotationList ENUM typeIR nameIR `{ namedExpressionListIR }
+   | annotationList ENUM typeIR nameIR `{ namedValueListIR }
    ;</code></pre>
 </div>
 </div>
@@ -18094,15 +18094,15 @@ object constructors.</p>
  -- Type_ok: GLOBAL TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
  -- if nameIR = $name(name)
- -- Enum_serializable_fieldList_ok: TC_0 nameIR typeIR |- namedExpressionList_field : TC_1 namedExpressionIR_field* # value_field*
- -- (if ((nameIR_field = _) = namedExpressionIR_field))*
+ -- Enum_serializable_fieldList_ok: TC_0 nameIR typeIR |- namedExpressionList_field : TC_1 namedValueIR_field*
+ -- (if ((nameIR_field = value_field) = namedValueIR_field))*
  -- (if (id_field = nameIR ++ "." ++ nameIR_field))*
  -- if enumTypeDefIR = ENUM nameIR `&lt;typeIR&gt; `{(nameIR_field = value_field ;)*}
  -- (if (varTypeIR = `EMPTY enumTypeDefIR LCTK value_field))*
  -- if TC_2 = $add_vars_t(GLOBAL, TC_0, id_field*, varTypeIR*)
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- enumTypeDefIR
  -- if TC_3 = $add_typeDef_t(GLOBAL, TC_2, nameIR, enumTypeDefIR)
- -- if enumTypeDeclarationIR = annotationList ENUM typeIR nameIR `{namedExpressionIR_field*}</pre>
+ -- if enumTypeDeclarationIR = annotationList ENUM typeIR nameIR `{namedValueIR_field*}</pre>
 </div>
 </div>
 </div>
@@ -18142,7 +18142,7 @@ object constructors.</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let the updated typing context <code>TC<sub>1</sub></code>,  <code>namedExpressionIR<sub>field</sub><sup>*</sup></code> , and field values <code>value<sub>field</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>1</sub></code> and field values <code>namedValueIR<sub>field</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18152,20 +18152,20 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>nameIR<sub>field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>field</sub></code>, obtained by repeating:</p>
+<p>Let <code>nameIR<sub>field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>field</sub></code> and <code>value<sub>field</sub><sup>*</sup></code> be the list of <code>value<sub>field</sub></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>nameIR<sub>field</sub></code> <code>=</code> <code>_</code> be <code>namedExpressionIR<sub>field</sub></code>.</p>
+<p>Let <code>nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub></code> be <code>namedValueIR<sub>field</sub></code>.</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="paragraph">
-<p>for each <code>namedExpressionIR<sub>field</sub></code> in <code>namedExpressionIR<sub>field</sub><sup>*</sup></code></p>
+<p>for each <code>namedValueIR<sub>field</sub></code> in <code>namedValueIR<sub>field</sub><sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -18218,7 +18218,7 @@ object constructors.</p>
 <p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>2</sub></code> where <code>nameIR</code> to <code>enumTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList</code> <code>ENUM</code> <code>typeIR</code> <code>nameIR</code> <code>{</code> <code>namedExpressionIR<sub>field</sub><sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>enumTypeDeclarationIR</code> be <code>annotationList</code> <code>ENUM</code> <code>typeIR</code> <code>nameIR</code> <code>{</code> <code>namedValueIR<sub>field</sub><sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>3</sub></code> and <code>enumTypeDeclarationIR</code>.</p>
@@ -18235,7 +18235,7 @@ object constructors.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Enum_serializable_field_ok: typingContext nameIR typeIR |- namedExpression : typingContext namedExpressionIR # value</pre>
+<pre>relation Enum_serializable_field_ok: typingContext nameIR typeIR |- namedExpression : typingContext namedValueIR</pre>
 </div>
 </div>
 </div>
@@ -18256,7 +18256,7 @@ object constructors.</p>
 <p>Typing <code>namedExpression</code> under typing context <code>typingContext</code> with enum name <code>nameIR</code> and underlying <code>typeIR</code>:</p>
 </li>
 <li>
-<p>Results in the updated typing context <code>typingContext</code>, and field value <code>namedExpressionIR</code>.</p>
+<p>Results in the updated typing context <code>typingContext</code>, and field value <code>namedValueIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -18269,7 +18269,7 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Enum_serializable_field_ok:
   rule Enum_serializable_field_ok:
-  TC_0 nameIR_enum typeIR |- name = expression : TC_1 (nameIR = typedExpressionIR_cast) # value
+  TC_0 nameIR_enum typeIR |- name = expression : TC_1 (nameIR = value)
  -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
  -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR)
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
@@ -18329,7 +18329,7 @@ object constructors.</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>varTypeIR</code> is added to the <code>BLOCK</code> layer</a>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>1</sub></code>, and field value <code>nameIR</code> <code>=</code> <code>typedExpressionIR<sub>cast</sub></code>.</p>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code>, and field value <code>nameIR</code> <code>=</code> <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -18343,7 +18343,7 @@ object constructors.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Enum_serializable_fieldList_ok: typingContext nameIR typeIR |- namedExpressionList : typingContext namedExpressionIR* # value*</pre>
+<pre>relation Enum_serializable_fieldList_ok: typingContext nameIR typeIR |- namedExpressionList : typingContext namedValueIR*</pre>
 </div>
 </div>
 </div>
@@ -18364,7 +18364,7 @@ object constructors.</p>
 <p>Typing <code>namedExpressionList</code> under typing context <code>typingContext</code> with enum name <code>nameIR</code> and underlying <code>typeIR</code>:</p>
 </li>
 <li>
-<p>Results in the updated typing context <code>typingContext</code>,  <code>namedExpressionIR<sup>*</sup></code> , and field values <code>value<sup>*</sup></code>.</p>
+<p>Results in the updated typing context <code>typingContext</code> and field values <code>namedValueIR<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -18383,13 +18383,12 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/enumTypeDeclarationIR-serializable:
   rule Decl_inst/enumTypeDeclarationIR-serializable:
-  IC_0 STO_0 |- annotationList ENUM typeIR nameIR `{(nameIR_field = typedExpressionIR_field)*} : IC_3 STO_1
- -- Enum_serializable_fields_inst: IC_0 STO_0 |- (nameIR_field = typedExpressionIR_field)* : IC_1 STO_1 # value_field*
+  IC_0 STO |- annotationList ENUM typeIR nameIR `{(nameIR_field = value_field)*} : IC_2 STO
  -- (if (nameIR_serenum_field = nameIR ++ "." ++ nameIR_field))*
  -- (if (value_serenum_field = nameIR . nameIR_field . value_field))*
- -- if IC_2 = $add_vars_i(GLOBAL, IC_0, nameIR_serenum_field*, value_serenum_field*)
+ -- if IC_1 = $add_vars_i(GLOBAL, IC_0, nameIR_serenum_field*, value_serenum_field*)
  -- if enumTypeDefIR = ENUM nameIR `&lt;typeIR&gt; `{(nameIR_field = value_field ;)*}
- -- if IC_3 = $add_typeDef_i(GLOBAL, IC_2, nameIR, enumTypeDefIR)</pre>
+ -- if IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, enumTypeDefIR)</pre>
 </div>
 </div>
 </div>
@@ -18402,20 +18401,10 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>ENUM</code> <code>typeIR</code> <code>nameIR</code> <code>{</code> <code>(nameIR<sub>field</sub></code> <code>=</code> <code>typedExpressionIR<sub>field</sub>)<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>ENUM</code> <code>typeIR</code> <code>nameIR</code> <code>{</code> <code>(nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub>)<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
-<li>
-<p>Let the updated instantiation context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and field values <code>value<sub>field</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Enum_serializable_fields_inst">loading <code>(nameIR<sub>field</sub></code> <code>=</code> <code>typedExpressionIR<sub>field</sub>)<sup>*</sup></code> under instantiation context <code>IC<sub>0</sub></code> and store <code>STO</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
 <li>
 <p>Let <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> be the list of <code>nameIR<sub>serenum_field</sub></code>, obtained by repeating:</p>
 <div class="openblock">
@@ -18451,127 +18440,18 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>IC<sub>2</sub></code> be <a href="#add_vars_i"><code>IC<sub>0</sub></code> where each of <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> to each of <code>value<sub>serenum_field</sub><sup>*</sup></code> are added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>IC<sub>1</sub></code> be <a href="#add_vars_i"><code>IC<sub>0</sub></code> where each of <code>nameIR<sub>serenum_field</sub><sup>*</sup></code> to each of <code>value<sub>serenum_field</sub><sup>*</sup></code> are added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>enumTypeDefIR</code> be <code>ENUM</code> <code>nameIR</code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> <code>{</code> <code>(nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>IC<sub>3</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>2</sub></code> where <code>nameIR</code> to <code>enumTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>IC<sub>2</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>1</sub></code> where <code>nameIR</code> to <code>enumTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Result in the updated instantiation context <code>IC<sub>3</sub></code> and the store <code>STO<sub>1</sub></code>.</p>
+<p>Result in the updated instantiation context <code>IC<sub>2</sub></code> and the store <code>STO</code>.</p>
 </li>
 </ol>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>An enum field is loaded as follows:</p>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>relation Enum_serializable_field_inst: instContext store |- namedExpressionIR : instContext store # value</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div id="Enum_serializable_field_inst" class="sidebarblock sidebar-title">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Enum_serializable_field_inst">Enum_serializable_field_inst</a>:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Loading <code>namedExpressionIR</code> under instantiation context <code>instContext</code> and store <code>store</code>:</p>
-</li>
-<li>
-<p>Results in the updated instantiation context <code>instContext</code>, store <code>store</code>, and field value <code>value</code>.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>rulegroup Enum_serializable_field_inst:
-  rule Enum_serializable_field_inst:
-  IC_0 STO_0 |- nameIR = typedExpressionIR : IC_1 STO_1 # value
- -- Expr_inst: BLOCK IC_0 STO_0 |- typedExpressionIR : STO_1 value
- -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value)</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Enum_serializable_field_inst">Loading <code>nameIR</code> <code>=</code> <code>typedExpressionIR</code> under instantiation context <code>IC<sub>0</sub></code> and store <code>STO<sub>0</sub></code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <a href="#Expr_inst">BLOCK IC<sub>0</sub> STO<sub>0</sub> |- typedExpressionIR : STO<sub>1</sub> value</a>.</p>
-</li>
-<li>
-<p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>value</code> is added to the <code>BLOCK</code> layer</a>.</p>
-</li>
-<li>
-<p>Result in the updated instantiation context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and field value <code>value</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>A list of enum fields is loaded with the following relation:</p>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>relation Enum_serializable_fields_inst: instContext store |- namedExpressionIR* : instContext store # value*</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div id="Enum_serializable_fields_inst" class="sidebarblock sidebar-title">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Enum_serializable_fields_inst">Enum_serializable_fields_inst</a>:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Loading <code>namedExpressionIR<sup>*</sup></code> under instantiation context <code>instContext</code> and store <code>store</code>:</p>
-</li>
-<li>
-<p>Results in the updated instantiation context <code>instContext</code>, store <code>store</code>, and field values <code>value<sup>*</sup></code>.</p>
-</li>
-</ul>
 </div>
 </div>
 </div>
@@ -18590,16 +18470,15 @@ object constructors.</p>
 <pre>rulegroup Decl_ok/structTypeDeclaration:
   rule Decl_ok/structTypeDeclaration:
   TC_0 |- annotationList STRUCT name typeParameterListOpt `{typeFieldList} : TC_2 structTypeDeclarationIR
- -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
  -- if (annotationList_field type_field name_field ;)* = $flatten_typeFieldList(typeFieldList)
- -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field # typeId_impl_field*)*
- -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_field**)
+ -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_field = $name(name_field)))*
- -- if structTypeDefIR = STRUCT nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if structTypeDefIR = STRUCT nameIR `&lt;typeId*&gt; `{(typeIR_field nameIR_field ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- structTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, structTypeDefIR)
- -- if structTypeDeclarationIR = annotationList STRUCT nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}</pre>
+ -- if structTypeDeclarationIR = annotationList STRUCT nameIR `&lt;typeId*&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}</pre>
 </div>
 </div>
 </div>
@@ -18617,7 +18496,7 @@ object constructors.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18630,13 +18509,13 @@ object constructors.</p>
 <p>Let <code>(annotationList<sub>field</sub></code> <code>type<sub>field</sub></code> <code>name<sub>field</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>field</sub><sup>*</sup></code> be the list of <code>typeIR<sub>field</sub></code> and <code>typeId<sub>impl_field</sub><sup>*</sup><sup>*</sup></code> be the list of <code>typeId<sub>impl_field</sub><sup>*</sup></code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sub>field</sub><sup>*</sup></code> be the list of <code>typeIR<sub>field</sub></code> and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list of <code>typeId'<sup>*</sup></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>field</sub></code> and a set of fresh type variables <code>typeId<sub>impl_field</sub><sup>*</sup></code> be</p>
+<p>Let <code>typeIR<sub>field</sub></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18654,7 +18533,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>typeId<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_"></code> <code>concat_&lt;typeId&gt;((typeId<sub>impl_field</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
+<p>Check that <code>typeId'<sup>*</sup></code> is an empty list, for all <code>typeId'<sup>*</sup></code> in <code>typeId'<sup>*</sup><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18677,7 +18556,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -18689,7 +18568,7 @@ object constructors.</p>
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>structTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>structTypeDeclarationIR</code> be <code>annotationList</code> <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>structTypeDeclarationIR</code> be <code>annotationList</code> <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>2</sub></code> and <code>structTypeDeclarationIR</code>.</p>
@@ -18708,9 +18587,9 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/structTypeDeclarationIR:
   rule Decl_inst/structTypeDeclarationIR:
-  IC_0 STO |- annotationList STRUCT nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{typeFieldIR*} : IC_1 STO
+  IC_0 STO |- annotationList STRUCT nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if structTypeDefIR = STRUCT nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if structTypeDefIR = STRUCT nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, structTypeDefIR)</pre>
 </div>
 </div>
@@ -18724,7 +18603,7 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18746,7 +18625,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>structTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -18772,16 +18651,15 @@ object constructors.</p>
 <pre>rulegroup Decl_ok/headerTypeDeclaration:
   rule Decl_ok/headerTypeDeclaration:
   TC_0 |- annotationList HEADER name typeParameterListOpt `{typeFieldList} : TC_2 headerTypeDeclarationIR
- -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
- -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
- -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
+ -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_f = $name(name_f)))*
- -- if headerTypeDefIR = HEADER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(typeIR_f nameIR_f ;)*}
+ -- if headerTypeDefIR = HEADER nameIR `&lt;typeId*&gt; `{(typeIR_f nameIR_f ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerTypeDefIR)
- -- if headerTypeDeclarationIR = annotationList HEADER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
+ -- if headerTypeDeclarationIR = annotationList HEADER nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
 </div>
 </div>
 </div>
@@ -18799,7 +18677,7 @@ object constructors.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18812,13 +18690,13 @@ object constructors.</p>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code> and <code>typeId<sub>impl_f</sub><sup>*</sup><sup>*</sup></code> be the list of <code>typeId<sub>impl_f</sub><sup>*</sup></code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code> and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list of <code>typeId'<sup>*</sup></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> and a set of fresh type variables <code>typeId<sub>impl_f</sub><sup>*</sup></code> be</p>
+<p>Let <code>typeIR<sub>f</sub></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18836,7 +18714,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>typeId<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_"></code> <code>concat_&lt;typeId&gt;((typeId<sub>impl_f</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
+<p>Check that <code>typeId'<sup>*</sup></code> is an empty list, for all <code>typeId'<sup>*</sup></code> in <code>typeId'<sup>*</sup><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18859,7 +18737,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -18871,7 +18749,7 @@ object constructors.</p>
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>headerTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>headerTypeDeclarationIR</code> be <code>annotationList</code> <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerTypeDeclarationIR</code> be <code>annotationList</code> <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>2</sub></code> and <code>headerTypeDeclarationIR</code>.</p>
@@ -18890,9 +18768,9 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/headerTypeDeclarationIR:
   rule Decl_inst/headerTypeDeclarationIR:
-  IC_0 STO |- annotationList HEADER nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{typeFieldIR*} : IC_1 STO
+  IC_0 STO |- annotationList HEADER nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if headerTypeDefIR = HEADER nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if headerTypeDefIR = HEADER nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerTypeDefIR)</pre>
 </div>
 </div>
@@ -18906,7 +18784,7 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18928,7 +18806,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>headerTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -18954,16 +18832,15 @@ object constructors.</p>
 <pre>rulegroup Decl_ok/headerUnionTypeDeclaration:
   rule Decl_ok/headerUnionTypeDeclaration:
   TC_0 |- annotationList HEADER_UNION name typeParameterListOpt `{typeFieldList} : TC_2 headerUnionTypeDeclarationIR
- -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+ -- TypeParameterListOpt_ok: BLOCK TC_0 |- typeParameterListOpt : TC_1 typeId*
  -- if (annotationList_f type_f name_f ;)* = $flatten_typeFieldList(typeFieldList)
- -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # typeId_impl_f*)*
- -- if typeId_impl* = $concat_&lt;typeId&gt;(typeId_impl_f**)
+ -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_f = $name(name_f)))*
- -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(typeIR_f nameIR_f ;)*}
+ -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeId*&gt; `{(typeIR_f nameIR_f ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerUnionTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerUnionTypeDefIR)
- -- if headerUnionTypeDeclarationIR = annotationList HEADER_UNION nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
+ -- if headerUnionTypeDeclarationIR = annotationList HEADER_UNION nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
 </div>
 </div>
 </div>
@@ -18981,7 +18858,7 @@ object constructors.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>1</sub></code> and type parameters <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18994,13 +18871,13 @@ object constructors.</p>
 <p>Let <code>(annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code> and <code>typeId<sub>impl_f</sub><sup>*</sup><sup>*</sup></code> be the list of <code>typeId<sub>impl_f</sub><sup>*</sup></code>, obtained by repeating:</p>
+<p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list of <code>typeIR<sub>f</sub></code> and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list of <code>typeId'<sup>*</sup></code>, obtained by repeating:</p>
 <div class="openblock">
 <div class="content">
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>typeIR<sub>f</sub></code> and a set of fresh type variables <code>typeId<sub>impl_f</sub><sup>*</sup></code> be</p>
+<p>Let <code>typeIR<sub>f</sub></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -19018,7 +18895,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>typeId<sub>impl</sub><sup>*</sup></code> be <code><a href="#concat_"></code> <code>concat_&lt;typeId&gt;((typeId<sub>impl_f</sub><sup>*</sup>)<sup>*</sup>)</a></code>.</p>
+<p>Check that <code>typeId'<sup>*</sup></code> is an empty list, for all <code>typeId'<sup>*</sup></code> in <code>typeId'<sup>*</sup><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -19041,7 +18918,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -19053,7 +18930,7 @@ object constructors.</p>
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>headerUnionTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDeclarationIR</code> be <code>annotationList</code> <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerUnionTypeDeclarationIR</code> be <code>annotationList</code> <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>2</sub></code> and <code>headerUnionTypeDeclarationIR</code>.</p>
@@ -19072,9 +18949,9 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/headerUnionTypeDeclarationIR:
   rule Decl_inst/headerUnionTypeDeclarationIR:
-  IC_0 STO |- annotationList HEADER_UNION nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{typeFieldIR*} : IC_1 STO
+  IC_0 STO |- annotationList HEADER_UNION nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeParameterListIR , typeParameterListIR_inferred&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerUnionTypeDefIR)</pre>
 </div>
 </div>
@@ -19088,7 +18965,7 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>typeFieldIR<sup>*</sup></code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -19110,7 +18987,7 @@ object constructors.</p>
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>,</code> <code>typeParameterListIR<sub>inferred</sub></code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>headerUnionTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>

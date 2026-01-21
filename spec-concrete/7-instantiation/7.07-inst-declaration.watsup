@@ -450,54 +450,48 @@ rule Decl_inst/enumTypeDeclarationIR-serializable:
 ;;;;; structTypeDeclarationIR
 ;;;;; syntax structTypeDeclarationIR =
 ;;;;;   annotationList STRUCT nameIR
-;;;;;     `< typeParameterListIR `, typeParameterListIR >
-;;;;;     `{ typeFieldListIR }
+;;;;;     `< typeParameterListIR > `{ typeFieldListIR }
 
 rule Decl_inst/structTypeDeclarationIR:
   IC_0 STO |- annotationList STRUCT nameIR
-                `< typeParameterListIR `, typeParameterListIR_inferred >
-                `{ typeFieldIR* }
+                `< typeParameterListIR > `{ typeFieldIR* }
             : IC_1 STO
   ---- ;; bind struct type to typedef environment
   -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if structTypeDefIR
-      = STRUCT nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
+      = STRUCT nameIR `< typeParameterListIR >
           `{ (typeIR_field nameIR_field `;)* }
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, structTypeDefIR)
 
 ;;;;; headerTypeDeclarationIR
 ;;;;; syntax headerTypeDeclarationIR =
 ;;;;;   annotationList HEADER nameIR
-;;;;;     `< typeParameterListIR `, typeParameterListIR >
-;;;;;     `{ typeFieldListIR }
+;;;;;     `< typeParameterListIR > `{ typeFieldListIR }
 
 rule Decl_inst/headerTypeDeclarationIR:
   IC_0 STO |- annotationList HEADER nameIR
-                `< typeParameterListIR `, typeParameterListIR_inferred >
-                `{ typeFieldIR* }
+                `< typeParameterListIR > `{ typeFieldIR* }
             : IC_1 STO
   ---- ;; bind header type to typedef environment
   -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if headerTypeDefIR
-      = HEADER nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
+      = HEADER nameIR `< typeParameterListIR >
           `{ (typeIR_field nameIR_field `;)* }
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerTypeDefIR)
 
 ;;;;; headerUnionTypeDeclarationIR
 ;;;;; syntax headerUnionTypeDeclarationIR =
 ;;;;;   annotationList HEADER_UNION nameIR
-;;;;;     `< typeParameterListIR `, typeParameterListIR >
-;;;;;     `{ typeFieldListIR }
+;;;;;     `< typeParameterListIR > `{ typeFieldListIR }
 
 rule Decl_inst/headerUnionTypeDeclarationIR:
   IC_0 STO |- annotationList HEADER_UNION nameIR
-                 `< typeParameterListIR `, typeParameterListIR_inferred >
-                 `{ typeFieldIR* }
+                 `< typeParameterListIR > `{ typeFieldIR* }
              : IC_1 STO
   ---- ;; bind header union type to typedef environment
   -- if (annotationList_field typeIR_field nameIR_field `; = typeFieldIR)*
   -- if headerUnionTypeDefIR
-      = HEADER_UNION nameIR `< typeParameterListIR `, typeParameterListIR_inferred >
+      = HEADER_UNION nameIR `< typeParameterListIR >
           `{ (typeIR_field nameIR_field `;)* }
   -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerUnionTypeDefIR)
 
