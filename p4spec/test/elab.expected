@@ -23300,26 +23300,39 @@ def $name_annotation_of_tableKeyIR'(annotation) : nameIR? =
   clause 1 : (annotation) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:47.1-47.68
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:45.1-45.62
+def $name_annotation_default(annotationList, nameIR) : nameIR =
+
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:47.1-48.70
+  clause 0 : (annotationList, nameIR) = nameIR_found
+  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_of_tableKeyIR(annotationList)
+  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
+  -- let ?(nameIR_found) = nameIR'?{nameIR' <- nameIR'?}
+
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:49.1-50.61
+  clause 1 : (annotationList, nameIR) = nameIR
+  -- if (?() = $name_annotation_of_tableKeyIR(annotationList))
+
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:54.1-54.68
 def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:49.1-54.63
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:56.1-61.63
   clause 0 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
   -- let nameIR?{nameIR <- nameIR?} = $name_annotation_of_tableKeyIR(annotationList)
   -- if nameIR?{nameIR <- nameIR?} matches (_)
   -- let ?(nameIR_key) = nameIR?{nameIR <- nameIR?}
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:55.1-63.63
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:62.1-70.63
   clause 1 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
   -- if (?() = $name_annotation_of_tableKeyIR(annotationList))
   -- let nameIR_key = $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR))
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:67.1-70.29
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:74.1-77.29
 def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface) : simpleKeysetExpressionIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:72.1-84.68
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:79.1-91.68
   clause 0 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "exact")
   -- let text'?{text' <- text'?} = $assoc_<nameIR, text>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -23330,7 +23343,7 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let typeIR_set = set< typeIR > as typeIR
   -- let simpleKeysetExpressionIR = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set dyn ) as simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:86.1-110.69
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:93.1-117.69
   clause 1 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "ternary")
   -- let text'?{text' <- text'?} = $assoc_<nameIR, text>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -23353,48 +23366,48 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:112.1-115.30
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:119.1-122.30
 def $tableObject_create_entry_keys((nameIR, nameIR, typeIR)*, tableKeysetInterface) : simpleKeysetExpressionIR* =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:117.1-117.49
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:124.1-124.49
   clause 0 : ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface) = []
   -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:118.1-129.30
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:125.1-136.30
   clause 1 : ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys((nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
   -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches _ :: _
   -- let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} = (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}
   -- let simpleKeysetExpressionIR_h = $tableObject_create_entry_key((nameIR_key_h, nameIR_matchKind_h, typeIR_h), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:131.1-134.23
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:138.1-141.23
 def $tableObject_create_entry_keyset(tableKeysPropertyIR, tableKeysetInterface) : keysetExpressionIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:136.1-148.71
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:143.1-155.71
   clause 0 : (key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} }, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
   -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
   -- (let (nameIR_key_update, text_key_value_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, text_key_value_update -> text_key_value_update*}
   -- if $eq_set<nameIR>({ nameIR_key*{nameIR_key <- nameIR_key*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
   -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys((nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:152.1-154.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:159.1-161.9
 def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterface*) : int* =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:159.1-164.54
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:166.1-171.54
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}, (nameIR_arg, i_arg)*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*}) = i_aligned*{i_aligned <- i_aligned*}
   -- (let int?{int <- int?} = $align_tableActionArgumentInterfaces'({ nameIR_arg : i_arg*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*} }, parameterIR))*{parameterIR <- parameterIR*, int? -> int?*}
   -- (if int?{int <- int?} matches (_))*{int? <- int?*}
   -- (let ?(i_aligned) = int?{int <- int?})*{int? <- int?*, i_aligned -> i_aligned*}
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:155.1-157.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:162.1-164.9
 def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:166.1-168.62
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:173.1-175.62
   clause 0 : ({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, _annotationList _direction _typeIR nameIR_param _constantInitializerOptIR) = $find_map<id, int>({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, nameIR_param)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:170.1-173.27
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:177.1-180.27
 def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:175.1-198.77
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:182.1-205.77
   clause 0 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_action_update ( argumentIR*{argumentIR <- argumentIR*} )
   -- (let _annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, argumentIR_data* -> argumentIR_data**, parameterIR_control* -> parameterIR_control**, prefixedNameIR -> prefixedNameIR*}
   -- (let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR))*{prefixedNameIR <- prefixedNameIR*, nameIR_action -> nameIR_action*}
@@ -23409,10 +23422,10 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data_update*{argumentIR_data_update <- argumentIR_data_update*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:202.1-207.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:209.1-214.16
 def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:209.1-232.57
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:216.1-239.57
   clause 0 : (table typeId { frame TBL }, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = table typeId { frame TBL_updated }
   -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- let keysetExpressionIR = $tableObject_create_entry_keyset(TBL.keys, tableKeysetInterface)
@@ -23422,10 +23435,10 @@ def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeyset
   -- let tableEntriesPropertyIR_updated = annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] }
   -- let TBL_updated = TBL[entries = tableEntriesPropertyIR_updated]
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:236.1-239.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:243.1-246.16
 def $tableObject_add_default_action(tableObject, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:241.1-253.76
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:248.1-260.76
   clause 0 : (table typeId { frame TBL }, tableActionInterface) = table typeId { frame TBL_updated }
   -- let _annotationList constIR?{constIR <- constIR?} default_action= _tableActionReferenceIR ; = TBL.default_action
   -- if constIR?{constIR <- constIR?} matches ()
@@ -25450,7 +25463,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- ActionDecl_inst: block IC_0 |- actionDeclarationIR : IC_1
     -- output: % % |- % : IC_1 STO ?()
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:43.1-65.58
+  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:43.1-67.58
   rulegroup tableDeclarationIR
 
    match
@@ -25471,7 +25484,8 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- if frame'*{frame' <- frame'*} matches _ :: _
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = table nameIR { frame TBL } as object
-    -- let objectId = IC_0.path ++ [nameIR]
+    -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
+    -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_map<objectId, object>(STO_1, objectId, object_table)
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)
     -- let constantDeclarationIR = `empty const typeIR nameIR = ref objectId as value ;
@@ -25480,7 +25494,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:130.1-138.30
 relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:72.1-98.2
+  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:74.1-100.2
   rulegroup 
 
    match

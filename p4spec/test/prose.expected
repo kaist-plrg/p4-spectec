@@ -12506,6 +12506,15 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Otherwise:
  .. Return ``·``.
 
+<<name_annotation_default, name_annotation_default(annotationList, nameIR)>>
+
+
+. Let ``nameIR'^?^`` be ``<<name_annotation_of_tableKeyIR,`` ``name_annotation_of_tableKeyIR(annotationList)>>``.
+. If let ``nameIR~found~`` be ``nameIR'^?^``:
+ .. Return ``nameIR~found~``.
+. If ``·`` is equal to ``<<name_annotation_of_tableKeyIR,`` ``name_annotation_of_tableKeyIR(annotationList)>>``:
+ .. Return ``nameIR``.
+
 <<interface_of_tableKeyIR, interface_of_tableKeyIR(typedExpressionIR : nameIR~matchKind~ annotationList ;)>>
 
 
@@ -13738,7 +13747,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Check that ``frame^{asterisk}^`` is a non-empty list.
 . Let ``frame'`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``frame^{asterisk}^``.
 . Let ``object~table~`` be ``TABLE`` ``nameIR`` ``{`` ``frame'`` ``TBL`` ``}``.
-. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR]``.
+. Let ``nameIR~object~`` be ``<<name_annotation_default,`` ``name_annotation_default(annotationList,`` ``nameIR)>>``.
+. Let ``objectId`` be ``IC~0~.PATH`` ``{pp}`` ``[nameIR~object~]``.
 . Let ``STO~2~`` be <<add_map, ``STO~1~``[``objectId`` := ``object~table~``]>>.
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``BLOCK`` layer>>.
 . Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
