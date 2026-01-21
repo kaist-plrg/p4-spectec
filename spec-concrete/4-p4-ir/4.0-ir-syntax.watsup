@@ -42,6 +42,14 @@ syntax parameterListIR = parameterIR*
 syntax constructorParameterListIR = parameterIR*
 
 ;;
+;; Value key-value pairs
+;;
+
+syntax namedValueIR = nameIR `= value
+
+syntax namedValueListIR = namedValueIR*
+
+;;
 ;; Expression key-value pairs
 ;;
 
@@ -547,7 +555,7 @@ syntax matchKindDeclarationIR = MATCH_KIND `{ nameListIR }
 
 syntax enumTypeDeclarationIR =
   | annotationList ENUM nameIR `{ nameListIR }
-  | annotationList ENUM typeIR nameIR `{ namedExpressionListIR }
+  | annotationList ENUM typeIR nameIR `{ namedValueListIR }
 
 ;;
 ;;;;;; Struct, header, and union type declarations

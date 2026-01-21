@@ -738,7 +738,7 @@ rule Decl_ok/enumTypeDeclaration-non-serializable:
 
 relation Enum_serializable_field_ok:
   typingContext nameIR typeIR |- namedExpression
-                               : typingContext namedExpressionIR `# value
+                               : typingContext namedValueIR
   hint(input %0 %1 %2 %3)
   hint(prose_in "typing" %3 "under typing context" %0
                 "with enum name" %1 "and underlying" %2)
@@ -747,7 +747,7 @@ relation Enum_serializable_field_ok:
 
 rule Enum_serializable_field_ok:
   TC_0 nameIR_enum typeIR |- name `= expression
-                           : TC_1 (nameIR `= typedExpressionIR_cast) `# value
+                           : TC_1 (nameIR `= value)
   ---- ;; check expression
   -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
   ---- ;; coerce expression to type
@@ -762,45 +762,44 @@ rule Enum_serializable_field_ok:
 
 relation Enum_serializable_fields_ok:
   typingContext nameIR typeIR |- namedExpression*
-                               : typingContext namedExpressionIR* `# value*
+                               : typingContext namedValueIR*
   hint(input %0 %1 %2 %3)
 
 rulegroup Enum_serializable_fields_ok {
 
   rule Enum_serializable_fields_ok/nil:
-    TC nameIR_enum typeIR |- eps : TC eps `# eps
+    TC nameIR_enum typeIR |- eps : TC eps
 
   rule Enum_serializable_fields_ok/cons:
     TC_0 nameIR_enum typeIR |- namedExpression_h :: namedExpression_t*
-                             : TC_2 namedExpressionIR* `# value_field*
+                             : TC_2 namedValueIR*
     -- Enum_serializable_field_ok:
         TC_0 nameIR_enum typeIR |- namedExpression_h
-                                 : TC_1 namedExpressionIR_h `# value_field_h
+                                 : TC_1 namedValueIR_h
     -- Enum_serializable_fields_ok:
         TC_1 nameIR_enum typeIR |- namedExpression_t*
-                                 : TC_2 namedExpressionIR_t* `# value_field_t*
-    -- if namedExpressionIR* = namedExpressionIR_h :: namedExpressionIR_t*
-    -- if value_field* = value_field_h :: value_field_t*
+                                 : TC_2 namedValueIR_t*
+    -- if namedValueIR* = namedValueIR_h :: namedValueIR_t*
 
 }
 
 relation Enum_serializable_fieldList_ok:
   typingContext nameIR typeIR |- namedExpressionList
-                               : typingContext namedExpressionIR* `# value*
+                               : typingContext namedValueIR*
   hint(input %0 %1 %2 %3)
   hint(prose_in "typing" %3 "under typing context" %0
                 "with enum name" %1 "and underlying" %2)
-  hint(prose_out "the updated typing context" %4#
-                 ", " %5 ", and field values" %6)
+  hint(prose_out "the updated typing context" %4
+                 "and field values" %6)
 
 rule Enum_serializable_fieldList_ok:
   TC_0 nameIR_enum typeIR |- namedExpressionList
-                           : TC_1 namedExpressionIR* `# value*
+                           : TC_1 namedValueIR*
   -- if namedExpression*
       = $flatten_namedExpressionList(namedExpressionList)
   -- Enum_serializable_fields_ok:
       TC_0 nameIR_enum typeIR |- namedExpression*
-                               : TC_1 namedExpressionIR* `# value*
+                               : TC_1 namedValueIR*
 
 rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
@@ -812,9 +811,9 @@ rule Decl_ok/enumTypeDeclaration-serializable:
   -- if nameIR = $name(name)
   -- Enum_serializable_fieldList_ok:
       TC_0 nameIR typeIR |- namedExpressionList_field
-                          : TC_1 namedExpressionIR_field* `# value_field*
+                          : TC_1 namedValueIR_field*
   ---- ;; add enum field values to the context
-  -- if ((nameIR_field `= _) = namedExpressionIR_field)*
+  -- if ((nameIR_field `= value_field) = namedValueIR_field)*
   -- if (id_field = nameIR ++ "." ++ nameIR_field)*
   -- if enumTypeDefIR
       = ENUM nameIR `< typeIR > `{ (nameIR_field `= value_field `;)* }
@@ -826,7 +825,7 @@ rule Decl_ok/enumTypeDeclaration-serializable:
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_2, nameIR, enumTypeDefIR)
   ---- ;; create IR
   -- if enumTypeDeclarationIR
-      = annotationList ENUM typeIR nameIR `{ namedExpressionIR_field* }
+      = annotationList ENUM typeIR nameIR `{ namedValueIR_field* }
 
 ;;;;; structTypeDeclaration
 ;;;;; syntax structTypeDeclaration =
