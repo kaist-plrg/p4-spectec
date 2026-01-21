@@ -740,6 +740,10 @@ relation Enum_serializable_field_ok:
   typingContext nameIR typeIR |- namedExpression
                                : typingContext namedExpressionIR `# value
   hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %3 "under typing context" %0
+                "with enum name" %1 "and underlying" %2)
+  hint(prose_out "the updated typing context" %4#
+                 ", and field value" %5)
 
 rule Enum_serializable_field_ok:
   TC_0 nameIR_enum typeIR |- name `= expression
@@ -780,6 +784,24 @@ rulegroup Enum_serializable_fields_ok {
 
 }
 
+relation Enum_serializable_fieldList_ok:
+  typingContext nameIR typeIR |- namedExpressionList
+                               : typingContext namedExpressionIR* `# value*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %3 "under typing context" %0
+                "with enum name" %1 "and underlying" %2)
+  hint(prose_out "the updated typing context" %4#
+                 ", " %5 ", and field values" %6)
+
+rule Enum_serializable_fieldList_ok:
+  TC_0 nameIR_enum typeIR |- namedExpressionList
+                           : TC_1 namedExpressionIR* `# value*
+  -- if namedExpression*
+      = $flatten_namedExpressionList(namedExpressionList)
+  -- Enum_serializable_fields_ok:
+      TC_0 nameIR_enum typeIR |- namedExpression*
+                               : TC_1 namedExpressionIR* `# value*
+
 rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
         : TC_3 enumTypeDeclarationIR
@@ -788,10 +810,8 @@ rule Decl_ok/enumTypeDeclaration-serializable:
   -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
   ---- ;; evaluate expressions
   -- if nameIR = $name(name)
-  -- if namedExpression_field*
-      = $flatten_namedExpressionList(namedExpressionList_field)
-  -- Enum_serializable_fields_ok:
-      TC_0 nameIR typeIR |- namedExpression_field*
+  -- Enum_serializable_fieldList_ok:
+      TC_0 nameIR typeIR |- namedExpressionList_field
                           : TC_1 namedExpressionIR_field* `# value_field*
   ---- ;; add enum field values to the context
   -- if ((nameIR_field `= _) = namedExpressionIR_field)*
