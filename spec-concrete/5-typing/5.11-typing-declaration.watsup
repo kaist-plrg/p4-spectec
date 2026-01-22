@@ -617,6 +617,8 @@ rule Decl_ok/parserDeclaration:
            `( parameterList ) constructorParameterListOpt
            `{ parserLocalDeclarationList parserStateList }
         : TC_6 parserDeclarationIR
+  ---- ;; collect bound variables
+  -- if B = $bound(GLOBAL, TC_0)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; check constructor parameters
@@ -639,7 +641,7 @@ rule Decl_ok/parserDeclaration:
       TC_5 |- parserStateList : parserStateIR*
   ---- ;; check apply method
   -- if callableTypeDefIR = PARSER_APPLY `( parameterIR* )
-  -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
+  -- CallableTypeDef_wf: B |- callableTypeDefIR
   ---- ;; create parser object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
@@ -647,7 +649,7 @@ rule Decl_ok/parserDeclaration:
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
           `( constructorParameterIR* ) `: typeIR_parser
-  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if parserDeclarationIR
@@ -666,6 +668,8 @@ rule Decl_ok/controlDeclaration:
            `( parameterList ) constructorParameterListOpt
            `{ controlLocalDeclarationList APPLY controlBody }
         : TC_6 controlDeclarationIR
+  ---- ;; collect bound variables
+  -- if B = $bound(GLOBAL, TC_0)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; check constructor parameters
@@ -687,7 +691,7 @@ rule Decl_ok/controlDeclaration:
   -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
   ---- ;; check apply method
   -- if callableTypeDefIR = CONTROL_APPLY `( parameterIR* )
-  -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
+  -- CallableTypeDef_wf: B |- callableTypeDefIR
   ---- ;; create control object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
@@ -695,7 +699,7 @@ rule Decl_ok/controlDeclaration:
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< eps `, eps >
           `( constructorParameterIR* ) `: typeIR_control
-  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
   -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if controlDeclarationIR
@@ -804,9 +808,11 @@ rule Enum_serializable_fieldList_ok:
 rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{ namedExpressionList_field _ }
         : TC_3 enumTypeDeclarationIR
+  ---- ;; collect bound variables
+  -- if B = $bound(GLOBAL, TC_0)
   ---- ;; check underlying type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  -- Type_wf: B |- typeIR
   ---- ;; evaluate expressions
   -- if nameIR = $name(name)
   -- Enum_serializable_fieldList_ok:
@@ -821,7 +827,7 @@ rule Decl_ok/enumTypeDeclaration-serializable:
   -- if TC_2
       = $add_vars_t(GLOBAL, TC_0, id_field*, varTypeIR*)
   ---- ;; add enum type to context
-  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- enumTypeDefIR
+  -- TypeDef_wf: B |- enumTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_2, nameIR, enumTypeDefIR)
   ---- ;; create IR
   -- if enumTypeDeclarationIR
@@ -919,13 +925,15 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
   rule Decl_ok/type:
     TC_0 |- annotationList TYPEDEF type name `;
           : TC_1 typedefDeclarationIR
+    ---- ;; collect bound variables
+    -- if B = $bound(GLOBAL, TC_0)
     ---- ;; check type
     -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
-    -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+    -- Type_wf: B |- typeIR
     ---- ;; create typedef and add to context
     -- if nameIR = $name(name)
     -- if typeDefIR_typedef = TYPEDEF nameIR typeIR
-    -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typeDefIR_typedef
+    -- TypeDef_wf: B |- typeDefIR_typedef
     -- if TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_typedef)
     ---- ;; create IR
     -- if typedefDeclarationIR
@@ -985,13 +993,15 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
 rule Decl_ok/typedefDeclaration-newtype:
   TC_0 |- annotationList TYPE type name `;
         : TC_1 typedefDeclarationIR
+  ---- ;; collect bound variables
+  -- if B = $bound(GLOBAL, TC_0)
   ---- ;; check type
   -- Type_ok: GLOBAL TC_0 |- type : typeIR `# eps
-  -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+  -- Type_wf: B |- typeIR
   ---- ;; create new type and add to context
   -- if nameIR = $name(name)
   -- if newTypeIR = TYPE nameIR typeIR
-  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- newTypeIR
+  -- TypeDef_wf: B |- newTypeIR
   -- if TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, newTypeIR)
   ---- ;; create IR
   -- if typedefDeclarationIR
@@ -1054,6 +1064,8 @@ rule Decl_ok/controlTypeDeclaration:
 rule Decl_ok/packageTypeDeclaration:
   TC_0 |- annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;
         : TC_4 packageTypeDeclarationIR
+  ---- ;; collect bound variables
+  -- if B = $bound(GLOBAL, TC_0)
   ---- ;; set block context
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PACKAGE ]
   ---- ;; add type parameters to the context
@@ -1068,7 +1080,7 @@ rule Decl_ok/packageTypeDeclaration:
   -- if (_ _ typeIR_package_inner _ _ = constructorParameterIR)*
   -- if packageObjectTypeDefIR
       = PACKAGE nameIR `< typeId_expl* `, typeId_impl* > `{ typeIR_package_inner* }
-  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- packageObjectTypeDefIR
+  -- TypeDef_wf: B |- packageObjectTypeDefIR
   -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
   ---- ;; update the context with package constructor
   -- if constructorId = $constructorId(name, `( parameterList ))
@@ -1076,7 +1088,7 @@ rule Decl_ok/packageTypeDeclaration:
   -- if constructorTypeDefIR
       = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
           `( constructorParameterIR* ) `: typeIR_package
-  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
   -- if TC_4 = $add_constructorDef_t(TC_3, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if packageTypeDeclarationIR

@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-21</span>
+<span id="revdate">2026-01-22</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -1111,149 +1111,152 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-declaration">11. Declarations</a>
 <ul class="sectlevel2">
-<li><a href="#sec-variable-declaration">11.1. Variable declarations</a>
+<li><a href="#_type_checking_declarations">11.1. Type checking declarations</a></li>
+<li><a href="#_compile_time_evaluation_of_declarations">11.2. Compile-time evaluation of declarations</a></li>
+<li><a href="#_runtime_evaluation_of_declarations">11.3. Runtime evaluation of declarations</a></li>
+<li><a href="#sec-variable-declaration">11.4. Variable declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_26">11.1.1. Type checking</a></li>
-<li><a href="#_runtime_evaluation">11.1.2. Runtime evaluation</a></li>
+<li><a href="#_type_checking_26">11.4.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation">11.4.2. Runtime evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-constant-declaration">11.2. Constant declarations</a>
+<li><a href="#sec-constant-declaration">11.5. Constant declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_27">11.2.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation">11.2.2. Compile-time evaluation</a></li>
-<li><a href="#_runtime_evaluation_2">11.2.3. Runtime evaluation</a></li>
+<li><a href="#_type_checking_27">11.5.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation">11.5.2. Compile-time evaluation</a></li>
+<li><a href="#_runtime_evaluation_2">11.5.3. Runtime evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-instantiation-declaration">11.3. Instantiations</a>
+<li><a href="#sec-instantiation-declaration">11.6. Instantiations</a>
 <ul class="sectlevel3">
-<li><a href="#sec-instantiation-abstract-method">11.3.1. Objects with abstract methods</a>
+<li><a href="#sec-instantiation-abstract-method">11.6.1. Objects with abstract methods</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_28">11.3.1.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_2">11.3.1.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_28">11.6.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_2">11.6.1.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#_type_checking_29">11.3.2. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_3">11.3.3. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_29">11.6.2. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_3">11.6.3. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-function-declaration">11.4. Function declarations</a>
+<li><a href="#sec-function-declaration">11.7. Function declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_30">11.4.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_4">11.4.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_30">11.7.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_4">11.7.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-action-declaration">11.5. Action declarations</a>
+<li><a href="#sec-action-declaration">11.8. Action declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_31">11.5.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_5">11.5.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_31">11.8.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_5">11.8.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-error-declaration">11.6. Error declarations</a>
+<li><a href="#sec-error-declaration">11.9. Error declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_32">11.6.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_6">11.6.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_32">11.9.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_6">11.9.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-match-kind-declaration">11.7. Match kind declarations</a>
+<li><a href="#sec-match-kind-declaration">11.10. Match kind declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_33">11.7.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_7">11.7.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_33">11.10.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_7">11.10.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-extern-declaration">11.8. Extern declarations</a>
+<li><a href="#sec-extern-declaration">11.11. Extern declarations</a>
 <ul class="sectlevel3">
-<li><a href="#sec-extern-function-declaration">11.8.1. Extern function declarations</a>
+<li><a href="#sec-extern-function-declaration">11.11.1. Extern function declarations</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_34">11.8.1.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_8">11.8.1.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_34">11.11.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_8">11.11.1.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-extern-object-declaration">11.8.2. Extern object declarations</a>
+<li><a href="#sec-extern-object-declaration">11.11.2. Extern object declarations</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_35">11.8.2.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_9">11.8.2.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_35">11.11.2.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_9">11.11.2.2. Compile-time evaluation</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-parser-declaration">11.9. Parser declarations</a>
+<li><a href="#sec-parser-declaration">11.12. Parser declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_36">11.9.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_10">11.9.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_36">11.12.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_10">11.12.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-control-declaration">11.10. Control declarations</a>
+<li><a href="#sec-control-declaration">11.13. Control declarations</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_37">11.10.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_11">11.10.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_37">11.13.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_11">11.13.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-enum-type-declaration">11.11. Enum type declaration</a>
+<li><a href="#sec-enum-type-declaration">11.14. Enum type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#sec-enum-type-declaration-serializable">11.11.1. Enum type declarations without an underyling type</a>
+<li><a href="#sec-enum-type-declaration-serializable">11.14.1. Enum type declarations without an underyling type</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_38">11.11.1.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_12">11.11.1.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_38">11.14.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_12">11.14.1.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-enum-type-declaration-non-serializable">11.11.2. Enum type declarations with an underlying type</a>
+<li><a href="#sec-enum-type-declaration-non-serializable">11.14.2. Enum type declarations with an underlying type</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_39">11.11.2.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_13">11.11.2.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_39">11.14.2.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_13">11.14.2.2. Compile-time evaluation</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-struct-type-declaration">11.12. Struct type declaration</a>
+<li><a href="#sec-struct-type-declaration">11.15. Struct type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_40">11.12.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_14">11.12.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_40">11.15.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_14">11.15.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-header-type-declaration">11.13. Header type declaration</a>
+<li><a href="#sec-header-type-declaration">11.16. Header type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_41">11.13.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_15">11.13.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_41">11.16.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_15">11.16.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-header-union-type-declaration">11.14. Header union type declaration</a>
+<li><a href="#sec-header-union-type-declaration">11.17. Header union type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_42">11.14.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_16">11.14.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_42">11.17.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_16">11.17.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#_typedef_declaration">11.15. Typedef declaration</a>
+<li><a href="#_typedef_declaration">11.18. Typedef declaration</a>
 <ul class="sectlevel3">
-<li><a href="#sec-typedef-declaration">11.15.1. <code>typedef</code> declaration</a>
+<li><a href="#sec-typedef-declaration">11.18.1. <code>typedef</code> declaration</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_43">11.15.1.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_17">11.15.1.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_43">11.18.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_17">11.18.1.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-newtype-declaration">11.15.2. New type declaration</a>
+<li><a href="#sec-newtype-declaration">11.18.2. New type declaration</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_44">11.15.2.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_18">11.15.2.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_44">11.18.2.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_18">11.18.2.2. Compile-time evaluation</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#sec-parser-type-declaration">11.16. Parser type declaration</a>
+<li><a href="#sec-parser-type-declaration">11.19. Parser type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_45">11.16.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_19">11.16.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_45">11.19.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_19">11.19.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-control-type-declaration">11.17. Control type declaration</a>
+<li><a href="#sec-control-type-declaration">11.20. Control type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_46">11.17.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_20">11.17.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_46">11.20.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_20">11.20.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-package-type-declaration">11.18. Package type declaration</a>
+<li><a href="#sec-package-type-declaration">11.21. Package type declaration</a>
 <ul class="sectlevel3">
-<li><a href="#_type_checking_47">11.18.1. Type checking</a></li>
-<li><a href="#_compile_time_evaluation_21">11.18.2. Compile-time evaluation</a></li>
+<li><a href="#_type_checking_47">11.21.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_21">11.21.2. Compile-time evaluation</a></li>
 </ul>
 </li>
 </ul>
@@ -5974,7 +5977,7 @@ type (these errors are declared in the P4 core library):</p>
 <p>The underlying representation of errors is target-dependent.</p>
 </div>
 <div class="paragraph">
-<p>Error declaration is described in detail in <a href="#sec-error-declaration">Section 11.6</a>.</p>
+<p>Error declaration is described in detail in <a href="#sec-error-declaration">Section 11.9</a>.</p>
 </div>
 <div class="sect4">
 <h5 id="_type_checking_3">8.1.4.1. Type checking</h5>
@@ -6057,7 +6060,7 @@ cannot declare new match kinds.</p>
 </div>
 <div class="paragraph">
 <p>Match kind declaration is described in detail in
-<a href="#sec-match-kind-declaration">Section 11.7</a>.</p>
+<a href="#sec-match-kind-declaration">Section 11.10</a>.</p>
 </div>
 <div class="sect4">
 <h5 id="_type_checking_4">8.1.5.1. Type checking</h5>
@@ -7756,7 +7759,7 @@ structValue
 <h5 id="_type_checking_15">8.3.5.1. Type checking</h5>
 <div class="paragraph">
 <p>Struct types are introduced by <code>struct</code> declarations. Its typing rule is
-explained in <a href="#sec-struct-type-declaration">Section 11.12</a>. Struct types are then used by
+explained in <a href="#sec-struct-type-declaration">Section 11.15</a>. Struct types are then used by
 referencing their names. Thus struct types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -7972,7 +7975,7 @@ headerValue
 <h5 id="_type_checking_16">8.3.6.1. Type checking</h5>
 <div class="paragraph">
 <p>Header types are introduced by <code>header</code> declarations. Its typing rule is
-explained in <a href="#sec-header-type-declaration">Section 11.13</a>. Header types are then used by
+explained in <a href="#sec-header-type-declaration">Section 11.16</a>. Header types are then used by
 referencing their names. Thus header types can be obtained from named types,
 as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8094,7 +8097,7 @@ headerUnionValue
 <h5 id="_type_checking_17">8.3.7.1. Type checking</h5>
 <div class="paragraph">
 <p>Header union types are introduced by <code>header_union</code> declarations. Its typing
-rule is explained in <a href="#sec-header-union-type-declaration">Section 11.14</a>. Header union types
+rule is explained in <a href="#sec-header-union-type-declaration">Section 11.17</a>. Header union types
 are then used by referencing their names. Thus header union types can be
 obtained from named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8287,7 +8290,7 @@ representation range of the underlying type.</p>
 <h5 id="_type_checking_18">8.3.8.3. Type checking</h5>
 <div class="paragraph">
 <p>Enum types are introduced by <code>enum</code> declarations. Its typing rule is explained
-in <a href="#sec-enum-type-declaration">Section 11.11</a>. Enum types are then used by referencing their
+in <a href="#sec-enum-type-declaration">Section 11.14</a>. Enum types are then used by referencing their
 names. Thus enum types can be obtained from named types, as illustrated in
 <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8566,7 +8569,7 @@ Internally, parser types are represented as:</p>
 <h5 id="_type_checking_20">8.4.2.1. Type checking</h5>
 <div class="paragraph">
 <p>Parser object types are introduced by parser type declarations. Its typing rule is
-explained in <a href="#sec-parser-type-declaration">Section 11.16</a>. Parser object types are then used
+explained in <a href="#sec-parser-type-declaration">Section 11.19</a>. Parser object types are then used
 by referencing their names. Thus parser object types can be obtained from named
 types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8650,7 +8653,7 @@ Internally, control types are represented as:</p>
 <h5 id="_type_checking_21">8.4.3.1. Type checking</h5>
 <div class="paragraph">
 <p>Control object types are introduced by control type declarations. Its typing rule
-is explained in <a href="#sec-control-type-declaration">Section 11.17</a>. Control object types are then
+is explained in <a href="#sec-control-type-declaration">Section 11.20</a>. Control object types are then
 used by referencing their names. Thus control object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8731,7 +8734,7 @@ Internally, package types are represented as:</p>
 <h5 id="_type_checking_22">8.4.4.1. Type checking</h5>
 <div class="paragraph">
 <p>Package object types are introduced by <code>package</code> declarations. Its typing rule
-is explained in <a href="#sec-package-type-declaration">Section 11.18</a>. Package object types are then
+is explained in <a href="#sec-package-type-declaration">Section 11.21</a>. Package object types are then
 used by referencing their names. Thus package object types can be obtained from
 named types, as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 </div>
@@ -8931,7 +8934,7 @@ suitable number of type arguments:</p>
 <h5 id="_type_checking_23">8.5.1.1. Type checking</h5>
 <div class="paragraph">
 <p><code>typedef</code>s are introduced by <code>typedef</code> declarations. Its typing rule is
-explained in <a href="#sec-typedef-declaration">Section 11.15.1</a>. <code>typedef</code>s are then used by
+explained in <a href="#sec-typedef-declaration">Section 11.18.1</a>. <code>typedef</code>s are then used by
 referencing their names. Thus <code>typedef</code> types can be obtained from named types,
 as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
@@ -9033,7 +9036,7 @@ with the control-plane software).</p>
 <h5 id="_type_checking_24">8.5.2.1. Type checking</h5>
 <div class="paragraph">
 <p><code>type</code>s are introduced by <code>type</code> declarations. Its typing rule is explained
-in <a href="#sec-newtype-declaration">Section 11.15.2</a>. <code>type</code>s are then used by referencing their
+in <a href="#sec-newtype-declaration">Section 11.18.2</a>. <code>type</code>s are then used by referencing their
 names. Thus <code>type</code> types can be obtained from named types, as illustrated in
 <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
@@ -10606,7 +10609,7 @@ directionless parameters behave like <code>in</code> parameters.</p>
 </div>
 <div class="paragraph">
 <p>Actions are introduced by <code>action</code> declarations. Its typing and instantiation
-rules are explained in <a href="#sec-action-declaration">Section 11.5</a>. It introduces an action type
+rules are explained in <a href="#sec-action-declaration">Section 11.8</a>. It introduces an action type
 definition:</p>
 </div>
 <div id="actionTypeDefIR" class="listingblock">
@@ -10765,7 +10768,7 @@ on all possible execution paths.</p>
 </div>
 <div class="paragraph">
 <p>The typing and instantiation rules for <code>function</code> declarations is explained in
-<a href="#sec-function-declaration">Section 11.4</a>. This introduces a function type definition, which
+<a href="#sec-function-declaration">Section 11.7</a>. This introduces a function type definition, which
 can be specialized to a function type.</p>
 </div>
 <div class="listingblock">
@@ -10894,7 +10897,7 @@ externFunctionTypeIR
 </div>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-extern-function-declaration">Section 11.8.1</a> for the typing and instantiation
+<p>See <a href="#sec-extern-function-declaration">Section 11.11.1</a> for the typing and instantiation
 rules for <code>extern</code> function declarations.</p>
 </div>
 <div class="sect4">
@@ -11547,7 +11550,7 @@ how a fully-qualified name is constructed.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Using instantiations, described in <a href="#sec-instantiation-declaration">Section 11.3</a>.</p>
+<p>Using instantiations, described in <a href="#sec-instantiation-declaration">Section 11.6</a>.</p>
 </li>
 <li>
 <p>Using constructor call expressions, described in <a href="#sec-constructor-call-expression">Section 13.10.2</a>.</p>
@@ -13316,7 +13319,8 @@ typeDeclaration
 <p>As described in <a href="#sec-p4-abstract-machine">Chapter 7</a>, declarations are type checked,
 instantiated at compile time, and evaluated at runtime.</p>
 </div>
-<h6 id="_type_checking_declarations" class="discrete">§ Type checking declarations</h6>
+<div class="sect2">
+<h3 id="_type_checking_declarations">11.1. Type checking declarations</h3>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -13376,7 +13380,9 @@ typeDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<h6 id="_compile_time_evaluation_of_declarations" class="discrete">§ Compile-time evaluation of declarations</h6>
+</div>
+<div class="sect2">
+<h3 id="_compile_time_evaluation_of_declarations">11.2. Compile-time evaluation of declarations</h3>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -13411,21 +13417,24 @@ typeDeclarationIR
 </div>
 <div class="paragraph">
 <p>Instantiation statically allocates instantiated objects in the global
-<code>store</code>. <a href="#sec-instantiation-declaration">Section 11.3</a> describes how objects are
+<code>store</code>. <a href="#sec-instantiation-declaration">Section 11.6</a> describes how objects are
 instantiated from a declaration.</p>
 </div>
-<h6 id="_runtime_evaluation_of_declarations" class="discrete">§ Runtime evaluation of declarations</h6>
+</div>
+<div class="sect2">
+<h3 id="_runtime_evaluation_of_declarations">11.3. Runtime evaluation of declarations</h3>
 <div class="paragraph">
 <p>All declarations except constant and variable declarations are evaluated at
-compile-time. See <a href="#sec-variable-declaration">Section 11.1</a> for the runtime evaluation of
-variable declarations and <a href="#sec-constant-declaration">Section 11.2</a> for the runtime
+compile-time. See <a href="#sec-variable-declaration">Section 11.4</a> for the runtime evaluation of
+variable declarations and <a href="#sec-constant-declaration">Section 11.5</a> for the runtime
 evaluation of constant declarations.</p>
 </div>
 <div class="paragraph">
 <p>The subsequent sections describe each kind of declaration in detail.</p>
 </div>
+</div>
 <div class="sect2">
-<h3 id="sec-variable-declaration">11.1. Variable declarations</h3>
+<h3 id="sec-variable-declaration">11.4. Variable declarations</h3>
 <div class="paragraph">
 <p>Local variables are declared with a type, a name, and an optional initializer
 (as well as an optional annotation):</p>
@@ -13456,7 +13465,7 @@ base types, <code>struct</code>, <code>header</code>, header stack, <code>tuple<
 impossible to declare variables with type <code>int</code>, or with types that are only
 synthesized by the compiler (e.g., <code>set</code>) In addition, variables of type
 <code>parser</code>, <code>control</code>, <code>package</code>, or <code>extern</code> types must be declared using
-instantiations (see <a href="#sec-instantiation-declaration">Section 11.3</a>).</p>
+instantiations (see <a href="#sec-instantiation-declaration">Section 11.6</a>).</p>
 </div>
 <div class="paragraph">
 <p>After typing, variable declarations are represented in P4<sub>IR</sub> as:</p>
@@ -13526,7 +13535,7 @@ invocation of its enclosing block to the next. In particular, variables cannot
 be used to maintain state between different network packets.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_26">11.1.1. Type checking</h4>
+<h4 id="_type_checking_26">11.4.1. Type checking</h4>
 <div class="paragraph">
 <p>Variable declarations are type checked using the following relation:</p>
 </div>
@@ -13709,7 +13718,7 @@ be used to maintain state between different network packets.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_runtime_evaluation">11.1.2. Runtime evaluation</h4>
+<h4 id="_runtime_evaluation">11.4.2. Runtime evaluation</h4>
 <div class="paragraph">
 <p>Variable declarations are evaluated at runtime using the following relation:</p>
 </div>
@@ -13933,7 +13942,7 @@ side, initializer expression. Ideally, revisit this.
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-constant-declaration">11.2. Constant declarations</h3>
+<h3 id="sec-constant-declaration">11.5. Constant declarations</h3>
 <div class="paragraph">
 <p>Constant values are defined with the syntax:</p>
 </div>
@@ -13982,7 +13991,7 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_27">11.2.1. Type checking</h4>
+<h4 id="_type_checking_27">11.5.1. Type checking</h4>
 <div class="paragraph">
 <p>Constant declarations are type checked with the relation:</p>
 </div>
@@ -14162,7 +14171,7 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation">11.2.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation">11.5.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>Constant declarations are evaluated during instantiation phase with:</p>
 </div>
@@ -14291,7 +14300,7 @@ evaluated with:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_runtime_evaluation_2">11.2.3. Runtime evaluation</h4>
+<h4 id="_runtime_evaluation_2">11.5.3. Runtime evaluation</h4>
 <div class="paragraph">
 <p>Constant declarations are evaluated at runtime using the following relation:</p>
 </div>
@@ -14365,7 +14374,7 @@ evaluated with:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-instantiation-declaration">11.3. Instantiations</h3>
+<h3 id="sec-instantiation-declaration">11.6. Instantiations</h3>
 <div class="paragraph">
 <p>Instantiations are similar to variable declarations, but are reserved for the
 types with constructors (<code>extern</code> objects, <code>control</code> blocks, <code>parser</code>s,
@@ -14437,7 +14446,7 @@ c<span style="color: #24292f;background-color: #f6f8fa">()</span> c1<span style=
 declarations of constants and instantiations of extern objects are permitted.</p>
 </div>
 <div class="sect3">
-<h4 id="sec-instantiation-abstract-method">11.3.1. Objects with abstract methods</h4>
+<h4 id="sec-instantiation-abstract-method">11.6.1. Objects with abstract methods</h4>
 <div class="paragraph">
 <p>When instantiating an extern type that has <code>abstract</code> methods users have to
 supply implementations for all such methods. This is done using object
@@ -14509,7 +14518,7 @@ values is; target architectures may impose additional constraints on abstract
 methods.</p>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_28">11.3.1.1. Type checking</h5>
+<h5 id="_type_checking_28">11.6.1.1. Type checking</h5>
 <div class="paragraph">
 <p>An object declaration is type checked with the relation:</p>
 </div>
@@ -14755,7 +14764,7 @@ methods.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_2">11.3.1.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_2">11.6.1.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At compile-time, an object declaration is loaded with the relation:</p>
 </div>
@@ -14907,7 +14916,7 @@ methods.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_29">11.3.2. Type checking</h4>
+<h4 id="_type_checking_29">11.6.2. Type checking</h4>
 <div class="paragraph">
 <p>When used as a top-level declaration, instantiations are typed with:</p>
 </div>
@@ -15422,7 +15431,7 @@ provided or not.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_3">11.3.3. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_3">11.6.3. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>When used as a top-level declaration, instantiations are evaluated with:</p>
 </div>
@@ -15680,7 +15689,7 @@ provided or not.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-function-declaration">11.4. Function declarations</h3>
+<h3 id="sec-function-declaration">11.7. Function declarations</h3>
 <div class="paragraph">
 <p>Function declarations introduce user-defined functions into a P4 program.</p>
 </div>
@@ -15711,7 +15720,7 @@ functionDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_30">11.4.1. Type checking</h4>
+<h4 id="_type_checking_30">11.7.1. Type checking</h4>
 <div class="paragraph">
 <p>Function declarations are type checked with the relation:</p>
 </div>
@@ -15914,7 +15923,7 @@ functionDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_4">11.4.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_4">11.7.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, function declarations are loaded into the context with the relation:</p>
 </div>
@@ -16048,7 +16057,7 @@ functionDeclarationIR
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-action-declaration">11.5. Action declarations</h3>
+<h3 id="sec-action-declaration">11.8. Action declarations</h3>
 <div class="paragraph">
 <p><code>action</code> declarations introduce actions:</p>
 </div>
@@ -16071,7 +16080,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_31">11.5.1. Type checking</h4>
+<h4 id="_type_checking_31">11.8.1. Type checking</h4>
 <div class="paragraph">
 <p>Action declarations are type checked with the relation:</p>
 </div>
@@ -16248,7 +16257,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_5">11.5.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_5">11.8.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, function declarations are loaded into the context with the relation:</p>
 </div>
@@ -16378,7 +16387,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-error-declaration">11.6. Error declarations</h3>
+<h3 id="sec-error-declaration">11.9. Error declarations</h3>
 <div class="paragraph">
 <p><code>error</code> declarations introduce error elements.</p>
 </div>
@@ -16401,7 +16410,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_32">11.6.1. Type checking</h4>
+<h4 id="_type_checking_32">11.9.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16519,7 +16528,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_6">11.6.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_6">11.9.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At comile-time, error declarations are loaded into the context by:</p>
 </div>
@@ -16597,7 +16606,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-match-kind-declaration">11.7. Match kind declarations</h3>
+<h3 id="sec-match-kind-declaration">11.10. Match kind declarations</h3>
 <div class="paragraph">
 <p>Similar to <code>error</code> declarations, <code>match_kind</code> declarations introduce match kinds.</p>
 </div>
@@ -16620,7 +16629,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_33">11.7.1. Type checking</h4>
+<h4 id="_type_checking_33">11.10.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16720,7 +16729,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_7">11.7.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_7">11.10.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At comile-time, match kind declarations are loaded into the context by:</p>
 </div>
@@ -16780,7 +16789,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-extern-declaration">11.8. Extern declarations</h3>
+<h3 id="sec-extern-declaration">11.11. Extern declarations</h3>
 <div class="paragraph">
 <p>P4 supports extern object declarations and extern function declarations using
 the following syntax.</p>
@@ -16794,7 +16803,7 @@ the following syntax.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-extern-function-declaration">11.8.1. Extern function declarations</h4>
+<h4 id="sec-extern-function-declaration">11.11.1. Extern function declarations</h4>
 <div class="paragraph">
 <p>An extern function declaration introduces an extern function.</p>
 </div>
@@ -16821,7 +16830,7 @@ as:</p>
 represented.</p>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_34">11.8.1.1. Type checking</h5>
+<h5 id="_type_checking_34">11.11.1.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16923,7 +16932,7 @@ represented.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_8">11.8.1.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_8">11.11.1.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At comile-time, extern function declarations are loaded into the context by:</p>
 </div>
@@ -16977,7 +16986,7 @@ represented.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-extern-object-declaration">11.8.2. Extern object declarations</h4>
+<h4 id="sec-extern-object-declaration">11.11.2. Extern object declarations</h4>
 <div class="paragraph">
 <p>An extern object declaration introduces an extern object.</p>
 </div>
@@ -17004,7 +17013,7 @@ as:</p>
 represented.</p>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_35">11.8.2.1. Type checking</h5>
+<h5 id="_type_checking_35">11.11.2.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17131,7 +17140,7 @@ represented.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_9">11.8.2.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_9">11.11.2.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At comile-time, extern function declarations are loaded into the context by:</p>
 </div>
@@ -17338,7 +17347,7 @@ represented.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-parser-declaration">11.9. Parser declarations</h3>
+<h3 id="sec-parser-declaration">11.12. Parser declarations</h3>
 <div class="paragraph">
 <p>A <code>parser</code> declaration introduces a programmable parser:</p>
 </div>
@@ -17395,7 +17404,7 @@ parserDeclarationIR
 <p>See <a href="#sec-parser-object">Section 10.4</a> for details about parser objects.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_36">11.9.1. Type checking</h4>
+<h4 id="_type_checking_36">11.12.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17404,6 +17413,7 @@ parserDeclarationIR
 <pre>rulegroup Decl_ok/parserDeclaration:
   rule Decl_ok/parserDeclaration:
   TC_0 |- annotationList PARSER name `EMPTY `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_6 parserDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
  -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
  -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
@@ -17413,12 +17423,12 @@ parserDeclarationIR
  -- if TC_5 = TC_4[LOCAL.KIND = PARSER_STATE]
  -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*
  -- if callableTypeDefIR = PARSER_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
+ -- CallableTypeDef_wf: B |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
  -- if typeIR_parser = PARSER nameIR `&lt;eps&gt; `(parameterIR*)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_parser
- -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+ -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
  -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
  -- if parserDeclarationIR = annotationList PARSER nameIR `&lt;eps&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*}</pre>
 </div>
@@ -17437,6 +17447,9 @@ parserDeclarationIR
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>PARSER</code>.</p>
 </li>
@@ -17499,10 +17512,7 @@ parserDeclarationIR
 <p>Let <code>callableTypeDefIR</code> be <code>PARSER_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -17517,10 +17527,7 @@ parserDeclarationIR
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>parser</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
@@ -17537,7 +17544,7 @@ parserDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_10">11.9.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_10">11.12.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, parser declarations are loaded into the context as parser
 object constructors.</p>
@@ -17588,7 +17595,7 @@ object constructors.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-control-declaration">11.10. Control declarations</h3>
+<h3 id="sec-control-declaration">11.13. Control declarations</h3>
 <div class="paragraph">
 <p>A <code>control</code> declaration introduces a control block:</p>
 </div>
@@ -17643,7 +17650,7 @@ controlDeclarationIR
 <p>See <a href="#sec-control-object">Section 10.5</a> for details about control objects.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_37">11.10.1. Type checking</h4>
+<h4 id="_type_checking_37">11.13.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17652,6 +17659,7 @@ controlDeclarationIR
 <pre>rulegroup Decl_ok/controlDeclaration:
   rule Decl_ok/controlDeclaration:
   TC_0 |- annotationList CONTROL name `EMPTY `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
  -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
  -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
@@ -17661,12 +17669,12 @@ controlDeclarationIR
  -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
  -- if callableTypeDefIR = CONTROL_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- callableTypeDefIR
+ -- CallableTypeDef_wf: B |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
  -- if typeIR_control = CONTROL nameIR `&lt;eps&gt; `(parameterIR*)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_control
- -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+ -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
  -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
  -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;eps&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
 </div>
@@ -17685,6 +17693,9 @@ controlDeclarationIR
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>CONTROL</code>.</p>
 </li>
@@ -17747,10 +17758,7 @@ controlDeclarationIR
 <p>Let <code>callableTypeDefIR</code> be <code>CONTROL_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -17765,10 +17773,7 @@ controlDeclarationIR
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>control</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
@@ -17785,7 +17790,7 @@ controlDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_11">11.10.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_11">11.13.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, control declarations are loaded into the context as control
 object constructors.</p>
@@ -17836,7 +17841,7 @@ object constructors.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-enum-type-declaration">11.11. Enum type declaration</h3>
+<h3 id="sec-enum-type-declaration">11.14. Enum type declaration</h3>
 <div class="paragraph">
 <p>An enumeration type is defined using the following syntax:</p>
 </div>
@@ -17878,9 +17883,9 @@ namedValueListIR = namedValueIR*</code></pre>
 <p>See <a href="#sec-enum">Section 8.3.8</a> for more details on enums.</p>
 </div>
 <div class="sect3">
-<h4 id="sec-enum-type-declaration-serializable">11.11.1. Enum type declarations without an underyling type</h4>
+<h4 id="sec-enum-type-declaration-serializable">11.14.1. Enum type declarations without an underyling type</h4>
 <div class="sect4">
-<h5 id="_type_checking_38">11.11.1.1. Type checking</h5>
+<h5 id="_type_checking_38">11.14.1.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18017,7 +18022,7 @@ namedValueListIR = namedValueIR*</code></pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_12">11.11.1.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_12">11.14.1.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At compile-time, enum type declarations are loaded into the context by:</p>
 </div>
@@ -18103,9 +18108,9 @@ namedValueListIR = namedValueIR*</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-enum-type-declaration-non-serializable">11.11.2. Enum type declarations with an underlying type</h4>
+<h4 id="sec-enum-type-declaration-non-serializable">11.14.2. Enum type declarations with an underlying type</h4>
 <div class="sect4">
-<h5 id="_type_checking_39">11.11.2.1. Type checking</h5>
+<h5 id="_type_checking_39">11.14.2.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18114,8 +18119,9 @@ namedValueListIR = namedValueIR*</code></pre>
 <pre>rulegroup Decl_ok/enumTypeDeclaration-serializable:
   rule Decl_ok/enumTypeDeclaration-serializable:
   TC_0 |- annotationList ENUM type name `{namedExpressionList_field _} : TC_3 enumTypeDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- Type_ok: GLOBAL TC_0 |- type : typeIR # eps
- -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+ -- Type_wf: B |- typeIR
  -- if nameIR = $name(name)
  -- Enum_serializable_fieldList_ok: TC_0 nameIR typeIR |- namedExpressionList_field : TC_1 namedValueIR_field*
  -- (if ((nameIR_field = value_field) = namedValueIR_field))*
@@ -18123,7 +18129,7 @@ namedValueListIR = namedValueIR*</code></pre>
  -- if enumTypeDefIR = ENUM nameIR `&lt;typeIR&gt; `{(nameIR_field = value_field ;)*}
  -- (if (varTypeIR = `EMPTY enumTypeDefIR LCTK value_field))*
  -- if TC_2 = $add_vars_t(GLOBAL, TC_0, id_field*, varTypeIR*)
- -- TypeDef_wf: $bound(GLOBAL, TC_0) |- enumTypeDefIR
+ -- TypeDef_wf: B |- enumTypeDefIR
  -- if TC_3 = $add_typeDef_t(GLOBAL, TC_2, nameIR, enumTypeDefIR)
  -- if enumTypeDeclarationIR = annotationList ENUM typeIR nameIR `{namedValueIR_field*}</pre>
 </div>
@@ -18143,6 +18149,9 @@ namedValueListIR = namedValueIR*</code></pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
@@ -18156,10 +18165,7 @@ namedValueListIR = namedValueIR*</code></pre>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18232,10 +18238,7 @@ namedValueListIR = namedValueIR*</code></pre>
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_vars_t"><code>TC<sub>0</sub></code> where each of <code>id<sub>field</sub><sup>*</sup></code> to each of <code>varTypeIR<sup>*</sup></code> are added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#TypeDef_wf"><code>enumTypeDefIR</code> is a well-formed type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>2</sub></code> where <code>nameIR</code> to <code>enumTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -18395,7 +18398,7 @@ namedValueListIR = namedValueIR*</code></pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_13">11.11.2.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_13">11.14.2.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At compile-time, enum type declarations are loaded into the context by:</p>
 </div>
@@ -18482,7 +18485,7 @@ namedValueListIR = namedValueIR*</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-struct-type-declaration">11.12. Struct type declaration</h3>
+<h3 id="sec-struct-type-declaration">11.15. Struct type declaration</h3>
 <div class="paragraph">
 <p>A struct type is defined with the following syntax:</p>
 </div>
@@ -18522,7 +18525,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 <p>See <a href="#sec-struct">Section 8.3.5</a> for more information about struct types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_40">11.12.1. Type checking</h4>
+<h4 id="_type_checking_40">11.15.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18640,7 +18643,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_14">11.12.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_14">11.15.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, struct type declarations are loaded into the context by:</p>
 </div>
@@ -18704,7 +18707,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-header-type-declaration">11.13. Header type declaration</h3>
+<h3 id="sec-header-type-declaration">11.16. Header type declaration</h3>
 <div class="paragraph">
 <p>A header type is defined with the following syntax:</p>
 </div>
@@ -18744,7 +18747,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 <p>See <a href="#sec-header">Section 8.3.6</a> for more information about header types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_41">11.13.1. Type checking</h4>
+<h4 id="_type_checking_41">11.16.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18862,7 +18865,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_15">11.13.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_15">11.16.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, header type declarations are loaded into the context by:</p>
 </div>
@@ -18926,7 +18929,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-header-union-type-declaration">11.14. Header union type declaration</h3>
+<h3 id="sec-header-union-type-declaration">11.17. Header union type declaration</h3>
 <div class="paragraph">
 <p>A header union type is defined with the following syntax:</p>
 </div>
@@ -18966,7 +18969,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 <p>See <a href="#sec-header-union">Section 8.3.7</a> for more information about header union types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_42">11.14.1. Type checking</h4>
+<h4 id="_type_checking_42">11.17.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19084,7 +19087,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_16">11.14.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_16">11.17.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, header union type declarations are loaded into the context by:</p>
 </div>
@@ -19148,7 +19151,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_typedef_declaration">11.15. Typedef declaration</h3>
+<h3 id="_typedef_declaration">11.18. Typedef declaration</h3>
 <div class="paragraph">
 <p>A <code>typedef</code> or <code>type</code> declaration introduces an alias for an existing type.</p>
 </div>
@@ -19182,12 +19185,12 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-typedef-declaration">11.15.1. <code>typedef</code> declaration</h4>
+<h4 id="sec-typedef-declaration">11.18.1. <code>typedef</code> declaration</h4>
 <div class="paragraph">
 <p>See <a href="#sec-typedef">Section 8.5.1</a> for more details about <code>typedef</code> aliases.</p>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_43">11.15.1.1. Type checking</h5>
+<h5 id="_type_checking_43">11.18.1.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19196,11 +19199,12 @@ typedefDeclarationIR
 <pre>rulegroup Decl_ok/typedefDeclaration-typedef:
   rule Decl_ok/type:
   TC_0 |- annotationList TYPEDEF type name ; : TC_1 typedefDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- Type_ok: GLOBAL TC_0 |- type : typeIR # eps
- -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+ -- Type_wf: B |- typeIR
  -- if nameIR = $name(name)
  -- if typeDefIR_typedef = TYPEDEF nameIR typeIR
- -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typeDefIR_typedef
+ -- TypeDef_wf: B |- typeDefIR_typedef
  -- if TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_typedef)
  -- if typedefDeclarationIR = annotationList TYPEDEF typeIR nameIR ;
   rule Decl_ok/derivedTypeDeclaration-mono:
@@ -19249,6 +19253,9 @@ typedefDeclarationIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
@@ -19262,10 +19269,7 @@ typedefDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -19274,10 +19278,7 @@ typedefDeclarationIR
 <p>Let <code>typeDefIR<sub>typedef</sub></code> be <code>TYPEDEF</code> <code>nameIR</code> <code>typeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>typedef</sub></code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#TypeDef_wf"><code>typeDefIR<sub>typedef</sub></code> is a well-formed type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>typeDefIR<sub>typedef</sub></code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -19400,7 +19401,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_17">11.15.1.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_17">11.18.1.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At compile-time, <code>typedef</code>s are loaded into the context with:</p>
 </div>
@@ -19551,12 +19552,12 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-newtype-declaration">11.15.2. New type declaration</h4>
+<h4 id="sec-newtype-declaration">11.18.2. New type declaration</h4>
 <div class="paragraph">
 <p>See <a href="#sec-newtype">Section 8.5.2</a> for more details about new type aliases.</p>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_44">11.15.2.1. Type checking</h5>
+<h5 id="_type_checking_44">11.18.2.1. Type checking</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19565,11 +19566,12 @@ typedefDeclarationIR
 <pre>rulegroup Decl_ok/typedefDeclaration-newtype:
   rule Decl_ok/typedefDeclaration-newtype:
   TC_0 |- annotationList TYPE type name ; : TC_1 typedefDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- Type_ok: GLOBAL TC_0 |- type : typeIR # eps
- -- Type_wf: $bound(GLOBAL, TC_0) |- typeIR
+ -- Type_wf: B |- typeIR
  -- if nameIR = $name(name)
  -- if newTypeIR = TYPE nameIR typeIR
- -- TypeDef_wf: $bound(GLOBAL, TC_0) |- newTypeIR
+ -- TypeDef_wf: B |- newTypeIR
  -- if TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, newTypeIR)
  -- if typedefDeclarationIR = annotationList TYPE typeIR nameIR ;</pre>
 </div>
@@ -19589,6 +19591,9 @@ typedefDeclarationIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>typeIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
@@ -19602,10 +19607,7 @@ typedefDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -19614,10 +19616,7 @@ typedefDeclarationIR
 <p>Let <code>newTypeIR</code> be <code>TYPE</code> <code>nameIR</code> <code>typeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#TypeDef_wf"><code>newTypeIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#TypeDef_wf"><code>newTypeIR</code> is a well-formed type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>newTypeIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -19634,7 +19633,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect4">
-<h5 id="_compile_time_evaluation_18">11.15.2.2. Compile-time evaluation</h5>
+<h5 id="_compile_time_evaluation_18">11.18.2.2. Compile-time evaluation</h5>
 <div class="paragraph">
 <p>At compile-time, <code>type</code>s are loaded into the context with:</p>
 </div>
@@ -19681,7 +19680,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-parser-type-declaration">11.16. Parser type declaration</h3>
+<h3 id="sec-parser-type-declaration">11.19. Parser type declaration</h3>
 <div class="paragraph">
 <p>A parser type declaration introduces a new parser type.</p>
 </div>
@@ -19706,7 +19705,7 @@ typedefDeclarationIR
 <p>See <a href="#sec-parser-object-type">Section 8.4.2</a> for more details on parser object types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_45">11.16.1. Type checking</h4>
+<h4 id="_type_checking_45">11.19.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19789,7 +19788,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_19">11.16.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_19">11.19.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, a parser type declaration is loaded into the context with:</p>
 </div>
@@ -19835,7 +19834,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-control-type-declaration">11.17. Control type declaration</h3>
+<h3 id="sec-control-type-declaration">11.20. Control type declaration</h3>
 <div class="paragraph">
 <p>A control type declaration introduces a new control type.</p>
 </div>
@@ -19860,7 +19859,7 @@ typedefDeclarationIR
 <p>See <a href="#sec-control-object-type">Section 8.4.3</a> for more details on control object types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_46">11.17.1. Type checking</h4>
+<h4 id="_type_checking_46">11.20.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19943,7 +19942,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_20">11.17.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_20">11.20.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, a control type declaration is loaded into the context with:</p>
 </div>
@@ -19989,7 +19988,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-package-type-declaration">11.18. Package type declaration</h3>
+<h3 id="sec-package-type-declaration">11.21. Package type declaration</h3>
 <div class="paragraph">
 <p>A package type declaration introduces a new package type.</p>
 </div>
@@ -20014,7 +20013,7 @@ typedefDeclarationIR
 <p>See <a href="#sec-package-object-type">Section 8.4.4</a> for more details on package object types.</p>
 </div>
 <div class="sect3">
-<h4 id="_type_checking_47">11.18.1. Type checking</h4>
+<h4 id="_type_checking_47">11.21.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20023,18 +20022,19 @@ typedefDeclarationIR
 <pre>rulegroup Decl_ok/packageTypeDeclaration:
   rule Decl_ok/packageTypeDeclaration:
   TC_0 |- annotationList PACKAGE name typeParameterListOpt `(parameterList) ; : TC_4 packageTypeDeclarationIR
+ -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = PACKAGE]
  -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
  -- ConstructorParameterListOpt_ok: TC_2 |- `(parameterList) : constructorParameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- (if (_ _ typeIR_package_inner _ _ = constructorParameterIR))*
  -- if packageObjectTypeDefIR = PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{typeIR_package_inner*}
- -- TypeDef_wf: $bound(GLOBAL, TC_0) |- packageObjectTypeDefIR
+ -- TypeDef_wf: B |- packageObjectTypeDefIR
  -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
  -- if constructorId = $constructorId(name, `(parameterList))
  -- if typeIR_package = $typeIR_of_typeDefIR(packageObjectTypeDefIR)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_package
- -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+ -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
  -- if TC_4 = $add_constructorDef_t(TC_3, constructorId, constructorTypeDefIR)
  -- if packageTypeDeclarationIR = annotationList PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) ;</pre>
 </div>
@@ -20053,6 +20053,9 @@ typedefDeclarationIR
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>PACKAGE</code>.</p>
 </li>
@@ -20100,10 +20103,7 @@ typedefDeclarationIR
 <p>Let <code>packageObjectTypeDefIR</code> be <code>PACKAGE</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>typeIR<sub>package_inner</sub><sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#TypeDef_wf"><code>packageObjectTypeDefIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#TypeDef_wf"><code>packageObjectTypeDefIR</code> is a well-formed type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>packageObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -20118,10 +20118,7 @@ typedefDeclarationIR
 <p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>package</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>4</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>3</sub></code></a>.</p>
@@ -20138,7 +20135,7 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="_compile_time_evaluation_21">11.18.2. Compile-time evaluation</h4>
+<h4 id="_compile_time_evaluation_21">11.21.2. Compile-time evaluation</h4>
 <div class="paragraph">
 <p>At compile-time, a package type declaration is loaded into the context with:</p>
 </div>
@@ -32734,7 +32731,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-21 22:36:56 +0900
+Last updated 2026-01-22 10:21:44 +0900
 </div>
 </div>
 </body>
