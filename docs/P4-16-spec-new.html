@@ -10327,6 +10327,9 @@ the same type as the parameter type.</p>
 </div>
 </li>
 <li>
+<p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>init</sub></code></a>.</p>
+</li>
+<li>
 <p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> is <code>LCTK</code>.</p>
 </li>
 <li>
@@ -13521,20 +13524,6 @@ synthesized by the compiler (e.g., <code>set</code>) In addition, variables of t
 instantiations (see <a href="#sec-instantiation-declaration">Section 11.6</a>).</p>
 </div>
 <div class="paragraph">
-<p>After typing, variable declarations are represented in P4<sub>IR</sub> as:</p>
-</div>
-<div id="variableDeclarationIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">initializerIR
-   : = typedExpressionIR
-   ;
-
-variableDeclarationIR
-   : annotationList typeIR nameIR initializerOptIR ;
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
 <p>Reading the value of a variable that has not been initialized yields an
 undefined result. The compiler should attempt to detect and emit a warning in
 such situations.</p>
@@ -13625,7 +13614,21 @@ be used to maintain state between different network packets.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>It is defined by the following rules:</p>
+<p>After typing, variable declarations are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="variableDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">initializerIR
+   : = typedExpressionIR
+   ;
+
+variableDeclarationIR
+   : annotationList typeIR nameIR initializerOptIR ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These are produced by the following rules:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14011,26 +14014,8 @@ constantDeclaration
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>initializer</code> expression must be a local compile-time known value. In P4<sub>IR</sub>,
-constant declarations have the syntax:</p>
-</div>
-<div id="constantDeclarationIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantInitializerIR
-   : = value
-   ;
-
-constantDeclarationIR
-   : annotationList CONST typeIR nameIR constantInitializerIR ;
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Notice that <code>constantInitializerIR</code> is reduced to a <code>value</code> in P4<sub>IR</sub>, where
-<code>value</code> is computed from <code>initializer</code> via local compile-time evaluation.</p>
-</div>
-<div class="paragraph">
-<p>A constant declaration introduces a constant whose value has the specified type.
+<p>The <code>initializer</code> expression must be a local compile-time known value. A
+constant declaration introduces a constant whose value has the specified type.
 The following are all legal constant declarations:</p>
 </div>
 <div class="listingblock">
@@ -14081,7 +14066,23 @@ The following are all legal constant declarations:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>It is defined by the following rule:</p>
+<p>After typing, in P4<sub>IR</sub>, constant declarations have the syntax:</p>
+</div>
+<div id="constantDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantInitializerIR
+   : = value
+   ;
+
+constantDeclarationIR
+   : annotationList CONST typeIR nameIR constantInitializerIR ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that <code>constantInitializerIR</code> is reduced to a <code>value</code> in P4<sub>IR</sub>, where
+<code>value</code> is computed from <code>initializer</code> via local compile-time evaluation. It is
+defined by the following rule:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -14442,18 +14443,8 @@ and <code>package</code>s):</p>
 </div>
 </div>
 <div class="paragraph">
-<p>An instantiation is written as a constructor invocation followed by a name. In
-P4<sub>IR</sub>, instantiations have the syntax:</p>
-</div>
-<div id="instantiationIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiationIR
-   : annotationList typeIR prefixedNameIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) nameIR objectInitializerOptIR ;
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Instantiations are always executed at compilation time (Section
+<p>An instantiation is written as a constructor invocation followed by a name.
+Instantiations are always executed at compilation time (Section
 <a href="#sec-instantiation">Section 7.3</a>). The effect is to allocate an object with the specified
 name, and to bind it to the result of the constructor invocation. Note that
 instantiation arguments can be specified by name.</p>
@@ -14967,51 +14958,6 @@ methods.</p>
 <div class="sect3">
 <h4 id="_type_checking_29">11.6.2. Type checking</h4>
 <div class="paragraph">
-<p>When used as a top-level declaration, instantiations are typed with:</p>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>rulegroup Decl_ok/instantiation:
-  rule Decl_ok/instantiation:
-  TC_0 |- instantiation : TC_1 instantiationIR
- -- InstDecl_ok: GLOBAL TC_0 |- instantiation : TC_1 instantiationIR</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Decl_ok">Typing <code>instantiation</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#InstDecl_ok">typing <code>instantiation</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="paragraph">
 <p>Instantiations are type checked with the relation:</p>
 </div>
 <details>
@@ -15044,6 +14990,16 @@ methods.</p>
 </li>
 </ul>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, in P4<sub>IR</sub>, instantiations have the syntax:</p>
+</div>
+<div id="instantiationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiationIR
+   : annotationList typeIR prefixedNameIR `&lt; typeArgumentListIR &gt; `( argumentListIR ) nameIR objectInitializerOptIR ;
+   ;</code></pre>
 </div>
 </div>
 <details>
@@ -15176,6 +15132,51 @@ methods.</p>
 </li>
 </ol>
 </div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When used as a top-level declaration, instantiations are typed with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Decl_ok/instantiation:
+  rule Decl_ok/instantiation:
+  TC_0 |- instantiation : TC_1 instantiationIR
+ -- InstDecl_ok: GLOBAL TC_0 |- instantiation : TC_1 instantiationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decl_ok">Typing <code>instantiation</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#InstDecl_ok">typing <code>instantiation</code>, under cursor <code>GLOBAL</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -15482,51 +15483,6 @@ provided or not.</p>
 <div class="sect3">
 <h4 id="_compile_time_evaluation_3">11.6.3. Compile-time evaluation</h4>
 <div class="paragraph">
-<p>When used as a top-level declaration, instantiations are evaluated with:</p>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>rulegroup Decl_inst/instantiationIR:
-  rule Decl_inst/instantiationIR:
-  IC_0 STO_0 |- instantiationIR : IC_1 STO_1
- -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>instantiationIR</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let the updated instantiation context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and the reference to the object <code>_</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#InstDecl_inst">loading <code>instantiationIR</code>, under cursor <code>GLOBAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and the store <code>STO<sub>1</sub></code>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="paragraph">
 <p>Instantiations are evaluated at compile-time with the relation:</p>
 </div>
 <details>
@@ -15735,13 +15691,55 @@ provided or not.</p>
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>When used as a top-level declaration, instantiations are evaluated with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Decl_inst/instantiationIR:
+  rule Decl_inst/instantiationIR:
+  IC_0 STO_0 |- instantiationIR : IC_1 STO_1
+ -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decl_inst">Loading <code>instantiationIR</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated instantiation context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and the reference to the object <code>_</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#InstDecl_inst">loading <code>instantiationIR</code>, under cursor <code>GLOBAL</code>, instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and the store <code>STO<sub>1</sub></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="sec-function-declaration">11.7. Function declarations</h3>
-<div class="paragraph">
-<p>Function declarations introduce user-defined functions into a P4 program.</p>
-</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototype
@@ -15754,19 +15752,9 @@ functionDeclaration
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#sec-user-defined-function">Section 9.4.1</a> describes the semantics of user-defined functions in P4.
-After type checking, function declarations are represented in P4<sub>IR</sub> as:</p>
-</div>
-<div id="functionDeclarationIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototypeIR
-   : typeIR nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR )
-   ;
-
-functionDeclarationIR
-   : annotationList functionPrototypeIR blockStatementIR
-   ;</code></pre>
-</div>
+<p>Function declarations introduce user-defined functions into a P4 program.
+<a href="#sec-user-defined-function">Section 9.4.1</a> describes the semantics of user-defined functions
+in P4.</p>
 </div>
 <div class="sect3">
 <h4 id="_type_checking_30">11.7.1. Type checking</h4>
@@ -15806,7 +15794,21 @@ functionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p>It is defined by the following rule:</p>
+<p>After type checking, function declarations are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="functionDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototypeIR
+   : typeIR nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR )
+   ;
+
+functionDeclarationIR
+   : annotationList functionPrototypeIR blockStatementIR
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>They are produced by the following rule:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16114,15 +16116,7 @@ functionDeclarationIR
 </div>
 </div>
 <div class="paragraph">
-<p><a href="#sec-action">Section 9.3</a> describes the semantics of actions. After type checking,
-action declarations are represented in P4<sub>IR</sub> as:</p>
-</div>
-<div id="actionDeclarationIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclarationIR
-   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
-   ;</code></pre>
-</div>
+<p><a href="#sec-action">Section 9.3</a> describes the semantics of actions.</p>
 </div>
 <div class="sect3">
 <h4 id="_type_checking_31">11.8.1. Type checking</h4>
@@ -16162,7 +16156,17 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>It is defined by the following rule:</p>
+<p>After type checking, action declarations are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="actionDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclarationIR
+   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These are produced by the following rule:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -16429,9 +16433,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div class="sect2">
 <h3 id="sec-error-declaration">11.9. Error declarations</h3>
-<div class="paragraph">
-<p><code>error</code> declarations introduce error elements.</p>
-</div>
 <div id="errorDeclaration" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">errorDeclaration
@@ -16440,8 +16441,13 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-error">Section 8.1.4</a> for more details on error elements. After type checking, an
-<code>error</code> declaration is represented as:</p>
+<p><code>error</code> declarations introduce error elements. See <a href="#sec-error">Section 8.1.4</a> for more
+details on error elements.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_32">11.9.1. Type checking</h4>
+<div class="paragraph">
+<p>After type checking, an <code>error</code> declaration is represented as:</p>
 </div>
 <div id="errorDeclarationIR" class="listingblock">
 <div class="content">
@@ -16450,8 +16456,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
    ;</code></pre>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_type_checking_32">11.9.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16648,9 +16652,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div class="sect2">
 <h3 id="sec-match-kind-declaration">11.10. Match kind declarations</h3>
-<div class="paragraph">
-<p>Similar to <code>error</code> declarations, <code>match_kind</code> declarations introduce match kinds.</p>
-</div>
 <div id="matchKindDeclaration" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">matchKindDeclaration
@@ -16659,8 +16660,13 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>See <a href="#sec-match-kind">Section 8.1.5</a> for more details on match kinds. After type checking, an
-<code>match_kind</code> declaration is represented as:</p>
+<p>Similar to <code>error</code> declarations, <code>match_kind</code> declarations introduce
+match kinds. See <a href="#sec-match-kind">Section 8.1.5</a> for more details on match kinds.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_33">11.10.1. Type checking</h4>
+<div class="paragraph">
+<p>After type checking, an <code>match_kind</code> declaration is represented as:</p>
 </div>
 <div id="matchKindDeclarationIR" class="listingblock">
 <div class="content">
@@ -16669,8 +16675,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
    ;</code></pre>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_type_checking_33">11.10.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -16831,9 +16835,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </div>
 <div class="sect2">
 <h3 id="sec-extern-function-declaration">11.11. Extern function declarations</h3>
-<div class="paragraph">
-<p>An extern function declaration introduces an extern function.</p>
-</div>
 <div id="externFunctionDeclaration" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionDeclaration
@@ -16841,6 +16842,12 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>An extern function declaration introduces an extern function. See
+<a href="#sec-extern-function">Section 9.4.2</a> for how extern functions are internally represented.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_34">11.11.1. Type checking</h4>
 <div class="paragraph">
 <p>After type checking, an extern function declaration is represented in P4<sub>IR</sub>
 as:</p>
@@ -16852,12 +16859,6 @@ as:</p>
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-extern-function">Section 9.4.2</a> for how extern functions are internally
-represented.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_34">11.11.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17026,26 +17027,6 @@ externConstructorOrMethodPrototypeList
 </div>
 </div>
 <div class="paragraph">
-<p>After type checking, an extern object declaration is represented in P4<sub>IR</sub>
-as:</p>
-</div>
-<div id="externConstructorPrototypeIR" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclarationIR
-   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt; `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
-   ;
-
-externConstructorPrototypeIR
-   : annotationList nameIR `&lt; , typeParameterListIR &gt; `( parameterListIR ) ;
-   ;
-
-externMethodPrototypeIR
-   : annotationList functionPrototypeIR ;
-   | annotationList ABSTRACT functionPrototypeIR ;
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
 <p>See <a href="#sec-extern-object">Section 10.3</a> for how extern objects are internally represented. An
 extern object declaration includes its constructors and methods, to be
 explained in the following sections.</p>
@@ -17060,17 +17041,6 @@ explained in the following sections.</p>
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodPrototype
    : annotationList functionPrototype ;
    | annotationList ABSTRACT functionPrototype ;
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In P4<sub>IR</sub>, an extern method declaration is represented as:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodPrototypeIR
-   : annotationList functionPrototypeIR ;
-   | annotationList ABSTRACT functionPrototypeIR ;
    ;</code></pre>
 </div>
 </div>
@@ -17116,7 +17086,18 @@ internally.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>It is implemented as:</p>
+<p>After type checking, in P4<sub>IR</sub>, an extern method declaration is represented as:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodPrototypeIR
+   : annotationList functionPrototypeIR ;
+   | annotationList ABSTRACT functionPrototypeIR ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These are produced by:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -17319,16 +17300,6 @@ internally.</p>
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>In P4<sub>IR</sub>, an extern constructor declaration is represented as:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externConstructorPrototypeIR
-   : annotationList nameIR `&lt; , typeParameterListIR &gt; `( parameterListIR ) ;
-   ;</code></pre>
-</div>
-</div>
 <div class="sect4">
 <h5 id="_type_checking_36">11.12.2.1. Type checking</h5>
 <div class="paragraph">
@@ -17367,7 +17338,17 @@ internally.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>It is implemented as:</p>
+<p>After type checking, in P4<sub>IR</sub>, an extern constructor declaration is represented as:</p>
+</div>
+<div id="externConstructorPrototypeIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externConstructorPrototypeIR
+   : annotationList nameIR `&lt; , typeParameterListIR &gt; `( parameterListIR ) ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These are produced by:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -17459,6 +17440,26 @@ internally.</p>
 </div>
 <div class="sect3">
 <h4 id="_type_checking_37">11.12.3. Type checking</h4>
+<div class="paragraph">
+<p>After type checking, an extern object declaration is represented in P4<sub>IR</sub>
+as:</p>
+</div>
+<div id="externObjectDeclarationIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclarationIR
+   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt; `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
+   ;
+
+externConstructorPrototypeIR
+   : annotationList nameIR `&lt; , typeParameterListIR &gt; `( parameterListIR ) ;
+   ;
+
+externMethodPrototypeIR
+   : annotationList functionPrototypeIR ;
+   | annotationList ABSTRACT functionPrototypeIR ;
+   ;</code></pre>
+</div>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -17901,6 +17902,8 @@ parserDeclaration
    ;</code></pre>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_type_checking_38">11.13.1. Type checking</h4>
 <div class="paragraph">
 <p>After type checking, a parser declaration is represented in P4<sub>IR</sub> as:</p>
 </div>
@@ -17922,21 +17925,6 @@ parserDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>When instantiated, an instance of a parser declaration is created:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>See <a href="#sec-parser-object">Section 10.4</a> for details about parser objects.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_38">11.13.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18116,6 +18104,19 @@ object constructors.</p>
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>When instantiated, an instance of a parser declaration is created:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
+   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See <a href="#sec-parser-object">Section 10.4</a> for details about parser objects.</p>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -18140,6 +18141,8 @@ controlDeclaration
    ;</code></pre>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_type_checking_39">11.14.1. Type checking</h4>
 <div class="paragraph">
 <p>After type checking, a control declaration is represented in P4<sub>IR</sub> as:</p>
 </div>
@@ -18160,21 +18163,6 @@ controlDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>When instantiated, an instance of a control declaration is created:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
-   ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>See <a href="#sec-control-object">Section 10.5</a> for details about control objects.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_39">11.14.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -18353,6 +18341,19 @@ object constructors.</p>
 </ol>
 </div>
 </div>
+</div>
+<div class="paragraph">
+<p>When instantiated, an instance of a control declaration is created:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
+   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See <a href="#sec-control-object">Section 10.5</a> for details about control objects.</p>
 </div>
 </div>
 </div>
@@ -19022,6 +19023,11 @@ typeFieldList
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-struct">Section 8.3.5</a> for more information about struct types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_42">11.16.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a struct type declaration is represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="typeFieldListIR" class="listingblock">
@@ -19037,11 +19043,6 @@ typeFieldIR
 typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-struct">Section 8.3.5</a> for more information about struct types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_42">11.16.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19244,6 +19245,11 @@ typeFieldList
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-header">Section 8.3.6</a> for more information about header types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_43">11.17.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a header type declaration is represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="headerTypeDeclarationIR" class="listingblock">
@@ -19259,11 +19265,6 @@ typeFieldIR
 typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-header">Section 8.3.6</a> for more information about header types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_43">11.17.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19466,6 +19467,11 @@ typeFieldList
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-header-union">Section 8.3.7</a> for more information about header union types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_44">11.18.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a header union type declaration is represented in P4<sub>IR</sub> as:</p>
 </div>
 <div id="headerUnionTypeDeclarationIR" class="listingblock">
@@ -19481,11 +19487,6 @@ typeFieldIR
 typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-header-union">Section 8.3.7</a> for more information about header union types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_44">11.18.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -19869,6 +19870,9 @@ typedefDeclarationIR
 <p>Check that <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>typedefTypeIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList</code> <code>TYPEDEF</code> <code>derivedTypeDeclarationIR</code> <code>nameIR</code> <code>;</code>.</p>
 </li>
 <li>
@@ -19898,6 +19902,9 @@ typedefDeclarationIR
 </li>
 <li>
 <p>Check that <a href="#TypeDef_wf"><code>typedefTypeIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>2</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>typedefTypeIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>typedefDeclarationIR</code> be <code>annotationList</code> <code>TYPEDEF</code> <code>derivedTypeDeclarationIR</code> <code>nameIR</code> <code>;</code>.</p>
@@ -20208,6 +20215,11 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-parser-object-type">Section 8.4.2</a> for more details on parser object types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_47">11.20.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a parser type declaration has the following form:</p>
 </div>
 <div id="parserTypeDeclarationIR" class="listingblock">
@@ -20217,11 +20229,6 @@ typedefDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-parser-object-type">Section 8.4.2</a> for more details on parser object types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_47">11.20.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20362,6 +20369,11 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-control-object-type">Section 8.4.3</a> for more details on control object types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_48">11.21.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a control type declaration has the following form:</p>
 </div>
 <div id="controlTypeDeclarationIR" class="listingblock">
@@ -20371,11 +20383,6 @@ typedefDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-control-object-type">Section 8.4.3</a> for more details on control object types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_48">11.21.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -20516,6 +20523,11 @@ typedefDeclarationIR
 </div>
 </div>
 <div class="paragraph">
+<p>See <a href="#sec-package-object-type">Section 8.4.4</a> for more details on package object types.</p>
+</div>
+<div class="sect3">
+<h4 id="_type_checking_49">11.22.1. Type checking</h4>
+<div class="paragraph">
 <p>After type checking, a package type declaration has the following form:</p>
 </div>
 <div id="packageTypeDeclarationIR" class="listingblock">
@@ -20525,11 +20537,6 @@ typedefDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>See <a href="#sec-package-object-type">Section 8.4.4</a> for more details on package object types.</p>
-</div>
-<div class="sect3">
-<h4 id="_type_checking_49">11.22.1. Type checking</h4>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -21083,6 +21090,9 @@ for comparison operators, logical operators, concat, range, or mask operators.</
 </li>
 <li>
 <p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_typedLvalueIR">the type of lvalue  <code>typedLvalueIR</code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
@@ -22865,6 +22875,9 @@ still performed after the execution of the <code>return</code> statement.  See
 </li>
 </ul>
 </div>
+</li>
+<li>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>ret</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_local_return_type_t">the expected return type in <code>TC</code></a>.</p>
@@ -26974,6 +26987,9 @@ binaryExpressionIR
 <p>Let <code>(typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_compare)</a></code>.</p>
 </li>
 <li>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>ctk<sub>l_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
 </li>
 <li>
@@ -30237,6 +30253,9 @@ indexAccessExpressionIR
 <p>Let <code>ctk<sub>base</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
 <li>
+<p>Let <code>typeIR<sub>index</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>ctk<sub>index</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>index</sub></code></a>.</p>
 </li>
 <li>
@@ -30464,7 +30483,13 @@ sliceAccessExpressionIR
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until $compat_bitslice_index is satisfied</a>.</p>
 </li>
 <li>
+<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+</li>
+<li>
 <p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>

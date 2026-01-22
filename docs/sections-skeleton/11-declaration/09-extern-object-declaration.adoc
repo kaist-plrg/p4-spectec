@@ -8,13 +8,6 @@ ${syntax: externObjectDeclaration
           externConstructorOrMethod
           externConstructorOrMethodPrototypeList}
 
-After type checking, an extern object declaration is represented in P4~IR~
-as:
-
-${syntax: externObjectDeclarationIR
-          externConstructorPrototypeIR
-          externMethodPrototypeIR}
-
 See <<sec-extern-object>> for how extern objects are internally represented. An
 extern object declaration includes its constructors and methods, to be
 explained in the following sections.
@@ -26,10 +19,6 @@ Extern objects can have methods, which are declared using the following syntax:
 
 ${syntax: externMethodPrototype}
 
-In P4~IR~, an extern method declaration is represented as:
-
-${syntax: externMethodPrototypeIR}
-
 See <<sec-extern-method>> for details on how extern methods are represented
 internally.
 
@@ -40,7 +29,11 @@ Extern methods are type checked using the following relation:
 ${relation-title-source: ExternMethod_ok}
 ${relation-title-prose: ExternMethod_ok}
 
-It is implemented as:
+After type checking, in P4~IR~, an extern method declaration is represented as:
+
+${syntax: externMethodPrototypeIR}
+
+These are produced by:
 
 ${rulegroup-source: ExternMethod_ok}
 ${rulegroup-prose: ExternMethod_ok}
@@ -52,10 +45,6 @@ Extern objects may have constructors, which are declared using the following syn
 
 ${syntax: externConstructorPrototype}
 
-In P4~IR~, an extern constructor declaration is represented as:
-
-${syntax: externConstructorPrototypeIR}
-
 ===== Type checking
 
 Extern constructors are type checked using the following relation:
@@ -63,12 +52,23 @@ Extern constructors are type checked using the following relation:
 ${relation-title-source: ExternConstructor_ok}
 ${relation-title-prose: ExternConstructor_ok}
 
-It is implemented as:
+After type checking, in P4~IR~, an extern constructor declaration is represented as:
+
+${syntax: externConstructorPrototypeIR}
+
+These are produced by:
 
 ${rulegroup-source: ExternConstructor_ok}
 ${rulegroup-prose: ExternConstructor_ok}
 
 ==== Type checking
+
+After type checking, an extern object declaration is represented in P4~IR~
+as:
+
+${syntax: externObjectDeclarationIR
+          externConstructorPrototypeIR
+          externMethodPrototypeIR}
 
 ${rulegroup-source: Decl_ok/externObjectDeclaration}
 ${rulegroup-prose: Decl_ok/externObjectDeclaration}

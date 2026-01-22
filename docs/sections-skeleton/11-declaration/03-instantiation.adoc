@@ -10,13 +10,7 @@ and ``package``s):
 ${syntax: instantiation}
 
 // Modified section 11.3 of the P4-16 Language Specification
-An instantiation is written as a constructor invocation followed by a name. In
-P4~IR~, instantiations have the syntax:
-
-// Added
-${syntax: instantiationIR}
-
-// Modified section 11.3 of the P4-16 Language Specification
+An instantiation is written as a constructor invocation followed by a name.
 Instantiations are always executed at compilation time (Section
 <<sec-instantiation>>). The effect is to allocate an object with the specified
 name, and to bind it to the result of the constructor invocation. Note that
@@ -152,18 +146,23 @@ ${relation-title-prose: ObjectDecls_inst}
 // Added
 ==== Type checking
 
-When used as a top-level declaration, instantiations are typed with:
-
-${rulegroup-source: Decl_ok/instantiation}
-${rulegroup-prose: Decl_ok/instantiation}
-
 Instantiations are type checked with the relation:
 
 ${relation-title-source: InstDecl_ok}
 ${relation-title-prose: InstDecl_ok}
 
+After type checking, in P4~IR~, instantiations have the syntax:
+
+// Added
+${syntax: instantiationIR}
+
 ${rulegroup-source: InstDecl_ok}
 ${rulegroup-prose: InstDecl_ok}
+
+When used as a top-level declaration, instantiations are typed with:
+
+${rulegroup-source: Decl_ok/instantiation}
+${rulegroup-prose: Decl_ok/instantiation}
 
 There are two sub-relations, depending on whether object initializers were
 provided or not.
@@ -188,11 +187,6 @@ ${rulegroup-prose: InstDecl_objectInitializer_ok}
 
 ==== Compile-time evaluation
 
-When used as a top-level declaration, instantiations are evaluated with:
-
-${rulegroup-source: Decl_inst/instantiationIR}
-${rulegroup-prose: Decl_inst/instantiationIR}
-
 Instantiations are evaluated at compile-time with the relation:
 
 ${relation-title-source: InstDecl_inst}
@@ -200,3 +194,8 @@ ${relation-title-prose: InstDecl_inst}
 
 ${rulegroup-source: InstDecl_inst}
 ${rulegroup-prose: InstDecl_inst}
+
+When used as a top-level declaration, instantiations are evaluated with:
+
+${rulegroup-source: Decl_inst/instantiationIR}
+${rulegroup-prose: Decl_inst/instantiationIR}
