@@ -1018,9 +1018,31 @@ syntax externConstructorOrMethodPrototype =
   | externConstructorPrototype
   | externMethodPrototype
 
+dec $is_externConstructorPrototype(
+    externConstructorOrMethodPrototype)
+  : bool
+
+def $is_externConstructorPrototype(
+    externConstructorPrototype)
+  = true
+def $is_externConstructorPrototype(
+    externConstructorOrMethodPrototype)
+  = false
+  -- otherwise
+
+dec $is_externMethodPrototype(
+    externConstructorOrMethodPrototype)
+  : bool
+
+def $is_externMethodPrototype(
+    externConstructorOrMethodPrototype)
+  = ~$is_externConstructorPrototype(
+      externConstructorOrMethodPrototype)
+
 syntax externConstructorOrMethodPrototypeList =
   | `EMPTY
-  | externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype
+  | externConstructorOrMethodPrototypeList
+      externConstructorOrMethodPrototype
 
 dec $flatten_externConstructorOrMethodPrototypeList(
     externConstructorOrMethodPrototypeList)

@@ -537,18 +537,6 @@ rule Decl_ok/externFunctionDeclaration:
 ;;;;   annotationList EXTERN nonTypeName
 ;;;;      typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
 
-dec $is_externConstructorPrototype(externConstructorOrMethodPrototype) : bool
-
-def $is_externConstructorPrototype(externConstructorPrototype) = true
-def $is_externConstructorPrototype(externConstructorOrMethodPrototype) = false
-  -- otherwise
-
-dec $is_externMethodPrototype(externConstructorOrMethodPrototype) : bool
-
-def $is_externMethodPrototype(externMethodPrototype) = true
-def $is_externMethodPrototype(externConstructorOrMethodPrototype) = false
-  -- otherwise
-
 dec $split_externConstructorOrMethodPrototypeList(
     externConstructorOrMethodPrototypeList)
   : (externConstructorPrototype* , externMethodPrototype*)
@@ -570,10 +558,29 @@ def $split_externConstructorOrMethodPrototypeList(
           externConstructorOrMethodPrototype*,
           def $is_externMethodPrototype)
 
+dec $constructorTypeDef_of_externConstructorPrototypeIR(
+    typeParameterListIR,
+    typeIR,
+    externConstructorPrototypeIR)
+  : constructorTypeDefIR
+  hint(prose_in "the constructor type definition of" %2
+                "with type parameters" %0 "and type" %1)
+
+def $constructorTypeDef_of_externConstructorPrototypeIR(
+    typeParameterListIR_expl,
+    typeIR,
+    _ nameIR `< `, typeParameterListIR_impl > `( parameterIR* ) `;)
+  = constructorTypeDefIR
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
+  -- if constructorTypeDefIR
+      = CONSTRUCTOR `< typeParameterListIR_expl `, typeParameterListIR_impl >
+          `( parameterIR* ) `: typeIR
+
 rule Decl_ok/externObjectDeclaration:
   TC_0 |- annotationList EXTERN nonTypeName
             typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
-        : TC_8 externObjectDeclarationIR
+        : TC_6 externObjectDeclarationIR
   ---- ;; split methods and constructors
   -- if (externConstructorPrototype* ,
           externMethodPrototype*)
@@ -586,21 +593,41 @@ rule Decl_ok/externObjectDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check methods
   -- if nameIR = $name(nonTypeName)
-  -- ExternMethods_ok: TC_2 nameIR |- externMethodPrototype*
-                                    : TC_3 externMethodPrototypeIR*
+  -- (ExternMethod_ok:
+      TC_2 nameIR |- externMethodPrototype
+                   : externMethodPrototypeIR)*
+  -- if (callableId_method
+      = $callableId_of_externMethodPrototype(externMethodPrototype))*
+  -- if $distinct_<callableId>(callableId_method*)
+  -- if (externMethodTypeDefIR
+      = $type_of_externMethodPrototypeIR(externMethodPrototypeIR))*
+  -- if externMethodTypeDefEnv
+      = `{ (callableId_method `: externMethodTypeDefIR)* }
   ---- ;; create extern object type and add to context
-  -- if `{ (callableId `: externMethodTypeDefIR)* } = TC_3.BLOCK.CALLABLE
   -- if typeDefIR_extern
-      = EXTERN nameIR `< typeId_expl* `, eps > `{ (callableId `: externMethodTypeDefIR)* }
-  -- if TC_4 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_extern)
+      = EXTERN nameIR `< typeId_expl* `, eps > externMethodTypeDefEnv
+  -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_extern)
   ---- ;; set block context again
-  -- if TC_5 = TC_4 [ .BLOCK.KIND = EXTERN ]
+  -- if TC_4 = TC_3[ .BLOCK.KIND = EXTERN ]
   ---- ;; add type parameters to context again
-  -- if TC_6 = $add_typeParameters_t(BLOCK, TC_5, typeId_expl*)
+  -- if TC_5 = $add_typeParameters_t(BLOCK, TC_4, typeId_expl*)
   ---- ;; check constructors and add to context
-  -- ExternConstructors_ok: TC_6 nameIR |- externConstructorPrototype*
-                                         : TC_7 externConstructorPrototypeIR*
-  -- if TC_8 = TC_4[ .GLOBAL.CONSTRUCTOR = TC_7.GLOBAL.CONSTRUCTOR ]
+  -- (ExternConstructor_ok:
+      TC_5 nameIR |- externConstructorPrototype
+                   : externConstructorPrototypeIR)*
+  -- if (constructorId
+      = $constructorId_of_externConstructorPrototype(
+          externConstructorPrototype))*
+  -- if typeIR_extern = $typeIR_of_typeDefIR(typeDefIR_extern)
+  -- if (constructorTypeDefIR
+      = $constructorTypeDef_of_externConstructorPrototypeIR(
+          typeId_expl*,
+          typeIR_extern,
+          externConstructorPrototypeIR))*
+  -- if TC_6 = $add_constructorDefs_t(
+          TC_3,
+          constructorId*,
+          constructorTypeDefIR*)
   ---- ;; create IR
   -- if externObjectDeclarationIR
       = annotationList EXTERN nameIR `< typeId_expl* `, >

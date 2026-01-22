@@ -238,8 +238,7 @@ module Make
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, tx_expect_queue =
       List.fold_left
-        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf
-           ->
+        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf ->
           run_stf_stmt value_ctx value_sto tx_output_queue tx_expect_queue
             stmt_stf)
         (value_ctx, value_sto, [], [])

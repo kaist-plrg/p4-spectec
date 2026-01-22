@@ -331,6 +331,9 @@ def $add_callableDef_non_overload_t(BLOCK, TC, callableId, callableTypeDefIR) = 
 dec $add_constructorDef_t(typingContext, callableId, constructorTypeDefIR)
   : typingContext
   hint(prose_in "where" %1 "to" %2 "is added to" %0)
+dec $add_constructorDefs_t(typingContext, callableId*, constructorTypeDefIR*)
+  : typingContext
+  hint(prose_in "where each of" %1 "to each of" %2 "are added to" %0)
 
 def $add_constructorDef_t(TC, callableId, constructorTypeDefIR) = TC'
   -- if constructorTypeDefEnv = TC.GLOBAL.CONSTRUCTOR
@@ -340,6 +343,14 @@ def $add_constructorDef_t(TC, callableId, constructorTypeDefIR) = TC'
         = $add_map<callableId, constructorTypeDefIR>(
             constructorTypeDefEnv, callableId, constructorTypeDefIR)
   -- if TC' = TC [ .GLOBAL.CONSTRUCTOR = constructorTypeDefEnv_update ]
+
+def $add_constructorDefs_t(TC, eps, eps) = TC
+def $add_constructorDefs_t(
+    TC, callableId_h :: callableId_t*,
+    constructorTypeDefIR_h :: constructorTypeDefIR_t*)
+  = TC''
+  -- if TC' = $add_constructorDef_t(TC, callableId_h, constructorTypeDefIR_h)
+  -- if TC'' = $add_constructorDefs_t(TC', callableId_t*, constructorTypeDefIR_t*)
 
 ;;
 ;; Finders

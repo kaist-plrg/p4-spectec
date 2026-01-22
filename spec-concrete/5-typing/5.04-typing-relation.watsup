@@ -205,33 +205,62 @@ relation ConstructorParameterListOpt_ok:
 ;;;; Extern method/constructor typing
 ;;
 
+dec $callableId_of_externMethodPrototype(
+    externMethodPrototype)
+  : callableId
+  hint(prose_in "the callable id of " %0)
+
+def $callableId_of_externMethodPrototype(
+    _ (_ name _ `( parameterList )) `;)
+  = $callableId(name, parameterList)
+def $callableId_of_externMethodPrototype(
+    _ ABSTRACT (_ name _ `( parameterList )) `;)
+  = $callableId(name, parameterList)
+
+dec $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
+  : externMethodTypeDefIR
+  hint(prose_in "the callable type definition of " %0)
+
+def $type_of_externMethodPrototypeIR(
+    _ (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;)
+  = externMethodTypeDefIR
+  -- if externMethodTypeDefIR
+      = EXTERN_METHOD `< typeParameterListIR_expl `, typeParameterListIR_impl >
+          `( parameterIR* ) `: typeIR_ret
+def $type_of_externMethodPrototypeIR(
+    _ ABSTRACT (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;)
+  = externMethodTypeDefIR
+  -- if externMethodTypeDefIR
+      = EXTERN_METHOD ABSTRACT
+          `< typeParameterListIR_expl `, typeParameterListIR_impl >
+          `( parameterIR* ) `: typeIR_ret
+
+dec $constructorId_of_externConstructorPrototype(
+    externConstructorPrototype)
+  : constructorId
+  hint(prose_in "the constructor id of " %0)
+
+def $constructorId_of_externConstructorPrototype(
+    _ typeIdentifier `( parameterList ) `;)
+  = $callableId(typeIdentifier, parameterList)
+
 relation ExternMethod_ok:
   typingContext typeId |- externMethodPrototype
-                     : typingContext externMethodPrototypeIR
+                        : externMethodPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed method prototype" %4)
-
-relation ExternMethods_ok:
-  typingContext typeId |- externMethodPrototype*
-                     : typingContext externMethodPrototypeIR*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed method prototypes" %4)
+  hint(prose_out %3)
 
 relation ExternConstructor_ok:
   typingContext typeId |- externConstructorPrototype
-                     : typingContext externConstructorPrototypeIR
+                        : externConstructorPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed constructor prototype" %4)
-
-relation ExternConstructors_ok:
-  typingContext typeId |- externConstructorPrototype*
-                     : typingContext externConstructorPrototypeIR*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed constructor prototypes" %4)
+  hint(prose_out %3)
 
 ;;
 ;;;; Parser typing
