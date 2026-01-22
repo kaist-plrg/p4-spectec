@@ -183,23 +183,28 @@ relation Block_ok:
 ;;
 
 relation Parameter_ok:
-  cursor typingContext |- parameter : parameterIR `# typeId*
+  cursor typingContext |- parameter
+                        : typingContext parameterIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the parameter" %3 "and a set of fresh type variables" %4)
+  hint(prose_out "the updated typing context" %3#
+                 ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ParameterList_ok:
-  cursor typingContext |- parameterList : parameterListIR `# typeId*
+  cursor typingContext |- parameterList
+                        : typingContext parameterListIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the parameter list" %3 "and a set of fresh type variables" %4)
+  hint(prose_out "the updated typing context" %3#
+                 ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ConstructorParameterListOpt_ok:
   typingContext |- constructorParameterListOpt
-                 : constructorParameterListIR `# typeId*
+                 : typingContext constructorParameterListIR `# typeId*
   hint(input %0 %1)
   hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the constructor parameter list" %2 "and a set of fresh type variables" %3)
+  hint(prose_out "the updated typing context" %2#
+                 ",\n" %3#", and a set of fresh type variables" %4)
 
 ;;
 ;;;; Extern method/constructor typing

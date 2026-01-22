@@ -4285,7 +4285,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``TC''`` be <<add_vars_t, ``TC'`` where each of ``id~t~^{asterisk}^`` to each of ``varTypeIR~t~^{asterisk}^`` are added to the ``p`` layer>>.
  .. Return ``TC''``.
 
-<<add_parameter_t, add_parameter_t(cursor, TC, ++_++ direction typeIR id (= value)^?^)>>
+<<add_parameter_t, ``++_++`` ``direction`` ``typeIR`` ``id`` ``(=`` ``value)^?^`` added to the ``cursor`` layer of ``TC``>>
 
 
 . If ``direction`` is ```EMPTY``:
@@ -4296,17 +4296,6 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``DYN`` ``value^?^``.
  .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer>>.
  .. Return ``TC'``.
-
-<<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``cursor`` layer of ``TC``>>
-
-
-. If ``parameterIR^{asterisk}^`` is an empty list:
- .. Return ``TC``.
-. Else:
- .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
- .. Let ``TC'`` be ``<<add_parameter_t,`` ``add_parameter_t(cursor,`` ``TC,`` ``parameterIR~h~)>>``.
- .. Let ``TC''`` be <<add_parameters_t, ``parameterIR~t~^{asterisk}^`` added to the ``cursor`` layer of ``TC'``>>.
- .. Return ``TC''``.
 
 <<add_constructorParameter_t, add_constructorParameter_t(TC, ++_++ direction typeIR id constantInitializerOptIR)>>
 
@@ -7914,57 +7903,66 @@ for each ``argument`` in ``argument^{asterisk}^``
 <<Parameter_ok, Parameter_ok>>:
 
 * Typing ``parameter``, under cursor ``cursor`` and typing context ``typingContext``:
-* Results in the parameter ``parameterIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
+* Results in the updated typing context ``typingContext``,
+ **  ``parameterIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-<<Parameter_ok, Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under cursor ``p`` and typing context ``TC``>>:
+<<Parameter_ok, Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under cursor ``p`` and typing context ``TC~0~``>>:
 
 . If ``initializerOpt`` is ```EMPTY``:
  .. Let ``typeIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
+* the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC~0~``>>.
+ .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
  .. Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{`` ``typeId~fresh~^{asterisk}^`` ``}``>>.
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Result in the parameter ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``·`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+ .. Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``·``.
+ .. Let ``TC~1~`` be <<add_parameter_t, ``parameterIR`` added to the ``p`` layer of ``TC~0~``>>.
+ .. Result in the updated typing context ``TC~1~``,
+*  ``parameterIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 . Else:
  .. Let ``=`` ``expression~init~`` be ``initializerOpt``.
  .. Let ``typeIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC``>>.
- .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
+* the result of <<Type_ok, typing ``type``, under cursor ``p`` and typing context ``TC~0~``>>.
+ .. Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC~0~``>>.
  .. Let ``B`` be <<union_set, the union of the sets ``bound`` and ``{`` ``typeId~fresh~^{asterisk}^`` ``}``>>.
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typedExpressionIR~init~`` be
-* the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC``>>.
+* the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``.
  .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``value~init~`` be
-* the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC``>>.
- .. Result in the parameter ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``=`` ``value~init~`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+* the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
+ .. Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``=`` ``value~init~``.
+ .. Let ``TC~1~`` be <<add_parameter_t, ``parameterIR`` added to the ``p`` layer of ``TC~0~``>>.
+ .. Result in the updated typing context ``TC~1~``,
+*  ``parameterIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ParameterList_ok, ParameterList_ok>>:
 
 * Typing ``parameterList``, under cursor ``cursor`` and typing context ``typingContext``:
-* Results in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
+* Results in the updated typing context ``typingContext``,
+ **  ``parameterListIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-<<ParameterList_ok, Typing ``parameterList``, under cursor ``p`` and typing context ``TC``>>:
+<<ParameterList_ok, Typing ``parameterList``, under cursor ``p`` and typing context ``TC~0~``>>:
 
 . Let ``parameter^{asterisk}^`` be <<flatten_parameterList, the list of parameters in ``parameterList``>>.
-. Let the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
-. Result in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Let <<ParameterList_ok_inner, p TC~0~ |- parameter^{asterisk}^ : TC~1~ parameterListIR # typeId~fresh~^{asterisk}^>>.
+. Result in the updated typing context ``TC~1~``,
+*  ``parameterListIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ConstructorParameterListOpt_ok, ConstructorParameterListOpt_ok>>:
 
 * Typing ``constructorParameterListOpt`` under typing context ``typingContext``:
-* Results in the constructor parameter list ``constructorParameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
+* Results in the updated typing context ``typingContext``,
+ **  ``constructorParameterListIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-<<ConstructorParameterListOpt_ok, Typing ``constructorParameterListOpt`` under typing context ``TC``>>:
+<<ConstructorParameterListOpt_ok, Typing ``constructorParameterListOpt`` under typing context ``TC~0~``>>:
 
 . Let ``constructorParameter^{asterisk}^`` be <<flatten_constructorParameterListOpt, the list of constructor parameters in ``constructorParameterListOpt``>>.
-. Let the parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``constructorParameter^{asterisk}^``, under cursor ``BLOCK`` and typing context ``TC``>>.
-. Result in the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Let <<ParameterList_ok_inner, BLOCK TC~0~ |- constructorParameter^{asterisk}^ : TC~1~ constructorParameterIR^{asterisk}^ # typeId~fresh~^{asterisk}^>>.
+. Result in the updated typing context ``TC~1~``,
+*  ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<callableId_of_externMethodPrototype, The callable id of  ``externMethodPrototype``>>
 
@@ -7996,43 +7994,43 @@ for each ``argument`` in ``argument^{asterisk}^``
 * Typing ``externMethodPrototype``, under typing context ``typingContext`` for an extern object ``typeId``:
 * Results in ``externMethodPrototypeIR``.
 
-<<ExternMethod_ok, Typing ``annotationList`` ``functionPrototype`` ``;``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``>>:
+<<ExternMethod_ok, Typing ``externMethodPrototype``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``>>:
 
-. Let ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` be ``functionPrototype``.
-. Let ``nameIR`` be <<name, the name of ``name``>>.
-. Check that ``nameIR`` is not equal to ``typeId~extern~``.
-. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+. If let ``annotationList`` ``functionPrototype`` ``;`` be ``externMethodPrototype``:
+ .. Let ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` be ``functionPrototype``.
+ .. Let ``nameIR`` be <<name, the name of ``name``>>.
+ .. Check that ``nameIR`` is not equal to ``typeId~extern~``.
+ .. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
-. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+ .. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
-. Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be ``TC~1~`` with ``LOCAL.KIND`` set to ``EXTERN_METHOD`` ``:`` ``typeIR~ret~``.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+ .. Check that ``typeId^{asterisk}^`` is an empty list.
+ .. Let ``TC~2~`` be ``TC~1~`` with ``LOCAL.KIND`` set to ``EXTERN_METHOD`` ``:`` ``typeIR~ret~``.
+ .. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
-. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
-. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
-. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
-. Let ``externMethodPrototypeIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
-. Result in ``externMethodPrototypeIR``.
-
-<<ExternMethod_ok, Typing ``annotationList`` ``ABSTRACT`` ``functionPrototype`` ``;``, under typing context ``TC~0~`` for an extern object ``typeId~extern~``>>:
-
-. Let ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` be ``functionPrototype``.
-. Let ``nameIR`` be <<name, the name of ``name``>>.
-. Check that ``nameIR`` is not equal to ``typeId~extern~``.
-. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+ .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
+ .. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
+ .. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
+ .. Let ``externMethodPrototypeIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
+ .. Result in ``externMethodPrototypeIR``.
+. Else:
+ .. Let ``annotationList`` ``ABSTRACT`` ``functionPrototype`` ``;`` be ``externMethodPrototype``.
+ .. Let ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` be ``functionPrototype``.
+ .. Let ``nameIR`` be <<name, the name of ``name``>>.
+ .. Check that ``nameIR`` is not equal to ``typeId~extern~``.
+ .. Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
-. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+ .. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
-. Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be ``TC~1~`` with ``LOCAL.KIND`` set to ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~``.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+ .. Check that ``typeId^{asterisk}^`` is an empty list.
+ .. Let ``TC~2~`` be ``TC~1~`` with ``LOCAL.KIND`` set to ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~``.
+ .. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
-. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``ABSTRACT`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
-. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
-. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
-. Let ``externMethodPrototypeIR`` be ``annotationList`` ``ABSTRACT`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
-. Result in ``externMethodPrototypeIR``.
+ .. Let ``externMethodTypeDefIR`` be ``EXTERN_METHOD`` ``ABSTRACT`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
+ .. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~0~``>>.
+ .. Check that <<CallableTypeDef_wf, ``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
+ .. Let ``externMethodPrototypeIR`` be ``annotationList`` ``ABSTRACT`` ``typeIR~ret~`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
+ .. Result in ``externMethodPrototypeIR``.
 
 <<ExternConstructor_ok, ExternConstructor_ok>>:
 
@@ -8043,7 +8041,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 
 . Let ``nameIR`` be <<name, the name of ``typeIdentifier``>>.
 . Check that ``nameIR`` is equal to ``typeId~extern~``.
-. Let the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+. Let the updated typing context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ConstructorParameterListOpt_ok, typing ``(`` ``parameterList`` ``)`` under typing context ``TC~0~``>>.
 . Let ``typeDefIR'`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``typeId~extern~`` in the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that ``typeDefIR'`` has type ``externObjectTypeDefIR``.
@@ -9043,9 +9041,8 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+. Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
-. Let ``TC~2~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~1~``>>.
 . Let ``TC~3~`` be ``TC~2~`` with ``LOCAL.KIND`` set to ``FUNCTION`` ``:`` ``typeIR~ret~``.
 . Let the typing context ``++_++``, abstract control flow ``f``, and  ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~3~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
@@ -9067,10 +9064,9 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 <<ActionDecl_ok, Typing ``annotationList`` ``ACTION`` ``name`` ``(`` ``parameterList`` ``)`` ``blockStatement``, under cursor ``p`` and typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~`` with ``LOCAL.KIND`` set to ``ACTION``.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+. Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~1~``>>.
 . Let the typing context ``++_++``, abstract control flow ``++_++``, and  ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~2~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
@@ -9178,12 +9174,11 @@ for each ``value~match_kind~`` in ``value~match_kind~^{asterisk}^``
 
 . Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
+. Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be ``TC~1~`` with ``LOCAL.KIND`` set to ``EXTERN_FUNCTION`` ``:`` ``typeIR~ret~``.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
 . Let ``callableId`` be <<callableId, the callable identifier for ``name`` ``(`` ``parameterList`` ``)``>>.
 . Let ``externFunctionTypeDefIR`` be ``EXTERN_FUNCTION`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~ret~``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
@@ -9259,14 +9254,12 @@ for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{ast
 
 . Let ``B`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``PARSER``.
-. Let the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+. Let the updated typing context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be <<add_parameters_t, ``constructorParameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
+. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId'^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Check that ``typeId'^{asterisk}^`` is an empty list.
-. Let ``TC~3~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~2~``>>.
 . Let the updated typing context ``TC~4~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
 * the result of <<ParserLocalDeclList_ok, typing ``parserLocalDeclarationList``, under typing context ``TC~3~``>>.
 . Let ``TC~5~`` be ``TC~4~`` with ``LOCAL.KIND`` set to ``PARSER_STATE``.
@@ -9287,14 +9280,12 @@ for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{ast
 
 . Let ``B`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``CONTROL``.
-. Let the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+. Let the updated typing context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let ``TC~2~`` be <<add_parameters_t, ``constructorParameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~1~``>>.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId'^{asterisk}^`` be
+. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId'^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Check that ``typeId'^{asterisk}^`` is an empty list.
-. Let ``TC~3~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``BLOCK`` layer of ``TC~2~``>>.
 . Let the updated typing context ``TC~4~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
 * the result of <<ControlLocalDeclList_ok, typing ``controlLocalDeclarationList``, under typing context ``TC~3~``>>.
 . Let ``TC~5~`` be ``TC~4~`` with ``LOCAL.KIND`` set to ``CONTROL_APPLY_METHOD``.
@@ -9539,30 +9530,30 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``PARSER``.
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``parserObjectTypeDefIR`` be ``PARSER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``parserObjectTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
-. Let ``TC~3~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``parserObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
+. Let ``TC~4~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``parserObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Let ``parserTypeDeclarationIR`` be ``annotationList`` ``PARSER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
-. Result in the updated typing context ``TC~3~`` and ``parserTypeDeclarationIR``.
+. Result in the updated typing context ``TC~4~`` and ``parserTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``CONTROL`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``CONTROL``.
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
-. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``controlObjectTypeDefIR`` be ``CONTROL`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``controlObjectTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
-. Let ``TC~3~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``controlObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
+. Let ``TC~4~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``controlObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Let ``controlTypeDeclarationIR`` be ``annotationList`` ``CONTROL`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``;``.
-. Result in the updated typing context ``TC~3~`` and ``controlTypeDeclarationIR``.
+. Result in the updated typing context ``TC~4~`` and ``controlTypeDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``PACKAGE`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``;`` under typing context ``TC~0~``>>:
 
@@ -9570,7 +9561,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``PACKAGE``.
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
-. Let the constructor parameter list ``constructorParameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+. Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of <<ConstructorParameterListOpt_ok, typing ``(`` ``parameterList`` ``)`` under typing context ``TC~2~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``typeIR~package_inner~^{asterisk}^`` be the list of ``typeIR~package_inner~``, obtained by repeating:
@@ -9582,14 +9573,14 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
 for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``packageObjectTypeDefIR`` be ``PACKAGE`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``{`` ``typeIR~package_inner~^{asterisk}^`` ``}``.
 . Check that <<TypeDef_wf, ``packageObjectTypeDefIR`` is a well-formed type definition, with bound type variables ``B``>>.
-. Let ``TC~3~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``packageObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
+. Let ``TC~4~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``packageObjectTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Let ``constructorId`` be <<constructorId, the constructor identifier for ``name`` ``(`` ``(`` ``parameterList`` ``)`` ``)``>>.
 . Let ``typeIR~package~`` be <<typeIR_of_typeDefIR, the underlying type of ``packageObjectTypeDefIR``>>.
 . Let ``constructorTypeDefIR`` be ``CONSTRUCTOR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~package~``.
 . Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``B``>>.
-. Let ``TC~4~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~3~``>>.
+. Let ``TC~5~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~4~``>>.
 . Let ``packageTypeDeclarationIR`` be ``annotationList`` ``PACKAGE`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``;``.
-. Result in the updated typing context ``TC~4~`` and ``packageTypeDeclarationIR``.
+. Result in the updated typing context ``TC~5~`` and ``packageTypeDeclarationIR``.
 
 <<Decls_ok, Decls_ok>>:
 
@@ -10559,21 +10550,19 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``expression`` be ``<<lvalue_to_expression,`` ``lvalue_to_expression(lvalue')>>``.
  .. Return ``(`` ``expression`` ``)``.
 
-<<Parameters_ok, Parameters_ok>>:
+<<ParameterList_ok_inner, ParameterList_ok_inner: ``p`` ``typingContext`` ``|-`` ``parameter^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
-* Typing ``parameter^{asterisk}^``, under cursor ``cursor`` and typing context ``typingContext``:
-* Results in the parameter list ``parameterListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
-
-<<Parameters_ok, Typing ``parameter^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>:
+<<ParameterList_ok_inner, ``p`` ``typingContext`` ``|-`` ``parameter^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
 
 . If ``parameter^{asterisk}^`` is equal to ``·``:
- .. Result in the parameter list ``·`` and a set of fresh type variables ``·``.
+ .. Result in ``typingContext``, ``·``, and ``·``.
 . If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
- .. Let the parameter ``parameterIR~h~`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
-* the result of <<Parameter_ok, typing ``parameter~h~``, under cursor ``p`` and typing context ``TC``>>.
- .. Let the parameter list ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
-* the result of <<Parameters_ok, typing ``parameter~t~^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
- .. Result in the parameter list ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
+ .. Let the updated typing context ``TC~1~``, ``parameterIR~h~``, and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
+* the result of <<Parameter_ok, typing ``parameter~h~``, under cursor ``p`` and typing context ``typingContext``>>.
+ .. Let <<ParameterList_ok_inner, p TC~1~ |- parameter~t~^{asterisk}^ : TC~2~ parameterIR~t~^{asterisk}^ # typeId~fresh_t~^{asterisk}^>>.
+ .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
+ .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
+ .. Result in ``TC~2~``, ``parameterIR^{asterisk}^``, and ``typeId~fresh~^{asterisk}^``.
 
 <<compat_direct_application, compat_direct_application(typeIR'')>>:
 [cols="2", options="header"]
@@ -10911,12 +10900,11 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``TC~2~`` be ``TC~1~`` with ``BLOCK.FRAME`` set to ``typeFrame``.
  .. Let the updated typing context ``TC~3~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
+ .. Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
  .. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of <<Type_ok, typing ``typeOrVoid``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
  .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Let the parameter list ``parameterIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``LOCAL`` and typing context ``TC~3~``>>.
- .. Let ``TC~4~`` be <<add_parameters_t, ``parameterIR^{asterisk}^`` added to the ``LOCAL`` layer of ``TC~3~``>>.
  .. Let ``TC~5~`` be ``TC~4~`` with ``LOCAL.KIND`` set to ``EXTERN_METHOD`` ``:`` ``typeIR~ret~``.
  .. Let the typing context ``++_++``, abstract control flow ``f``, and  ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC~5~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.

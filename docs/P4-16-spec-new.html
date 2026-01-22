@@ -10184,7 +10184,14 @@ restrictions described there.</p>
 <p>Typing <code>parameter</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Results in the parameter <code>parameterIR</code> and a set of fresh type variables <code>typeId<sup>*</sup></code>.</p>
+<p>Results in the updated typing context <code>typingContext</code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>parameterIR</code>, and a set of fresh type variables <code>typeId<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
 </li>
 </ul>
 </div>
@@ -10202,22 +10209,26 @@ the same type as the parameter type.</p>
 <div class="content">
 <pre>rulegroup Parameter_ok:
   rule Parameter_ok/non-initializer:
-  p TC |- annotationList direction type name `EMPTY : (annotationList direction typeIR nameIR eps) # typeId_fresh*
- -- Type_ok: p TC |- type : typeIR # typeId_fresh*
- -- if B = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_fresh*})
+  p TC_0 |- annotationList direction type name `EMPTY : TC_1 parameterIR # typeId_fresh*
+ -- Type_ok: p TC_0 |- type : typeIR # typeId_fresh*
+ -- if B = $union_set&lt;typeId&gt;($bound(p, TC_0), `{typeId_fresh*})
  -- Type_wf: B |- typeIR
  -- if nameIR = $name(name)
+ -- if parameterIR = annotationList direction typeIR nameIR eps
+ -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)
   rule Parameter_ok/initializer:
-  p TC |- annotationList direction type name (= expression_init) : (annotationList direction typeIR nameIR (= value_init)) # typeId_fresh*
- -- Type_ok: p TC |- type : typeIR # typeId_fresh*
- -- if B = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_fresh*})
+  p TC_0 |- annotationList direction type name (= expression_init) : TC_1 parameterIR # typeId_fresh*
+ -- Type_ok: p TC_0 |- type : typeIR # typeId_fresh*
+ -- if B = $union_set&lt;typeId&gt;($bound(p, TC_0), `{typeId_fresh*})
  -- Type_wf: B |- typeIR
- -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
+ -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
  -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
  -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
- -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~&gt; value_init</pre>
+ -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_init_cast ~&gt; value_init
+ -- if parameterIR = annotationList direction typeIR nameIR (= value_init)
+ -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)</pre>
 </div>
 </div>
 </div>
@@ -10230,7 +10241,7 @@ the same type as the parameter type.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Parameter_ok">Typing <code>annotationList</code> <code>direction</code> <code>type</code> <code>name</code> <code>initializerOpt</code>, under cursor <code>p</code> and typing context <code>TC</code></a>:</p>
+<p><a href="#Parameter_ok">Typing <code>annotationList</code> <code>direction</code> <code>type</code> <code>name</code> <code>initializerOpt</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -10243,13 +10254,13 @@ the same type as the parameter type.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>B</code> be <a href="#union_set">the union of the sets <code>bound</code> and <code>{</code> <code>typeId<sub>fresh</sub><sup>*</sup></code> <code>}</code></a>.</p>
@@ -10261,7 +10272,20 @@ the same type as the parameter type.</p>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>·</code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Let <code>parameterIR</code> be <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>·</code>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_parameter_t"><code>parameterIR</code> added to the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>parameterIR</code>, and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -10278,13 +10302,13 @@ the same type as the parameter type.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Type_ok">typing <code>type</code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>B</code> be <a href="#union_set">the union of the sets <code>bound</code> and <code>{</code> <code>typeId<sub>fresh</sub><sup>*</sup></code> <code>}</code></a>.</p>
@@ -10297,7 +10321,7 @@ the same type as the parameter type.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Expr_ok">typing <code>expression<sub>init</sub></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -10316,13 +10340,26 @@ the same type as the parameter type.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>init_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>init_cast</sub></code>, under cursor <code>p</code> and typing context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in the parameter <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value<sub>init</sub></code> and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+<p>Let <code>parameterIR</code> be <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value<sub>init</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_parameter_t"><code>parameterIR</code> added to the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>parameterIR</code>, and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
 </li>
 </ol>
 </div>
@@ -14590,9 +14627,8 @@ methods.</p>
  -- if TC_1 = TC_0[BLOCK.KIND = EXTERN]
  -- if TC_2 = TC_1[BLOCK.FRAME = typeFrame]
  -- TypeParameterListOpt_ok: LOCAL TC_2 |- typeParameterListOpt : TC_3 typeId_expl*
+ -- ParameterList_ok: LOCAL TC_3 |- parameterList : TC_4 parameterIR* # typeId_impl*
  -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # eps
- -- ParameterList_ok: LOCAL TC_3 |- parameterList : parameterIR* # typeId_impl*
- -- if TC_4 = $add_parameters_t(LOCAL, TC_3, parameterIR*)
  -- if TC_5 = TC_4[LOCAL.KIND = (EXTERN_METHOD : typeIR_ret)]
  -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
  -- if f = RET \/ typeIR_ret = VOID
@@ -14671,6 +14707,16 @@ methods.</p>
 </div>
 </li>
 <li>
+<p>Let the updated typing context <code>TC<sub>4</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
 <p>Let <code>typeIR<sub>ret</sub></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
@@ -14682,19 +14728,6 @@ methods.</p>
 </li>
 <li>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>3</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>3</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>EXTERN_METHOD</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
@@ -15785,8 +15818,7 @@ functionDeclarationIR
   p TC_0 |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : TC_4 functionDeclarationIR
  -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
- -- ParameterList_ok: LOCAL TC_1 |- parameterList : parameterIR* # typeId_impl*
- -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
+ -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR* # typeId_impl*
  -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret]
  -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
  -- if f = RET \/ typeIR_ret = VOID
@@ -15836,7 +15868,7 @@ functionDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -15844,9 +15876,6 @@ functionDeclarationIR
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>3</sub></code> be <code>TC<sub>2</sub></code> with <code>LOCAL.KIND</code> set to <code>FUNCTION</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
@@ -16144,8 +16173,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
   rule ActionDecl_ok:
   p TC_0 |- annotationList ACTION name `(parameterList) blockStatement : TC_3 actionDeclarationIR
  -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
- -- ParameterList_ok: LOCAL TC_1 |- parameterList : parameterIR* # eps
- -- if TC_2 = $add_parameters_t(LOCAL, TC_1, parameterIR*)
+ -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR* # eps
  -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
  -- if callableId = $callableId(name, parameterList)
  -- if actionTypeDefIR = ACTION `(parameterIR*)
@@ -16173,7 +16201,7 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>LOCAL.KIND</code> set to <code>ACTION</code>.</p>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -16184,9 +16212,6 @@ action declarations are represented in P4<sub>IR</sub> as:</p>
 </li>
 <li>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>LOCAL</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Let the typing context <code>_</code>, abstract control flow <code>_</code>, and  <code>blockStatementIR</code> be</p>
@@ -16842,10 +16867,9 @@ represented.</p>
   rule Decl_ok/externFunctionDeclaration:
   TC_0 |- annotationList EXTERN (typeOrVoid name typeParameterListOpt `(parameterList)) ; : TC_4 externFunctionDeclarationIR
  -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
+ -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR* # typeId_impl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
- -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_FUNCTION : typeIR_ret]
- -- ParameterList_ok: LOCAL TC_2 |- parameterList : parameterIR* # typeId_impl*
- -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
+ -- if TC_3 = TC_2[LOCAL.KIND = EXTERN_FUNCTION : typeIR_ret]
  -- if callableId = $callableId(name, parameterList)
  -- if externFunctionTypeDefIR = EXTERN_FUNCTION `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
  -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- externFunctionTypeDefIR
@@ -16879,6 +16903,16 @@ represented.</p>
 </div>
 </li>
 <li>
+<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
 <p>Let <code>typeIR<sub>ret</sub></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
@@ -16890,19 +16924,6 @@ represented.</p>
 </li>
 <li>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code> with <code>LOCAL.KIND</code> set to <code>EXTERN_FUNCTION</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
-</li>
-<li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>LOCAL</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
-</li>
-</ul>
-</div>
 </li>
 <li>
 <p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
@@ -17111,8 +17132,7 @@ internally.</p>
  -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
  -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_METHOD : typeIR_ret]
- -- ParameterList_ok: LOCAL TC_2 |- parameterList : parameterIR* # typeId_impl*
- -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
+ -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR* # typeId_impl*
  -- if externMethodTypeDefIR = EXTERN_METHOD `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
  -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
  -- if externMethodPrototypeIR = annotationList (typeIR_ret nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)) ;
@@ -17124,8 +17144,7 @@ internally.</p>
  -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
  -- if TC_2 = TC_1[LOCAL.KIND = EXTERN_METHOD ABSTRACT : typeIR_ret]
- -- ParameterList_ok: LOCAL TC_2 |- parameterList : parameterIR* # typeId_impl*
- -- if TC_3 = $add_parameters_t(LOCAL, TC_2, parameterIR*)
+ -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR* # typeId_impl*
  -- if externMethodTypeDefIR = EXTERN_METHOD ABSTRACT `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
  -- CallableTypeDef_wf: $bound(BLOCK, TC_0) |- externMethodTypeDefIR
  -- if externMethodPrototypeIR = annotationList ABSTRACT (typeIR_ret nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)) ;</pre>
@@ -17185,7 +17204,7 @@ internally.</p>
 <p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code> with <code>LOCAL.KIND</code> set to <code>EXTERN_METHOD</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -17255,7 +17274,7 @@ internally.</p>
 <p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub></code> with <code>LOCAL.KIND</code> set to <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -17360,7 +17379,7 @@ internally.</p>
   TC_0 typeId_extern |- annotationList typeIdentifier `(parameterList) ; : externConstructorPrototypeIR
  -- if nameIR = $name(typeIdentifier)
  -- if nameIR = typeId_extern
- -- ConstructorParameterListOpt_ok: TC_0 |- `(parameterList) : constructorParameterIR* # typeId_impl*
+ -- ConstructorParameterListOpt_ok: TC_0 |- `(parameterList) : TC_1 constructorParameterIR* # typeId_impl*
  -- if externObjectTypeDefIR = $find_typeDef_t(GLOBAL, TC_0, ` typeId_extern)
  -- if (typeId_expl*, eps) = $typeParameterListIR_of_typeDefIR(externObjectTypeDefIR)
  -- if typeIR_extern = $typeIR_of_typeDefIR(externObjectTypeDefIR)
@@ -17390,7 +17409,7 @@ internally.</p>
 <p>Check that <code>nameIR</code> is equal to <code>typeId<sub>extern</sub></code>.</p>
 </li>
 <li>
-<p>Let the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>1</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -17928,10 +17947,8 @@ parserDeclarationIR
   TC_0 |- annotationList PARSER name `EMPTY `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_6 parserDeclarationIR
  -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
- -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
- -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # eps
- -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
  -- ParserLocalDeclList_ok: TC_3 |- parserLocalDeclarationList : TC_4 parserLocalDeclarationIR*
  -- if TC_5 = TC_4[LOCAL.KIND = PARSER_STATE]
  -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*
@@ -17967,7 +17984,7 @@ parserDeclarationIR
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>PARSER</code>.</p>
 </li>
 <li>
-<p>Let the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -17980,10 +17997,7 @@ parserDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
-</li>
-<li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -17994,9 +18008,6 @@ parserDeclarationIR
 </li>
 <li>
 <p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
 <p>Let the updated typing context <code>TC<sub>4</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
@@ -18174,10 +18185,8 @@ controlDeclarationIR
   TC_0 |- annotationList CONTROL name `EMPTY `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
  -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
- -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : constructorParameterIR* # eps
- -- if TC_2 = $add_parameters_t(BLOCK, TC_1, constructorParameterIR*)
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # eps
- -- if TC_3 = $add_parameters_t(BLOCK, TC_2, parameterIR*)
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
  -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*
  -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
@@ -18213,7 +18222,7 @@ controlDeclarationIR
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>CONTROL</code>.</p>
 </li>
 <li>
-<p>Let the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18226,10 +18235,7 @@ controlDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>2</sub></code> be <a href="#add_parameters_t"><code>constructorParameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
-</li>
-<li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -18240,9 +18246,6 @@ controlDeclarationIR
 </li>
 <li>
 <p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_parameters_t"><code>parameterIR<sup>*</sup></code> added to the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
 </li>
 <li>
 <p>Let the updated typing context <code>TC<sub>4</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
@@ -20226,14 +20229,14 @@ typedefDeclarationIR
 <div class="content">
 <pre>rulegroup Decl_ok/parserTypeDeclaration:
   rule Decl_ok/parserTypeDeclaration:
-  TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) ; : TC_3 parserTypeDeclarationIR
+  TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) ; : TC_4 parserTypeDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
  -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # typeId_impl*
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- if parserObjectTypeDefIR = PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- parserObjectTypeDefIR
- -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, parserObjectTypeDefIR)
+ -- if TC_4 = $add_typeDef_t(GLOBAL, TC_0, nameIR, parserObjectTypeDefIR)
  -- if parserTypeDeclarationIR = annotationList PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) ;</pre>
 </div>
 </div>
@@ -20265,7 +20268,7 @@ typedefDeclarationIR
 </div>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -20287,13 +20290,13 @@ typedefDeclarationIR
 <p>Check that <a href="#TypeDef_wf"><code>parserObjectTypeDefIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>parserObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>parserObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>parserTypeDeclarationIR</code> be <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>3</sub></code> and <code>parserTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>parserTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -20380,14 +20383,14 @@ typedefDeclarationIR
 <div class="content">
 <pre>rulegroup Decl_ok/controlTypeDeclaration:
   rule Decl_ok/controlTypeDeclaration:
-  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) ; : TC_3 controlTypeDeclarationIR
+  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) ; : TC_4 controlTypeDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
  -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : parameterIR* # typeId_impl*
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- if controlObjectTypeDefIR = CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- controlObjectTypeDefIR
- -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, controlObjectTypeDefIR)
+ -- if TC_4 = $add_typeDef_t(GLOBAL, TC_0, nameIR, controlObjectTypeDefIR)
  -- if controlTypeDeclarationIR = annotationList CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) ;</pre>
 </div>
 </div>
@@ -20419,7 +20422,7 @@ typedefDeclarationIR
 </div>
 </li>
 <li>
-<p>Let the parameter list <code>parameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -20441,13 +20444,13 @@ typedefDeclarationIR
 <p>Check that <a href="#TypeDef_wf"><code>controlObjectTypeDefIR</code> is a well-formed type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>controlObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>controlObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>controlTypeDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>3</sub></code> and <code>controlTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>controlTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -20534,21 +20537,21 @@ typedefDeclarationIR
 <div class="content">
 <pre>rulegroup Decl_ok/packageTypeDeclaration:
   rule Decl_ok/packageTypeDeclaration:
-  TC_0 |- annotationList PACKAGE name typeParameterListOpt `(parameterList) ; : TC_4 packageTypeDeclarationIR
+  TC_0 |- annotationList PACKAGE name typeParameterListOpt `(parameterList) ; : TC_5 packageTypeDeclarationIR
  -- if B = $bound(GLOBAL, TC_0)
  -- if TC_1 = TC_0[BLOCK.KIND = PACKAGE]
  -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
- -- ConstructorParameterListOpt_ok: TC_2 |- `(parameterList) : constructorParameterIR* # typeId_impl*
+ -- ConstructorParameterListOpt_ok: TC_2 |- `(parameterList) : TC_3 constructorParameterIR* # typeId_impl*
  -- if nameIR = $name(name)
  -- (if (_ _ typeIR_package_inner _ _ = constructorParameterIR))*
  -- if packageObjectTypeDefIR = PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `{typeIR_package_inner*}
  -- TypeDef_wf: B |- packageObjectTypeDefIR
- -- if TC_3 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
+ -- if TC_4 = $add_typeDef_t(GLOBAL, TC_0, nameIR, packageObjectTypeDefIR)
  -- if constructorId = $constructorId(name, `(parameterList))
  -- if typeIR_package = $typeIR_of_typeDefIR(packageObjectTypeDefIR)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_package
  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
- -- if TC_4 = $add_constructorDef_t(TC_3, constructorId, constructorTypeDefIR)
+ -- if TC_5 = $add_constructorDef_t(TC_4, constructorId, constructorTypeDefIR)
  -- if packageTypeDeclarationIR = annotationList PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) ;</pre>
 </div>
 </div>
@@ -20583,7 +20586,7 @@ typedefDeclarationIR
 </div>
 </li>
 <li>
-<p>Let the constructor parameter list <code>constructorParameterIR<sup>*</sup></code> and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -20619,7 +20622,7 @@ typedefDeclarationIR
 <p>Check that <a href="#TypeDef_wf"><code>packageObjectTypeDefIR</code> is a well-formed type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>packageObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_typeDef_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>packageObjectTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>constructorId</code> be <a href="#constructorId">the constructor identifier for <code>name</code> <code>(</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>)</code></a>.</p>
@@ -20634,13 +20637,13 @@ typedefDeclarationIR
 <p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>3</sub></code></a>.</p>
+<p>Let <code>TC<sub>5</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>4</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>packageTypeDeclarationIR</code> be <code>annotationList</code> <code>PACKAGE</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>4</sub></code> and <code>packageTypeDeclarationIR</code>.</p>
+<p>Result in the updated typing context <code>TC<sub>5</sub></code> and <code>packageTypeDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
