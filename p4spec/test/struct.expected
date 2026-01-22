@@ -8315,7 +8315,9 @@ def $bin_shr(value, value')
 
             2. (Let i_l' be $bitstr_to_int((w_l as int), i_l))
 
-            3. If ((i_l' < (0 as int))), then
+            3. (Let i_r' be $bitstr_to_int((w_r as int), i_r))
+
+            4. If ((i_l' < (0 as int))), then
 
               1. (Let int be (w_l - 1))
 
@@ -8331,9 +8333,9 @@ def $bin_shr(value, value')
 
               2. Else Phantom#289
 
-            3. Else Phantom#290
+            4. Else Phantom#290
 
-            4. If ((i_l' >= (0 as int))), then
+            5. If ((i_l' >= (0 as int))), then
 
               1. (Let i be $shr(i_l, i_r))
 
@@ -8341,7 +8343,7 @@ def $bin_shr(value, value')
 
               3. Return ((w_l s i') as value)
 
-            4. Else Phantom#291
+            5. Else Phantom#291
 
       2. Else Phantom#292
 
@@ -18316,15 +18318,17 @@ relation Expr_ok: p TC |- expression : %
 
             1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be ((typedExpressionIR, typedExpressionIR)')?)
 
-            2. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+            2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-            3. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+            3. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-            4. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+            4. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-            5. (Let expressionNoteIR be (( ((bool) as typeIR) ctk_reduced )))
+            5. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-            6. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
+            6. (Let expressionNoteIR be (( ((bool) as typeIR) ctk_reduced )))
+
+            7. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
           3. Else Phantom#1080
 
@@ -18984,11 +18988,13 @@ relation Expr_ok: p TC |- expression : %
 
       4. (Let ctk_base be $ctk_of_typedExpressionIR(typedExpressionIR_base))
 
-      5. (Let ctk_index be $ctk_of_typedExpressionIR(typedExpressionIR_index))
+      5. (Let typeIR_index be $type_of_typedExpressionIR(typedExpressionIR_index))
 
-      6. (Let (typedExpressionIR)? be $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+      6. (Let ctk_index be $ctk_of_typedExpressionIR(typedExpressionIR_index))
 
-      7. If (((typedExpressionIR)? matches pattern (_))), then
+      7. (Let (typedExpressionIR)? be $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+
+      8. If (((typedExpressionIR)? matches pattern (_))), then
 
         1. (Let ?(typedExpressionIR_index_reduced) be (typedExpressionIR)?)
 
@@ -19070,7 +19076,7 @@ relation Expr_ok: p TC |- expression : %
 
         3. Else Phantom#1130
 
-      7. Else Phantom#1131
+      8. Else Phantom#1131
 
   10. Case (% has type sliceAccessExpression)
 
@@ -19106,11 +19112,15 @@ relation Expr_ok: p TC |- expression : %
 
             1. (Let ?(typedExpressionIR_lo_reduced) be (typedExpressionIR'')?)
 
-            2. (Let ctk_hi_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced))
+            2. (Let typeIR_hi_reduced be $type_of_typedExpressionIR(typedExpressionIR_hi_reduced))
 
-            3. (Let ctk_lo_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced))
+            3. (Let ctk_hi_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced))
 
-            4. If ((ctk_hi_reduced matches pattern `LCTK`)), then
+            4. (Let typeIR_lo_reduced be $type_of_typedExpressionIR(typedExpressionIR_lo_reduced))
+
+            5. (Let ctk_lo_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced))
+
+            6. If ((ctk_hi_reduced matches pattern `LCTK`)), then
 
               1. (Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value)
 
@@ -19166,7 +19176,7 @@ relation Expr_ok: p TC |- expression : %
 
               2. Else Phantom#1138
 
-            4. Else Phantom#1139
+            6. Else Phantom#1139
 
           3. Else Phantom#1140
 
@@ -19739,15 +19749,17 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
           3. (Let typeIR_l be $type_of_typedLvalueIR(typedLvalueIR))
 
-          4. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_l))
+          4. (Let typeIR_r be $type_of_typedExpressionIR(typedExpressionIR))
 
-          5. If (((typedExpressionIR')? matches pattern (_))), then
+          5. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_l))
+
+          6. If (((typedExpressionIR')? matches pattern (_))), then
 
             1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
 
             2. Result in: % % % % |- % : TC f ((typedLvalueIR (=) typedExpressionIR_cast ;) as statementIR)
 
-          5. Else Phantom#1182
+          6. Else Phantom#1182
 
         2. Case false
 
@@ -19999,11 +20011,13 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             2. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-            3. (Let (typeIR)? be $find_local_return_type_t(TC))
+            3. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
 
-            4. If (((typeIR)? matches pattern (_))), then
+            4. (Let (typeIR')? be $find_local_return_type_t(TC))
 
-              1. (Let ?(typeIR_ret) be (typeIR)?)
+            5. If (((typeIR')? matches pattern (_))), then
+
+              1. (Let ?(typeIR_ret) be (typeIR')?)
 
               2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_ret))
 
@@ -20015,7 +20029,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
               3. Else Phantom#1202
 
-            4. Else Phantom#1203
+            5. Else Phantom#1203
 
     2. Case (% has type blockStatement)
 
@@ -20055,9 +20069,11 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             2. (Stmt_ok: (local) TC_2 f (loop) |- statement' : TC_3 f_post statementIR)
 
-            3. (Let forStatementIR be (annotationList for( (forInitStatementIR)* ; typedExpressionIR ; (forUpdateStatementIR)* ) statementIR))
+            3. (Let TC_4 be $exit_t(TC_3))
 
-            4. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
+            4. (Let forStatementIR be (annotationList for( (forInitStatementIR)* ; typedExpressionIR ; (forUpdateStatementIR)* ) statementIR))
+
+            5. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
 
           5. Else Phantom#1204
 
@@ -20089,9 +20105,11 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
                   5. (Stmt_ok: (local) TC_2 f (loop) |- statement' : TC_3 f_post statementIR)
 
-                  6. (Let forStatementIR be (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR))
+                  6. (Let TC_4 be $exit_t(TC_3))
 
-                  7. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
+                  7. (Let forStatementIR be (annotationList for( typeIR nameIR in forCollectionExpressionIR ) statementIR))
+
+                  8. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
 
                 1. Else Phantom#1206
 
@@ -20287,7 +20305,9 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
         1. (Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init)
 
-        2. If (($ctk_of_typedExpressionIR(typedExpressionIR_init) matches pattern `LCTK`)), then
+        2. (Let typeIR_init be $type_of_typedExpressionIR(typedExpressionIR_init))
+
+        3. If (($ctk_of_typedExpressionIR(typedExpressionIR_init) matches pattern `LCTK`)), then
 
           1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_init, typeIR))
 
@@ -20307,7 +20327,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
           2. Else Phantom#1220
 
-        2. Else Phantom#1221
+        3. Else Phantom#1221
 
       4. Else Phantom#1222
 
@@ -20674,9 +20694,11 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
       2. (ParserStmtList_ok: TC_1 |- parserStatementList : TC_2 (parserStatementIR)*)
 
-      3. (Let parserBlockStatementIR be (annotationList { (parserStatementIR)* }))
+      3. (Let TC_3 be $exit_t(TC_2))
 
-      4. Result in: % |- % : TC_1 (parserBlockStatementIR as parserStatementIR)
+      4. (Let parserBlockStatementIR be (annotationList { (parserStatementIR)* }))
+
+      5. Result in: % |- % : TC_1 (parserBlockStatementIR as parserStatementIR)
 
   8. Case (% has type parserConditionalStatement)
 
@@ -20746,9 +20768,11 @@ relation ParserState_ok: TC_0 (nameIR_state)* |- (annotationList state name { pa
 
   5. (ParserTransition_ok: TC_2 (nameIR_state)* |- transitionStatement : transitionStatementIR)
 
-  6. (Let parserStateIR be (annotationList state nameIR { (parserStatementIR)* transitionStatementIR }))
+  6. (Let TC_3 be $exit_t(TC_2))
 
-  7. Result in: % % |- % : parserStateIR
+  7. (Let parserStateIR be (annotationList state nameIR { (parserStatementIR)* transitionStatementIR }))
+
+  8. Result in: % % |- % : parserStateIR
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:298.1-302.47
 relation ParserStateList_ok: TC |- parserStateList : %
@@ -22805,9 +22829,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                         4. If (TypeDef_wf: $bound((global), TC_0) |- (typedefTypeIR as typeDefIR)) holds, then
 
-                          1. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
+                          1. (Let TC_2 be $add_typeDef_t((global), TC_0, nameIR, (typedefTypeIR as typeDefIR)))
 
-                          2. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
+                          2. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
+
+                          3. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
                         4. Else Phantom#1379
 
@@ -22823,9 +22849,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                           4. If (TypeDef_wf: $bound((global), TC_0) |- (typedefTypeIR as typeDefIR)) holds, then
 
-                            1. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
+                            1. (Let TC_2 be $add_typeDef_t((global), TC_0, nameIR, (typedefTypeIR as typeDefIR)))
 
-                            2. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
+                            2. (Let typedefDeclarationIR be (annotationList typedef (derivedTypeDeclarationIR as typedefIR) nameIR ;))
+
+                            3. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
                           4. Else Phantom#1380
 
@@ -26803,9 +26831,11 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be ((typedExpressionIR, typedExpressionIR)')?)
 
-          2. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
+          2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-          3. If (((typedExpressionIR)? matches pattern (_))), then
+          3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
+
+          4. If (((typedExpressionIR)? matches pattern (_))), then
 
             1. (Let ?(typedExpressionIR_l_coerced) be (typedExpressionIR)?)
 
@@ -26819,7 +26849,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
             3. Else Phantom#1747
 
-          3. Else Phantom#1748
+          4. Else Phantom#1748
 
         3. Else Phantom#1749
 

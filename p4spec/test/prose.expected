@@ -2856,6 +2856,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Else:
   ... Let ``w~r~`` ``S`` ``i~r~`` be ``integerLiteral'``.
   ... Let ``i~l'~`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w~l~,`` ``i~l~)>>``.
+  ... Let ``i~r'~`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w~r~,`` ``i~r~)>>``.
   ... If ``i~l'~`` is less than ``0``:
    .... Let ``int`` be ``w~l~`` ``-`` ``1``.
    .... Check that ``int`` has type ``nat``.
@@ -6851,6 +6852,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_compare)>>``.
+. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~r_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_reduced~``>>.
 . Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
@@ -7215,6 +7217,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~index~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
 . Let ``ctk~base~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~base~``>>.
+. Let ``typeIR~index~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~index~``>>.
 . Let ``ctk~index~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~index~``>>.
 . Let ``typedExpressionIR~index_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~index~`` until $compat_array_index is satisfied>>.
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
@@ -7260,7 +7263,9 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 . Let ``ctk~base_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~base_reduced~``>>.
 . Let ``typedExpressionIR~hi_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~hi~`` until $compat_bitslice_index is satisfied>>.
 . Let ``typedExpressionIR~lo_reduced~`` be <<option_get, *!*>> <<reduce_serenum_unary, the result of reducing serializable enums in ``typedExpressionIR~lo~`` until $compat_bitslice_index is satisfied>>.
+. Let ``typeIR~hi_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~hi_reduced~``>>.
 . Let ``ctk~hi_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~hi_reduced~``>>.
+. Let ``typeIR~lo_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~lo_reduced~``>>.
 . Let ``ctk~lo_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~lo_reduced~``>>.
 . Check that ``ctk~hi_reduced~`` is ``LCTK``.
 . Let ``value`` be
@@ -7566,6 +7571,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~l~`` be <<type_of_typedLvalueIR, the type of lvalue  ``typedLvalueIR``>>.
+ .. Let ``typeIR~r~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~l~``>>.
  .. Result in 
 * the typing context ``TC``, 
@@ -7720,6 +7726,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``RETURN`` ``expression`` ``;`` be ``returnStatement``.
  .. Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
+ .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``typeIR~ret~`` be <<option_get, *!*>> <<find_local_return_type_t, the expected return type in ``TC``>>.
  .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~ret~``>>.
  .. Result in 
@@ -7749,6 +7756,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let <<ForUpdateStmtList_ok, TC~2~ |- forUpdateStatementList : forUpdateStatementIR^{asterisk}^>>.
 . Let the typing context ``TC~3~``, the abstract control flow ``f~post~``, and the typed statement ``statementIR`` be
 * the result of <<Stmt_ok, typing ``statement'``, under cursor ``LOCAL``, typing context ``TC~2~``, abstract control flow ``f``, and loop context ``LOOP``>>.
+. Let ``TC~4~`` be ``<<exit_t,`` ``exit_t(TC~3~)>>``.
 . Let ``forStatementIR`` be ``annotationList`` ``FOR`` ``(`` ``forInitStatementIR^{asterisk}^`` ``;`` ``typedExpressionIR`` ``;`` ``forUpdateStatementIR^{asterisk}^`` ``)`` ``statementIR``.
 . Result in 
 * the typing context ``TC``, 
@@ -7770,6 +7778,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``TC~2~`` be <<add_var_t, ``TC~1~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
  .. Let the typing context ``TC~3~``, the abstract control flow ``f~post~``, and the typed statement ``statementIR`` be
 * the result of <<Stmt_ok, typing ``statement'``, under cursor ``LOCAL``, typing context ``TC~2~``, abstract control flow ``f``, and loop context ``LOOP``>>.
+ .. Let ``TC~4~`` be ``<<exit_t,`` ``exit_t(TC~3~)>>``.
  .. Let ``forStatementIR`` be ``annotationList`` ``FOR`` ``(`` ``typeIR`` ``nameIR`` ``IN`` ``forCollectionExpressionIR`` ``)`` ``statementIR``.
  .. Result in 
 * the typing context ``TC``, 
@@ -7928,6 +7937,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
+ .. Let ``typeIR~init~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~init~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``.
  .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
@@ -8168,6 +8178,7 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 . Let ``TC~1~`` be ``<<enter_t,`` ``enter_t(TC~0~)>>``.
 . Let the updated typing context ``TC~2~`` and the typed parser statements ``parserStatementIR^{asterisk}^`` be
 * the result of <<ParserStmtList_ok, typing ``parserStatementList``, under typing context ``TC~1~``>>.
+. Let ``TC~3~`` be ``<<exit_t,`` ``exit_t(TC~2~)>>``.
 . Let ``parserBlockStatementIR`` be ``annotationList`` ``{`` ``parserStatementIR^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~1~`` and the typed parser statement ``parserBlockStatementIR``.
 
@@ -8219,6 +8230,7 @@ for each ``selectCase`` in ``selectCase^{asterisk}^``
 * the result of <<ParserStmts_ok, typing ``parserStatement^{asterisk}^``, under typing context ``TC~1~``>>.
 . Let the typed transition statement ``transitionStatementIR`` be
 * the result of <<ParserTransition_ok, typing ``transitionStatement``, under typing context ``TC~2~`` and parser state names ``nameIR~state~^{asterisk}^``>>.
+. Let ``TC~3~`` be ``<<exit_t,`` ``exit_t(TC~2~)>>``.
 . Let ``parserStateIR`` be ``annotationList`` ``STATE`` ``nameIR`` ``{`` ``parserStatementIR^{asterisk}^`` ``transitionStatementIR`` ``}``.
 . Result in the typed parser state ``parserStateIR``.
 
@@ -9499,6 +9511,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``typedefTypeIR`` be ``TYPEDEF`` ``nameIR`` ``typeIR``.
   ... Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
   ... Check that <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, with bound type variables ``bound``>>.
+  ... Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``typedefTypeIR`` is added to the ``GLOBAL`` layer>>.
   ... Let ``typedefDeclarationIR`` be ``annotationList`` ``TYPEDEF`` ``derivedTypeDeclarationIR`` ``nameIR`` ``;``.
   ... Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
  .. Else:
@@ -9508,6 +9521,7 @@ for each ``name~f~`` in ``name~f~^{asterisk}^``
   ... Let ``typedefTypeIR`` be ``TYPEDEF`` ``nameIR`` ``typeIR``.
   ... Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
   ... Check that <<TypeDef_wf, ``typedefTypeIR`` is a well-formed type definition, with bound type variables ``bound``>>.
+  ... Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``typedefTypeIR`` is added to the ``GLOBAL`` layer>>.
   ... Let ``typedefDeclarationIR`` be ``annotationList`` ``TYPEDEF`` ``derivedTypeDeclarationIR`` ``nameIR`` ``;``.
   ... Result in the updated typing context ``TC~1~`` and ``typedefDeclarationIR``.
 
@@ -11099,6 +11113,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
+. Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
 . Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
 . Result in ``typedExpressionIR~l_coerced~`` ``&&&`` ``typedExpressionIR~r_coerced~``.
