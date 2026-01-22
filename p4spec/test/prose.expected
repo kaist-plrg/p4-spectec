@@ -1105,9 +1105,9 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 | TYPE ++_++ typeIR | <<is_defaultable_typeIR, is_defaultable_typeIR(typeIR)>>
 | TUPLE < typeIR^{asterisk}^ > | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
 | typeIR [ ++_++ ] | <<is_defaultable_typeIR, is_defaultable_typeIR(typeIR)>>
-| STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
-| HEADER ++_++ < ++_++^{asterisk}^ > { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
-| HEADER_UNION ++_++ < ++_++^{asterisk}^ > { (typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| STRUCT ++_++ < ++_++^{asterisk}^ > { (++_++ typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| HEADER ++_++ < ++_++^{asterisk}^ > { (++_++ typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
+| HEADER_UNION ++_++ < ++_++^{asterisk}^ > { (++_++ typeIR ++_++ ;)^{asterisk}^ } | <<forall_, forall_((is_defaultable_typeIR(typeIR))^{asterisk}^)>>
 | ENUM ++_++ { ++_++^{asterisk}^ } | true
 | ENUM ++_++ < typeIR > { ++_++^{asterisk}^ } | <<is_defaultable_typeIR, is_defaultable_typeIR(typeIR)>>
 | ++_++ | false
@@ -1408,11 +1408,11 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Return ``<<unions_set,`` ``unions_set<typeId>((free_typeIR(typeIR'))^{asterisk}^)>>``.
 . Else if let ``typeIR'`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Return ``<<free_typeIR,`` ``free_typeIR(typeIR')>>``.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<union_set,`` ``union_set<typeId>(unions_set<typeId>((free_typeIR(typeArgumentIR))^{asterisk}^),`` ``unions_set<typeId>((free_typeIR(typeIR~field~))^{asterisk}^))>>``.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<union_set,`` ``union_set<typeId>(unions_set<typeId>((free_typeIR(typeArgumentIR))^{asterisk}^),`` ``unions_set<typeId>((free_typeIR(typeIR~field~))^{asterisk}^))>>``.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<union_set,`` ``union_set<typeId>(unions_set<typeId>((free_typeIR(typeArgumentIR))^{asterisk}^),`` ``unions_set<typeId>((free_typeIR(typeIR~field~))^{asterisk}^))>>``.
 . Else if let ``enumTypeIR`` be ``typeIR``:
  .. If ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``{`` ``%`` ``}``:
@@ -1441,10 +1441,10 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
   ... Let ``SEQ`` ``<`` ``typeIR'^{asterisk}^`` ``,`` ``...`` ``>`` be ``sequenceTypeIR``.
   ... Return ``<<unions_set,`` ``unions_set<typeId>((free_typeIR(typeIR'))^{asterisk}^)>>``.
 . Else if let ``recordTypeIR`` be ``typeIR``:
- .. If let ``RECORD`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
+ .. If let ``RECORD`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
   ... Return ``<<unions_set,`` ``unions_set<typeId>((free_typeIR(typeIR'))^{asterisk}^)>>``.
  .. Else:
-  ... Let ``RECORD`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
+  ... Let ``RECORD`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
   ... Return ``<<unions_set,`` ``unions_set<typeId>((free_typeIR(typeIR'))^{asterisk}^)>>``.
 . Else if let ``SET`` ``<`` ``typeIR'`` ``>`` be ``typeIR``:
  .. Return ``<<free_typeIR,`` ``free_typeIR(typeIR')>>``.
@@ -1676,7 +1676,7 @@ for each ``typeIR'`` in ``typeIR'^{asterisk}^``
  .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR'`` substituted by a non-empty ``theta``>>.
  .. Return ``typeIR~subst~`` ``[`` ``n~size~`` ``]``.
 . Else if let ``structTypeIR`` be ``typeIR``:
- .. Let ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``structTypeIR``.
+ .. Let ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``structTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
@@ -1691,10 +1691,10 @@ for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
- .. Let ``structTypeIR~subst~`` be ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+ .. Let ``structTypeIR~subst~`` be ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
  .. Return ``structTypeIR~subst~``.
 . Else if let ``headerTypeIR`` be ``typeIR``:
- .. Let ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``headerTypeIR``.
+ .. Let ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``headerTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
@@ -1709,10 +1709,10 @@ for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
- .. Let ``headerTypeIR~subst~`` be ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+ .. Let ``headerTypeIR~subst~`` be ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
  .. Return ``headerTypeIR~subst~``.
 . Else if let ``headerUnionTypeIR`` be ``typeIR``:
- .. Let ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``headerUnionTypeIR``.
+ .. Let ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``headerUnionTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
 +
 --
@@ -1727,7 +1727,7 @@ for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
- .. Let ``headerUnionTypeIR~subst~`` be ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+ .. Let ``headerUnionTypeIR~subst~`` be ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR~subst~^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field_subst~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
  .. Return ``headerUnionTypeIR~subst~``.
 . Else if let ``enumTypeIR`` be ``typeIR``:
  .. If let ``ENUM`` ``typeId`` ``{`` ``id~field~^{asterisk}^`` ``}`` be ``enumTypeIR``:
@@ -1843,7 +1843,7 @@ for each ``typeIR'`` in ``typeIR'^{asterisk}^``
 for each ``typeIR'`` in ``typeIR'^{asterisk}^``
   ... Return ``SEQ`` ``<`` ``typeIR~subst~^{asterisk}^`` ``,`` ``...`` ``>``.
 . Else if let ``recordTypeIR`` be ``typeIR``:
- .. If let ``RECORD`` ``{`` ``(typeIR~field~`` ``id~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
+ .. If let ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field~`` ``id~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
   ... Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
@@ -1851,9 +1851,9 @@ for each ``typeIR'`` in ``typeIR'^{asterisk}^``
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
-  ... Return ``RECORD`` ``{`` ``(typeIR~field_subst~`` ``id~field~`` ``;)^{asterisk}^`` ``}``.
+  ... Return ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_subst~`` ``id~field~`` ``;)^{asterisk}^`` ``}``.
  .. Else:
-  ... Let ``RECORD`` ``{`` ``(typeIR~field~`` ``id~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
+  ... Let ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field~`` ``id~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
   ... Let ``typeIR~field_subst~^{asterisk}^`` be the list of ``typeIR~field_subst~``, obtained by repeating:
 +
 --
@@ -1861,7 +1861,7 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
-  ... Return ``RECORD`` ``{`` ``(typeIR~field_subst~`` ``id~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}``.
+  ... Return ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_subst~`` ``id~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}``.
 . Else if let ``SET`` ``<`` ``typeIR'`` ``>`` be ``typeIR``:
  .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR'`` substituted by a non-empty ``theta``>>.
  .. Return ``SET`` ``<`` ``typeIR~subst~`` ``>``.
@@ -2268,16 +2268,18 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 <<Type_alpha, ``recordTypeIR`` and ``recordTypeIR'`` are the same type when>>:
 
-. If let ``RECORD`` ``{`` ``(typeIR~field_a~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
+. If let ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
  .. Check that ``recordTypeIR'`` matches pattern ``RECORD`` ``{`` ``%`` ``}``.
- .. Let ``RECORD`` ``{`` ``(typeIR~field_b~`` ``nameIR`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR'``.
+ .. Let ``RECORD`` ``{`` ``(annotationList'`` ``typeIR~field_b~`` ``nameIR`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR'``.
+ .. Check that ``annotationList'`` is equal to ``annotationList``, for all ``annotationList`` in ``annotationList^{asterisk}^`` and ``annotationList'`` in ``annotationList'^{asterisk}^``.
  .. Check that ``nameIR`` is equal to ``nameIR~field~``, for all ``nameIR`` in ``nameIR^{asterisk}^`` and ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``.
  .. Check that <<Type_alpha, ``typeIR~field_a~`` and ``typeIR~field_b~`` are the same type>>, for all ``typeIR~field_a~`` in ``typeIR~field_a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else:
- .. Let ``RECORD`` ``{`` ``(typeIR~field_a~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
+ .. Let ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
  .. Check that ``recordTypeIR'`` matches pattern ``RECORD`` ``{`` ``%`` ``,`` ``...`` ``}``.
- .. Let ``RECORD`` ``{`` ``(typeIR~field_b~`` ``nameIR`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR'``.
+ .. Let ``RECORD`` ``{`` ``(annotationList'`` ``typeIR~field_b~`` ``nameIR`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR'``.
+ .. Check that ``annotationList'`` is equal to ``annotationList``, for all ``annotationList`` in ``annotationList^{asterisk}^`` and ``annotationList'`` in ``annotationList'^{asterisk}^``.
  .. Check that ``nameIR`` is equal to ``nameIR~field~``, for all ``nameIR`` in ``nameIR^{asterisk}^`` and ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``.
  .. Check that <<Type_alpha, ``typeIR~field_a~`` and ``typeIR~field_b~`` are the same type>>, for all ``typeIR~field_a~`` in ``typeIR~field_a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
@@ -3313,11 +3315,11 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
  .. Let ``value'`` be <<default, the default value for type ``typeIR'``>>.
  .. Let ``value^{asterisk}^`` be <<repeat_, a list of ``n~s~`` copies of ``value'``>>.
  .. Return ``HEADER_STACK`` ``[`` ``value^{asterisk}^`` ``(`` ``0`` ``;`` ``n~s~`` ``)`` ``]``.
-. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``STRUCT`` ``typeId`` ``{`` ``(<<default,`` ``default(typeIR~f~)>>`` ``id~f~`` ``;)^{asterisk}^`` ``}``.
-. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``HEADER`` ``typeId`` ``{`` ``false`` ``;`` ``(<<default,`` ``default(typeIR~f~)>>`` ``id~f~`` ``;)^{asterisk}^`` ``}``.
-. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``id~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``HEADER_UNION`` ``typeId`` ``{`` ``(<<default,`` ``default(typeIR~f~)>>`` ``id~f~`` ``;)^{asterisk}^`` ``}``.
 . Else if let ``enumTypeIR`` be ``typeIR``:
  .. If let ``ENUM`` ``typeId`` ``{`` ``id^{asterisk}^`` ``}`` be ``enumTypeIR``:
@@ -3538,7 +3540,7 @@ for each ``id`` in ``id^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
 for each ``value`` in ``value^{asterisk}^``
  .. Let ``n~idx~`` be the length of ``value^{asterisk}^``.
  .. Return ``HEADER_STACK`` ``[`` ``value~cast~^{asterisk}^`` ``(`` ``n~idx~`` ``;`` ``n~size~`` ``)`` ``]``.
-. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``value~cast~^{asterisk}^`` be the list of ``value~cast~``, obtained by repeating:
 +
 --
@@ -3547,7 +3549,7 @@ for each ``value`` in ``value^{asterisk}^``
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
  .. Return ``STRUCT`` ``typeId`` ``{`` ``(value~cast~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
-. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``value~cast~^{asterisk}^`` be the list of ``value~cast~``, obtained by repeating:
 +
 --
@@ -3569,7 +3571,7 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^`` and ``value`` in ``v
 for each ``id`` in ``id^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
 . If let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_record,`` ``cast_record(typeIR',`` ``((value',`` ``id'))^{asterisk}^)>>``.
-. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~t_field~`` ``id~t_field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``value''^?^^{asterisk}^`` be the list of ``value''^?^``, obtained by repeating:
 +
 --
@@ -3593,7 +3595,7 @@ for each ``value''^?^`` in ``value''^?^^{asterisk}^``
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field~`` in ``value~field~^{asterisk}^``
  .. Return ``STRUCT`` ``typeId`` ``{`` ``(value~field_cast~`` ``id'`` ``;)^{asterisk}^`` ``}``.
-. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~t_field~`` ``id~t_field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``typeId`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``value''^?^^{asterisk}^`` be the list of ``value''^?^``, obtained by repeating:
 +
 --
@@ -3736,11 +3738,11 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_minSizeInBits'(typeIR'))^{asterisk}^)>>``.
 . Else if let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``:
  .. Return ``<<sizeof_minSizeInBits',`` ``sizeof_minSizeInBits'(typeIR')>>`` ``*`` ``n~size~``.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_minSizeInBits'(typeIR'))^{asterisk}^)>>``.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_minSizeInBits'(typeIR'))^{asterisk}^)>>``.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<min_nat,`` ``min_nat((sizeof_minSizeInBits'(typeIR'))^{asterisk}^)>>``.
 
 <<sizeof_minSizeInBytes, sizeof_minSizeInBytes(typeIR)>>
@@ -3778,11 +3780,11 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_maxSizeInBits'(typeIR'))^{asterisk}^)>>``.
 . Else if let ``typeIR'`` ``[`` ``n~size~`` ``]`` be ``typeIR``:
  .. Return ``<<sizeof_maxSizeInBits',`` ``sizeof_maxSizeInBits'(typeIR')>>`` ``*`` ``n~size~``.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_maxSizeInBits'(typeIR'))^{asterisk}^)>>``.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<sum_nat,`` ``sum_nat((sizeof_maxSizeInBits'(typeIR'))^{asterisk}^)>>``.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR'`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Return ``<<max_nat,`` ``max_nat((sizeof_maxSizeInBits'(typeIR'))^{asterisk}^)>>``.
 
 <<sizeof_maxSizeInBytes, sizeof_maxSizeInBytes(typeIR)>>
@@ -4740,21 +4742,21 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 . Check that <<Type_wf, ``typeIR'`` is a well-formed type, with bound type variables ``B``>>.
 . The relation holds.
 
-<<Type_wf, ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
+<<Type_wf, ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_struct, ``typeIR~field~`` can be nested in a struct type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, with bound type variables ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
+<<Type_wf, ``HEADER`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_header, ``typeIR~field~`` can be used in a header type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, with bound type variables ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . The relation holds.
 
-<<Type_wf, ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
+<<Type_wf, ``HEADER_UNION`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``(annotationList`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` is a well-formed type, with bound type variables ``B`` when>>:
 
 . Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
 . Check that <<nestable_headerUnion, ``typeIR~field~`` can be used in a header union type>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
@@ -4818,12 +4820,12 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 <<Type_wf, ``recordTypeIR`` is a well-formed type, with bound type variables ``B`` when>>:
 
-. If let ``RECORD`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
+. If let ``RECORD`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``recordTypeIR``:
  .. Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
  .. Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, with bound type variables ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
  .. The relation holds.
 . Else:
- .. Let ``RECORD`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
+ .. Let ``RECORD`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` be ``recordTypeIR``.
  .. Check that <<distinct_, the elements of ``nameIR~field~^{asterisk}^`` are distinct>>.
  .. Check that <<Type_wf, ``typeIR~field~`` is a well-formed type, with bound type variables ``B``>>, for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
  .. The relation holds.
@@ -5219,7 +5221,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 | TYPEDEF ++_++ typeIR | <<nestable_header, nestable_header(typeIR)>>
 | newTypeIR | true
 | ENUM ++_++ < ++_++ > { ++_++^{asterisk}^ } | true
-| STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, forall_((nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
+| STRUCT ++_++ < ++_++^{asterisk}^ > { (++_++ typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, forall_((nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
 | ++_++ | false
 
 |===
@@ -5236,7 +5238,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 | TYPEDEF ++_++ typeIR | <<nestable_struct_in_header, nestable_struct_in_header(typeIR)>>
 | newTypeIR | true
 | ENUM ++_++ < ++_++ > { ++_++^{asterisk}^ } | true
-| STRUCT ++_++ < ++_++^{asterisk}^ > { (typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, forall_((nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
+| STRUCT ++_++ < ++_++^{asterisk}^ > { (++_++ typeIR~field~ ++_++ ;)^{asterisk}^ } | <<forall_, forall_((nestable_struct_in_header(typeIR~field~))^{asterisk}^)>>
 | ++_++ | false
 
 |===
@@ -6149,10 +6151,10 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 
@@ -6169,22 +6171,22 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
  .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6218,7 +6220,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6253,9 +6255,9 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6306,7 +6308,7 @@ for each ``id~default~`` in ``id~default~^{asterisk}^``
 for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6433,10 +6435,10 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``sequenceTypeIR'`` be ``typeIR'``:
@@ -6458,22 +6460,22 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``++_++`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
  .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6507,7 +6509,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6542,9 +6544,9 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -6595,7 +6597,7 @@ for each ``id~default~`` in ``id~default~^{asterisk}^``
 for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``;)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list of ``typeIR''^?^``, obtained by repeating:
 +
@@ -7005,7 +7007,7 @@ for each ``typedExpressionIR~e_h~`` in ``typedExpressionIR~e_h~^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~f~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~f~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~f~``>>.
  .. Let ``ctk~f~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~f~``>>.
- .. Let ``typeIR`` be ``RECORD`` ``{`` ``[typeIR~f~`` ``nameIR~f~`` ``;]`` ``}``.
+ .. Let ``typeIR`` be ``RECORD`` ``{`` ``[`EMPTY`` ``typeIR~f~`` ``nameIR~f~`` ``;]`` ``}``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk~f~``>>.
  .. Result in <<typedExpressionIR, ``RECORD`` ``{`` ``[nameIR~f~`` ``=`` ``typedExpressionIR~f~]`` ``}`` annotated with ``expressionNoteIR``>>.
 . Else if let ``name~f~`` ``=`` ``expression~f~`` ``,`` ``...`` be ``recordElementExpression``:
@@ -7014,7 +7016,7 @@ for each ``typedExpressionIR~e_h~`` in ``typedExpressionIR~e_h~^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~f~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~f~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~f~``>>.
  .. Let ``ctk~f~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~f~``>>.
- .. Let ``typeIR`` be ``RECORD`` ``{`` ``[typeIR~f~`` ``nameIR~f~`` ``;]`` ``,`` ``...`` ``}``.
+ .. Let ``typeIR`` be ``RECORD`` ``{`` ``[`EMPTY`` ``typeIR~f~`` ``nameIR~f~`` ``;]`` ``,`` ``...`` ``}``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk~f~``>>.
  .. Result in <<typedExpressionIR, ``RECORD`` ``{`` ``[nameIR~f~`` ``=`` ``typedExpressionIR~f~]`` ``,`` ``...`` ``}`` annotated with ``expressionNoteIR``>>.
 . Else if let ``name~f_h~`` ``=`` ``expression~f_h~`` ``,`` ``namedExpressionList~t~`` be ``recordElementExpression``:
@@ -7050,7 +7052,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 --
 +
 for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
- .. Let ``typeIR`` be ``RECORD`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+ .. Let ``typeIR`` be ``RECORD`` ``{`` ``(`EMPTY`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
  .. Let ``ctk`` be <<joins_ctk, ``ctk~f~^{asterisk}^`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>>.
  .. Result in <<typedExpressionIR, ``RECORD`` ``{`` ``(nameIR~f~`` ``=`` ``typedExpressionIR~f~)^{asterisk}^`` ``}`` annotated with ``expressionNoteIR``>>.
@@ -7088,7 +7090,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 --
 +
 for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
- .. Let ``typeIR`` be ``RECORD`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}``.
+ .. Let ``typeIR`` be ``RECORD`` ``{`` ``(`EMPTY`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``,`` ``...`` ``}``.
  .. Let ``ctk`` be <<joins_ctk, ``ctk~f~^{asterisk}^`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>>.
  .. Result in <<typedExpressionIR, ``RECORD`` ``{`` ``(nameIR~f~`` ``=`` ``typedExpressionIR~f~)^{asterisk}^`` ``,`` ``...`` ``}`` annotated with ``expressionNoteIR``>>.
@@ -7166,17 +7168,17 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 . Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
 . Let ``ctk~base~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~base~``>>.
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
-. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~f~,`` ``typeIR~f~))^{asterisk}^)>>``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR''`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``nameIR`` annotated with ``expressionNoteIR``>>.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~f~,`` ``typeIR~f~))^{asterisk}^)>>``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR''`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``nameIR`` annotated with ``expressionNoteIR``>>.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~f~,`` ``typeIR~f~))^{asterisk}^)>>``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR''`` and compile-time known-ness ``ctk~base~``>>.
@@ -7440,17 +7442,17 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
  .. Result in ``typedLvalueIR``.
-. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~field~,`` ``typeIR~field~))^{asterisk}^)>>``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR''`` ``)``>>.
  .. Result in ``typedLvalueIR``.
-. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~field~,`` ``typeIR~field~))^{asterisk}^)>>``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR''`` ``)``>>.
  .. Result in ``typedLvalueIR``.
-. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
+. Else if let ``HEADER_UNION`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(++_++`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Let ``typeIR''`` be <<option_get, *!*>> ``<<assoc_,`` ``assoc_<nameIR,`` ``typeIR>(nameIR,`` ``((nameIR~field~,`` ``typeIR~field~))^{asterisk}^)>>``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR''`` ``)``>>.
@@ -9380,7 +9382,7 @@ for each ``type~field~`` in ``type~field~^{asterisk}^``
 --
 +
 for each ``name~field~`` in ``name~field~^{asterisk}^``
-. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``structTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``structTypeDefIR`` is added to the ``GLOBAL`` layer>>.
@@ -9409,7 +9411,7 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 --
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
-. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``headerTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``headerTypeDefIR`` is added to the ``GLOBAL`` layer>>.
@@ -9438,7 +9440,7 @@ for each ``type~f~`` in ``type~f~^{asterisk}^``
 --
 +
 for each ``name~f~`` in ``name~f~^{asterisk}^``
-. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeId^{asterisk}^`` ``>`` ``{`` ``(annotationList~f~`` ``typeIR~f~`` ``nameIR~f~`` ``;)^{asterisk}^`` ``}``.
 . Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Check that <<TypeDef_wf, ``headerUnionTypeDefIR`` is a well-formed type definition, with bound type variables ``bound``>>.
 . Let ``TC~2~`` be <<add_typeDef_t, ``TC~0~`` where ``nameIR`` to ``headerUnionTypeDefIR`` is added to the ``GLOBAL`` layer>>.
@@ -13705,7 +13707,7 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``structTypeDefIR`` be ``STRUCT`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``structTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
@@ -13718,7 +13720,7 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerTypeDefIR`` be ``HEADER`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``headerTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
@@ -13731,7 +13733,7 @@ for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
+. Let ``headerUnionTypeDefIR`` be ``HEADER_UNION`` ``nameIR`` ``<`` ``typeParameterListIR`` ``>`` ``{`` ``(annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``;)^{asterisk}^`` ``}``.
 . Let ``IC~1~`` be <<add_typeDef_i, ``IC~0~`` where ``nameIR`` to ``headerUnionTypeDefIR`` is added to the ``GLOBAL`` layer>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 

@@ -3516,9 +3516,9 @@ syntax tupleTypeIR =
 syntax headerStackTypeIR = 
    | typeIR [ nat ]
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:62.22-62.38
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:62.22-62.53
 syntax fieldTypeIR = 
-   | typeIR nameIR ;
+   | annotationList typeIR nameIR ;
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:65.3-66.28
 syntax structTypeIR = 
@@ -4065,20 +4065,20 @@ tbl def $is_defaultable_typeIR(typeIR) : bool =
     -- if typeIR' <: headerStackTypeIR
     -- let typeIR [ _nat ] = typeIR' as headerStackTypeIR
   row 8 :
-    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
     (typeIR') -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
   row 9 :
-    (signature) header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (signature) header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
     (typeIR') -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
   row 10 :
-    (signature) header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (signature) header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
     (typeIR') -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: headerUnionTypeIR
-    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
+    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
   row 11 :
     (signature) enum _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR
     (typeIR) -> true
@@ -4840,17 +4840,17 @@ def $free_typeIR(typeIR) : bound =
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:48.1-51.56
   clause 7 : (typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
   -- if typeIR <: structTypeIR
-  -- let struct _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+  -- let struct _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:53.1-56.56
   clause 8 : (typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
   -- if typeIR <: headerTypeIR
-  -- let header _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
+  -- let header _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:58.1-61.56
   clause 9 : (typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
   -- if typeIR <: headerUnionTypeIR
-  -- let header_union _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as headerUnionTypeIR
+  -- let header_union _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as headerUnionTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:63.1-63.43
   clause 10 : (typeIR) = { [] }
@@ -4922,14 +4922,14 @@ def $free_typeIR(typeIR) : bound =
   -- if typeIR' <: recordTypeIR
   -- let recordTypeIR = typeIR' as recordTypeIR
   -- if recordTypeIR matches `RECORD{%}`
-  -- let record{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = recordTypeIR
+  -- let record{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = recordTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:106.1-107.47
   clause 22 : (typeIR') = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: recordTypeIR
   -- let recordTypeIR = typeIR' as recordTypeIR
   -- if recordTypeIR matches `RECORD{%,...}`
-  -- let record{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} ,...} = recordTypeIR
+  -- let record{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} ,...} = recordTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:109.1-110.25
   clause 23 : (typeIR') = $free_typeIR(typeIR)
@@ -5128,32 +5128,32 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:123.1-132.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:123.1-132.68
   clause 7 : (theta, typeIR) = structTypeIR_subst as typeIR
   -- if typeIR <: structTypeIR
   -- let structTypeIR = typeIR as structTypeIR
-  -- let struct typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = structTypeIR
+  -- let struct typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = structTypeIR
   -- (let typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
-  -- let structTypeIR_subst = struct typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
+  -- let structTypeIR_subst = struct typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:134.1-143.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:134.1-143.68
   clause 8 : (theta, typeIR) = headerTypeIR_subst as typeIR
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
-  -- let header typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerTypeIR
+  -- let header typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerTypeIR
   -- (let typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
-  -- let headerTypeIR_subst = header typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
+  -- let headerTypeIR_subst = header typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:145.1-154.53
+  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:145.1-154.68
   clause 9 : (theta, typeIR) = headerUnionTypeIR_subst as typeIR
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
-  -- let header_union typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerUnionTypeIR
+  -- let header_union typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerUnionTypeIR
   -- (let typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst -> typeArgumentIR_subst*}
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
-  -- let headerUnionTypeIR_subst = header_union typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ typeIR_field_subst nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
+  -- let headerUnionTypeIR_subst = header_union typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} >{ annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} }
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:156.1-157.31
   clause 10 : (theta, typeIR) = enum typeId { id_field*{id_field <- id_field*} } as typeIR
@@ -5242,19 +5242,19 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   -- (let typeIR_subst = $subst_typeIR'(theta, typeIR))*{typeIR <- typeIR*, typeIR_subst -> typeIR_subst*}
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:222.1-225.68
-  clause 21 : (theta, typeIR) = record{ typeIR_field_subst id_field ;*{id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} } as typeIR
+  clause 21 : (theta, typeIR) = record{ annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} } as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
   -- if recordTypeIR matches `RECORD{%}`
-  -- let record{ typeIR_field id_field ;*{id_field <- id_field*, typeIR_field <- typeIR_field*} } = recordTypeIR
+  -- let record{ annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} } = recordTypeIR
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:227.1-230.68
-  clause 22 : (theta, typeIR) = record{ typeIR_field_subst id_field ;*{id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} ,...} as typeIR
+  clause 22 : (theta, typeIR) = record{ annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} ,...} as typeIR
   -- if typeIR <: recordTypeIR
   -- let recordTypeIR = typeIR as recordTypeIR
   -- if recordTypeIR matches `RECORD{%,...}`
-  -- let record{ typeIR_field id_field ;*{id_field <- id_field*, typeIR_field <- typeIR_field*} ,...} = recordTypeIR
+  -- let record{ annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} ,...} = recordTypeIR
   -- (let typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*{typeIR_field <- typeIR_field*, typeIR_field_subst -> typeIR_field_subst*}
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:232.1-234.53
@@ -5930,10 +5930,11 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath non-default
     -- let recordTypeIR'' = recordTypeIR
     -- if recordTypeIR'' matches `RECORD{%}`
-    -- let record{ typeIR_field_a nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR''
+    -- let record{ annotationList typeIR_field_a nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR''
     -- let recordTypeIR''' = recordTypeIR'
     -- if recordTypeIR''' matches `RECORD{%}`
-    -- let record{ typeIR_field_b nameIR ;*{nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} } = recordTypeIR'''
+    -- let record{ annotationList' typeIR_field_b nameIR ;*{annotationList' <- annotationList'*, nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} } = recordTypeIR'''
+    -- (if (annotationList' = annotationList))*{annotationList <- annotationList*, annotationList' <- annotationList'*}
     -- (if (nameIR = nameIR_field))*{nameIR <- nameIR*, nameIR_field <- nameIR_field*}
     -- (if Type_alpha: typeIR_field_a ~~ typeIR_field_b holds)*{typeIR_field_a <- typeIR_field_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
@@ -5941,10 +5942,11 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath default
     -- let recordTypeIR'' = recordTypeIR
     -- if recordTypeIR'' matches `RECORD{%,...}`
-    -- let record{ typeIR_field_a nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR''
+    -- let record{ annotationList typeIR_field_a nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR''
     -- let recordTypeIR''' = recordTypeIR'
     -- if recordTypeIR''' matches `RECORD{%,...}`
-    -- let record{ typeIR_field_b nameIR ;*{nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} ,...} = recordTypeIR'''
+    -- let record{ annotationList' typeIR_field_b nameIR ;*{annotationList' <- annotationList'*, nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} ,...} = recordTypeIR'''
+    -- (if (annotationList' = annotationList))*{annotationList <- annotationList*, annotationList' <- annotationList'*}
     -- (if (nameIR = nameIR_field))*{nameIR <- nameIR*, nameIR_field <- nameIR_field*}
     -- (if Type_alpha: typeIR_field_a ~~ typeIR_field_b holds)*{typeIR_field_a <- typeIR_field_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
@@ -7770,17 +7772,17 @@ def $default(typeIR) : value =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:837.1-838.53
   clause 11 : (typeIR) = struct typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: structTypeIR
-  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as structTypeIR
+  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as structTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:840.1-841.62
   clause 12 : (typeIR) = header typeId { false ; $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: headerTypeIR
-  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerTypeIR
+  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:843.1-844.59
   clause 13 : (typeIR) = header_union typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
   -- if typeIR <: headerUnionTypeIR
-  -- let header_union typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerUnionTypeIR
+  -- let header_union typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } = typeIR as headerUnionTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:846.1-846.62
   clause 14 : (typeIR) = typeId . id_f_h as value
@@ -8144,13 +8146,13 @@ def $cast_sequence(typeIR, value*) : value =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:727.1-729.54
   clause 4 : (typeIR, value*{value <- value*}) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: structTypeIR
-  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:731.1-733.54
   clause 5 : (typeIR, value*{value <- value*}) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: headerTypeIR
-  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
+  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:741.1-742.23
@@ -8164,7 +8166,7 @@ def $cast_record(typeIR, (value, id)*) : value =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:747.1-753.69
   clause 1 : (typeIR, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = struct typeId { value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: structTypeIR
-  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_t_field id_t_field ;*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
+  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
   -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -8173,7 +8175,7 @@ def $cast_record(typeIR, (value, id)*) : value =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:755.1-761.69
   clause 2 : (typeIR, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}) = header typeId { true ; value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: headerTypeIR
-  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_t_field id_t_field ;*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
+  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
   -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -8356,17 +8358,17 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:928.1-929.46
   clause 9 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: structTypeIR
-  -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
+  -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:930.1-931.46
   clause 10 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerTypeIR
-  -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
+  -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:932.1-933.46
   clause 11 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
-  -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
+  -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:899.1-900.23
 def $sizeof_minSizeInBytes(typeIR) : value =
@@ -8441,17 +8443,17 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:962.1-963.46
   clause 9 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: structTypeIR
-  -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
+  -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:964.1-965.46
   clause 10 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerTypeIR
-  -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
+  -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:966.1-967.46
   clause 11 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
-  -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR _nameIR ;*{_nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
+  -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:907.1-908.23
 def $sizeof_maxSizeInBytes(typeIR) : value =
@@ -10704,10 +10706,10 @@ relation Type_wf: bound |- typeIR
 
    match
 
-    (signature) B |- struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
+    (signature) B |- struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
     B |- typeIR
     -- if typeIR <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
 
    paths
 
@@ -10722,10 +10724,10 @@ relation Type_wf: bound |- typeIR
 
    match
 
-    (signature) B |- header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
+    (signature) B |- header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
     B |- typeIR
     -- if typeIR <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
 
    paths
 
@@ -10740,10 +10742,10 @@ relation Type_wf: bound |- typeIR
 
    match
 
-    (signature) B |- header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
+    (signature) B |- header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR
     B |- typeIR
     -- if typeIR <: headerUnionTypeIR
-    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerUnionTypeIR
+    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerUnionTypeIR
 
    paths
 
@@ -10934,7 +10936,7 @@ relation Type_wf: bound |- typeIR
     rulepath non-default
     -- let recordTypeIR' = recordTypeIR
     -- if recordTypeIR' matches `RECORD{%}`
-    -- let record{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = recordTypeIR'
+    -- let record{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = recordTypeIR'
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
     -- (if Type_wf: B |- typeIR_field holds)*{typeIR_field <- typeIR_field*}
     -- the relation holds
@@ -10942,7 +10944,7 @@ relation Type_wf: bound |- typeIR
     rulepath default
     -- let recordTypeIR' = recordTypeIR
     -- if recordTypeIR' matches `RECORD{%,...}`
-    -- let record{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} ,...} = recordTypeIR'
+    -- let record{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} ,...} = recordTypeIR'
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
     -- (if Type_wf: B |- typeIR_field holds)*{typeIR_field <- typeIR_field*}
     -- the relation holds
@@ -11717,10 +11719,10 @@ tbl def $nestable_header(typeIR) : bool =
     -- if enumTypeIR matches `ENUM%<%>{%}`
     -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
   row 8 :
-    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
+    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
     (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
     -- if typeIR <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   row 9 :
     (signature) _typeIR
     (_typeIR) -> false
@@ -11770,10 +11772,10 @@ tbl def $nestable_struct_in_header(typeIR) : bool =
     -- if enumTypeIR matches `ENUM%<%>{%}`
     -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
   row 7 :
-    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
+    (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
     (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
     -- if typeIR <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field _nameIR ;*{_nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   row 8 :
     (signature) _typeIR
     (_typeIR) -> false
@@ -13753,14 +13755,14 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- (if Sub_expl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- (if Sub_expl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
@@ -13800,7 +13802,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- (if Sub_expl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
@@ -13810,7 +13812,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- (if Sub_expl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
@@ -13822,19 +13824,19 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
+    (signature) record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
     typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%}`
-    -- let record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR
+    -- let record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if $eq_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -13848,7 +13850,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if $eq_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -13864,19 +13866,19 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
+    (signature) record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
     typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%,...}`
-    -- let record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR
+    -- let record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if $sub_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -13895,7 +13897,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if $sub_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -14116,14 +14118,14 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- (if Sub_impl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- (if Sub_impl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
@@ -14172,7 +14174,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- (if Sub_impl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
@@ -14182,7 +14184,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- (if Sub_impl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
@@ -14194,19 +14196,19 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
+    (signature) record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
     typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%}`
-    -- let record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR
+    -- let record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if $eq_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -14220,7 +14222,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if $eq_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -14236,19 +14238,19 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
+    (signature) record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
     typeIR' <: typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%,...}`
-    -- let record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR
+    -- let record{ _annotationList typeIR_field_a id_field_a ;*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if $sub_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -14267,7 +14269,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b id_field_b ;*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList' typeIR_field_b id_field_b ;*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if $sub_set<id>({ id_field_a*{id_field_a <- id_field_a*} }, { id_field_b*{id_field_b <- id_field_b*} })
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>({ id_field_a : typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
@@ -14916,7 +14918,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
     -- let typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
     -- let ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
-    -- let typeIR = record{ [typeIR_f nameIR_f ;] } as typeIR
+    -- let typeIR = record{ [`empty typeIR_f nameIR_f ;] } as typeIR
     -- let expressionNoteIR = ( typeIR ctk_f )
     -- output: % % |- % : record{ [nameIR_f = typedExpressionIR_f] } as expressionIR # expressionNoteIR
 
@@ -14928,7 +14930,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
     -- let typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
     -- let ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
-    -- let typeIR = record{ [typeIR_f nameIR_f ;] ,...} as typeIR
+    -- let typeIR = record{ [`empty typeIR_f nameIR_f ;] ,...} as typeIR
     -- let expressionNoteIR = ( typeIR ctk_f )
     -- output: % % |- % : record{ [nameIR_f = typedExpressionIR_f] ,...} as expressionIR # expressionNoteIR
 
@@ -14943,7 +14945,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f -> typedExpressionIR_f*}
     -- (let typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, typeIR_f -> typeIR_f*}
     -- (let ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, ctk_f -> ctk_f*}
-    -- let typeIR = record{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } as typeIR
+    -- let typeIR = record{ `empty typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } as typeIR
     -- let ctk = $joins_ctk(ctk_f*{ctk_f <- ctk_f*})
     -- let expressionNoteIR = ( typeIR ctk )
     -- output: % % |- % : record{ nameIR_f = typedExpressionIR_f*{nameIR_f <- nameIR_f*, typedExpressionIR_f <- typedExpressionIR_f*} } as expressionIR # expressionNoteIR
@@ -14959,7 +14961,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f -> typedExpressionIR_f*}
     -- (let typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, typeIR_f -> typeIR_f*}
     -- (let ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f))*{typedExpressionIR_f <- typedExpressionIR_f*, ctk_f -> ctk_f*}
-    -- let typeIR = record{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} ,...} as typeIR
+    -- let typeIR = record{ `empty typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} ,...} as typeIR
     -- let ctk = $joins_ctk(ctk_f*{ctk_f <- ctk_f*})
     -- let expressionNoteIR = ( typeIR ctk )
     -- output: % % |- % : record{ nameIR_f = typedExpressionIR_f*{nameIR_f <- nameIR_f*, typedExpressionIR_f <- typedExpressionIR_f*} ,...} as expressionIR # expressionNoteIR
@@ -15094,7 +15096,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f nameIR_f ;*{_annotationList <- _annotationList*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as structTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -15108,7 +15110,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f nameIR_f ;*{_annotationList <- _annotationList*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as headerTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -15122,7 +15124,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerUnionTypeIR
-    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as headerUnionTypeIR
+    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_f nameIR_f ;*{_annotationList <- _annotationList*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} } = typeIR' as headerUnionTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_f, typeIR_f)*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -15560,7 +15562,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: structTypeIR
-    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as structTypeIR
+    -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as structTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_field, typeIR_field)*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -15573,7 +15575,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerTypeIR
-    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as headerTypeIR
+    -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as headerTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_field, typeIR_field)*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -15586,7 +15588,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerUnionTypeIR
-    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as headerUnionTypeIR
+    -- let header_union _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR' as headerUnionTypeIR
     -- let nameIR = $name(member)
     -- let typeIR''?{typeIR'' <- typeIR''?} = $assoc_<nameIR, typeIR>(nameIR, (nameIR_field, typeIR_field)*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*})
     -- if typeIR''?{typeIR'' <- typeIR''?} matches (_)
@@ -18376,7 +18378,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_field = $name(name_field))*{name_field <- name_field*, nameIR_field -> nameIR_field*}
-    -- let structTypeDefIR = struct nameIR < typeId*{typeId <- typeId*} >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let structTypeDefIR = struct nameIR < typeId*{typeId <- typeId*} >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- structTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, structTypeDefIR as typeDefIR)
     -- let structTypeDeclarationIR = annotationList struct nameIR < typeId*{typeId <- typeId*} >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
@@ -18401,7 +18403,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_f = $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
-    -- let headerTypeDefIR = header nameIR < typeId*{typeId <- typeId*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerTypeDefIR = header nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- headerTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, headerTypeDefIR as typeDefIR)
     -- let headerTypeDeclarationIR = annotationList header nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
@@ -18426,7 +18428,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- (if typeId'*{typeId' <- typeId'*} matches [])*{typeId'* <- typeId'**}
     -- let nameIR = $name(name)
     -- (let nameIR_f = $name(name_f))*{name_f <- name_f*, nameIR_f -> nameIR_f*}
-    -- let headerUnionTypeDefIR = header_union nameIR < typeId*{typeId <- typeId*} >{ typeIR_f nameIR_f ;*{nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
+    -- let headerUnionTypeDefIR = header_union nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
     -- if TypeDef_wf: $bound(global, TC_0) |- headerUnionTypeDefIR as typeDefIR holds
     -- let TC_2 = $add_typeDef_t(global, TC_0, nameIR, headerUnionTypeDefIR as typeDefIR)
     -- let headerUnionTypeDeclarationIR = annotationList header_union nameIR < typeId*{typeId <- typeId*} >{ annotationList_f typeIR_f nameIR_f ;*{annotationList_f <- annotationList_f*, nameIR_f <- nameIR_f*, typeIR_f <- typeIR_f*} }
@@ -26243,7 +26245,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
 
     rulepath structTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let structTypeDefIR = struct nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let structTypeDefIR = struct nameIR < typeParameterListIR >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, structTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
@@ -26261,7 +26263,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
 
     rulepath headerTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let headerTypeDefIR = header nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let headerTypeDefIR = header nameIR < typeParameterListIR >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, headerTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
@@ -26279,7 +26281,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
 
     rulepath headerUnionTypeDeclarationIR
     -- (let annotationList_field typeIR_field nameIR_field ; = typeFieldIR)*{typeFieldIR <- typeFieldIR*, annotationList_field -> annotationList_field*, nameIR_field -> nameIR_field*, typeIR_field -> typeIR_field*}
-    -- let headerUnionTypeDefIR = header_union nameIR < typeParameterListIR >{ typeIR_field nameIR_field ;*{nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
+    -- let headerUnionTypeDefIR = header_union nameIR < typeParameterListIR >{ annotationList_field typeIR_field nameIR_field ;*{annotationList_field <- annotationList_field*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} }
     -- let IC_1 = $add_typeDef_i(global, IC_0, nameIR, headerUnionTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 

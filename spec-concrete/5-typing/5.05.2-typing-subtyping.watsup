@@ -119,11 +119,11 @@ rulegroup Sub_expl_unroll_neq/sequenceTypeIR-non-default {
     -- (Sub_expl: typeIR_a <: typeIR_b)*
 
   rule Sub_expl_unroll_neq/structTypeIR:
-    SEQ `< typeIR_a* > <: STRUCT _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* > <: STRUCT _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- (Sub_expl: typeIR_a <: typeIR_field_b)*
 
   rule Sub_expl_unroll_neq/headerTypeIR:
-    SEQ `< typeIR_a* > <: HEADER _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* > <: HEADER _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- (Sub_expl: typeIR_a <: typeIR_field_b)*
 
 }
@@ -145,7 +145,7 @@ rulegroup Sub_expl_unroll_neq/sequenceTypeIR-default {
     -- if $is_defaultable_typeIR(typeIR_b)
 
   rule Sub_expl_unroll_neq/structTypeIR:
-    SEQ `< typeIR_a* `, `... > <: STRUCT _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* `, `... > <: STRUCT _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- if $(|typeIR_a*| < |typeIR_field_b*|)
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
@@ -153,7 +153,7 @@ rulegroup Sub_expl_unroll_neq/sequenceTypeIR-default {
     -- if $is_defaultable_typeIR(typeIR_field_b_default)*
 
   rule Sub_expl_unroll_neq/headerTypeIR:
-    SEQ `< typeIR_a* `, `... > <: HEADER _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* `, `... > <: HEADER _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- if $(|typeIR_a*| < |typeIR_field_b*|)
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
@@ -165,8 +165,8 @@ rulegroup Sub_expl_unroll_neq/sequenceTypeIR-default {
 rulegroup Sub_expl_unroll_neq/recordTypeIR-non-default {
 
   rule Sub_expl_unroll_neq/structTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* }
-    <: STRUCT _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* }
+    <: STRUCT _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $eq_set<id>(`{ id_field_a* }, `{ id_field_b* })
     -- if (typeIR_field_a_aligned
           = $find_map<id, typeIR>(`{ (id_field_a `: typeIR_field_a)* }, id_field_a))*
@@ -175,8 +175,8 @@ rulegroup Sub_expl_unroll_neq/recordTypeIR-non-default {
     -- (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned)*
 
   rule Sub_expl_unroll_neq/headerTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* }
-    <: HEADER _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* }
+    <: HEADER _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $eq_set<id>(`{ id_field_a* }, `{ id_field_b* })
     -- if (typeIR_field_a_aligned
           = $find_map<id, typeIR>(`{ (id_field_a `: typeIR_field_a)* }, id_field_a))*
@@ -189,8 +189,8 @@ rulegroup Sub_expl_unroll_neq/recordTypeIR-non-default {
 rulegroup Sub_expl_unroll_neq/recordTypeIR_default {
 
   rule Sub_expl_unroll_neq/structTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* `, `... }
-    <: STRUCT _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
+    <: STRUCT _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $sub_set<id>(`{ id_field_a* }, `{ id_field_b* })
     ----
     -- if (typeIR_field_a_aligned
@@ -205,8 +205,8 @@ rulegroup Sub_expl_unroll_neq/recordTypeIR_default {
     -- if $is_defaultable_typeIR(typeIR_field_b_default)*
 
   rule Sub_expl_unroll_neq/headerTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* `, `... }
-    <: HEADER _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
+    <: HEADER _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $sub_set<id>(`{ id_field_a* }, `{ id_field_b* })
     ----
     -- if (typeIR_field_a_aligned
@@ -301,11 +301,11 @@ rulegroup Sub_impl_unroll_neq/sequenceTypeIR-non-default {
     -- (Sub_impl: typeIR_a <: typeIR_b)*
 
   rule Sub_impl_unroll_neq/structTypeIR:
-    SEQ `< typeIR_a* > <: STRUCT _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* > <: STRUCT _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- (Sub_impl: typeIR_a <: typeIR_field_b)*
 
   rule Sub_impl_unroll_neq/headerTypeIR:
-    SEQ `< typeIR_a* > <: HEADER _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* > <: HEADER _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- (Sub_impl: typeIR_a <: typeIR_field_b)*
 
   rule Sub_impl_unroll_neq/sequenceTypeIR:
@@ -331,7 +331,7 @@ rulegroup Sub_impl_unroll_neq/sequenceTypeIR-default {
     -- if $is_defaultable_typeIR(typeIR_b)
 
   rule Sub_impl_unroll_neq/structTypeIR:
-    SEQ `< typeIR_a* `, `... > <: STRUCT _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* `, `... > <: STRUCT _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- if $(|typeIR_a*| < |typeIR_field_b*|)
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
@@ -339,7 +339,7 @@ rulegroup Sub_impl_unroll_neq/sequenceTypeIR-default {
     -- if $is_defaultable_typeIR(typeIR_field_b_default)*
 
   rule Sub_impl_unroll_neq/headerTypeIR:
-    SEQ `< typeIR_a* `, `... > <: HEADER _ `< _ > `{ (typeIR_field_b _ `;)* }
+    SEQ `< typeIR_a* `, `... > <: HEADER _ `< _ > `{ (_ typeIR_field_b _ `;)* }
     -- if $(|typeIR_a*| < |typeIR_field_b*|)
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
@@ -351,8 +351,8 @@ rulegroup Sub_impl_unroll_neq/sequenceTypeIR-default {
 rulegroup Sub_impl_unroll_neq/recordTypeIR-non-default {
 
   rule Sub_impl_unroll_neq/structTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* }
-    <: STRUCT _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* }
+    <: STRUCT _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $eq_set<id>(`{ id_field_a* }, `{ id_field_b* })
     -- if (typeIR_field_a_aligned
           = $find_map<id, typeIR>(`{ (id_field_a `: typeIR_field_a)* }, id_field_a))*
@@ -361,8 +361,8 @@ rulegroup Sub_impl_unroll_neq/recordTypeIR-non-default {
     -- (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned)*
 
   rule Sub_impl_unroll_neq/headerTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* }
-    <: HEADER _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* }
+    <: HEADER _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $eq_set<id>(`{ id_field_a* }, `{ id_field_b* })
     -- if (typeIR_field_a_aligned
           = $find_map<id, typeIR>(`{ (id_field_a `: typeIR_field_a)* }, id_field_a))*
@@ -375,8 +375,8 @@ rulegroup Sub_impl_unroll_neq/recordTypeIR-non-default {
 rulegroup Sub_impl_unroll_neq/recordTypeIR-default {
 
   rule Sub_impl_unroll_neq/structTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* `, `... }
-    <: STRUCT _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
+    <: STRUCT _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $sub_set<id>(`{ id_field_a* }, `{ id_field_b* })
     ----
     -- if (typeIR_field_a_aligned
@@ -391,8 +391,8 @@ rulegroup Sub_impl_unroll_neq/recordTypeIR-default {
     -- if $is_defaultable_typeIR(typeIR_field_b_default)*
 
   rule Sub_impl_unroll_neq/headerTypeIR:
-    RECORD `{ (typeIR_field_a id_field_a `;)* `, `... }
-    <: HEADER _ `< _ > `{ (typeIR_field_b id_field_b `;)* }
+    RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
+    <: HEADER _ `< _ > `{ (_ typeIR_field_b id_field_b `;)* }
     -- if $sub_set<id>(`{ id_field_a* }, `{ id_field_b* })
     ----
     -- if (typeIR_field_a_aligned
