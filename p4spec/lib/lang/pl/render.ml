@@ -292,7 +292,7 @@ and render_exp ctx exp : string =
   | MatchE (exp, pattern) ->
       F.asprintf "%s matches pattern %s" (render_exp ctx exp)
         (code_of_pattern pattern |> adoc_as_code ctx)
-  | TupleE es -> "(" ^ render_exps ctx ~sep:", " es ^ ")"
+  | TupleE es -> "( " ^ render_exps ctx ~sep:", " es ^ " )"
   | CaseE (id, mixop, exps, hint) -> (
       if ctx.in_code then code_of_notexp ctx (mixop, exps)
       else
@@ -375,11 +375,16 @@ and render_exp ctx exp : string =
       |> adoc_as_link ctx ~link:id.it
       |> adoc_as_code ctx
   | IterE (exp, (_, [])) -> render_exp ctx exp
-  | IterE (({ it = VarE _; _ } as exp), iterexp) ->
+  | IterE (({ it = VarE _; _ } as exp), iterexp)
+  | IterE (({ it = TupleE _; _ } as exp), iterexp) ->
       render_exp in_code exp ^ code_of_iterexp iterexp |> adoc_as_code ctx
   | IterE (exp, iterexp) ->
-      "(" ^ render_exp in_code exp ^ ")" ^ code_of_iterexp iterexp
-      |> adoc_as_code ctx
+      let sexp = render_exp in_code exp in
+      if String.contains sexp ' ' then
+        "( " ^ sexp ^ " )" ^ code_of_iterexp iterexp |> adoc_as_code ctx
+      else
+        sexp ^ code_of_iterexp iterexp
+        |> adoc_as_code ctx
 
 and render_exp_as_code ctx (exp : exp) =
   render_exp (code ctx) exp |> adoc_as_code ctx
@@ -609,12 +614,12 @@ and render_rulegroup_title (id_rel : id) (rulegroup_title : rulegroup_title) :
     string =
   match rulegroup_title with
   | ProseRuleTitle (`Hold (_id_rulegroup, hintexp, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hintexp (reindent_lines ~level:0)
+      render_alter_hint ~caps:true in_link hintexp (reindent_lines ~level:0)
         render_exp exps_input
       ^ " when"
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | ProseRuleTitle (`Yield (_id_rulegroup, hintexp, exps_input)) ->
-      render_alter_hint ~caps:true in_prose hintexp (reindent_lines ~level:0)
+      render_alter_hint ~caps:true in_link hintexp (reindent_lines ~level:0)
         render_exp exps_input
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   | MathRuleTitle (_id_rulegroup, mixop, exps) ->

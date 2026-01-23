@@ -1,4 +1,15 @@
 ;;
+;; Value constructor checks
+;;
+
+dec $is_headerStackValue(value) : bool
+  hint(prose_true %0 " is a header stack value")
+  hint(prose_false %0 " is not a header stack value")
+def $is_headerStackValue(headerStackValue) = true
+def $is_headerStackValue(_) = false
+  -- otherwise
+
+;;
 ;; Interpret a bitstring with width as a raw integer
 ;;
 
@@ -57,6 +68,26 @@ def $update_fieldValue(
   -- if nameIR_field_h =/= nameIR
 
 ;;
+;;;; Update a header union
+;;
+
+dec $update_headerUnion(fieldValue*, nameIR) : fieldValue*
+
+def $update_headerUnion(eps, nameIR) = eps
+def $update_headerUnion(
+    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
+    nameIR)
+  = (value_field_h nameIR_field_h `;) :: $update_headerUnion(fieldValue_t*, nameIR)
+  -- if nameIR_field_h = nameIR
+def $update_headerUnion(
+    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
+    nameIR)
+  = (value_field_h_update nameIR_field_h `;) :: $update_headerUnion(fieldValue_t*, nameIR)
+  -- if nameIR_field_h =/= nameIR
+  -- if HEADER typeId `{ _ `; fieldValue* } = value_field_h
+  -- if value_field_h_update = HEADER typeId `{ false `; fieldValue* }
+
+;;
 ;; Header operations
 ;;
 
@@ -86,54 +117,6 @@ def $invalidate_value(headerValue)
   = $invalidate_header(headerValue)
 def $invalidate_value(headerUnionValue)
   = $invalidate_headerUnion(headerUnionValue)
-
-;;
-;;;; Update a header stack by index
-;;
-
-dec $update_headerStack(value*, value, nat, nat) : value*
-dec $update_headerStack'(value*, value, nat, nat, nat) : value*
-
-def $update_headerStack(value*, value_new, n_target_idx, n_size)
-  = $update_headerStack'(value*, value_new, 0, n_target_idx, n_size)
-
-def $update_headerStack'(eps, _, _, _, _) = eps
-def $update_headerStack'(
-    value_h :: value_t*,
-    value_new, n_current_idx, n_target_idx, n_size)
-  = eps
-  -- if n_current_idx = n_size
-def $update_headerStack'(
-    value_h :: value_t*,
-    value_new, n_current_idx, n_target_idx, n_size)
-  = value_new :: value_t*
-  -- if n_target_idx = n_current_idx
-def $update_headerStack'(
-    value_h :: value_t*,
-    value_new, n_current_idx, n_target_idx, n_size)
-  = value_h ::
-      $update_headerStack'(value_t*, value_new, $(n_current_idx + 1), n_target_idx, n_size)
-  -- if n_target_idx =/= n_current_idx
-
-;;
-;;;; Update a header union
-;;
-
-dec $update_headerUnion(fieldValue*, nameIR) : fieldValue*
-
-def $update_headerUnion(eps, nameIR) = eps
-def $update_headerUnion(
-    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
-    nameIR)
-  = (value_field_h nameIR_field_h `;) :: $update_headerUnion(fieldValue_t*, nameIR)
-  -- if nameIR_field_h = nameIR
-def $update_headerUnion(
-    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
-    nameIR)
-  = (value_field_h_update nameIR_field_h `;) :: $update_headerUnion(fieldValue_t*, nameIR)
-  -- if nameIR_field_h =/= nameIR
-  -- if HEADER typeId `{ _ `; fieldValue* } = value_field_h
-  -- if value_field_h_update = HEADER typeId `{ false `; fieldValue* }
 
 ;;
 ;; Write bits to a value

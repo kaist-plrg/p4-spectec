@@ -1,0 +1,80 @@
+[#sec-lvalue]
+== L-values
+
+// Section 12.3.1 of the P4-16 Language Specification ----
+L-values are expressions that may appear on the left side of an assignment
+operation or as arguments corresponding to `out` and `inout` function
+parameters. An l-value represents a storage reference. The following
+expressions are legal l-values:
+// ----
+
+// Added ----
+${syntax: lvalue}
+// ----
+
+// Modified section 12.3.1 of the P4-16 Language Specification ----
+* Identifiers of a base or derived type.
+* Structure, header, and header union field member access operations
+  (using the dot notation).
+* References to elements within header stacks (see
+  <<sec-header-stack>>): indexing, and references to `last` and `next`.
+* The result of a bit-slice operator `[m:l]`.
+// ----
+
+// Section 12.3.1 of the P4-16 Language Specification ----
+The following is a legal l-value: `headers.stack[4].field`. Note that method
+and function calls cannot return l-values.
+// ----
+
+=== Type checking
+
+After type checking, l-values are represented in P4~IR~ as:
+
+${syntax: typedLvalueIR lvalueIR lvalueNoteIR}
+
+Notice that l-values in P4~IR~ carry type information. L-values are type
+checked according to the relation:
+
+${relation-title-source: Lvalue_ok}
+${relation-title-prose: Lvalue_ok}
+
+=== Runtime evaluation
+
+At runtime, l-values are represented as storage references:
+
+${syntax: storageReference}
+
+==== Creating storage references
+
+The following relation evaluates an l-value to a storage reference:
+
+${relation-title-source: Lvalue_eval}
+${relation-title-prose: Lvalue_eval}
+
+The result of evaluating an l-value is:
+
+${syntax: storageReferenceResult
+          continueResult
+          abortResult}
+
+==== Reading from storage references
+
+The following relation reads a value from a storage reference:
+
+${relation-title-source: Lvalue_read}
+${relation-title-prose: Lvalue_read}
+
+==== Writing to storage references
+
+The following relation writes a value to a storage reference:
+
+${relation-title-source: Lvalue_write}
+${relation-title-prose: Lvalue_write}
+
+The subsequent sections describe each kind of l-value in detail.
+
+include::01-identifier.adoc[]
+include::02-member-access.adoc[]
+include::03-index-access.adoc[]
+include::04-slice-access.adoc[]
+include::05-parenthesized.adoc[]

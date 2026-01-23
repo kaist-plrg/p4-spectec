@@ -22,15 +22,14 @@ def $lvalue_to_expression(`( lvalue )) = `( expression )
 ;;; syntax referenceExpression
 
 ;;;; prefixedNonTypeName
+;;;; THIS
+;;;; THIS `= ... is disallowed
 
-rule Lvalue_ok/referenceExpression-prefixedNonTypeName:
+rule Lvalue_ok/referenceExpression:
   p TC |- prefixedNonTypeName : prefixedNameIR `# `( typeIR )
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
   -- if direction typeIR DYN eps = $find_var_t(p, TC, prefixedNameIR)
   -- if direction = OUT \/ direction = INOUT
-
-;;;; THIS
-;;;; THIS `= ... is disallowed
 
 ;;; lvalue `. member
 
@@ -119,8 +118,7 @@ rulegroup Lvalue_ok/indexAccess {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index
-          )
+            def $compat_array_index)
     ---- ;; if the index is local compile-time known, then it must be in range
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index

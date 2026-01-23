@@ -969,6 +969,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
 ;;;;; expression `[ expression ]
 
 tbl dec $compat_array_index(typeIR) : bool
+  hint(prose_true %0 "can be used as an array index")
+  hint(prose_false %0 "cannot be used as an array index")
 tbl def $compat_array_index =
   | INT => true
   | INT `< _ > => true
@@ -1069,6 +1071,8 @@ rulegroup Expr_ok/indexAccessExpression {
 ;;;;  expression `[ expression `: expression ]
 
 tbl dec $compat_bitslice_base(typeIR) : bool
+  hint(prose_true %0 "can be used as a bitslice base")
+  hint(prose_false %0 "cannot be used as a bitslice base")
 tbl def $compat_bitslice_base =
   | INT => true
   | INT `< w > => $(w > 0)
@@ -1078,6 +1082,8 @@ tbl def $compat_bitslice_base =
   | _ => false
 
 tbl dec $compat_bitslice_index(typeIR) : bool
+  hint(prose_true %0 "can be used as a bitslice index")
+  hint(prose_false %0 "cannot be used as a bitslice index")
 tbl def $compat_bitslice_index =
   | INT => true
   | INT `< _ > => true
@@ -1087,6 +1093,8 @@ tbl def $compat_bitslice_index =
   | _ => false
 
 dec $is_valid_bitslice(typeIR, nat, nat) : bool
+  hint(prose_true %0 `[ %1 `: %2 ] "is a valid bitslice")
+  hint(prose_false %0 `[ %1 `: %2 ] "is not a valid bitslice")
 
 def $is_valid_bitslice(INT, n_lo, n_hi) = $(n_lo <= n_hi)
 def $is_valid_bitslice(INT `< w >, n_lo, n_hi)
