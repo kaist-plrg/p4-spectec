@@ -20,11 +20,11 @@ rule EBPF_init:
 ;;
 
 relation EBPF_init_packet_in:
-  evalContext store |- externState : evalContext store
+  evalContext store |- objectState : evalContext store
   hint(input %0 %1 %2)
 
 rule EBPF_init_packet_in:
-  EC_0 STO_0 |- externState_packet_in : EC_1 STO_2
+  EC_0 STO_0 |- objectState_packet_in : EC_1 STO_2
   ---- ;; initialize packet_in extern
   -- Extern_init: EC_0 STO_0 |- "packet_in" : STO_1
   ---- ;; add packet_in to context
@@ -34,7 +34,7 @@ rule EBPF_init_packet_in:
   -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
       = externObject_packet_in
   -- if externObject_packet_in_init
-      = EXTERN typeId `< theta > `{ externState_packet_in frame externMethodDefEnv }
+      = EXTERN typeId `< theta > `{ objectState_packet_in frame externMethodDefEnv }
   -- if STO_2 = $add_store(STO_1, [ "packet_in" ], externObject_packet_in_init)
 
 relation EBPF_init_globals:

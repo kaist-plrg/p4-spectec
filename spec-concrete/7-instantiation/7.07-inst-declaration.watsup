@@ -119,7 +119,7 @@ rulegroup InstDecl_inst {
                               `( argumentListIR `# id_default* )
                           : STO_1 object
     ---- ;; if object is an extern
-    -- if EXTERN typeId `< theta > `{ externState frame externMethodDefEnv } = object
+    -- if EXTERN typeId `< theta > `{ objectState frame externMethodDefEnv } = object
     ---- ;; initialize context for object declarations
     -- if IC_decl = $inherit_i(GLOBAL, IC_0)
     -- if objectDeclarationListIR
@@ -134,7 +134,7 @@ rulegroup InstDecl_inst {
         = $merge_externMethodDefEnvs(externMethodDefEnv, IC_decl_post.BLOCK.CALLABLE)
     ---- ;; create new object with merged environments
     -- if object_merged
-        = EXTERN typeId `< theta > `{ externState frame_merged externMethodDefEnv_merged }
+        = EXTERN typeId `< theta > `{ objectState frame_merged externMethodDefEnv_merged }
     ---- ;; add object to store
     -- if objectId = IC_0.PATH ++ nameIR
     -- if STO_3 = $add_store(STO_2, objectId, object_merged)

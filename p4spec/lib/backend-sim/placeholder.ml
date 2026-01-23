@@ -55,7 +55,7 @@ struct
   (* Extern calls *)
 
   let eval_extern_init (_values_input : Value.t list) : Value.t =
-    wrap_extern_v "externState" `Null
+    wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =

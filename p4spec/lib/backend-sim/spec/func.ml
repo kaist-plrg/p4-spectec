@@ -90,17 +90,17 @@ let update_store_unqualified (value_sto : Value.t) (value_id : Value.t)
     (value_object : Value.t) : Value.t =
   !call "update_store_unqualified" [] [ value_sto; value_id; value_object ]
 
-(* find/update_store_externState *)
+(* find/update_store_objectState *)
 
-let find_store_externState (value_sto : Value.t) (value_objectId : Value.t) :
+let find_store_objectState (value_sto : Value.t) (value_objectId : Value.t) :
     Value.t =
-  !call "find_store_externState" [] [ value_sto; value_objectId ]
+  !call "find_store_objectState" [] [ value_sto; value_objectId ]
   |> unwrap_opt_v |> Option.get
 
-let update_store_externState (value_sto : Value.t) (value_objectId : Value.t)
-    (value_externState : Value.t) : Value.t =
-  !call "update_store_externState" []
-    [ value_sto; value_objectId; value_externState ]
+let update_store_objectState (value_sto : Value.t) (value_objectId : Value.t)
+    (value_objectState : Value.t) : Value.t =
+  !call "update_store_objectState" []
+    [ value_sto; value_objectId; value_objectState ]
   |> unwrap_opt_v |> Option.get
 
 (* find_type_e *)

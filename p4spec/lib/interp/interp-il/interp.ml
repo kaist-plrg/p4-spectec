@@ -1367,7 +1367,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and invoke_extern_func (ctx : Ctx.t) (id : id) (_targs : targ list)
       (values_input : value list) : (Ctx.t * value) attempt_reason =
     match id.it with
-    | "init_externState" ->
+    | "init_objectState" ->
         let value_output = Arch.eval_extern_init values_input in
         Ok (ctx, value_output)
     | _ ->

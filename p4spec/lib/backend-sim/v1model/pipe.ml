@@ -64,7 +64,7 @@ struct
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_objectId : Value.t) : extern =
-    Spec.Func.find_store_externState value_sto value_objectId
+    Spec.Func.find_store_objectState value_sto value_objectId
     |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
 
   let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
@@ -93,12 +93,12 @@ struct
     | "counter" ->
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
-        counter |> extern_to_yojson |> wrap_extern_v "externState"
+        counter |> extern_to_yojson |> wrap_extern_v "objectState"
     | "register" ->
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
-        register |> extern_to_yojson |> wrap_extern_v "externState"
-    | _ -> wrap_extern_v "externState" `Null
+        register |> extern_to_yojson |> wrap_extern_v "objectState"
+    | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -284,10 +284,10 @@ struct
             ^ ")")
     in
     let value_extern =
-      extern |> extern_to_yojson |> wrap_extern_v "externState"
+      extern |> extern_to_yojson |> wrap_extern_v "objectState"
     in
     let value_sto =
-      Spec.Func.update_store_externState value_sto value_objectId value_extern
+      Spec.Func.update_store_objectState value_sto value_objectId value_extern
     in
     [ value_ctx; value_sto; value_callResult ]
 
@@ -370,14 +370,14 @@ struct
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
-    let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
+    let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
     in
     (* Setup packet_out extern *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = extern_to_yojson packet_out in
-    let value_packet_out_state = wrap_extern_v "externState" packet_out_state in
+    let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_out value_ctx value_sto
         value_packet_out_state

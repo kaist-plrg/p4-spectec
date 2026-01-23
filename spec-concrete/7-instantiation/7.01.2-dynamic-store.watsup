@@ -47,12 +47,12 @@ def $find_store_unqualified(`{ (objectId `: object)* }, id) = eps
 
 ;;; Finder for extern state
 
-dec $find_store_externState(store, objectId) : externState?
+dec $find_store_objectState(store, objectId) : objectState?
 
-def $find_store_externState(STO, objectId) = externState
+def $find_store_objectState(STO, objectId) = objectState
   -- if externObject = $find_store(STO, objectId)
-  -- if EXTERN _ `< _ > `{ externState _ _ } = externObject
-def $find_store_externState(STO, objectId) = eps
+  -- if EXTERN _ `< _ > `{ objectState _ _ } = externObject
+def $find_store_objectState(STO, objectId) = eps
   -- otherwise
 
 ;;
@@ -77,14 +77,14 @@ def $update_store_unqualified(STO_0, id, object) = STO_1
 
 ;;; Updater for extern state
 
-dec $update_store_externState(store, objectId, externState) : store?
+dec $update_store_objectState(store, objectId, objectState) : store?
 
-def $update_store_externState(STO_0, objectId, externState) = STO_1
+def $update_store_objectState(STO_0, objectId, objectState) = STO_1
   -- if externObject = $find_store(STO_0, objectId)
   -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
       = externObject
   -- if externObject_update
-      = EXTERN typeId `< theta > `{ externState frame externMethodDefEnv }
+      = EXTERN typeId `< theta > `{ objectState frame externMethodDefEnv }
   -- if STO_1 = $add_store(STO_0, objectId, externObject_update)
-def $update_store_externState(STO_0, objectId, externState) = eps
+def $update_store_objectState(STO_0, objectId, objectState) = eps
   -- otherwise

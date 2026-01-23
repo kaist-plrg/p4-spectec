@@ -62,7 +62,7 @@ struct
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
-    Spec.Func.find_store_externState value_sto value_oid
+    Spec.Func.find_store_objectState value_sto value_oid
     |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
 
   (* Extern calls *)
@@ -81,8 +81,8 @@ struct
           Object.CounterArray.init value_type_args value_args
         in
         let counter_array = CounterArray counter_array in
-        counter_array |> extern_to_yojson |> wrap_extern_v "externState"
-    | _ -> wrap_extern_v "externState" `Null
+        counter_array |> extern_to_yojson |> wrap_extern_v "objectState"
+    | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -221,10 +221,10 @@ struct
             ^ ")")
     in
     let value_extern =
-      extern |> extern_to_yojson |> wrap_extern_v "externState"
+      extern |> extern_to_yojson |> wrap_extern_v "objectState"
     in
     let value_sto =
-      Spec.Func.update_store_externState value_sto value_oid value_extern
+      Spec.Func.update_store_objectState value_sto value_oid value_extern
     in
     [ value_ctx; value_sto; value_callResult ]
 
@@ -307,7 +307,7 @@ struct
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
-    let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
+    let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
     let value_ctx, value_sto =
       Spec.Rel.ebpf_init_packet_in value_ctx value_sto value_packet_in_state
     in
