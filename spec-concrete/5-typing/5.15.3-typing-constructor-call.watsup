@@ -13,11 +13,11 @@ def $resolve_type_alias(PACKAGE nameIR_alias `< typeIR_arg* > `{ _ })
 
 rule ConstructorType_ok/non-aliased-none-type:
   p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
+        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
   ---- ;; if not aliased
   -- if eps = $find_typeDef_t(p, TC, prefixedNameIR)
   ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_default*)
+  -- if (callableId, constructorTypeDefIR, id_omitted*)
       = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
   -- if (constructorTypeIR, typeId_impl*)
       = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
@@ -27,12 +27,12 @@ rule ConstructorType_ok/non-aliased-none-type:
 
 rule ConstructorType_ok/non-aliased-some-type:
   p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
+        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
   ---- ;; if not aliased
   -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
   -- if ~$is_typedefTypeDefIR(typeDefIR)
   ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_default*)
+  -- if (callableId, constructorTypeDefIR, id_omitted*)
       = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
   -- if (constructorTypeIR, typeId_impl*)
       = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
@@ -42,13 +42,13 @@ rule ConstructorType_ok/non-aliased-some-type:
 
 rule ConstructorType_ok/aliased:
   p TC |- prefixedNameIR `< eps > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
+        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
   ---- ;; if aliased, resolve the alias
   -- if TYPEDEF nameIR_alias typeIR_alias
       = $find_typeDef_t(p, TC, prefixedNameIR)
   -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
   ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_default*)
+  -- if (callableId, constructorTypeDefIR, id_omitted*)
       = $find_constructorDef_overloaded_t(TC, `` nameIR, argumentIR*)
   -- if (constructorTypeIR, typeId_impl*)
       = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
@@ -120,7 +120,7 @@ def $instantiable(p, TC, instctxt, typeIR)
 
 rule Inst_ok/package:
   GLOBAL TC instctxt |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > 
-                                          `( argumentIR* `# id_default* )
+                                          `( argumentIR* `# id_omitted* )
                       : typeIR_object_inferred `< typeArgumentIR_inferred* >
                                                `( argumentIR_cast* )
   ---- ;; if the constructor is for a package object
@@ -128,8 +128,8 @@ rule Inst_ok/package:
       = constructorTypeIR
   -- if PACKAGE _ `< _ > `{ _ } = $unroll_typeIR(typeIR_object)
   ---- ;; align parameters with arguments
-  -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
-      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
+  -- if (parameterIR_aligned*, _, _)
+      = $align_parameterListIR(parameterIR*, argumentIR*, id_omitted*)
   ---- ;; perform type inference
   -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
@@ -154,7 +154,7 @@ rule Inst_ok/package:
 
 rule Inst_ok/non-package:
   p TC instctxt |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > 
-                                     `( argumentIR* `# id_default* )
+                                     `( argumentIR* `# id_omitted* )
                  : typeIR_object_inferred `< typeArgumentIR_inferred* >
                                           `( argumentIR_cast* )
   ---- ;; if the constructor is not for a package object
@@ -162,8 +162,8 @@ rule Inst_ok/non-package:
       = constructorTypeIR
   -- if ~$is_packageObjectTypeIR($unroll_typeIR(typeIR_object))
   ---- ;; align parameters with arguments
-  -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
-      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
+  -- if (parameterIR_aligned*, _, _)
+      = $align_parameterListIR(parameterIR*, argumentIR*, id_omitted*)
   ---- ;; perform type inference
   -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
   -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
