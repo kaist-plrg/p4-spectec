@@ -127,10 +127,10 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_sto, value_name_func, value_names_param =
+    let value_ctx, value_sto, value_ctx_caller, value_name_func, value_names_param =
       match values_input with
-      | [ value_ctx; value_sto; value_name_func; value_names_param ] ->
-          (value_ctx, value_sto, value_name_func, value_names_param)
+      | [ value_ctx; value_sto; value_ctx_caller; value_name_func; value_names_param ] ->
+          (value_ctx, value_sto, value_ctx_caller, value_name_func, value_names_param)
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
@@ -158,6 +158,8 @@ struct
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
           let packet_in = get_packet_in value_sto in
           Func.update_checksum_with_payload value_ctx value_sto packet_in
+      | "resubmit_preserving_field_list", [ "index" ] ->
+          Func.resubmit_preserving_field_list value_ctx value_sto value_ctx_caller
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
       | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_sto
@@ -418,10 +420,8 @@ struct
       let tx = (port, packet) in
       Some tx
 
-  let drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
+  let drive_pipe_pre' (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * bool =
-    (* Setup port and packet *)
-    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parser block *)
     let value_ctx, value_sto = drive_p value_ctx value_sto in
     (* Verify block *)
@@ -445,6 +445,27 @@ struct
     in
     (value_ctx, value_sto, drop)
 
+  let rec drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) :
+      Value.t * Value.t * bool =
+    try drive_pipe_pre' value_ctx value_sto
+    with
+    | Exception.Resubmit (value_ctx', value_sto', value_ctx_caller, value_index)
+    ->
+      (* post-resubmit logic *)
+      let value_ctx' =
+        Spec.Rel.v1model_setup_preserved_meta_fields value_ctx' value_sto'
+          value_ctx_caller value_index
+      in
+      (* set sm.instance_type = 6 on resubmit *)
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
+      in
+      let value_ctx' =
+        Spec.Rel.lvalue_write_dot_global value_ctx' value_sto
+          "standard_metadata" "instance_type" value_instance_type
+      in
+      drive_pipe_pre value_ctx' value_sto
+
   let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * IO.tx option =
     (* Egress block *)
@@ -465,7 +486,9 @@ struct
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * IO.tx option =
-    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto rx in
+    (* Setup port and packet *)
+    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
+    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto in
     if drop then (value_ctx, value_sto, None)
     else drive_pipe_post value_ctx value_sto
 

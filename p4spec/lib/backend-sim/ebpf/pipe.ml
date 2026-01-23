@@ -111,10 +111,10 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_sto, value_name_func, value_names_param =
+    let value_ctx, value_sto, _value_ctx_caller, value_name_func, value_names_param =
       match values_input with
-      | [ value_ctx; value_sto; value_name_func; value_names_param ] ->
-          (value_ctx, value_sto, value_name_func, value_names_param)
+      | [ value_ctx; value_sto; value_ctx_caller; value_name_func; value_names_param ] ->
+          (value_ctx, value_sto, value_ctx_caller, value_name_func, value_names_param)
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
