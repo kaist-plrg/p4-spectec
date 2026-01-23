@@ -2,14 +2,24 @@
 ;; Store
 ;;
 
+;; Architecture-specific state
+
+extern syntax archState
+extern dec $empty_archState : archState
+
 ;; Map from object identifiers to objects
-syntax store = map<objectId, object>
+
+syntax objectStore = map<objectId, object>
+
+syntax store = archState objectStore
 
 var STO : store
 
 dec $empty_store : store
   hint(prose_in "an empty store")
-def $empty_store = $empty_map<objectId, object>
+def $empty_store = archState objectStore
+  -- if archState = $empty_archState
+  -- if objectStore = $empty_map<objectId, object>
 
 ;;
 ;; Adder
@@ -17,8 +27,9 @@ def $empty_store = $empty_map<objectId, object>
 
 dec $add_store(store, objectId, object) : store
   hint(prose_in %0 "where" %1 "to" %2 "is added")
-def $add_store(STO, objectId, object)
-  = $add_map<objectId, object>(STO, objectId, object)
+def $add_store(archState objectStore, objectId, object)
+  = archState objectStore'
+  -- if objectStore' = $add_map<objectId, object>(objectStore, objectId, object)
 
 ;;
 ;; Finder
@@ -26,23 +37,23 @@ def $add_store(STO, objectId, object)
 
 dec $find_store(store, objectId) : object
   hint(prose_in "the object" %1 "in" %0)
-def $find_store(STO, objectId) = object
-  -- if object = $find_map<objectId, object>(STO, objectId)
+def $find_store(_ objectStore, objectId) = object
+  -- if object = $find_map<objectId, object>(objectStore, objectId)
 
 dec $find_store_qualified(store, objectId) : object?
 dec $find_store_unqualified(store, id) : object?
 dec $is_some_object(object?) : bool
 
-def $find_store_qualified(store, objectId)
-  = $find_store(store, objectId)
+def $find_store_qualified(STO, objectId)
+  = $find_store(STO, objectId)
 
 def $is_some_object(object?) = $is_some_<object>(object?)
-def $find_store_unqualified(`{ (objectId `: object)* }, id) = object_id_found
+def $find_store_unqualified(archState (`{ (objectId `: object)* }), id) = object_id_found
   -- if (object_id?
       = $ite<object?>($objectId_ends_with(objectId, id), object, eps))*
   -- if object_id_found
       = $filter_<object?>(object_id?*, def $is_some_object)
-def $find_store_unqualified(`{ (objectId `: object)* }, id) = eps 
+def $find_store_unqualified(archState (`{ (objectId `: object)* }), id) = eps 
   -- otherwise
 
 ;;; Finder for extern state
@@ -69,7 +80,7 @@ def $update_store_qualified(STO_0, objectId, object) = STO_1
 
 def $is_some_objectId(objectId?) = $is_some_<objectId>(objectId?)
 def $update_store_unqualified(STO_0, id, object) = STO_1
-  -- if `{ (objectId `: _)* } = STO_0
+  -- if _ `{ (objectId `: _)* } = STO_0
   -- if (objectId_id?
       = $ite<objectId?>($objectId_ends_with(objectId, id), objectId, eps))*
   -- if objectId_found = $filter_<objectId?>(objectId_id?*, def $is_some_objectId)

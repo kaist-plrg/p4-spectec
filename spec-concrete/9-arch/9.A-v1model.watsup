@@ -627,18 +627,17 @@ def $field_has_field_list_index(_, _) = false
 ;; Metadata setup after field-preserving extern calls
 ;;
 
-dec $V1Model_meta_fields_of_index(store, integerLiteral)
-  : (storageReference, nameIR*)
+dec $V1Model_meta_fields_of_index(store, integerLiteral) : (storageReference, nameIR*)
 def $V1Model_meta_fields_of_index(STO, integerLiteral_index)
   = (storageReference_meta, nameIR_field*)
-  -- if PACKAGE `< theta > `{ _ }
-      = $find_map<objectId, object>(STO, [ "main" ])
+  -- if PACKAGE `< theta > `{ _ } = $find_store(STO, [ "main" ])
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   -- if STRUCT typeId `< typeArgumentIR* > `{ fieldTypeIR* } = typeIR_meta
   -- if (_ _ nameIR `;)* = fieldTypeIR*
-  -- if (_ _ nameIR_field `;)* = $fields_with_field_list_index(fieldTypeIR*, integerLiteral_index)
+  -- if (_ _ nameIR_field `;)*
+      = $fields_with_field_list_index(fieldTypeIR*, integerLiteral_index)
   -- if CONTROL `( parameterListIR ) `{ _ _ _ _ }
-      = $find_map<objectId, object>(STO, [ "main", "ig" ])
+      = $find_store(STO, [ "main", "ig" ])
   ---- ;; find the parameter name for meta i.e. the second parameter in Ingress
   -- if _ :: (_ _ _ id _) :: _ = parameterListIR
   -- if storageReference_meta = (`` id)
