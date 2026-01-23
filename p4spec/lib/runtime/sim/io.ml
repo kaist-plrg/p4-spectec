@@ -11,15 +11,29 @@ let string_of_rx ((port, packet) : rx) : string =
 let string_of_tx ((port, packet) : tx) : string =
   Printf.sprintf "(%d)%s" port (if packet = "" then "" else " " ^ packet)
 
-let compare_packet packet_out packet_expect : bool =
+let compare_packet ~exact_compare packet_out packet_expect : bool =
   let to_list s = List.init (String.length s) (String.get s) in
+  let take n l =
+    List.fold_left
+      (fun (k, acc) x -> if k = 0 then (0, acc) else (k - 1, x :: acc))
+      (n, []) l
+    |> snd |> List.rev
+  in
   let packet_out = to_list packet_out in
   let packet_expect = to_list packet_expect in
-  List.length packet_out = List.length packet_expect
-  && List.fold_left2
-       (fun same o e -> same && (e = '*' || o = e))
-       true packet_out packet_expect
+  let len_packet_out = List.length packet_out in
+  let len_packet_expect = List.length packet_expect in
+  if len_packet_out < len_packet_expect then false
+  else
+    let packet_out =
+      if exact_compare then packet_out else take len_packet_expect packet_out
+    in
+    List.length packet_out = List.length packet_expect
+    && List.fold_left2
+         (fun same o e -> same && (e = '*' || o = e))
+         true packet_out packet_expect
 
-let compare_tx ((port_out, packet_out) : tx) ((port_expect, packet_expect) : tx)
-    : bool =
-  port_out = port_expect && compare_packet packet_out packet_expect
+let compare_tx ~(exact_compare : bool) ((port_out, packet_out) : tx)
+    ((port_expect, packet_expect) : tx) : bool =
+  port_out = port_expect
+  && compare_packet ~exact_compare packet_out packet_expect

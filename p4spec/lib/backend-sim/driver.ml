@@ -54,8 +54,13 @@ module Make
 
   (* STF test runner *)
 
+  type expect = {
+    tx : IO.tx;
+    exact_compare : bool;
+  }
+
   let on_tx_output (tx_opt : IO.tx option) (tx_output_queue : IO.tx list)
-      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+      (tx_expect_queue : expect list) : IO.tx list * expect list =
     match tx_opt with
     (* Packet was transmitted *)
     | Some tx -> (
@@ -65,26 +70,26 @@ module Make
             let tx_output_queue = tx_output_queue @ [ tx ] in
             (tx_output_queue, tx_expect_queue)
         (* There is an expected packet *)
-        | tx_expect :: tx_expect_queue when compare_tx tx tx_expect ->
+      | { tx = tx_expect; exact_compare } :: tx_expect_queue when compare_tx ~exact_compare tx tx_expect ->
             Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
             |> log;
             (tx_output_queue, tx_expect_queue)
-        | tx_expect :: _ ->
+        | { tx = tx_expect; _ } :: _ ->
             error_stf
               (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
                  (string_of_tx tx)))
     (* Packet was dropped *)
     | None -> (tx_output_queue, tx_expect_queue)
 
-  let on_tx_expect (tx_expect : IO.tx) (tx_output_queue : IO.tx list)
-      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+  let on_tx_expect ({ tx = tx_expect; exact_compare } : expect) (tx_output_queue : IO.tx list)
+      (tx_expect_queue : expect list) : IO.tx list * expect list =
     match tx_output_queue with
     (* No output packet (yet) *)
     | [] ->
-        let tx_expect_queue = tx_expect_queue @ [ tx_expect ] in
+        let tx_expect_queue = tx_expect_queue @ [ { tx = tx_expect; exact_compare  } ] in
         (tx_output_queue, tx_expect_queue)
     (* There is an output packet *)
-    | tx_output :: tx_output_queue when compare_tx tx_output tx_expect ->
+    | tx_output :: tx_output_queue when compare_tx ~exact_compare tx_output tx_expect ->
         Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
         (tx_output_queue, tx_expect_queue)
     | tx_output :: _ ->
@@ -93,8 +98,8 @@ module Make
              (string_of_tx tx_output))
 
   let run_stf_stmt (value_ctx : Il.value) (value_sto : Il.value)
-      (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
-      (stmt_stf : Stf.Ast.stmt) : Il.value * Il.value * IO.tx list * IO.tx list
+      (tx_output_queue : IO.tx list) (tx_expect_queue : expect list)
+      (stmt_stf : Stf.Ast.stmt) : Il.value * Il.value * IO.tx list * expect list
       =
     match stmt_stf with
     (* Packet I/O *)
@@ -109,11 +114,11 @@ module Make
           on_tx_output tx_output_opt tx_output_queue tx_expect_queue
         in
         (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
-    | Stf.Ast.Expect (port_expect, packet_expect_opt, _exact) ->
+    | Stf.Ast.Expect (port_expect, packet_expect_opt, exact_compare) ->
         let port_expect = int_of_string port_expect in
         let packet_expect = Option.value packet_expect_opt ~default:"" in
         let packet_expect = String.uppercase_ascii packet_expect in
-        let tx_expect = (port_expect, packet_expect) in
+        let tx_expect = { tx = (port_expect, packet_expect); exact_compare } in
         let tx_output_queue, tx_expect_queue =
           on_tx_expect tx_expect tx_output_queue tx_expect_queue
         in
@@ -257,7 +262,7 @@ module Make
         let msg_expect =
           if tx_expect_queue <> [] then
             Format.asprintf "[FAIL] Expected packets to be output:\n%s"
-              (tx_expect_queue |> List.map string_of_tx |> String.concat "\n")
+              (tx_expect_queue |> List.map (fun e -> string_of_tx e.tx) |> String.concat "\n")
           else ""
         in
         error_stf (msg_output ^ msg_expect)
