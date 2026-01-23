@@ -13,12 +13,15 @@
 rulegroup Parameter_ok {
 
   rule Parameter_ok/non-initializer:
-    p TC_0 |- annotationList direction type name `EMPTY
-            : TC_1 parameterIR `# typeId_fresh*
+    p TC_0 paramctxt |- annotationList direction type name `EMPTY
+                      : TC_1 parameterIR `# typeId_fresh*
     ---- ;; check parameter type
     -- Type_ok: p TC_0 |- type : typeIR `# typeId_fresh*
     -- if B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh* })
     -- Type_wf: B |- typeIR
+    ---- ;; check optional annotation
+    -- if (paramctxt = NOOPT)
+        => ~$optional_annotation_of_parameterIR'(annotationList)
     ---- ;; construct parameter IR and add to context
     -- if nameIR = $name(name)
     -- if parameterIR
@@ -26,8 +29,8 @@ rulegroup Parameter_ok {
     -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)
 
   rule Parameter_ok/initializer:
-    p TC_0 |- annotationList direction type name (`= expression_init)
-            : TC_1 parameterIR `# typeId_fresh*
+    p TC_0 paramctxt |- annotationList direction type name (`= expression_init)
+                      : TC_1 parameterIR `# typeId_fresh*
     ---- ;; check parameter type
     -- Type_ok: p TC_0 |- type : typeIR `# typeId_fresh*
     -- if B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh* })
@@ -60,36 +63,36 @@ rulegroup Parameter_ok {
 ;;
 
 relation ParameterList_ok_inner:
-  cursor typingContext |- parameter*
-                        : typingContext parameterListIR `# typeId*
-  hint(input %0 %1 %2)
+  cursor typingContext paramctxt |- parameter*
+                                  : typingContext parameterListIR `# typeId*
+  hint(input %0 %1 %2 %3)
 
 rulegroup ParameterList_ok_inner {
 
   rule ParameterList_ok_inner/nil:
-    p TC |- eps : TC eps `# eps
+    p TC paramctxt |- eps : TC eps `# eps
 
   rule ParameterList_ok_inner/cons:
-    p TC_0 |- parameter_h :: parameter_t*
+    p TC_0 paramctxt |- parameter_h :: parameter_t*
             : TC_2 parameterIR* `# typeId_fresh*
     -- Parameter_ok:
-        p TC_0 |- parameter_h
-                : TC_1 parameterIR_h `# typeId_fresh_h*
+        p TC_0 paramctxt |- parameter_h
+                          : TC_1 parameterIR_h `# typeId_fresh_h*
     -- ParameterList_ok_inner:
-        p TC_1 |- parameter_t*
-                : TC_2 parameterIR_t* `# typeId_fresh_t*
+        p TC_1 paramctxt |- parameter_t*
+                          : TC_2 parameterIR_t* `# typeId_fresh_t*
     -- if parameterIR* = parameterIR_h :: parameterIR_t*
     -- if typeId_fresh* = typeId_fresh_h* ++ typeId_fresh_t*
 
 }
 
 rule ParameterList_ok:
-  p TC_0 |- parameterList
-          : TC_1 parameterListIR `# typeId_fresh*
+  p TC_0 paramctxt |- parameterList
+                    : TC_1 parameterListIR `# typeId_fresh*
   -- if parameter* = $flatten_parameterList(parameterList)
   -- ParameterList_ok_inner:
-      p TC_0 |- parameter*
-              : TC_1 parameterListIR `# typeId_fresh*
+      p TC_0 paramctxt |- parameter*
+                        : TC_1 parameterListIR `# typeId_fresh*
 
 ;;
 ;; Constructor list typing
@@ -103,5 +106,5 @@ rule ConstructorParameterListOpt_ok:
   -- if constructorParameter*
       = $flatten_constructorParameterListOpt(constructorParameterListOpt)
   -- ParameterList_ok_inner:
-      BLOCK TC_0 |- constructorParameter*
-                  : TC_1 constructorParameterIR* `# typeId_fresh*
+      BLOCK TC_0 NOOPT |- constructorParameter*
+                        : TC_1 constructorParameterIR* `# typeId_fresh*

@@ -182,21 +182,25 @@ relation Block_ok:
 ;;;; inserts fresh type variables for parameters with don't care types
 ;;
 
+syntax paramctxt = OPT | NOOPT
+
 relation Parameter_ok:
-  cursor typingContext |- parameter
-                        : typingContext parameterIR `# typeId*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3#
-                 ",\n" %4#", and a set of fresh type variables" %5)
+  cursor typingContext paramctxt |- parameter
+                                  : typingContext parameterIR `# typeId*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %2#", under cursor" %0#", typing context"
+                %1#", and parameter context" %3)
+  hint(prose_out "the updated typing context" %4#
+                 ",\n" %5#", and a set of fresh type variables" %6)
 
 relation ParameterList_ok:
-  cursor typingContext |- parameterList
-                        : typingContext parameterListIR `# typeId*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3#
-                 ",\n" %4#", and a set of fresh type variables" %5)
+  cursor typingContext paramctxt |- parameterList
+                                  : typingContext parameterListIR `# typeId*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %2#", under cursor" %0#", typing context"
+                %1#", and parameter context" %3)
+  hint(prose_out "the updated typing context" %4#
+                 ",\n" %5#", and a set of fresh type variables" %6)
 
 relation ConstructorParameterListOpt_ok:
   typingContext |- constructorParameterListOpt
