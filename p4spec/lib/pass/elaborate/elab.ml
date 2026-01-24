@@ -671,7 +671,7 @@ and infer_iter_exp (ctx : Ctx.t) (exp : exp) (iter : iter) :
 
 and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  let* ctx, exp_il = elab_exp ctx plaintyp exp in
+  let* ctx, exp_il, _plaintyp = infer_exp ctx exp in
   let typ_il = elab_plaintyp ctx plaintyp in
   let exp_il = Il.SubE (exp_il, typ_il) in
   let plaintyp = BoolT in

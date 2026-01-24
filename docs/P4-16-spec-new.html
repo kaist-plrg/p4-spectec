@@ -6245,10 +6245,10 @@ should be used for a given table in the generated control-plane API:</p>
 <div id="integerValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerTypeIR
-   : INT
-   | INT `&lt; nat &gt;
-   | BIT `&lt; nat &gt;
-   | VARBIT `&lt; nat &gt;
+   : intTypeIR
+   | fixedIntTypeIR
+   | fixedBitTypeIR
+   | varBitTypeIR
    ;
 
 integerLiteral
@@ -10400,15 +10400,15 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
   B |- _ direction typeIR _ eps
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
- -- if ~$is_synthesizedTypeIR(typeIR_unroll)
- -- if ($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll) \/ $is_objectTypeIR(typeIR_unroll)) =&gt; direction = `EMPTY
+ -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
+ -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: synthesizedTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY
   rule ParameterType_wf/default:
   B |- _ direction typeIR _ (= value)
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
- -- if ~$is_synthesizedTypeIR(typeIR_unroll)
+ -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
  -- if direction = IN \/ direction = `EMPTY
- -- if ($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll) \/ $is_objectTypeIR(typeIR_unroll)) =&gt; direction = `EMPTY</pre>
+ -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: synthesizedTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY</pre>
 </div>
 </div>
 </div>
@@ -10436,10 +10436,10 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Let <code>typeIR<sub>unroll</sub></code> be <a href="#unroll_typeIR"><code>typeIR</code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Check that <code>~<a href="#is_synthesizedTypeIR"></code> <code>is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> does not have type <code>synthesizedTypeIR</code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> <code>=</code> <code>INT</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>synthesizedTypeIR</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>objectTypeIR</code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -10458,13 +10458,13 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Let <code>typeIR<sub>unroll</sub></code> be <a href="#unroll_typeIR"><code>typeIR</code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Check that <code>~<a href="#is_synthesizedTypeIR"></code> <code>is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> does not have type <code>synthesizedTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>direction</code> <code>=</code> <code>IN</code> or <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> <code>=</code> <code>INT</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>synthesizedTypeIR</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>objectTypeIR</code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -15553,7 +15553,7 @@ provided or not.</p>
  -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
  -- if IC_inner = $enter_path_i(IC_0, nameIR)
  -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
- -- if ~$is_externObject(object)
+ -- if ~(object &lt;: externObject)
  -- if objectId = IC_0.PATH ++ nameIR
  -- if STO_2 = $add_store(STO_1, objectId, object)
  -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
@@ -15655,7 +15655,7 @@ provided or not.</p>
 </div>
 </li>
 <li>
-<p>If <code>~<a href="#is_externObject"></code> <code>is_externObject(object)</a></code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21172,7 +21172,7 @@ abortResult
  -- if typeIR `[_] = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if nameIR = "next" \/ nameIR = "last"
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- if typedLvalueIR = (typedLvalueIR_base . nameIR) # `(typeIR)
   rule Lvalue_ok/structTypeIR:
   p TC |- lvalue_base . member : typedLvalueIR
@@ -21241,7 +21241,7 @@ abortResult
 <p>Check that <code>nameIR</code> <code>=</code> <code>"next"</code> or <code>nameIR</code> <code>=</code> <code>"last"</code>.</p>
 </li>
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
@@ -21345,7 +21345,7 @@ abortResult
   p EC_0 STO_0 |- (typedLvalueIR . nameIR) # _ : EC_1 STO_1 storageReferenceResult
  -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 (` storageReference)
  -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
- -- if ~$is_headerStackValue(value)
+ -- if ~(value &lt;: headerStackValue)
  -- if storageReferenceResult = ` (storageReference . nameIR)</pre>
 </div>
 </div>
@@ -21446,7 +21446,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>If <code>~<a href="#is_headerStackValue"></code> <code>is_headerStackValue(value)</a></code>:</p>
+<p>Else:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -24207,10 +24207,15 @@ callStatementIR
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup CallableTarget_ok/referenceExpression:
-  rule CallableTarget_ok/prefixedNonTypeName:
+  rule CallableTarget_ok/prefixedNonTypeName-non-verify:
   p TC |- prefixedNonTypeName : prefixedNameIR
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
- -- if ((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify")) =&gt; ((p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND)))
+ -- if ~((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify"))
+  rule CallableTarget_ok/prefixedNonTypeName-verify:
+  p TC |- prefixedNonTypeName : prefixedNameIR
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if ((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify"))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
   rule CallableTarget_ok/this:
   p TC |- THIS : (` "this")</pre>
 </div>
@@ -24237,10 +24242,27 @@ callStatementIR
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR</code> <code>=</code> <code>"verify"</code> <code>\/</code> <code>prefixedNameIR</code> <code>=</code> <code>.</code> <code>"verify"</code> implies <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <code>\/</code> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>If <code>~prefixedNameIR</code> <code>=</code> <code>"verify"</code> <code>\/</code> <code>prefixedNameIR</code> <code>=</code> <code>.</code> <code>"verify"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the typed callable target <code>prefixedNameIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Result in the typed callable target <code>prefixedNameIR</code>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
@@ -28697,8 +28719,8 @@ binaryExpressionIR
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
- -- if $is_fixedBitTypeIR(typeIR_r_reduced)
- -- if $is_arbitraryIntTypeIR(typeIR_l_reduced) =&gt; (ctk_r_reduced = LCTK)
+ -- if BIT `&lt;_&gt; = typeIR_r_reduced
+ -- if (typeIR_l_reduced = INT) =&gt; (ctk_r_reduced = LCTK)
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)
   rule Expr_ok/rhs-non-fixbit:
@@ -28711,8 +28733,8 @@ binaryExpressionIR
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
+ -- if ~(typeIR_r_reduced &lt;: fixedBitTypeIR)
  -- if ctk_r_reduced = LCTK
- -- if $is_arbitraryIntTypeIR(typeIR_r_reduced) \/ $is_fixedIntTypeIR(typeIR_r_reduced)
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)</pre>
 </div>
@@ -28770,11 +28792,11 @@ binaryExpressionIR
 <p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>If <a href="#is_fixedBitTypeIR"><code>typeIR<sub>r_reduced</sub></code> is fixed-width bit type</a>:</p>
+<p>If <code>typeIR<sub>r_reduced</sub></code> has type <code>fixedBitTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>l_reduced</sub>)</a></code> implies <code>ctk<sub>r_reduced</sub></code> <code>=</code> <code>LCTK</code>.</p>
+<p>Check that <code>typeIR<sub>l_reduced</sub></code> <code>=</code> <code>INT</code> implies <code>ctk<sub>r_reduced</sub></code> <code>=</code> <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
@@ -28789,11 +28811,11 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>If <code>ctk<sub>r_reduced</sub></code> is <code>LCTK</code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code> or <code><a href="#is_fixedIntTypeIR"></code> <code>is_fixedIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code>.</p>
+<p>Check that <code>ctk<sub>r_reduced</sub></code> is <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
@@ -29590,7 +29612,7 @@ ternaryExpressionIR
  -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
  -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
  -- if ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
- -- if $is_arbitraryIntTypeIR(typeIR_cast) =&gt; (ctk_cond =/= DYN)
+ -- if (typeIR_cast = INT) =&gt; (ctk_cond =/= DYN)
  -- if ctk = $joins_ctk([ctk_cond, ctk_true_cast, ctk_false_cast])
  -- if expressionNoteIR = `(typeIR_cast ctk)</pre>
 </div>
@@ -29661,7 +29683,7 @@ ternaryExpressionIR
 <p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>cast</sub>)</a></code> implies <code>ctk<sub>cond</sub></code> <code>=/=</code> <code>DYN</code>.</p>
+<p>Check that <code>typeIR<sub>cast</sub></code> <code>=</code> <code>INT</code> implies <code>ctk<sub>cond</sub></code> <code>=/=</code> <code>DYN</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#joins_ctk"><code>[ctk<sub>cond</sub>,</code> <code>ctk<sub>true_cast</sub>,</code> <code>ctk<sub>false_cast</sub>]</code> joined</a>.</p>
@@ -31521,7 +31543,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-lastIndex:
   p TC |- expression_base . member : (typedExpressionIR_base . "lastIndex") # expressionNoteIR
  -- if "lastIndex" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31529,7 +31551,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-last:
   p TC |- expression_base . member : (typedExpressionIR_base . "last") # expressionNoteIR
  -- if "last" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31537,7 +31559,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-next:
   p TC |- expression_base . member : (typedExpressionIR_base . "next") # expressionNoteIR
  -- if "next" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31646,7 +31668,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
@@ -31681,7 +31703,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
@@ -31719,7 +31741,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>

@@ -30,7 +30,7 @@ rule ConstructorType_ok/non-aliased-some-type:
         : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
   ---- ;; if not aliased
   -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
-  -- if ~$is_typedefTypeDefIR(typeDefIR)
+  -- if ~(typeDefIR <: typedefTypeIR)
   ---- ;; find and specialize the constructor type definition
   -- if (callableId, constructorTypeDefIR, id_default*)
       = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
@@ -71,50 +71,61 @@ dec $instantiable_parser(cursor, typingContext, instctxt) : bool
 def $instantiable_parser(GLOBAL, TC, instctxt)
   = instctxt = ANON
 def $instantiable_parser(BLOCK, TC, instctxt)
-  = $is_parser_blockKind(TC.BLOCK.KIND)
+  = blockKind = PARSER
+  -- if blockKind = TC.BLOCK.KIND
 def $instantiable_parser(LOCAL, TC, instctxt)
-  = $is_parser_state_localKind(TC.LOCAL.KIND)
+  = localKind = PARSER_STATE
+  -- if localKind = TC.LOCAL.KIND
 
 dec $instantiable_control(cursor, typingContext, instctxt) : bool
 
 def $instantiable_control(GLOBAL, TC, instctxt)
   = instctxt = ANON
 def $instantiable_control(BLOCK, TC, instctxt)
-  = $is_control_blockKind(TC.BLOCK.KIND)
+  = blockKind = CONTROL
+  -- if blockKind = TC.BLOCK.KIND
 def $instantiable_control(LOCAL, TC, instctxt)
-  = $is_control_apply_method_localKind(TC.LOCAL.KIND)
+  = localKind = CONTROL_APPLY_METHOD
+  -- if localKind = TC.LOCAL.KIND
 
 dec $instantiable_package(cursor, typingContext, instctxt) : bool
 
 def $instantiable_package(GLOBAL, TC, instctxt) = true
 def $instantiable_package(BLOCK, TC, instctxt)
-  = $is_package_blockKind(TC.BLOCK.KIND)
+  = blockKind = PACKAGE
+  -- if blockKind = TC.BLOCK.KIND
 def $instantiable_package(LOCAL, TC, instctxt) = false
 
 dec $instantiable_table(cursor, typingContext, instctxt) : bool
 
 def $instantiable_table(GLOBAL, TC, instctxt) = false
 def $instantiable_table(BLOCK, TC, instctxt)
-  = $is_control_blockKind(TC.BLOCK.KIND)
+  = blockKind = CONTROL
+  -- if blockKind = TC.BLOCK.KIND
 def $instantiable_table(LOCAL, TC, instctxt) = false
 
 dec $instantiable(cursor, typingContext, instctxt, typeIR) : bool
 
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_extern(p, TC, instctxt)
-  -- if $is_externObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: externObjectTypeIR
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_parser(p, TC, instctxt)
-  -- if $is_parserObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: parserObjectTypeIR
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_control(p, TC, instctxt)
-  -- if $is_controlObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: controlObjectTypeIR
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_package(p, TC, instctxt)
-  -- if $is_packageObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: packageObjectTypeIR
 def $instantiable(p, TC, instctxt, typeIR)
   = $instantiable_table(p, TC, instctxt)
-  -- if $is_tableObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: tableObjectTypeIR
 
 ;;; Instantiation of a package
 
@@ -160,7 +171,8 @@ rule Inst_ok/non-package:
   ---- ;; if the constructor is not for a package object
   -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object
       = constructorTypeIR
-  -- if ~$is_packageObjectTypeIR($unroll_typeIR(typeIR_object))
+  -- if typeIR_object_unroll = $unroll_typeIR(typeIR_object)
+  -- if ~(typeIR_object_unroll <: packageObjectTypeIR)
   ---- ;; align parameters with arguments
   -- if (parameterIR_aligned*, argumentIR_aligned*, _, _)
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)

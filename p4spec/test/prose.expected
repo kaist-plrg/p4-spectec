@@ -734,12 +734,6 @@
  .. Return ``true``.
 . Otherwise: return ``false``.
 
-<<is_headerStackValue, ``value``  is a header stack value>>
-
-
-. If ``value`` has type ``headerStackValue``: return ``true``.
-. Otherwise: return ``false``.
-
 <<bitstr_to_int, bitstr_to_int(int, int')>>
 
 <<int_to_bitstr, int_to_bitstr(int, int')>>
@@ -950,138 +944,6 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Let ``++_++`` ``.`` ``w`` ``V`` ``i`` be ``integerValue``.
  .. Return ``<<int_to_bits_unsigned,`` ``int_to_bits_unsigned(w,`` ``i)>>``.
 
-<<is_baseTypeIR, ``typeIR`` is base type>>
-
-
-. If ``typeIR`` has type ``baseTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_voidTypeIR, ``typeIR`` is void type>>
-
-
-. If let ``voidTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_boolTypeIR, ``typeIR`` is bool type>>
-
-
-. If let ``boolTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_errorTypeIR, ``typeIR`` is error type>>
-
-
-. If let ``errorTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_matchkindTypeIR, ``typeIR`` is match kind type>>
-
-
-. If let ``matchKindTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_stringTypeIR, ``typeIR`` is string type>>
-
-
-. If let ``stringTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_integerTypeIR, ``typeIR`` is integer type>>
-
-
-. If ``typeIR`` has type ``integerTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_arbitraryIntTypeIR, ``typeIR`` is int type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` is ``INT``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_fixedIntTypeIR, ``typeIR`` is fixed-width int type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``INT`` ``<`` ``%`` ``>``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_fixedBitTypeIR, ``typeIR`` is fixed-width bit type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_dataTypeIR, ``typeIR`` is data type>>
-
-
-. If ``typeIR`` has type ``dataTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_headerStackTypeIR, ``typeIR`` is header stack type>>
-
-
-. If ``typeIR`` has type ``headerStackTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_objectTypeIR, ``typeIR`` is object type>>
-
-
-. If ``typeIR`` has type ``objectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_externObjectTypeIR, ``typeIR`` is extern object type>>
-
-
-. If ``typeIR`` has type ``externObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_parserObjectTypeIR, ``typeIR`` is parser object type>>
-
-
-. If ``typeIR`` has type ``parserObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_controlObjectTypeIR, ``typeIR`` is control object type>>
-
-
-. If ``typeIR`` has type ``controlObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_packageObjectTypeIR, ``typeIR`` is package object type>>
-
-
-. If ``typeIR`` has type ``packageObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_tableObjectTypeIR, ``typeIR`` is table object type>>
-
-
-. If ``typeIR`` has type ``controlObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_synthesizedTypeIR, ``typeIR`` is synthesized type>>
-
-
-. If ``typeIR`` has type ``synthesizedTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_tableMetadataStructTypeIR, ``typeIR`` is table metadata struct type>>
-
-
-. If ``typeIR`` has type ``tableMetadataStructTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_setTypeIR, ``typeIR`` is set type>>
-
-
-. If ``typeIR`` has type ``setTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
 <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>
 
 
@@ -1149,12 +1011,6 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 | ++_++ | true
 
 |===
-
-<<is_typedefTypeDefIR, ``typeDefIR`` is a typedef type definition>>
-
-
-. If ``typeDefIR`` has type ``typedefTypeIR``: return ``true``.
-. Otherwise: return ``false``.
 
 <<typeId_of_typeDefIR, The name of ``typeDefIR``>>
 
@@ -3292,16 +3148,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else if let ``stringTypeIR`` be ``typeIR``:
  .. Let ``text~empty~`` be ``""``.
  .. Return ``"`` ``text~empty~`` ``"``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``0``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``W`` ``0``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``S`` ``0``.
- .. Else:
-  ... Let ``VARBIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
-  ... Return ``w`` ``.`` ``0`` ``V`` ``0``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``0``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``W`` ``0``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``S`` ``0``.
+. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``.`` ``0`` ``V`` ``0``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<default,`` ``default(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3338,9 +3192,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``b``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
- .. Let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
  .. If ``b`` is equal to ``true``:
   ... Return ``w`` ``W`` ``1``.
  .. Else:
@@ -3357,13 +3209,12 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``i`` ``=/=`` ``0``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``i``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``W`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``S`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``i``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``W`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``S`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_arbint,`` ``cast_arbint(typeIR',`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3398,15 +3249,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``i`` ``=/=`` ``0``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``i``.
- .. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
-  ... Return ``w~to~`` ``W`` ``i'``.
- .. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
-  ... Return ``w~to~`` ``S`` ``i'``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``i``.
+. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
+ .. Return ``w~to~`` ``W`` ``i'``.
+. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
+ .. Return ``w~to~`` ``S`` ``i'``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_fixbit,`` ``cast_fixbit(typeIR',`` ``w,`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3419,17 +3269,16 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 <<cast_fixint, cast_fixint(typeIR, w, i)>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
- .. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
-  ... Return ``w~to~`` ``W`` ``i'``.
- .. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
-  ... Return ``w~to~`` ``S`` ``i'``.
+. If let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
+ .. Return ``w~to~`` ``W`` ``i'``.
+. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
+ .. Return ``w~to~`` ``S`` ``i'``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_fixint,`` ``cast_fixint(typeIR',`` ``w,`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3442,9 +3291,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 <<cast_varbit, cast_varbit(typeIR, w~max~, w, i)>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``VARBIT`` ``<`` ``%`` ``>``.
- .. Let ``VARBIT`` ``<`` ``w~max'~`` ``>`` be ``integerTypeIR``.
+. If let ``VARBIT`` ``<`` ``w~max'~`` ``>`` be ``typeIR``:
  .. Check that ``w~max'~`` is equal to ``w~max'~``.
  .. Return ``w~max'~`` ``.`` ``w`` ``V`` ``i``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3716,13 +3563,12 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ``1``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if ``integerTypeIR`` matches pattern ``VARBIT`` ``<`` ``%`` ``>``:
-  ... Return ``0``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if ``typeIR`` has type ``varBitTypeIR``:
+ .. Return ``0``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<sizeof_minSizeInBits',`` ``sizeof_minSizeInBits'(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3758,13 +3604,12 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ``1``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<sizeof_maxSizeInBits',`` ``sizeof_maxSizeInBits'(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -4128,74 +3973,6 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 . Return ``<<empty_map,`` ``empty_map<constructorId,`` ``constructorTypeDefIR>>>``.
 
-<<is_extern_blockKind, is_extern_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``EXTERN``.
-
-<<is_parser_blockKind, is_parser_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``PARSER``.
-
-<<is_control_blockKind, is_control_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``CONTROL``.
-
-<<is_package_blockKind, is_package_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``PACKAGE``.
-
-<<is_function_localKind, is_function_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``FUNCTION`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_function_localKind, is_extern_function_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_FUNCTION`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_action_localKind, is_action_localKind(localKind)>>
-
-
-. If ``localKind`` is ``ACTION``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_method_localKind, is_extern_method_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_METHOD`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_abstract_method_localKind, is_extern_abstract_method_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_parser_state_localKind, is_parser_state_localKind(localKind)>>
-
-
-. If ``localKind`` is ``PARSER_STATE``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_control_apply_method_localKind, is_control_apply_method_localKind(localKind)>>
-
-
-. If ``localKind`` is ``CONTROL_APPLY_METHOD``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_table_apply_method_localKind, is_table_apply_method_localKind(localKind)>>
-
-
-. If ``localKind`` is ``TABLE_APPLY_METHOD``: return ``true``.
-. Otherwise: return ``false``.
-
 <<empty_typingContext, An empty typing context>>
 
 
@@ -4237,7 +4014,8 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``typeFrame`` be ``TC.GLOBAL.FRAME``.
  .. Check that ``~<<in_set,`` ``in_set<id>(id,`` ``dom_map<id,`` ``varTypeIR>(typeFrame))>>``.
  .. Let ``typeIR`` be the type of ``varTypeIR``.
- .. Check that ``id`` ``=`` ``"main"`` implies ``<<is_packageObjectTypeIR,`` ``is_packageObjectTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``id`` ``=`` ``"main"`` implies ``typeIR~unroll~`` ``has`` ``type`` ``packageObjectTypeIR``.
  .. Let ``typeFrame~update~`` be <<add_map, ``typeFrame`` where ``id`` to ``varTypeIR`` is added>>.
  .. Let ``TC'`` be ``TC`` with ``GLOBAL.FRAME`` set to ``typeFrame~update~``.
  .. Return ``TC'``.
@@ -4546,14 +4324,16 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Return ``typeIR~ret~``.
 . Else if let ``EXTERN_FUNCTION`` ``:`` ``typeIR~ret~`` be ``localKind``:
  .. Return ``typeIR~ret~``.
-. Else if let ``EXTERN_METHOD`` ``:`` ``typeIR~ret~`` be ``localKind``:
- .. Return ``typeIR~ret~``.
 . Else:
- .. Let ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~`` be ``localKind``.
- .. Return ``typeIR~ret~``.
-. If ``TC.LOCAL.KIND`` is ``ACTION``:
+ .. Let ``externMethodLocalKind`` be ``localKind``.
+ .. If let ``EXTERN_METHOD`` ``:`` ``typeIR~ret~`` be ``externMethodLocalKind``:
+  ... Return ``typeIR~ret~``.
+ .. Else:
+  ... Let ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~`` be ``externMethodLocalKind``.
+  ... Return ``typeIR~ret~``.
+. If ``ACTION`` is equal to ``TC.LOCAL.KIND``:
  .. Return ``VOID``.
-. Else:
+. If ``CONTROL_APPLY_METHOD`` is equal to ``TC.LOCAL.KIND``:
  .. Return ``VOID``.
 . Otherwise:
  .. Return ``·``.
@@ -4586,17 +4366,15 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 
 . If ``text`` is equal to ``"lpm"``:
- .. If let ``integerTypeIR`` be ``typeIR``:
-  ... If let ``INT`` ``<`` ``n`` ``>`` be ``integerTypeIR``:
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
-  ... Else if let ``BIT`` ``<`` ``n`` ``>`` be ``integerTypeIR``:
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
-  ... Else:
-   .... Let ``VARBIT`` ``<`` ``n`` ``>`` be ``integerTypeIR``.
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. If let ``INT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. Else if let ``BIT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. Else if let ``VARBIT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
  .. Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
   ... Return ``<<update_mode,`` ``update_mode(TBLC,`` ``"lpm",`` ``typeIR')>>``.
  .. Else:
@@ -4868,15 +4646,15 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 . If ``constantInitializerIR^?^`` is none:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
- .. Check that ``~<<is_synthesizedTypeIR,`` ``is_synthesizedTypeIR(typeIR~unroll~)>>``.
- .. Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` implies ``direction`` ``=`` ```EMPTY``.
+ .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
+ .. Check that ``typeIR~unroll~`` ``=`` ``INT`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``stringTypeIR`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``objectTypeIR`` implies ``direction`` ``=`` ```EMPTY``.
  .. The relation holds.
 . Else:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
- .. Check that ``~<<is_synthesizedTypeIR,`` ``is_synthesizedTypeIR(typeIR~unroll~)>>``.
+ .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
  .. Check that ``direction`` ``=`` ``IN`` or ``direction`` ``=`` ```EMPTY``.
- .. Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` implies ``direction`` ``=`` ```EMPTY``.
+ .. Check that ``typeIR~unroll~`` ``=`` ``INT`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``stringTypeIR`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``objectTypeIR`` implies ``direction`` ``=`` ```EMPTY``.
  .. The relation holds.
 
 <<ReturnType_wf, ReturnType_wf>>:
@@ -4887,7 +4665,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 . Check that <<Type_wf, ``typeIR~ret~`` is a well-formed type, with bound type variables ``B``>>.
 . Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR~ret~`` with typedefs unrolled>>.
-. Check that ``~<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``/\`` ``~<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` and ``~<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>``.
+. Check that ``~typeIR~unroll~`` ``=`` ``INT`` ``/\`` ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``synthesizedTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``objectTypeIR``.
 . The relation holds.
 
 <<CallableType_wf, CallableType_wf>>:
@@ -6077,19 +5855,18 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 
 . If ``typeIR'`` is equal to ``BOOL``:
  .. The relation holds.
-. If let ``integerTypeIR'`` be ``typeIR'``:
- .. If ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
-  ... The relation holds.
- .. Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
-  ... The relation holds.
-
-<<Cast_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
-
-. If ``integerTypeIR'`` is ``INT``:
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. The relation holds.
-. Else if ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
+. Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
-. If ``integerTypeIR'`` is equal to ``BIT`` ``<`` ``nat`` ``>``:
+
+<<Cast_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+
+. If ``typeIR'`` is equal to ``INT``:
+ .. The relation holds.
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
+ .. The relation holds.
+. If ``typeIR'`` is equal to ``BIT`` ``<`` ``nat`` ``>``:
  .. The relation holds.
 
 <<Cast_expl_unroll_neq, ``BIT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
@@ -6101,8 +5878,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. The relation holds.
 . If ``typeIR'`` is equal to ``INT`` ``<`` ``nat`` ``>``:
  .. The relation holds.
-. If let ``integerTypeIR'`` be ``typeIR'``:
- .. Check that ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
+. If ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
 <<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
@@ -6365,7 +6141,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 . If let ``SET`` ``<`` ``typeIR~a~`` ``>`` be ``typeIR``:
  .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
-. If ``~<<is_setTypeIR,`` ``is_setTypeIR(typeIR)>>``:
+. Else:
  .. Check that <<Cast_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
@@ -6399,11 +6175,11 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 
 * ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
-<<Cast_impl_unroll_neq, ``INT`` can be implicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``INT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. The relation holds.
-. Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
+. Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
 <<Cast_impl_unroll_neq, ``ENUM`` ``typeId`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``valueFieldIR^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
@@ -6803,13 +6579,13 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
 . Let ``typeIR~r_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~r_reduced~``>>.
 . Let ``ctk~r_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_reduced~``>>.
-. If <<is_fixedBitTypeIR, ``typeIR~r_reduced~`` is fixed-width bit type>>:
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~l_reduced~)>>`` implies ``ctk~r_reduced~`` ``=`` ``LCTK``.
+. If ``typeIR~r_reduced~`` has type ``fixedBitTypeIR``:
+ .. Check that ``typeIR~l_reduced~`` ``=`` ``INT`` implies ``ctk~r_reduced~`` ``=`` ``LCTK``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
-. If ``ctk~r_reduced~`` is ``LCTK``:
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~r_reduced~)>>`` or ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(typeIR~r_reduced~)>>``.
+. Else:
+ .. Check that ``ctk~r_reduced~`` is ``LCTK``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
@@ -6910,7 +6686,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 . Let ``typeIR~cast~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~true_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~false_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~false_cast~``>>.
-. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~cast~)>>`` implies ``ctk~cond~`` ``=/=`` ``DYN``.
+. Check that ``typeIR~cast~`` ``=`` ``INT`` implies ``ctk~cond~`` ``=/=`` ``DYN``.
 . Let ``ctk`` be <<joins_ctk, ``[ctk~cond~,`` ``ctk~true_cast~,`` ``ctk~false_cast~]`` joined>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~cast~`` and compile-time known-ness ``ctk``>>.
 . Result in <<typedExpressionIR, ``typedExpressionIR~cond~`` ``?`` ``typedExpressionIR~true_cast~`` ``:`` ``typedExpressionIR~false_cast~`` annotated with ``expressionNoteIR``>>.
@@ -7136,7 +6912,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``LCTK``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"size"`` annotated with ``expressionNoteIR``>>.
 . If ``"lastIndex"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7145,7 +6921,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``DYN``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"lastIndex"`` annotated with ``expressionNoteIR``>>.
 . If ``"last"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7155,7 +6931,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"last"`` annotated with ``expressionNoteIR``>>.
 . If ``"next"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7443,7 +7219,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If let ``typeIR'`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Check that ``nameIR`` ``=`` ``"next"`` or ``nameIR`` ``=`` ``"last"``.
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
  .. Result in ``typedLvalueIR``.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field~`` ``nameIR~field~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR``:
@@ -8768,7 +8544,8 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` or ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``typeIR~unroll~`` ``has`` ``type`` ``integerTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``varBitTypeIR``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
  .. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
@@ -8791,7 +8568,8 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` or ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``typeIR~unroll~`` ``has`` ``type`` ``integerTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``varBitTypeIR``.
  .. Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
@@ -9710,8 +9488,11 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 . If let ``prefixedNonTypeName`` be ``callableTarget``:
  .. Let ``prefixedNameIR`` be <<prefixedNonTypeName, the prefixed name of  ``prefixedNonTypeName``>>.
- .. Check that ``prefixedNameIR`` ``=`` ``"verify"`` ``\/`` ``prefixedNameIR`` ``=`` ``.`` ``"verify"`` implies ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
- .. Result in the typed callable target ``prefixedNameIR``.
+ .. If ``~prefixedNameIR`` ``=`` ``"verify"`` ``\/`` ``prefixedNameIR`` ``=`` ``.`` ``"verify"``:
+  ... Result in the typed callable target ``prefixedNameIR``.
+ .. Else:
+  ... Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
+  ... Result in the typed callable target ``prefixedNameIR``.
 . If ``callableTarget`` is equal to ``THIS``:
  .. Result in the typed callable target ``"this"``.
 
@@ -10082,7 +9863,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<ConstructorType_ok, Type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeDefIR'`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
-. Check that ``~<<is_typedefTypeDefIR,`` ``is_typedefTypeDefIR(typeDefIR')>>``.
+. Check that ``typeDefIR'`` does not have type ``typedefTypeIR``.
 . Let ``(`` ``callableId,`` ``constructorTypeDefIR,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_constructorDef_overloaded_t,`` ``find_constructorDef_overloaded_t(TC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
 . Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``>>.
 . Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
@@ -10149,7 +9930,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<Inst_ok, Typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``cursor``, typing context ``TC``, and ``instctxt`` instantiation site context>>:
 
 . Let ``CONSTRUCTOR`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~object~`` be ``constructorTypeIR``.
-. Check that ``~<<is_packageObjectTypeIR,`` ``is_packageObjectTypeIR(unroll_typeIR(typeIR~object~))>>``.
+. Let ``typeIR~object_unroll~`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
+. Check that ``typeIR~object_unroll~`` does not have type ``packageObjectTypeIR``.
 . Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``++_++^{asterisk}^,`` ``++_++^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``inference`` be ``<<infer,`` ``infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)>>``.
 . Let ``typeIR^?^^{asterisk}^`` be the list of ``typeIR^?^``, obtained by repeating:
@@ -10419,21 +10201,16 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Check that ``typeIR'`` has type ``stringTypeIR``.
  .. Let ``stringTypeIR'`` be ``typeIR'``.
  .. Return ``STRING``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w~a~`` ``>`` be ``integerTypeIR``:
-  ... Check that ``typeIR'`` has type ``integerTypeIR``.
-  ... Let ``integerTypeIR'`` be ``typeIR'``.
-  ... If let ``INT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
-  ... Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
- .. Else if let ``BIT`` ``<`` ``w~a~`` ``>`` be ``integerTypeIR``:
-  ... Check that ``typeIR'`` has type ``integerTypeIR``.
-  ... Let ``integerTypeIR'`` be ``typeIR'``.
-  ... If let ``INT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
-  ... Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+. Else if let ``INT`` ``<`` ``w~a~`` ``>`` be ``typeIR``:
+ .. If let ``INT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+ .. Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+. Else if let ``BIT`` ``<`` ``w~a~`` ``>`` be ``typeIR``:
+ .. If let ``INT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+ .. Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR~l~`` be ``typeIR``:
  .. Return ``<<result_concat,`` ``result_concat(typeIR~l~,`` ``typeIR')>>``.
 . If let ``TYPEDEF`` ``++_++`` ``typeIR~r~`` be ``typeIR'``:
@@ -10493,20 +10270,18 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<is_valid_bitslice, ``typeIR`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``n~lo~`` ``<=`` ``n~hi~``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``w~slice~`` be ``int``.
-  ... Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
- .. Else:
-  ... Let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
-  ... Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``w~slice~`` be ``int``.
-  ... Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
+. If let ``intTypeIR`` be ``typeIR``:
+ .. Return ``n~lo~`` ``<=`` ``n~hi~``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``w~slice~`` be ``int``.
+ .. Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``w~slice~`` be ``int``.
+ .. Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
 . Else:
  .. Let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``.
  .. Return ``<<is_valid_bitslice,`` ``is_valid_bitslice(typeIR',`` ``n~lo~,`` ``n~hi~)>>``.
@@ -10520,8 +10295,9 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<is_concrete_extern_object', is_concrete_extern_object'(typeIR)>>
 
 
-. If ``~<<is_externObjectTypeIR,`` ``is_externObjectTypeIR(typeIR)>>``: return ``true``.
-. If let ``EXTERN`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``++_++`` ``:`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``}`` be ``typeIR``:
+. If ``typeIR`` does not have type ``externObjectTypeIR``: return ``true``.
+. Else:
+ .. Let ``EXTERN`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``++_++`` ``:`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``}`` be ``typeIR``.
  .. Check that ``<<is_concrete_extern_object'',`` ``is_concrete_extern_object''(externMethodTypeDefIR)>>``, for all ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``.
  .. Return ``true``.
 . Otherwise: return ``false``.
@@ -11086,7 +10862,8 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
-. Check that ``~<<is_setTypeIR,`` ``is_setTypeIR(unroll_typeIR(typeIR))>>``.
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. Check that ``typeIR~unroll~`` does not have type ``setTypeIR``.
 . Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
 . Let ``typeIR~cast~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
 . Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~cast~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
@@ -11332,7 +11109,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 
 
 . Let ``typeIR`` be the type of ``expressionNoteIR``.
-. If <<is_tableMetadataStructTypeIR, ``typeIR`` with typedefs unrolled is table metadata struct type>>: return ``true``.
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. If ``typeIR~unroll~`` has type ``tableMetadataStructTypeIR``: return ``true``.
 . Otherwise:
  .. Return ``<<has_table_apply_expr',`` ``has_table_apply_expr'(expressionIR)>>``.
 
@@ -11571,9 +11349,9 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . If ``typeIR'`` has type ``headerStackTypeIR``:
  .. Check that ``nameIR`` ``=`` ``"next"`` or ``nameIR`` ``=`` ``"last"``.
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. The relation holds.
-. If ``~<<is_headerStackTypeIR,`` ``is_headerStackTypeIR(unroll_typeIR(typeIR~base~))>>``:
+. Else:
  .. The relation holds.
 
 <<Expr_lvalue_ok, ``p`` ``TC`` ``|-`` ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index~`` ``]`` ``#`` ``(`` ``typeIR`` ``ctk`` ``)``>>:
@@ -11844,9 +11622,11 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``:
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER``.
 . Else:
- .. Return ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``PARSER_STATE``.
 
 <<instantiable_control, instantiable_control(cursor, TC, instctxt)>>
 
@@ -11854,16 +11634,19 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``:
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``CONTROL``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<instantiable_package, instantiable_package(cursor, TC, instctxt)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``true``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_package_blockKind,`` ``is_package_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PACKAGE``.
 . Else: return ``false``.
 
 <<instantiable_table, instantiable_table(cursor, TC, instctxt)>>
@@ -11871,21 +11654,23 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``false``.
 
 <<instantiable, instantiable(p, TC, instctxt, typeIR)>>
 
 
-. If <<is_externObjectTypeIR, ``typeIR`` with typedefs unrolled is extern object type>>:
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. If ``typeIR~unroll~`` has type ``externObjectTypeIR``:
  .. Return ``<<instantiable_extern,`` ``instantiable_extern(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_parserObjectTypeIR, ``typeIR`` with typedefs unrolled is parser object type>>:
+. Else if ``typeIR~unroll~`` has type ``parserObjectTypeIR``:
  .. Return ``<<instantiable_parser,`` ``instantiable_parser(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_controlObjectTypeIR, ``typeIR`` with typedefs unrolled is control object type>>:
+. Else if ``typeIR~unroll~`` has type ``controlObjectTypeIR``:
  .. Return ``<<instantiable_control,`` ``instantiable_control(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_packageObjectTypeIR, ``typeIR`` with typedefs unrolled is package object type>>:
+. Else if ``typeIR~unroll~`` has type ``packageObjectTypeIR``:
  .. Return ``<<instantiable_package,`` ``instantiable_package(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_tableObjectTypeIR, ``typeIR`` with typedefs unrolled is table object type>>:
+. Else if ``typeIR~unroll~`` has type ``tableObjectTypeIR``:
  .. Return ``<<instantiable_table,`` ``instantiable_table(p,`` ``TC,`` ``instctxt)>>``.
 
 <<callable_action, callable_action(cursor, TC)>>
@@ -11894,23 +11679,27 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_action_localKind,`` ``is_action_localKind(TC.LOCAL.KIND)>>`` ``\/`` ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``ACTION`` ``\/`` ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<callable_definedFunction, callable_definedFunction(cursor, TC)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else:
- .. Return ``~<<is_extern_method_localKind,`` ``is_extern_method_localKind(TC.LOCAL.KIND)>>`` ``/\`` ``~<<is_extern_abstract_method_localKind,`` ``is_extern_abstract_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``does`` ``not`` ``have`` ``type`` ``externMethodLocalKind``.
 
 <<callable_externFunction, callable_externFunction(cursor, TC)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``true``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_builtinMethod, callable_builtinMethod(cursor, TC)>>
@@ -11925,7 +11714,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_externAbstractMethod, callable_externAbstractMethod(cursor, TC)>>
@@ -11933,7 +11723,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_parserApplyMethod, callable_parserApplyMethod(cursor, TC)>>
@@ -11942,7 +11733,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``PARSER_STATE``.
 
 <<callable_controlApplyMethod, callable_controlApplyMethod(cursor, TC)>>
 
@@ -11950,7 +11742,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<callable_tableApplyMethod, callable_tableApplyMethod(cursor, TC)>>
 
@@ -11958,7 +11751,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>`` ``\/`` ``<<is_table_apply_method_localKind,`` ``is_table_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD`` ``\/`` ``localKind`` ``=`` ``TABLE_APPLY_METHOD``.
 
 <<callableId_IR, The callable identifier for ``nameIR`` ``(`` ``parameterIR^{asterisk}^`` ``)``>>
 
@@ -12056,12 +11850,6 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Return ``constructorParameterListIR``.
 
 <<init_externState, init_externState(nameIR, typeIR^{asterisk}^, value^{asterisk}^)>>
-
-<<is_externObject, ``object`` is an extern object>>
-
-
-. If ``object`` has type ``externObject``: return ``true``.
-. Otherwise: return ``false``.
 
 <<text_of_number_tableKeyValueInterface, text_of_number_tableKeyValueInterface(tableKeyValueInterface)>>
 
@@ -13490,7 +13278,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Result in 
 * the updated instantiation context ``IC~1~``, store ``STO~3~``, 
 * and the reference to the object ``constantDeclarationIR``.
-. If ``~<<is_externObject,`` ``is_externObject(object)>>``:
+. Else:
  .. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
  .. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
@@ -13879,7 +13667,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Result in the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default~^{asterisk}^``.
 . Let ``typeDefIR^?^`` be ``<<find_typeDef_i,`` ``find_typeDef_i(p,`` ``IC,`` ``prefixedNameIR)>>``.
 . If let ``typeDefIR'`` be ``typeDefIR^?^``:
- .. Check that ``~<<is_typedefTypeDefIR,`` ``is_typedefTypeDefIR(typeDefIR')>>``.
+ .. Check that ``typeDefIR'`` does not have type ``typedefTypeIR``.
  .. Let ``(`` ``++_++,`` ``constructorDef,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_constructorDef_i,`` ``find_constructorDef_i(IC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
  .. Result in the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default~^{asterisk}^``.
 . If ``typeArgumentIR^{asterisk}^`` is equal to ``·``:
@@ -14932,7 +14720,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... If ``n~idx~`` is less than ``n~size~``:
    .... Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``nameIR``.
    .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and result ``storageReferenceResult'``.
- .. If ``~<<is_headerStackValue,`` ``is_headerStackValue(value)>>``:
+ .. Else:
   ... Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``nameIR``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and result ``storageReferenceResult'``.
 
