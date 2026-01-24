@@ -415,9 +415,9 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     ---- ;; statically evaluate the right hand side to get its width
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR_r_reduced ~> integerValue_r
-    -- if i_r = $int_of_integerValue(integerValue_r)
+    -- if n_r = $nat_of_integerValue(integerValue_r)
     ---- ;; compute the table entry state
-    -- if n_prefix = $tableEntry_lpm_prefix(n W $int_to_bitstr(n, i_r))
+    -- if n_prefix = $tableEntry_lpm_prefix(n W $int_to_bitstr(n, n_r))
 
   rule TableEntry_keyset_simple_ok/ternary:
     TC TBLC |- (typeIR_key, "ternary") `@ (expression_l `&&& expression_r)
@@ -794,7 +794,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; evaluate and initialize the priority
-    -- if n = $int_of_integerValue(integerLiteral)
+    -- if n = $nat_of_integerValue(integerLiteral)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -808,7 +808,7 @@ rulegroup TableEntry_priority_ok/specified-number {
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     -- if TBLC_0.PRIORITIES.INIT
     ---- ;; evaluate and initialize the priority
-    -- if n = $int_of_integerValue(integerLiteral)
+    -- if n = $nat_of_integerValue(integerLiteral)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
 }
@@ -829,7 +829,7 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
-    -- if n = $int_of_integerValue(integerValue)
+    -- if n = $nat_of_integerValue(integerValue)
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
@@ -846,7 +846,7 @@ rulegroup TableEntry_priority_ok/specified-expression {
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
     -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
-    -- if n = $int_of_integerValue(integerValue)
+    -- if n = $nat_of_integerValue(integerValue)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
   
 }
@@ -1008,7 +1008,7 @@ rulegroup TableProperty_ok/custom {
           /\ ~(typeIR_unroll <: varBitTypeIR)
     -- Expr_eval_lctk:
         LOCAL TC |- typedExpressionIR ~> integerValue
-    -- if n_delta = $int_of_integerValue(integerValue)
+    -- if n_delta = $nat_of_integerValue(integerValue)
     -- if $(n_delta > 0)
     ---- ;; update table context
     -- if TBLC_1 = TBLC_0 [ .PRIORITIES.DELTA = n_delta ]

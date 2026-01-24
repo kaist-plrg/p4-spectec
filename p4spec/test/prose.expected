@@ -761,6 +761,15 @@
  .. Let ``++_++`` ``.`` ``++_++`` ``V`` ``i`` be ``integerValue``.
  .. Return ``i``.
 
+<<nat_of_integerValue, The natural number representation of  ``integerValue``>>
+
+
+. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
+. If let ``n`` be ``int``:
+ .. Return ``n``.
+. Otherwise:
+ .. Return ``·``.
+
 <<update_fieldValue, update_fieldValue(fieldValue^{asterisk}^, nameIR, value)>>
 
 
@@ -5482,16 +5491,12 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~index~`` be ``value``.
 . If let ``TUPLE`` ``(`` ``value~e~^{asterisk}^`` ``)`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
 . Else if let ``HEADER_STACK`` ``[`` ``value~e~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
@@ -5649,9 +5654,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``INT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``baseType``, under cursor ``p`` and typing context ``TC``>>:
@@ -5670,9 +5673,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``BIT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``baseType``, under cursor ``p`` and typing context ``TC``>>:
@@ -5689,9 +5690,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``VARBIT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``prefixedTypeName``, under cursor ``p`` and typing context ``TC``>>:
@@ -5726,9 +5725,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~size~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~size~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~size~`` be ``int``.
+. Let ``n~size~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~size~``>>.
 . Check that ``n~size~`` is greater than ``0``.
 . Result in ``typeIR~base~`` ``[`` ``n~size~`` ``]`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
@@ -6555,9 +6552,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~r~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~r~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~r~`` be ``int``.
+ .. Let ``n~r~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~r~``>>.
  .. Check that ``n~r~`` is greater than ``0``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
@@ -6990,9 +6985,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~e~^{asterisk}^[n~index~]`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7002,9 +6995,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
   ... Check that ``value`` has type ``integerValue``.
   ... Let ``integerValue~index~`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
   ... Check that ``n~index~`` is less than ``n~size~``.
   ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``ctk~base~``>>.
   ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7035,21 +7026,17 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~hi_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~hi~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~hi~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~hi~`` be ``int``.
+. Let ``n~hi~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~hi~``>>.
 . Check that ``ctk~lo_reduced~`` is ``LCTK``.
 . Let ``value'`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~lo_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value'`` has type ``integerValue``.
 . Let ``integerValue~lo~`` be ``value'``.
-. Let ``int'`` be <<int_of_integerValue, the integer representation of  ``integerValue~lo~``>>.
-. Check that ``int'`` has type ``nat``.
-. Let ``n~lo~`` be ``int'``.
+. Let ``n~lo~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~lo~``>>.
 . Check that <<is_valid_bitslice, ``typeIR~base_reduced~`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>.
-. Let ``int''`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-. Check that ``int''`` has type ``nat``.
-. Let ``n~slice~`` be ``int''``.
+. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~slice~`` be ``int``.
 . Let ``typeIR`` be ``BIT`` ``<`` ``n~slice~`` ``>``.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``>>.
 . Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~hi_reduced~`` ``:`` ``typedExpressionIR~lo_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7255,9 +7242,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than ``n~size~``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` with note ``(`` ``typeIR'`` ``)``>>.
  .. Result in ``typedLvalueIR``.
@@ -7284,21 +7269,17 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~hi_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~hi~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~hi~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~hi~`` be ``int``.
+. Let ``n~hi~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~hi~``>>.
 . Check that ``ctk~lo_reduced~`` is ``LCTK``.
 . Let ``value'`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~lo_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value'`` has type ``integerValue``.
 . Let ``integerValue~lo~`` be ``value'``.
-. Let ``int'`` be <<int_of_integerValue, the integer representation of  ``integerValue~lo~``>>.
-. Check that ``int'`` has type ``nat``.
-. Let ``n~lo~`` be ``int'``.
+. Let ``n~lo~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~lo~``>>.
 . Check that <<is_valid_bitslice, ``typeIR~base~`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>.
-. Let ``int''`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-. Check that ``int''`` has type ``nat``.
-. Let ``n~slice~`` be ``int''``.
+. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~slice~`` be ``int``.
 . Let ``typeIR`` be ``BIT`` ``<`` ``n~slice~`` ``>``.
 . Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``[`` ``typedExpressionIR~hi_reduced~`` ``:`` ``typedExpressionIR~lo_reduced~`` ``]`` with note ``(`` ``typeIR`` ``)``>>.
 . Result in ``typedLvalueIR``.
@@ -8406,17 +8387,13 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Check that ``tableContext.MODE`` ``=`` ``PRI`` or ``tableContext.MODE`` ``=`` ``PRILPM``.
 . Check that ``~tableContext.ENTRIES.CONST``.
 . If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
  .. Let ``TBLC~1~`` be ``tableContext`` with ``PRIORITIES.INIT`` set to ``true``.
  .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
 . Else:
  .. Check that ``tableContext.PRIORITIES.INIT``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
  .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
 
@@ -8432,9 +8409,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Let ``TBLC~1~`` be ``tableContext`` with ``PRIORITIES.INIT`` set to ``true``.
  .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
@@ -8447,9 +8422,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
 
@@ -8574,9 +8547,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~delta~`` be ``int``.
+ .. Let ``n~delta~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Check that ``n~delta~`` is greater than ``0``.
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``PRIORITIES.DELTA`` set to ``n~delta~``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
@@ -11212,8 +11183,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~r~`` be ``value``.
- .. Let ``i~r~`` be <<int_of_integerValue, the integer representation of  ``integerValue~r~``>>.
- .. Let ``int`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n,`` ``i~r~)>>``.
+ .. Let ``n~r~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~r~``>>.
+ .. Let ``int`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n,`` ``n~r~)>>``.
  .. Let ``n~prefix~`` be ``<<tableEntry_lpm_prefix,`` ``tableEntry_lpm_prefix(n`` ``W`` ``int)>>``.
  .. Result in ``LPM`` ``n~prefix~`` and ``typedExpressionIR~l_reduced~`` ``&&&`` ``typedExpressionIR~r_reduced~``.
 . Else if ``text`` is equal to ``"ternary"``:
@@ -12639,16 +12610,12 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~index~`` be ``value``.
 . If let ``TUPLE`` ``(`` ``value~e~^{asterisk}^`` ``)`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``STO~2~`` and ``value'``.
 . Else if let ``HEADER_STACK`` ``[`` ``value~e~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``STO~2~`` and ``value'``.
@@ -13087,9 +13054,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let <<Expr_inst, BLOCK IC~0~ STO |- typedExpressionIR~size~ : STO~1~ value>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~size~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~size~`` be ``int``.
+. Let ``n~size~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~size~``>>.
 . Let ``typeIR~subst~`` be <<subst_type_i, ``typeIR`` substituted by bound type variables in ``IC~0~`` from the ``BLOCK`` layer>>.
 . Let ``value''`` be <<default, the default value for type ``typeIR~subst~``>>.
 . Let ``value'^{asterisk}^`` be <<repeat_, a list of ``n~size~`` copies of ``value''``>>.
@@ -14566,18 +14531,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``value'`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value'``.
  .. If let ``TUPLE`` ``(`` ``value~elem~^{asterisk}^`` ``)`` be ``value~base~``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
  .. Else if let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
+  ... Let ``int`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
   ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
-  ... Let ``int'`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
-  ... Check that ``int'`` has type ``nat``.
-  ... Let ``n~idx~`` be ``int'``.
+  ... Let ``n~idx~`` be ``int``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
@@ -14813,9 +14774,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Lvalue_read, reading from ``storageReference'``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . Check that ``value~base~`` has type ``headerStackValue``.
 . Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~idx~`` be ``int``.
+. Let ``n~idx~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
 . If ``n~idx~`` is less than ``n~size~``:
  .. Let ``value'`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in the value ``value'``.
@@ -14893,9 +14852,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Lvalue_read, reading from ``storageReference'``, under cursor ``p``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``value~base~`` has type ``headerStackValue``.
 . Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``n~base_idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~idx~`` be ``int``.
+. Let ``n~idx~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
 . If ``n~idx~`` is less than ``n~size~``:
  .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
  .. Let ``value~base_update~`` be ``HEADER_STACK`` ``[`` ``value~element_update~^{asterisk}^`` ``(`` ``n~base_idx~`` ``;`` ``n~size~`` ``)`` ``]``.
@@ -15998,9 +15955,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``value'`` be ``expressionResult``.
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~count~``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~count~`` be ``int``.
+   .... Let ``n~count~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~count~``>>.
    .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
    .... Let ``value~front_invalidated~^{asterisk}^`` be the list of ``value~front_invalidated~``, obtained by repeating:
 +
@@ -16009,9 +15964,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 --
 +
 for each ``value~front~`` in ``value~front~^{asterisk}^``
-   .... Let ``int'`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
-   .... Check that ``int'`` has type ``nat``.
-   .... Let ``n~back~`` be ``int'``.
+   .... Let ``int`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
+   .... Check that ``int`` has type ``nat``.
+   .... Let ``n~back~`` be ``int``.
    .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
    .... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
    .... Let ``n~idx_updated~`` be ``<<min_nat,`` ``min_nat([n~size~,`` ``n~idx~`` ``+`` ``n~count~])>>``.
@@ -16034,12 +15989,10 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
    .... Let ``value'`` be ``expressionResult``.
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~count~``>>.
+   .... Let ``n~count~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~count~``>>.
+   .... Let ``int`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
    .... Check that ``int`` has type ``nat``.
-   .... Let ``n~count~`` be ``int``.
-   .... Let ``int'`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
-   .... Check that ``int'`` has type ``nat``.
-   .... Let ``n~front~`` be ``int'``.
+   .... Let ``n~front~`` be ``int``.
    .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
    .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
    .... Let ``value~back_invalidated~^{asterisk}^`` be the list of ``value~back_invalidated~``, obtained by repeating:
@@ -16681,9 +16634,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<TableEntryPriority_eval, ``EC`` ``STO`` ``|-`` ``PRIORITY`` ``=`` ``integerLiteral`` ``:`` ``:`` ``%``>>:
 
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n`` be ``int``.
+. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
 . Result in ``n``.
 
 <<TableMatch_eval, TableMatch_eval: ``EC~0~`` ``STO~0~`` ``|-`` ``tableKeyValue^{asterisk}^`` ``@`` ``tableEntryIR`` ``:`` ``%`` ``%`` ``%``>>

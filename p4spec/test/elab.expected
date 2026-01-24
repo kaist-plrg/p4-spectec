@@ -3166,39 +3166,52 @@ def $int_of_integerValue(integerValue) : int =
   -- if integerValue matches `%.%V%`
   -- let _nat . _nat' v i = integerValue
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:42.1-42.65
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:38.1-39.60
+def $nat_of_integerValue(integerValue) : nat? =
+
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:41.1-42.47
+  clause 0 : (integerValue) = ?(n)
+  -- let int = $int_of_integerValue(integerValue)
+  -- if int <: nat
+  -- let n = int as nat
+
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:43.1-44.15
+  clause 1 : (integerValue) = ?()
+  -- otherwise
+
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:50.1-50.65
 def $update_fieldValue(fieldValue*, nameIR, value) : fieldValue* =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:44.1-44.49
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:52.1-52.49
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, nameIR, value) = []
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:46.1-50.32
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:54.1-58.32
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, nameIR, value) = value nameIR ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*}
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let value_field_h nameIR_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- if (nameIR_field_h = nameIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:52.1-57.34
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:60.1-65.34
   clause 2 : (fieldValue*{fieldValue <- fieldValue*}, nameIR, value) = value_field_h nameIR_field_h ; :: $update_fieldValue(fieldValue_t*{fieldValue_t <- fieldValue_t*}, nameIR, value)
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let value_field_h nameIR_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- if (nameIR_field_h =/= nameIR)
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:63.1-63.59
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:71.1-71.59
 def $update_headerUnion(fieldValue*, nameIR) : fieldValue* =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:65.1-65.43
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:73.1-73.43
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, nameIR) = []
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:66.1-70.32
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:74.1-78.32
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, nameIR) = value_field_h nameIR_field_h ; :: $update_headerUnion(fieldValue_t*{fieldValue_t <- fieldValue_t*}, nameIR)
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let value_field_h nameIR_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- if (nameIR_field_h = nameIR)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:71.1-77.71
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:79.1-85.71
   clause 2 : (fieldValue'*{fieldValue' <- fieldValue'*}, nameIR) = value_field_h_update nameIR_field_h ; :: $update_headerUnion(fieldValue_t*{fieldValue_t <- fieldValue_t*}, nameIR)
   -- if fieldValue'*{fieldValue' <- fieldValue'*} matches _ :: _
   -- let value_field_h nameIR_field_h ; :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue'*{fieldValue' <- fieldValue'*}
@@ -3208,60 +3221,60 @@ def $update_headerUnion(fieldValue*, nameIR) : fieldValue* =
   -- let header typeId { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let value_field_h_update = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:87.1-87.34
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:95.1-95.34
 def $isValid_header(value) : bool =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:88.1-89.49
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:96.1-97.49
   clause 0 : (value) = b_valid
   -- if value <: headerValue
   -- let headerValue = value as headerValue
   -- let header _typeId { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} } = headerValue
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:95.1-95.37
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:103.1-103.37
 def $invalidate_value(value) : value =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:105.1-106.36
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:113.1-114.36
   clause 0 : (value) = $invalidate_header(headerValue) as value
   -- if value <: headerValue
   -- let headerValue = value as headerValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:107.1-108.46
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:115.1-116.46
   clause 1 : (value) = $invalidate_headerUnion(headerUnionValue) as value
   -- if value <: headerUnionValue
   -- let headerUnionValue = value as headerUnionValue
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:96.1-96.50
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:104.1-104.50
 def $invalidate_header(headerValue) : headerValue =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:99.1-100.44
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:107.1-108.44
   clause 0 : (header typeId { _bool ; fieldValue*{fieldValue <- fieldValue*} }) = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} }
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:97.1-97.65
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:105.1-105.65
 def $invalidate_headerUnion(headerUnionValue) : headerUnionValue =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:101.1-103.68
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:109.1-111.68
   clause 0 : (header_union typeId { value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }) = header_union typeId { value_field_invalidated nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_invalidated <- value_field_invalidated*} }
   -- (let value_field_invalidated = $invalidate_value(value_field))*{value_field <- value_field*, value_field_invalidated -> value_field_invalidated*}
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:114.1-114.54
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:122.1-122.54
 def $write_value_from_bits(value, nat, bool*) : value =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:120.1-122.50
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:128.1-130.50
   clause 0 : (value, n_var, b*{b <- b*}) = value_updated
   -- let (value_updated, bool*{bool <- bool*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
   -- if bool*{bool <- bool*} matches []
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:115.1-115.64
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:123.1-123.64
 def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:124.1-124.71
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:132.1-132.71
   clause 0 : (value, n_var, bool*{bool <- bool*}) = (`b b_h as value, b_t*{b_t <- b_t*})
   -- if value <: boolValue
   -- let `b _bool = value as boolValue
   -- if bool*{bool <- bool*} matches _ :: _
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:125.1-130.59
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:133.1-138.59
   clause 1 : (value, n_var, b*{b <- b*}) = (w w i as value, b_t*{b_t <- b_t*})
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -3275,7 +3288,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:131.1-136.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:139.1-144.57
   clause 2 : (value, n_var, b*{b <- b*}) = (w s i as value, b_t*{b_t <- b_t*})
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -3289,7 +3302,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:137.1-137.74
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:145.1-145.74
   clause 3 : (value, nat, b*{b <- b*}) = (n_max . 0 v i as value, b*{b <- b*})
   -- if value <: integerValue
   -- let integerValue = value as integerValue
@@ -3297,7 +3310,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let n_max . _nat v i = integerValue
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:138.1-143.61
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:146.1-151.61
   clause 4 : (value, n_var, b*{b <- b*}) = (n_max . n_var v i as value, b_t*{b_t <- b_t*})
   -- if value <: integerValue
   -- let integerValue = value as integerValue
@@ -3311,19 +3324,19 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[n_var : n_t]
   -- let i = $int_to_bitstr(n_var as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:169.1-173.63
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:177.1-181.63
   clause 5 : (value, n_var, b*{b <- b*}) = (struct typeId { fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: structValue
   -- let struct typeId { fieldValue*{fieldValue <- fieldValue*} } = value as structValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:174.1-178.63
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:182.1-186.63
   clause 6 : (value, n_var, b*{b <- b*}) = (header typeId { true ; fieldValue_updated*{fieldValue_updated <- fieldValue_updated*} } as value, b_rest*{b_rest <- b_rest*})
   -- if value <: headerValue
   -- let header typeId { _bool ; fieldValue*{fieldValue <- fieldValue*} } = value as headerValue
   -- let (fieldValue_updated*{fieldValue_updated <- fieldValue_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:180.1-183.77
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:188.1-191.77
   clause 7 : (value', n_var, b*{b <- b*}) = (typeId . "__UNSPECIFIED" . value_updated as value, b_rest*{b_rest <- b_rest*})
   -- if value' <: enumValue
   -- let enumValue = value' as enumValue
@@ -3331,104 +3344,104 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let typeId . nameIR . value = enumValue
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:185.1-188.80
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:193.1-196.80
   clause 8 : (value', n_var, b*{b <- b*}) = (header_stack[ value_updated*{value_updated <- value_updated*} ( n_idx ; n_size )] as value, b_rest*{b_rest <- b_rest*})
   -- if value' <: headerStackValue
   -- let header_stack[ value*{value <- value*} ( n_idx ; n_size )] = value' as headerStackValue
   -- let (value_updated*{value_updated <- value_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*})
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:116.1-116.67
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:124.1-124.67
 def $write_values_from_bits'(value*, nat, bool*) : (value*, bool*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:145.1-145.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:153.1-153.57
   clause 0 : (value*{value <- value*}, n_var, b*{b <- b*}) = ([], b*{b <- b*})
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:146.1-152.56
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:154.1-160.56
   clause 1 : (value*{value <- value*}, n_var, b*{b <- b*}) = (value_h_updated :: value_t_updated*{value_t_updated <- value_t_updated*}, b_rest*{b_rest <- b_rest*})
   -- if value*{value <- value*} matches _ :: _
   -- let value_h :: value_t*{value_t <- value_t*} = value*{value <- value*}
   -- let (value_h_updated, b_t*{b_t <- b_t*}) = $write_value_from_bits'(value_h, n_var, b*{b <- b*})
   -- let (value_t_updated*{value_t_updated <- value_t_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value_t*{value_t <- value_t*}, n_var, b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:117.1-117.83
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:125.1-125.83
 def $write_value_fields_from_bits'(fieldValue*, nat, bool*) : (fieldValue*, bool*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:154.1-154.63
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:162.1-162.63
   clause 0 : (fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*}) = ([], b*{b <- b*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches []
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:155.1-161.67
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:163.1-169.67
   clause 1 : (fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*}) = (fieldValue_h_updated :: fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*})
   -- if fieldValue*{fieldValue <- fieldValue*} matches _ :: _
   -- let fieldValue_h :: fieldValue_t*{fieldValue_t <- fieldValue_t*} = fieldValue*{fieldValue <- fieldValue*}
   -- let (fieldValue_h_updated, b_t*{b_t <- b_t*}) = $write_value_field_from_bits'(fieldValue_h, n_var, b*{b <- b*})
   -- let (fieldValue_t_updated*{fieldValue_t_updated <- fieldValue_t_updated*}, b_rest*{b_rest <- b_rest*}) = $write_value_fields_from_bits'(fieldValue_t*{fieldValue_t <- fieldValue_t*}, n_var, b_t*{b_t <- b_t*})
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:118.1-118.80
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:126.1-126.80
 def $write_value_field_from_bits'(fieldValue, nat, bool*) : (fieldValue, bool*) =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:163.1-167.50
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:171.1-175.50
   clause 0 : (value id ;, n_var, b*{b <- b*}) = (value_updated id ;, b_rest*{b_rest <- b_rest*})
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
 
-;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:194.1-194.42
+;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:202.1-202.42
 def $write_bits_from_value(value) : bool* =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:196.1-196.41
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:204.1-204.41
   clause 0 : (value) = [b]
   -- if value <: boolValue
   -- let `b b = value as boolValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:197.1-198.30
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:205.1-206.30
   clause 1 : (value) = $int_to_bits_signed(w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%S%`
   -- let w s i = integerLiteral
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:199.1-200.32
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:207.1-208.32
   clause 2 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%W%`
   -- let w w i = integerLiteral
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:201.1-202.32
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:209.1-210.32
   clause 3 : (value) = $int_to_bits_unsigned(w, i)
   -- if value <: integerValue
   -- let integerValue = value as integerValue
   -- if integerValue matches `%.%V%`
   -- let _nat . w v i = integerValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:204.1-206.59
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:212.1-214.59
   clause 4 : (value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
   -- if value <: headerStackValue
   -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; _nat' )] = value as headerStackValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:208.1-210.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:216.1-218.57
   clause 5 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: structValue
   -- let struct _typeId { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as structValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:211.1-213.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:219.1-221.57
   clause 6 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: headerValue
   -- let header _typeId { bool ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } = value as headerValue
   -- if (bool = true)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:214.1-214.59
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:222.1-222.59
   clause 7 : (value) = []
   -- if value <: headerValue
   -- let header _typeId { bool ; _fieldValue*{_fieldValue <- _fieldValue*} } = value as headerValue
   -- if (bool = false)
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:215.1-217.51
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:223.1-225.51
   clause 8 : (value') = $concat_<bool>($write_bits_from_value(value)*{value <- value*})
   -- if value' <: headerUnionValue
   -- let header_union _typeId { value id ;*{id <- id*, value <- value*} } = value' as headerUnionValue
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:219.1-220.34
+  ;; ../../../../spec-concrete/2-static-runtime/2.1.2-value-aux.watsup:227.1-228.34
   clause 9 : (value') = $write_bits_from_value(value)
   -- if value' <: enumValue
   -- let enumValue = value' as enumValue
@@ -12355,9 +12368,9 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- let value'' = value_base
     -- if value'' <: tupleValue
     -- let tuple( value_e*{value_e <- value_e*} ) = value'' as tupleValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
@@ -12370,9 +12383,9 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_e*{value_e <- value_e*} ( _nat ; _nat' )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
@@ -12684,9 +12697,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- output: % % |- % : int< n > as typeIR # []
 
   ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:60.1-75.2
@@ -12722,9 +12735,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- output: % % |- % : bit< n > as typeIR # []
 
   ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:80.1-92.2
@@ -12756,9 +12769,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- output: % % |- % : varbit< n > as typeIR # []
 
   ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:99.1-115.2
@@ -12832,9 +12845,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> value
     -- if value <: integerValue
     -- let integerValue_size = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_size)
-    -- if int <: nat
-    -- let n_size = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_size)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_size) = nat?{nat <- nat?}
     -- if (n_size > 0)
     -- output: % % |- % : typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
@@ -14115,9 +14128,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_r = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_r)
-    -- if int <: nat
-    -- let n_r = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_r)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_r) = nat?{nat <- nat?}
     -- if (n_r > 0)
     -- let ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- let expressionNoteIR = ( typeIR_reduced ctk_reduced )
@@ -14749,9 +14762,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_index = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
     -- let expressionNoteIR = ( typeIR_e*{typeIR_e <- typeIR_e*}[n_index] ctk_base )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
@@ -14773,9 +14786,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_index = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < n_size)
     -- let expressionNoteIR = ( typeIR ctk_base )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
@@ -14833,20 +14846,20 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_hi = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_hi)
-    -- if int <: nat
-    -- let n_hi = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_hi)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_hi) = nat?{nat <- nat?}
     -- if (ctk_lo_reduced = lctk)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> value'
     -- if value' <: integerValue
     -- let integerValue_lo = value' as integerValue
-    -- let int' = $int_of_integerValue(integerValue_lo)
-    -- if int' <: nat
-    -- let n_lo = int' as nat
+    -- let nat'?{nat' <- nat'?} = $nat_of_integerValue(integerValue_lo)
+    -- if nat'?{nat' <- nat'?} matches (_)
+    -- let ?(n_lo) = nat'?{nat' <- nat'?}
     -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
-    -- let int'' = ((n_hi - n_lo) + 1 as int)
-    -- if int'' <: nat
-    -- let n_slice = int'' as nat
+    -- let int = ((n_hi - n_lo) + 1 as int)
+    -- if int <: nat
+    -- let n_slice = int as nat
     -- let typeIR = bit< n_slice > as typeIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] as expressionIR # expressionNoteIR
@@ -15178,9 +15191,9 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_index = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < n_size)
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
@@ -15230,20 +15243,20 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_hi = value as integerValue
-    -- let int = $int_of_integerValue(integerValue_hi)
-    -- if int <: nat
-    -- let n_hi = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_hi)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_hi) = nat?{nat <- nat?}
     -- if (ctk_lo_reduced = lctk)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> value'
     -- if value' <: integerValue
     -- let integerValue_lo = value' as integerValue
-    -- let int' = $int_of_integerValue(integerValue_lo)
-    -- if int' <: nat
-    -- let n_lo = int' as nat
+    -- let nat'?{nat' <- nat'?} = $nat_of_integerValue(integerValue_lo)
+    -- if nat'?{nat' <- nat'?} matches (_)
+    -- let ?(n_lo) = nat'?{nat' <- nat'?}
     -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
-    -- let int'' = ((n_hi - n_lo) + 1 as int)
-    -- if int'' <: nat
-    -- let n_slice = int'' as nat
+    -- let int = ((n_hi - n_lo) + 1 as int)
+    -- if int <: nat
+    -- let n_slice = int as nat
     -- let typeIR = bit< n_slice > as typeIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
@@ -16927,9 +16940,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
     -- if ~TBLC_0.entries.const
     -- if (TBLC_0.priorities.values = [])
-    -- let int = $int_of_integerValue(integerLiteral as integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = TBLC_0[priorities.init = true]
     -- let TBLC_2 = $add_table_priority(TBLC_1, n)
     -- output: % % % |- % : TBLC_2 ?(priority= integerLiteral :)
@@ -16939,9 +16952,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- if ~TBLC_0.entries.const
     -- if (TBLC_0.priorities.values =/= [])
     -- if TBLC_0.priorities.init
-    -- let int = $int_of_integerValue(integerLiteral as integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= integerLiteral :)
 
@@ -16968,9 +16981,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = TBLC_0[priorities.init = true]
     -- let TBLC_2 = $add_table_priority(TBLC_1, n)
     -- output: % % % |- % : TBLC_2 ?(priority=( typedExpressionIR ):)
@@ -16985,9 +16998,9 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority=( typedExpressionIR ):)
 
@@ -17194,9 +17207,9 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
     -- if value <: integerValue
     -- let integerValue = value as integerValue
-    -- let int = $int_of_integerValue(integerValue)
-    -- if int <: nat
-    -- let n_delta = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_delta) = nat?{nat <- nat?}
     -- if (n_delta > 0)
     -- let TBLC_1 = TBLC_0[priorities.delta = n_delta]
     -- let constOptIR = $flatten_constOpt(constOpt)
@@ -21628,8 +21641,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- Expr_eval_lctk: local TC |- typedExpressionIR_r_reduced ~> value
     -- if value <: integerValue
     -- let integerValue_r = value as integerValue
-    -- let i_r = $int_of_integerValue(integerValue_r)
-    -- let n_prefix = $tableEntry_lpm_prefix(n w $int_to_bitstr(n as int, i_r) as value)
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_r)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_r) = nat?{nat <- nat?}
+    -- let n_prefix = $tableEntry_lpm_prefix(n w $int_to_bitstr(n as int, n_r as int) as value)
     -- output: % % |- % @ % : lpm n_prefix typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced
 
     rulepath ternary
@@ -24046,9 +24061,9 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let value'' = value_base
     -- if value'' <: tupleValue
     -- let tuple( value_e*{value_e <- value_e*} ) = value'' as tupleValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
@@ -24061,9 +24076,9 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_e*{value_e <- value_e*} ( _nat ; _nat' )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
@@ -24978,9 +24993,9 @@ relation ParserLocalDecl_inst: instContext store |- parserLocalDeclarationIR : i
     -- Expr_inst: block IC STO_0 |- typedExpressionIR_size : STO_1 value'
     -- if value' <: integerValue
     -- let integerValue_size = value' as integerValue
-    -- let int = $int_of_integerValue(integerValue_size)
-    -- if int <: nat
-    -- let n_size = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_size)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_size) = nat?{nat <- nat?}
     -- let typeIR_subst = $subst_type_i(block, IC, typeIR)
     -- let value*{value <- value*} = $repeat_<value>($default(typeIR_subst), n_size)
     -- let valueSetObject = value_set{ value*{value <- value*} ( n_size )}
@@ -27473,9 +27488,9 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let value'' = value_base
     -- if value'' <: tupleValue
     -- let tuple( value_elem*{value_elem <- value_elem*} ) = value'' as tupleValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_index = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_index] as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
@@ -27490,12 +27505,12 @@ relation Expr_eval: cursor evalContext store |- typedExpressionIR : evalContext 
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_elem*{value_elem <- value_elem*} ( _nat ; n_size )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
+    -- let int = $min_int([n_index as int, (n_size - 1)])
     -- if int <: nat
-    -- let n_index = int as nat
-    -- let int' = $min_int([n_index as int, (n_size - 1)])
-    -- if int' <: nat
-    -- let n_idx = int' as nat
+    -- let n_idx = int as nat
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
     -- output: % % % |- % : EC_1 STO_1 expressionResult
 
@@ -28074,9 +28089,9 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_idx = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_idx) = nat?{nat <- nat?}
     -- if (n_idx < n_size)
     -- let value = value_element*{value_element <- value_element*}[n_idx]
     -- output: % % % |- % : value
@@ -28086,9 +28101,9 @@ relation Lvalue_read: cursor evalContext store |- storageReference : value
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_idx = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_idx) = nat?{nat <- nat?}
     -- if (n_idx >= n_size)
     -- let value''' = value_element*{value_element <- value_element*}[0]
     -- if value''' <: headerValue
@@ -28239,9 +28254,9 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( n_base_idx ; n_size )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_idx = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_idx) = nat?{nat <- nat?}
     -- if (n_idx < n_size)
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let value_base_update = header_stack[ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ; n_size )] as value
@@ -28253,9 +28268,9 @@ relation Lvalue_write: cursor evalContext store |- storageReference -> value : e
     -- let value'' = value_base
     -- if value'' <: headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = value'' as headerStackValue
-    -- let int = $int_of_integerValue(integerValue_index)
-    -- if int <: nat
-    -- let n_idx = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_idx) = nat?{nat <- nat?}
     -- if (n_idx >= n_size)
     -- output: % % % |- % -> % : EC_0
 
@@ -30569,14 +30584,14 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let ` value'' = expressionResult as continueResult<value>
     -- if value'' <: integerValue
     -- let integerValue_count = value'' as integerValue
-    -- let int = $int_of_integerValue(integerValue_count)
-    -- if int <: nat
-    -- let n_count = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_count) = nat?{nat <- nat?}
     -- let value_front*{value_front <- value_front*} = value_element*{value_element <- value_element*}[0 : n_count]
     -- (let value_front_invalidated = $invalidate_value(value_front))*{value_front <- value_front*, value_front_invalidated -> value_front_invalidated*}
-    -- let int' = $max_int([0 as int, (n_size - n_count)])
-    -- if int' <: nat
-    -- let n_back = int' as nat
+    -- let int = $max_int([0 as int, (n_size - n_count)])
+    -- if int <: nat
+    -- let n_back = int as nat
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_back]
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
@@ -30624,12 +30639,12 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let ` value'' = expressionResult as continueResult<value>
     -- if value'' <: integerValue
     -- let integerValue_count = value'' as integerValue
-    -- let int = $int_of_integerValue(integerValue_count)
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_count) = nat?{nat <- nat?}
+    -- let int = $max_int([0 as int, (n_size - n_count)])
     -- if int <: nat
-    -- let n_count = int as nat
-    -- let int' = $max_int([0 as int, (n_size - n_count)])
-    -- if int' <: nat
-    -- let n_front = int' as nat
+    -- let n_front = int as nat
     -- let value_front*{value_front <- value_front*} = value_element*{value_element <- value_element*}[n_count : n_front]
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_count]
     -- (let value_back_invalidated = $invalidate_value(value_back))*{value_back <- value_back*, value_back_invalidated -> value_back_invalidated*}
@@ -32122,9 +32137,9 @@ relation TableEntryPriority_eval: evalContext store |- tableEntryPriorityIR? : n
    paths
 
     rulepath integerLiteral
-    -- let int = $int_of_integerValue(integerLiteral as integerValue)
-    -- if int <: nat
-    -- let n = int as nat
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n) = nat?{nat <- nat?}
     -- output: % % |- % : ?(n)
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:91.21-91.51
