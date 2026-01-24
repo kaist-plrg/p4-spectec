@@ -248,7 +248,7 @@ and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
   | TupleE exps -> infer_tuple_exp ctx exps
   | CallE (id, targs, args) -> infer_call_exp ctx at id targs args
   | IterE (exp, iter) -> infer_iter_exp ctx exp iter
-  | TypE (exp, plaintyp) -> infer_typ_exp ctx exp plaintyp
+  | SubE (exp, plaintyp) -> infer_sub_exp ctx exp plaintyp
   | AtomE _ -> fail_infer at "atom"
   | SeqE _ -> fail_infer at "sequence expression"
   | InfixE _ -> fail_infer at "infix expression"
@@ -667,13 +667,15 @@ and infer_iter_exp (ctx : Ctx.t) (exp : exp) (iter : iter) :
   let plaintyp = IterT (plaintyp, iter) in
   Ok (ctx, exp_il, plaintyp)
 
-(* Inference of typed expressions *)
+(* Inference of subtype expressions *)
 
-and infer_typ_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
+and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
   let* ctx, exp_il = elab_exp ctx plaintyp exp in
-  let _typ_il = elab_plaintyp ctx plaintyp in
-  Ok (ctx, exp_il.it, plaintyp.it)
+  let typ_il = elab_plaintyp ctx plaintyp in
+  let exp_il = Il.SubE (exp_il, typ_il) in
+  let plaintyp = BoolT in
+  Ok (ctx, exp_il, plaintyp)
 
 (* Elaboration of expression type:
 

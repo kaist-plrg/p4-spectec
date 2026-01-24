@@ -141,7 +141,7 @@ and render_exp exp =
   | CallE (id, targs, args) ->
       render_defid id ^ render_targs targs ^ render_args args
   | IterE (exp, iter) -> render_exp exp ^ render_iter iter
-  | TypE (exp, plaintyp) -> render_exp exp ^ " : " ^ render_plaintyp plaintyp
+  | SubE (exp, plaintyp) -> render_exp exp ^ " <: " ^ render_plaintyp plaintyp
   | AtomE atom -> render_atom atom
   | SeqE exps -> render_exps " " exps
   | InfixE (exp_l, atom, exp_r) ->
