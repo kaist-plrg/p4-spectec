@@ -512,11 +512,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   (fun typcase ->
                     let nottyp, _hints = typcase in
                     let mixop_t, typs_inner = nottyp.it in
+                    Mixop.eq mixop_t mixop_v
+                    &&
                     let typs_inner =
                       List.map (Typ.subst_typ theta) typs_inner
                     in
-                    Mixop.eq mixop_t mixop_v
-                    && subtyps ctx typs_inner values_inner)
+                    subtyps ctx typs_inner values_inner)
                   typcases
             | _ -> true))
     | TupleT typs -> (
