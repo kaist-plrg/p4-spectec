@@ -3037,28 +3037,31 @@ syntax annotationBody =
 syntax structuredAnnotationBody = 
    | dataElementExpression trailingCommaOpt
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1394.1-1396.42
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1394.1-1401.32
 syntax annotation = 
-   | @ name
-   | @ name ( annotationBody )
-   | @ name [ structuredAnnotationBody ]
+   | @ name hint(print "@"#%0)
+   | @ name ( annotationBody ) hint(print "@"#%0#"("#%1#")")
+   | @ name [ structuredAnnotationBody ] hint(print "@"#%0#"["#%1#"]")
+   | @pragma name annotationBody hint(print "@pragma" %0 %1)
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1399.1-1400.38
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1404.1-1405.38
 syntax annotationListNonEmpty = 
-   | @ name
-   | @ name ( annotationBody )
-   | @ name [ structuredAnnotationBody ]
+   | @ name hint(print "@"#%0)
+   | @ name ( annotationBody ) hint(print "@"#%0#"("#%1#")")
+   | @ name [ structuredAnnotationBody ] hint(print "@"#%0#"["#%1#"]")
+   | @pragma name annotationBody hint(print "@pragma" %0 %1)
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1403.1-1404.27
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1408.1-1409.27
 syntax annotationList = 
    | `empty
-   | @ name
-   | @ name ( annotationBody )
-   | @ name [ structuredAnnotationBody ]
+   | @ name hint(print "@"#%0)
+   | @ name ( annotationBody ) hint(print "@"#%0#"("#%1#")")
+   | @ name [ structuredAnnotationBody ] hint(print "@"#%0#"["#%1#"]")
+   | @pragma name annotationBody hint(print "@pragma" %0 %1)
    | annotationListNonEmpty annotation
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1406.1-1407.49
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1411.1-1412.49
 def $flatten_annotationList(annotationList)
 
 1. Case analysis on annotationList
@@ -3089,13 +3092,13 @@ def $flatten_annotationList(annotationList)
 
 2. Else Phantom#31
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1418.1-1420.17
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1423.1-1425.17
 syntax p4program = 
    | `empty
    | p4program declaration
    | p4program ;
 
-;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1422.1-1423.50
+;; ../../../../spec-concrete/1-p4-surface/1-syntax.watsup:1427.1-1428.50
 def $flatten_p4program(p4program)
 
 1. Case analysis on p4program

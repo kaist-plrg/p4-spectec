@@ -671,11 +671,20 @@ and infer_iter_exp (ctx : Ctx.t) (exp : exp) (iter : iter) :
 
 and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  let* ctx, exp_il, _plaintyp = infer_exp ctx exp in
+  let* ctx, exp_il, plaintyp_exp = infer_exp ctx exp in
   let typ_il = elab_plaintyp ctx plaintyp in
-  let exp_il = Il.SubE (exp_il, typ_il) in
-  let plaintyp = BoolT in
-  Ok (ctx, exp_il, plaintyp)
+  if
+    Types.Sub.sub_plaintyp ctx.tdenv plaintyp_exp plaintyp
+    || Types.Sub.sub_plaintyp ctx.tdenv plaintyp plaintyp_exp
+  then
+    let exp_il = Il.SubE (exp_il, typ_il) in
+    let plaintyp = BoolT in
+    Ok (ctx, exp_il, plaintyp)
+  else
+    fail_unit exp.at
+      (F.asprintf "incomparable types %s and %s"
+         (El.Print.string_of_plaintyp plaintyp_exp)
+         (El.Print.string_of_plaintyp plaintyp))
 
 (* Elaboration of expression type:
 
