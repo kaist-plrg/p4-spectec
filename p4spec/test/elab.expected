@@ -21986,8 +21986,13 @@ syntax inference = map<typeId, typeIR>
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:20.1-20.59
 def $infer(typeId*, parameterIR*, argumentIR*) : inference =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:39.1-48.59
-  clause 0 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:39.1-39.72
+  clause 0 : (typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
+  -- if typeId*{typeId <- typeId*} matches []
+
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:41.1-51.59
+  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
+  -- if (typeId_infer*{typeId_infer <- typeId_infer*} =/= [])
   -- let constraint_init = $empty_constraint(typeId_infer*{typeId_infer <- typeId_infer*})
   -- (let constraint_pair = $infer'(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
   -- let constraint_inferred = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*})
@@ -21997,40 +22002,40 @@ def $infer(typeId*, parameterIR*, argumentIR*) : inference =
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:21.1-21.62
 def $infer'(constraint, parameterIR, argumentIR) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:50.1-53.67
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:53.1-56.67
   clause 0 : (constraint, parameterIR, argumentIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if argumentIR <: typedExpressionIR
   -- let typedExpressionIR = argumentIR as typedExpressionIR
   -- let _annotationList _direction typeIR_param _id _constantInitializerOptIR = parameterIR
   -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:55.1-58.67
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:58.1-61.67
   clause 1 : (constraint, parameterIR, argumentIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if argumentIR matches `%=%`
   -- let nameIR = typedExpressionIR = argumentIR
   -- let _annotationList _direction typeIR_param _id _constantInitializerOptIR = parameterIR
   -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:60.1-60.64
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:63.1-63.64
   clause 2 : (constraint, parameterIR, argumentIR) = constraint
   -- if argumentIR matches `%=_`
   -- let nameIR =_ = argumentIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:62.1-62.54
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:65.1-65.54
   clause 3 : (constraint, parameterIR, argumentIR) = constraint
   -- if argumentIR matches `_`
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:23.1-23.46
 def $resolve_inference(inference) : inference =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:69.1-70.57
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:72.1-73.57
   clause 0 : ({ typeId : typeIR*{typeIR <- typeIR*, typeId <- typeId*} }) = { typeId : typeIR_resolved*{typeIR_resolved <- typeIR_resolved*, typeId <- typeId*} }
   -- (let typeIR_resolved = $resolve_inference'(typeIR))*{typeIR <- typeIR*, typeIR_resolved -> typeIR_resolved*}
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:24.1-24.41
 def $resolve_inference'(typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:72.1-74.49
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:75.1-77.49
   clause 0 : (typeIR) = typeIR_resolved
   -- let typeIR' = $unroll_typeIR(typeIR)
   -- if typeIR' <: sequenceTypeIR
@@ -22039,30 +22044,30 @@ def $resolve_inference'(typeIR) : typeIR =
   -- let seq< typeIR_arg*{typeIR_arg <- typeIR_arg*} > = sequenceTypeIR
   -- let typeIR_resolved = tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} > as typeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:75.1-76.15
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:78.1-79.15
   clause 1 : (typeIR) = typeIR
   -- otherwise
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:26.1-26.61
 def $gen_constraint(constraint, typeIR, typeIR) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:84.1-86.75
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:87.1-89.75
   clause 0 : (constraint, typeIR, typeIR_arg) = $update_map<typeId, infer>(constraint, typeId_param, knownas typeIR_arg)
   -- if typeIR <: nameTypeIR
   -- let ` typeId_param = typeIR as nameTypeIR
   -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:90.1-91.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:93.1-94.58
   clause 1 : (constraint, typeIR, typeIR_arg) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_param = typeIR as typedefTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:93.1-94.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:96.1-97.58
   clause 2 : (constraint, typeIR_param, typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_arg = typeIR as typedefTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:96.1-97.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:99.1-100.58
   clause 3 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: newTypeIR
   -- let type typeId typeIR_param = typeIR as newTypeIR
@@ -22070,21 +22075,21 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let type typeId' typeIR_arg = typeIR' as newTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:101.1-105.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:104.1-108.58
   clause 4 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: listTypeIR
   -- let list< typeIR_param > = typeIR as listTypeIR
   -- if typeIR' <: listTypeIR
   -- let list< typeIR_arg > = typeIR' as listTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:107.1-111.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:110.1-114.61
   clause 5 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: tupleTypeIR
   -- let tuple< typeIR_param*{typeIR_param <- typeIR_param*} > = typeIR as tupleTypeIR
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:113.1-117.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:116.1-120.58
   clause 6 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: headerStackTypeIR
   -- let typeIR_param [ n_size ] = typeIR as headerStackTypeIR
@@ -22092,7 +22097,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let typeIR_arg [ n_size' ] = typeIR' as headerStackTypeIR
   -- if (n_size = n_size')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:119.1-124.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:122.1-127.48
   clause 7 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: structTypeIR
   -- let struct typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as structTypeIR
@@ -22100,7 +22105,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let struct typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as structTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:126.1-131.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:129.1-134.48
   clause 8 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerTypeIR
   -- let header typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerTypeIR
@@ -22108,7 +22113,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let header typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as headerTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:133.1-138.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:136.1-141.48
   clause 9 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerUnionTypeIR
   -- let header_union typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerUnionTypeIR
@@ -22116,7 +22121,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let header_union typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as headerUnionTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:142.1-147.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:145.1-150.48
   clause 10 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: externObjectTypeIR
   -- let extern typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} } = typeIR as externObjectTypeIR
@@ -22124,7 +22129,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let extern typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} } = typeIR' as externObjectTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:149.1-155.56
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:152.1-158.56
   clause 11 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: parserObjectTypeIR
   -- let parser _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) = typeIR as parserObjectTypeIR
@@ -22134,7 +22139,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- (let _annotationList' direction' typeIR_arg _id' _constantInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _id' -> _id'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:157.1-163.56
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:160.1-166.56
   clause 12 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: controlObjectTypeIR
   -- let control _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) = typeIR as controlObjectTypeIR
@@ -22144,28 +22149,28 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- (let _annotationList' direction' typeIR_arg _id' _constantInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _constantInitializerOptIR' -> _constantInitializerOptIR'*, _id' -> _id'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:165.1-169.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:168.1-172.61
   clause 13 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: packageObjectTypeIR
   -- let package _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_param*{typeIR_param <- typeIR_param*} } = typeIR as packageObjectTypeIR
   -- if typeIR' <: packageObjectTypeIR
   -- let package _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} >{ typeIR_arg*{typeIR_arg <- typeIR_arg*} } = typeIR' as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:173.1-175.15
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:174.1-176.15
   clause 14 : (constraint, typeIR_param, typeIR_arg) = constraint
   -- otherwise
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:27.1-27.64
 def $gen_constraints(constraint, typeIR*, typeIR*) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:179.1-182.64
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:180.1-183.64
   clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
   -- (let constraint_pair = $gen_constraint(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:29.1-29.59
 def $merge_constraint(constraint, constraint) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:188.1-192.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:189.1-193.61
   clause 0 : (constraint_pre, constraint_post) = $merge_constraint'(constraint_pre, constraint_post, typeId_pre*{typeId_pre <- typeId_pre*}, { [] })
   -- let { typeId_pre*{typeId_pre <- typeId_pre*} } = $dom_map<typeId, infer>(constraint_pre)
   -- let { typeId_post*{typeId_post <- typeId_post*} } = $dom_map<typeId, infer>(constraint_post)
@@ -22174,11 +22179,11 @@ def $merge_constraint(constraint, constraint) : constraint =
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:30.1-30.81
 def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:194.1-196.15
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:195.1-197.15
   clause 0 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = constraint
   -- if typeId*{typeId <- typeId*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:198.1-206.66
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:199.1-207.66
   clause 1 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -22186,7 +22191,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if (?(unknown) = $find_map<typeId, infer>(constraint_post, typeId_h))
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, unknown)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:208.1-216.79
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:209.1-217.79
   clause 2 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -22198,7 +22203,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let knownas typeIR_post = infer
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_post)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:218.1-226.78
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:219.1-227.78
   clause 3 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -22210,7 +22215,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if (?(unknown) = $find_map<typeId, infer>(constraint_post, typeId_h))
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_pre)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:228.1-237.79
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:229.1-238.79
   clause 4 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -22227,7 +22232,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if Cast_impl: typeIR_pre -> typeIR_post holds
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_post)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:239.1-249.78
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:240.1-250.78
   clause 5 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -22248,11 +22253,11 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:31.1-31.61
 def $merge_constraints(constraint, constraint*) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:251.1-251.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:252.1-252.61
   clause 0 : (constraint_pre, constraint*{constraint <- constraint*}) = constraint_pre
   -- if constraint*{constraint <- constraint*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:253.1-260.65
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:254.1-261.65
   clause 1 : (constraint_pre_0, constraint*{constraint <- constraint*}) = constraint_pre_2
   -- if constraint*{constraint <- constraint*} matches _ :: _
   -- let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} = constraint*{constraint <- constraint*}
@@ -22262,7 +22267,7 @@ def $merge_constraints(constraint, constraint*) : constraint =
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:33.1-33.48
 def $resolve_constraint(constraint) : inference =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:266.1-268.35
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:267.1-269.35
   clause 0 : ({ typeId : infer*{infer <- infer*, typeId <- typeId*} }) = { typeId : typeIR*{typeIR <- typeIR*, typeId <- typeId*} }
   -- (let infer' = infer)*{infer <- infer*, infer' -> infer'*}
   -- (if infer' matches `KNOWNAS%`)*{infer' <- infer'*}

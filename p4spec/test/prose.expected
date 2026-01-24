@@ -11340,21 +11340,24 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 
 . Return ``{`` ``(`` ``typeId`` ``:`` ``UNKNOWN`` ``)^{asterisk}^`` ``}``.
 
-<<infer, infer(typeId~infer~^{asterisk}^, parameterIR^{asterisk}^, argumentIR^{asterisk}^)>>
+<<infer, infer(typeId^{asterisk}^, parameterIR^{asterisk}^, argumentIR^{asterisk}^)>>
 
 
-. Let ``constraint~init~`` be ``<<empty_constraint,`` ``empty_constraint(typeId~infer~^{asterisk}^)>>``.
-. Let ``constraint~pair~^{asterisk}^`` be the list of ``constraint~pair~``, obtained by repeating:
+. If ``typeId^{asterisk}^`` is an empty list:
+ .. Return ``<<empty_map,`` ``empty_map<typeId,`` ``typeIR>>>``.
+. If ``typeId^{asterisk}^`` is not equal to ``·``:
+ .. Let ``constraint~init~`` be ``<<empty_constraint,`` ``empty_constraint(typeId^{asterisk}^)>>``.
+ .. Let ``constraint~pair~^{asterisk}^`` be the list of ``constraint~pair~``, obtained by repeating:
 +
 --
- ** Let ``constraint~pair~`` be ``<<infer',`` ``infer'(constraint~init~,`` ``parameterIR,`` ``argumentIR)>>``.
+  *** Let ``constraint~pair~`` be ``<<infer',`` ``infer'(constraint~init~,`` ``parameterIR,`` ``argumentIR)>>``.
 --
 +
 for each ``argumentIR`` in ``argumentIR^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Let ``constraint~inferred~`` be ``<<merge_constraints,`` ``merge_constraints(constraint~init~,`` ``constraint~pair~^{asterisk}^)>>``.
-. Let ``inference`` be ``<<resolve_constraint,`` ``resolve_constraint(constraint~inferred~)>>``.
-. Let ``inference~resolved~`` be ``<<resolve_inference,`` ``resolve_inference(inference)>>``.
-. Return ``inference~resolved~``.
+ .. Let ``constraint~inferred~`` be ``<<merge_constraints,`` ``merge_constraints(constraint~init~,`` ``constraint~pair~^{asterisk}^)>>``.
+ .. Let ``inference`` be ``<<resolve_constraint,`` ``resolve_constraint(constraint~inferred~)>>``.
+ .. Let ``inference~resolved~`` be ``<<resolve_inference,`` ``resolve_inference(inference)>>``.
+ .. Return ``inference~resolved~``.
 
 <<infer', infer'(constraint, parameterIR, argumentIR)>>
 

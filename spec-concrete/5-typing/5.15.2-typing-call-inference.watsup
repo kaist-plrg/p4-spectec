@@ -36,7 +36,10 @@ dec $resolve_constraint(constraint) : inference
 ;;;; Type inference
 ;;
 
+def $infer(eps, parameterIR*, argumentIR*) = $empty_map<typeId, typeIR>
+
 def $infer(typeId_infer*, parameterIR*, argumentIR*) = inference_resolved
+  -- if typeId_infer* =/= eps
   ---- ;; create constraints
   -- if constraint_init = $empty_constraint(typeId_infer*)
   -- if (constraint_pair
@@ -167,8 +170,6 @@ def $gen_constraint(
     PACKAGE _ `< _ > `{ typeIR_param* },
     PACKAGE _ `< _ > `{ typeIR_arg* })
   = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
-
-;;; Synthesized types
 
 def $gen_constraint(constraint, typeIR_param, typeIR_arg)
   = constraint

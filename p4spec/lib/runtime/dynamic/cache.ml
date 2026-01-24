@@ -64,13 +64,9 @@ end
 (* Cache targets *)
 
 let is_cached_func = function
-  | "subst_typeIR" | "specialize_typeDefIR" | "unroll_typeIR" | "free_typeIR"
-  | "bound" | "gen_constraint_typeIR" | "merge_constraint" | "merge_constraint'"
-  | "nestable_struct" | "nestable_struct_in_header" ->
-      true
+  | "specialize_typeDefIR" | "unroll_typeIR" | "free_typeIR" | "bound" -> true
   | _ -> false
 
 let is_cached_rule = function
-  | "Cast_expl" | "Cast_impl" | "Type_wf" | "Type_alpha" ->
-      true
+  | "Cast_expl" | "Cast_impl" | "Type_wf" | "Type_alpha" -> true
   | _ -> false
