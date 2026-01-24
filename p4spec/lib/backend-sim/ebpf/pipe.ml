@@ -56,6 +56,11 @@ struct
 
   (* Extern objects *)
 
+  type arch_state = unit [@@deriving yojson]
+
+  let empty_arch_state =
+    () |> arch_state_to_yojson |> wrap_extern_v "archState"
+
   type extern =
     | PacketIn of Core.Object.PacketIn.t
     | CounterArray of Object.CounterArray.t

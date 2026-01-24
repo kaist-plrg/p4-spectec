@@ -56,6 +56,14 @@ struct
 
   (* Extern objects *)
 
+  (* CloneType * Session * Field Index *)
+  type clone_pkt = Value.t * Value.t * Value.t [@@deriving yojson]
+
+  type arch_state = { clone_opt : clone_pkt option } [@@deriving yojson]
+
+  let empty_arch_state =
+    { clone_opt = None } |> arch_state_to_yojson |> wrap_extern_v "archState"
+
   type extern =
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t

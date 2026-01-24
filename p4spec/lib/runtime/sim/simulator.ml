@@ -31,6 +31,10 @@ module type ARCH = sig
   val eval_extern_func_call : Value.t list -> Value.t list
   val eval_extern_method_call : Value.t list -> Value.t list
 
+  (* Architecture-specific external state *)
+
+  val empty_arch_state : Value.t
+
   (* Match-action table interface *)
 
   val table_add_entry :

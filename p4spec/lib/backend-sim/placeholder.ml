@@ -54,6 +54,11 @@ struct
 
   (* Extern calls *)
 
+  type arch_state = unit [@@deriving yojson]
+
+  let empty_arch_state =
+    () |> arch_state_to_yojson |> wrap_extern_v "archState"
+
   let eval_extern_init (_values_input : Value.t list) : Value.t =
     wrap_extern_v "objectState" `Null
 
