@@ -941,60 +941,55 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#_object_reference_values">8.4.6. Object reference values</a></li>
+<li><a href="#sec-typedef">8.4.7. <code>typedef</code> declaration</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_23">8.4.7.1. Type checking</a></li>
+<li><a href="#_well_formedness_14">8.4.7.2. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#_alias_types">8.5. Alias types</a>
+<li><a href="#sec-newtype">8.4.8. <code>type</code> declaration</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_24">8.4.8.1. Type checking</a></li>
+<li><a href="#_well_formedness_15">8.4.8.2. Well-formedness</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_synthesized_types_and_values">8.5. Synthesized types and values</a>
 <ul class="sectlevel3">
-<li><a href="#sec-typedef">8.5.1. <code>typedef</code> declaration</a>
+<li><a href="#_default_types_and_values">8.5.1. Default types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_23">8.5.1.1. Type checking</a></li>
-<li><a href="#_well_formedness_14">8.5.1.2. Well-formedness</a></li>
+<li><a href="#_well_formedness_16">8.5.1.1. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#sec-newtype">8.5.2. <code>type</code> declaration</a>
+<li><a href="#_invalid_header_types_and_values">8.5.2. Invalid header types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_type_checking_24">8.5.2.1. Type checking</a></li>
-<li><a href="#_well_formedness_15">8.5.2.2. Well-formedness</a></li>
+<li><a href="#_well_formedness_17">8.5.2.1. Well-formedness</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a href="#_synthesized_types_and_values">8.6. Synthesized types and values</a>
-<ul class="sectlevel3">
-<li><a href="#_default_types_and_values">8.6.1. Default types and values</a>
+<li><a href="#_sequence_types_and_values">8.5.3. Sequence types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_well_formedness_16">8.6.1.1. Well-formedness</a></li>
+<li><a href="#_well_formedness_18">8.5.3.1. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#_invalid_header_types_and_values">8.6.2. Invalid header types and values</a>
+<li><a href="#_record_types_and_values">8.5.4. Record types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_well_formedness_17">8.6.2.1. Well-formedness</a></li>
+<li><a href="#_well_formedness_19">8.5.4.1. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#_sequence_types_and_values">8.6.3. Sequence types and values</a>
+<li><a href="#_set_types_and_values">8.5.5. Set types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_well_formedness_18">8.6.3.1. Well-formedness</a></li>
+<li><a href="#_well_formedness_20">8.5.5.1. Well-formedness</a></li>
 </ul>
 </li>
-<li><a href="#_record_types_and_values">8.6.4. Record types and values</a>
+<li><a href="#sec-table-metadata-type-and-value">8.5.6. Table metadata types and values</a>
 <ul class="sectlevel4">
-<li><a href="#_well_formedness_19">8.6.4.1. Well-formedness</a></li>
-</ul>
-</li>
-<li><a href="#_set_types_and_values">8.6.5. Set types and values</a>
-<ul class="sectlevel4">
-<li><a href="#_well_formedness_20">8.6.5.1. Well-formedness</a></li>
-</ul>
-</li>
-<li><a href="#sec-table-metadata-type-and-value">8.6.6. Table metadata types and values</a>
-<ul class="sectlevel4">
-<li><a href="#_well_formedness_21">8.6.6.1. Well-formedness</a></li>
+<li><a href="#_well_formedness_21">8.5.6.1. Well-formedness</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#_unrolling">8.7. Unrolling</a></li>
-<li><a href="#_subtyping">8.8. Subtyping</a></li>
+<li><a href="#_unrolling">8.6. Unrolling</a></li>
 </ul>
 </li>
 <li><a href="#_p4_callables">9. P4 callables</a>
@@ -6250,10 +6245,10 @@ should be used for a given table in the generated control-plane API:</p>
 <div id="integerValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">integerTypeIR
-   : INT
-   | INT `&lt; nat &gt;
-   | BIT `&lt; nat &gt;
-   | VARBIT `&lt; nat &gt;
+   : intTypeIR
+   | fixedIntTypeIR
+   | fixedBitTypeIR
+   | varBitTypeIR
    ;
 
 integerLiteral
@@ -6455,7 +6450,7 @@ operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
  -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
- -- if n = $int_of_integerValue(integerValue)</pre>
+ -- if n = $nat_of_integerValue(integerValue)</pre>
 </div>
 </div>
 </div>
@@ -6532,13 +6527,7 @@ operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 <p>Let <code>integerValue</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n</code> be <code>int</code>.</p>
+<p>Let <code>n</code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>BIT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and a set of fresh type variables <code>·</code>.</p>
@@ -6594,7 +6583,7 @@ arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
  -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
- -- if n = $int_of_integerValue(integerValue)</pre>
+ -- if n = $nat_of_integerValue(integerValue)</pre>
 </div>
 </div>
 </div>
@@ -6661,13 +6650,7 @@ arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).</p>
 <p>Let <code>integerValue</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n</code> be <code>int</code>.</p>
+<p>Let <code>n</code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>INT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and a set of fresh type variables <code>·</code>.</p>
@@ -6718,7 +6701,7 @@ to always contain an integer number of bytes at runtime.</p>
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
  -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
- -- if n = $int_of_integerValue(integerValue)</pre>
+ -- if n = $nat_of_integerValue(integerValue)</pre>
 </div>
 </div>
 </div>
@@ -6785,13 +6768,7 @@ to always contain an integer number of bytes at runtime.</p>
 <p>Let <code>integerValue</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue</code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n</code> be <code>int</code>.</p>
+<p>Let <code>n</code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>VARBIT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and a set of fresh type variables <code>·</code>.</p>
@@ -7627,7 +7604,7 @@ which may be valid.</p>
  -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size)
  -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~&gt; integerValue_size
- -- if n_size = $int_of_integerValue(integerValue_size)
+ -- if n_size = $nat_of_integerValue(integerValue_size)
  -- if n_size &gt; 0</pre>
 </div>
 </div>
@@ -7685,13 +7662,7 @@ which may be valid.</p>
 <p>Let <code>integerValue<sub>size</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>size</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>size</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>size</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>size</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>size</sub></code> is greater than <code>0</code>.</p>
@@ -8878,7 +8849,7 @@ tableObjectTypeDefIR = tableObjectTypeIR</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Table metadata types are introduced in <a href="#sec-table-metadata-type-and-value">Section 8.6.6</a>.</p>
+<p>Table metadata types are introduced in <a href="#sec-table-metadata-type-and-value">Section 8.5.6</a>.</p>
 </div>
 <div class="sect4">
 <h5 id="_well_formedness_13">8.4.5.1. Well-formedness</h5>
@@ -8935,12 +8906,9 @@ objectReferenceValue
 </div>
 </div>
 <div class="paragraph">
-<p>Objects are referred to by their fully-qualified names from the top-level scope.</p>
+<p>Objects are referred to by their fully-qualified names from the top-level scope.
+=== Alias types</p>
 </div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_alias_types">8.5. Alias types</h3>
 <div class="paragraph">
 <p>A <code>typedef</code> or <code>type</code> declaration can be used to give an alias to a type.</p>
 </div>
@@ -8968,8 +8936,9 @@ typedefDeclaration
    ;</code></pre>
 </div>
 </div>
+</div>
 <div class="sect3">
-<h4 id="sec-typedef">8.5.1. <code>typedef</code> declaration</h4>
+<h4 id="sec-typedef">8.4.7. <code>typedef</code> declaration</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">typedef</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> u32<span style="color: #24292f;background-color: #f6f8fa">;</span>
@@ -9006,7 +8975,7 @@ suitable number of type arguments:</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_23">8.5.1.1. Type checking</h5>
+<h5 id="_type_checking_23">8.4.7.1. Type checking</h5>
 <div class="paragraph">
 <p><code>typedef</code>s are introduced by <code>typedef</code> declarations. Its typing rule is
 explained in <a href="#sec-typedef-declaration">Section 11.17.1</a>. <code>typedef</code>s are then used by
@@ -9015,7 +8984,7 @@ as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_14">8.5.1.2. Well-formedness</h5>
+<h5 id="_well_formedness_14">8.4.7.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9058,7 +9027,7 @@ as illustrated in <a href="#sec-def-namedType">[sec-def-namedType]</a>.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-newtype">8.5.2. <code>type</code> declaration</h4>
+<h4 id="sec-newtype">8.4.8. <code>type</code> declaration</h4>
 <div class="paragraph">
 <p>Similarly to <code>typedef</code>, the keyword <code>type</code> can be used to introduce a new type.</p>
 </div>
@@ -9108,7 +9077,7 @@ with the control-plane software).</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_type_checking_24">8.5.2.1. Type checking</h5>
+<h5 id="_type_checking_24">8.4.8.1. Type checking</h5>
 <div class="paragraph">
 <p><code>type</code>s are introduced by <code>type</code> declarations. Its typing rule is explained
 in <a href="#sec-newtype-declaration">Section 11.17.2</a>. <code>type</code>s are then used by referencing their
@@ -9117,7 +9086,7 @@ names. Thus <code>type</code> types can be obtained from named types, as illustr
 </div>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_15">8.5.2.2. Well-formedness</h5>
+<h5 id="_well_formedness_15">8.4.8.2. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9161,7 +9130,7 @@ names. Thus <code>type</code> types can be obtained from named types, as illustr
 </div>
 </div>
 <div class="sect2">
-<h3 id="_synthesized_types_and_values">8.6. Synthesized types and values</h3>
+<h3 id="_synthesized_types_and_values">8.5. Synthesized types and values</h3>
 <div class="paragraph">
 <p>For the purposes of type-checking the P4 compiler can synthesize some type
 representations which cannot be directly expressed by users.</p>
@@ -9191,7 +9160,7 @@ synthesizedValue
 </div>
 </div>
 <div class="sect3">
-<h4 id="_default_types_and_values">8.6.1. Default types and values</h4>
+<h4 id="_default_types_and_values">8.5.1. Default types and values</h4>
 <div class="paragraph">
 <p>A left-value can be initialized automatically with a default value of the
 suitable type using:</p>
@@ -9253,7 +9222,7 @@ a type and value, we need to represent those of <code>...</code>.
 </table>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_16">8.6.1.1. Well-formedness</h5>
+<h5 id="_well_formedness_16">8.5.1.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9288,7 +9257,7 @@ a type and value, we need to represent those of <code>...</code>.
 </div>
 </div>
 <div class="sect3">
-<h4 id="_invalid_header_types_and_values">8.6.2. Invalid header types and values</h4>
+<h4 id="_invalid_header_types_and_values">8.5.2. Invalid header types and values</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">dataExpression
@@ -9347,7 +9316,7 @@ must have a type and value, we need to represent those of <code>{#}</code>.
 </table>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_17">8.6.2.1. Well-formedness</h5>
+<h5 id="_well_formedness_17">8.5.2.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9382,7 +9351,7 @@ must have a type and value, we need to represent those of <code>{#}</code>.
 </div>
 </div>
 <div class="sect3">
-<h4 id="_sequence_types_and_values">8.6.3. Sequence types and values</h4>
+<h4 id="_sequence_types_and_values">8.5.3. Sequence types and values</h4>
 <div class="paragraph">
 <p>A sequence expression is written using curly braces, with each element
 separated by a comma:</p>
@@ -9487,7 +9456,7 @@ represent the expression sequence within curly braces, apart from tuple types.
 </table>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_18">8.6.3.1. Well-formedness</h5>
+<h5 id="_well_formedness_18">8.5.3.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9552,7 +9521,7 @@ represent the expression sequence within curly braces, apart from tuple types.
 </div>
 </div>
 <div class="sect3">
-<h4 id="_record_types_and_values">8.6.4. Record types and values</h4>
+<h4 id="_record_types_and_values">8.5.4. Record types and values</h4>
 <div class="paragraph">
 <p>One can write record expressions that evaluate to a structure or header. The
 syntax of these expressions is given by:</p>
@@ -9651,7 +9620,7 @@ optTrailingComma }</code>.
 </table>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_19">8.6.4.1. Well-formedness</h5>
+<h5 id="_well_formedness_19">8.5.4.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9724,7 +9693,7 @@ optTrailingComma }</code>.
 </div>
 </div>
 <div class="sect3">
-<h4 id="_set_types_and_values">8.6.5. Set types and values</h4>
+<h4 id="_set_types_and_values">8.5.5. Set types and values</h4>
 <div id="setTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">setTypeIR
@@ -9756,7 +9725,7 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_20">8.6.5.1. Well-formedness</h5>
+<h5 id="_well_formedness_20">8.5.5.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9799,7 +9768,7 @@ by the compiler internally and used for type-checking.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-table-metadata-type-and-value">8.6.6. Table metadata types and values</h4>
+<h4 id="sec-table-metadata-type-and-value">8.5.6. Table metadata types and values</h4>
 <div class="paragraph">
 <p>A <code>table</code> can be invoked by calling its <code>apply</code> method. Calling an apply method
 on a table instance returns a value with a table metadata <code>struct</code> type with
@@ -9868,7 +9837,7 @@ tableMetadataValue
 </div>
 </div>
 <div class="sect4">
-<h5 id="_well_formedness_21">8.6.6.1. Well-formedness</h5>
+<h5 id="_well_formedness_21">8.5.6.1. Well-formedness</h5>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -9931,7 +9900,7 @@ tableMetadataValue
 </div>
 </div>
 <div class="sect2">
-<h3 id="_unrolling">8.7. Unrolling</h3>
+<h3 id="_unrolling">8.6. Unrolling</h3>
 <div id="typedefTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">typedefTypeIR
@@ -10004,72 +9973,6 @@ def $unroll_typeIR(typeIR) = typeIR
 <ol class="loweralpha" type="a">
 <li>
 <p>Return <code>typeIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_subtyping">8.8. Subtyping</h3>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre>def $coerce_unary(typedExpressionIR, typeIR_to) = typedExpressionIR
- -- if _ # `(typeIR _) = typedExpressionIR
- -- Type_alpha: typeIR ~~ typeIR_to
-
-def $coerce_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
- -- if _ # `(typeIR ctk) = typedExpressionIR
- -- Type_alpha:/ typeIR ~~ typeIR_to
- -- Sub_impl: typeIR &lt;: typeIR_to
- -- if typedExpressionIR_cast = (`(typeIR_to) typedExpressionIR) # `(typeIR_to ctk)</pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div id="coerce_unary" class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>to</sub></code></a></p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR</code>.</p>
-</li>
-<li>
-<p>If <a href="#Type_alpha"><code>typeIR</code> and <code>typeIR<sub>to</sub></code> are the same type</a>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Return <code>typedExpressionIR</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Check that <a href="#Sub_impl"><code>typeIR</code> can be implicitly cast to <code>typeIR<sub>to</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>to</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with type <code>typeIR<sub>to</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
-</li>
-<li>
-<p>Return <code>typedExpressionIR<sub>cast</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -10293,7 +10196,7 @@ the same type as the parameter type.</p>
  -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
  -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
- -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
+ -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
  -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_init_cast ~&gt; value_init
  -- if parameterIR = annotationList direction typeIR nameIR (= value_init)
@@ -10402,7 +10305,7 @@ the same type as the parameter type.</p>
 <p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> is <code>LCTK</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -10473,15 +10376,15 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
   B |- _ direction typeIR _ eps
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
- -- if ~$is_synthesizedTypeIR(typeIR_unroll)
- -- if ($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll) \/ $is_objectTypeIR(typeIR_unroll)) =&gt; direction = `EMPTY
+ -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
+ -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY
   rule ParameterType_wf/default:
   B |- _ direction typeIR _ (= value)
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
- -- if ~$is_synthesizedTypeIR(typeIR_unroll)
+ -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
  -- if direction = IN \/ direction = `EMPTY
- -- if ($is_stringTypeIR(typeIR_unroll) \/ $is_arbitraryIntTypeIR(typeIR_unroll) \/ $is_objectTypeIR(typeIR_unroll)) =&gt; direction = `EMPTY</pre>
+ -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY</pre>
 </div>
 </div>
 </div>
@@ -10509,10 +10412,10 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Let <code>typeIR<sub>unroll</sub></code> be <a href="#unroll_typeIR"><code>typeIR</code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Check that <code>~<a href="#is_synthesizedTypeIR"></code> <code>is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> does not have type <code>synthesizedTypeIR</code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> <code>=</code> <code>INT</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>stringTypeIR</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>objectTypeIR</code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -10531,13 +10434,13 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Let <code>typeIR<sub>unroll</sub></code> be <a href="#unroll_typeIR"><code>typeIR</code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Check that <code>~<a href="#is_synthesizedTypeIR"></code> <code>is_synthesizedTypeIR(typeIR<sub>unroll</sub>)</a></code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> does not have type <code>synthesizedTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <code>direction</code> <code>=</code> <code>IN</code> or <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_stringTypeIR"></code> <code>is_stringTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>unroll</sub>)</a></code> <code>\/</code> <code><a href="#is_objectTypeIR"></code> <code>is_objectTypeIR(typeIR<sub>unroll</sub>)</a></code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
+<p>Check that <code>typeIR<sub>unroll</sub></code> <code>=</code> <code>INT</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>stringTypeIR</code> <code>\/</code> <code>typeIR<sub>unroll</sub></code> <code>has</code> <code>type</code> <code>objectTypeIR</code> implies <code>direction</code> <code>=</code> <code>`EMPTY</code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -13722,7 +13625,7 @@ variableDeclarationIR
  -- Type_wf: $bound(p, TC_0) |- typeIR
  -- if $is_assignable_typeIR(typeIR)
  -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
- -- if typedExpressionIR_init_cast = $coerce_unary(typedExpressionIR_init, typeIR)
+ -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
  -- if variableDeclarationIR = annotationList typeIR nameIR (= typedExpressionIR_init_cast) ;</pre>
@@ -13823,7 +13726,7 @@ variableDeclarationIR
 </div>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -14168,7 +14071,7 @@ defined by the following rule:</p>
  -- Type_wf: $bound(p, TC_0) |- typeIR
  -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_value)
- -- if typedExpressionIR_value_cast = $coerce_unary(typedExpressionIR_value, typeIR)
+ -- if typedExpressionIR_value_cast = $cast_unary(typedExpressionIR_value, typeIR)
  -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~&gt; value
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR LCTK value)
@@ -14222,7 +14125,7 @@ defined by the following rule:</p>
 <p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>value</sub></code></a> is <code>LCTK</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>value_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>value</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>value_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>value</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be</p>
@@ -15626,7 +15529,7 @@ provided or not.</p>
  -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
  -- if IC_inner = $enter_path_i(IC_0, nameIR)
  -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
- -- if ~$is_externObject(object)
+ -- if ~(object &lt;: externObject)
  -- if objectId = IC_0.PATH ++ nameIR
  -- if STO_2 = $add_store(STO_1, objectId, object)
  -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
@@ -15728,7 +15631,7 @@ provided or not.</p>
 </div>
 </li>
 <li>
-<p>If <code>~<a href="#is_externObject"></code> <code>is_externObject(object)</a></code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -18886,7 +18789,7 @@ namedValueListIR = namedValueIR*</code></pre>
   rule Enum_serializable_field_ok:
   TC_0 nameIR_enum typeIR |- name = expression : TC_1 (nameIR = value)
  -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
- -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR)
+ -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR)
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
  -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~&gt; value
  -- if nameIR = $name(name)
@@ -18919,7 +18822,7 @@ namedValueListIR = namedValueIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>cast</sub></code></a> is <code>LCTK</code>.</p>
@@ -19776,7 +19679,7 @@ typedefDeclarationIR
 <div class="sect3">
 <h4 id="sec-typedef-declaration">11.17.1. <code>typedef</code> declaration</h4>
 <div class="paragraph">
-<p>See <a href="#sec-typedef">Section 8.5.1</a> for more details about <code>typedef</code> aliases.</p>
+<p>See <a href="#sec-typedef">Section 8.4.7</a> for more details about <code>typedef</code> aliases.</p>
 </div>
 <div class="sect4">
 <h5 id="_type_checking_46">11.17.1.1. Type checking</h5>
@@ -20149,7 +20052,7 @@ typedefDeclarationIR
 <div class="sect3">
 <h4 id="sec-newtype-declaration">11.17.2. New type declaration</h4>
 <div class="paragraph">
-<p>See <a href="#sec-newtype">Section 8.5.2</a> for more details about new type aliases.</p>
+<p>See <a href="#sec-newtype">Section 8.4.8</a> for more details about new type aliases.</p>
 </div>
 <div class="sect4">
 <h5 id="_type_checking_47">11.17.2.1. Type checking</h5>
@@ -21245,7 +21148,7 @@ abortResult
  -- if typeIR `[_] = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if nameIR = "next" \/ nameIR = "last"
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- if typedLvalueIR = (typedLvalueIR_base . nameIR) # `(typeIR)
   rule Lvalue_ok/structTypeIR:
   p TC |- lvalue_base . member : typedLvalueIR
@@ -21314,7 +21217,7 @@ abortResult
 <p>Check that <code>nameIR</code> <code>=</code> <code>"next"</code> or <code>nameIR</code> <code>=</code> <code>"last"</code>.</p>
 </li>
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> with note <code>(</code> <code>typeIR'</code> <code>)</code></a>.</p>
@@ -21418,7 +21321,7 @@ abortResult
   p EC_0 STO_0 |- (typedLvalueIR . nameIR) # _ : EC_1 STO_1 storageReferenceResult
  -- Lvalue_eval: p EC_0 STO_0 |- typedLvalueIR : EC_1 STO_1 (` storageReference)
  -- Lvalue_read: p EC_1 STO_1 |- storageReference : value
- -- if ~$is_headerStackValue(value)
+ -- if ~(value &lt;: headerStackValue)
  -- if storageReferenceResult = ` (storageReference . nameIR)</pre>
 </div>
 </div>
@@ -21519,7 +21422,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>If <code>~<a href="#is_headerStackValue"></code> <code>is_headerStackValue(value)</a></code>:</p>
+<p>Else:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
@@ -21956,7 +21859,7 @@ abortResult
  -- if typedExpressionIR_index_reduced = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
  -- if ctk_index = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; integerValue_index
- -- if n_index = $int_of_integerValue(integerValue_index)
+ -- if n_index = $nat_of_integerValue(integerValue_index)
  -- if n_index &lt; n_size
  -- if typedLvalueIR = (typedLvalueIR_base `[typedExpressionIR_index_reduced]) # `(typeIR)
   rule Lvalue_ok/non-lctk:
@@ -22044,13 +21947,7 @@ abortResult
 <p>Let <code>integerValue<sub>index</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>index</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
@@ -22213,14 +22110,14 @@ abortResult
   p EC_0 STO |- storageReference `[integerValue_index] : value
  -- Lvalue_read: p EC_0 STO |- storageReference : value_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = value_base
- -- if n_idx = $int_of_integerValue(integerValue_index)
+ -- if n_idx = $nat_of_integerValue(integerValue_index)
  -- if n_idx &lt; n_size
  -- if value = value_element*[n_idx]
   rule Lvalue_read/stack-out-of-bounds:
   p EC_0 STO |- storageReference `[integerValue_index] : value
  -- Lvalue_read: p EC_0 STO |- storageReference : value_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = value_base
- -- if n_idx = $int_of_integerValue(integerValue_index)
+ -- if n_idx = $nat_of_integerValue(integerValue_index)
  -- if n_idx &gt;= n_size
  -- if HEADER typeId `{b_valid ; fieldValue*} = value_element*[0]
  -- if value = HEADER typeId `{false ; fieldValue*}</pre>
@@ -22257,13 +22154,7 @@ abortResult
 <p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>_</code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>value<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>idx</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>idx</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>If <code>n<sub>idx</sub></code> is less than <code>n<sub>size</sub></code>:</p>
@@ -22317,7 +22208,7 @@ abortResult
   p EC_0 STO |- (storageReference `[integerValue_index]) -&gt; value : EC_1
  -- Lvalue_read: p EC_0 STO |- storageReference : value_base
  -- if HEADER_STACK `[value_element* `(n_base_idx ; n_size)] = value_base
- -- if n_idx = $int_of_integerValue(integerValue_index)
+ -- if n_idx = $nat_of_integerValue(integerValue_index)
  -- if n_idx &lt; n_size
  -- if value_element_update* = value_element*[[n_idx] = value]
  -- if value_base_update = HEADER_STACK `[value_element_update* `(n_base_idx ; n_size)]
@@ -22326,7 +22217,7 @@ abortResult
   p EC_0 STO |- (storageReference `[integerValue_index]) -&gt; value : EC_0
  -- Lvalue_read: p EC_0 STO |- storageReference : value_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = value_base
- -- if n_idx = $int_of_integerValue(integerValue_index)
+ -- if n_idx = $nat_of_integerValue(integerValue_index)
  -- if n_idx &gt;= n_size</pre>
 </div>
 </div>
@@ -22361,13 +22252,7 @@ abortResult
 <p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>n<sub>base_idx</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>value<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>idx</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>idx</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>If <code>n<sub>idx</sub></code> is less than <code>n<sub>size</sub></code>:</p>
@@ -22434,10 +22319,10 @@ abortResult
  -- if _ # `(typeIR_lo_reduced ctk_lo_reduced) = typedExpressionIR_lo_reduced
  -- if ctk_hi_reduced = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; integerValue_hi
- -- if n_hi = $int_of_integerValue(integerValue_hi)
+ -- if n_hi = $nat_of_integerValue(integerValue_hi)
  -- if ctk_lo_reduced = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; integerValue_lo
- -- if n_lo = $int_of_integerValue(integerValue_lo)
+ -- if n_lo = $nat_of_integerValue(integerValue_lo)
  -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
  -- if n_slice = n_hi - n_lo + 1
  -- if typeIR = BIT `&lt;n_slice&gt;
@@ -22526,13 +22411,7 @@ abortResult
 <p>Let <code>integerValue<sub>hi</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>hi</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>hi</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>lo_reduced</sub></code> is <code>LCTK</code>.</p>
@@ -22554,25 +22433,19 @@ abortResult
 <p>Let <code>integerValue<sub>lo</sub></code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Let <code>int'</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int'</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
+<p>Let <code>n<sub>lo</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#is_valid_bitslice"><code>typeIR<sub>base</sub></code> <code>[</code> <code>n<sub>lo</sub></code> : <code>n<sub>hi</sub></code> <code>]</code> is a valid bitslice</a>.</p>
 </li>
 <li>
-<p>Let <code>int''</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
+<p>Let <code>int</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
 </li>
 <li>
-<p>Check that <code>int''</code> has type <code>nat</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
 </li>
 <li>
-<p>Let <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
+<p>Let <code>n<sub>slice</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>BIT</code> <code>&lt;</code> <code>n<sub>slice</sub></code> <code>&gt;</code>.</p>
@@ -23404,7 +23277,7 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
  -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
- -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)
+ -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
   rule Stmt_ok/compound:
   p TC f l |- lvalue assignop expression ; : TC f (typedLvalueIR assignop typedExpressionIR_cast ;)
  -- if assignop =/= =
@@ -23414,7 +23287,7 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- if expression_binary = expression_lvalue binop expression
  -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
  -- if _ # `(typeIR_lvalue) = typedLvalueIR
- -- if (_ binop typedExpressionIR_cast) # _ = $coerce_unary(typedExpressionIR_binary, typeIR_lvalue)</pre>
+ -- if (_ binop typedExpressionIR_cast) # _ = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)</pre>
 </div>
 </div>
 </div>
@@ -23462,7 +23335,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -23520,7 +23393,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <p>Let <code>(</code> <code>typeIR<sub>lvalue</sub></code> <code>)</code> be the note of <code>typedLvalueIR</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionIR</code> <code>#</code> <code>_</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>binary</sub></code> implicitly cast to <code>typeIR<sub>lvalue</sub></code></a>.</p>
+<p>Let <code>expressionIR</code> <code>#</code> <code>_</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>binary</sub></code> implicitly cast to <code>typeIR<sub>lvalue</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>expressionIR</code> has type <code>binaryExpressionIR</code>.</p>
@@ -24280,10 +24153,15 @@ callStatementIR
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup CallableTarget_ok/referenceExpression:
-  rule CallableTarget_ok/prefixedNonTypeName:
+  rule CallableTarget_ok/prefixedNonTypeName-non-verify:
   p TC |- prefixedNonTypeName : prefixedNameIR
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
- -- if ((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify")) =&gt; ((p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND)))
+ -- if ~((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify"))
+  rule CallableTarget_ok/prefixedNonTypeName-verify:
+  p TC |- prefixedNonTypeName : prefixedNameIR
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if ((prefixedNameIR = ` "verify") \/ (prefixedNameIR = . "verify"))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
   rule CallableTarget_ok/this:
   p TC |- THIS : (` "this")</pre>
 </div>
@@ -24310,10 +24188,27 @@ callStatementIR
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR</code> <code>=</code> <code>"verify"</code> <code>\/</code> <code>prefixedNameIR</code> <code>=</code> <code>.</code> <code>"verify"</code> implies <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> <code>\/</code> <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>If <code>~prefixedNameIR</code> <code>=</code> <code>"verify"</code> <code>\/</code> <code>prefixedNameIR</code> <code>=</code> <code>.</code> <code>"verify"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the typed callable target <code>prefixedNameIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Result in the typed callable target <code>prefixedNameIR</code>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
@@ -24870,7 +24765,7 @@ still performed after the execution of the <code>return</code> statement.  See
  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
  -- if typeIR_ret = $find_local_return_type_t(TC)
- -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_ret)</pre>
+ -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)</pre>
 </div>
 </div>
 </div>
@@ -24937,7 +24832,7 @@ still performed after the execution of the <code>return</code> statement.  See
 <p>Let <code>typeIR<sub>ret</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_local_return_type_t">the expected return type in <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>ret</sub></code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>ret</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -26759,7 +26654,7 @@ ambiguity with a block statement.</p>
   TC typeIR_switch _ |- expressionNonBrace_label : typedExpressionIR_label_cast
  -- if expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
  -- Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label
- -- if typedExpressionIR_label_cast = $coerce_unary(typedExpressionIR_label, typeIR_switch)
+ -- if typedExpressionIR_label_cast = $cast_unary(typedExpressionIR_label, typeIR_switch)
  -- if _ # `(_ LCTK) = typedExpressionIR_label_cast</pre>
 </div>
 </div>
@@ -26808,7 +26703,7 @@ ambiguity with a block statement.</p>
 </div>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>label_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_unary"><code>typedExpressionIR<sub>label</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>label_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>label</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
 <p>Let <a href="#expressionNoteIR">type <code>_</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
@@ -28430,7 +28325,7 @@ binaryExpressionIR
  -- if binop &lt;- [+, -, *]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -28477,7 +28372,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_plusminusmult)</a></code>.</p>
@@ -28519,7 +28414,7 @@ binaryExpressionIR
  -- if binop &lt;- [|+|, |-|]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -28566,7 +28461,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_satplusminus)</a></code>.</p>
@@ -28608,14 +28503,14 @@ binaryExpressionIR
  -- if binop &lt;- [/, %]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ctk_r_reduced = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~&gt; integerValue_r
- -- if n_r = $int_of_integerValue(integerValue_r)
+ -- if n_r = $nat_of_integerValue(integerValue_r)
  -- if n_r &gt; 0
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)
@@ -28624,7 +28519,7 @@ binaryExpressionIR
  -- if binop &lt;- [/, %]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -28672,7 +28567,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_divmod)</a></code>.</p>
@@ -28707,13 +28602,7 @@ binaryExpressionIR
 <p>Let <code>integerValue<sub>r</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>r</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>r</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>r</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>r</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>r</sub></code> is greater than <code>0</code>.</p>
@@ -28770,8 +28659,8 @@ binaryExpressionIR
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
- -- if $is_fixedBitTypeIR(typeIR_r_reduced)
- -- if $is_arbitraryIntTypeIR(typeIR_l_reduced) =&gt; (ctk_r_reduced = LCTK)
+ -- if BIT `&lt;_&gt; = typeIR_r_reduced
+ -- if (typeIR_l_reduced = INT) =&gt; (ctk_r_reduced = LCTK)
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)
   rule Expr_ok/rhs-non-fixbit:
@@ -28784,8 +28673,8 @@ binaryExpressionIR
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
+ -- if ~(typeIR_r_reduced &lt;: fixedBitTypeIR)
  -- if ctk_r_reduced = LCTK
- -- if $is_arbitraryIntTypeIR(typeIR_r_reduced) \/ $is_fixedIntTypeIR(typeIR_r_reduced)
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)</pre>
 </div>
@@ -28843,11 +28732,11 @@ binaryExpressionIR
 <p>Let <code>ctk<sub>r_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>If <a href="#is_fixedBitTypeIR"><code>typeIR<sub>r_reduced</sub></code> is fixed-width bit type</a>:</p>
+<p>If <code>typeIR<sub>r_reduced</sub></code> has type <code>fixedBitTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>l_reduced</sub>)</a></code> implies <code>ctk<sub>r_reduced</sub></code> <code>=</code> <code>LCTK</code>.</p>
+<p>Check that <code>typeIR<sub>l_reduced</sub></code> <code>=</code> <code>INT</code> implies <code>ctk<sub>r_reduced</sub></code> <code>=</code> <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
@@ -28862,11 +28751,11 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>If <code>ctk<sub>r_reduced</sub></code> is <code>LCTK</code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code> or <code><a href="#is_fixedIntTypeIR"></code> <code>is_fixedIntTypeIR(typeIR<sub>r_reduced</sub>)</a></code>.</p>
+<p>Check that <code>ctk<sub>r_reduced</sub></code> is <code>LCTK</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk"><code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code> joined</a>.</p>
@@ -28899,7 +28788,7 @@ binaryExpressionIR
  -- if binop &lt;- [==, !=]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
  -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
  -- if ctk_r_cast = $ctk_of_typedExpressionIR(typedExpressionIR_r_cast)
@@ -28946,7 +28835,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_cast</sub></code></a>.</p>
@@ -28988,7 +28877,7 @@ binaryExpressionIR
  -- if binop &lt;- [&lt;=, &gt;=, &lt;, &gt;]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -29035,7 +28924,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_compare)</a></code>.</p>
@@ -29077,7 +28966,7 @@ binaryExpressionIR
  -- if binop &lt;- [&amp;, ^, |]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -29124,7 +29013,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_bitwise)</a></code>.</p>
@@ -29259,7 +29148,7 @@ binaryExpressionIR
  -- if binop &lt;- [&amp;&amp;, ||]
  -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
  -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
- -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+ -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
  -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced) = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
  -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
  -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -29306,7 +29195,7 @@ binaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#reduce_serenum_binary"></code> <code>reduce_serenum_binary(typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub>,</code> <code>compat_logical)</a></code>.</p>
@@ -29659,11 +29548,11 @@ ternaryExpressionIR
  -- if _ # `(BOOL ctk_cond) = typedExpressionIR_cond
  -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
  -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
- -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast) = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
+ -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast) = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
  -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
  -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
  -- if ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
- -- if $is_arbitraryIntTypeIR(typeIR_cast) =&gt; (ctk_cond =/= DYN)
+ -- if (typeIR_cast = INT) =&gt; (ctk_cond =/= DYN)
  -- if ctk = $joins_ctk([ctk_cond, ctk_true_cast, ctk_false_cast])
  -- if expressionNoteIR = `(typeIR_cast ctk)</pre>
 </div>
@@ -29722,7 +29611,7 @@ ternaryExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>typedExpressionIR<sub>true_cast</sub>,</code> <code>typedExpressionIR<sub>false_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#coerce_binary"><code>typedExpressionIR<sub>true</sub></code> and <code>typedExpressionIR<sub>false</sub></code> implicitly cast to equal types</a>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>true_cast</sub>,</code> <code>typedExpressionIR<sub>false_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>true</sub></code> and <code>typedExpressionIR<sub>false</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>cast</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>true_cast</sub></code></a>.</p>
@@ -29734,7 +29623,7 @@ ternaryExpressionIR
 <p>Let <code>ctk<sub>false_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>false_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <code><a href="#is_arbitraryIntTypeIR"></code> <code>is_arbitraryIntTypeIR(typeIR<sub>cast</sub>)</a></code> implies <code>ctk<sub>cond</sub></code> <code>=/=</code> <code>DYN</code>.</p>
+<p>Check that <code>typeIR<sub>cast</sub></code> <code>=</code> <code>INT</code> implies <code>ctk<sub>cond</sub></code> <code>=/=</code> <code>DYN</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#joins_ctk"><code>[ctk<sub>cond</sub>,</code> <code>ctk<sub>true_cast</sub>,</code> <code>ctk<sub>false_cast</sub>]</code> joined</a>.</p>
@@ -29926,7 +29815,7 @@ castExpressionIR
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
- -- Sub_expl: typeIR &lt;: typeIR_t
+ -- Cast_expl: typeIR -&gt; typeIR_t
  -- if expressionNoteIR = `(typeIR_t ctk)</pre>
 </div>
 </div>
@@ -29980,7 +29869,7 @@ castExpressionIR
 <p>Let <code>ctk</code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#Sub_expl"><code>typeIR</code> can be explicitly cast to <code>typeIR<sub>t</sub></code></a>.</p>
+<p>Check that <a href="#Cast_expl"><code>typeIR</code> can be explicitly cast to <code>typeIR<sub>t</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>t</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
@@ -31594,7 +31483,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-lastIndex:
   p TC |- expression_base . member : (typedExpressionIR_base . "lastIndex") # expressionNoteIR
  -- if "lastIndex" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31602,7 +31491,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-last:
   p TC |- expression_base . member : (typedExpressionIR_base . "last") # expressionNoteIR
  -- if "last" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31610,7 +31499,7 @@ memberAccessExpressionIR
   rule Expr_ok/headerStack-next:
   p TC |- expression_base . member : (typedExpressionIR_base . "next") # expressionNoteIR
  -- if "next" = $name(member)
- -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND)) \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+ -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER) \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
@@ -31719,7 +31608,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
@@ -31754,7 +31643,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
@@ -31792,7 +31681,7 @@ memberAccessExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code><a href="#is_parser_blockKind"></code> <code>is_parser_blockKind(TC.BLOCK.KIND)</a></code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code><a href="#is_parser_state_localKind"></code> <code>is_parser_state_localKind(TC.LOCAL.KIND)</a></code>.</p>
+<p>Check that <code>p</code> <code>=</code> <code>BLOCK</code> <code>/\</code> <code>TC.BLOCK.KIND</code> <code>=</code> <code>PARSER</code> or <code>p</code> <code>=</code> <code>LOCAL</code> <code>/\</code> <code>TC.LOCAL.KIND</code> <code>=</code> <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
@@ -32233,7 +32122,7 @@ indexAccessExpressionIR
  -- if TUPLE `&lt;typeIR_e*&gt; = $unroll_typeIR(typeIR_base)
  -- if ctk_index = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; integerValue_index
- -- if n_index = $int_of_integerValue(integerValue_index)
+ -- if n_index = $nat_of_integerValue(integerValue_index)
  -- if n_index &lt; |typeIR_e*|
  -- if expressionNoteIR = `(typeIR_e*[n_index] ctk_base)
   rule Expr_ok/headerStack-lctk:
@@ -32248,7 +32137,7 @@ indexAccessExpressionIR
  -- if typeIR `[n_size] = $unroll_typeIR(typeIR_base)
  -- if ctk_index = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~&gt; integerValue_index
- -- if n_index = $int_of_integerValue(integerValue_index)
+ -- if n_index = $nat_of_integerValue(integerValue_index)
  -- if n_index &lt; n_size
  -- if expressionNoteIR = `(typeIR ctk_base)
   rule Expr_ok/headerStack-non-lctk:
@@ -32342,13 +32231,7 @@ indexAccessExpressionIR
 <p>Let <code>integerValue<sub>index</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>index</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than the length of <code>typeIR<sub>e</sub><sup>*</sup></code>.</p>
@@ -32387,13 +32270,7 @@ indexAccessExpressionIR
 <p>Let <code>integerValue<sub>index</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>index</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>index</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
@@ -32467,10 +32344,10 @@ sliceAccessExpressionIR
  -- if ctk_lo_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced)
  -- if ctk_hi_reduced = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; integerValue_hi
- -- if n_hi = $int_of_integerValue(integerValue_hi)
+ -- if n_hi = $nat_of_integerValue(integerValue_hi)
  -- if ctk_lo_reduced = LCTK
  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; integerValue_lo
- -- if n_lo = $int_of_integerValue(integerValue_lo)
+ -- if n_lo = $nat_of_integerValue(integerValue_lo)
  -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
  -- if n_slice = n_hi - n_lo + 1
  -- if typeIR = BIT `&lt;n_slice&gt;
@@ -32568,13 +32445,7 @@ sliceAccessExpressionIR
 <p>Let <code>integerValue<sub>hi</sub></code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>hi</sub></code> be <code>int</code>.</p>
+<p>Let <code>n<sub>hi</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>lo_reduced</sub></code> is <code>LCTK</code>.</p>
@@ -32596,25 +32467,19 @@ sliceAccessExpressionIR
 <p>Let <code>integerValue<sub>lo</sub></code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Let <code>int'</code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>int'</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>lo</sub></code> be <code>int'</code>.</p>
+<p>Let <code>n<sub>lo</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#is_valid_bitslice"><code>typeIR<sub>base_reduced</sub></code> <code>[</code> <code>n<sub>lo</sub></code> : <code>n<sub>hi</sub></code> <code>]</code> is a valid bitslice</a>.</p>
 </li>
 <li>
-<p>Let <code>int''</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
+<p>Let <code>int</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
 </li>
 <li>
-<p>Check that <code>int''</code> has type <code>nat</code>.</p>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
 </li>
 <li>
-<p>Let <code>n<sub>slice</sub></code> be <code>int''</code>.</p>
+<p>Let <code>n<sub>slice</sub></code> be <code>int</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <code>BIT</code> <code>&lt;</code> <code>n<sub>slice</sub></code> <code>&gt;</code>.</p>
@@ -34556,6 +34421,7 @@ annotation
    : @ name
    | @ name `( annotationBody )
    | @ name `[ structuredAnnotationBody ]
+   | @ PRAGMA name annotationBody
    ;</code></pre>
 </div>
 </div>
@@ -34967,7 +34833,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">[sec-entries]
 </div>
 </li>
 <li>
-<p>Type definitions (<a href="#sec-newtype">Section 8.5.2</a>)</p>
+<p>Type definitions (<a href="#sec-newtype">Section 8.4.8</a>)</p>
 <div class="ulist">
 <ul>
 <li>

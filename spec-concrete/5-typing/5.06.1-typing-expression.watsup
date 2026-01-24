@@ -167,7 +167,7 @@ rule Expr_ok/binaryExpression-plusminusmult:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -204,7 +204,7 @@ rule Expr_ok/binaryExpression-satplusminus:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -242,7 +242,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+          = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -256,7 +256,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the divisor is local compile-time known and is positive
     -- if ctk_r_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> integerValue_r
-    -- if n_r = $int_of_integerValue(integerValue_r)
+    -- if n_r = $nat_of_integerValue(integerValue_r)
     -- if $(n_r > 0)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
@@ -272,7 +272,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+          = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -333,10 +333,10 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the right-hand side is fixed bit type
-    -- if $is_fixedBitTypeIR(typeIR_r_reduced)
+    -- if BIT `< _ > = typeIR_r_reduced
     ---- ;; check that if the left-hand side is int type,
     ---- ;; the right-hand side is local compile-time known
-    -- if $is_arbitraryIntTypeIR(typeIR_l_reduced) => (ctk_r_reduced = LCTK)
+    -- if (typeIR_l_reduced = INT) => (ctk_r_reduced = LCTK)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `( typeIR_l_reduced ctk_reduced )
@@ -361,9 +361,8 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the right-hand side is local compile-time known int type
+    -- if ~(typeIR_r_reduced <: fixedBitTypeIR)
     -- if ctk_r_reduced = LCTK
-    -- if $is_arbitraryIntTypeIR(typeIR_r_reduced)
-          \/ $is_fixedIntTypeIR(typeIR_r_reduced)
     ---- ;; create typed expression
     -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- if expressionNoteIR = `( typeIR_l_reduced ctk_reduced )
@@ -382,7 +381,7 @@ rule Expr_ok/binaryExpression-equality:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   ---- ;; fetch annotations
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
   -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
@@ -416,7 +415,7 @@ rule Expr_ok/binaryExpression-comparison:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -453,7 +452,7 @@ rule Expr_ok/binaryExpression-bitwise:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -544,7 +543,7 @@ rule Expr_ok/binaryExpression-logical:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -574,14 +573,14 @@ rule Expr_ok/ternaryExpression:
   -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
   ---- ;; check that the types are compatible for the branches
   -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast)
-        = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
+        = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
   ---- ;; fetch annotations
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
   -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
   -- if ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
   ---- ;; if both branches are arbitrary integer types,
   ---- ;; then the condition must be compile-time known
-  -- if $is_arbitraryIntTypeIR(typeIR_cast) => (ctk_cond =/= DYN)
+  -- if (typeIR_cast = INT) => (ctk_cond =/= DYN)
   ---- ;; create typed expression
   -- if ctk = $joins_ctk([ ctk_cond, ctk_true_cast, ctk_false_cast ])
   -- if expressionNoteIR = `( typeIR_cast ctk )
@@ -601,7 +600,7 @@ rule Expr_ok/castExpression:
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   ---- ;; check that explicit cast is defined
-  -- Sub_expl: typeIR <: typeIR_t
+  -- Cast_expl: typeIR -> typeIR_t
   ---- ;; create typed expression
   -- if expressionNoteIR = `( typeIR_t ctk )
 
@@ -818,8 +817,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; check that member is "lastIndex"
     -- if "lastIndex" = $name(member)
     ---- ;; "lastIndex" can be only used within a parser
-    -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-          \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
@@ -835,8 +834,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; check that member is "last"
     -- if "last" = $name(member)
     ---- ;; "last" can be only used within a parser
-    -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-          \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
@@ -852,8 +851,8 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; check that member is "next"
     -- if "next" = $name(member)
     ---- ;; "next" can be only used within a parser
-    -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-          \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
@@ -1005,7 +1004,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if TUPLE `< typeIR_e* > = $unroll_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
-    -- if n_index = $int_of_integerValue(integerValue_index)
+    -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if $(n_index < |typeIR_e*|)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR_e*[n_index] ctk_base )
@@ -1033,7 +1032,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
-    -- if n_index = $int_of_integerValue(integerValue_index)
+    -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if $(n_index < n_size)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR ctk_base )
@@ -1144,10 +1143,10 @@ rule Expr_ok/sliceAccessExpression:
   ---- ;; check that the indices are local compile-time known
   -- if ctk_hi_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> integerValue_hi
-  -- if n_hi = $int_of_integerValue(integerValue_hi)
+  -- if n_hi = $nat_of_integerValue(integerValue_hi)
   -- if ctk_lo_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> integerValue_lo
-  -- if n_lo = $int_of_integerValue(integerValue_lo)
+  -- if n_lo = $nat_of_integerValue(integerValue_lo)
   ---- ;; check that the slice is valid
   -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
   ---- ;; create typed expression
@@ -1262,7 +1261,7 @@ def $is_concrete_extern_object(typeIR)
     = $is_concrete_extern_object'($unroll_typeIR(typeIR))
 
 def $is_concrete_extern_object'(typeIR) = true
-  -- if ~$is_externObjectTypeIR(typeIR)
+  -- if ~(typeIR <: externObjectTypeIR)
 def $is_concrete_extern_object'(
     EXTERN _ `< _ > `{ (_ `: externMethodTypeDefIR)* })
   = true

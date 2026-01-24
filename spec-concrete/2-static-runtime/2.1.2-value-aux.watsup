@@ -1,15 +1,4 @@
 ;;
-;; Value constructor checks
-;;
-
-dec $is_headerStackValue(value) : bool
-  hint(prose_true %0 " is a header stack value")
-  hint(prose_false %0 " is not a header stack value")
-def $is_headerStackValue(headerStackValue) = true
-def $is_headerStackValue(_) = false
-  -- otherwise
-
-;;
 ;; Interpret a bitstring with width as a raw integer
 ;;
 
@@ -45,6 +34,14 @@ def $int_of_integerValue(D i) = i
 def $int_of_integerValue(w S i) = $bitstr_to_int(w, i)
 def $int_of_integerValue(w W i) = i
 def $int_of_integerValue(_ `. _ V i) = i
+
+dec $nat_of_integerValue(integerValue) : nat?
+  hint(prose_in "the natural number representation of " %0)
+
+def $nat_of_integerValue(integerValue) = n
+  -- if n = $int_of_integerValue(integerValue)
+def $nat_of_integerValue(integerValue) = eps
+  -- otherwise
 
 ;;
 ;; Update a field value

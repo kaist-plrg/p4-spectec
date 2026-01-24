@@ -98,7 +98,7 @@ and exp' =
   | TupleE of exp list                  (* `(` list2(exp, `,`) `)` *)
   | CallE of id * targ list * arg list  (* `$` defid (`<` list(targ, `,`) `>`)? (`(` list(arg, `,`) `)`)? *)
   | IterE of exp * iter                 (* exp iter *)
-  | TypE of exp * plaintyp              (* exp `:` typ *)
+  | SubE of exp * plaintyp              (* exp `<:` typ *)
   (* Notation expressions *)
   | AtomE of atom                       (* atom *)
   | SeqE of exp list                    (* list(exp, ` `) *)

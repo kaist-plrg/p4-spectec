@@ -382,9 +382,7 @@ and render_exp ctx exp : string =
       let sexp = render_exp in_code exp in
       if String.contains sexp ' ' then
         "( " ^ sexp ^ " )" ^ code_of_iterexp iterexp |> adoc_as_code ctx
-      else
-        sexp ^ code_of_iterexp iterexp
-        |> adoc_as_code ctx
+      else sexp ^ code_of_iterexp iterexp |> adoc_as_code ctx
 
 and render_exp_as_code ctx (exp : exp) =
   render_exp (code ctx) exp |> adoc_as_code ctx

@@ -66,12 +66,11 @@ end
 let is_cached_func = function
   | "subst_typeIR" | "specialize_typeDefIR" | "unroll_typeIR" | "free_typeIR"
   | "bound" | "gen_constraint_typeIR" | "merge_constraint" | "merge_constraint'"
-  | "nestable_struct" | "nestable_struct_in_header" | "find_map" ->
+  | "nestable_struct" | "nestable_struct_in_header" ->
       true
   | _ -> false
 
 let is_cached_rule = function
-  | "Sub_expl" | "Sub_expl_unroll" | "Sub_expl_unroll_neq" | "Sub_impl"
-  | "Sub_impl_unroll" | "Sub_impl_unroll_neq" | "Type_wf" | "Type_alpha" ->
+  | "Cast_expl" | "Cast_impl" | "Type_wf" | "Type_alpha" ->
       true
   | _ -> false

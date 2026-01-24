@@ -40,11 +40,18 @@ let rec collect_exp (dctx : Dctx.t) (exp : exp) : Bind.BEnv.t =
       collect_noninvertible exp.at "comparison operator" binds;
       Bind.BEnv.empty
   | UpCastE (_, exp) -> collect_exp dctx exp
-  | DownCastE _ | SubE _ | MatchE _ ->
-      error exp.at
-        (Format.asprintf
-           "downcast, subtype check, and match check expressions should appear \
-            only after injection analysis")
+  | DownCastE (_, exp) ->
+      let binds = collect_exp dctx exp in
+      collect_noninvertible exp.at "downcast operator" binds;
+      Bind.BEnv.empty
+  | SubE (exp, _) ->
+      let binds = collect_exp dctx exp in
+      collect_noninvertible exp.at "subtype check operator" binds;
+      Bind.BEnv.empty
+  | MatchE (exp, _) ->
+      let binds = collect_exp dctx exp in
+      collect_noninvertible exp.at "match check operator" binds;
+      Bind.BEnv.empty
   | TupleE exps -> collect_exps dctx exps
   | CaseE notexp -> notexp |> snd |> collect_exps dctx
   | StrE expfields -> expfields |> List.map snd |> collect_exps dctx

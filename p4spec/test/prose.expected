@@ -734,12 +734,6 @@
  .. Return ``true``.
 . Otherwise: return ``false``.
 
-<<is_headerStackValue, ``value``  is a header stack value>>
-
-
-. If ``value`` has type ``headerStackValue``: return ``true``.
-. Otherwise: return ``false``.
-
 <<bitstr_to_int, bitstr_to_int(int, int')>>
 
 <<int_to_bitstr, int_to_bitstr(int, int')>>
@@ -766,6 +760,15 @@
 . Else:
  .. Let ``++_++`` ``.`` ``++_++`` ``V`` ``i`` be ``integerValue``.
  .. Return ``i``.
+
+<<nat_of_integerValue, The natural number representation of  ``integerValue``>>
+
+
+. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
+. If let ``n`` be ``int``:
+ .. Return ``n``.
+. Otherwise:
+ .. Return ``·``.
 
 <<update_fieldValue, update_fieldValue(fieldValue^{asterisk}^, nameIR, value)>>
 
@@ -950,138 +953,6 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
  .. Let ``++_++`` ``.`` ``w`` ``V`` ``i`` be ``integerValue``.
  .. Return ``<<int_to_bits_unsigned,`` ``int_to_bits_unsigned(w,`` ``i)>>``.
 
-<<is_baseTypeIR, ``typeIR`` is base type>>
-
-
-. If ``typeIR`` has type ``baseTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_voidTypeIR, ``typeIR`` is void type>>
-
-
-. If let ``voidTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_boolTypeIR, ``typeIR`` is bool type>>
-
-
-. If let ``boolTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_errorTypeIR, ``typeIR`` is error type>>
-
-
-. If let ``errorTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_matchkindTypeIR, ``typeIR`` is match kind type>>
-
-
-. If let ``matchKindTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_stringTypeIR, ``typeIR`` is string type>>
-
-
-. If let ``stringTypeIR`` be ``typeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_integerTypeIR, ``typeIR`` is integer type>>
-
-
-. If ``typeIR`` has type ``integerTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_arbitraryIntTypeIR, ``typeIR`` is int type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` is ``INT``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_fixedIntTypeIR, ``typeIR`` is fixed-width int type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``INT`` ``<`` ``%`` ``>``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_fixedBitTypeIR, ``typeIR`` is fixed-width bit type>>
-
-
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
- .. Return ``true``.
-. Otherwise: return ``false``.
-
-<<is_dataTypeIR, ``typeIR`` is data type>>
-
-
-. If ``typeIR`` has type ``dataTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_headerStackTypeIR, ``typeIR`` is header stack type>>
-
-
-. If ``typeIR`` has type ``headerStackTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_objectTypeIR, ``typeIR`` is object type>>
-
-
-. If ``typeIR`` has type ``objectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_externObjectTypeIR, ``typeIR`` is extern object type>>
-
-
-. If ``typeIR`` has type ``externObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_parserObjectTypeIR, ``typeIR`` is parser object type>>
-
-
-. If ``typeIR`` has type ``parserObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_controlObjectTypeIR, ``typeIR`` is control object type>>
-
-
-. If ``typeIR`` has type ``controlObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_packageObjectTypeIR, ``typeIR`` is package object type>>
-
-
-. If ``typeIR`` has type ``packageObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_tableObjectTypeIR, ``typeIR`` is table object type>>
-
-
-. If ``typeIR`` has type ``controlObjectTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_synthesizedTypeIR, ``typeIR`` is synthesized type>>
-
-
-. If ``typeIR`` has type ``synthesizedTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_tableMetadataStructTypeIR, ``typeIR`` is table metadata struct type>>
-
-
-. If ``typeIR`` has type ``tableMetadataStructTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_setTypeIR, ``typeIR`` is set type>>
-
-
-. If ``typeIR`` has type ``setTypeIR``: return ``true``.
-. Otherwise: return ``false``.
-
 <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>
 
 
@@ -1149,12 +1020,6 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 | ++_++ | true
 
 |===
-
-<<is_typedefTypeDefIR, ``typeDefIR`` is a typedef type definition>>
-
-
-. If ``typeDefIR`` has type ``typedefTypeIR``: return ``true``.
-. Otherwise: return ``false``.
 
 <<typeId_of_typeDefIR, The name of ``typeDefIR``>>
 
@@ -3292,16 +3157,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 . Else if let ``stringTypeIR`` be ``typeIR``:
  .. Let ``text~empty~`` be ``""``.
  .. Return ``"`` ``text~empty~`` ``"``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``0``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``W`` ``0``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``S`` ``0``.
- .. Else:
-  ... Let ``VARBIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
-  ... Return ``w`` ``.`` ``0`` ``V`` ``0``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``0``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``W`` ``0``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``S`` ``0``.
+. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``.`` ``0`` ``V`` ``0``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<default,`` ``default(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3338,9 +3201,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``b``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
- .. Let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
  .. If ``b`` is equal to ``true``:
   ... Return ``w`` ``W`` ``1``.
  .. Else:
@@ -3357,13 +3218,12 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``i`` ``=/=`` ``0``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``i``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``W`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w`` ``S`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``i``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``W`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w`` ``S`` ``<<int_to_bitstr,`` ``int_to_bitstr(w,`` ``i)>>``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_arbint,`` ``cast_arbint(typeIR',`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3398,15 +3258,14 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ```B`` ``i`` ``=/=`` ``0``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``i``.
- .. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
-  ... Return ``w~to~`` ``W`` ``i'``.
- .. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
-  ... Return ``w~to~`` ``S`` ``i'``.
+. Else if let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``i``.
+. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
+ .. Return ``w~to~`` ``W`` ``i'``.
+. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``i)>>``.
+ .. Return ``w~to~`` ``S`` ``i'``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_fixbit,`` ``cast_fixbit(typeIR',`` ``w,`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3419,17 +3278,16 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 <<cast_fixint, cast_fixint(typeIR, w, i)>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``D`` ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
- .. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
-  ... Return ``w~to~`` ``W`` ``i'``.
- .. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
-  ... Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
-  ... Return ``w~to~`` ``S`` ``i'``.
+. If let ``intTypeIR`` be ``typeIR``:
+ .. Return ``D`` ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+. Else if let ``BIT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
+ .. Return ``w~to~`` ``W`` ``i'``.
+. Else if let ``INT`` ``<`` ``w~to~`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``<<bitstr_to_int,`` ``bitstr_to_int(w,`` ``i)>>``.
+ .. Let ``i'`` be ``<<int_to_bitstr,`` ``int_to_bitstr(w~to~,`` ``int)>>``.
+ .. Return ``w~to~`` ``S`` ``i'``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<cast_fixint,`` ``cast_fixint(typeIR',`` ``w,`` ``i)>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3442,9 +3300,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 <<cast_varbit, cast_varbit(typeIR, w~max~, w, i)>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. Check that ``integerTypeIR`` matches pattern ``VARBIT`` ``<`` ``%`` ``>``.
- .. Let ``VARBIT`` ``<`` ``w~max'~`` ``>`` be ``integerTypeIR``.
+. If let ``VARBIT`` ``<`` ``w~max'~`` ``>`` be ``typeIR``:
  .. Check that ``w~max'~`` is equal to ``w~max'~``.
  .. Return ``w~max'~`` ``.`` ``w`` ``V`` ``i``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3716,13 +3572,12 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ``1``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if ``integerTypeIR`` matches pattern ``VARBIT`` ``<`` ``%`` ``>``:
-  ... Return ``0``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if ``typeIR`` has type ``varBitTypeIR``:
+ .. Return ``0``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<sizeof_minSizeInBits',`` ``sizeof_minSizeInBits'(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -3758,13 +3613,12 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 
 . If let ``boolTypeIR`` be ``typeIR``:
  .. Return ``1``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
- .. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Return ``w``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
+. Else if let ``VARBIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Return ``w``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``<<sizeof_maxSizeInBits',`` ``sizeof_maxSizeInBits'(typeIR')>>``.
 . Else if let ``TYPE`` ``++_++`` ``typeIR'`` be ``typeIR``:
@@ -4128,74 +3982,6 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 . Return ``<<empty_map,`` ``empty_map<constructorId,`` ``constructorTypeDefIR>>>``.
 
-<<is_extern_blockKind, is_extern_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``EXTERN``.
-
-<<is_parser_blockKind, is_parser_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``PARSER``.
-
-<<is_control_blockKind, is_control_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``CONTROL``.
-
-<<is_package_blockKind, is_package_blockKind(blockKind)>>
-
-
-. Return ``blockKind`` ``=`` ``PACKAGE``.
-
-<<is_function_localKind, is_function_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``FUNCTION`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_function_localKind, is_extern_function_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_FUNCTION`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_action_localKind, is_action_localKind(localKind)>>
-
-
-. If ``localKind`` is ``ACTION``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_method_localKind, is_extern_method_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_METHOD`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_extern_abstract_method_localKind, is_extern_abstract_method_localKind(localKind)>>
-
-
-. If ``localKind`` matches pattern ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``%``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_parser_state_localKind, is_parser_state_localKind(localKind)>>
-
-
-. If ``localKind`` is ``PARSER_STATE``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_control_apply_method_localKind, is_control_apply_method_localKind(localKind)>>
-
-
-. If ``localKind`` is ``CONTROL_APPLY_METHOD``: return ``true``.
-. Otherwise: return ``false``.
-
-<<is_table_apply_method_localKind, is_table_apply_method_localKind(localKind)>>
-
-
-. If ``localKind`` is ``TABLE_APPLY_METHOD``: return ``true``.
-. Otherwise: return ``false``.
-
 <<empty_typingContext, An empty typing context>>
 
 
@@ -4237,7 +4023,8 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``typeFrame`` be ``TC.GLOBAL.FRAME``.
  .. Check that ``~<<in_set,`` ``in_set<id>(id,`` ``dom_map<id,`` ``varTypeIR>(typeFrame))>>``.
  .. Let ``typeIR`` be the type of ``varTypeIR``.
- .. Check that ``id`` ``=`` ``"main"`` implies ``<<is_packageObjectTypeIR,`` ``is_packageObjectTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``id`` ``=`` ``"main"`` implies ``typeIR~unroll~`` ``has`` ``type`` ``packageObjectTypeIR``.
  .. Let ``typeFrame~update~`` be <<add_map, ``typeFrame`` where ``id`` to ``varTypeIR`` is added>>.
  .. Let ``TC'`` be ``TC`` with ``GLOBAL.FRAME`` set to ``typeFrame~update~``.
  .. Return ``TC'``.
@@ -4546,14 +4333,16 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Return ``typeIR~ret~``.
 . Else if let ``EXTERN_FUNCTION`` ``:`` ``typeIR~ret~`` be ``localKind``:
  .. Return ``typeIR~ret~``.
-. Else if let ``EXTERN_METHOD`` ``:`` ``typeIR~ret~`` be ``localKind``:
- .. Return ``typeIR~ret~``.
 . Else:
- .. Let ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~`` be ``localKind``.
- .. Return ``typeIR~ret~``.
-. If ``TC.LOCAL.KIND`` is ``ACTION``:
+ .. Let ``externMethodLocalKind`` be ``localKind``.
+ .. If let ``EXTERN_METHOD`` ``:`` ``typeIR~ret~`` be ``externMethodLocalKind``:
+  ... Return ``typeIR~ret~``.
+ .. Else:
+  ... Let ``EXTERN_METHOD`` ``ABSTRACT`` ``:`` ``typeIR~ret~`` be ``externMethodLocalKind``.
+  ... Return ``typeIR~ret~``.
+. If ``ACTION`` is equal to ``TC.LOCAL.KIND``:
  .. Return ``VOID``.
-. Else:
+. If ``CONTROL_APPLY_METHOD`` is equal to ``TC.LOCAL.KIND``:
  .. Return ``VOID``.
 . Otherwise:
  .. Return ``·``.
@@ -4586,17 +4375,15 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 
 . If ``text`` is equal to ``"lpm"``:
- .. If let ``integerTypeIR`` be ``typeIR``:
-  ... If let ``INT`` ``<`` ``n`` ``>`` be ``integerTypeIR``:
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
-  ... Else if let ``BIT`` ``<`` ``n`` ``>`` be ``integerTypeIR``:
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
-  ... Else:
-   .... Let ``VARBIT`` ``<`` ``n`` ``>`` be ``integerTypeIR``.
-   .... Check that ``TBLC.MODE`` is ``NOPRI``.
-   .... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. If let ``INT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. Else if let ``BIT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
+ .. Else if let ``VARBIT`` ``<`` ``n`` ``>`` be ``typeIR``:
+  ... Check that ``TBLC.MODE`` is ``NOPRI``.
+  ... Return ``TBLC[MODE`` ``=`` ``NOPRILPM`` ``n]``.
  .. Else if let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``:
   ... Return ``<<update_mode,`` ``update_mode(TBLC,`` ``"lpm",`` ``typeIR')>>``.
  .. Else:
@@ -4868,15 +4655,15 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 . If ``constantInitializerIR^?^`` is none:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
- .. Check that ``~<<is_synthesizedTypeIR,`` ``is_synthesizedTypeIR(typeIR~unroll~)>>``.
- .. Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` implies ``direction`` ``=`` ```EMPTY``.
+ .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
+ .. Check that ``typeIR~unroll~`` ``=`` ``INT`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``stringTypeIR`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``objectTypeIR`` implies ``direction`` ``=`` ```EMPTY``.
  .. The relation holds.
 . Else:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
- .. Check that ``~<<is_synthesizedTypeIR,`` ``is_synthesizedTypeIR(typeIR~unroll~)>>``.
+ .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
  .. Check that ``direction`` ``=`` ``IN`` or ``direction`` ``=`` ```EMPTY``.
- .. Check that ``<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` ``\/`` ``<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>`` implies ``direction`` ``=`` ```EMPTY``.
+ .. Check that ``typeIR~unroll~`` ``=`` ``INT`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``stringTypeIR`` ``\/`` ``typeIR~unroll~`` ``has`` ``type`` ``objectTypeIR`` implies ``direction`` ``=`` ```EMPTY``.
  .. The relation holds.
 
 <<ReturnType_wf, ReturnType_wf>>:
@@ -4887,7 +4674,7 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 . Check that <<Type_wf, ``typeIR~ret~`` is a well-formed type, with bound type variables ``B``>>.
 . Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR~ret~`` with typedefs unrolled>>.
-. Check that ``~<<is_stringTypeIR,`` ``is_stringTypeIR(typeIR~unroll~)>>`` ``/\`` ``~<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~unroll~)>>`` and ``~<<is_objectTypeIR,`` ``is_objectTypeIR(typeIR~unroll~)>>``.
+. Check that ``~typeIR~unroll~`` ``=`` ``INT`` ``/\`` ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``synthesizedTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``objectTypeIR``.
 . The relation holds.
 
 <<CallableType_wf, CallableType_wf>>:
@@ -5704,16 +5491,12 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~index~`` be ``value``.
 . If let ``TUPLE`` ``(`` ``value~e~^{asterisk}^`` ``)`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
 . Else if let ``HEADER_STACK`` ``[`` ``value~e~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
@@ -5871,9 +5654,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``INT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``baseType``, under cursor ``p`` and typing context ``TC``>>:
@@ -5892,9 +5673,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``BIT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``baseType``, under cursor ``p`` and typing context ``TC``>>:
@@ -5911,9 +5690,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Result in ``VARBIT`` ``<`` ``n`` ``>`` and a set of fresh type variables ``·``.
 
 <<Type_ok, Typing ``prefixedTypeName``, under cursor ``p`` and typing context ``TC``>>:
@@ -5948,9 +5725,7 @@ for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^`
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~size~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~size~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~size~`` be ``int``.
+. Let ``n~size~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~size~``>>.
 . Check that ``n~size~`` is greater than ``0``.
 . Result in ``typeIR~base~`` ``[`` ``n~size~`` ``]`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
@@ -6039,60 +5814,59 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 * the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
 . Result in ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
-<<Sub_expl, Sub_expl>>:
+<<Cast_expl, Cast_expl>>:
 
 * ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``
 
-<<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when>>:
+<<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when>>:
 
 . Let ``typeIR~a_unroll~`` be <<unroll_typeIR, ``typeIR~a~`` with typedefs unrolled>>.
 . Let ``typeIR~b_unroll~`` be <<unroll_typeIR, ``typeIR~b~`` with typedefs unrolled>>.
-. Check that <<Sub_expl_unroll, ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
+. Check that <<Cast_expl_unroll, ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
 . The relation holds.
 
-<<Sub_expl_unroll, Sub_expl_unroll>>:
+<<Cast_expl_unroll, Cast_expl_unroll>>:
 
 * ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling
 
-<<Sub_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
 
-<<Sub_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are not the same type>>.
-. Check that <<Sub_expl_unroll_neq, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
+. Check that <<Cast_expl_unroll_neq, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
 . The relation holds.
 
-<<Sub_expl_unroll_neq, Sub_expl_unroll_neq>>:
+<<Cast_expl_unroll_neq, Cast_expl_unroll_neq>>:
 
 * ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
-<<Sub_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT`` ``<`` ``1`` ``>`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT`` ``<`` ``1`` ``>`` when they are not the same type after unrolling when>>:
 
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` is equal to ``BOOL``:
  .. The relation holds.
-. If let ``integerTypeIR'`` be ``typeIR'``:
- .. If ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
-  ... The relation holds.
- .. Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
-  ... The relation holds.
-
-<<Sub_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
-
-. If ``integerTypeIR'`` is ``INT``:
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. The relation holds.
-. Else if ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
- .. The relation holds.
-. If ``integerTypeIR'`` is equal to ``BIT`` ``<`` ``nat`` ``>``:
+. Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``BIT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+
+. If ``typeIR'`` is equal to ``INT``:
+ .. The relation holds.
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
+ .. The relation holds.
+. If ``typeIR'`` is equal to ``BIT`` ``<`` ``nat`` ``>``:
+ .. The relation holds.
+
+<<Cast_expl_unroll_neq, ``BIT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``nat`` is equal to ``1``:
  .. Check that ``typeIR'`` is equal to ``BOOL``.
@@ -6101,90 +5875,89 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. The relation holds.
 . If ``typeIR'`` is equal to ``INT`` ``<`` ``nat`` ``>``:
  .. The relation holds.
-. If let ``integerTypeIR'`` be ``typeIR'``:
- .. Check that ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
+. If ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TYPE`` ``++_++`` ``typeIR~a~`` be ``typeIR``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
  .. The relation holds.
 . If let ``TYPE`` ``++_++`` ``typeIR~b~`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``enumTypeIR`` be ``typeIR``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
  .. Let ``ENUM`` ``++_++`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
  .. The relation holds.
 . If let ``enumTypeIR`` be ``typeIR'``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
  .. Let ``ENUM`` ``++_++`` ``<`` ``typeIR~b~`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . Check that <<is_defaultable_typeIR, ``typeIR'`` can be default-initialized>>.
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``LIST`` ``<`` ``typeIR~b~`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b_default~`` can be default-initialized>>, for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6218,7 +5991,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6252,10 +6025,10 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6289,7 +6062,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6340,7 +6113,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6360,120 +6133,120 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET`` ``<`` ``typeIR~b~`` ``>`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET`` ``<`` ``typeIR~b~`` ``>`` when they are not the same type after unrolling when>>:
 
 . If let ``SET`` ``<`` ``typeIR~a~`` ``>`` be ``typeIR``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
-. If ``~<<is_setTypeIR,`` ``is_setTypeIR(typeIR)>>``:
- .. Check that <<Sub_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>.
+. Else:
+ .. Check that <<Cast_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_impl, Sub_impl>>:
+<<Cast_impl, Cast_impl>>:
 
 * ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``
 
-<<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when>>:
+<<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when>>:
 
 . Let ``typeIR~a_unroll~`` be <<unroll_typeIR, ``typeIR~a~`` with typedefs unrolled>>.
 . Let ``typeIR~b_unroll~`` be <<unroll_typeIR, ``typeIR~b~`` with typedefs unrolled>>.
-. Check that <<Sub_impl_unroll, ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
+. Check that <<Cast_impl_unroll, ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
 . The relation holds.
 
-<<Sub_impl_unroll, Sub_impl_unroll>>:
+<<Cast_impl_unroll, Cast_impl_unroll>>:
 
 * ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling
 
-<<Sub_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
 
-<<Sub_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are not the same type>>.
-. Check that <<Sub_impl_unroll_neq, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
+. Check that <<Cast_impl_unroll_neq, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, Sub_impl_unroll_neq>>:
+<<Cast_impl_unroll_neq, Cast_impl_unroll_neq>>:
 
 * ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
-<<Sub_impl_unroll_neq, ``INT`` can be implicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``INT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. If ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. The relation holds.
-. Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
+. Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``ENUM`` ``typeId`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``valueFieldIR^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``ENUM`` ``typeId`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``valueFieldIR^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, ``DEFAULT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``DEFAULT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . Check that <<is_defaultable_typeIR, ``typeIR'`` can be default-initialized>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, ``HEADER_INVALID`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``HEADER_INVALID`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``LIST`` ``<`` ``typeIR~b~`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``sequenceTypeIR'`` be ``typeIR'``:
  .. Check that ``sequenceTypeIR'`` matches pattern ``SEQ`` ``<`` ``%`` ``>``.
  .. Let ``SEQ`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``sequenceTypeIR'``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b_default~`` can be default-initialized>>, for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6507,7 +6280,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6541,10 +6314,10 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6578,7 +6351,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6629,7 +6402,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6737,7 +6510,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_plusminusmult)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6753,7 +6526,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_satplusminus)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6769,7 +6542,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_divmod)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6779,9 +6552,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~r~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~r~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~r~`` be ``int``.
+ .. Let ``n~r~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~r~``>>.
  .. Check that ``n~r~`` is greater than ``0``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
@@ -6803,13 +6574,13 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
 . Let ``typeIR~r_reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~r_reduced~``>>.
 . Let ``ctk~r_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_reduced~``>>.
-. If <<is_fixedBitTypeIR, ``typeIR~r_reduced~`` is fixed-width bit type>>:
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~l_reduced~)>>`` implies ``ctk~r_reduced~`` ``=`` ``LCTK``.
+. If ``typeIR~r_reduced~`` has type ``fixedBitTypeIR``:
+ .. Check that ``typeIR~l_reduced~`` ``=`` ``INT`` implies ``ctk~r_reduced~`` ``=`` ``LCTK``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
-. If ``ctk~r_reduced~`` is ``LCTK``:
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~r_reduced~)>>`` or ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(typeIR~r_reduced~)>>``.
+. Else:
+ .. Check that ``ctk~r_reduced~`` is ``LCTK``.
  .. Let ``ctk~reduced~`` be <<join_ctk, ``ctk~l_reduced~`` and ``ctk~r_reduced~`` joined>>.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``>>.
@@ -6821,7 +6592,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``typeIR~cast~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_cast~``>>.
 . Let ``ctk~l_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_cast~``>>.
 . Let ``ctk~r_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_cast~``>>.
@@ -6837,7 +6608,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_compare)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6853,7 +6624,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_bitwise)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6886,7 +6657,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_logical)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6906,11 +6677,11 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~true~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~false~`` be
 * the result of <<Expr_ok, typing ``expression~false~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~true_cast~,`` ``typedExpressionIR~false_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~true~`` and ``typedExpressionIR~false~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~true_cast~,`` ``typedExpressionIR~false_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~true~`` and ``typedExpressionIR~false~`` implicitly cast to equal types>>.
 . Let ``typeIR~cast~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~true_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~false_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~false_cast~``>>.
-. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(typeIR~cast~)>>`` implies ``ctk~cond~`` ``=/=`` ``DYN``.
+. Check that ``typeIR~cast~`` ``=`` ``INT`` implies ``ctk~cond~`` ``=/=`` ``DYN``.
 . Let ``ctk`` be <<joins_ctk, ``[ctk~cond~,`` ``ctk~true_cast~,`` ``ctk~false_cast~]`` joined>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~cast~`` and compile-time known-ness ``ctk``>>.
 . Result in <<typedExpressionIR, ``typedExpressionIR~cond~`` ``?`` ``typedExpressionIR~true_cast~`` ``:`` ``typedExpressionIR~false_cast~`` annotated with ``expressionNoteIR``>>.
@@ -6926,7 +6697,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression'``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
 . Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
-. Check that <<Sub_expl, ``typeIR`` can be explicitly cast to ``typeIR~t~``>>.
+. Check that <<Cast_expl, ``typeIR`` can be explicitly cast to ``typeIR~t~``>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~t~`` and compile-time known-ness ``ctk``>>.
 . Result in <<typedExpressionIR, ``(`` ``typeIR~t~`` ``)`` ``typedExpressionIR`` annotated with ``expressionNoteIR``>>.
 
@@ -7136,7 +6907,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``LCTK``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"size"`` annotated with ``expressionNoteIR``>>.
 . If ``"lastIndex"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7145,7 +6916,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``BIT`` ``<`` ``32`` ``>`` and compile-time known-ness ``DYN``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"lastIndex"`` annotated with ``expressionNoteIR``>>.
 . If ``"last"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7155,7 +6926,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``DYN``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``.`` ``"last"`` annotated with ``expressionNoteIR``>>.
 . If ``"next"`` is equal to <<name, the name of ``member``>>:
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedExpressionIR~base~`` be
 * the result of <<Expr_ok, typing ``expression~base~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~base~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~base~``>>.
@@ -7214,9 +6985,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~e~^{asterisk}^[n~index~]`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7226,9 +6995,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
   ... Check that ``value`` has type ``integerValue``.
   ... Let ``integerValue~index~`` be ``value``.
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
   ... Check that ``n~index~`` is less than ``n~size~``.
   ... Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR'`` and compile-time known-ness ``ctk~base~``>>.
   ... Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7259,21 +7026,17 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~hi_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~hi~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~hi~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~hi~`` be ``int``.
+. Let ``n~hi~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~hi~``>>.
 . Check that ``ctk~lo_reduced~`` is ``LCTK``.
 . Let ``value'`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~lo_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value'`` has type ``integerValue``.
 . Let ``integerValue~lo~`` be ``value'``.
-. Let ``int'`` be <<int_of_integerValue, the integer representation of  ``integerValue~lo~``>>.
-. Check that ``int'`` has type ``nat``.
-. Let ``n~lo~`` be ``int'``.
+. Let ``n~lo~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~lo~``>>.
 . Check that <<is_valid_bitslice, ``typeIR~base_reduced~`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>.
-. Let ``int''`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-. Check that ``int''`` has type ``nat``.
-. Let ``n~slice~`` be ``int''``.
+. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~slice~`` be ``int``.
 . Let ``typeIR`` be ``BIT`` ``<`` ``n~slice~`` ``>``.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``>>.
 . Result in <<typedExpressionIR, ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~hi_reduced~`` ``:`` ``typedExpressionIR~lo_reduced~`` ``]`` annotated with ``expressionNoteIR``>>.
@@ -7443,7 +7206,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 . If let ``typeIR'`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Let ``nameIR`` be <<name, the name of ``member``>>.
  .. Check that ``nameIR`` ``=`` ``"next"`` or ``nameIR`` ``=`` ``"last"``.
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``.`` ``nameIR`` with note ``(`` ``typeIR'`` ``)``>>.
  .. Result in ``typedLvalueIR``.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field~`` ``nameIR~field~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR``:
@@ -7479,9 +7242,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under cursor ``p`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than ``n~size~``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``[`` ``typedExpressionIR~index_reduced~`` ``]`` with note ``(`` ``typeIR'`` ``)``>>.
  .. Result in ``typedLvalueIR``.
@@ -7508,21 +7269,17 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~hi_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~hi~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~hi~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~hi~`` be ``int``.
+. Let ``n~hi~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~hi~``>>.
 . Check that ``ctk~lo_reduced~`` is ``LCTK``.
 . Let ``value'`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~lo_reduced~``, under cursor ``p`` and typing context ``TC``>>.
 . Check that ``value'`` has type ``integerValue``.
 . Let ``integerValue~lo~`` be ``value'``.
-. Let ``int'`` be <<int_of_integerValue, the integer representation of  ``integerValue~lo~``>>.
-. Check that ``int'`` has type ``nat``.
-. Let ``n~lo~`` be ``int'``.
+. Let ``n~lo~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~lo~``>>.
 . Check that <<is_valid_bitslice, ``typeIR~base~`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>.
-. Let ``int''`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-. Check that ``int''`` has type ``nat``.
-. Let ``n~slice~`` be ``int''``.
+. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~slice~`` be ``int``.
 . Let ``typeIR`` be ``BIT`` ``<`` ``n~slice~`` ``>``.
 . Let ``typedLvalueIR`` be <<typedLvalueIR, ``typedLvalueIR~base~`` ``[`` ``typedExpressionIR~hi_reduced~`` ``:`` ``typedExpressionIR~lo_reduced~`` ``]`` with note ``(`` ``typeIR`` ``)``>>.
 . Result in ``typedLvalueIR``.
@@ -7559,7 +7316,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~l~`` be <<type_of_typedLvalueIR, the type of lvalue  ``typedLvalueIR``>>.
  .. Let ``typeIR~r~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
- .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~l~``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~l~``>>.
  .. Result in 
 * the typing context ``TC``, 
 * the abstract control flow ``f``, 
@@ -7573,7 +7330,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR~binary~`` be
 * the result of <<Expr_ok, typing ``expression~binary~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``(`` ``typeIR~lvalue~`` ``)`` be the note of ``typedLvalueIR``.
- .. Let ``expressionIR`` ``#`` ``++_++`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``>>.
+ .. Let ``expressionIR`` ``#`` ``++_++`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``>>.
  .. Check that ``expressionIR`` has type ``binaryExpressionIR``.
  .. Let ``++_++`` ``binop''`` ``typedExpressionIR~cast~`` be ``expressionIR``.
  .. Check that ``binop''`` is equal to ``binop'``.
@@ -7715,7 +7472,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``typeIR~ret~`` be <<option_get, *!*>> <<find_local_return_type_t, the expected return type in ``TC``>>.
- .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~ret~``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~ret~``>>.
  .. Result in 
 * the typing context ``TC``, 
 * the abstract control flow ``RET``, 
@@ -7926,7 +7683,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typeIR~init~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~init~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``value~init~`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
@@ -8630,17 +8387,13 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Check that ``tableContext.MODE`` ``=`` ``PRI`` or ``tableContext.MODE`` ``=`` ``PRILPM``.
 . Check that ``~tableContext.ENTRIES.CONST``.
 . If ``tableContext.PRIORITIES.VALUES`` is equal to ``·``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
  .. Let ``TBLC~1~`` be ``tableContext`` with ``PRIORITIES.INIT`` set to ``true``.
  .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
 . Else:
  .. Check that ``tableContext.PRIORITIES.INIT``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
  .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``integerLiteral`` ``:``.
 
@@ -8656,9 +8409,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Let ``TBLC~1~`` be ``tableContext`` with ``PRIORITIES.INIT`` set to ``true``.
  .. Let ``TBLC~2~`` be ``<<add_table_priority,`` ``add_table_priority(TBLC~1~,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
@@ -8671,9 +8422,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n`` be ``int``.
+ .. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Let ``TBLC~1~`` be ``<<add_table_priority,`` ``add_table_priority(tableContext,`` ``n)>>``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``PRIORITY`` ``=`` ``(`` ``typedExpressionIR`` ``)`` ``:``.
 
@@ -8768,7 +8517,8 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` or ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``typeIR~unroll~`` ``has`` ``type`` ``integerTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``varBitTypeIR``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM`` ``"size"`` ``=`` ``typedExpressionIR`` ``;``.
  .. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
@@ -8791,14 +8541,13 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>> is ``LCTK``.
- .. Check that ``<<is_arbitraryIntTypeIR,`` ``is_arbitraryIntTypeIR(unroll_typeIR(typeIR))>>`` ``\/`` ``<<is_fixedIntTypeIR,`` ``is_fixedIntTypeIR(unroll_typeIR(typeIR))>>`` or ``<<is_fixedBitTypeIR,`` ``is_fixedBitTypeIR(unroll_typeIR(typeIR))>>``.
+ .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+ .. Check that ``typeIR~unroll~`` ``has`` ``type`` ``integerTypeIR`` and ``typeIR~unroll~`` ``does`` ``not`` ``have`` ``type`` ``varBitTypeIR``.
  .. Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~delta~`` be ``int``.
+ .. Let ``n~delta~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue``>>.
  .. Check that ``n~delta~`` is greater than ``0``.
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``PRIORITIES.DELTA`` set to ``n~delta~``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
@@ -8972,7 +8721,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``p`` layer>>.
  .. Let ``variableDeclarationIR`` be ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~`` ``;``.
@@ -8993,7 +8742,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``typedExpressionIR~value~`` be
 * the result of <<Expr_ok, typing ``expression~value~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~value~``>> is ``LCTK``.
-. Let ``typedExpressionIR~value_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~value~`` implicitly cast to ``typeIR``>>.
+. Let ``typedExpressionIR~value_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~value~`` implicitly cast to ``typeIR``>>.
 . Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
@@ -9616,7 +9365,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``IN`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
-. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 . Result in ``typedExpressionIR~arg_cast~``.
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
@@ -9630,10 +9379,10 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ```EMPTY`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``actctxt`` is ``ACTION``:
- .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
  .. Result in ``typedExpressionIR~arg_cast~``.
 . Else:
- .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~arg~``>> does not match pattern ``DYN``.
  .. Result in ``typedExpressionIR~arg_cast~``.
 
@@ -9710,8 +9459,11 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 . If let ``prefixedNonTypeName`` be ``callableTarget``:
  .. Let ``prefixedNameIR`` be <<prefixedNonTypeName, the prefixed name of  ``prefixedNonTypeName``>>.
- .. Check that ``prefixedNameIR`` ``=`` ``"verify"`` ``\/`` ``prefixedNameIR`` ``=`` ``.`` ``"verify"`` implies ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
- .. Result in the typed callable target ``prefixedNameIR``.
+ .. If ``~prefixedNameIR`` ``=`` ``"verify"`` ``\/`` ``prefixedNameIR`` ``=`` ``.`` ``"verify"``:
+  ... Result in the typed callable target ``prefixedNameIR``.
+ .. Else:
+  ... Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
+  ... Result in the typed callable target ``prefixedNameIR``.
 . If ``callableTarget`` is equal to ``THIS``:
  .. Result in the typed callable target ``"this"``.
 
@@ -10082,7 +9834,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<ConstructorType_ok, Type checking constructor ``prefixedNameIR````<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``, under cursor ``p`` and typing context ``TC``>>:
 
 . Let ``typeDefIR'`` be <<option_get, *!*>> <<find_typeDef_t, the type definition of ``prefixedNameIR`` in the ``p`` layer of ``TC``>>.
-. Check that ``~<<is_typedefTypeDefIR,`` ``is_typedefTypeDefIR(typeDefIR')>>``.
+. Check that ``typeDefIR'`` does not have type ``typedefTypeIR``.
 . Let ``(`` ``callableId,`` ``constructorTypeDefIR,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_constructorDef_overloaded_t,`` ``find_constructorDef_overloaded_t(TC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
 . Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be <<specialize_constructorTypeDefIR, ``constructorTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``>>.
 . Let ``bound`` be <<bound, bound type variables from the ``p`` layer of ``TC``>>.
@@ -10149,7 +9901,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<Inst_ok, Typing the instantiation ``constructorTypeIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with omitted type arguments ``typeId~infer~^{asterisk}^`` and omitted arguments ``id~default~^{asterisk}^`` , under cursor ``cursor``, typing context ``TC``, and ``instctxt`` instantiation site context>>:
 
 . Let ``CONSTRUCTOR`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~object~`` be ``constructorTypeIR``.
-. Check that ``~<<is_packageObjectTypeIR,`` ``is_packageObjectTypeIR(unroll_typeIR(typeIR~object~))>>``.
+. Let ``typeIR~object_unroll~`` be <<unroll_typeIR, ``typeIR~object~`` with typedefs unrolled>>.
+. Check that ``typeIR~object_unroll~`` does not have type ``packageObjectTypeIR``.
 . Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``++_++^{asterisk}^,`` ``++_++^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``inference`` be ``<<infer,`` ``infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)>>``.
 . Let ``typeIR^?^^{asterisk}^`` be the list of ``typeIR^?^``, obtained by repeating:
@@ -10237,18 +9990,18 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Otherwise:
  .. Return ``·``.
 
-<<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
+<<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
 
 
 . Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR``.
 . If <<Type_alpha, ``typeIR`` and ``typeIR~to~`` are the same type>>:
  .. Return ``typedExpressionIR``.
 . Else:
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~to~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~to~``>>.
  .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~to~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~to~`` and compile-time known-ness ``ctk``>>.
  .. Return ``typedExpressionIR~cast~``.
 
-<<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>
+<<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>
 
 
 . Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l~``.
@@ -10256,21 +10009,21 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . If <<Type_alpha, ``typeIR~l~`` and ``typeIR~r~`` are the same type>>:
  .. Return ``(`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r~`` ``)``.
 . Else:
- .. If <<Sub_impl, ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``>>:
+ .. If <<Cast_impl, ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``>>:
   ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``(`` ``typeIR~r~`` ``)`` ``typedExpressionIR~l~`` annotated with type ``typeIR~r~`` and compile-time known-ness ``ctk``>>.
   ... Return ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~`` ``)``.
  .. Else:
-  ... If <<Sub_impl, ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``>>:
+  ... If <<Cast_impl, ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``>>:
    .... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``(`` ``typeIR~l~`` ``)`` ``typedExpressionIR~r~`` annotated with type ``typeIR~l~`` and compile-time known-ness ``ctk``>>.
    .... Return ``(`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~`` ``)``.
   ... Else:
    .... Let ``typedExpressionIR~l_cast~`` be ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~l~)>>``.
    .... If ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``:
-    ..... Return ``<<coerce_binary,`` ``coerce_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~)>>``.
+    ..... Return ``<<cast_binary,`` ``cast_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~)>>``.
    .... If ``typedExpressionIR~l~`` is equal to ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~l~)>>``:
     ..... Let ``typedExpressionIR~r_cast~`` be ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~r~)>>``.
     ..... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.
-    ..... Return ``<<coerce_binary,`` ``coerce_binary(typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~)>>``.
+    ..... Return ``<<cast_binary,`` ``cast_binary(typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~)>>``.
 . Otherwise:
  .. Return ``·``.
 
@@ -10419,21 +10172,16 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Check that ``typeIR'`` has type ``stringTypeIR``.
  .. Let ``stringTypeIR'`` be ``typeIR'``.
  .. Return ``STRING``.
-. Else if let ``integerTypeIR`` be ``typeIR``:
- .. If let ``INT`` ``<`` ``w~a~`` ``>`` be ``integerTypeIR``:
-  ... Check that ``typeIR'`` has type ``integerTypeIR``.
-  ... Let ``integerTypeIR'`` be ``typeIR'``.
-  ... If let ``INT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
-  ... Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
- .. Else if let ``BIT`` ``<`` ``w~a~`` ``>`` be ``integerTypeIR``:
-  ... Check that ``typeIR'`` has type ``integerTypeIR``.
-  ... Let ``integerTypeIR'`` be ``typeIR'``.
-  ... If let ``INT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
-  ... Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``integerTypeIR'``:
-   .... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+. Else if let ``INT`` ``<`` ``w~a~`` ``>`` be ``typeIR``:
+ .. If let ``INT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+ .. Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``INT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+. Else if let ``BIT`` ``<`` ``w~a~`` ``>`` be ``typeIR``:
+ .. If let ``INT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
+ .. Else if let ``BIT`` ``<`` ``w~b~`` ``>`` be ``typeIR'``:
+  ... Return ``BIT`` ``<`` ``w~a~`` ``+`` ``w~b~`` ``>``.
 . Else if let ``TYPEDEF`` ``++_++`` ``typeIR~l~`` be ``typeIR``:
  .. Return ``<<result_concat,`` ``result_concat(typeIR~l~,`` ``typeIR')>>``.
 . If let ``TYPEDEF`` ``++_++`` ``typeIR~r~`` be ``typeIR'``:
@@ -10493,20 +10241,18 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<is_valid_bitslice, ``typeIR`` ``[`` ``n~lo~`` : ``n~hi~`` ``]`` is a valid bitslice>>
 
 
-. If let ``integerTypeIR`` be ``typeIR``:
- .. If ``integerTypeIR`` is ``INT``:
-  ... Return ``n~lo~`` ``<=`` ``n~hi~``.
- .. Else if let ``INT`` ``<`` ``w`` ``>`` be ``integerTypeIR``:
-  ... Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``w~slice~`` be ``int``.
-  ... Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
- .. Else:
-  ... Let ``BIT`` ``<`` ``w`` ``>`` be ``integerTypeIR``.
-  ... Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``w~slice~`` be ``int``.
-  ... Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
+. If let ``intTypeIR`` be ``typeIR``:
+ .. Return ``n~lo~`` ``<=`` ``n~hi~``.
+. Else if let ``INT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``w~slice~`` be ``int``.
+ .. Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
+. Else if let ``BIT`` ``<`` ``w`` ``>`` be ``typeIR``:
+ .. Let ``int`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``w~slice~`` be ``int``.
+ .. Return ``n~lo~`` ``<=`` ``n~hi~`` ``/\`` ``n~hi~`` ``<=`` ``w`` ``/\`` ``w~slice~`` ``<=`` ``w``.
 . Else:
  .. Let ``TYPEDEF`` ``++_++`` ``typeIR'`` be ``typeIR``.
  .. Return ``<<is_valid_bitslice,`` ``is_valid_bitslice(typeIR',`` ``n~lo~,`` ``n~hi~)>>``.
@@ -10520,8 +10266,9 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 <<is_concrete_extern_object', is_concrete_extern_object'(typeIR)>>
 
 
-. If ``~<<is_externObjectTypeIR,`` ``is_externObjectTypeIR(typeIR)>>``: return ``true``.
-. If let ``EXTERN`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``++_++`` ``:`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``}`` be ``typeIR``:
+. If ``typeIR`` does not have type ``externObjectTypeIR``: return ``true``.
+. Else:
+ .. Let ``EXTERN`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``++_++`` ``:`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``}`` be ``typeIR``.
  .. Check that ``<<is_concrete_extern_object'',`` ``is_concrete_extern_object''(externMethodTypeDefIR)>>``, for all ``externMethodTypeDefIR`` in ``externMethodTypeDefIR^{asterisk}^``.
  .. Return ``true``.
 . Otherwise: return ``false``.
@@ -10641,7 +10388,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
  .. Result in ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~``.
@@ -10679,7 +10426,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Let <<expressionNoteIR, type ``typeIR~list~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~list~`` with typedefs unrolled>>.
 . If let ``LIST`` ``<`` ``typeIR~e~`` ``>`` be ``typeIR``:
- .. Check that <<Sub_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
+ .. Check that <<Cast_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
  .. Result in ``typedExpressionIR``.
 . Else if let ``typeIR~e~`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Check that <<Type_alpha, ``typeIR~e~`` and ``typeIR~var~`` are the same type>>.
@@ -10691,12 +10438,12 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
-. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_coerced~``.
-. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
+. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_castd~``.
+. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_castd~``.
 . Check that ``<<compat_range,`` ``compat_range(typeIR~l~,`` ``typeIR~r~)>>``.
-. Result in ``typedExpressionIR~l_coerced~`` ``..`` ``typedExpressionIR~r_coerced~``.
+. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
 
 <<compat_range, compat_range(typeIR'', typeIR''')>>:
 [cols="3", options="header"]
@@ -10779,7 +10526,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``expression~label~`` be <<expressionNonBrace_as_expression, the expression corresponding to ``expressionNonBrace~label~``>>.
  .. Let ``typedExpressionIR~label~`` be
 * the result of <<Expr_ok, typing ``expression~label~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~label_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~label~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~label_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~label~`` implicitly cast to ``typeIR``>>.
  .. Let <<expressionNoteIR, type ``++_++`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR~label_cast~``.
  .. Check that ``ctk`` is ``LCTK``.
  .. Result in ``typedExpressionIR~label_cast~``.
@@ -11021,7 +10768,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 . Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
-. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR``>>.
+. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~cast~``>> is ``LCTK``.
 . Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~cast~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
@@ -11076,7 +10823,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Check that ``typeIR'`` has type ``setTypeIR``.
 . Let ``SET`` ``<`` ``typeIR~base~`` ``>`` be ``typeIR'``.
 . Check that <<Type_alpha, ``typeIR~base~`` and ``typeIR~key~`` are not the same type>>.
-. Check that <<Sub_impl, ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``>>.
+. Check that <<Cast_impl, ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``>>.
 . Let ``typeIR~cast~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
 . Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~cast~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
 . Result in ``typedExpressionIR~cast~``.
@@ -11086,8 +10833,9 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
-. Check that ``~<<is_setTypeIR,`` ``is_setTypeIR(unroll_typeIR(typeIR))>>``.
-. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. Check that ``typeIR~unroll~`` does not have type ``setTypeIR``.
+. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
 . Let ``typeIR~cast~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
 . Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~cast~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
 . Result in ``typedExpressionIR~cast~``.
@@ -11098,12 +10846,12 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Result in ``typedExpressionIR~l_coerced~`` ``&&&`` ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Result in ``typedExpressionIR~l_castd~`` ``&&&`` ``typedExpressionIR~r_castd~``.
 
 <<SelectCase_keyset_simple_ok, ``TC`` ``typeIR~key~`` ``|-`` ``expression~l~`` ``..`` ``expression~r~`` ``:`` ``%``>>:
 
@@ -11111,13 +10859,13 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_range)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Check that ``typeIR~reduced~`` is equal to <<type_of_typedExpressionIR, the type of ``typedExpressionIR~r_reduced~``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Result in ``typedExpressionIR~l_coerced~`` ``..`` ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
 
 <<SelectCase_keyset_simple_ok, ``TC`` ``typeIR~key~`` ``|-`` ``DEFAULT`` ``:`` ``%``>>:
 
@@ -11332,7 +11080,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 
 
 . Let ``typeIR`` be the type of ``expressionNoteIR``.
-. If <<is_tableMetadataStructTypeIR, ``typeIR`` with typedefs unrolled is table metadata struct type>>: return ``true``.
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. If ``typeIR~unroll~`` has type ``tableMetadataStructTypeIR``: return ``true``.
 . Otherwise:
  .. Return ``<<has_table_apply_expr',`` ``has_table_apply_expr'(expressionIR)>>``.
 
@@ -11401,7 +11150,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
  .. Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``(`` ``typeIR~set~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
  .. Result in ``LPM`` ``n`` and ``typedExpressionIR~set~``.
@@ -11410,7 +11159,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
  .. Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``(`` ``typeIR~set~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
  .. Result in ``NOLPM`` and ``typedExpressionIR~set~``.
@@ -11425,8 +11174,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
- .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
  .. Let ``ctk~r_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_reduced~``>>.
  .. Check that ``ctk~r_reduced~`` is ``LCTK``.
@@ -11434,8 +11183,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~r~`` be ``value``.
- .. Let ``i~r~`` be <<int_of_integerValue, the integer representation of  ``integerValue~r~``>>.
- .. Let ``int`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n,`` ``i~r~)>>``.
+ .. Let ``n~r~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~r~``>>.
+ .. Let ``int`` be ``<<int_to_bitstr,`` ``int_to_bitstr(n,`` ``n~r~)>>``.
  .. Let ``n~prefix~`` be ``<<tableEntry_lpm_prefix,`` ``tableEntry_lpm_prefix(n`` ``W`` ``int)>>``.
  .. Result in ``LPM`` ``n~prefix~`` and ``typedExpressionIR~l_reduced~`` ``&&&`` ``typedExpressionIR~r_reduced~``.
 . Else if ``text`` is equal to ``"ternary"``:
@@ -11443,8 +11192,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
- .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
  .. Result in ``NOLPM`` and ``typedExpressionIR~l_reduced~`` ``&&&`` ``typedExpressionIR~r_reduced~``.
 
@@ -11475,8 +11224,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_range)>>``.
 . Result in ``NOLPM`` and ``typedExpressionIR~l_reduced~`` ``..`` ``typedExpressionIR~r_reduced~``.
 
@@ -11571,9 +11320,9 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
 . Let ``typeIR'`` be <<unroll_typeIR, ``typeIR~base~`` with typedefs unrolled>>.
 . If ``typeIR'`` has type ``headerStackTypeIR``:
  .. Check that ``nameIR`` ``=`` ``"next"`` or ``nameIR`` ``=`` ``"last"``.
- .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Check that ``p`` ``=`` ``BLOCK`` ``/\`` ``TC.BLOCK.KIND`` ``=`` ``PARSER`` or ``p`` ``=`` ``LOCAL`` ``/\`` ``TC.LOCAL.KIND`` ``=`` ``PARSER_STATE``.
  .. The relation holds.
-. If ``~<<is_headerStackTypeIR,`` ``is_headerStackTypeIR(unroll_typeIR(typeIR~base~))>>``:
+. Else:
  .. The relation holds.
 
 <<Expr_lvalue_ok, ``p`` ``TC`` ``|-`` ``typedExpressionIR~base~`` ``[`` ``typedExpressionIR~index~`` ``]`` ``#`` ``(`` ``typeIR`` ``ctk`` ``)``>>:
@@ -11789,11 +11538,11 @@ for each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in
   ... If let ``infer'''`` be ``infer''^?^``:
    .... Check that ``infer'''`` matches pattern ``KNOWN`` ``AS`` ``%``.
    .... Let ``KNOWN`` ``AS`` ``typeIR~post~`` be ``infer'''``.
-   .... If <<Sub_impl, ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``>>:
+   .... If <<Cast_impl, ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``>>:
     ..... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for ``typeId~h~`` is updated to ``KNOWN`` ``AS`` ``typeIR~post~``>>.
     ..... Return ``<<merge_constraint',`` ``merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)>>``.
    .... Else:
-    ..... Check that <<Sub_impl, ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``>>.
+    ..... Check that <<Cast_impl, ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``>>.
     ..... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for ``typeId~h~`` is updated to ``KNOWN`` ``AS`` ``typeIR~pre~``>>.
     ..... Return ``<<merge_constraint',`` ``merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)>>``.
 
@@ -11844,9 +11593,11 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``:
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER``.
 . Else:
- .. Return ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``PARSER_STATE``.
 
 <<instantiable_control, instantiable_control(cursor, TC, instctxt)>>
 
@@ -11854,16 +11605,19 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``:
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``CONTROL``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<instantiable_package, instantiable_package(cursor, TC, instctxt)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``true``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_package_blockKind,`` ``is_package_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PACKAGE``.
 . Else: return ``false``.
 
 <<instantiable_table, instantiable_table(cursor, TC, instctxt)>>
@@ -11871,21 +11625,23 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``false``.
 
 <<instantiable, instantiable(p, TC, instctxt, typeIR)>>
 
 
-. If <<is_externObjectTypeIR, ``typeIR`` with typedefs unrolled is extern object type>>:
+. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
+. If ``typeIR~unroll~`` has type ``externObjectTypeIR``:
  .. Return ``<<instantiable_extern,`` ``instantiable_extern(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_parserObjectTypeIR, ``typeIR`` with typedefs unrolled is parser object type>>:
+. Else if ``typeIR~unroll~`` has type ``parserObjectTypeIR``:
  .. Return ``<<instantiable_parser,`` ``instantiable_parser(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_controlObjectTypeIR, ``typeIR`` with typedefs unrolled is control object type>>:
+. Else if ``typeIR~unroll~`` has type ``controlObjectTypeIR``:
  .. Return ``<<instantiable_control,`` ``instantiable_control(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_packageObjectTypeIR, ``typeIR`` with typedefs unrolled is package object type>>:
+. Else if ``typeIR~unroll~`` has type ``packageObjectTypeIR``:
  .. Return ``<<instantiable_package,`` ``instantiable_package(p,`` ``TC,`` ``instctxt)>>``.
-. If <<is_tableObjectTypeIR, ``typeIR`` with typedefs unrolled is table object type>>:
+. Else if ``typeIR~unroll~`` has type ``tableObjectTypeIR``:
  .. Return ``<<instantiable_table,`` ``instantiable_table(p,`` ``TC,`` ``instctxt)>>``.
 
 <<callable_action, callable_action(cursor, TC)>>
@@ -11894,23 +11650,27 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_action_localKind,`` ``is_action_localKind(TC.LOCAL.KIND)>>`` ``\/`` ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``ACTION`` ``\/`` ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<callable_definedFunction, callable_definedFunction(cursor, TC)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else:
- .. Return ``~<<is_extern_method_localKind,`` ``is_extern_method_localKind(TC.LOCAL.KIND)>>`` ``/\`` ``~<<is_extern_abstract_method_localKind,`` ``is_extern_abstract_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``does`` ``not`` ``have`` ``type`` ``externMethodLocalKind``.
 
 <<callable_externFunction, callable_externFunction(cursor, TC)>>
 
 
 . If ``cursor`` is ``GLOBAL``: return ``true``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_builtinMethod, callable_builtinMethod(cursor, TC)>>
@@ -11925,7 +11685,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_externAbstractMethod, callable_externAbstractMethod(cursor, TC)>>
@@ -11933,7 +11694,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``:
- .. Return ``<<is_parser_blockKind,`` ``is_parser_blockKind(TC.BLOCK.KIND)>>`` ``\/`` ``<<is_control_blockKind,`` ``is_control_blockKind(TC.BLOCK.KIND)>>``.
+ .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``CONTROL``.
 . Else: return ``true``.
 
 <<callable_parserApplyMethod, callable_parserApplyMethod(cursor, TC)>>
@@ -11942,7 +11704,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_parser_state_localKind,`` ``is_parser_state_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``PARSER_STATE``.
 
 <<callable_controlApplyMethod, callable_controlApplyMethod(cursor, TC)>>
 
@@ -11950,7 +11713,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
 
 <<callable_tableApplyMethod, callable_tableApplyMethod(cursor, TC)>>
 
@@ -11958,7 +11722,8 @@ for each ``infer`` in ``infer^{asterisk}^``
 . If ``cursor`` is ``GLOBAL``: return ``false``.
 . Else if ``cursor`` is ``BLOCK``: return ``false``.
 . Else:
- .. Return ``<<is_control_apply_method_localKind,`` ``is_control_apply_method_localKind(TC.LOCAL.KIND)>>`` ``\/`` ``<<is_table_apply_method_localKind,`` ``is_table_apply_method_localKind(TC.LOCAL.KIND)>>``.
+ .. Let ``localKind`` be ``TC.LOCAL.KIND``.
+ .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD`` ``\/`` ``localKind`` ``=`` ``TABLE_APPLY_METHOD``.
 
 <<callableId_IR, The callable identifier for ``nameIR`` ``(`` ``parameterIR^{asterisk}^`` ``)``>>
 
@@ -12056,12 +11821,6 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Return ``constructorParameterListIR``.
 
 <<init_externState, init_externState(nameIR, typeIR^{asterisk}^, value^{asterisk}^)>>
-
-<<is_externObject, ``object`` is an extern object>>
-
-
-. If ``object`` has type ``externObject``: return ``true``.
-. Otherwise: return ``false``.
 
 <<text_of_number_tableKeyValueInterface, text_of_number_tableKeyValueInterface(tableKeyValueInterface)>>
 
@@ -12169,24 +11928,24 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"lpm"``:
@@ -12197,12 +11956,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
@@ -12211,12 +11970,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ```SLASH`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
@@ -12228,12 +11987,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``n~key_remaining_width~`` be ``int``.
   ... Let ``i~key_base_value~`` be ``<<shl,`` ``shl(i~key_prefix_value~,`` ``n~key_remaining_width~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``int'`` be ``<<pow2,`` ``pow2(n~key_type_width~)>>``.
   ... Let ``int''`` be ``<<pow2,`` ``pow2(n~key_remaining_width~)>>``.
   ... Let ``i~key_mask_value~`` be ``int'`` ``-`` ``int''``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 
@@ -12329,7 +12088,7 @@ for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
 . Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
 +
 --
- ** Let ``typedExpressionIR^?^`` be <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ ** Let ``typedExpressionIR^?^`` be <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 --
 +
 for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
@@ -12851,16 +12610,12 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~index~`` be ``value``.
 . If let ``TUPLE`` ``(`` ``value~e~^{asterisk}^`` ``)`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``STO~2~`` and ``value'``.
 . Else if let ``HEADER_STACK`` ``[`` ``value~e~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``++_++`` ``)`` ``]`` be ``value~base~``:
- .. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
- .. Check that ``int`` has type ``nat``.
- .. Let ``n~index~`` be ``int``.
+ .. Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``STO~2~`` and ``value'``.
@@ -13299,9 +13054,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let <<Expr_inst, BLOCK IC~0~ STO |- typedExpressionIR~size~ : STO~1~ value>>.
 . Check that ``value`` has type ``integerValue``.
 . Let ``integerValue~size~`` be ``value``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~size~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~size~`` be ``int``.
+. Let ``n~size~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~size~``>>.
 . Let ``typeIR~subst~`` be <<subst_type_i, ``typeIR`` substituted by bound type variables in ``IC~0~`` from the ``BLOCK`` layer>>.
 . Let ``value''`` be <<default, the default value for type ``typeIR~subst~``>>.
 . Let ``value'^{asterisk}^`` be <<repeat_, a list of ``n~size~`` copies of ``value''``>>.
@@ -13490,7 +13243,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Result in 
 * the updated instantiation context ``IC~1~``, store ``STO~3~``, 
 * and the reference to the object ``constantDeclarationIR``.
-. If ``~<<is_externObject,`` ``is_externObject(object)>>``:
+. Else:
  .. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
  .. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
@@ -13879,7 +13632,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Result in the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default~^{asterisk}^``.
 . Let ``typeDefIR^?^`` be ``<<find_typeDef_i,`` ``find_typeDef_i(p,`` ``IC,`` ``prefixedNameIR)>>``.
 . If let ``typeDefIR'`` be ``typeDefIR^?^``:
- .. Check that ``~<<is_typedefTypeDefIR,`` ``is_typedefTypeDefIR(typeDefIR')>>``.
+ .. Check that ``typeDefIR'`` does not have type ``typedefTypeIR``.
  .. Let ``(`` ``++_++,`` ``constructorDef,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_constructorDef_i,`` ``find_constructorDef_i(IC,`` ``prefixedNameIR,`` ``argumentIR^{asterisk}^)>>``.
  .. Result in the constructor ``constructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` with default parameters ``id~default~^{asterisk}^``.
 . If ``typeArgumentIR^{asterisk}^`` is equal to ``·``:
@@ -14778,18 +14531,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Check that ``value'`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value'``.
  .. If let ``TUPLE`` ``(`` ``value~elem~^{asterisk}^`` ``)`` be ``value~base~``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
  .. Else if let ``HEADER_STACK`` ``[`` ``value~elem~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``:
-  ... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
+  ... Let ``n~index~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
+  ... Let ``int`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
   ... Check that ``int`` has type ``nat``.
-  ... Let ``n~index~`` be ``int``.
-  ... Let ``int'`` be ``<<min_int,`` ``min_int([n~index~,`` ``n~size~`` ``-`` ``1])>>``.
-  ... Check that ``int'`` has type ``nat``.
-  ... Let ``n~idx~`` be ``int'``.
+  ... Let ``n~idx~`` be ``int``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult``.
 
@@ -14932,7 +14681,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
   ... If ``n~idx~`` is less than ``n~size~``:
    .... Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``nameIR``.
    .... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and result ``storageReferenceResult'``.
- .. If ``~<<is_headerStackValue,`` ``is_headerStackValue(value)>>``:
+ .. Else:
   ... Let ``storageReferenceResult'`` be ``storageReference'`` ``.`` ``nameIR``.
   ... Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and result ``storageReferenceResult'``.
 
@@ -15025,9 +14774,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Lvalue_read, reading from ``storageReference'``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
 . Check that ``value~base~`` has type ``headerStackValue``.
 . Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``++_++`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~idx~`` be ``int``.
+. Let ``n~idx~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
 . If ``n~idx~`` is less than ``n~size~``:
  .. Let ``value'`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in the value ``value'``.
@@ -15105,9 +14852,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * the result of <<Lvalue_read, reading from ``storageReference'``, under cursor ``p``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``value~base~`` has type ``headerStackValue``.
 . Let ``HEADER_STACK`` ``[`` ``value~element~^{asterisk}^`` ``(`` ``n~base_idx~`` ``;`` ``n~size~`` ``)`` ``]`` be ``value~base~``.
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~index~``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n~idx~`` be ``int``.
+. Let ``n~idx~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~index~``>>.
 . If ``n~idx~`` is less than ``n~size~``:
  .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
  .. Let ``value~base_update~`` be ``HEADER_STACK`` ``[`` ``value~element_update~^{asterisk}^`` ``(`` ``n~base_idx~`` ``;`` ``n~size~`` ``)`` ``]``.
@@ -16210,9 +15955,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``value'`` be ``expressionResult``.
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~count~``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~count~`` be ``int``.
+   .... Let ``n~count~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~count~``>>.
    .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
    .... Let ``value~front_invalidated~^{asterisk}^`` be the list of ``value~front_invalidated~``, obtained by repeating:
 +
@@ -16221,9 +15964,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 --
 +
 for each ``value~front~`` in ``value~front~^{asterisk}^``
-   .... Let ``int'`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
-   .... Check that ``int'`` has type ``nat``.
-   .... Let ``n~back~`` be ``int'``.
+   .... Let ``int`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
+   .... Check that ``int`` has type ``nat``.
+   .... Let ``n~back~`` be ``int``.
    .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
    .... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
    .... Let ``n~idx_updated~`` be ``<<min_nat,`` ``min_nat([n~size~,`` ``n~idx~`` ``+`` ``n~count~])>>``.
@@ -16246,12 +15989,10 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
    .... Let ``value'`` be ``expressionResult``.
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerValue~count~``>>.
+   .... Let ``n~count~`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerValue~count~``>>.
+   .... Let ``int`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
    .... Check that ``int`` has type ``nat``.
-   .... Let ``n~count~`` be ``int``.
-   .... Let ``int'`` be ``<<max_int,`` ``max_int([0,`` ``n~size~`` ``-`` ``n~count~])>>``.
-   .... Check that ``int'`` has type ``nat``.
-   .... Let ``n~front~`` be ``int'``.
+   .... Let ``n~front~`` be ``int``.
    .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
    .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
    .... Let ``value~back_invalidated~^{asterisk}^`` be the list of ``value~back_invalidated~``, obtained by repeating:
@@ -16893,9 +16634,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<TableEntryPriority_eval, ``EC`` ``STO`` ``|-`` ``PRIORITY`` ``=`` ``integerLiteral`` ``:`` ``:`` ``%``>>:
 
-. Let ``int`` be <<int_of_integerValue, the integer representation of  ``integerLiteral``>>.
-. Check that ``int`` has type ``nat``.
-. Let ``n`` be ``int``.
+. Let ``n`` be <<option_get, *!*>> <<nat_of_integerValue, the natural number representation of  ``integerLiteral``>>.
 . Result in ``n``.
 
 <<TableMatch_eval, TableMatch_eval: ``EC~0~`` ``STO~0~`` ``|-`` ``tableKeyValue^{asterisk}^`` ``@`` ``tableEntryIR`` ``:`` ``%`` ``%`` ``%``>>

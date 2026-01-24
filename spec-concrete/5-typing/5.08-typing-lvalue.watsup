@@ -46,8 +46,8 @@ rulegroup Lvalue_ok/memberAccess {
     -- if nameIR = $name(member)
     -- if nameIR = "next" \/ nameIR = "last"
     ---- ;; "next" and "last" can be only used within a parser
-    -- if (p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-          \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; create typed lvalue
     -- if typedLvalueIR
         = (typedLvalueIR_base `. nameIR) `# `( typeIR )
@@ -122,7 +122,7 @@ rulegroup Lvalue_ok/indexAccess {
     ---- ;; if the index is local compile-time known, then it must be in range
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
-    -- if n_index = $int_of_integerValue(integerValue_index)
+    -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if $(n_index < n_size)
     ---- ;; create typed lvalue
     -- if typedLvalueIR
@@ -184,10 +184,10 @@ rule Lvalue_ok/sliceAccess:
   ---- ;; check that the indices are local compile-time known
   -- if ctk_hi_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~> integerValue_hi
-  -- if n_hi = $int_of_integerValue(integerValue_hi)
+  -- if n_hi = $nat_of_integerValue(integerValue_hi)
   -- if ctk_lo_reduced = LCTK
   -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~> integerValue_lo
-  -- if n_lo = $int_of_integerValue(integerValue_lo)
+  -- if n_lo = $nat_of_integerValue(integerValue_lo)
   ---- ;; check that the slice is valid
   -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
   ---- ;; create typed lvalue

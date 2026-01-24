@@ -12,13 +12,18 @@
 
 rulegroup CallableTarget_ok/referenceExpression {
 
-  rule CallableTarget_ok/prefixedNonTypeName:
+  rule CallableTarget_ok/prefixedNonTypeName-non-verify:
+    p TC |- prefixedNonTypeName : prefixedNameIR
+    -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+    -- if ~((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
+
+  rule CallableTarget_ok/prefixedNonTypeName-verify:
     p TC |- prefixedNonTypeName : prefixedNameIR
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     ---- ;; call to "verify" is only allowed in parsers
     -- if ((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
-          => ((p = BLOCK /\ $is_parser_blockKind(TC.BLOCK.KIND))
-               \/ (p = LOCAL /\ $is_parser_state_localKind(TC.LOCAL.KIND))) 
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+            \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
 
   rule CallableTarget_ok/this:
     p TC |- THIS : (`` "this")
@@ -251,8 +256,8 @@ dec $callable_action(cursor, typingContext) : bool
 def $callable_action(GLOBAL, TC) = false
 def $callable_action(BLOCK, TC) = false
 def $callable_action(LOCAL, TC)
-  = $is_action_localKind(TC.LOCAL.KIND)
-    \/ $is_control_apply_method_localKind(TC.LOCAL.KIND)
+  = (localKind = ACTION) \/ (localKind = CONTROL_APPLY_METHOD)
+  -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/action:
   p TC |- (ACTION `( parameterIR* ))
@@ -279,11 +284,11 @@ dec $callable_definedFunction(cursor, typingContext) : bool
 
 def $callable_definedFunction(GLOBAL, TC) = false
 def $callable_definedFunction(BLOCK, TC)
-  = $is_parser_blockKind(TC.BLOCK.KIND)
-    \/ $is_control_blockKind(TC.BLOCK.KIND)
+  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+  -- if blockKind = TC.BLOCK.KIND
 def $callable_definedFunction(LOCAL, TC)
-  = ~$is_extern_method_localKind(TC.LOCAL.KIND)
-    /\ ~$is_extern_abstract_method_localKind(TC.LOCAL.KIND)
+  = ~(localKind <: externMethodLocalKind)
+  -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/definedFunctionTypeIR:
   p TC |- (FUNCTION `( parameterIR* ) `: typeIR_ret)
@@ -320,8 +325,8 @@ dec $callable_externFunction(cursor, typingContext) : bool
 
 def $callable_externFunction(GLOBAL, TC) = true
 def $callable_externFunction(BLOCK, TC)
-  = $is_parser_blockKind(TC.BLOCK.KIND)
-    \/ $is_control_blockKind(TC.BLOCK.KIND)
+  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+  -- if blockKind = TC.BLOCK.KIND
 def $callable_externFunction(LOCAL, TC) = true
 
 rule Call_ok/externFunctionTypeIR:
@@ -387,8 +392,8 @@ dec $callable_externMethod(cursor, typingContext) : bool
 
 def $callable_externMethod(GLOBAL, TC) = false
 def $callable_externMethod(BLOCK, TC)
-  = $is_parser_blockKind(TC.BLOCK.KIND)
-    \/ $is_control_blockKind(TC.BLOCK.KIND)
+  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+  -- if blockKind = TC.BLOCK.KIND
 def $callable_externMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-non-abstract:
@@ -424,8 +429,8 @@ dec $callable_externAbstractMethod(cursor, typingContext) : bool
 
 def $callable_externAbstractMethod(GLOBAL, TC) = false
 def $callable_externAbstractMethod(BLOCK, TC)
-  = $is_parser_blockKind(TC.BLOCK.KIND)
-    \/ $is_control_blockKind(TC.BLOCK.KIND)
+  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+  -- if blockKind = TC.BLOCK.KIND
 def $callable_externAbstractMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-abstract:
@@ -465,7 +470,8 @@ dec $callable_parserApplyMethod(cursor, typingContext) : bool
 def $callable_parserApplyMethod(GLOBAL, TC) = false
 def $callable_parserApplyMethod(BLOCK, TC) = false
 def $callable_parserApplyMethod(LOCAL, TC)
-  = $is_parser_state_localKind(TC.LOCAL.KIND)
+  = localKind = PARSER_STATE
+  -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/parserApplyMethodTypeIR:
   p TC |- (PARSER_APPLY `( parameterIR* ))
@@ -490,7 +496,8 @@ dec $callable_controlApplyMethod(cursor, typingContext) : bool
 def $callable_controlApplyMethod(GLOBAL, TC) = false
 def $callable_controlApplyMethod(BLOCK, TC) = false
 def $callable_controlApplyMethod(LOCAL, TC)
-  = $is_control_apply_method_localKind(TC.LOCAL.KIND)
+  = localKind = CONTROL_APPLY_METHOD
+  -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/controlApplyMethodTypeIR:
   p TC |- (CONTROL_APPLY `( parameterIR* ))
@@ -514,8 +521,9 @@ dec $callable_tableApplyMethod(cursor, typingContext) : bool
 def $callable_tableApplyMethod(GLOBAL, TC) = false
 def $callable_tableApplyMethod(BLOCK, TC) = false
 def $callable_tableApplyMethod(LOCAL, TC)
-  = $is_control_apply_method_localKind(TC.LOCAL.KIND)
-    \/ $is_table_apply_method_localKind(TC.LOCAL.KIND)
+  = (localKind = CONTROL_APPLY_METHOD)
+     \/ (localKind = TABLE_APPLY_METHOD)
+  -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/tableApplyMethodTypeIR:
   p TC |- (TABLE_APPLY `: tableMetadataStructTypeIR) `< eps `# eps > `( eps `# eps )

@@ -431,21 +431,21 @@ rulegroup ParameterType_wf {
     B |- _ direction typeIR _ eps
     -- Type_wf: B |- typeIR
     -- if typeIR_unroll = $unroll_typeIR(typeIR)
-    -- if ~$is_synthesizedTypeIR(typeIR_unroll)
-    -- if ($is_stringTypeIR(typeIR_unroll)
-          \/ $is_arbitraryIntTypeIR(typeIR_unroll)
-          \/ $is_objectTypeIR(typeIR_unroll))
+    -- if ~(typeIR_unroll <: synthesizedTypeIR)
+    -- if ((typeIR_unroll = INT)
+          \/ (typeIR_unroll <: stringTypeIR)
+          \/ (typeIR_unroll <: objectTypeIR))
           => direction = `EMPTY
 
   rule ParameterType_wf/default:
     B |- _ direction typeIR _ (`= value)
     -- Type_wf: B |- typeIR
     -- if typeIR_unroll = $unroll_typeIR(typeIR)
-    -- if ~$is_synthesizedTypeIR(typeIR_unroll)
+    -- if ~(typeIR_unroll <: synthesizedTypeIR)
     -- if direction = IN \/ direction = `EMPTY
-    -- if ($is_stringTypeIR(typeIR_unroll)
-          \/ $is_arbitraryIntTypeIR(typeIR_unroll)
-          \/ $is_objectTypeIR(typeIR_unroll))
+    -- if ((typeIR_unroll = INT)
+          \/ (typeIR_unroll <: stringTypeIR)
+          \/ (typeIR_unroll <: objectTypeIR))
           => direction = `EMPTY
 
 }
@@ -458,9 +458,9 @@ rule ReturnType_wf:
   B |- typeIR_ret
   -- Type_wf: B |- typeIR_ret
   -- if typeIR_unroll = $unroll_typeIR(typeIR_ret)
-  -- if ~$is_stringTypeIR(typeIR_unroll)
-        /\ ~$is_arbitraryIntTypeIR(typeIR_unroll)
-        /\ ~$is_objectTypeIR(typeIR_unroll)
+  -- if ~(typeIR_unroll = INT)
+        /\ ~(typeIR_unroll <: synthesizedTypeIR)
+        /\ ~(typeIR_unroll <: objectTypeIR)
 
 ;;
 ;;;; Well-formedness of callable types

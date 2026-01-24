@@ -64,7 +64,7 @@ let rec free_id_exp (exp : exp) : IdSet.t =
   | TupleE exps -> free_id_exps exps
   | CallE (_, _, args) -> free_id_args args
   | IterE (exp, _) -> free_id_exp exp
-  | TypE (exp, _) -> free_id_exp exp
+  | SubE (exp, _) -> free_id_exp exp
   | AtomE _ -> IdSet.empty
   | SeqE exps -> free_id_exps exps
   | InfixE (exp_l, _, exp_r) ->
