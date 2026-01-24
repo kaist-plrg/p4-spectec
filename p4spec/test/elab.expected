@@ -13444,34 +13444,34 @@ relation TypeArgumentList_ok: cursor typingContext |- typeArgumentList : typeArg
     -- output: % % |- % : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:66.1-69.57
-relation Sub_expl: typeIR <: typeIR
+relation Cast_expl: typeIR -> typeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:5.1-9.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:5.1-9.58
   rulegroup 
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
     rulepath 
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
-    -- if Sub_expl_unroll: typeIR_a_unroll <: typeIR_b_unroll holds
+    -- if Cast_expl_unroll: typeIR_a_unroll -> typeIR_b_unroll holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:70.1-73.75
-relation Sub_expl_unroll: typeIR <: typeIR
+relation Cast_expl_unroll: typeIR -> typeIR
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:11.1-13.38
   rulegroup equals
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
@@ -13479,31 +13479,31 @@ relation Sub_expl_unroll: typeIR <: typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:15.1-18.47
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:15.1-18.48
   rulegroup not-equals
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
     rulepath not-equals
     -- if Type_alpha: typeIR_a ~~ typeIR_b does not hold
-    -- if Sub_expl_unroll_neq: typeIR_a <: typeIR_b holds
+    -- if Cast_expl_unroll_neq: typeIR_a -> typeIR_b holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:74.1-77.107
-relation Sub_expl_unroll_neq: typeIR <: typeIR
+relation Cast_expl_unroll_neq: typeIR -> typeIR
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:24.1-25.21
   rulegroup boolean-fixBit
 
    match
 
-    (signature) bool as typeIR <: bit< 1 > as typeIR
-    typeIR <: typeIR'
+    (signature) bool as typeIR -> bit< 1 > as typeIR
+    typeIR -> typeIR'
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
     -- if (boolTypeIR = bool)
@@ -13519,8 +13519,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) int as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) int as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: integerTypeIR
     -- let integerTypeIR = typeIR' as integerTypeIR
     -- if integerTypeIR matches `INT`
@@ -13552,8 +13552,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) int< nat > as typeIR <: integerTypeIR as typeIR
-    typeIR <: typeIR'
+    (signature) int< nat > as typeIR -> integerTypeIR as typeIR
+    typeIR -> typeIR'
     -- if typeIR <: integerTypeIR
     -- let integerTypeIR' = typeIR as integerTypeIR
     -- if integerTypeIR' matches `INT<%>`
@@ -13585,8 +13585,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) bit< nat > as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) bit< nat > as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: integerTypeIR
     -- let integerTypeIR = typeIR' as integerTypeIR
     -- if integerTypeIR matches `BIT<%>`
@@ -13623,8 +13623,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) typeIR <: typeIR'
-    typeIR <: typeIR'
+    (signature) typeIR -> typeIR'
+    typeIR -> typeIR'
 
    paths
 
@@ -13633,7 +13633,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- if typeIR'' <: newTypeIR
     -- let type _typeId typeIR_a = typeIR'' as newTypeIR
     -- let typeIR_b = typeIR'
-    -- if Sub_impl: typeIR_a <: typeIR_b holds
+    -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
     rulepath right
@@ -13641,7 +13641,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: newTypeIR
     -- let type _typeId typeIR_b = typeIR'' as newTypeIR
-    -- if Sub_impl: typeIR_a <: typeIR_b holds
+    -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:81.1-91.2
@@ -13649,8 +13649,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) typeIR <: typeIR'
-    typeIR <: typeIR'
+    (signature) typeIR -> typeIR'
+    typeIR -> typeIR'
 
    paths
 
@@ -13661,7 +13661,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- if enumTypeIR matches `ENUM%<%>{%}`
     -- let enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
     -- let typeIR_b = typeIR'
-    -- if Sub_impl: typeIR_a <: typeIR_b holds
+    -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
     rulepath right
@@ -13671,7 +13671,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let enumTypeIR = typeIR'' as enumTypeIR
     -- if enumTypeIR matches `ENUM%<%>{%}`
     -- let enum _typeId < typeIR_b >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
-    -- if Sub_impl: typeIR_a <: typeIR_b holds
+    -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:93.1-95.41
@@ -13679,8 +13679,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) default as typeIR <: typeIR_b
-    typeIR <: typeIR_b
+    (signature) default as typeIR -> typeIR_b
+    typeIR -> typeIR_b
     -- if typeIR <: defaultTypeIR
     -- let defaultTypeIR = typeIR as defaultTypeIR
     -- if (defaultTypeIR = default)
@@ -13696,8 +13696,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) header_invalid as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) header_invalid as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: invalidHeaderTypeIR
     -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
     -- if (invalidHeaderTypeIR = header_invalid)
@@ -13721,8 +13721,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%>`
@@ -13734,14 +13734,14 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: listTypeIR
     -- let list< typeIR_b > = typeIR'' as listTypeIR
-    -- (if Sub_expl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
     -- let tuple< typeIR_b*{typeIR_b <- typeIR_b*} > = typeIR'' as tupleTypeIR
-    -- (if Sub_expl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
     rulepath headerStackTypeIR
@@ -13749,21 +13749,21 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
-    -- (if Sub_expl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
-    -- (if Sub_expl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
+    -- (if Cast_expl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
     -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
-    -- (if Sub_expl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
+    -- (if Cast_expl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:131.1-163.2
@@ -13771,8 +13771,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%,...>`
@@ -13786,7 +13786,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let tuple< typeIR_b*{typeIR_b <- typeIR_b*} > = typeIR'' as tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)
     -- let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) = $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_expl: typeIR_a <: typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
+    -- (if Cast_expl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
     -- the relation holds
 
@@ -13795,7 +13795,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Sub_expl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- if $is_defaultable_typeIR(typeIR_b)
     -- the relation holds
 
@@ -13805,7 +13805,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_expl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (if Cast_expl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
     -- the relation holds
 
@@ -13815,7 +13815,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_expl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (if Cast_expl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
     -- the relation holds
 
@@ -13824,8 +13824,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%}`
@@ -13844,7 +13844,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
+    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
     -- the relation holds
 
     rulepath headerTypeIR
@@ -13858,7 +13858,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
+    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:189.1-223.2
@@ -13866,8 +13866,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%,...}`
@@ -13886,7 +13886,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
     -- let { id_default*{id_default <- id_default*} } = $diff_set<id>({ id_field_b*{id_field_b <- id_field_b*} }, { id_field_a*{id_field_a <- id_field_a*} })
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
@@ -13905,7 +13905,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
     -- let { id_default*{id_default <- id_default*} } = $diff_set<id>({ id_field_b*{id_field_b <- id_field_b*} }, { id_field_a*{id_field_a <- id_field_a*} })
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
@@ -13918,8 +13918,8 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) typeIR <: set< typeIR_b > as typeIR
-    typeIR <: typeIR'
+    (signature) typeIR -> set< typeIR_b > as typeIR
+    typeIR -> typeIR'
     -- if typeIR' <: setTypeIR
     -- let set< typeIR_b > = typeIR' as setTypeIR
 
@@ -13929,44 +13929,44 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: setTypeIR
     -- let set< typeIR_a > = typeIR'' as setTypeIR
-    -- if Sub_expl: typeIR_a <: typeIR_b holds
+    -- if Cast_expl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
     rulepath non-set
     -- let typeIR_a = typeIR
     -- if ~$is_setTypeIR(typeIR_a)
-    -- if Sub_expl: typeIR_a <: typeIR_b holds
+    -- if Cast_expl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:79.1-82.57
-relation Sub_impl: typeIR <: typeIR
+relation Cast_impl: typeIR -> typeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:242.1-246.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:242.1-246.58
   rulegroup 
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
     rulepath 
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
-    -- if Sub_impl_unroll: typeIR_a_unroll <: typeIR_b_unroll holds
+    -- if Cast_impl_unroll: typeIR_a_unroll -> typeIR_b_unroll holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:83.1-86.75
-relation Sub_impl_unroll: typeIR <: typeIR
+relation Cast_impl_unroll: typeIR -> typeIR
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:248.1-250.38
   rulegroup equals
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
@@ -13974,31 +13974,31 @@ relation Sub_impl_unroll: typeIR <: typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:252.1-255.47
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:252.1-255.48
   rulegroup not-equals
 
    match
 
-    (signature) typeIR_a <: typeIR_b
-    typeIR_a <: typeIR_b
+    (signature) typeIR_a -> typeIR_b
+    typeIR_a -> typeIR_b
 
    paths
 
     rulepath not-equals
     -- if Type_alpha: typeIR_a ~~ typeIR_b does not hold
-    -- if Sub_impl_unroll_neq: typeIR_a <: typeIR_b holds
+    -- if Cast_impl_unroll_neq: typeIR_a -> typeIR_b holds
     -- the relation holds
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:87.1-90.107
-relation Sub_impl_unroll_neq: typeIR <: typeIR
+relation Cast_impl_unroll_neq: typeIR -> typeIR
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:261.1-269.2
   rulegroup arbitraryInt
 
    match
 
-    (signature) int as typeIR <: integerTypeIR as typeIR
-    typeIR <: typeIR'
+    (signature) int as typeIR -> integerTypeIR as typeIR
+    typeIR -> typeIR'
     -- if typeIR <: integerTypeIR
     -- let integerTypeIR' = typeIR as integerTypeIR
     -- if integerTypeIR' matches `INT`
@@ -14019,13 +14019,13 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let bit< _nat > = integerTypeIR''
     -- the relation holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:271.1-273.36
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:271.1-273.37
   rulegroup enumTypeIR-serializable
 
    match
 
-    (signature) enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR <: typeIR_b
-    typeIR <: typeIR_b
+    (signature) enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR -> typeIR_b
+    typeIR -> typeIR_b
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
     -- if enumTypeIR matches `ENUM%<%>{%}`
@@ -14034,7 +14034,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
    paths
 
     rulepath enumTypeIR-serializable
-    -- if Sub_impl: typeIR_a <: typeIR_b holds
+    -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:275.1-277.41
@@ -14042,8 +14042,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) default as typeIR <: typeIR_b
-    typeIR <: typeIR_b
+    (signature) default as typeIR -> typeIR_b
+    typeIR -> typeIR_b
     -- if typeIR <: defaultTypeIR
     -- let defaultTypeIR = typeIR as defaultTypeIR
     -- if (defaultTypeIR = default)
@@ -14059,8 +14059,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) header_invalid as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) header_invalid as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: invalidHeaderTypeIR
     -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
     -- if (invalidHeaderTypeIR = header_invalid)
@@ -14084,8 +14084,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%>`
@@ -14097,14 +14097,14 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: listTypeIR
     -- let list< typeIR_b > = typeIR'' as listTypeIR
-    -- (if Sub_impl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
     -- let tuple< typeIR_b*{typeIR_b <- typeIR_b*} > = typeIR'' as tupleTypeIR
-    -- (if Sub_impl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
     rulepath headerStackTypeIR
@@ -14112,21 +14112,21 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
-    -- (if Sub_impl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
-    -- (if Sub_impl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
+    -- (if Cast_impl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
     -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
-    -- (if Sub_impl: typeIR_a <: typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
+    -- (if Cast_impl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
     rulepath sequenceTypeIR
@@ -14135,7 +14135,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let sequenceTypeIR' = typeIR'' as sequenceTypeIR
     -- if sequenceTypeIR' matches `SEQ<%>`
     -- let seq< typeIR_b*{typeIR_b <- typeIR_b*} > = sequenceTypeIR'
-    -- (if Sub_impl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:317.1-349.2
@@ -14143,8 +14143,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) seq< typeIR_a*{typeIR_a <- typeIR_a*} ,...> as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%,...>`
@@ -14158,7 +14158,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let tuple< typeIR_b*{typeIR_b <- typeIR_b*} > = typeIR'' as tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)
     -- let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) = $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_impl: typeIR_a <: typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
     -- the relation holds
 
@@ -14167,7 +14167,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Sub_impl: typeIR_a <: typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- if $is_defaultable_typeIR(typeIR_b)
     -- the relation holds
 
@@ -14177,7 +14177,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_impl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (if Cast_impl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
     -- the relation holds
 
@@ -14187,7 +14187,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- let header _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_field_b _nameIR ;*{_nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } = typeIR'' as headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
-    -- (if Sub_impl: typeIR_a <: typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (if Cast_impl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
     -- the relation holds
 
@@ -14196,8 +14196,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} } as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%}`
@@ -14216,7 +14216,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
+    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
     -- the relation holds
 
     rulepath headerTypeIR
@@ -14230,7 +14230,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
+    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
     -- the relation holds
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:375.1-409.2
@@ -14238,8 +14238,8 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
 
    match
 
-    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR <: typeIR
-    typeIR' <: typeIR
+    (signature) record{ typeIR_field_a id_field_a ;*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ,...} as typeIR -> typeIR
+    typeIR' -> typeIR
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD{%,...}`
@@ -14258,7 +14258,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
     -- let { id_default*{id_default <- id_default*} } = $diff_set<id>({ id_field_b*{id_field_b <- id_field_b*} }, { id_field_a*{id_field_a <- id_field_a*} })
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
@@ -14277,7 +14277,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
     -- let { id_default*{id_default <- id_default*} } = $diff_set<id>({ id_field_b*{id_field_b <- id_field_b*} }, { id_field_a*{id_field_a <- id_field_a*} })
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>({ id_field_b : typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} }, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
@@ -14491,7 +14491,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [+, -, *]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
@@ -14520,7 +14520,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [|+|, |-|]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
@@ -14549,7 +14549,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [/, %]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
@@ -14574,7 +14574,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [/, %]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
@@ -14650,7 +14650,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [==, !=]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
@@ -14677,7 +14677,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [<=, >=, <, >]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
@@ -14706,7 +14706,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [&, ^, |]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
@@ -14764,7 +14764,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- [&&, ||]
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
@@ -14797,7 +14797,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (boolTypeIR = bool)
     -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
     -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_true_cast, typedExpressionIR_false_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
@@ -14827,7 +14827,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Sub_expl: typeIR <: typeIR_t holds
+    -- if Cast_expl: typeIR -> typeIR_t holds
     -- let expressionNoteIR = ( typeIR_t ctk )
     -- output: % % |- % : ( typeIR_t ) typedExpressionIR as expressionIR # expressionNoteIR
 
@@ -15753,7 +15753,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
     -- let typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR_l)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_l)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % % % |- % : TC f typedLvalueIR = typedExpressionIR_cast ; as statementIR
@@ -15769,7 +15769,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let expression_binary = expression_lvalue binop expression as expression
     -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
     -- let _lvalueIR # ( typeIR_lvalue ) = typedLvalueIR
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_binary, typeIR_lvalue)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(expressionIR # _expressionNoteIR) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if expressionIR <: binaryExpressionIR
@@ -15891,7 +15891,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let typeIR'?{typeIR' <- typeIR'?} = $find_local_return_type_t(TC)
     -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
     -- let ?(typeIR_ret) = typeIR'?{typeIR' <- typeIR'?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR_ret)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_ret)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % % % |- % : TC ret return typedExpressionIR_cast ; as statementIR
@@ -16232,7 +16232,7 @@ relation Parameter_ok: cursor typingContext |- parameter : typingContext paramet
     -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
     -- let typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR_init))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_init, typeIR)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -17888,7 +17888,7 @@ relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext
     -- if Type_wf: $bound(p, TC_0) |- typeIR holds
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_init, typeIR)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -17915,7 +17915,7 @@ relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingConte
     -- if Type_wf: $bound(p, TC_0) |- typeIR holds
     -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
     -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR_value))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_value, typeIR)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_value, typeIR)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_value_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
@@ -18630,7 +18630,7 @@ syntax actctxt =
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:503.1-508.84
 relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:9.1-14.59
+  ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:9.1-14.57
   rulegroup in
 
    match
@@ -18642,7 +18642,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
    paths
 
     rulepath in
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- output: % % % |- % @ % : typedExpressionIR_arg_cast
@@ -18677,14 +18677,14 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
 
     rulepath action
     -- if (actctxt = action)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- output: % % % |- % @ % : typedExpressionIR_arg_cast
 
     rulepath non-action
     -- if (actctxt = noaction)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
@@ -19628,7 +19628,7 @@ def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, 
   -- otherwise
 
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:499.1-500.44
-def $coerce_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
+def $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:502.1-504.37
   clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR)
@@ -19639,11 +19639,11 @@ def $coerce_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
   clause 1 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
   -- if Type_alpha: typeIR ~~ typeIR_to does not hold
-  -- if Sub_impl: typeIR <: typeIR_to holds
+  -- if Cast_impl: typeIR -> typeIR_to holds
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:515.1-517.62
-def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
+def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:519.1-523.38
   clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r))
@@ -19656,7 +19656,7 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Sub_impl: typeIR_l <: typeIR_r holds
+  -- if Cast_impl: typeIR_l -> typeIR_r holds
   -- let typedExpressionIR_l_cast = ( typeIR_r ) typedExpressionIR_l as expressionIR # ( typeIR_r ctk_l )
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:534.1-542.65
@@ -19664,27 +19664,27 @@ def $coerce_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, t
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Sub_impl: typeIR_l <: typeIR_r does not hold
-  -- if Sub_impl: typeIR_r <: typeIR_l holds
+  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
+  -- if Cast_impl: typeIR_r -> typeIR_l holds
   -- let typedExpressionIR_r_cast = ( typeIR_l ) typedExpressionIR_r as expressionIR # ( typeIR_l ctk_r )
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:544.1-552.57
-  clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $coerce_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+  clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Sub_impl: typeIR_l <: typeIR_r does not hold
-  -- if Sub_impl: typeIR_r <: typeIR_l does not hold
+  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
+  -- if Cast_impl: typeIR_r -> typeIR_l does not hold
   -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
   -- if (typedExpressionIR_l =/= typedExpressionIR_l_cast)
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:554.1-563.57
-  clause 4 : (typedExpressionIR_l, typedExpressionIR_r) = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+  clause 4 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Sub_impl: typeIR_l <: typeIR_r does not hold
-  -- if Sub_impl: typeIR_r <: typeIR_l does not hold
+  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
+  -- if Cast_impl: typeIR_r -> typeIR_l does not hold
   -- if (typedExpressionIR_l = $reduce_serenum(typedExpressionIR_l))
   -- let typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
   -- if (typedExpressionIR_r =/= typedExpressionIR_r_cast)
@@ -20580,7 +20580,7 @@ relation ForInitStmt_ok: typingContext |- forInitStatement : typingContext forIn
     -- if Type_wf: $bound(local, TC_0) |- typeIR holds
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: local TC_0 |- expression_init : typedExpressionIR_init
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_init, typeIR)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -20669,7 +20669,7 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- let typeIR = $unroll_typeIR(typeIR_list)
     -- if typeIR <: listTypeIR
     -- let list< typeIR_e > = typeIR as listTypeIR
-    -- if Sub_impl: typeIR_e <: typeIR_var holds
+    -- if Cast_impl: typeIR_e -> typeIR_var holds
     -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
 
     rulepath header-stack
@@ -20696,16 +20696,16 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     rulepath range
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l, typeIR_var)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_var)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_coerced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r, typeIR_var)
+    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_var)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l_coerced
-    -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r_coerced
+    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l_castd
+    -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r_castd
     -- if $compat_range(typeIR_l, typeIR_r)
-    -- output: % % |- % : typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced
+    -- output: % % |- % : typedExpressionIR_l_castd .. typedExpressionIR_r_castd
 
 ;; ../../../../spec-concrete/5-typing/5.10-typing-statement.watsup:443.1-443.45
 tbl def $compat_range(typeIR, typeIR) : bool =
@@ -20892,7 +20892,7 @@ relation SwitchLabel_general_ok: typingContext typeIR bool |- switchLabel : swit
     -- let expressionNonBrace_label = switchLabel' as expressionNonBrace
     -- let expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: local TC |- expression_label : typedExpressionIR_label
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_label, typeIR_switch)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_label, typeIR_switch)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_label_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let _expressionIR # ( _typeIR' ctk ) = typedExpressionIR_label_cast
@@ -21247,7 +21247,7 @@ relation Enum_serializable_field_ok: typingContext nameIR typeIR |- namedExpress
 
     rulepath 
     -- Expr_ok: block TC_0 |- expression : typedExpressionIR
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR, typeIR)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR_cast))
@@ -21346,7 +21346,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- if typeIR' <: setTypeIR
     -- let set< typeIR_base > = typeIR' as setTypeIR
     -- if Type_alpha: typeIR_base ~~ typeIR_key does not hold
-    -- if Sub_impl: typeIR_base <: typeIR_key holds
+    -- if Cast_impl: typeIR_base -> typeIR_key holds
     -- let typeIR_cast = set< typeIR_key > as typeIR
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
@@ -21367,12 +21367,12 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ~$is_setTypeIR($unroll_typeIR(typeIR))
-    -- if Sub_impl: typeIR <: typeIR_key holds
+    -- if Cast_impl: typeIR -> typeIR_key holds
     -- let typeIR_cast = set< typeIR_key > as typeIR
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:87.1-109.63
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:87.1-109.61
   rulegroup mask
 
    match
@@ -21387,22 +21387,22 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath mask
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
     -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_coerced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r_reduced, typeIR_key)
+    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % |- % : typedExpressionIR_l_coerced &&& typedExpressionIR_r_coerced
+    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- output: % % |- % : typedExpressionIR_l_castd &&& typedExpressionIR_r_castd
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:113.1-137.63
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:113.1-137.61
   rulegroup range
 
    match
@@ -21417,7 +21417,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath range
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
@@ -21425,13 +21425,13 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_coerced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r_reduced, typeIR_key)
+    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_coerced) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % |- % : typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced
+    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- output: % % |- % : typedExpressionIR_l_castd .. typedExpressionIR_r_castd
 
   ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:141.1-142.37
   rulegroup default
@@ -22146,7 +22146,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Sub_impl: typeIR <: typeIR_key holds
+    -- if Cast_impl: typeIR -> typeIR_key holds
     -- let typeIR_set = set< typeIR_key > as typeIR
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : lpm n typedExpressionIR_set as simpleKeysetExpressionIR
@@ -22157,7 +22157,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Sub_impl: typeIR <: typeIR_key holds
+    -- if Cast_impl: typeIR -> typeIR_key holds
     -- let typeIR_set = set< typeIR_key > as typeIR
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : nolpm typedExpressionIR_set as simpleKeysetExpressionIR
@@ -22181,10 +22181,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let noprilpm n = matchMode
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l, typeIR_key)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r, typeIR_key)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
@@ -22203,10 +22203,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- if (text = "ternary")
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l, typeIR_key)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r, typeIR_key)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
@@ -22230,10 +22230,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     rulepath range-range
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_l, typeIR_key)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_r, typeIR_key)
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
@@ -22772,7 +22772,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
   -- if infer'' matches `KNOWNAS%`
   -- let knownas typeIR_post = infer''
-  -- if Sub_impl: typeIR_pre <: typeIR_post holds
+  -- if Cast_impl: typeIR_pre -> typeIR_post holds
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_post)
 
   ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:239.1-249.78
@@ -22789,8 +22789,8 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
   -- if infer'' matches `KNOWNAS%`
   -- let knownas typeIR_post = infer''
-  -- if Sub_impl: typeIR_pre <: typeIR_post does not hold
-  -- if Sub_impl: typeIR_post <: typeIR_pre holds
+  -- if Cast_impl: typeIR_pre -> typeIR_post does not hold
+  -- if Cast_impl: typeIR_post -> typeIR_pre holds
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_pre)
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:31.1-31.61
@@ -23557,14 +23557,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_base, typeIR)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_mask, typeIR)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -23580,14 +23580,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_base, typeIR)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_mask, typeIR)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -23605,14 +23605,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_base, typeIR)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_mask, typeIR)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -23630,14 +23630,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_base, typeIR)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_mask, typeIR)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -23658,12 +23658,12 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let n_key_remaining_width = int as nat
   -- let i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width as int)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_base, typeIR)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let i_key_mask_value = ($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $coerce_unary(typedExpressionIR_mask, typeIR)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -23719,7 +23719,7 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control_update*{parameterIR_control_update <- parameterIR_control_update*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
   -- (let _annotationList' _direction typeIR_param nameIR_param _constantInitializerOptIR = parameterIR_control_update)*{parameterIR_control_update <- parameterIR_control_update*, _annotationList' -> _annotationList'*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
   -- (let typedExpressionIR_arg = d i_arg_aligned as expressionIR # ( int as typeIR dyn ))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $coerce_unary(typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
   -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data_update*{argumentIR_data_update <- argumentIR_data_update*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*

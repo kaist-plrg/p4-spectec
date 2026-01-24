@@ -6039,41 +6039,41 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 * the result of <<TypeArguments_ok, typing ``typeArgument^{asterisk}^``, under cursor ``p`` and typing context ``TC``>>.
 . Result in ``typeArgumentIR^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
-<<Sub_expl, Sub_expl>>:
+<<Cast_expl, Cast_expl>>:
 
 * ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``
 
-<<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when>>:
+<<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when>>:
 
 . Let ``typeIR~a_unroll~`` be <<unroll_typeIR, ``typeIR~a~`` with typedefs unrolled>>.
 . Let ``typeIR~b_unroll~`` be <<unroll_typeIR, ``typeIR~b~`` with typedefs unrolled>>.
-. Check that <<Sub_expl_unroll, ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
+. Check that <<Cast_expl_unroll, ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
 . The relation holds.
 
-<<Sub_expl_unroll, Sub_expl_unroll>>:
+<<Cast_expl_unroll, Cast_expl_unroll>>:
 
 * ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling
 
-<<Sub_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
 
-<<Sub_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_expl_unroll, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are not the same type>>.
-. Check that <<Sub_expl_unroll_neq, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
+. Check that <<Cast_expl_unroll_neq, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
 . The relation holds.
 
-<<Sub_expl_unroll_neq, Sub_expl_unroll_neq>>:
+<<Cast_expl_unroll_neq, Cast_expl_unroll_neq>>:
 
 * ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
-<<Sub_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT`` ``<`` ``1`` ``>`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``BOOL`` can be explicitly cast to ``BIT`` ``<`` ``1`` ``>`` when they are not the same type after unrolling when>>:
 
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``INT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` is equal to ``BOOL``:
  .. The relation holds.
@@ -6083,7 +6083,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
   ... The relation holds.
 
-<<Sub_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``INT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``integerTypeIR'`` is ``INT``:
  .. The relation holds.
@@ -6092,7 +6092,7 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
 . If ``integerTypeIR'`` is equal to ``BIT`` ``<`` ``nat`` ``>``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``BIT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``BIT`` ``<`` ``nat`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``nat`` is equal to ``1``:
  .. Check that ``typeIR'`` is equal to ``BOOL``.
@@ -6105,86 +6105,86 @@ for each ``typeParameter`` in ``typeParameter^{asterisk}^``
  .. Check that ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TYPE`` ``++_++`` ``typeIR~a~`` be ``typeIR``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
  .. The relation holds.
 . If let ``TYPE`` ``++_++`` ``typeIR~b~`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``enumTypeIR`` be ``typeIR``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
  .. Let ``ENUM`` ``++_++`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
  .. The relation holds.
 . If let ``enumTypeIR`` be ``typeIR'``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
  .. Let ``ENUM`` ``++_++`` ``<`` ``typeIR~b~`` ``>`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``enumTypeIR``.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``DEFAULT`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . Check that <<is_defaultable_typeIR, ``typeIR'`` can be default-initialized>>.
 . The relation holds.
 
-<<Sub_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``HEADER_INVALID`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``LIST`` ``<`` ``typeIR~b~`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b_default~`` can be default-initialized>>, for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6218,7 +6218,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6252,10 +6252,10 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6289,7 +6289,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6340,7 +6340,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_expl, ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6360,120 +6360,120 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET`` ``<`` ``typeIR~b~`` ``>`` when they are not the same type after unrolling when>>:
+<<Cast_expl_unroll_neq, ``typeIR`` can be explicitly cast to ``SET`` ``<`` ``typeIR~b~`` ``>`` when they are not the same type after unrolling when>>:
 
 . If let ``SET`` ``<`` ``typeIR~a~`` ``>`` be ``typeIR``:
- .. Check that <<Sub_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_expl, ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 . If ``~<<is_setTypeIR,`` ``is_setTypeIR(typeIR)>>``:
- .. Check that <<Sub_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>.
+ .. Check that <<Cast_expl, ``typeIR`` can be explicitly cast to ``typeIR~b~``>>.
  .. The relation holds.
 
-<<Sub_impl, Sub_impl>>:
+<<Cast_impl, Cast_impl>>:
 
 * ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``
 
-<<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when>>:
+<<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when>>:
 
 . Let ``typeIR~a_unroll~`` be <<unroll_typeIR, ``typeIR~a~`` with typedefs unrolled>>.
 . Let ``typeIR~b_unroll~`` be <<unroll_typeIR, ``typeIR~b~`` with typedefs unrolled>>.
-. Check that <<Sub_impl_unroll, ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
+. Check that <<Cast_impl_unroll, ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling>>.
 . The relation holds.
 
-<<Sub_impl_unroll, Sub_impl_unroll>>:
+<<Cast_impl_unroll, Cast_impl_unroll>>:
 
 * ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling
 
-<<Sub_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
 
-<<Sub_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
+<<Cast_impl_unroll, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are not the same type>>.
-. Check that <<Sub_impl_unroll_neq, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
+. Check that <<Cast_impl_unroll_neq, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, Sub_impl_unroll_neq>>:
+<<Cast_impl_unroll_neq, Cast_impl_unroll_neq>>:
 
 * ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling
 
-<<Sub_impl_unroll_neq, ``INT`` can be implicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``INT`` can be implicitly cast to ``integerTypeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``integerTypeIR'`` matches pattern ``INT`` ``<`` ``%`` ``>``:
  .. The relation holds.
 . Else if ``integerTypeIR'`` matches pattern ``BIT`` ``<`` ``%`` ``>``:
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``ENUM`` ``typeId`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``valueFieldIR^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``ENUM`` ``typeId`` ``<`` ``typeIR~a~`` ``>`` ``{`` ``valueFieldIR^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
-. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
+. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR'``>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, ``DEFAULT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``DEFAULT`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . Check that <<is_defaultable_typeIR, ``typeIR'`` can be default-initialized>>.
 . The relation holds.
 
-<<Sub_impl_unroll_neq, ``HEADER_INVALID`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``HEADER_INVALID`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``LIST`` ``<`` ``typeIR~b~`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``sequenceTypeIR'`` be ``typeIR'``:
  .. Check that ``sequenceTypeIR'`` matches pattern ``SEQ`` ``<`` ``%`` ``>``.
  .. Let ``SEQ`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``sequenceTypeIR'``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``SEQ`` ``<`` ``typeIR~a~^{asterisk}^`` ``,`` ``...`` ``>`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``TUPLE`` ``<`` ``typeIR~b~^{asterisk}^`` ``>`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b_default~`` can be default-initialized>>, for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``typeIR~b~`` ``[`` ``n~size~`` ``]`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~b~`` can be default-initialized>>.
  .. The relation holds.
 . Else if let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``++_++`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)>>``.
- .. Check that <<Sub_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``>>, for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that <<is_defaultable_typeIR, ``typeIR~field_b_default~`` can be default-initialized>>, for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6507,7 +6507,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 . Else if let ``HEADER`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<eq_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is equal to ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6541,10 +6541,10 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-<<Sub_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
+<<Cast_impl_unroll_neq, ``RECORD`` ``{`` ``(`` ``typeIR~field_a~`` ``id~field_a~`` ``;`` ``)^{asterisk}^`` ``,`` ``...`` ``}`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when>>:
 
 . If let ``STRUCT`` ``++_++`` ``<`` ``++_++^{asterisk}^`` ``>`` ``{`` ``(`` ``typeIR~field_b~`` ``id~field_b~`` ``;`` ``)^{asterisk}^`` ``}`` be ``typeIR'``:
  .. Check that <<sub_set, ``{`` ``id~field_a~^{asterisk}^`` ``}`` is a subset of ``{`` ``id~field_b~^{asterisk}^`` ``}``>>.
@@ -6578,7 +6578,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6629,7 +6629,7 @@ for each ``id~field_a~`` in ``id~field_a~^{asterisk}^``
 --
 +
 for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
- .. Check that <<Sub_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
+ .. Check that <<Cast_impl, ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``>>, for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``.
  .. Let ``{`` ``id~default~^{asterisk}^`` ``}`` be <<diff_set, the difference of the sets ``{`` ``id~field_b~^{asterisk}^`` ``}`` and ``{`` ``id~field_a~^{asterisk}^`` ``}``>>.
  .. Let ``typeIR''''^?^^{asterisk}^`` be the list of ``typeIR''''^?^``, obtained by repeating:
 +
@@ -6737,7 +6737,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_plusminusmult)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6753,7 +6753,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_satplusminus)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6769,7 +6769,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_divmod)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6821,7 +6821,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``typeIR~cast~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_cast~``>>.
 . Let ``ctk~l_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_cast~``>>.
 . Let ``ctk~r_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_cast~``>>.
@@ -6837,7 +6837,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_compare)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6853,7 +6853,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_bitwise)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6886,7 +6886,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_logical)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Let ``ctk~l_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~l_reduced~``>>.
@@ -6906,7 +6906,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~true~``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~false~`` be
 * the result of <<Expr_ok, typing ``expression~false~``, under cursor ``p`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~true_cast~,`` ``typedExpressionIR~false_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~true~`` and ``typedExpressionIR~false~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~true_cast~,`` ``typedExpressionIR~false_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~true~`` and ``typedExpressionIR~false~`` implicitly cast to equal types>>.
 . Let ``typeIR~cast~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~true_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~true_cast~``>>.
 . Let ``ctk~false_cast~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~false_cast~``>>.
@@ -6926,7 +6926,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression'``, under cursor ``p`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
 . Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
-. Check that <<Sub_expl, ``typeIR`` can be explicitly cast to ``typeIR~t~``>>.
+. Check that <<Cast_expl, ``typeIR`` can be explicitly cast to ``typeIR~t~``>>.
 . Let ``expressionNoteIR`` be <<expressionNoteIR, type ``typeIR~t~`` and compile-time known-ness ``ctk``>>.
 . Result in <<typedExpressionIR, ``(`` ``typeIR~t~`` ``)`` ``typedExpressionIR`` annotated with ``expressionNoteIR``>>.
 
@@ -7559,7 +7559,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``typeIR~l~`` be <<type_of_typedLvalueIR, the type of lvalue  ``typedLvalueIR``>>.
  .. Let ``typeIR~r~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
- .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~l~``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~l~``>>.
  .. Result in 
 * the typing context ``TC``, 
 * the abstract control flow ``f``, 
@@ -7573,7 +7573,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR~binary~`` be
 * the result of <<Expr_ok, typing ``expression~binary~``, under cursor ``p`` and typing context ``TC``>>.
  .. Let ``(`` ``typeIR~lvalue~`` ``)`` be the note of ``typedLvalueIR``.
- .. Let ``expressionIR`` ``#`` ``++_++`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``>>.
+ .. Let ``expressionIR`` ``#`` ``++_++`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``>>.
  .. Check that ``expressionIR`` has type ``binaryExpressionIR``.
  .. Let ``++_++`` ``binop''`` ``typedExpressionIR~cast~`` be ``expressionIR``.
  .. Check that ``binop''`` is equal to ``binop'``.
@@ -7715,7 +7715,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``typeIR~ret~`` be <<option_get, *!*>> <<find_local_return_type_t, the expected return type in ``TC``>>.
- .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~ret~``>>.
+ .. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~ret~``>>.
  .. Result in 
 * the typing context ``TC``, 
 * the abstract control flow ``RET``, 
@@ -7926,7 +7926,7 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typeIR~init~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~init~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``value~init~`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
@@ -8972,7 +8972,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``p`` layer>>.
  .. Let ``variableDeclarationIR`` be ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~`` ``;``.
@@ -8993,7 +8993,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``typedExpressionIR~value~`` be
 * the result of <<Expr_ok, typing ``expression~value~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~value~``>> is ``LCTK``.
-. Let ``typedExpressionIR~value_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~value~`` implicitly cast to ``typeIR``>>.
+. Let ``typedExpressionIR~value_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~value~`` implicitly cast to ``typeIR``>>.
 . Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
@@ -9616,7 +9616,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``IN`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
-. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 . Result in ``typedExpressionIR~arg_cast~``.
 
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
@@ -9630,10 +9630,10 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 <<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ```EMPTY`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``actctxt`` is ``ACTION``:
- .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
  .. Result in ``typedExpressionIR~arg_cast~``.
 . Else:
- .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
  .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~arg~``>> does not match pattern ``DYN``.
  .. Result in ``typedExpressionIR~arg_cast~``.
 
@@ -10237,18 +10237,18 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Otherwise:
  .. Return ``·``.
 
-<<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
+<<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR~to~``>>
 
 
 . Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR``.
 . If <<Type_alpha, ``typeIR`` and ``typeIR~to~`` are the same type>>:
  .. Return ``typedExpressionIR``.
 . Else:
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~to~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~to~``>>.
  .. Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~to~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~to~`` and compile-time known-ness ``ctk``>>.
  .. Return ``typedExpressionIR~cast~``.
 
-<<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>
+<<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>
 
 
 . Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l~``.
@@ -10256,21 +10256,21 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . If <<Type_alpha, ``typeIR~l~`` and ``typeIR~r~`` are the same type>>:
  .. Return ``(`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r~`` ``)``.
 . Else:
- .. If <<Sub_impl, ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``>>:
+ .. If <<Cast_impl, ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``>>:
   ... Let ``typedExpressionIR~l_cast~`` be <<typedExpressionIR, ``(`` ``typeIR~r~`` ``)`` ``typedExpressionIR~l~`` annotated with type ``typeIR~r~`` and compile-time known-ness ``ctk``>>.
   ... Return ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~`` ``)``.
  .. Else:
-  ... If <<Sub_impl, ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``>>:
+  ... If <<Cast_impl, ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``>>:
    .... Let ``typedExpressionIR~r_cast~`` be <<typedExpressionIR, ``(`` ``typeIR~l~`` ``)`` ``typedExpressionIR~r~`` annotated with type ``typeIR~l~`` and compile-time known-ness ``ctk``>>.
    .... Return ``(`` ``typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~`` ``)``.
   ... Else:
    .... Let ``typedExpressionIR~l_cast~`` be ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~l~)>>``.
    .... If ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``:
-    ..... Return ``<<coerce_binary,`` ``coerce_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~)>>``.
+    ..... Return ``<<cast_binary,`` ``cast_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r~)>>``.
    .... If ``typedExpressionIR~l~`` is equal to ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~l~)>>``:
     ..... Let ``typedExpressionIR~r_cast~`` be ``<<reduce_serenum,`` ``reduce_serenum(typedExpressionIR~r~)>>``.
     ..... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.
-    ..... Return ``<<coerce_binary,`` ``coerce_binary(typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~)>>``.
+    ..... Return ``<<cast_binary,`` ``cast_binary(typedExpressionIR~l~,`` ``typedExpressionIR~r_cast~)>>``.
 . Otherwise:
  .. Return ``·``.
 
@@ -10641,7 +10641,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
  .. Result in ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~``.
@@ -10679,7 +10679,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Let <<expressionNoteIR, type ``typeIR~list~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
 . Let ``typeIR`` be <<unroll_typeIR, ``typeIR~list~`` with typedefs unrolled>>.
 . If let ``LIST`` ``<`` ``typeIR~e~`` ``>`` be ``typeIR``:
- .. Check that <<Sub_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
+ .. Check that <<Cast_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
  .. Result in ``typedExpressionIR``.
 . Else if let ``typeIR~e~`` ``[`` ``++_++`` ``]`` be ``typeIR``:
  .. Check that <<Type_alpha, ``typeIR~e~`` and ``typeIR~var~`` are the same type>>.
@@ -10691,12 +10691,12 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
-. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_coerced~``.
-. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
+. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_castd~``.
+. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_castd~``.
 . Check that ``<<compat_range,`` ``compat_range(typeIR~l~,`` ``typeIR~r~)>>``.
-. Result in ``typedExpressionIR~l_coerced~`` ``..`` ``typedExpressionIR~r_coerced~``.
+. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
 
 <<compat_range, compat_range(typeIR'', typeIR''')>>:
 [cols="3", options="header"]
@@ -10779,7 +10779,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``expression~label~`` be <<expressionNonBrace_as_expression, the expression corresponding to ``expressionNonBrace~label~``>>.
  .. Let ``typedExpressionIR~label~`` be
 * the result of <<Expr_ok, typing ``expression~label~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~label_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~label~`` implicitly cast to ``typeIR``>>.
+ .. Let ``typedExpressionIR~label_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~label~`` implicitly cast to ``typeIR``>>.
  .. Let <<expressionNoteIR, type ``++_++`` and compile-time known-ness ``ctk``>> be the note of ``typedExpressionIR~label_cast~``.
  .. Check that ``ctk`` is ``LCTK``.
  .. Result in ``typedExpressionIR~label_cast~``.
@@ -11021,7 +11021,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 . Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
-. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR`` implicitly cast to ``typeIR``>>.
+. Let ``typedExpressionIR~cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR`` implicitly cast to ``typeIR``>>.
 . Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~cast~``>> is ``LCTK``.
 . Let ``value`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~cast~``, under cursor ``BLOCK`` and typing context ``TC~0~``>>.
@@ -11076,7 +11076,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Check that ``typeIR'`` has type ``setTypeIR``.
 . Let ``SET`` ``<`` ``typeIR~base~`` ``>`` be ``typeIR'``.
 . Check that <<Type_alpha, ``typeIR~base~`` and ``typeIR~key~`` are not the same type>>.
-. Check that <<Sub_impl, ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``>>.
+. Check that <<Cast_impl, ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``>>.
 . Let ``typeIR~cast~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
 . Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~cast~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
 . Result in ``typedExpressionIR~cast~``.
@@ -11087,7 +11087,7 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
 . Check that ``~<<is_setTypeIR,`` ``is_setTypeIR(unroll_typeIR(typeIR))>>``.
-. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
 . Let ``typeIR~cast~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
 . Let ``typedExpressionIR~cast~`` be <<typedExpressionIR, ``(`` ``typeIR~cast~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~cast~`` and compile-time known-ness ``DYN``>>.
 . Result in ``typedExpressionIR~cast~``.
@@ -11098,12 +11098,12 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Result in ``typedExpressionIR~l_coerced~`` ``&&&`` ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Result in ``typedExpressionIR~l_castd~`` ``&&&`` ``typedExpressionIR~r_castd~``.
 
 <<SelectCase_keyset_simple_ok, ``TC`` ``typeIR~key~`` ``|-`` ``expression~l~`` ``..`` ``expression~r~`` ``:`` ``%``>>:
 
@@ -11111,13 +11111,13 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<coerce_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
+. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be <<option_get, *!*>> <<cast_binary, ``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_range)>>``.
 . Let ``typeIR~reduced~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l_reduced~``>>.
 . Check that ``typeIR~reduced~`` is equal to <<type_of_typedExpressionIR, the type of ``typedExpressionIR~r_reduced~``>>.
-. Let ``typedExpressionIR~l_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_coerced~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
-. Result in ``typedExpressionIR~l_coerced~`` ``..`` ``typedExpressionIR~r_coerced~``.
+. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``>>.
+. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
 
 <<SelectCase_keyset_simple_ok, ``TC`` ``typeIR~key~`` ``|-`` ``DEFAULT`` ``:`` ``%``>>:
 
@@ -11401,7 +11401,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
  .. Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``(`` ``typeIR~set~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
  .. Result in ``LPM`` ``n`` and ``typedExpressionIR~set~``.
@@ -11410,7 +11410,7 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
  .. Let ``ctk`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR``>>.
- .. Check that <<Sub_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
+ .. Check that <<Cast_impl, ``typeIR`` can be implicitly cast to ``typeIR~key~``>>.
  .. Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR~key~`` ``>``.
  .. Let ``typedExpressionIR~set~`` be <<typedExpressionIR, ``(`` ``typeIR~set~`` ``)`` ``typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``>>.
  .. Result in ``NOLPM`` and ``typedExpressionIR~set~``.
@@ -11425,8 +11425,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
- .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
  .. Let ``ctk~r_reduced~`` be <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~r_reduced~``>>.
  .. Check that ``ctk~r_reduced~`` is ``LCTK``.
@@ -11443,8 +11443,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
  .. Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
- .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
- .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+ .. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_mask)>>``.
  .. Result in ``NOLPM`` and ``typedExpressionIR~l_reduced~`` ``&&&`` ``typedExpressionIR~r_reduced~``.
 
@@ -11475,8 +11475,8 @@ for each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` an
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
-. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~l_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``>>.
+. Let ``typedExpressionIR~r_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``>>.
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be <<option_get, *!*>> ``<<reduce_serenum_binary,`` ``reduce_serenum_binary(typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~,`` ``compat_range)>>``.
 . Result in ``NOLPM`` and ``typedExpressionIR~l_reduced~`` ``..`` ``typedExpressionIR~r_reduced~``.
 
@@ -11789,11 +11789,11 @@ for each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in
   ... If let ``infer'''`` be ``infer''^?^``:
    .... Check that ``infer'''`` matches pattern ``KNOWN`` ``AS`` ``%``.
    .... Let ``KNOWN`` ``AS`` ``typeIR~post~`` be ``infer'''``.
-   .... If <<Sub_impl, ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``>>:
+   .... If <<Cast_impl, ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``>>:
     ..... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for ``typeId~h~`` is updated to ``KNOWN`` ``AS`` ``typeIR~post~``>>.
     ..... Return ``<<merge_constraint',`` ``merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)>>``.
    .... Else:
-    ..... Check that <<Sub_impl, ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``>>.
+    ..... Check that <<Cast_impl, ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``>>.
     ..... Let ``constraint~updated~`` be <<update_map, the map ``constraint`` with the value for ``typeId~h~`` is updated to ``KNOWN`` ``AS`` ``typeIR~pre~``>>.
     ..... Return ``<<merge_constraint',`` ``merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)>>``.
 
@@ -12169,24 +12169,24 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"lpm"``:
@@ -12197,12 +12197,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ```BIN`` ``text~key_value~`` be ``tableKeyValueInterface'``:
@@ -12211,12 +12211,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``text~key_base_value~`` be <<replace_text, the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_base_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``text~key_mask_value~`` be <<replace_text_except, the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``>>.
   ... Let ``text~key_mask_value'~`` be <<replace_text, the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``>>.
   ... Let ``i~key_mask_value~`` be ``<<text_to_int,`` ``text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)>>``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ```SLASH`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
@@ -12228,12 +12228,12 @@ for each ``annotation`` in ``annotation^{asterisk}^``
   ... Let ``n~key_remaining_width~`` be ``int``.
   ... Let ``i~key_base_value~`` be ``<<shl,`` ``shl(i~key_prefix_value~,`` ``n~key_remaining_width~)>>``.
   ... Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``D`` ``i~key_base_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~base_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~base~`` implicitly cast to ``typeIR``>>.
   ... Let ``int'`` be ``<<pow2,`` ``pow2(n~key_type_width~)>>``.
   ... Let ``int''`` be ``<<pow2,`` ``pow2(n~key_remaining_width~)>>``.
   ... Let ``i~key_mask_value~`` be ``int'`` ``-`` ``int''``.
   ... Let ``typedExpressionIR~mask~`` be <<typedExpressionIR, ``D`` ``i~key_mask_value~`` annotated with type ``INT`` and compile-time known-ness ``DYN``>>.
-  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<coerce_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
+  ... Let ``typedExpressionIR~mask_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~mask~`` implicitly cast to ``typeIR``>>.
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``&&&`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 
@@ -12329,7 +12329,7 @@ for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
 . Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
 +
 --
- ** Let ``typedExpressionIR^?^`` be <<coerce_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
+ ** Let ``typedExpressionIR^?^`` be <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 --
 +
 for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``

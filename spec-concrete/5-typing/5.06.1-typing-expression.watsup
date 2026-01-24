@@ -167,7 +167,7 @@ rule Expr_ok/binaryExpression-plusminusmult:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -204,7 +204,7 @@ rule Expr_ok/binaryExpression-satplusminus:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -242,7 +242,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+          = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -272,7 +272,7 @@ rulegroup Expr_ok/binaryExpression-divmod {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-          = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+          = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -382,7 +382,7 @@ rule Expr_ok/binaryExpression-equality:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   ---- ;; fetch annotations
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
   -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
@@ -416,7 +416,7 @@ rule Expr_ok/binaryExpression-comparison:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -453,7 +453,7 @@ rule Expr_ok/binaryExpression-bitwise:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -544,7 +544,7 @@ rule Expr_ok/binaryExpression-logical:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -574,7 +574,7 @@ rule Expr_ok/ternaryExpression:
   -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
   ---- ;; check that the types are compatible for the branches
   -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast)
-        = $coerce_binary(typedExpressionIR_true, typedExpressionIR_false)
+        = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
   ---- ;; fetch annotations
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
   -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
@@ -601,7 +601,7 @@ rule Expr_ok/castExpression:
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   ---- ;; check that explicit cast is defined
-  -- Sub_expl: typeIR <: typeIR_t
+  -- Cast_expl: typeIR -> typeIR_t
   ---- ;; create typed expression
   -- if expressionNoteIR = `( typeIR_t ctk )
 

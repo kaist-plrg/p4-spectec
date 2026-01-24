@@ -360,7 +360,7 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
-    -- Sub_impl: typeIR <: typeIR_key
+    -- Cast_impl: typeIR -> typeIR_key
     ---- ;; lift the expression to set type
     -- if typeIR_set = SET `< typeIR_key >
     -- if typedExpressionIR_set
@@ -376,7 +376,7 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check compatibility with the key type
-    -- Sub_impl: typeIR <: typeIR_key
+    -- Cast_impl: typeIR -> typeIR_key
     ---- ;; lift the expression to set type
     -- if typeIR_set = SET `< typeIR_key >
     -- if typedExpressionIR_set
@@ -399,9 +399,9 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if typedExpressionIR_l_cast
-        = $coerce_unary(typedExpressionIR_l, typeIR_key)
+        = $cast_unary(typedExpressionIR_l, typeIR_key)
     -- if typedExpressionIR_r_cast
-        = $coerce_unary(typedExpressionIR_r, typeIR_key)
+        = $cast_unary(typedExpressionIR_r, typeIR_key)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -427,9 +427,9 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     ---- ;; check that the types are compatible
     ---- ;; while inserting implicit casts if necessary
     -- if typedExpressionIR_l_cast
-        = $coerce_unary(typedExpressionIR_l, typeIR_key)
+        = $cast_unary(typedExpressionIR_l, typeIR_key)
     -- if typedExpressionIR_r_cast
-        = $coerce_unary(typedExpressionIR_r, typeIR_key)
+        = $cast_unary(typedExpressionIR_r, typeIR_key)
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
           = $reduce_serenum_binary(
               typedExpressionIR_l_cast,
@@ -449,9 +449,9 @@ rule TableEntry_keyset_simple_ok/range-range:
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_l_cast
-      = $coerce_unary(typedExpressionIR_l, typeIR_key)
+      = $cast_unary(typedExpressionIR_l, typeIR_key)
   -- if typedExpressionIR_r_cast
-      = $coerce_unary(typedExpressionIR_r, typeIR_key)
+      = $cast_unary(typedExpressionIR_r, typeIR_key)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,

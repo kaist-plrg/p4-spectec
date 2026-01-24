@@ -16749,24 +16749,24 @@ relation TypeArgumentList_ok: p TC |- typeArgumentList : % # %
   3. Result in: % % |- % : (typeArgumentIR)* # (typeId_impl)*
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:66.1-69.57
-relation Sub_expl: typeIR_a <: typeIR_b
+relation Cast_expl: typeIR_a -> typeIR_b
 
-1. Group : typeIR_a <: typeIR_b
+1. Group : typeIR_a -> typeIR_b
 
   1. (Let typeIR_a_unroll be $unroll_typeIR(typeIR_a))
 
   2. (Let typeIR_b_unroll be $unroll_typeIR(typeIR_b))
 
-  3. If (Sub_expl_unroll: typeIR_a_unroll <: typeIR_b_unroll) holds, then
+  3. If (Cast_expl_unroll: typeIR_a_unroll -> typeIR_b_unroll) holds, then
 
     1. The relation holds
 
   3. Else Phantom#913
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:70.1-73.75
-relation Sub_expl_unroll: typeIR_a <: typeIR_b
+relation Cast_expl_unroll: typeIR_a -> typeIR_b
 
-1. Group equals: typeIR_a <: typeIR_b
+1. Group equals: typeIR_a -> typeIR_b
 
   1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
@@ -16774,11 +16774,11 @@ relation Sub_expl_unroll: typeIR_a <: typeIR_b
 
   1. Else Phantom#914
 
-2. Group not-equals: typeIR_a <: typeIR_b
+2. Group not-equals: typeIR_a -> typeIR_b
 
   1. If (Type_alpha: typeIR_a ~~ typeIR_b) does not hold, then
 
-    1. If (Sub_expl_unroll_neq: typeIR_a <: typeIR_b) holds, then
+    1. If (Cast_expl_unroll_neq: typeIR_a -> typeIR_b) holds, then
 
       1. The relation holds
 
@@ -16787,7 +16787,7 @@ relation Sub_expl_unroll: typeIR_a <: typeIR_b
   1. Else Phantom#916
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:74.1-77.107
-relation Sub_expl_unroll_neq: typeIR <: typeIR'
+relation Cast_expl_unroll_neq: typeIR -> typeIR'
 
 1. Case analysis on typeIR
 
@@ -16797,7 +16797,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
     2. If ((typeIR' = ((bit< 1 >) as typeIR))), then
 
-      1. Group boolean-fixBit: ((bool) as typeIR) <: ((bit< 1 >) as typeIR)
+      1. Group boolean-fixBit: ((bool) as typeIR) -> ((bit< 1 >) as typeIR)
 
         1. The relation holds
 
@@ -16811,7 +16811,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
       1. Case (% matches pattern `INT`)
 
-        1. Group arbitraryInt: ((int) as typeIR) <: typeIR'
+        1. Group arbitraryInt: ((int) as typeIR) -> typeIR'
 
           1. If ((typeIR' = ((bool) as typeIR))), then
 
@@ -16845,7 +16845,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
           1. (Let integerTypeIR' be (typeIR' as integerTypeIR))
 
-          2. Group fixInt: ((int< nat >) as typeIR) <: (integerTypeIR' as typeIR)
+          2. Group fixInt: ((int< nat >) as typeIR) -> (integerTypeIR' as typeIR)
 
             1. Case analysis on integerTypeIR'
 
@@ -16871,7 +16871,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (bit< nat >) be integerTypeIR)
 
-        2. Group fixBit: ((bit< nat >) as typeIR) <: typeIR'
+        2. Group fixBit: ((bit< nat >) as typeIR) -> typeIR'
 
           1. If ((nat = 1)), then
 
@@ -16911,13 +16911,13 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
 1. Else Phantom#931
 
-2. Group newTypeIR: typeIR <: typeIR'
+2. Group newTypeIR: typeIR -> typeIR'
 
   1. If ((typeIR has type newTypeIR)), then
 
     1. (Let (type _typeId typeIR_a) be (typeIR as newTypeIR))
 
-    2. If (Sub_impl: typeIR_a <: typeIR') holds, then
+    2. If (Cast_impl: typeIR_a -> typeIR') holds, then
 
       1. The relation holds
 
@@ -16929,7 +16929,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
     1. (Let (type _typeId typeIR_b) be (typeIR' as newTypeIR))
 
-    2. If (Sub_impl: typeIR <: typeIR_b) holds, then
+    2. If (Cast_impl: typeIR -> typeIR_b) holds, then
 
       1. The relation holds
 
@@ -16937,7 +16937,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
   2. Else Phantom#935
 
-3. Group enumTypeIR-serializable: typeIR <: typeIR'
+3. Group enumTypeIR-serializable: typeIR -> typeIR'
 
   1. If ((typeIR has type enumTypeIR)), then
 
@@ -16947,7 +16947,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
       1. (Let (enum _typeId < typeIR_a >{ (_valueFieldIR)* }) be enumTypeIR)
 
-      2. If (Sub_impl: typeIR_a <: typeIR') holds, then
+      2. If (Cast_impl: typeIR_a -> typeIR') holds, then
 
         1. The relation holds
 
@@ -16965,7 +16965,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
       1. (Let (enum _typeId < typeIR_b >{ (_valueFieldIR)* }) be enumTypeIR)
 
-      2. If (Sub_impl: typeIR <: typeIR_b) holds, then
+      2. If (Cast_impl: typeIR -> typeIR_b) holds, then
 
         1. The relation holds
 
@@ -16981,7 +16981,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
     1. (Let defaultTypeIR be (typeIR as defaultTypeIR))
 
-    2. Group defaultTypeIR: ((default) as typeIR) <: typeIR'
+    2. Group defaultTypeIR: ((default) as typeIR) -> typeIR'
 
       1. If ($is_defaultable_typeIR(typeIR')), then
 
@@ -16993,7 +16993,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
     1. (Let invalidHeaderTypeIR be (typeIR as invalidHeaderTypeIR))
 
-    2. Group invalidHeaderTypeIR: ((header_invalid) as typeIR) <: typeIR'
+    2. Group invalidHeaderTypeIR: ((header_invalid) as typeIR) -> typeIR'
 
       1. Case analysis on typeIR'
 
@@ -17017,7 +17017,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (seq< (typeIR_a)* >) be sequenceTypeIR)
 
-        2. Group sequenceTypeIR-non-default: ((seq< (typeIR_a)* >) as typeIR) <: typeIR'
+        2. Group sequenceTypeIR-non-default: ((seq< (typeIR_a)* >) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17025,7 +17025,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (list< typeIR_b >) be (typeIR' as listTypeIR))
 
-              2. If (Sub_expl: typeIR_a <: typeIR_b)* holds, then
+              2. If (Cast_expl: typeIR_a -> typeIR_b)* holds, then
 
                 1. The relation holds
 
@@ -17035,7 +17035,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (tuple< (typeIR_b)* >) be (typeIR' as tupleTypeIR))
 
-              2. If (Sub_expl: typeIR_a <: typeIR_b)* holds, then
+              2. If (Cast_expl: typeIR_a -> typeIR_b)* holds, then
 
                 1. The relation holds
 
@@ -17047,7 +17047,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ((|(typeIR_a)*| <= n_size)), then
 
-                1. If (Sub_expl: typeIR_a <: typeIR_b)* holds, then
+                1. If (Cast_expl: typeIR_a -> typeIR_b)* holds, then
 
                   1. The relation holds
 
@@ -17059,7 +17059,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field_b _nameIR ;))* }) be (typeIR' as structTypeIR))
 
-              2. If (Sub_expl: typeIR_a <: typeIR_field_b)* holds, then
+              2. If (Cast_expl: typeIR_a -> typeIR_field_b)* holds, then
 
                 1. The relation holds
 
@@ -17069,7 +17069,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR_field_b _nameIR ;))* }) be (typeIR' as headerTypeIR))
 
-              2. If (Sub_expl: typeIR_a <: typeIR_field_b)* holds, then
+              2. If (Cast_expl: typeIR_a -> typeIR_field_b)* holds, then
 
                 1. The relation holds
 
@@ -17081,7 +17081,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (seq< (typeIR_a)* ,...>) be sequenceTypeIR)
 
-        2. Group sequenceTypeIR-default: ((seq< (typeIR_a)* ,...>) as typeIR) <: typeIR'
+        2. Group sequenceTypeIR-default: ((seq< (typeIR_a)* ,...>) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17093,7 +17093,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_b_non_default)*, (typeIR_b_default)*) be $partition_<typeIR>((typeIR_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_expl: typeIR_a <: typeIR_b_non_default)* holds, then
+                2. If (Cast_expl: typeIR_a -> typeIR_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -17111,7 +17111,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
               2. If ((|(typeIR_a)*| < n_size)), then
 
-                1. If (Sub_expl: typeIR_a <: typeIR_b)* holds, then
+                1. If (Cast_expl: typeIR_a -> typeIR_b)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_b)), then
 
@@ -17131,7 +17131,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_field_b_non_default)*, (typeIR_field_b_default)*) be $partition_<typeIR>((typeIR_field_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_expl: typeIR_a <: typeIR_field_b_non_default)* holds, then
+                2. If (Cast_expl: typeIR_a -> typeIR_field_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17151,7 +17151,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_field_b_non_default)*, (typeIR_field_b_default)*) be $partition_<typeIR>((typeIR_field_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_expl: typeIR_a <: typeIR_field_b_non_default)* holds, then
+                2. If (Cast_expl: typeIR_a -> typeIR_field_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17175,7 +17175,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (record{ ((typeIR_field_a id_field_a ;))* }) be recordTypeIR)
 
-        2. Group recordTypeIR-non-default: ((record{ ((typeIR_field_a id_field_a ;))* }) as typeIR) <: typeIR'
+        2. Group recordTypeIR-non-default: ((record{ ((typeIR_field_a id_field_a ;))* }) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17197,7 +17197,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
+                    2. If (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned)* holds, then
 
                       1. The relation holds
 
@@ -17227,7 +17227,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
+                    2. If (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned)* holds, then
 
                       1. The relation holds
 
@@ -17245,7 +17245,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (record{ ((typeIR_field_a id_field_a ;))* ,...}) be recordTypeIR)
 
-        2. Group recordTypeIR_default: ((record{ ((typeIR_field_a id_field_a ;))* ,...}) as typeIR) <: typeIR'
+        2. Group recordTypeIR_default: ((record{ ((typeIR_field_a id_field_a ;))* ,...}) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17267,7 +17267,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
+                    2. If (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
@@ -17311,7 +17311,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_expl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
+                    2. If (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
@@ -17345,13 +17345,13 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
   1. (Let (set< typeIR_b >) be (typeIR' as setTypeIR))
 
-  2. Group setTypeIR: typeIR <: ((set< typeIR_b >) as typeIR)
+  2. Group setTypeIR: typeIR -> ((set< typeIR_b >) as typeIR)
 
     1. If ((typeIR has type setTypeIR)), then
 
       1. (Let (set< typeIR_a >) be (typeIR as setTypeIR))
 
-      2. If (Sub_expl: typeIR_a <: typeIR_b) holds, then
+      2. If (Cast_expl: typeIR_a -> typeIR_b) holds, then
 
         1. The relation holds
 
@@ -17361,7 +17361,7 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 
     2. If (~$is_setTypeIR(typeIR)), then
 
-      1. If (Sub_expl: typeIR <: typeIR_b) holds, then
+      1. If (Cast_expl: typeIR -> typeIR_b) holds, then
 
         1. The relation holds
 
@@ -17372,24 +17372,24 @@ relation Sub_expl_unroll_neq: typeIR <: typeIR'
 5. Else Phantom#991
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:79.1-82.57
-relation Sub_impl: typeIR_a <: typeIR_b
+relation Cast_impl: typeIR_a -> typeIR_b
 
-1. Group : typeIR_a <: typeIR_b
+1. Group : typeIR_a -> typeIR_b
 
   1. (Let typeIR_a_unroll be $unroll_typeIR(typeIR_a))
 
   2. (Let typeIR_b_unroll be $unroll_typeIR(typeIR_b))
 
-  3. If (Sub_impl_unroll: typeIR_a_unroll <: typeIR_b_unroll) holds, then
+  3. If (Cast_impl_unroll: typeIR_a_unroll -> typeIR_b_unroll) holds, then
 
     1. The relation holds
 
   3. Else Phantom#992
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:83.1-86.75
-relation Sub_impl_unroll: typeIR_a <: typeIR_b
+relation Cast_impl_unroll: typeIR_a -> typeIR_b
 
-1. Group equals: typeIR_a <: typeIR_b
+1. Group equals: typeIR_a -> typeIR_b
 
   1. If (Type_alpha: typeIR_a ~~ typeIR_b) holds, then
 
@@ -17397,11 +17397,11 @@ relation Sub_impl_unroll: typeIR_a <: typeIR_b
 
   1. Else Phantom#993
 
-2. Group not-equals: typeIR_a <: typeIR_b
+2. Group not-equals: typeIR_a -> typeIR_b
 
   1. If (Type_alpha: typeIR_a ~~ typeIR_b) does not hold, then
 
-    1. If (Sub_impl_unroll_neq: typeIR_a <: typeIR_b) holds, then
+    1. If (Cast_impl_unroll_neq: typeIR_a -> typeIR_b) holds, then
 
       1. The relation holds
 
@@ -17410,7 +17410,7 @@ relation Sub_impl_unroll: typeIR_a <: typeIR_b
   1. Else Phantom#995
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:87.1-90.107
-relation Sub_impl_unroll_neq: typeIR <: typeIR'
+relation Cast_impl_unroll_neq: typeIR -> typeIR'
 
 1. Case analysis on typeIR
 
@@ -17424,7 +17424,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
         1. (Let integerTypeIR' be (typeIR' as integerTypeIR))
 
-        2. Group arbitraryInt: ((int) as typeIR) <: (integerTypeIR' as typeIR)
+        2. Group arbitraryInt: ((int) as typeIR) -> (integerTypeIR' as typeIR)
 
           1. Case analysis on integerTypeIR'
 
@@ -17450,9 +17450,9 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
       1. (Let (enum typeId < typeIR_a >{ (valueFieldIR)* }) be enumTypeIR)
 
-      2. Group enumTypeIR-serializable: ((enum typeId < typeIR_a >{ (valueFieldIR)* }) as typeIR) <: typeIR'
+      2. Group enumTypeIR-serializable: ((enum typeId < typeIR_a >{ (valueFieldIR)* }) as typeIR) -> typeIR'
 
-        1. If (Sub_impl: typeIR_a <: typeIR') holds, then
+        1. If (Cast_impl: typeIR_a -> typeIR') holds, then
 
           1. The relation holds
 
@@ -17464,7 +17464,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
     1. (Let defaultTypeIR be (typeIR as defaultTypeIR))
 
-    2. Group defaultTypeIR: ((default) as typeIR) <: typeIR'
+    2. Group defaultTypeIR: ((default) as typeIR) -> typeIR'
 
       1. If ($is_defaultable_typeIR(typeIR')), then
 
@@ -17476,7 +17476,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
     1. (Let invalidHeaderTypeIR be (typeIR as invalidHeaderTypeIR))
 
-    2. Group invalidHeaderTypeIR: ((header_invalid) as typeIR) <: typeIR'
+    2. Group invalidHeaderTypeIR: ((header_invalid) as typeIR) -> typeIR'
 
       1. Case analysis on typeIR'
 
@@ -17500,7 +17500,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (seq< (typeIR_a)* >) be sequenceTypeIR)
 
-        2. Group sequenceTypeIR-non-default: ((seq< (typeIR_a)* >) as typeIR) <: typeIR'
+        2. Group sequenceTypeIR-non-default: ((seq< (typeIR_a)* >) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17508,7 +17508,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (list< typeIR_b >) be (typeIR' as listTypeIR))
 
-              2. If (Sub_impl: typeIR_a <: typeIR_b)* holds, then
+              2. If (Cast_impl: typeIR_a -> typeIR_b)* holds, then
 
                 1. The relation holds
 
@@ -17518,7 +17518,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (tuple< (typeIR_b)* >) be (typeIR' as tupleTypeIR))
 
-              2. If (Sub_impl: typeIR_a <: typeIR_b)* holds, then
+              2. If (Cast_impl: typeIR_a -> typeIR_b)* holds, then
 
                 1. The relation holds
 
@@ -17530,7 +17530,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ((|(typeIR_a)*| <= n_size)), then
 
-                1. If (Sub_impl: typeIR_a <: typeIR_b)* holds, then
+                1. If (Cast_impl: typeIR_a -> typeIR_b)* holds, then
 
                   1. The relation holds
 
@@ -17542,7 +17542,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (struct _typeId < (_typeArgumentIR)* >{ ((typeIR_field_b _nameIR ;))* }) be (typeIR' as structTypeIR))
 
-              2. If (Sub_impl: typeIR_a <: typeIR_field_b)* holds, then
+              2. If (Cast_impl: typeIR_a -> typeIR_field_b)* holds, then
 
                 1. The relation holds
 
@@ -17552,7 +17552,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               1. (Let (header _typeId < (_typeArgumentIR)* >{ ((typeIR_field_b _nameIR ;))* }) be (typeIR' as headerTypeIR))
 
-              2. If (Sub_impl: typeIR_a <: typeIR_field_b)* holds, then
+              2. If (Cast_impl: typeIR_a -> typeIR_field_b)* holds, then
 
                 1. The relation holds
 
@@ -17566,7 +17566,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let (seq< (typeIR_b)* >) be sequenceTypeIR')
 
-                2. If (Sub_impl: typeIR_a <: typeIR_b)* holds, then
+                2. If (Cast_impl: typeIR_a -> typeIR_b)* holds, then
 
                   1. The relation holds
 
@@ -17580,7 +17580,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (seq< (typeIR_a)* ,...>) be sequenceTypeIR)
 
-        2. Group sequenceTypeIR-default: ((seq< (typeIR_a)* ,...>) as typeIR) <: typeIR'
+        2. Group sequenceTypeIR-default: ((seq< (typeIR_a)* ,...>) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17592,7 +17592,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_b_non_default)*, (typeIR_b_default)*) be $partition_<typeIR>((typeIR_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_impl: typeIR_a <: typeIR_b_non_default)* holds, then
+                2. If (Cast_impl: typeIR_a -> typeIR_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_b_default))*, then
 
@@ -17610,7 +17610,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
               2. If ((|(typeIR_a)*| < n_size)), then
 
-                1. If (Sub_impl: typeIR_a <: typeIR_b)* holds, then
+                1. If (Cast_impl: typeIR_a -> typeIR_b)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_b)), then
 
@@ -17630,7 +17630,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_field_b_non_default)*, (typeIR_field_b_default)*) be $partition_<typeIR>((typeIR_field_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_impl: typeIR_a <: typeIR_field_b_non_default)* holds, then
+                2. If (Cast_impl: typeIR_a -> typeIR_field_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17650,7 +17650,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                 1. (Let ((typeIR_field_b_non_default)*, (typeIR_field_b_default)*) be $partition_<typeIR>((typeIR_field_b)*, |(typeIR_a)*|))
 
-                2. If (Sub_impl: typeIR_a <: typeIR_field_b_non_default)* holds, then
+                2. If (Cast_impl: typeIR_a -> typeIR_field_b_non_default)* holds, then
 
                   1. If ($is_defaultable_typeIR(typeIR_field_b_default))*, then
 
@@ -17674,7 +17674,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (record{ ((typeIR_field_a id_field_a ;))* }) be recordTypeIR)
 
-        2. Group recordTypeIR-non-default: ((record{ ((typeIR_field_a id_field_a ;))* }) as typeIR) <: typeIR'
+        2. Group recordTypeIR-non-default: ((record{ ((typeIR_field_a id_field_a ;))* }) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17696,7 +17696,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
+                    2. If (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned)* holds, then
 
                       1. The relation holds
 
@@ -17726,7 +17726,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_aligned)* holds, then
+                    2. If (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned)* holds, then
 
                       1. The relation holds
 
@@ -17744,7 +17744,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
         1. (Let (record{ ((typeIR_field_a id_field_a ;))* ,...}) be recordTypeIR)
 
-        2. Group recordTypeIR-default: ((record{ ((typeIR_field_a id_field_a ;))* ,...}) as typeIR) <: typeIR'
+        2. Group recordTypeIR-default: ((record{ ((typeIR_field_a id_field_a ;))* ,...}) as typeIR) -> typeIR'
 
           1. Case analysis on typeIR'
 
@@ -17766,7 +17766,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
+                    2. If (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
@@ -17810,7 +17810,7 @@ relation Sub_impl_unroll_neq: typeIR <: typeIR'
 
                     1. (Let ?(typeIR_field_b_non_default_aligned) be (typeIR''')?)*
 
-                    2. If (Sub_impl: typeIR_field_a_aligned <: typeIR_field_b_non_default_aligned)* holds, then
+                    2. If (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned)* holds, then
 
                       1. (Let ({ (id_default)* }) be $diff_set<id>(({ (id_field_b)* }), ({ (id_field_a)* })))
 
@@ -18049,7 +18049,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18087,7 +18087,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18125,7 +18125,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18249,7 +18249,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18283,7 +18283,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18321,7 +18321,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18397,7 +18397,7 @@ relation Expr_ok: p TC |- expression : %
 
         2. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-        3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+        3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
         4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18445,7 +18445,7 @@ relation Expr_ok: p TC |- expression : %
 
         3. (Expr_ok: p TC |- expression_false : typedExpressionIR_false)
 
-        4. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_true, typedExpressionIR_false))
+        4. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_true, typedExpressionIR_false))
 
         5. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -18489,7 +18489,7 @@ relation Expr_ok: p TC |- expression : %
 
           3. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-          4. If (Sub_expl: typeIR <: typeIR_t) holds, then
+          4. If (Cast_expl: typeIR -> typeIR_t) holds, then
 
             1. (Let expressionNoteIR be (( typeIR_t ctk )))
 
@@ -19728,7 +19728,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
           4. (Let typeIR_r be $type_of_typedExpressionIR(typedExpressionIR))
 
-          5. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_l))
+          5. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR_l))
 
           6. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -19756,7 +19756,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             6. (Let (_lvalueIR # (( typeIR_lvalue ))) be typedLvalueIR)
 
-            7. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_binary, typeIR_lvalue))
+            7. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_binary, typeIR_lvalue))
 
             8. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -19996,7 +19996,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
               1. (Let ?(typeIR_ret) be (typeIR')?)
 
-              2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR_ret))
+              2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR_ret))
 
               3. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -20286,7 +20286,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
         3. If (($ctk_of_typedExpressionIR(typedExpressionIR_init) matches pattern `LCTK`)), then
 
-          1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_init, typeIR))
+          1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_init, typeIR))
 
           2. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -22083,7 +22083,7 @@ relation VarDecl_ok: p TC_0 |- (annotationList type name initializerOpt ;) : % %
 
             1. (Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init)
 
-            2. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_init, typeIR))
+            2. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_init, typeIR))
 
             3. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -22120,7 +22120,7 @@ relation ConstDecl_ok: p TC_0 |- (annotationList const type name (= expression_v
 
       2. If (($ctk_of_typedExpressionIR(typedExpressionIR_value) matches pattern `LCTK`)), then
 
-        1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_value, typeIR))
+        1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_value, typeIR))
 
         2. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -23016,7 +23016,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
   1. Group in: p TC actctxt |- (annotationList (in) typeIR_param id constantInitializerOptIR) @ typedExpressionIR_arg : %
 
-    1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
+    1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))
 
     2. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -23054,7 +23054,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
       1. Case (% matches pattern `ACTION`)
 
-        1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
+        1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))
 
         2. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -23066,7 +23066,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
       2. Case (% matches pattern `NOACTION`)
 
-        1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))
+        1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))
 
         2. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -24191,7 +24191,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
   1. Return ?()
 
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:499.1-500.44
-def $coerce_unary(typedExpressionIR, typeIR_to)
+def $cast_unary(typedExpressionIR, typeIR_to)
 
 1. (Let (_expressionIR # (( typeIR ctk ))) be typedExpressionIR)
 
@@ -24201,7 +24201,7 @@ def $coerce_unary(typedExpressionIR, typeIR_to)
 
 2. Else,
 
-  1. If (Sub_impl: typeIR <: typeIR_to) holds, then
+  1. If (Cast_impl: typeIR -> typeIR_to) holds, then
 
     1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR) as expressionIR) # (( typeIR_to ctk ))))
 
@@ -24210,7 +24210,7 @@ def $coerce_unary(typedExpressionIR, typeIR_to)
   1. Else Phantom#1495
 
 ;; ../../../../spec-concrete/5-typing/5.05.2-typing-subtyping.watsup:515.1-517.62
-def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
 
@@ -24222,7 +24222,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
 3. Else,
 
-  1. If (Sub_impl: typeIR_l <: typeIR_r) holds, then
+  1. If (Cast_impl: typeIR_l -> typeIR_r) holds, then
 
     1. (Let typedExpressionIR_l_cast be (((( typeIR_r ) typedExpressionIR_l) as expressionIR) # (( typeIR_r ctk ))))
 
@@ -24230,7 +24230,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
   1. Else,
 
-    1. If (Sub_impl: typeIR_r <: typeIR_l) holds, then
+    1. If (Cast_impl: typeIR_r -> typeIR_l) holds, then
 
       1. (Let typedExpressionIR_r_cast be (((( typeIR_l ) typedExpressionIR_r) as expressionIR) # (( typeIR_l ctk ))))
 
@@ -24242,7 +24242,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
       2. If ((typedExpressionIR_l =/= typedExpressionIR_l_cast)), then
 
-        1. Return $coerce_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+        1. Return $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
 
       3. If ((typedExpressionIR_l = $reduce_serenum(typedExpressionIR_l))), then
 
@@ -24250,7 +24250,7 @@ def $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
 
         2. If ((typedExpressionIR_r =/= typedExpressionIR_r_cast)), then
 
-          1. Return $coerce_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+          1. Return $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
 
 4. Otherwise
 
@@ -25836,7 +25836,7 @@ relation ForInitStmt_ok: TC_0 |- forInitStatement : % %
 
                 1. (Expr_ok: (local) TC_0 |- expression_init : typedExpressionIR_init)
 
-                2. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_init, typeIR))
+                2. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_init, typeIR))
 
                 3. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -25923,7 +25923,7 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
           1. (Let (list< typeIR_e >) be (typeIR as listTypeIR))
 
-          2. If (Sub_impl: typeIR_e <: typeIR_var) holds, then
+          2. If (Cast_impl: typeIR_e -> typeIR_var) holds, then
 
             1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
@@ -25951,25 +25951,25 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
       2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-      3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l, typeIR_var))
+      3. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l, typeIR_var))
 
       4. If (((typedExpressionIR)? matches pattern (_))), then
 
-        1. (Let ?(typedExpressionIR_l_coerced) be (typedExpressionIR)?)
+        1. (Let ?(typedExpressionIR_l_castd) be (typedExpressionIR)?)
 
-        2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r, typeIR_var))
+        2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r, typeIR_var))
 
         3. If (((typedExpressionIR')? matches pattern (_))), then
 
-          1. (Let ?(typedExpressionIR_r_coerced) be (typedExpressionIR')?)
+          1. (Let ?(typedExpressionIR_r_castd) be (typedExpressionIR')?)
 
-          2. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l_coerced)
+          2. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l_castd)
 
-          3. (Let (_expressionIR' # (( typeIR_r _ctk' ))) be typedExpressionIR_r_coerced)
+          3. (Let (_expressionIR' # (( typeIR_r _ctk' ))) be typedExpressionIR_r_castd)
 
           4. If ($compat_range(typeIR_l, typeIR_r)), then
 
-            1. Result in: % % |- % : (typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced)
+            1. Result in: % % |- % : (typedExpressionIR_l_castd .. typedExpressionIR_r_castd)
 
           4. Else Phantom#1678
 
@@ -26228,7 +26228,7 @@ relation SwitchLabel_general_ok: TC typeIR bool |- switchLabel : %
 
     3. (Expr_ok: (local) TC |- expression_label : typedExpressionIR_label)
 
-    4. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_label, typeIR))
+    4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_label, typeIR))
 
     5. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -26651,7 +26651,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
   1. (Expr_ok: (block) TC_0 |- expression : typedExpressionIR)
 
-  2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR, typeIR))
+  2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR))
 
   3. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -26752,7 +26752,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
         2. If (Type_alpha: typeIR_base ~~ typeIR_key) does not hold, then
 
-          1. If (Sub_impl: typeIR_base <: typeIR_key) holds, then
+          1. If (Cast_impl: typeIR_base -> typeIR_key) holds, then
 
             1. (Let typeIR_cast be ((set< typeIR_key >) as typeIR))
 
@@ -26774,7 +26774,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
       3. If (~$is_setTypeIR($unroll_typeIR(typeIR))), then
 
-        1. If (Sub_impl: typeIR <: typeIR_key) holds, then
+        1. If (Cast_impl: typeIR -> typeIR_key) holds, then
 
           1. (Let typeIR_cast be ((set< typeIR_key >) as typeIR))
 
@@ -26796,7 +26796,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
       2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-      3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+      3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
       4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -26810,19 +26810,19 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           2. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-          3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
+          3. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l_reduced, typeIR_key))
 
           4. If (((typedExpressionIR)? matches pattern (_))), then
 
-            1. (Let ?(typedExpressionIR_l_coerced) be (typedExpressionIR)?)
+            1. (Let ?(typedExpressionIR_l_castd) be (typedExpressionIR)?)
 
-            2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r_reduced, typeIR_key))
+            2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r_reduced, typeIR_key))
 
             3. If (((typedExpressionIR')? matches pattern (_))), then
 
-              1. (Let ?(typedExpressionIR_r_coerced) be (typedExpressionIR')?)
+              1. (Let ?(typedExpressionIR_r_castd) be (typedExpressionIR')?)
 
-              2. Result in: % % |- % : (typedExpressionIR_l_coerced &&& typedExpressionIR_r_coerced)
+              2. Result in: % % |- % : (typedExpressionIR_l_castd &&& typedExpressionIR_r_castd)
 
             3. Else Phantom#1746
 
@@ -26842,7 +26842,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
       2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-      3. (Let ((typedExpressionIR, typedExpressionIR))? be $coerce_binary(typedExpressionIR_l, typedExpressionIR_r))
+      3. (Let ((typedExpressionIR, typedExpressionIR))? be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
 
       4. If ((((typedExpressionIR, typedExpressionIR))? matches pattern (_))), then
 
@@ -26858,19 +26858,19 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           3. If ((typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))), then
 
-            1. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l_reduced, typeIR_key))
+            1. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l_reduced, typeIR_key))
 
             2. If (((typedExpressionIR)? matches pattern (_))), then
 
-              1. (Let ?(typedExpressionIR_l_coerced) be (typedExpressionIR)?)
+              1. (Let ?(typedExpressionIR_l_castd) be (typedExpressionIR)?)
 
-              2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r_reduced, typeIR_key))
+              2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r_reduced, typeIR_key))
 
               3. If (((typedExpressionIR')? matches pattern (_))), then
 
-                1. (Let ?(typedExpressionIR_r_coerced) be (typedExpressionIR')?)
+                1. (Let ?(typedExpressionIR_r_castd) be (typedExpressionIR')?)
 
-                2. Result in: % % |- % : (typedExpressionIR_l_coerced .. typedExpressionIR_r_coerced)
+                2. Result in: % % |- % : (typedExpressionIR_l_castd .. typedExpressionIR_r_castd)
 
               3. Else Phantom#1750
 
@@ -27710,7 +27710,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             4. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-            5. If (Sub_impl: typeIR <: typeIR_key) holds, then
+            5. If (Cast_impl: typeIR -> typeIR_key) holds, then
 
               1. (Let typeIR_set be ((set< typeIR_key >) as typeIR))
 
@@ -27730,7 +27730,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
           3. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-          4. If (Sub_impl: typeIR <: typeIR_key) holds, then
+          4. If (Cast_impl: typeIR -> typeIR_key) holds, then
 
             1. (Let typeIR_set be ((set< typeIR_key >) as typeIR))
 
@@ -27760,13 +27760,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
             3. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-            4. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l, typeIR_key))
+            4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l, typeIR_key))
 
             5. If (((typedExpressionIR)? matches pattern (_))), then
 
               1. (Let ?(typedExpressionIR_l_cast) be (typedExpressionIR)?)
 
-              2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r, typeIR_key))
+              2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r, typeIR_key))
 
               3. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -27812,13 +27812,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
           2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-          3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l, typeIR_key))
+          3. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l, typeIR_key))
 
           4. If (((typedExpressionIR)? matches pattern (_))), then
 
             1. (Let ?(typedExpressionIR_l_cast) be (typedExpressionIR)?)
 
-            2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r, typeIR_key))
+            2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r, typeIR_key))
 
             3. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -27904,13 +27904,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key, text) @ simpleKeys
 
       2. (Expr_ok: (local) TC |- expression_r : typedExpressionIR_r)
 
-      3. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_l, typeIR_key))
+      3. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_l, typeIR_key))
 
       4. If (((typedExpressionIR)? matches pattern (_))), then
 
         1. (Let ?(typedExpressionIR_l_cast) be (typedExpressionIR)?)
 
-        2. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_r, typeIR_key))
+        2. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_r, typeIR_key))
 
         3. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28513,7 +28513,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
             1. (Let (knownas typeIR_post) be infer''')
 
-            2. If (Sub_impl: typeIR_pre <: typeIR_post) holds, then
+            2. If (Cast_impl: typeIR_pre -> typeIR_post) holds, then
 
               1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, (knownas typeIR_post)))
 
@@ -28521,7 +28521,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
             2. Else,
 
-              1. If (Sub_impl: typeIR_post <: typeIR_pre) holds, then
+              1. If (Cast_impl: typeIR_post -> typeIR_pre) holds, then
 
                 1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, (knownas typeIR_pre)))
 
@@ -29436,7 +29436,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
           4. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-          5. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_base, typeIR))
+          5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
 
           6. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -29450,7 +29450,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            6. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_mask, typeIR))
+            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
 
             7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -29474,7 +29474,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
           4. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-          5. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_base, typeIR))
+          5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
 
           6. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -29488,7 +29488,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            6. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_mask, typeIR))
+            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
 
             7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -29530,7 +29530,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            4. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_base, typeIR))
+            4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
 
             5. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -29544,7 +29544,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              6. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_mask, typeIR))
+              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
 
               7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -29574,7 +29574,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            4. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_base, typeIR))
+            4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
 
             5. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -29588,7 +29588,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              6. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_mask, typeIR))
+              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
 
               7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -29624,7 +29624,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              4. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_base, typeIR))
+              4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
 
               5. If (((typedExpressionIR)? matches pattern (_))), then
 
@@ -29634,7 +29634,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                 3. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-                4. (Let (typedExpressionIR')? be $coerce_unary(typedExpressionIR_mask, typeIR))
+                4. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
 
                 5. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -29731,7 +29731,7 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
   4. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
 
-  5. (Let (typedExpressionIR)? be $coerce_unary(typedExpressionIR_arg, typeIR_param))*
+  5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))*
 
   6. If (((typedExpressionIR)? matches pattern (_)))*, then
 

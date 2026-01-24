@@ -35,7 +35,7 @@ rulegroup VarDecl_ok {
     ---- ;; check that the expression matches the type
     ---- ;; while inserting implicit casts if necessary
     -- if typedExpressionIR_init_cast
-        = $coerce_unary(typedExpressionIR_init, typeIR)
+        = $cast_unary(typedExpressionIR_init, typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
@@ -65,7 +65,7 @@ rule ConstDecl_ok:
   ---- ;; check that the expression matches the type
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_value_cast
-      = $coerce_unary(typedExpressionIR_value, typeIR)
+      = $cast_unary(typedExpressionIR_value, typeIR)
   ---- ;; evaluate the expression
   -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
   ---- ;; update the context
@@ -773,8 +773,8 @@ rule Enum_serializable_field_ok:
                            : TC_1 (nameIR `= value)
   ---- ;; check expression
   -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
-  ---- ;; coerce expression to type
-  -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR)
+  ---- ;; cast expression to type
+  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR)
   ---- ;; perform compile-time evaluation
   -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
   -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~> value
