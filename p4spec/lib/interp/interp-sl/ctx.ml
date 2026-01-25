@@ -31,11 +31,11 @@ type cursor = Global | Local
 
 type global = {
   (* Map from syntax ids to type definitions *)
-  mutable tdenv : TDEnv.t;
+  tdtbl : TDTbl.t;
   (* Map from relation ids to relations *)
-  mutable renv : REnv.t;
+  rtbl : RTbl.t;
   (* Map from function ids to functions *)
-  mutable fenv : FEnv.t;
+  ftbl : FTbl.t;
 }
 
 (* Local layer *)
@@ -63,31 +63,32 @@ type local =
       venv : VEnv.t;
     }
 
-type t = { global : global ref; local : local }
+type t = { global : global; local : local }
 
 (* Global constructor *)
 
-let empty_global () : global =
-  { tdenv = TDEnv.empty; renv = REnv.empty; fenv = FEnv.empty }
-
-let global : global ref = ref (empty_global ())
+let global : global =
+  let tdtbl = TDTbl.create ~size:500 in
+  let rtbl = RTbl.create ~size:500 in
+  let ftbl = FTbl.create ~size:500 in
+  { tdtbl; rtbl; ftbl }
 
 (* Adders for globals *)
 
 let add_typdef_global (tid : TId.t) (td : Typdef.t) : unit =
-  if TDEnv.find_opt tid !global.tdenv |> Option.is_some then
+  if TDTbl.find_opt tid global.tdtbl |> Option.is_some then
     error_dup tid.at "type" tid.it;
-  !global.tdenv <- TDEnv.add tid td !global.tdenv
+  TDTbl.add tid td global.tdtbl
 
 let add_rel_global (rid : RId.t) (rel : Rel.t) : unit =
-  if REnv.find_opt rid !global.renv |> Option.is_some then
+  if RTbl.find_opt rid global.rtbl |> Option.is_some then
     error_dup rid.at "relation" rid.it;
-  !global.renv <- REnv.add rid rel !global.renv
+  RTbl.add rid rel global.rtbl
 
 let add_func_global (fid : FId.t) (func : Func.t) : unit =
-  if FEnv.find_opt fid !global.fenv |> Option.is_some then
+  if FTbl.find_opt fid global.ftbl |> Option.is_some then
     error_dup fid.at "function" fid.it;
-  !global.fenv <- FEnv.add fid func !global.fenv
+  FTbl.add fid func global.ftbl
 
 (* Global initializer *)
 
@@ -167,7 +168,7 @@ let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
   in
   match TDEnv.find_opt tid tdenv with
   | Some td -> Some td
-  | None -> TDEnv.find_opt tid !(ctx.global).tdenv
+  | None -> TDTbl.find_opt tid ctx.global.tdtbl
 
 let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
   match find_typdef_opt ctx tid with
@@ -185,7 +186,7 @@ let bound_typdef (ctx : t) (tid : TId.t) : bool =
 (* Finders for rules *)
 
 let find_rel_opt (ctx : t) (rid : RId.t) : Rel.t option =
-  REnv.find_opt rid !(ctx.global).renv
+  RTbl.find_opt rid ctx.global.rtbl
 
 let find_rel (ctx : t) (rid : RId.t) : Rel.t =
   match find_rel_opt ctx rid with
@@ -205,7 +206,7 @@ let find_func_opt (ctx : t) (fid : FId.t) : Func.t option =
   in
   match FEnv.find_opt fid fenv with
   | Some func -> Some func
-  | None -> FEnv.find_opt fid !(ctx.global).fenv
+  | None -> FTbl.find_opt fid ctx.global.ftbl
 
 let find_func (ctx : t) (fid : FId.t) : Func.t =
   match find_func_opt ctx fid with

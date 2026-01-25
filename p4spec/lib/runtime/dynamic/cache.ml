@@ -1,6 +1,3 @@
-open Domain
-open Lang
-open Xl
 open Util.Source
 
 (* Cache entry for relation and function invocations *)
@@ -8,46 +5,49 @@ open Util.Source
 module Entry = struct
   type t = string * Value.t list
 
-  let equal (id_a, values_a) (id_b, values_b) =
-    id_a = id_b
-    && List.compare (fun v_a v_b -> Value.compare v_a v_b) values_a values_b = 0
+  let rec equal_values (values_a : Value.t list) (values_b : Value.t list) :
+      bool =
+    match (values_a, values_b) with
+    | [], [] -> true
+    | v_a :: rest_a, v_b :: rest_b ->
+        Value.eq v_a v_b && equal_values rest_a rest_b
+    | _ -> false
 
-  let ( +! ) h1 h2 = (h1 * 65599) + h2
-  let hash_atom (atom : Atom.t) : int = Hashtbl.hash atom
+  let equal ((id_a, values_a) : t) ((id_b, values_b) : t) : bool =
+    if id_a <> id_b then false else equal_values values_a values_b
 
-  let hash_num (num : Num.t) : int =
-    match num with `Nat n -> 0 +! Bigint.hash n | `Int i -> 1 +! Bigint.hash i
-
-  let hash_mixop (mixop : Mixop.t) : int =
-    List.fold_left
-      (fun hash atoms ->
-        List.fold_left (fun hash atom -> hash +! hash_atom atom.it) hash atoms)
-      2 mixop
-
-  let rec hash_value (v : Value.t) : int =
-    match v.it with
-    | BoolV b -> 0 +! Hashtbl.hash b
-    | NumV n -> 1 +! hash_num n
-    | TextV s -> 2 +! Hashtbl.hash s
-    | StructV fields ->
-        List.fold_left
-          (fun hash (atom, v) -> hash +! (hash_atom atom.it +! hash_value v))
-          3 fields
-    | CaseV (mixop, values) ->
-        let base_hash = 4 +! hash_mixop mixop in
-        List.fold_left (fun hash v -> hash +! hash_value v) base_hash values
-    | TupleV values ->
-        List.fold_left (fun hash v -> hash +! hash_value v) 5 values
-    | OptV None -> 6
-    | OptV (Some v) -> 7 +! hash_value v
-    | ListV values ->
-        List.fold_left (fun hash v -> hash +! hash_value v) 8 values
-    | FuncV id -> 9 +! Hashtbl.hash id.it
-    | ExternV json -> 10 +! Hashtbl.hash json
-
-  let hash (id, values) =
-    let base_hash = Hashtbl.hash id in
-    List.fold_left (fun hash v -> hash +! hash_value v) base_hash values
+  let hash ((id, values) : t) : int =
+    let h = ref ((Hashtbl.hash id * 31) + 17) in
+    let rec hash_value (value : Value.t) =
+      match value.it with
+      | BoolV b -> h := (!h * 31) + if b then 1231 else 1237
+      | NumV (`Nat n) -> h := (!h * 31) + (1 + Bigint.hash n)
+      | NumV (`Int i) -> h := (!h * 31) + (2 + Bigint.hash i)
+      | TextV s -> h := (!h * 31) + Hashtbl.hash s
+      | StructV valuefields ->
+          List.iter
+            (fun (atom, value_field) ->
+              h := (!h * 31) + Hashtbl.hash atom.it;
+              hash_value value_field)
+            valuefields
+      | CaseV (mixop, values) ->
+          List.iter
+            (fun atoms ->
+              List.iter
+                (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it)
+                atoms)
+            mixop;
+          List.iter hash_value values
+      | TupleV values | ListV values -> List.iter hash_value values
+      | OptV None -> h := (!h * 31) + 997
+      | OptV (Some value) ->
+          h := (!h * 31) + 1009;
+          hash_value value
+      | FuncV id -> h := (!h * 31) + Hashtbl.hash id.it
+      | ExternV json -> h := (!h * 31) + Hashtbl.hash json
+    in
+    List.iter hash_value values;
+    !h land 0x7FFFFFFF
 end
 
 (* Cache *)
@@ -59,6 +59,7 @@ module Cache = struct
   let clear cache = Table.clear cache
   let find cache key = Table.find_opt cache key
   let add cache key value = Table.add cache key value
+  let size cache = Table.length cache
 end
 
 (* Cache targets *)
