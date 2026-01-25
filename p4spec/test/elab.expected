@@ -31147,7 +31147,7 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInResult as continueResult<storageReference?*>
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_2 value_default*{value_default <- value_default*} ~> EC_callee_3
     -- (let _annotationList _direction _typeIR nameIR_param _constantInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _constantInitializerOptIR -> _constantInitializerOptIR*, _direction -> _direction*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
-    -- ExternFunctionCall_eval: EC_callee_3 STO_1 |- nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 STO_2 callResult
+    -- ExternFunctionCall_eval: EC_1 EC_callee_3 STO_1 |- nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 STO_2 callResult
     -- Copy_out: p_shared STO_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
     -- output: % % % |- % @< % >( % ): EC_2 STO_2 callResult
 
@@ -31586,10 +31586,10 @@ relation Call_eval: cursor evalContext store |- callee @< typeArgumentListIR >( 
     -- let EC_1 = $copy_e(block, EC_callee_2, EC_0)
     -- output: % % % |- % @< % >( % ): EC_1 STO_1 returnResult as callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:314.1-319.90
-extern relation ExternFunctionCall_eval: evalContext store |- nameIR ( nameIR* ): evalContext store callResult
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:314.1-322.90
+extern relation ExternFunctionCall_eval: evalContext evalContext store |- nameIR ( nameIR* ): evalContext store callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:321.1-327.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:324.1-330.90
 extern relation ExternMethodCall_eval: evalContext store |- objectId . nameIR ( nameIR* ): evalContext store callResult
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
@@ -33659,6 +33659,157 @@ relation V1Model_deparse: evalContext store |- evalContext store callResult
     -- let exitResult = statementResult as exitResult
     -- if (exitResult = exit)
     -- output: % % |- EC_1 STO_1 exit as callResult
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:591.1-591.67
+def $field_list_annotation_index(annotationList) : integerLiteral? =
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:594.1-599.75
+  clause 0 : (annotationList) = ?(integerLiteral_fixbit)
+  -- let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList)
+  -- (let integerLiteral?{integerLiteral <- integerLiteral?} = $field_list_annotation_index'(annotation))*{annotation <- annotation*, integerLiteral? -> integerLiteral?*}
+  -- let integerLiteral''?{integerLiteral'' <- integerLiteral''?}*{integerLiteral''? <- integerLiteral''?*} = integerLiteral?{integerLiteral <- integerLiteral?}*{integerLiteral? <- integerLiteral?*}
+  -- if integerLiteral''?{integerLiteral'' <- integerLiteral''?}*{integerLiteral''? <- integerLiteral''?*} matches [ _/1 ]
+  -- let [integerLiteral'?{integerLiteral' <- integerLiteral'?}] = integerLiteral''?{integerLiteral'' <- integerLiteral''?}*{integerLiteral''? <- integerLiteral''?*}
+  -- if integerLiteral'?{integerLiteral' <- integerLiteral'?} matches (_)
+  -- let ?(integerLiteral_found) = integerLiteral'?{integerLiteral' <- integerLiteral'?}
+  -- let value = $cast_op(bit< 8 > as typeIR, integerLiteral_found as value)
+  -- if value <: integerLiteral
+  -- let integerLiteral_fixbit = value as integerLiteral
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:600.1-601.15
+  clause 1 : (annotationList) = ?()
+  -- otherwise
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:592.1-592.64
+def $field_list_annotation_index'(annotation) : integerLiteral? =
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:603.1-605.47
+  clause 0 : (annotation) = ?(integerLiteral)
+  -- if annotation matches `@%(%)`
+  -- let @ name ( annotationBody ) = annotation
+  -- if ("field_list" = $name(name))
+  -- let annotationBody'' = annotationBody
+  -- if annotationBody'' matches `%%`
+  -- let annotationBody' annotationToken = annotationBody''
+  -- if annotationBody' matches ``EMPTY`
+  -- if annotationToken <: integerLiteral
+  -- let integerLiteral = annotationToken as integerLiteral
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:606.1-607.15
+  clause 1 : (annotation) = ?()
+  -- otherwise
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:609.1-609.79
+def $fields_with_field_list_index(fieldTypeIR*, integerLiteral) : fieldTypeIR* =
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:612.1-614.102
+  clause 0 : (fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}, integerLiteral) = fieldTypeIR*{fieldTypeIR <- fieldTypeIR*}
+  -- if fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*} matches _ :: _
+  -- let fieldTypeIR_h :: fieldTypeIR_t*{fieldTypeIR_t <- fieldTypeIR_t*} = fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}
+  -- if $field_has_field_list_index(fieldTypeIR_h, integerLiteral)
+  -- let fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} = fieldTypeIR_h :: $fields_with_field_list_index(fieldTypeIR_t*{fieldTypeIR_t <- fieldTypeIR_t*}, integerLiteral)
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:615.1-617.85
+  clause 1 : (fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}, integerLiteral) = fieldTypeIR*{fieldTypeIR <- fieldTypeIR*}
+  -- if fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*} matches _ :: _
+  -- let fieldTypeIR_h :: fieldTypeIR_t*{fieldTypeIR_t <- fieldTypeIR_t*} = fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}
+  -- if ~$field_has_field_list_index(fieldTypeIR_h, integerLiteral)
+  -- let fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} = $fields_with_field_list_index(fieldTypeIR_t*{fieldTypeIR_t <- fieldTypeIR_t*}, integerLiteral)
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:618.1-618.61
+  clause 2 : (fieldTypeIR*{fieldTypeIR <- fieldTypeIR*}, integerLiteral) = []
+  -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:610.1-610.68
+def $field_has_field_list_index(fieldTypeIR, integerLiteral) : bool =
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:620.1-622.76
+  clause 0 : (annotationList typeIR nameIR ;, integerLiteral) = $bin_eq(integerLiteral as value, integerLiteral_found as value)
+  -- let integerLiteral'?{integerLiteral' <- integerLiteral'?} = $field_list_annotation_index(annotationList)
+  -- if integerLiteral'?{integerLiteral' <- integerLiteral'?} matches (_)
+  -- let ?(integerLiteral_found) = integerLiteral'?{integerLiteral' <- integerLiteral'?}
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:623.1-624.15
+  clause 1 : (_fieldTypeIR, _integerLiteral) = false
+  -- otherwise
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:630.1-631.32
+def $V1Model_meta_fields_of_index(store, integerLiteral) : (storageReference, nameIR*) =
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:632.1-644.40
+  clause 0 : (STO, integerLiteral_index) = (storageReference_meta, nameIR_field*{nameIR_field <- nameIR_field*})
+  -- let object'?{object' <- object'?} = $find_map<objectId, object>(STO, ["main"])
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: packageObject
+  -- let package< theta >{ _frame } = object as packageObject
+  -- let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(theta, "M")
+  -- if typeIR?{typeIR <- typeIR?} matches (_)
+  -- let ?(typeIR_meta) = typeIR?{typeIR <- typeIR?}
+  -- let typeIR' = typeIR_meta
+  -- if typeIR' <: structTypeIR
+  -- let struct typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} } = typeIR' as structTypeIR
+  -- let _annotationList _typeIR nameIR ;*{_annotationList <- _annotationList*, _typeIR <- _typeIR*, nameIR <- nameIR*} = fieldTypeIR*{fieldTypeIR <- fieldTypeIR*}
+  -- let _annotationList' _typeIR' nameIR_field ;*{_annotationList' <- _annotationList'*, _typeIR' <- _typeIR'*, nameIR_field <- nameIR_field*} = $fields_with_field_list_index(fieldTypeIR*{fieldTypeIR <- fieldTypeIR*}, integerLiteral_index)
+  -- let object'''?{object''' <- object'''?} = $find_map<objectId, object>(STO, ["main", "ig"])
+  -- if object'''?{object''' <- object'''?} matches (_)
+  -- let ?(object'') = object'''?{object''' <- object'''?}
+  -- if object'' <: controlObject
+  -- let control( parameterListIR ){ _frame' _controlLocalDeclarationListIR _actionDefEnv _controlBodyIR } = object'' as controlObject
+  -- let parameterIR'*{parameterIR' <- parameterIR'*} = parameterListIR
+  -- if parameterIR'*{parameterIR' <- parameterIR'*} matches _ :: _
+  -- let _parameterIR :: parameterIR*{parameterIR <- parameterIR*} = parameterIR'*{parameterIR' <- parameterIR'*}
+  -- if parameterIR*{parameterIR <- parameterIR*} matches _ :: _
+  -- let _annotationList'' _direction _typeIR'' id _constantInitializerOptIR :: _parameterIR'*{_parameterIR' <- _parameterIR'*} = parameterIR*{parameterIR <- parameterIR*}
+  -- let storageReference_meta = ` id as storageReference
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:646.1-648.29
+relation V1Model_copy_meta_fields: evalContext evalContext store |- storageReference nameIR* : evalContext
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:650.1-666.2
+  rulegroup 
+
+   match
+
+    (signature) EC_capture EC_0 STO |- storageReference nameIR*{nameIR <- nameIR*} : %
+    EC_capture EC_0 STO |- storageReference nameIR*{nameIR <- nameIR*} : %
+
+   paths
+
+    rulepath nil
+    -- let _storageReference = storageReference
+    -- if (nameIR*{nameIR <- nameIR*} = [])
+    -- output: % % % |- % % : EC_0
+
+    rulepath cons
+    -- let storageReference_meta = storageReference
+    -- let nameIR'*{nameIR' <- nameIR'*} = nameIR*{nameIR <- nameIR*}
+    -- if nameIR'*{nameIR' <- nameIR'*} matches _ :: _
+    -- let nameIR_h :: nameIR_t*{nameIR_t <- nameIR_t*} = nameIR'*{nameIR' <- nameIR'*}
+    -- let storageReference_h = storageReference_meta . nameIR_h
+    -- Lvalue_read: block EC_capture STO |- storageReference_h : value_h
+    -- let storageReference_global = ` "meta" as storageReference . nameIR_h
+    -- Lvalue_write: global EC_0 STO |- storageReference_global -> value_h : EC_1
+    -- V1Model_copy_meta_fields: EC_capture EC_1 STO |- storageReference_meta nameIR_t*{nameIR_t <- nameIR_t*} : EC_2
+    -- output: % % % |- % % : EC_2
+
+;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:668.1-670.26
+relation V1Model_setup_preserved_meta_fields: evalContext evalContext store |- integerLiteral : evalContext
+
+  ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:672.1-677.72
+  rulegroup 
+
+   match
+
+    (signature) EC_capture EC_0 STO |- integerLiteral_index : %
+    EC_capture EC_0 STO |- integerLiteral_index : %
+
+   paths
+
+    rulepath 
+    -- let (storageReference_meta, nameIR_field*{nameIR_field <- nameIR_field*}) = $V1Model_meta_fields_of_index(STO, integerLiteral_index)
+    -- V1Model_copy_meta_fields: EC_capture EC_0 STO |- storageReference_meta nameIR_field*{nameIR_field <- nameIR_field*} : EC_1
+    -- output: % % % |- % : EC_1
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:5.1-10.72
 relation EBPF_init: |- p4program : evalContext store

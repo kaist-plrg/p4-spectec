@@ -98,6 +98,10 @@ module PacketIn = struct
     let bits = string_to_bits pkt in
     { bits; idx = 0; len = Array.length bits }
 
+  (* Resetter *)
+
+  let reset (pkt : t) : t = { pkt with idx = 0 }
+
   (* Parser *)
 
   let parse (pkt : t) (size : int) : t * bits =

@@ -627,8 +627,10 @@ def $field_has_field_list_index(_, _) = false
 ;; Metadata setup after field-preserving extern calls
 ;;
 
-dec $V1Model_meta_fields_of_index(store, integerLiteral) : (storageReference, nameIR*)
-def $V1Model_meta_fields_of_index(STO, integerLiteral_index) = (storageReference_meta, nameIR_field*)
+dec $V1Model_meta_fields_of_index(store, integerLiteral)
+  : (storageReference, nameIR*)
+def $V1Model_meta_fields_of_index(STO, integerLiteral_index)
+  = (storageReference_meta, nameIR_field*)
   -- if PACKAGE `< theta > `{ _ }
       = $find_map<objectId, object>(STO, [ "main" ])
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -642,16 +644,16 @@ def $V1Model_meta_fields_of_index(STO, integerLiteral_index) = (storageReference
   -- if storageReference_meta = (`` id)
 
 relation V1Model_copy_meta_fields:
-  evalContext store |- evalContext storageReference nameIR* : evalContext
+  evalContext evalContext store |- storageReference nameIR* : evalContext
   hint(input %0 %1 %2 %3 %4)
 
 rulegroup V1Model_copy_meta_fields {
 
   rule V1Model_copy_meta_fields/nil:
-    EC_0 STO |- EC_capture _ eps : EC_0
+    EC_capture EC_0 STO |- _ eps : EC_0
 
   rule V1Model_copy_meta_fields/cons:
-    EC_0 STO |- EC_capture storageReference_meta (nameIR_h :: nameIR_t*) : EC_2
+    EC_capture EC_0 STO |- storageReference_meta (nameIR_h :: nameIR_t*) : EC_2
     -- if storageReference_h = storageReference_meta `. nameIR_h
     -- Lvalue_read: 
         BLOCK EC_capture STO |- storageReference_h : value_h
@@ -659,16 +661,17 @@ rulegroup V1Model_copy_meta_fields {
     -- Lvalue_write:
         GLOBAL EC_0 STO |- storageReference_global -> value_h : EC_1
     -- V1Model_copy_meta_fields:
-        EC_1 STO |- EC_capture storageReference_meta nameIR_t* : EC_2
+        EC_capture EC_1 STO |- storageReference_meta nameIR_t* : EC_2
 
 }
 
 relation V1Model_setup_preserved_meta_fields:
-  evalContext store |- evalContext integerLiteral : evalContext
+  evalContext evalContext store |- integerLiteral : evalContext
   hint(input %0 %1 %2 %3)
 
 rule V1Model_setup_preserved_meta_fields:
-  EC_0 STO |- EC_capture integerLiteral_index : EC_1
-  -- if (storageReference_meta, nameIR_field*) = $V1Model_meta_fields_of_index(STO, integerLiteral_index)
+  EC_capture EC_0 STO |- integerLiteral_index : EC_1
+  -- if (storageReference_meta, nameIR_field*)
+      = $V1Model_meta_fields_of_index(STO, integerLiteral_index)
   -- V1Model_copy_meta_fields:
-      EC_0 STO |- EC_capture storageReference_meta nameIR_field* : EC_1
+      EC_capture EC_0 STO |- storageReference_meta nameIR_field* : EC_1

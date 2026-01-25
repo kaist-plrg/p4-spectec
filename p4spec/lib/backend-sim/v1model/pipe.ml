@@ -63,19 +63,19 @@ struct
     | Register of Object.Register.t
   [@@deriving yojson]
 
-  let get_extern (value_sto : Value.t) (value_oid : Value.t) : extern =
-    Spec.Func.find_store_externState value_sto value_oid
+  let get_extern (value_sto : Value.t) (value_objectId : Value.t) : extern =
+    Spec.Func.find_store_externState value_sto value_objectId
     |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
 
   let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
-    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-    match get_extern value_sto value_oid with
+    let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+    match get_extern value_sto value_objectId with
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "packet_in extern not found"
 
   let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
-    let value_oid = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
-    match get_extern value_sto value_oid with
+    let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
+    match get_extern value_sto value_objectId with
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "packet_out extern not found"
 
@@ -127,10 +127,24 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_sto, value_ctx_caller, value_name_func, value_names_param =
+    let ( value_ctx_caller,
+          value_ctx,
+          value_sto,
+          value_name_func,
+          value_names_param ) =
       match values_input with
-      | [ value_ctx; value_sto; value_ctx_caller; value_name_func; value_names_param ] ->
-          (value_ctx, value_sto, value_ctx_caller, value_name_func, value_names_param)
+      | [
+       value_ctx_caller;
+       value_ctx;
+       value_sto;
+       value_name_func;
+       value_names_param;
+      ] ->
+          ( value_ctx_caller,
+            value_ctx,
+            value_sto,
+            value_name_func,
+            value_names_param )
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
@@ -159,7 +173,8 @@ struct
           let packet_in = get_packet_in value_sto in
           Func.update_checksum_with_payload value_ctx value_sto packet_in
       | "resubmit_preserving_field_list", [ "index" ] ->
-          Func.resubmit_preserving_field_list value_ctx value_sto value_ctx_caller
+          Func.resubmit_preserving_field_list value_ctx_caller value_ctx
+            value_sto
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
       | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_sto
@@ -173,16 +188,28 @@ struct
     [ value_ctx; value_sto; value_callResult ]
 
   let eval_extern_method_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_sto, value_oid, value_name_method, value_names_param =
+    let ( value_ctx,
+          value_sto,
+          value_objectId,
+          value_name_method,
+          value_names_param ) =
       match values_input with
       | [
-       value_ctx; value_sto; value_oid; value_name_method; value_names_param;
+       value_ctx;
+       value_sto;
+       value_objectId;
+       value_name_method;
+       value_names_param;
       ] ->
-          (value_ctx, value_sto, value_oid, value_name_method, value_names_param)
+          ( value_ctx,
+            value_sto,
+            value_objectId,
+            value_name_method,
+            value_names_param )
       | _ ->
           error_no_region "unexpected number of arguments to extern method call"
     in
-    let extern = get_extern value_sto value_oid in
+    let extern = get_extern value_sto value_objectId in
     let name_method = unwrap_text_v value_name_method in
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
@@ -248,7 +275,7 @@ struct
           (register, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
-            value_oid |> unwrap_list_v |> List.map unwrap_text_v
+            value_objectId |> unwrap_list_v |> List.map unwrap_text_v
             |> String.concat "."
           in
           error_no_region
@@ -260,7 +287,7 @@ struct
       extern |> extern_to_yojson |> wrap_extern_v "externState"
     in
     let value_sto =
-      Spec.Func.update_store_externState value_sto value_oid value_extern
+      Spec.Func.update_store_externState value_sto value_objectId value_extern
     in
     [ value_ctx; value_sto; value_callResult ]
 
@@ -420,7 +447,7 @@ struct
       let tx = (port, packet) in
       Some tx
 
-  let drive_pipe_pre' (value_ctx : Value.t) (value_sto : Value.t) :
+  let drive_pipe_pre_inner (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * bool =
     (* Parser block *)
     let value_ctx, value_sto = drive_p value_ctx value_sto in
@@ -447,24 +474,36 @@ struct
 
   let rec drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * bool =
-    try drive_pipe_pre' value_ctx value_sto
+    try drive_pipe_pre_inner value_ctx value_sto
     with
-    | Exception.Resubmit (value_ctx', value_sto', value_ctx_caller, value_index)
+    | Exception.Resubmit (value_ctx_caller, value_ctx, value_sto, value_index)
     ->
-      (* post-resubmit logic *)
-      let value_ctx' =
-        Spec.Rel.v1model_setup_preserved_meta_fields value_ctx' value_sto'
-          value_ctx_caller value_index
+      (* When resubmitted *)
+      let value_ctx =
+        Spec.Rel.v1model_setup_preserved_meta_fields value_ctx_caller value_ctx
+          value_sto value_index
       in
-      (* set sm.instance_type = 6 on resubmit *)
+      (* Reset packet_in extern in store *)
+      let value_sto =
+        let packet_in = get_packet_in value_sto in
+        let packet_in = Core.Object.PacketIn.reset packet_in in
+        let packet_in = PacketIn packet_in in
+        let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+        let value_packet_in =
+          packet_in |> extern_to_yojson |> wrap_extern_v "externState"
+        in
+        Spec.Func.update_store_externState value_sto value_objectId
+          value_packet_in
+      in
+      (* Set standard_metadata.instance_type as 6 *)
       let value_instance_type =
         Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
       in
-      let value_ctx' =
-        Spec.Rel.lvalue_write_dot_global value_ctx' value_sto
-          "standard_metadata" "instance_type" value_instance_type
+      let value_ctx =
+        Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
+          "instance_type" value_instance_type
       in
-      drive_pipe_pre value_ctx' value_sto
+      drive_pipe_pre value_ctx value_sto
 
   let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * IO.tx option =

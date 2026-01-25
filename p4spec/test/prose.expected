@@ -16150,7 +16150,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let the updated evaluation context ``EC~callee_4~``, store ``STO~2~``, and call result ``callResult`` be
-* the result of <<ExternFunctionCall_eval, calling an extern function ``nameIR`` ``(`` ``nameIR~param~^{asterisk}^`` ``)``, under evaluation context ``EC~callee_3~``, and store ``STO~1~``>>.
+* the result of <<ExternFunctionCall_eval, calling an extern function ``nameIR`` ``(`` ``nameIR~param~^{asterisk}^`` ``)``, under caller's evaluation context ``EC~1~``, evaluation context ``EC~callee_3~``, and store ``STO~1~``>>.
  .. Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ (storageReference^?^)^{asterisk}^ ~> EC~2~>>.
  .. Result in the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult``.
 
@@ -16366,7 +16366,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<ExternFunctionCall_eval, ExternFunctionCall_eval>>:
 
-* Calling an extern function ``nameIR`` ``(`` ``nameIR^{asterisk}^`` ``)``, under evaluation context ``evalContext``, and store ``store``:
+* Calling an extern function ``nameIR`` ``(`` ``nameIR^{asterisk}^`` ``)``, under caller's evaluation context ``evalContext``, evaluation context ``evalContext``, and store ``store``:
 * Results in the updated evaluation context ``evalContext``, store ``store``, and call result ``callResult``.
 
 <<ExternMethodCall_eval, ExternMethodCall_eval>>:
@@ -17342,6 +17342,108 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+
+<<field_list_annotation_index, field_list_annotation_index(annotationList)>>
+
+
+. Let ``annotation^{asterisk}^`` be <<flatten_annotationList, the list of annotations in ``annotationList``>>.
+. Let ``integerLiteral^?^^{asterisk}^`` be the list of ``integerLiteral^?^``, obtained by repeating:
++
+--
+ ** Let ``integerLiteral^?^`` be ``<<field_list_annotation_index',`` ``field_list_annotation_index'(annotation)>>``.
+--
++
+for each ``annotation`` in ``annotation^{asterisk}^``
+. Let ``(integerLiteral'^?^)^{asterisk}^`` be ``(integerLiteral^?^)^{asterisk}^``.
+. If let ``[integerLiteral''^?^]`` be ``(integerLiteral'^?^)^{asterisk}^``:
+ .. Check that ``integerLiteral''^?^`` is defined.
+ .. Let ``integerLiteral~found~`` be ``integerLiteral''^?^``.
+ .. Let ``value`` be <<cast_op, cast ``integerLiteral~found~`` to type ``BIT`` ``<`` ``8`` ``>``>>.
+ .. Check that ``value`` has type ``integerLiteral``.
+ .. Let ``integerLiteral~fixbit~`` be ``value``.
+ .. Return ``integerLiteral~fixbit~``.
+. Otherwise:
+ .. Return ``·``.
+
+<<field_list_annotation_index', field_list_annotation_index'(annotation)>>
+
+
+. If let ``@`` ``name`` ``(`` ``annotationBody`` ``)`` be ``annotation``:
+ .. Check that ``"field_list"`` is equal to <<name, the name of ``name``>>.
+ .. Check that ``annotationBody`` matches pattern ``%`` ```` ``%``.
+ .. Let ``annotationBody'`` ``annotationToken`` be ``annotationBody``.
+ .. Check that ``annotationBody'`` is ```EMPTY``.
+ .. Check that ``annotationToken`` has type ``integerLiteral``.
+ .. Let ``integerLiteral`` be ``annotationToken``.
+ .. Return ``integerLiteral``.
+. Otherwise:
+ .. Return ``·``.
+
+<<fields_with_field_list_index, fields_with_field_list_index(fieldTypeIR^{asterisk}^, integerLiteral)>>
+
+
+. If let ``fieldTypeIR~h~`` ``{two-colons}`` ``fieldTypeIR~t~^{asterisk}^`` be ``fieldTypeIR^{asterisk}^``:
+ .. If ``<<field_has_field_list_index,`` ``field_has_field_list_index(fieldTypeIR~h~,`` ``integerLiteral)>>``:
+  ... Let ``fieldTypeIR''^{asterisk}^`` be ``<<fields_with_field_list_index,`` ``fields_with_field_list_index(fieldTypeIR~t~^{asterisk}^,`` ``integerLiteral)>>``.
+  ... Let ``fieldTypeIR'^{asterisk}^`` be ``fieldTypeIR~h~`` ``{two-colons}`` ``fieldTypeIR''^{asterisk}^``.
+  ... Return ``fieldTypeIR'^{asterisk}^``.
+ .. Else:
+  ... Let ``fieldTypeIR'^{asterisk}^`` be ``<<fields_with_field_list_index,`` ``fields_with_field_list_index(fieldTypeIR~t~^{asterisk}^,`` ``integerLiteral)>>``.
+  ... Return ``fieldTypeIR'^{asterisk}^``.
+. Else:
+ .. Return ``·``.
+
+<<field_has_field_list_index, field_has_field_list_index(fieldTypeIR, integerLiteral)>>
+
+
+. Let ``annotationList`` ``typeIR`` ``nameIR`` ``;`` be ``fieldTypeIR``.
+. Let ``integerLiteral'^?^`` be ``<<field_list_annotation_index,`` ``field_list_annotation_index(annotationList)>>``.
+. If let ``integerLiteral~found~`` be ``integerLiteral'^?^``:
+ .. Return ``<<bin_eq,`` ``bin_eq(integerLiteral,`` ``integerLiteral~found~)>>``.
+. Otherwise: return ``false``.
+
+<<V1Model_meta_fields_of_index, V1Model_meta_fields_of_index(STO, integerLiteral~index~)>>
+
+
+. Let ``object'`` be <<option_get, *!*>> <<find_map, ``["main"]`` in map ``STO``>>.
+. Check that ``object'`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object'``.
+. Let ``typeIR~meta~`` be <<option_get, *!*>> <<find_map, ``"M"`` in map ``theta``>>.
+. Check that ``typeIR~meta~`` has type ``structTypeIR``.
+. Let ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeIR~meta~``.
+. Let ``(++_++`` ``++_++`` ``nameIR~field~`` ``;)^{asterisk}^`` be ``<<fields_with_field_list_index,`` ``fields_with_field_list_index(fieldTypeIR^{asterisk}^,`` ``integerLiteral~index~)>>``.
+. Let ``object'''`` be <<option_get, *!*>> <<find_map, ``["main",`` ``"ig"]`` in map ``STO``>>.
+. Check that ``object'''`` has type ``controlObject``.
+. Let ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``++_++`` ``++_++`` ``}`` be ``object'''``.
+. Let ``parameterIR^{asterisk}^`` be ``parameterListIR``.
+. Check that ``parameterIR^{asterisk}^`` is a non-empty list.
+. Let ``++_++`` ``{two-colons}`` ``parameterIR'^{asterisk}^`` be ``parameterIR^{asterisk}^``.
+. Check that ``parameterIR'^{asterisk}^`` is a non-empty list.
+. Let ``++_++`` ``++_++`` ``++_++`` ``id`` ``++_++`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``parameterIR'^{asterisk}^``.
+. Let ``storageReference~meta~`` be ``id``.
+. Return ``(storageReference~meta~,`` ``nameIR~field~^{asterisk}^)``.
+
+<<V1Model_copy_meta_fields, V1Model_copy_meta_fields: ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>
+
+<<V1Model_copy_meta_fields, ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>:
+
+. If ``nameIR^{asterisk}^`` is equal to ``·``:
+ .. Result in ``EC~0~``.
+. If let ``nameIR~h~`` ``{two-colons}`` ``nameIR~t~^{asterisk}^`` be ``nameIR^{asterisk}^``:
+ .. Let ``storageReference~h~`` be ``storageReference`` ``.`` ``nameIR~h~``.
+ .. Let <<Lvalue_read, BLOCK EC~capture~ STO |- storageReference~h~ : value~h~>>.
+ .. Let ``storageReference~global~`` be ``"meta"`` ``.`` ``nameIR~h~``.
+ .. Let <<Lvalue_write, GLOBAL EC~0~ STO |- storageReference~global~ -> value~h~ : EC~1~>>.
+ .. Let <<V1Model_copy_meta_fields, EC~capture~ EC~1~ STO |- storageReference nameIR~t~^{asterisk}^ : EC~2~>>.
+ .. Result in ``EC~2~``.
+
+<<V1Model_setup_preserved_meta_fields, V1Model_setup_preserved_meta_fields: ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>
+
+<<V1Model_setup_preserved_meta_fields, ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>:
+
+. Let ``(storageReference~meta~,`` ``nameIR~field~^{asterisk}^)`` be ``<<V1Model_meta_fields_of_index,`` ``V1Model_meta_fields_of_index(STO,`` ``integerLiteral~index~)>>``.
+. Let <<V1Model_copy_meta_fields, EC~capture~ EC~0~ STO |- storageReference~meta~ nameIR~field~^{asterisk}^ : EC~1~>>.
+. Result in ``EC~1~``.
 
 <<EBPF_init, EBPF_init>>:
 
