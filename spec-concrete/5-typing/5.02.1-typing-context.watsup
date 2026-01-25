@@ -169,15 +169,33 @@ def $add_vars_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
 ;;; Adder for parameters
 
 dec $add_parameter_t(cursor, typingContext, parameterIR) : typingContext
+dec $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext
   hint(prose_in %2 "added to the" %0 "layer of" %1)
 
+;; Fix for directionless parameters in actions (p4lang/p4c#5405, p4-spectec#37)
+;; Per P4-16 spec §18.1: directionless action parameters are control-plane supplied (DYN),
+;; not compile-time known, unlike directionless parameters of other callables (CTK).
+
+;; Directionless parameter in NON-action context → CTK
 def $add_parameter_t(cursor, TC, _ `EMPTY typeIR id (`= value)?) = TC'
+  -- if ~$is_action_localKind(TC.LOCAL.KIND)
   -- if varTypeIR = `EMPTY typeIR CTK value?
   -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
+;; Directionless parameter in ACTION context → DYN
+def $add_parameter_t(cursor, TC, _ `EMPTY typeIR id (`= value)?) = TC'
+  -- if $is_action_localKind(TC.LOCAL.KIND)
+  -- if varTypeIR = `EMPTY typeIR DYN value?
+  -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
+;; Directed parameters (IN, OUT, INOUT) → DYN (unchanged)
 def $add_parameter_t(cursor, TC, _ direction typeIR id (`= value)?) = TC'
   -- if direction =/= `EMPTY
   -- if varTypeIR = direction typeIR DYN value?
   -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
+
+def $add_parameters_t(cursor, TC, eps) = TC
+def $add_parameters_t(cursor, TC, parameterIR_h :: parameterIR_t*) = TC''
+  -- if TC' = $add_parameter_t(cursor, TC, parameterIR_h)
+  -- if TC'' = $add_parameters_t(cursor, TC', parameterIR_t*)
 
 ;;; Adder for constructor parameters
 
