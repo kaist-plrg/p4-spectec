@@ -321,11 +321,14 @@ relation Call_eval:
   hint(prose_out "the updated evaluation context" %6#", store" %7#", and call result" %8)
 
 extern relation ExternFunctionCall_eval:
-  evalContext store |- nameIR `( nameIR* )
-                     : evalContext store callResult
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "calling an extern function" %2 `( %3 ) #", under evaluation context" %0#", and store" %1)
-  hint(prose_out "the updated evaluation context" %4#", store" %5#", and call result" %6)
+  evalContext evalContext store |- nameIR `( nameIR* )
+                                 : evalContext store callResult
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "calling an extern function" %3 `( %4 )#
+                ", under caller's evaluation context" %0#
+                ", evaluation context" %1#
+                ", and store" %2)
+  hint(prose_out "the updated evaluation context" %5#", store" %6#", and call result" %7)
 
 extern relation ExternMethodCall_eval:
   evalContext store |- objectId `. nameIR `( nameIR* )

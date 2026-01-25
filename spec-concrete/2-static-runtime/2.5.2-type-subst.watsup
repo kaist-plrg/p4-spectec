@@ -123,35 +123,35 @@ def $subst_typeIR'(theta, typeIR `[ n_size ])
 def $subst_typeIR'(theta, structTypeIR)
   = structTypeIR_subst
   -- if STRUCT typeId `< typeArgumentIR* >
-          `{ (typeIR_field nameIR_field `;)* }
+          `{ (annotationList typeIR_field nameIR_field `;)* }
       = structTypeIR
   -- if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
   -- if structTypeIR_subst
       = STRUCT typeId `< typeArgumentIR_subst* >
-          `{ (typeIR_field_subst nameIR_field `;)* }
+          `{ (annotationList typeIR_field_subst nameIR_field `;)* }
 
 def $subst_typeIR'(theta, headerTypeIR)
   = headerTypeIR_subst
   -- if HEADER typeId `< typeArgumentIR* >
-          `{ (typeIR_field nameIR_field `;)* }
+          `{ (annotationList typeIR_field nameIR_field `;)* }
       = headerTypeIR
   -- if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
   -- if headerTypeIR_subst
       = HEADER typeId `< typeArgumentIR_subst* >
-          `{ (typeIR_field_subst nameIR_field `;)* }
+          `{ (annotationList typeIR_field_subst nameIR_field `;)* }
 
 def $subst_typeIR'(theta, headerUnionTypeIR)
   = headerUnionTypeIR_subst
   -- if HEADER_UNION typeId `< typeArgumentIR* >
-          `{ (typeIR_field nameIR_field `;)* }
+          `{ (annotationList typeIR_field nameIR_field `;)* }
       = headerUnionTypeIR
   -- if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
   -- if headerUnionTypeIR_subst
       = HEADER_UNION typeId `< typeArgumentIR_subst* >
-          `{ (typeIR_field_subst nameIR_field `;)* }
+          `{ (annotationList typeIR_field_subst nameIR_field `;)* }
 
 def $subst_typeIR'(theta, ENUM typeId `{ id_field* })
   = ENUM typeId `{ id_field* }
@@ -220,13 +220,13 @@ def $subst_typeIR'(theta, SEQ `< typeIR* `, `... >)
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))*
 
 def $subst_typeIR'(
-    theta, RECORD `{ (typeIR_field id_field `;)* })
-  = RECORD `{ (typeIR_field_subst id_field `;)* }
+    theta, RECORD `{ (annotationList typeIR_field id_field `;)* })
+  = RECORD `{ (annotationList typeIR_field_subst id_field `;)* }
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
 
 def $subst_typeIR'(
-    theta, RECORD `{ (typeIR_field id_field `;)* `, `... })
-  = RECORD `{ (typeIR_field_subst id_field `;)* `, `... }
+    theta, RECORD `{ (annotationList typeIR_field id_field `;)* `, `... })
+  = RECORD `{ (annotationList typeIR_field_subst id_field `;)* `, `... }
   -- if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field))*
 
 def $subst_typeIR'(theta, SET `< typeIR >)

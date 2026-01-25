@@ -724,11 +724,11 @@ def $cast_sequence(typeIR `[ n_size ], value*)
   -- if (value_cast = $cast_op(typeIR, value))*
   -- if n_idx = |value*|
 
-def $cast_sequence(STRUCT typeId `< _ > `{ (typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(STRUCT typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, value*)
   = STRUCT typeId `{ (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
-def $cast_sequence(HEADER typeId `< _ > `{ (typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, value*)
   = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
@@ -745,7 +745,7 @@ def $cast_record(TYPEDEF _ typeIR, (value, id)*)
   = $cast_record(typeIR, (value, id)*)
 
 def $cast_record(
-    STRUCT typeId `< _ > `{ (typeIR_t_field id_t_field `;)* },
+    STRUCT typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
     (value_field, nameIR_field)*)
   = STRUCT typeId `{ (value_field_cast nameIR_field `;)* }
   -- if (value_field'
@@ -753,7 +753,7 @@ def $cast_record(
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
 def $cast_record(
-    HEADER typeId `< _ > `{ (typeIR_t_field id_t_field `;)* },
+    HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
     (value_field, nameIR_field)*)
   = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
   -- if (value_field'
@@ -834,13 +834,13 @@ def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 def $default(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0; n_s ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
-def $default(STRUCT typeId `< _ > `{ (typeIR_f id_f `;)* })
+def $default(STRUCT typeId `< _ > `{ (_ typeIR_f id_f `;)* })
   = STRUCT typeId `{ ($default(typeIR_f) id_f `;)* }
 
-def $default(HEADER typeId `< _ > `{ (typeIR_f id_f `;)* })
+def $default(HEADER typeId `< _ > `{ (_ typeIR_f id_f `;)* })
   = HEADER typeId `{ false `; ($default(typeIR_f) id_f `;)* }
 
-def $default(HEADER_UNION typeId `< _ > `{ (typeIR_f id_f `;)* })
+def $default(HEADER_UNION typeId `< _ > `{ (_ typeIR_f id_f `;)* })
   = HEADER_UNION typeId `{ ($default(typeIR_f) id_f `;)* }
 
 def $default(ENUM typeId `{ id_f_h :: _ }) = typeId `. id_f_h
@@ -927,11 +927,11 @@ def $sizeof_minSizeInBits'(TUPLE `< typeIR* >)
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
 def $sizeof_minSizeInBits'(typeIR `[ n_size ])
   = $($sizeof_minSizeInBits'(typeIR) * n_size)
-def $sizeof_minSizeInBits'(STRUCT _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_minSizeInBits'(STRUCT _ `< _ > `{ (_ typeIR _ `;)* })
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits'(HEADER _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_minSizeInBits'(HEADER _ `< _ > `{ (_ typeIR _ `;)* })
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
-def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* })
   = $min_nat($sizeof_minSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
@@ -961,11 +961,11 @@ def $sizeof_maxSizeInBits'(TUPLE `< typeIR* >)
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
 def $sizeof_maxSizeInBits'(typeIR `[ n_size ])
   = $($sizeof_maxSizeInBits'(typeIR) * n_size)
-def $sizeof_maxSizeInBits'(STRUCT _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_maxSizeInBits'(STRUCT _ `< _ > `{ (_ typeIR _ `;)* })
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits'(HEADER _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_maxSizeInBits'(HEADER _ `< _ > `{ (_ typeIR _ `;)* })
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
-def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ > `{ (typeIR _ `;)* })
+def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* })
   = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
 
 def $sizeof(typeIR, "maxSizeInBits") = $sizeof_maxSizeInBits(typeIR)

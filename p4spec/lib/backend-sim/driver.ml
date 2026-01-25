@@ -55,47 +55,49 @@ module Make
   (* STF test runner *)
 
   let on_tx_output (tx_opt : IO.tx option) (tx_output_queue : IO.tx list)
-      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+      (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
     match tx_opt with
     (* Packet was transmitted *)
     | Some tx -> (
-        match tx_expect_queue with
+        match expect_queue with
         (* No expected packet (yet) *)
         | [] ->
             let tx_output_queue = tx_output_queue @ [ tx ] in
-            (tx_output_queue, tx_expect_queue)
-        (* There is an expected packet *)
-        | tx_expect :: tx_expect_queue when compare_tx tx tx_expect ->
+            (tx_output_queue, expect_queue)
+            (* There is an expected packet *)
+        | (tx_expect, exact) :: expect_queue when compare_tx ~exact tx tx_expect
+          ->
             Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
             |> log;
-            (tx_output_queue, tx_expect_queue)
-        | tx_expect :: _ ->
+            (tx_output_queue, expect_queue)
+        | (tx_expect, _) :: _ ->
             error_stf
               (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
                  (string_of_tx tx)))
     (* Packet was dropped *)
-    | None -> (tx_output_queue, tx_expect_queue)
+    | None -> (tx_output_queue, expect_queue)
 
-  let on_tx_expect (tx_expect : IO.tx) (tx_output_queue : IO.tx list)
-      (tx_expect_queue : IO.tx list) : IO.tx list * IO.tx list =
+  let on_tx_expect ((tx_expect, exact) : IO.expect)
+      (tx_output_queue : IO.tx list) (expect_queue : IO.expect list) :
+      IO.tx list * expect list =
     match tx_output_queue with
     (* No output packet (yet) *)
     | [] ->
-        let tx_expect_queue = tx_expect_queue @ [ tx_expect ] in
-        (tx_output_queue, tx_expect_queue)
+        let expect_queue = expect_queue @ [ (tx_expect, exact) ] in
+        (tx_output_queue, expect_queue)
     (* There is an output packet *)
-    | tx_output :: tx_output_queue when compare_tx tx_output tx_expect ->
+    | tx_output :: tx_output_queue when compare_tx ~exact tx_output tx_expect ->
         Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
-        (tx_output_queue, tx_expect_queue)
+        (tx_output_queue, expect_queue)
     | tx_output :: _ ->
         error_stf
           (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
              (string_of_tx tx_output))
 
   let run_stf_stmt (value_ctx : Il.value) (value_sto : Il.value)
-      (tx_output_queue : IO.tx list) (tx_expect_queue : IO.tx list)
-      (stmt_stf : Stf.Ast.stmt) : Il.value * Il.value * IO.tx list * IO.tx list
-      =
+      (tx_output_queue : IO.tx list) (expect_queue : IO.expect list)
+      (stmt_stf : Stf.Ast.stmt) :
+      Il.value * Il.value * IO.tx list * IO.expect list =
     match stmt_stf with
     (* Packet I/O *)
     | Stf.Ast.Packet (port_in, packet_in, _exact) ->
@@ -105,19 +107,19 @@ module Make
         let value_ctx, value_sto, tx_output_opt =
           Arch.drive_pipe value_ctx value_sto rx
         in
-        let tx_output_queue, tx_expect_queue =
-          on_tx_output tx_output_opt tx_output_queue tx_expect_queue
+        let tx_output_queue, expect_queue =
+          on_tx_output tx_output_opt tx_output_queue expect_queue
         in
-        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
-    | Stf.Ast.Expect (port_expect, packet_expect_opt, _exact) ->
+        (value_ctx, value_sto, tx_output_queue, expect_queue)
+    | Stf.Ast.Expect (port_expect, packet_expect_opt, exact) ->
         let port_expect = int_of_string port_expect in
         let packet_expect = Option.value packet_expect_opt ~default:"" in
         let packet_expect = String.uppercase_ascii packet_expect in
-        let tx_expect = (port_expect, packet_expect) in
-        let tx_output_queue, tx_expect_queue =
-          on_tx_expect tx_expect tx_output_queue tx_expect_queue
+        let expect = ((port_expect, packet_expect), exact) in
+        let tx_output_queue, expect_queue =
+          on_tx_expect expect tx_output_queue expect_queue
         in
-        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+        (value_ctx, value_sto, tx_output_queue, expect_queue)
     (* Match-action table updates *)
     | Stf.Ast.Add
         ( table_name,
@@ -201,7 +203,7 @@ module Make
             value_tableEntryPriorityInterface value_tableKeysetInterface
             value_tableActionInterface
         in
-        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+        (value_ctx, value_sto, tx_output_queue, expect_queue)
     | Stf.Ast.SetDefault (table_name, table_entry_action) ->
         (* Encode name *)
         let value_tableName = wrap_text_v table_name in
@@ -227,26 +229,25 @@ module Make
           Arch.table_add_default_action value_sto value_tableName
             value_tableActionInterface
         in
-        (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+        (value_ctx, value_sto, tx_output_queue, expect_queue)
     (* Async *)
-    | Stf.Ast.Wait -> (value_ctx, value_sto, tx_output_queue, tx_expect_queue)
+    | Stf.Ast.Wait -> (value_ctx, value_sto, tx_output_queue, expect_queue)
     | _ ->
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
   let run_stf_stmts (value_ctx : Il.value) (value_sto : Il.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
-    let _, _, tx_output_queue, tx_expect_queue =
+    let _, _, tx_output_queue, expect_queue =
       List.fold_left
-        (fun (value_ctx, value_sto, tx_output_queue, tx_expect_queue) stmt_stf ->
-          run_stf_stmt value_ctx value_sto tx_output_queue tx_expect_queue
-            stmt_stf)
+        (fun (value_ctx, value_sto, tx_output_queue, expect_queue) stmt_stf ->
+          run_stf_stmt value_ctx value_sto tx_output_queue expect_queue stmt_stf)
         (value_ctx, value_sto, [], [])
         stmts_stf
     in
-    match (tx_output_queue, tx_expect_queue) with
+    match (tx_output_queue, expect_queue) with
     | [], [] -> ()
-    | tx_output_queue, tx_expect_queue ->
+    | tx_output_queue, expect_queue ->
         let msg_output =
           if tx_output_queue <> [] then
             Format.asprintf "[FAIL] Remaining packets to be matched:\n%s"
@@ -254,9 +255,11 @@ module Make
           else ""
         in
         let msg_expect =
-          if tx_expect_queue <> [] then
+          if expect_queue <> [] then
             Format.asprintf "[FAIL] Expected packets to be output:\n%s"
-              (tx_expect_queue |> List.map string_of_tx |> String.concat "\n")
+              (expect_queue
+              |> List.map (fun (tx, _) -> string_of_tx tx)
+              |> String.concat "\n")
           else ""
         in
         error_stf (msg_output ^ msg_expect)

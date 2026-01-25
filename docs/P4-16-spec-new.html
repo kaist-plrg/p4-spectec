@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-23</span>
+<span id="revdate">2026-01-25</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -5239,7 +5239,7 @@ Edited contents from Section 18.4.
 <div class="ulist">
 <ul>
 <li>
-<p>Calling an extern function <code>nameIR</code> <code>(</code> <code>nameIR<sup>*</sup></code> <code>)</code>, under evaluation context <code>evalContext</code>, and store <code>store</code>:</p>
+<p>Calling an extern function <code>nameIR</code> <code>(</code> <code>nameIR<sup>*</sup></code> <code>)</code>, under caller&#8217;s evaluation context <code>evalContext</code>, evaluation context <code>evalContext</code>, and store <code>store</code>:</p>
 </li>
 <li>
 <p>Results in the updated evaluation context <code>evalContext</code>, store <code>store</code>, and call result <code>callResult</code>.</p>
@@ -7785,7 +7785,7 @@ struct types and values are represented as follows:</p>
 <div id="structValue" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">fieldTypeIR
-   : typeIR nameIR ;
+   : annotationList typeIR nameIR ;
    ;
 
 structTypeIR
@@ -7819,7 +7819,7 @@ as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 <div class="content">
 <pre>rulegroup Type_wf/structTypeIR:
   rule Type_wf/structTypeIR:
-  B |- STRUCT _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*}
+  B |- STRUCT _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
  -- (if $nestable_struct(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
@@ -7835,7 +7835,7 @@ as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Type_wf"><code>STRUCT</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
+<p><a href="#Type_wf"><code>STRUCT</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8035,7 +8035,7 @@ as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 <div class="content">
 <pre>rulegroup Type_wf/headerTypeIR:
   rule Type_wf/headerTypeIR:
-  B |- HEADER _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*}
+  B |- HEADER _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
  -- (if $nestable_header(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
@@ -8051,7 +8051,7 @@ as illustrated in <a href="#sec-named-types">Section 8.2</a>.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Type_wf"><code>HEADER</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
+<p><a href="#Type_wf"><code>HEADER</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -8157,7 +8157,7 @@ obtained from named types, as illustrated in <a href="#sec-named-types">Section 
 <div class="content">
 <pre>rulegroup Type_wf/headerUnionTypeIR:
   rule Type_wf/headerUnionTypeIR:
-  B |- HEADER_UNION _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*}
+  B |- HEADER_UNION _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
  -- (if $nestable_headerUnion(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
@@ -8173,7 +8173,7 @@ obtained from named types, as illustrated in <a href="#sec-named-types">Section 
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Type_wf"><code>HEADER_UNION</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
+<p><a href="#Type_wf"><code>HEADER_UNION</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> is a well-formed type, with bound type variables <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -9628,11 +9628,11 @@ optTrailingComma }</code>.
 <div class="content">
 <pre>rulegroup Type_wf/recordTypeIR:
   rule Type_wf/non-default:
-  B |- RECORD `{(typeIR_field nameIR_field ;)*}
+  B |- RECORD `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
  -- (Type_wf: B |- typeIR_field)*
   rule Type_wf/default:
-  B |- RECORD `{(typeIR_field nameIR_field ;)* , ...}
+  B |- RECORD `{(_ typeIR_field nameIR_field ;)* , ...}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
  -- (Type_wf: B |- typeIR_field)*</pre>
 </div>
@@ -9652,7 +9652,7 @@ optTrailingComma }</code>.
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>RECORD</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordTypeIR</code>:</p>
+<p>If let <code>RECORD</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordTypeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -9672,7 +9672,7 @@ optTrailingComma }</code>.
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code> be <code>recordTypeIR</code>.</p>
+<p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code> be <code>recordTypeIR</code>.</p>
 </li>
 <li>
 <p>Check that <a href="#distinct_">the elements of <code>nameIR<sub>field</sub><sup>*</sup></code> are distinct</a>.</p>
@@ -19031,7 +19031,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
  -- (Type_ok: BLOCK TC_1 |- type_field : typeIR_field # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_field = $name(name_field)))*
- -- if structTypeDefIR = STRUCT nameIR `&lt;typeId*&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if structTypeDefIR = STRUCT nameIR `&lt;typeId*&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- structTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, structTypeDefIR)
  -- if structTypeDeclarationIR = annotationList STRUCT nameIR `&lt;typeId*&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}</pre>
@@ -19112,7 +19112,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -19148,7 +19148,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
   rule Decl_inst/structTypeDeclarationIR:
   IC_0 STO |- annotationList STRUCT nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if structTypeDefIR = STRUCT nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if structTypeDefIR = STRUCT nameIR `&lt;typeParameterListIR&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, structTypeDefIR)</pre>
 </div>
 </div>
@@ -19184,7 +19184,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>structTypeDefIR</code> be <code>STRUCT</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>structTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -19253,7 +19253,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_f = $name(name_f)))*
- -- if headerTypeDefIR = HEADER nameIR `&lt;typeId*&gt; `{(typeIR_f nameIR_f ;)*}
+ -- if headerTypeDefIR = HEADER nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerTypeDefIR)
  -- if headerTypeDeclarationIR = annotationList HEADER nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
@@ -19334,7 +19334,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -19370,7 +19370,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
   rule Decl_inst/headerTypeDeclarationIR:
   IC_0 STO |- annotationList HEADER nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if headerTypeDefIR = HEADER nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if headerTypeDefIR = HEADER nameIR `&lt;typeParameterListIR&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerTypeDefIR)</pre>
 </div>
 </div>
@@ -19406,7 +19406,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerTypeDefIR</code> be <code>HEADER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>headerTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -19475,7 +19475,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
  -- (Type_ok: BLOCK TC_1 |- type_f : typeIR_f # eps)*
  -- if nameIR = $name(name)
  -- (if (nameIR_f = $name(name_f)))*
- -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeId*&gt; `{(typeIR_f nameIR_f ;)*}
+ -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}
  -- TypeDef_wf: $bound(GLOBAL, TC_0) |- headerUnionTypeDefIR
  -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, headerUnionTypeDefIR)
  -- if headerUnionTypeDeclarationIR = annotationList HEADER_UNION nameIR `&lt;typeId*&gt; `{(annotationList_f typeIR_f nameIR_f ;)*}</pre>
@@ -19556,7 +19556,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>f</sub></code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -19592,7 +19592,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
   rule Decl_inst/headerUnionTypeDeclarationIR:
   IC_0 STO |- annotationList HEADER_UNION nameIR `&lt;typeParameterListIR&gt; `{typeFieldIR*} : IC_1 STO
  -- (if (annotationList_field typeIR_field nameIR_field ; = typeFieldIR))*
- -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeParameterListIR&gt; `{(typeIR_field nameIR_field ;)*}
+ -- if headerUnionTypeDefIR = HEADER_UNION nameIR `&lt;typeParameterListIR&gt; `{(annotationList_field typeIR_field nameIR_field ;)*}
  -- if IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, headerUnionTypeDefIR)</pre>
 </div>
 </div>
@@ -19628,7 +19628,7 @@ typeFieldListIR = typeFieldIR*</code></pre>
 </div>
 </li>
 <li>
-<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>headerUnionTypeDefIR</code> be <code>HEADER_UNION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>{</code> <code>(</code> <code>annotationList<sub>field</sub></code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_typeDef_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>headerUnionTypeDefIR</code> is added to the <code>GLOBAL</code> layer</a>.</p>
@@ -21154,7 +21154,7 @@ abortResult
   p TC |- lvalue_base . member : typedLvalueIR
  -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
  -- if _ # `(typeIR_base) = typedLvalueIR_base
- -- if STRUCT _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
+ -- if STRUCT _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_field, typeIR_field)*)
  -- if typedLvalueIR = (typedLvalueIR_base . nameIR) # `(typeIR)
@@ -21162,7 +21162,7 @@ abortResult
   p TC |- lvalue_base . member : typedLvalueIR
  -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
  -- if _ # `(typeIR_base) = typedLvalueIR_base
- -- if HEADER _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
+ -- if HEADER _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_field, typeIR_field)*)
  -- if typedLvalueIR = (typedLvalueIR_base . nameIR) # `(typeIR)
@@ -21170,7 +21170,7 @@ abortResult
   p TC |- lvalue_base . member : typedLvalueIR
  -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
  -- if _ # `(typeIR_base) = typedLvalueIR_base
- -- if HEADER_UNION _ `&lt;_&gt; `{(typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
+ -- if HEADER_UNION _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_field, typeIR_field)*)
  -- if typedLvalueIR = (typedLvalueIR_base . nameIR) # `(typeIR)</pre>
@@ -21229,7 +21229,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>Else if let <code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>Else if let <code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21248,7 +21248,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>Else if let <code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -21267,7 +21267,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>Else if let <code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -30516,7 +30516,7 @@ dataExpressionIR
  -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
  -- if typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
  -- if ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
- -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)}
+ -- if typeIR = RECORD `{(`EMPTY typeIR_f nameIR_f ;)}
  -- if expressionNoteIR = `(typeIR ctk_f)
   rule Expr_ok/single-default:
   p TC |- `{(name_f = expression_f , ...) _} : (RECORD `{(nameIR_f = typedExpressionIR_f) , ...}) # expressionNoteIR
@@ -30524,7 +30524,7 @@ dataExpressionIR
  -- Expr_ok: p TC |- expression_f : typedExpressionIR_f
  -- if typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)
  -- if ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)
- -- if typeIR = RECORD `{(typeIR_f nameIR_f ;) , ...}
+ -- if typeIR = RECORD `{(`EMPTY typeIR_f nameIR_f ;) , ...}
  -- if expressionNoteIR = `(typeIR ctk_f)
   rule Expr_ok/multiple-non-default:
   p TC |- `{(name_f_h = expression_f_h , namedExpressionList_t) _} : (RECORD `{(nameIR_f = typedExpressionIR_f)*}) # expressionNoteIR
@@ -30535,7 +30535,7 @@ dataExpressionIR
  -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
  -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*
  -- (if (ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)))*
- -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)*}
+ -- if typeIR = RECORD `{(`EMPTY typeIR_f nameIR_f ;)*}
  -- if ctk = $joins_ctk(ctk_f*)
  -- if expressionNoteIR = `(typeIR ctk)
   rule Expr_ok/multiple-default:
@@ -30547,7 +30547,7 @@ dataExpressionIR
  -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*
  -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*
  -- (if (ctk_f = $ctk_of_typedExpressionIR(typedExpressionIR_f)))*
- -- if typeIR = RECORD `{(typeIR_f nameIR_f ;)* , ...}
+ -- if typeIR = RECORD `{(`EMPTY typeIR_f nameIR_f ;)* , ...}
  -- if ctk = $joins_ctk(ctk_f*)
  -- if expressionNoteIR = `(typeIR ctk)</pre>
 </div>
@@ -30590,7 +30590,7 @@ dataExpressionIR
 <p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>[typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;]</code> <code>}</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>[`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;]</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
@@ -30625,7 +30625,7 @@ dataExpressionIR
 <p>Let <code>ctk<sub>f</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>f</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>[typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;]</code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>[`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;]</code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
@@ -30725,7 +30725,7 @@ dataExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>(</code> <code>`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#joins_ctk"><code>ctk<sub>f</sub><sup>*</sup></code> joined</a>.</p>
@@ -30831,7 +30831,7 @@ dataExpressionIR
 </div>
 </li>
 <li>
-<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code>.</p>
+<p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>(</code> <code>`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>&#8230;&#8203;</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk</code> be <a href="#joins_ctk"><code>ctk<sub>f</sub><sup>*</sup></code> joined</a>.</p>
@@ -31509,7 +31509,7 @@ memberAccessExpressionIR
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
- -- if STRUCT _ `&lt;_&gt; `{(typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
+ -- if STRUCT _ `&lt;_&gt; `{(_ typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
  -- if expressionNoteIR = `(typeIR ctk_base)
@@ -31518,7 +31518,7 @@ memberAccessExpressionIR
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
- -- if HEADER _ `&lt;_&gt; `{(typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
+ -- if HEADER _ `&lt;_&gt; `{(_ typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
  -- if expressionNoteIR = `(typeIR ctk_base)
@@ -31527,7 +31527,7 @@ memberAccessExpressionIR
  -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
- -- if HEADER_UNION _ `&lt;_&gt; `{(typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
+ -- if HEADER_UNION _ `&lt;_&gt; `{(_ typeIR_f nameIR_f ;)*} = $unroll_typeIR(typeIR_base)
  -- if nameIR = $name(member)
  -- if typeIR = $assoc_&lt;nameIR, typeIR&gt;(nameIR, (nameIR_f, typeIR_f)*)
  -- if expressionNoteIR = `(typeIR ctk_base)
@@ -31734,7 +31734,7 @@ memberAccessExpressionIR
 <p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>If let <code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>If let <code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -31753,7 +31753,7 @@ memberAccessExpressionIR
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>Else if let <code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -31772,7 +31772,7 @@ memberAccessExpressionIR
 </div>
 </li>
 <li>
-<p>Else if let <code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<p>Else if let <code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -35192,7 +35192,7 @@ in parsers and deparsers to access packet data.</p>
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-23 17:25:31 +0900
+Last updated 2026-01-25 17:05:56 +0900
 </div>
 </div>
 </body>
