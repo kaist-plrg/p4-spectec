@@ -14,7 +14,7 @@ end
 
 (* Hints associated with type cases *)
 
-module TypHints = MakeCIdEnv (Kind)
+module TypHints = MakeCaseIdEnv (Kind)
 
 (* Hints associated with relation ids *)
 
@@ -33,7 +33,7 @@ let empty =
 
 (* Adders *)
 
-let add_typ (cid : CId.t) (kind : Kind.t) (kinds : t) : t =
+let add_typ (cid : CaseId.t) (kind : Kind.t) (kinds : t) : t =
   { kinds with typs = TypHints.add cid kind kinds.typs }
 
 let add_func (fid : FId.t) (kind : Kind.t) (kinds : t) : t =
@@ -44,7 +44,7 @@ let add_rel (rid : RId.t) (kind : Kind.t) (kinds : t) : t =
 
 (* Finders *)
 
-let find_typ (cid : CId.t) (kinds : t) : Kind.t option =
+let find_typ (cid : CaseId.t) (kinds : t) : Kind.t option =
   TypHints.find_opt cid kinds.typs
 
 let find_func (fid : FId.t) (kinds : t) : Kind.t option =

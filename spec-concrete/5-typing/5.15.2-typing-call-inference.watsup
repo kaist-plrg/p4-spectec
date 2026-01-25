@@ -36,7 +36,10 @@ dec $resolve_constraint(constraint) : inference
 ;;;; Type inference
 ;;
 
+def $infer(eps, parameterIR*, argumentIR*) = $empty_map<typeId, typeIR>
+
 def $infer(typeId_infer*, parameterIR*, argumentIR*) = inference_resolved
+  -- if typeId_infer* =/= eps
   ---- ;; create constraints
   -- if constraint_init = $empty_constraint(typeId_infer*)
   -- if (constraint_pair
@@ -168,8 +171,6 @@ def $gen_constraint(
     PACKAGE _ `< _ > `{ typeIR_arg* })
   = $gen_constraints(constraint, typeIR_param*, typeIR_arg*)
 
-;;; Synthesized types
-
 def $gen_constraint(constraint, typeIR_param, typeIR_arg)
   = constraint
   -- otherwise
@@ -232,7 +233,7 @@ def $merge_constraint'(
   = $merge_constraint'(constraint_pre, constraint_post, typeId_t*, constraint_updated)
   -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
   -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- Sub_impl: typeIR_pre <: typeIR_post
+  -- Cast_impl: typeIR_pre -> typeIR_post
   -- if constraint_updated
       = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
 
@@ -243,8 +244,8 @@ def $merge_constraint'(
   = $merge_constraint'(constraint_pre, constraint_post, typeId_t*, constraint_updated)
   -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
   -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- Sub_impl:/ typeIR_pre <: typeIR_post
-  -- Sub_impl: typeIR_post <: typeIR_pre
+  -- Cast_impl:/ typeIR_pre -> typeIR_post
+  -- Cast_impl: typeIR_post -> typeIR_pre
   -- if constraint_updated
       = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
 

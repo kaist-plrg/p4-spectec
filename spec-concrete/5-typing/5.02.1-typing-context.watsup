@@ -19,18 +19,6 @@ syntax blockKind =
   | CONTROL
   | PACKAGE
 
-dec $is_extern_blockKind(blockKind) : bool
-def $is_extern_blockKind(blockKind) = blockKind = EXTERN
-
-dec $is_parser_blockKind(blockKind) : bool
-def $is_parser_blockKind(blockKind) = blockKind = PARSER
-
-dec $is_control_blockKind(blockKind) : bool
-def $is_control_blockKind(blockKind) = blockKind = CONTROL
-
-dec $is_package_blockKind(blockKind) : bool
-def $is_package_blockKind(blockKind) = blockKind = PACKAGE
-
 syntax blockTypingLayer =
   { KIND blockKind,
     TYPE typeDefEnv,
@@ -39,58 +27,33 @@ syntax blockTypingLayer =
 
 ;; Local layer
 
-syntax localKind =
-  | `EMPTY
-  | FUNCTION `: typeIR
-  | EXTERN_FUNCTION `: typeIR
-  | ACTION
+syntax actionLocalKind = ACTION
+
+syntax definedFunctionLocalKind =
+  FUNCTION `: typeIR
+
+syntax externFunctionLocalKind =
+  EXTERN_FUNCTION `: typeIR
+
+syntax functionLocalKind =
+  | definedFunctionLocalKind
+  | externFunctionLocalKind
+
+syntax externMethodLocalKind =
   | EXTERN_METHOD `: typeIR
   | EXTERN_METHOD ABSTRACT `: typeIR
+
+syntax methodLocalKind =
+  | externMethodLocalKind
   | PARSER_STATE
   | CONTROL_APPLY_METHOD
   | TABLE_APPLY_METHOD
 
-dec $is_function_localKind(localKind) : bool
-def $is_function_localKind(FUNCTION `: _) = true
-def $is_function_localKind(_) = false
-  -- otherwise
-
-dec $is_extern_function_localKind(localKind) : bool
-def $is_extern_function_localKind(EXTERN_FUNCTION `: _) = true
-def $is_extern_function_localKind(_) = false
-  -- otherwise
-
-dec $is_action_localKind(localKind) : bool
-def $is_action_localKind(ACTION) = true
-def $is_action_localKind(_) = false
-  -- otherwise
-
-dec $is_extern_method_localKind(localKind) : bool
-def $is_extern_method_localKind(EXTERN_METHOD `: _) = true
-def $is_extern_method_localKind(_) = false
-  -- otherwise
-
-dec $is_extern_abstract_method_localKind(localKind) : bool
-def $is_extern_abstract_method_localKind(
-    EXTERN_METHOD ABSTRACT `: _
-  ) = true
-def $is_extern_abstract_method_localKind(_) = false
-  -- otherwise
-
-dec $is_parser_state_localKind(localKind) : bool
-def $is_parser_state_localKind(PARSER_STATE) = true
-def $is_parser_state_localKind(_) = false
-  -- otherwise
-
-dec $is_control_apply_method_localKind(localKind) : bool
-def $is_control_apply_method_localKind(CONTROL_APPLY_METHOD) = true
-def $is_control_apply_method_localKind(_) = false
-  -- otherwise
-
-dec $is_table_apply_method_localKind(localKind) : bool
-def $is_table_apply_method_localKind(TABLE_APPLY_METHOD) = true
-def $is_table_apply_method_localKind(_) = false
-  -- otherwise
+syntax localKind =
+  | `EMPTY
+  | actionLocalKind
+  | functionLocalKind
+  | methodLocalKind
 
 syntax localTypingLayer =
   { KIND localKind,
@@ -177,7 +140,8 @@ def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.GLOBAL.FRAME
   -- if ~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame))
   -- if _ typeIR _ _ = varTypeIR
-  -- if (id = "main") => $is_packageObjectTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if (id = "main") => (typeIR_unroll <: packageObjectTypeIR)
   -- if typeFrame_update
       = $add_map<nameIR, varTypeIR>(typeFrame, id, varTypeIR)
   -- if TC' = TC [ .GLOBAL.FRAME = typeFrame_update ]
@@ -205,7 +169,6 @@ def $add_vars_t(p, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
 ;;; Adder for parameters
 
 dec $add_parameter_t(cursor, typingContext, parameterIR) : typingContext
-dec $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext
   hint(prose_in %2 "added to the" %0 "layer of" %1)
 
 def $add_parameter_t(cursor, TC, _ `EMPTY typeIR id (`= value)?) = TC'
@@ -215,11 +178,6 @@ def $add_parameter_t(cursor, TC, _ direction typeIR id (`= value)?) = TC'
   -- if direction =/= `EMPTY
   -- if varTypeIR = direction typeIR DYN value?
   -- if TC' = $add_var_t(cursor, TC, id, varTypeIR)
-
-def $add_parameters_t(cursor, TC, eps) = TC
-def $add_parameters_t(cursor, TC, parameterIR_h :: parameterIR_t*) = TC''
-  -- if TC' = $add_parameter_t(cursor, TC, parameterIR_h)
-  -- if TC'' = $add_parameters_t(cursor, TC', parameterIR_t*)
 
 ;;; Adder for constructor parameters
 
@@ -331,6 +289,9 @@ def $add_callableDef_non_overload_t(BLOCK, TC, callableId, callableTypeDefIR) = 
 dec $add_constructorDef_t(typingContext, callableId, constructorTypeDefIR)
   : typingContext
   hint(prose_in "where" %1 "to" %2 "is added to" %0)
+dec $add_constructorDefs_t(typingContext, callableId*, constructorTypeDefIR*)
+  : typingContext
+  hint(prose_in "where each of" %1 "to each of" %2 "are added to" %0)
 
 def $add_constructorDef_t(TC, callableId, constructorTypeDefIR) = TC'
   -- if constructorTypeDefEnv = TC.GLOBAL.CONSTRUCTOR
@@ -340,6 +301,14 @@ def $add_constructorDef_t(TC, callableId, constructorTypeDefIR) = TC'
         = $add_map<callableId, constructorTypeDefIR>(
             constructorTypeDefEnv, callableId, constructorTypeDefIR)
   -- if TC' = TC [ .GLOBAL.CONSTRUCTOR = constructorTypeDefEnv_update ]
+
+def $add_constructorDefs_t(TC, eps, eps) = TC
+def $add_constructorDefs_t(
+    TC, callableId_h :: callableId_t*,
+    constructorTypeDefIR_h :: constructorTypeDefIR_t*)
+  = TC''
+  -- if TC' = $add_constructorDef_t(TC, callableId_h, constructorTypeDefIR_h)
+  -- if TC'' = $add_constructorDefs_t(TC', callableId_t*, constructorTypeDefIR_t*)
 
 ;;
 ;; Finders

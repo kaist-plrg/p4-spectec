@@ -14,18 +14,12 @@ Variable declarations without an initializer are uninitialized (except for
 headers and other header-related types, which are initialized to invalid in the
 same way as described for direction `out` parameters in
 <<sec-call-convention>>). The language places few restrictions on the types of
-the variables: most P4 types that can be written explicitly can be used (e.g.,
+variables: most P4 types that can be written explicitly can be used (e.g.,
 base types, `struct`, `header`, header stack, `tuple`). However, it is
 impossible to declare variables with type `int`, or with types that are only
 synthesized by the compiler (e.g., `set`) In addition, variables of type
 `parser`, `control`, `package`, or `extern` types must be declared using
 instantiations (see <<sec-instantiation-declaration>>).
-
-// Added
-After typing, variable declarations are represented in P4~IR~ as:
-
-${syntax: initializerIR
-          variableDeclarationIR}
 
 // Section 11.2 of the P4-16 Language Specification
 Reading the value of a variable that has not been initialized yields an
@@ -35,7 +29,7 @@ such situations.
 NOTE: P4-SpecTec implements zero-initialization for local variables.
 
 // Section 11.2 of the P4-16 Language Specification
-Variables declarations can appear in the following locations within a P4
+Variable declarations can appear in the following locations within a P4
 program:
 
 * In a block statement,
@@ -55,7 +49,7 @@ languages such as C. The value of a variable is never preserved from one
 invocation of its enclosing block to the next. In particular, variables cannot
 be used to maintain state between different network packets.
 
-// Added
+// Added ----
 ==== Type checking
 
 Variable declarations are type checked using the following relation:
@@ -63,12 +57,16 @@ Variable declarations are type checked using the following relation:
 ${relation-title-source: VarDecl_ok}
 ${relation-title-prose: VarDecl_ok}
 
-It is defined by the following rules:
+After typing, variable declarations are represented in P4~IR~ as:
+
+${syntax: initializerIR
+          variableDeclarationIR}
+
+These are produced by the following rules:
 
 ${rulegroup-source: VarDecl_ok}
 ${rulegroup-prose: VarDecl_ok}
 
-// Added
 ==== Runtime evaluation
 
 Variable declarations are evaluated at runtime using the following relation:
@@ -92,3 +90,4 @@ ${rulegroup-prose: VarDecl_eval}
 NOTE: Currently in P4-SpecTec, instantiation of a variable declaration is
 implemented as a no-op. But, instantiation _may_ occur within the right-hand
 side, initializer expression. Ideally, revisit this.
+// ---- Added

@@ -9,19 +9,8 @@ ${syntax: initializer
           constantDeclaration}
 
 // Section 11 of the P4-16 Language Specification
-The `initializer` expression must be a local compile-time known value. In P4~IR~,
-constant declarations have the syntax:
-
-// Added
-${syntax: constantInitializerIR
-          constantDeclarationIR}
-
-// Added
-Notice that `constantInitializerIR` is reduced to a `value` in P4~IR~, where
-`value` is computed from `initializer` via local compile-time evaluation.
-
-// Section 11 of the P4-16 Language Specification
-A constant declaration introduces a constant whose value has the specified type.
+The `initializer` expression must be a local compile-time known value. A
+constant declaration introduces a constant whose value has the specified type.
 The following are all legal constant declarations:
 
 [source,p4]
@@ -42,7 +31,16 @@ Constant declarations are type checked with the relation:
 ${relation-title-source: ConstDecl_ok}
 ${relation-title-prose: ConstDecl_ok}
 
-It is defined by the following rule:
+After typing, in P4~IR~, constant declarations have the syntax:
+
+// Added
+${syntax: constantInitializerIR
+          constantDeclarationIR}
+
+// Added
+Notice that `constantInitializerIR` is reduced to a `value` in P4~IR~, where
+`value` is computed from `initializer` via local compile-time evaluation. It is
+defined by the following rule:
 
 ${rulegroup-source: ConstDecl_ok}
 ${rulegroup-prose: ConstDecl_ok}

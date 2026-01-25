@@ -1,0 +1,82 @@
+// Added ----
+[#sec-extern-object-declaration]
+=== Extern object declarations
+
+An extern object declaration introduces an extern object.
+
+${syntax: externObjectDeclaration
+          externConstructorOrMethod
+          externConstructorOrMethodPrototypeList}
+
+See <<sec-extern-object>> for how extern objects are internally represented. An
+extern object declaration includes its constructors and methods, to be
+explained in the following sections.
+
+[#sec-extern-method-declaration]
+==== Extern methods
+
+Extern objects can have methods, which are declared using the following syntax:
+
+${syntax: externMethodPrototype}
+
+See <<sec-extern-method>> for details on how extern methods are represented
+internally.
+
+===== Type checking
+
+Extern methods are type checked using the following relation:
+
+${relation-title-source: ExternMethod_ok}
+${relation-title-prose: ExternMethod_ok}
+
+After type checking, in P4~IR~, an extern method declaration is represented as:
+
+${syntax: externMethodPrototypeIR}
+
+These are produced by:
+
+${rulegroup-source: ExternMethod_ok}
+${rulegroup-prose: ExternMethod_ok}
+
+[#sec-extern-constructor-declaration]
+==== Extern constructors
+
+Extern objects may have constructors, which are declared using the following syntax:
+
+${syntax: externConstructorPrototype}
+
+===== Type checking
+
+Extern constructors are type checked using the following relation:
+
+${relation-title-source: ExternConstructor_ok}
+${relation-title-prose: ExternConstructor_ok}
+
+After type checking, in P4~IR~, an extern constructor declaration is represented as:
+
+${syntax: externConstructorPrototypeIR}
+
+These are produced by:
+
+${rulegroup-source: ExternConstructor_ok}
+${rulegroup-prose: ExternConstructor_ok}
+
+==== Type checking
+
+After type checking, an extern object declaration is represented in P4~IR~
+as:
+
+${syntax: externObjectDeclarationIR
+          externConstructorPrototypeIR
+          externMethodPrototypeIR}
+
+${rulegroup-source: Decl_ok/externObjectDeclaration}
+${rulegroup-prose: Decl_ok/externObjectDeclaration}
+
+==== Compile-time evaluation
+
+At comile-time, extern object declarations are loaded into the context by:
+
+${rulegroup-source: Decl_inst/externObjectDeclarationIR}
+${rulegroup-prose: Decl_inst/externObjectDeclarationIR}
+// ---- Added

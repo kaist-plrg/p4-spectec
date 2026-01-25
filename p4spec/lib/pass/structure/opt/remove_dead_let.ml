@@ -30,6 +30,31 @@ module Used = struct
   let union (used_a : t) (used_b : t) : t = IdSet.union used_a used_b
 end
 
+let rec removable_let (exp_r : exp) : bool =
+  match exp_r.it with
+  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
+  | UnE (_, _, exp) -> removable_let exp
+  | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
+      removable_let exp_l && removable_let exp_r
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+      removable_let exp
+  | TupleE exps | CaseE (_, exps) -> List.for_all removable_let exps
+  | StrE expfields -> expfields |> List.map snd |> List.for_all removable_let
+  | OptE (Some exp) -> removable_let exp
+  | OptE None -> true
+  | ListE exps -> List.for_all removable_let exps
+  | ConsE (exp_h, exp_t) -> removable_let exp_h && removable_let exp_t
+  | CatE (exp_l, exp_r) -> removable_let exp_l && removable_let exp_r
+  | MemE (exp_e, exp_s) -> removable_let exp_e && removable_let exp_s
+  | LenE exp -> removable_let exp
+  | DotE (exp_b, _) -> removable_let exp_b
+  | IdxE (exp_b, exp_i) -> removable_let exp_b && removable_let exp_i
+  | SliceE (exp_b, exp_i, exp_n) ->
+      removable_let exp_b && removable_let exp_i && removable_let exp_n
+  | UpdE (exp_b, _, exp) -> removable_let exp_b && removable_let exp
+  | CallE _ -> false
+  | IterE (exp, _) -> removable_let exp
+
 let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
   match instr.it with
   | IfI (exp_cond, _, instrs_then) ->
@@ -115,7 +140,8 @@ let rec upstream (instrs : instr list) : instr list =
       let instr_h = GroupI (id, rel_signature, exps, instrs_group) $ at in
       let instrs_t = upstream instrs_t in
       instr_h :: instrs_t
-  | { it = LetI (exp_l, exp_r, iterexps); at; _ } :: instrs_t ->
+  | { it = LetI (exp_l, exp_r, iterexps); at; _ } :: instrs_t
+    when removable_let exp_r ->
       let defined = Defined.init_exp exp_l in
       let used = downstream_instrs defined instrs_t in
       if IdSet.is_empty used then upstream instrs_t

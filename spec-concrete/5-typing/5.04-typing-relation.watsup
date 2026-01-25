@@ -60,31 +60,31 @@ relation TypeArgumentList_ok:
   hint(prose_out %3 "and a set of fresh type variables" %4)
 
 ;;
-;;;; Subtyping, explicit and implicit
+;;;; Casting, explicit and implicit
 ;;
 
-relation Sub_expl: typeIR <: typeIR
+relation Cast_expl: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be explicitly cast to" %1)
   hint(prose_false %0 "cannot be explicitly cast to" %1)
-relation Sub_expl_unroll: typeIR <: typeIR
+relation Cast_expl_unroll: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be explicitly cast to" %1 "after unrolling")
   hint(prose_false %0 "cannot be explicitly cast to" %1 "after unrolling")
-relation Sub_expl_unroll_neq: typeIR <: typeIR
+relation Cast_expl_unroll_neq: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be explicitly cast to" %1 "when they are not the same type after unrolling")
   hint(prose_false %0 "cannot be explicitly cast to" %1 "when they are not the same type after unrolling")
 
-relation Sub_impl: typeIR <: typeIR
+relation Cast_impl: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be implicitly cast to" %1)
   hint(prose_false %0 "cannot be implicitly cast to" %1)
-relation Sub_impl_unroll: typeIR <: typeIR
+relation Cast_impl_unroll: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be implicitly cast to" %1 "after unrolling")
   hint(prose_false %0 "cannot be implicitly cast to" %1 "after unrolling")
-relation Sub_impl_unroll_neq: typeIR <: typeIR
+relation Cast_impl_unroll_neq: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be implicitly cast to" %1 "when they are not the same type after unrolling")
   hint(prose_false %0 "cannot be implicitly cast to" %1 "when they are not the same type after unrolling")
@@ -183,55 +183,89 @@ relation Block_ok:
 ;;
 
 relation Parameter_ok:
-  cursor typingContext |- parameter : parameterIR `# typeId*
+  cursor typingContext |- parameter
+                        : typingContext parameterIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the parameter" %3 "and a set of fresh type variables" %4)
+  hint(prose_out "the updated typing context" %3#
+                 ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ParameterList_ok:
-  cursor typingContext |- parameterList : parameterListIR `# typeId*
+  cursor typingContext |- parameterList
+                        : typingContext parameterListIR `# typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the parameter list" %3 "and a set of fresh type variables" %4)
+  hint(prose_out "the updated typing context" %3#
+                 ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ConstructorParameterListOpt_ok:
   typingContext |- constructorParameterListOpt
-                 : constructorParameterListIR `# typeId*
+                 : typingContext constructorParameterListIR `# typeId*
   hint(input %0 %1)
   hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the constructor parameter list" %2 "and a set of fresh type variables" %3)
+  hint(prose_out "the updated typing context" %2#
+                 ",\n" %3#", and a set of fresh type variables" %4)
 
 ;;
 ;;;; Extern method/constructor typing
 ;;
 
+dec $callableId_of_externMethodPrototype(
+    externMethodPrototype)
+  : callableId
+  hint(prose_in "the callable id of " %0)
+
+def $callableId_of_externMethodPrototype(
+    _ (_ name _ `( parameterList )) `;)
+  = $callableId(name, parameterList)
+def $callableId_of_externMethodPrototype(
+    _ ABSTRACT (_ name _ `( parameterList )) `;)
+  = $callableId(name, parameterList)
+
+dec $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
+  : externMethodTypeDefIR
+  hint(prose_in "the callable type definition of " %0)
+
+def $type_of_externMethodPrototypeIR(
+    _ (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;)
+  = externMethodTypeDefIR
+  -- if externMethodTypeDefIR
+      = EXTERN_METHOD `< typeParameterListIR_expl `, typeParameterListIR_impl >
+          `( parameterIR* ) `: typeIR_ret
+def $type_of_externMethodPrototypeIR(
+    _ ABSTRACT (typeIR_ret nameIR
+      `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      `( parameterIR* )) `;)
+  = externMethodTypeDefIR
+  -- if externMethodTypeDefIR
+      = EXTERN_METHOD ABSTRACT
+          `< typeParameterListIR_expl `, typeParameterListIR_impl >
+          `( parameterIR* ) `: typeIR_ret
+
+dec $constructorId_of_externConstructorPrototype(
+    externConstructorPrototype)
+  : constructorId
+  hint(prose_in "the constructor id of " %0)
+
+def $constructorId_of_externConstructorPrototype(
+    _ typeIdentifier `( parameterList ) `;)
+  = $callableId(typeIdentifier, parameterList)
+
 relation ExternMethod_ok:
   typingContext typeId |- externMethodPrototype
-                     : typingContext externMethodPrototypeIR
+                        : externMethodPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed method prototype" %4)
-
-relation ExternMethods_ok:
-  typingContext typeId |- externMethodPrototype*
-                     : typingContext externMethodPrototypeIR*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed method prototypes" %4)
+  hint(prose_out %3)
 
 relation ExternConstructor_ok:
   typingContext typeId |- externConstructorPrototype
-                     : typingContext externConstructorPrototypeIR
+                        : externConstructorPrototypeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed constructor prototype" %4)
-
-relation ExternConstructors_ok:
-  typingContext typeId |- externConstructorPrototype*
-                     : typingContext externConstructorPrototypeIR*
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
-  hint(prose_out "the updated typing context" %3 "and the typed constructor prototypes" %4)
+  hint(prose_out %3)
 
 ;;
 ;;;; Parser typing

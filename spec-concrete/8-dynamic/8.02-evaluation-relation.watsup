@@ -87,15 +87,22 @@ relation Lvalue_eval:
   cursor evalContext store |- typedLvalueIR
                             : evalContext store storageReferenceResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the updated evaluation context" %4#", store" %5#
+               ", and result" %6)
 
 relation Lvalue_read:
   cursor evalContext store |- storageReference : value
   hint(input %0 %1 %2 %3)
+  hint(prose_in "reading from" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the value" %4)
 
 relation Lvalue_write:
   cursor evalContext store |- storageReference -> value
                             : evalContext
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "writing" %4#" to" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "the updated evaluation context" %5)
 
 ;;
 ;;;; Statement evaluation
@@ -106,14 +113,16 @@ syntax callResult =
   | returnResult
 
 syntax forBreakResult = BREAK
-
 syntax forContinueResult = CONTINUE
+
+syntax forResult =
+  | forBreakResult
+  | forContinueResult
 
 syntax statementResult =
   | continueEmptyResult
   | callResult
-  | forBreakResult
-  | forContinueResult
+  | forResult
 
 relation Stmt_eval:
   cursor evalContext store |- statementIR

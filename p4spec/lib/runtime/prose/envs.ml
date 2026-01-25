@@ -14,7 +14,7 @@ module IHEnv = MakeHIdEnv (Hints.Input)
 
    This implements a 3-level mapping:
     - Indexed by hint id (e.g., "prose", "prose_in")
-    - Indexed by case/relation/function id (i.e., CId.t, FId.t, RId.t)
+    - Indexed by case/relation/function id (i.e., CaseId.t, FId.t, RId.t)
     - Kind of hint (Alter, Fields) *)
 
 module HEnv = struct
@@ -24,7 +24,7 @@ module HEnv = struct
 
   (* Key for hints *)
 
-  type key = [ `Typ of CId.t | `Func of FId.t | `Rel of RId.t ]
+  type key = [ `Typ of CaseId.t | `Func of FId.t | `Rel of RId.t ]
 
   (* Adders and finders for hints *)
 

@@ -158,7 +158,7 @@ rulegroup InstDecl_inst {
                               `( argumentListIR `# id_default* )
                           : STO_1 object
     ---- ;; if object is not an extern
-    -- if ~$is_externObject(object)
+    -- if ~(object <: externObject)
     ---- ;; bind object to store
     -- if objectId = IC_0.PATH ++ nameIR
     -- if STO_2 = $add_store(STO_1, objectId, object)
@@ -258,7 +258,9 @@ rule Decl_inst/externFunctionDeclarationIR:
 
 ;;;; externObjectDeclarationIR
 
-dec $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR) : callableId
+dec $callableId_of_externMethodPrototypeIR(
+    externMethodPrototypeIR)
+  : callableId
   hint(prose_in "the callable id of " %0)
 
 def $callableId_of_externMethodPrototypeIR(
@@ -268,29 +270,9 @@ def $callableId_of_externMethodPrototypeIR(
     _ ABSTRACT (_ nameIR `< _ `, _ > `( parameterListIR )) `;)
   = $callableId_IR(nameIR, parameterListIR)
 
-dec $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
-  : externMethodTypeDefIR
-  hint(prose_in "the callable type definition of " %0)
-
-def $type_of_externMethodPrototypeIR(
-    _ (typeIR_ret nameIR
-      `< typeParameterListIR_expl `, typeParameterListIR_impl >
-      `( parameterIR* )) `;)
-  = externMethodTypeDefIR
-  -- if externMethodTypeDefIR
-      = EXTERN_METHOD `< typeParameterListIR_expl `, typeParameterListIR_impl >
-          `( parameterIR* ) `: typeIR_ret
-def $type_of_externMethodPrototypeIR(
-    _ ABSTRACT (typeIR_ret nameIR
-      `< typeParameterListIR_expl `, typeParameterListIR_impl >
-      `( parameterIR* )) `;)
-  = externMethodTypeDefIR
-  -- if externMethodTypeDefIR
-      = EXTERN_METHOD ABSTRACT
-          `< typeParameterListIR_expl `, typeParameterListIR_impl >
-          `( parameterIR* ) `: typeIR_ret
-
-dec $callableId_of_externConstructorPrototypeIR(externConstructorPrototypeIR) : callableId
+dec $callableId_of_externConstructorPrototypeIR(
+    externConstructorPrototypeIR)
+  : callableId
   hint(prose_in "the constructor id of " %0)
 
 def $callableId_of_externConstructorPrototypeIR(

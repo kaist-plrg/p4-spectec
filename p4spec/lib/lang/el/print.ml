@@ -140,8 +140,8 @@ and string_of_exp exp =
   | CallE (id, targs, args) ->
       string_of_defid id ^ string_of_targs targs ^ string_of_args args
   | IterE (exp, iter) -> string_of_exp exp ^ string_of_iter iter
-  | TypE (exp, plaintyp) ->
-      string_of_exp exp ^ " : " ^ string_of_plaintyp plaintyp
+  | SubE (exp, plaintyp) ->
+      string_of_exp exp ^ " <: " ^ string_of_plaintyp plaintyp
   | AtomE atom -> string_of_atom atom
   | SeqE exps -> string_of_exps " " exps
   | InfixE (exp_l, atom, exp_r) ->
