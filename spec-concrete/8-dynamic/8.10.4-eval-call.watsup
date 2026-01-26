@@ -393,8 +393,8 @@ rulegroup Call_eval/externFunctionCallee {
     ---- ;; evaluate function body
     -- if (_ _ _ nameIR_param _ = parameterIR)*
     -- ExternFunctionCall_eval:
-        EC_callee_3 STO_1 |- nameIR `( nameIR_param* )
-                           : EC_callee_4 STO_2 callResult
+        EC_1 EC_callee_3 STO_1 |- nameIR `( nameIR_param* )
+                                : EC_callee_4 STO_2 callResult
     ---- ;; copy-out
     -- Copy_out:
         p_shared STO_2 |-
@@ -449,7 +449,7 @@ rulegroup Call_eval/builtinMethodCallee {
     -- Argument_eval:
         p EC_0 STO_0 |- argumentIR
                       : EC_1 STO_1 (`` integerValue_count)
-    -- if n_count = $int_of_integerValue(integerValue_count)
+    -- if n_count = $nat_of_integerValue(integerValue_count)
     ---- ;; push front operation
     -- if value_front* = value_element*[0 : n_count]
     -- if (value_front_invalidated = $invalidate_value(value_front))*
@@ -496,7 +496,7 @@ rulegroup Call_eval/builtinMethodCallee {
     -- Argument_eval:
         p EC_0 STO_0 |- argumentIR
                       : EC_1 STO_1 (`` integerValue_count)
-    -- if n_count = $int_of_integerValue(integerValue_count)
+    -- if n_count = $nat_of_integerValue(integerValue_count)
     ---- ;; pop front operation
     -- if n_front = $max_int([ 0, $(n_size - n_count) ])
     -- if value_front* = value_element*[n_count : n_front]

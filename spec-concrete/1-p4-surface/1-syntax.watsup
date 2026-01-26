@@ -1392,8 +1392,13 @@ syntax structuredAnnotationBody =
 
 syntax annotation =
   | `@ name
+    hint(print "@"#%0)
   | `@ name `( annotationBody )
+    hint(print "@"#%0#"("#%1#")")
   | `@ name `[ structuredAnnotationBody ]
+    hint(print "@"#%0#"["#%1#"]")
+  | `@ PRAGMA name annotationBody
+    hint(print "@pragma" %0 %1)
 
 syntax annotationListNonEmpty =
   | annotation

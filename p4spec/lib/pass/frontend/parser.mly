@@ -58,7 +58,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token TICK_BAR_PLUS_BAR TICK_BAR_PLUS_BAR_EQ TICK_BAR_MINUS_BAR TICK_BAR_MINUS_BAR_EQ
 
 %token NL_BAR NL2 NL3
-%token SUB SUP TURNSTILE TILESTURN ENTAIL
+%token SUB TURNSTILE TILESTURN
 %token ARROW ARROW_SUB
 %token DOUBLE_ARROW DOUBLE_ARROW_SUB DOUBLE_ARROW_BOTH DOUBLE_ARROW_LONG
 %token SQARROW SQARROW_STAR
@@ -92,7 +92,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %nonassoc TURNSTILE
 %nonassoc TILESTURN
 %right SQARROW SQARROW_STAR
-%left COLON SUB SUP TILDE2
+%left COLON SUB TILDE2
 %right EQ NEQ LANGLE RANGLE LANGLE_EQ RANGLE_EQ LANGLE_DASH
 %right COLON2
 %right ARROW ARROW_SUB
@@ -466,8 +466,6 @@ deftyp_ :
   | relop_ { $1 @@@ $sloc }
 %inline relop_ :
   | COLON { Atom.Colon }
-  | SUB { Atom.Sub }
-  | SUP { Atom.Sup }
   | TILDE2 { Atom.Tilde2 }
   | SQARROW { Atom.SqArrow }
   | SQARROW_STAR { Atom.SqArrowStar }
@@ -630,6 +628,7 @@ exp_bin_ :
   | exp_bin COLON2 exp_bin { ConsE ($1, $3) }
   | exp_bin PLUS2 exp_bin { CatE ($1, $3) }
   | exp_bin LANGLE_DASH exp_bin { MemE ($1, $3) }
+  | exp_bin SUB plaintyp { SubE ($1, $3) }
 
 exp_rel : exp_rel_ { $1 @@@ $sloc }
 exp_rel_ :

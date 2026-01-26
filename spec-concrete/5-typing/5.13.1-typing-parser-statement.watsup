@@ -53,7 +53,7 @@ rule SelectCase_keyset_simple_ok/expression-set-subtype:
   -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
   ---- ;; if the keyset type is a subtype of the key type
   -- Type_alpha:/ typeIR_base ~~ typeIR_key
-  -- Sub_impl: typeIR_base <: typeIR_key
+  -- Cast_impl: typeIR_base -> typeIR_key
   ---- ;; cast the expression to the key type
   -- if typeIR_cast = SET `< typeIR_key >
   -- if typedExpressionIR_cast
@@ -65,9 +65,10 @@ rule SelectCase_keyset_simple_ok/expression-non-set:
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   ---- ;; if the keyset type is not a set type
-  -- if ~$is_setTypeIR($unroll_typeIR(typeIR))
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if ~(typeIR_unroll <: setTypeIR)
   ---- ;; if the keyset type is a subtype of the key type
-  -- Sub_impl: typeIR <: typeIR_key
+  -- Cast_impl: typeIR -> typeIR_key
   ---- ;; cast the expression to the key type
   -- if typeIR_cast = SET `< typeIR_key >
   -- if typedExpressionIR_cast
@@ -86,14 +87,14 @@ tbl def $compat_mask =
 
 rule SelectCase_keyset_simple_ok/mask:
   TC typeIR_key |- expression_l `&&& expression_r
-                : typedExpressionIR_l_coerced `&&& typedExpressionIR_r_coerced
+                : typedExpressionIR_l_castd `&&& typedExpressionIR_r_castd
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -103,23 +104,23 @@ rule SelectCase_keyset_simple_ok/mask:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_coerced
-      = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_coerced
-      = $coerce_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- if typedExpressionIR_l_castd
+      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
+  -- if typedExpressionIR_r_castd
+      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
 
 ;;;;;; expression `.. expression
 
 rule SelectCase_keyset_simple_ok/range:
   TC typeIR_key |- expression_l `.. expression_r
-                : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
+                : typedExpressionIR_l_castd `.. typedExpressionIR_r_castd
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
   -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $coerce_binary(typedExpressionIR_l, typedExpressionIR_r)
+        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -131,10 +132,10 @@ rule SelectCase_keyset_simple_ok/range:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_coerced
-      = $coerce_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_coerced
-      = $coerce_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- if typedExpressionIR_l_castd
+      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
+  -- if typedExpressionIR_r_castd
+      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
 
 ;;;;;; DEFAULT
 

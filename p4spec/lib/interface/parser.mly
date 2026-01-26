@@ -1728,7 +1728,7 @@ annotation:
     { [ Term "@"; NT name; Term "["; NT body; Term "]" ] #@ "annotation" }
 (* From Petr4: PRAGMA not in Spec, but in Petr4/p4c *)
 	| PRAGMA name = name body = annotationBody PRAGMA_END
-		{ [ Term "PRAGMA"; NT name; NT body; Term "PRAGMA_END" ] #@ "annotation" }
+    { [ Term "@"; Term "PRAGMA"; NT name; NT body; ] #@ "annotation" }
 ;
 
 annotationListNonEmpty:

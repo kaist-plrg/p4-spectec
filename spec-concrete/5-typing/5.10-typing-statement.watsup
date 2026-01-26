@@ -31,7 +31,7 @@ rulegroup Stmt_ok/assignmentStatement {
     -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check type compatibility
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_l)
+    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
 
   rule Stmt_ok/compound:
     p TC f l |- lvalue assignop expression `;
@@ -50,7 +50,7 @@ rulegroup Stmt_ok/assignmentStatement {
     -- if _ `# `( typeIR_lvalue ) = typedLvalueIR
     ---- ;; check type compatibility
     -- if (_ binop typedExpressionIR_cast) `# _
-        = $coerce_unary(typedExpressionIR_binary, typeIR_lvalue)
+        = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
 
 }
 
@@ -188,7 +188,7 @@ rulegroup Stmt_ok/returnStatement {
     -- if typeIR_ret = $find_local_return_type_t(TC)
     ---- ;; check type compatibility
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_cast = $coerce_unary(typedExpressionIR, typeIR_ret)
+    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)
 
 }
 
@@ -335,7 +335,7 @@ rulegroup ForInitStmt_ok/variableDeclaration {
     ---- ;; check that the expression matches the type
     ---- ;; while inserting implicit casts if necessary
     -- if typedExpressionIR_init_cast
-        = $coerce_unary(typedExpressionIR_init, typeIR)
+        = $cast_unary(typedExpressionIR_init, typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
@@ -427,7 +427,7 @@ rulegroup ForCollectionExpr_ok/expression {
     ---- ;; check list type
     -- if _ `# `( typeIR_list _ ) = typedExpressionIR
     -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_list)
-    -- Sub_impl: typeIR_e <: typeIR_var
+    -- Cast_impl: typeIR_e -> typeIR_var
 
   rule ForCollectionExpr_ok/header-stack:
     TC typeIR_var |- expression : typedExpressionIR
@@ -451,16 +451,16 @@ tbl def $compat_range =
 
 rule ForCollectionExpr_ok/range:
   TC typeIR_var |- expression_l `.. expression_r
-                : typedExpressionIR_l_coerced `.. typedExpressionIR_r_coerced
+                : typedExpressionIR_l_castd `.. typedExpressionIR_r_castd
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; cast the expressions to the variable type
-  -- if typedExpressionIR_l_coerced = $coerce_unary(typedExpressionIR_l, typeIR_var)
-  -- if typedExpressionIR_r_coerced = $coerce_unary(typedExpressionIR_r, typeIR_var)
+  -- if typedExpressionIR_l_castd = $cast_unary(typedExpressionIR_l, typeIR_var)
+  -- if typedExpressionIR_r_castd = $cast_unary(typedExpressionIR_r, typeIR_var)
   ---- ;; fetch the types of both sides
-  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_coerced
-  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_coerced
+  -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_castd
+  -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_castd
   -- if $compat_range(typeIR_l, typeIR_r)
 
 rulegroup Stmt_ok/forStatement-in {
@@ -661,7 +661,7 @@ rulegroup SwitchLabel_general_ok {
     -- if expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label
     -- if typedExpressionIR_label_cast
-        = $coerce_unary(typedExpressionIR_label, typeIR_switch)
+        = $cast_unary(typedExpressionIR_label, typeIR_switch)
     ---- ;; switch label must be compile-time known
     -- if _ `# `( _ LCTK ) = typedExpressionIR_label_cast
 

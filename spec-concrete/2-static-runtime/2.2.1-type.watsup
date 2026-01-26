@@ -15,11 +15,16 @@ syntax errorTypeIR = ERROR
 syntax matchKindTypeIR = MATCH_KIND
 syntax stringTypeIR = STRING
 
+syntax intTypeIR = INT
+syntax fixedIntTypeIR = INT `< nat >
+syntax fixedBitTypeIR = BIT `< nat >
+syntax varBitTypeIR = VARBIT `< nat >
+
 syntax integerTypeIR =
-  | INT
-  | INT `< nat >
-  | BIT `< nat >
-  | VARBIT `< nat >
+  | intTypeIR
+  | fixedIntTypeIR
+  | fixedBitTypeIR
+  | varBitTypeIR
 
 syntax baseTypeIR =
   | voidTypeIR
@@ -59,7 +64,7 @@ syntax listTypeIR = LIST `< typeIR >
 syntax tupleTypeIR = TUPLE `< typeIR* >
 syntax headerStackTypeIR = typeIR `[ nat ]
 
-syntax fieldTypeIR = typeIR nameIR `;
+syntax fieldTypeIR = annotationList typeIR nameIR `;
 
 syntax structTypeIR =
   STRUCT typeId `< typeArgumentIR* > `{ fieldTypeIR* }

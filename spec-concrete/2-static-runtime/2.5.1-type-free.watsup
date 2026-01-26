@@ -45,17 +45,17 @@ def $free_typeIR(TUPLE `< typeIR* >)
 
 def $free_typeIR(typeIR `[ _ ]) = $free_typeIR(typeIR)
 
-def $free_typeIR(STRUCT _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(STRUCT _ `< typeArgumentIR* > `{ (_ typeIR_field _ `;)* })
   = $union_set<typeId>(
       $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
 
-def $free_typeIR(HEADER _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(HEADER _ `< typeArgumentIR* > `{ (_ typeIR_field _ `;)* })
   = $union_set<typeId>(
       $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
 
-def $free_typeIR(HEADER_UNION _ `< typeArgumentIR* > `{ (typeIR_field _ `;)* })
+def $free_typeIR(HEADER_UNION _ `< typeArgumentIR* > `{ (_ typeIR_field _ `;)* })
   = $union_set<typeId>(
       $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
       $unions_set<typeId>($free_typeIR(typeIR_field)*))
@@ -100,10 +100,10 @@ def $free_typeIR(SEQ `< typeIR* >)
 def $free_typeIR(SEQ `< typeIR* `, `... >)
   = $unions_set<typeId>($free_typeIR(typeIR)*)
 
-def $free_typeIR(RECORD `{ (typeIR _ `;)* })
+def $free_typeIR(RECORD `{ (_ typeIR _ `;)* })
   = $unions_set<typeId>($free_typeIR(typeIR)*)
 
-def $free_typeIR(RECORD `{ (typeIR _ `;)* `, `... })
+def $free_typeIR(RECORD `{ (_ typeIR _ `;)* `, `... })
   = $unions_set<typeId>($free_typeIR(typeIR)*)
 
 def $free_typeIR(SET `< typeIR >)

@@ -48,3 +48,5 @@ module TDEnv = struct
             | _ -> typ))
     | _ -> typ
 end
+
+module TDTbl = MakeTIdTbl (Typdef)

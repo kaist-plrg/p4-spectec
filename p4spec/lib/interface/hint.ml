@@ -4,7 +4,7 @@ open Util.Source
 
 (* Hint environment *)
 
-module HEnv = MakeCIdEnv (Hints.Alter)
+module HEnv = MakeCaseIdEnv (Hints.Alter)
 
 let hintid = "print"
 
