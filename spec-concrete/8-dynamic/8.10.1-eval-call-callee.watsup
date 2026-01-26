@@ -26,14 +26,14 @@ rule Callee_eval/referenceExpressionIR-externFunctionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` externFunctionCallee)
   ---- ;; find the extern function definition being called
-  -- if (_, _, externFunctionDef, id_default*)
+  -- if (_, _, externFunctionDef, id_omitted*)
       = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
   ---- ;; prepare the callee
   -- if EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR )
       = externFunctionDef
   -- if externFunctionCallee
       = EXTERN_FUNCTION nameIR `< typeParameterListIR >
-          `( parameterListIR `# id_default* )
+          `( parameterListIR `# id_omitted* )
 
 ;;;; Defined function call
 
@@ -163,7 +163,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
         = $find_store(STO_1, objectId)
     ---- ;; find the method being called
     -- if callTargetKey = $callTargetKey(nameIR, argumentListIR)
-    -- if (_, externMethodDef, id_default*)
+    -- if (_, externMethodDef, id_omitted*)
         = $find_overloaded<externMethodDef>(
             externMethodDefEnv, callTargetKey,
             def $parameterListIR_of_externMethodDef)
@@ -173,7 +173,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
         = externMethodDef
     -- if externMethodCallee
         = EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >
-            `( parameterListIR `# id_default* )
+            `( parameterListIR `# id_omitted* )
             `{ theta `; frame `; blockStatementIR? }
 
 }
@@ -214,14 +214,14 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
         = PARSER_APPLY `( parameterListIR )
             `{ parserLocalDeclarationListIR `; stateEnv }
     -- if callTargetKey = $callTargetKey("apply", argumentListIR)
-    -- if (_, _, id_default*)
+    -- if (_, _, id_omitted*)
         = $find_overloaded<parserApplyMethodDef>(
             `{ (callableId `: parserApplyMethodDef) },
             callTargetKey,
             def $parameterListIR_of_parserApplyMethodDef)
     ---- ;; prepare the callee
     -- if parserApplyMethodCallee
-        = PARSER objectId `. APPLY `( parameterListIR `# id_default* )
+        = PARSER objectId `. APPLY `( parameterListIR `# id_omitted* )
             `{ frame `; parserLocalDeclarationListIR `; stateEnv }
 
 }
@@ -262,14 +262,14 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
         = CONTROL_APPLY `( parameterListIR )
             `{ controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR }
     -- if callTargetKey = $callTargetKey("apply", argumentListIR)
-    -- if (_, _, id_default*)
+    -- if (_, _, id_omitted*)
         = $find_overloaded<controlApplyMethodDef>(
             `{ (callableId `: controlApplyMethodDef) },
             callTargetKey,
             def $parameterListIR_of_controlApplyMethodDef)
     ---- ;; prepare the callee
     -- if controlApplyMethodCallee
-        = CONTROL objectId `. APPLY `( parameterListIR `# id_default* )
+        = CONTROL objectId `. APPLY `( parameterListIR `# id_omitted* )
             `{ frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
 
