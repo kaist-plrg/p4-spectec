@@ -110,12 +110,12 @@ rule InstDecl_non_objectInitializer_ok:
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
   -- ConstructorType_ok:
       p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-             : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
+             : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                        `( argumentIR* `# id_default* )
+                        `( argumentIR* `# id_omitted* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
@@ -307,12 +307,12 @@ rule InstDecl_objectInitializer_ok:
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
   -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-                                 : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
+                                 : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                        `( argumentIR* `# id_default* )
+                        `( argumentIR* `# id_omitted* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; object initializer can be specified for an extern object
   -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
@@ -646,8 +646,8 @@ rule Decl_ok/parserDeclaration:
   -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_1 |- constructorParameterListOpt
-            : TC_2 constructorParameterIR* `# eps
+      TC_1 NOOPT |- constructorParameterListOpt
+                  : TC_2 constructorParameterIR* `# eps
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
       BLOCK TC_2 OPT |- parameterList : TC_3 parameterIR* `# eps
@@ -695,8 +695,8 @@ rule Decl_ok/controlDeclaration:
   -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_1 |- constructorParameterListOpt
-            : TC_2 constructorParameterIR* `# eps
+      TC_1 NOOPT |- constructorParameterListOpt
+                  : TC_2 constructorParameterIR* `# eps
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
       BLOCK TC_2 OPT |- parameterList : TC_3 parameterIR* `# eps
@@ -1092,8 +1092,8 @@ rule Decl_ok/packageTypeDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_2 |- `( parameterList )
-            : TC_3 constructorParameterIR* `# typeId_impl*
+      TC_2 OPT |- `( parameterList )
+                : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; update the context with package type
   -- if nameIR = $name(name)
   -- if (_ _ typeIR_package_inner _ _ = constructorParameterIR)*

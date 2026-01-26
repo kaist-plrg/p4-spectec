@@ -51,7 +51,7 @@ rulegroup Copy_in_inst {
 
 rule Constructor_call/externConstructorDef:
   p IC STO_0 |- externObjectConstructorDef
-                  `< typeArgumentIR* > `( argumentIR* `# id_default* )
+                  `< typeArgumentIR* > `( argumentIR* `# id_omitted* )
               : STO_1 object_extern
   -- if EXTERN nameIR `< typeParameterIR* >
                   `( constructorParameterIR* ) `{ externMethodPrototypeIR* }
@@ -65,7 +65,7 @@ rule Constructor_call/externConstructorDef:
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, constructorParameterIR_default*,
          value_default*)
-      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+      = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_omitted*)
   ---- ;; bind non-default arguments to the callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Copy_in_inst:

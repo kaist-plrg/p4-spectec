@@ -97,9 +97,9 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-              : callableTypeIR `< `# typeId_impl* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_impl* > `( `# id_omitted* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_omitted* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     -- if ~$is_static_assert_callableTarget(callableTargetIR)
     ---- ;; create IR
@@ -120,10 +120,10 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
     ---- ;; check calling convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
-    -- Call_ok: p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_omitted* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; create IR
     -- if callStatementIR

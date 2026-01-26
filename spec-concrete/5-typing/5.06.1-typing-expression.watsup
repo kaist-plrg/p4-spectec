@@ -1166,9 +1166,9 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-             : callableTypeIR `< `# typeId_infer* > `( `# id_default* )
+             : callableTypeIR `< `# typeId_infer* > `( `# id_omitted* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_omitted* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
@@ -1194,9 +1194,9 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-             : callableTypeIR `< `# typeId_infer* > `( `# id_default* )
+             : callableTypeIR `< `# typeId_infer* > `( `# id_omitted* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_default* )
+    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_infer* > `( argumentIR* `# id_omitted* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
@@ -1223,11 +1223,11 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; check callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
     ---- ;; check calling convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Call_ok:
-        p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
+        p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_omitted* )
               : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
@@ -1280,11 +1280,11 @@ rulegroup Expr_ok/callExpression-constructor {
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok: p TC |- prefixedNameIR `< eps > `( argumentIR* )
-                                 : constructorTypeIR `< `# typeId_impl* > `( `# id_default* )
+                                 : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
     ---- ;; check instantiation convention
     -- Inst_ok:
         p TC ANON |- constructorTypeIR `< eps `# typeId_impl* >
-                      `( argumentIR* `# id_default* )
+                      `( argumentIR* `# id_omitted* )
                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object)
@@ -1306,12 +1306,12 @@ rulegroup Expr_ok/callExpression-constructor {
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- ConstructorType_ok:
         p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-             : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
+             : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
     ---- ;; check instantiation convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Inst_ok:
         p TC ANON |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                      `( argumentIR* `# id_default* )
+                      `( argumentIR* `# id_omitted* )
                    : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; constructed object may not contain an abstract method
     -- if $is_concrete_extern_object(typeIR_object)

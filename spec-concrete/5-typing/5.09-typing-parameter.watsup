@@ -101,10 +101,10 @@ rule ParameterList_ok:
 ;;
 
 rule ConstructorParameterListOpt_ok:
-  TC_0 |- constructorParameterListOpt
-        : TC_1 constructorParameterIR* `# typeId_fresh*
+  TC_0 paramctxt |- constructorParameterListOpt
+                  : TC_1 constructorParameterIR* `# typeId_fresh*
   -- if constructorParameter*
       = $flatten_constructorParameterListOpt(constructorParameterListOpt)
   -- ParameterList_ok_inner:
-      BLOCK TC_0 NOOPT |- constructorParameter*
-                        : TC_1 constructorParameterIR* `# typeId_fresh*
+      BLOCK TC_0 paramctxt |- constructorParameter*
+                            : TC_1 constructorParameterIR* `# typeId_fresh*
