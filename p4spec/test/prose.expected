@@ -1130,11 +1130,11 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``
 
 . Return ``id``.
 
-<<default_of_parameterIR, default_of_parameterIR(++_++ ++_++ ++_++ ++_++ constantInitializerOptIR)>>
+<<default_of_parameterIR, default_of_parameterIR(++_++ ++_++ ++_++ ++_++ parameterInitializerOptIR)>>
 
 
-. Let ``constantInitializerIR^?^`` be ``constantInitializerOptIR``.
-. If ``constantInitializerIR^?^`` is none: return ``false``.
+. Let ``parameterInitializerIR^?^`` be ``parameterInitializerOptIR``.
+. If ``parameterInitializerIR^?^`` is none: return ``false``.
 . Otherwise: return ``true``.
 
 <<callableTypeIR_of_callableTypeDefIR, The underlying type of ``callableTypeDefIR``>>
@@ -1740,11 +1740,11 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
 . Otherwise:
  .. Return ``<<subst_parameterIR',`` ``subst_parameterIR'(set<pair<typeId,`` ``typeIR>>,`` ``parameterIR)>>``.
 
-<<subst_parameterIR', ``annotationList`` ``direction`` ``typeIR`` ``id`` ``constantInitializerOptIR`` substituted by a non-empty ``theta``>>
+<<subst_parameterIR', ``annotationList`` ``direction`` ``typeIR`` ``id`` ``parameterInitializerOptIR`` substituted by a non-empty ``theta``>>
 
 
 . Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR`` substituted by a non-empty ``theta``>>.
-. Return ``annotationList`` ``direction`` ``typeIR~subst~`` ``id`` ``constantInitializerOptIR``.
+. Return ``annotationList`` ``direction`` ``typeIR~subst~`` ``id`` ``parameterInitializerOptIR``.
 
 <<subst_callableTypeIR, ``callableTypeIR`` substituted by ``set<pair<typeId,`` ``typeIR>>``>>
 
@@ -2158,9 +2158,9 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 
 <<ParameterType_alpha, ParameterType_alpha>>:
 
-* ``annotationList`` ``direction`` ``typeIR~a~`` ``id`` ``constantInitializerOptIR`` and ``annotationList'`` ``direction'`` ``typeIR~b~`` ``id'`` ``constantInitializerOptIR'`` are the same type
+* ``annotationList`` ``direction`` ``typeIR~a~`` ``id`` ``parameterInitializerOptIR`` and ``annotationList'`` ``direction'`` ``typeIR~b~`` ``id'`` ``parameterInitializerOptIR'`` are the same type
 
-<<ParameterType_alpha, ``annotationList`` ``direction`` ``typeIR~a~`` ``id`` ``constantInitializerOptIR`` and ``annotationList'`` ``direction`` ``typeIR~b~`` ``id'`` ``constantInitializerOptIR'`` are the same type when>>:
+<<ParameterType_alpha, ``annotationList`` ``direction`` ``typeIR~a~`` ``id`` ``parameterInitializerOptIR`` and ``annotationList'`` ``direction`` ``typeIR~b~`` ``id'`` ``parameterInitializerOptIR'`` are the same type when>>:
 
 . Check that <<Type_alpha, ``typeIR~a~`` and ``typeIR~b~`` are the same type>>.
 . The relation holds.
@@ -3767,22 +3767,22 @@ for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~fiel
 +
 for each ``parameterIR~non_default~`` in ``parameterIR~non_default~^{asterisk}^``
 . Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^`` ``)`` be ``<<align_parameterListIR',`` ``align_parameterListIR'({`` ``(`` ``nameIR~param~`` ``:`` ``parameterIR~non_default~`` ``)^{asterisk}^`` ``},`` ``parameterIR~non_default~^{asterisk}^,`` ``argumentIR^{asterisk}^)>>``.
-. Let ``constantInitializerOptIR^{asterisk}^`` be the list of ``constantInitializerOptIR``, obtained by repeating:
+. Let ``parameterInitializerOptIR^{asterisk}^`` be the list of ``parameterInitializerOptIR``, obtained by repeating:
 +
 --
- ** Let ``constantInitializerOptIR`` be the default initializer of ``parameterIR~default~``.
+ ** Let ``parameterInitializerOptIR`` be the default initializer of ``parameterIR~default~``.
 --
 +
 for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
-. Check that ``constantInitializerOptIR`` is defined, for all ``constantInitializerOptIR`` in ``constantInitializerOptIR^{asterisk}^``.
-. Let ``value~default~^{asterisk}^`` be the list of ``value~default~``, obtained by repeating:
+. Check that ``parameterInitializerOptIR`` is defined, for all ``parameterInitializerOptIR`` in ``parameterInitializerOptIR^{asterisk}^``.
+. Let ``parameterInitializerIR~default~^{asterisk}^`` be the list of ``parameterInitializerIR~default~``, obtained by repeating:
 +
 --
- ** Let ``=`` ``value~default~`` be ``constantInitializerOptIR``.
+ ** Let ``parameterInitializerIR~default~`` be ``parameterInitializerOptIR``.
 --
 +
-for each ``constantInitializerOptIR`` in ``constantInitializerOptIR^{asterisk}^``
-. Return ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)``.
+for each ``parameterInitializerOptIR`` in ``parameterInitializerOptIR^{asterisk}^``
+. Return ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)``.
 
 <<align_parameterListIR', align_parameterListIR'({ ( id : parameterIR )^{asterisk}^ }, parameterIR'^{asterisk}^, argumentIR^{asterisk}^)>>
 
@@ -4062,30 +4062,24 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
  .. Let ``TC''`` be <<add_vars_t, ``TC'`` where each of ``id~t~^{asterisk}^`` to each of ``varTypeIR~t~^{asterisk}^`` are added to the ``p`` layer>>.
  .. Return ``TC''``.
 
-<<add_parameter_t, ``++_++`` ``direction`` ``typeIR`` ``id`` ``(`` ``=`` ``value`` ``)^?^`` added to the ``cursor`` layer of ``TC``>>
+<<add_parameter_t, ``++_++`` ``direction`` ``typeIR`` ``id`` ``++_++`` added to the ``cursor`` layer of ``TC``>>
 
 
 . If ``direction`` is ```EMPTY``:
- .. Let ``varTypeIR`` be ```EMPTY`` ``typeIR`` ``CTK`` ``value^?^``.
+ .. Let ``varTypeIR`` be ```EMPTY`` ``typeIR`` ``CTK`` ``·``.
  .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer>>.
  .. Return ``TC'``.
 . Else:
- .. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``DYN`` ``value^?^``.
+ .. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``DYN`` ``·``.
  .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer>>.
  .. Return ``TC'``.
 
-<<add_constructorParameter_t, add_constructorParameter_t(TC, ++_++ direction typeIR id constantInitializerOptIR)>>
+<<add_constructorParameter_t, add_constructorParameter_t(TC, ++_++ direction typeIR id ++_++)>>
 
 
-. Let ``constantInitializerIR^?^`` be ``constantInitializerOptIR``.
-. If ``constantInitializerIR^?^`` is none:
- .. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``CTK`` ``·``.
- .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
- .. Return ``TC'``.
-. If let ``=`` ``value`` be ``constantInitializerOptIR``:
- .. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``CTK`` ``value``.
- .. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
- .. Return ``TC'``.
+. Let ``varTypeIR`` be ``direction`` ``typeIR`` ``CTK`` ``·``.
+. Let ``TC'`` be <<add_var_t, ``TC`` where ``id`` to ``varTypeIR`` is added to the ``BLOCK`` layer>>.
+. Return ``TC'``.
 
 <<add_constructorParameters_t, ``parameterIR^{asterisk}^`` added to ``TC``>>
 
@@ -4650,11 +4644,11 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 
 <<ParameterType_wf, ParameterType_wf>>:
 
-* ``annotationList`` ``direction`` ``typeIR`` ``id`` ``constantInitializerIR^?^`` is a well-formed parameter type, with bound type variables ``B``
+* ``annotationList`` ``direction`` ``typeIR`` ``id`` ``parameterInitializerIR^?^`` is a well-formed parameter type, with bound type variables ``B``
 
-<<ParameterType_wf, ``annotationList`` ``direction`` ``typeIR`` ``id`` ``constantInitializerIR^?^`` is a well-formed parameter type, with bound type variables ``B`` when>>:
+<<ParameterType_wf, ``annotationList`` ``direction`` ``typeIR`` ``id`` ``parameterInitializerIR^?^`` is a well-formed parameter type, with bound type variables ``B`` when>>:
 
-. If ``constantInitializerIR^?^`` is none:
+. If ``parameterInitializerIR^?^`` is none:
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``B``>>.
  .. Let ``typeIR~unroll~`` be <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
  .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
@@ -5533,9 +5527,9 @@ for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``TC~callee_0~`` be <<empty_typingContext, an empty typing context>>.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR'^{asterisk}^,`` ``value^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``·``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR'^{asterisk}^,`` ``parameterInitializerIR^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``·``>>.
 . Check that ``parameterIR'^{asterisk}^`` is an empty list.
-. Check that ``value^{asterisk}^`` is an empty list.
+. Check that ``parameterInitializerIR^{asterisk}^`` is an empty list.
 . Let ``value~argument~^{asterisk}^`` be the list of ``value~argument~``, obtained by repeating:
 +
 --
@@ -5559,10 +5553,10 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 +
 for each ``direction~param_aligned~`` in ``direction~param_aligned~^{asterisk}^``, ``typeIR~param_aligned~`` in ``typeIR~param_aligned~^{asterisk}^``, and ``value~argument~`` in ``value~argument~^{asterisk}^``
 . Let ``TC~callee_1~`` be <<add_vars_t, ``TC~callee_0~`` where each of ``nameIR~param_aligned~^{asterisk}^`` to each of ``varTypeIR^{asterisk}^`` are added to the ``LOCAL`` layer>>.
-. Let ``value'`` be
+. Let ``value`` be
 * the result of <<ExternFunctionCall_eval_lctk, calling an extern function ``"static_assert"``(``nameIR~param~^{asterisk}^``) under typing context ``TC~callee_1~``>>.
-. Check that ``value'`` has type ``boolValue``.
-. Let ``boolValue`` be ``value'``.
+. Check that ``value`` has type ``boolValue``.
+. Let ``boolValue`` be ``value``.
 . Check that ```B`` ``true`` is equal to ``boolValue``.
 . Result in ``boolValue``.
 
@@ -7629,14 +7623,23 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``typedExpressionIR~init~`` be
 * the result of <<Expr_ok, typing ``expression~init~``, under cursor ``p`` and typing context ``TC~0~``>>.
  .. Let ``typeIR~init~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~init~``>>.
- .. Check that <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``value~init~`` be
+ .. If <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``CTK``:
+  ... Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+  ... Let ``nameIR`` be <<name, the name of ``name``>>.
+  ... Let ``parameterInitializerIR`` be ``=`` ``typedExpressionIR~init_cast~``.
+  ... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
+  ... Let ``TC~1~`` be <<add_parameter_t, ``parameterIR`` added to the ``p`` layer of ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~``,
+*  ``parameterIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
+ .. Else if <<ctk_of_typedExpressionIR, the compile-time known-ness of ``typedExpressionIR~init~``>> is ``LCTK``:
+  ... Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+  ... Let ``nameIR`` be <<name, the name of ``name``>>.
+  ... Let ``value~init~`` be
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
- .. Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``=`` ``value~init~``.
- .. Let ``TC~1~`` be <<add_parameter_t, ``parameterIR`` added to the ``p`` layer of ``TC~0~``>>.
- .. Result in the updated typing context ``TC~1~``,
+  ... Let ``parameterInitializerIR`` be ``=`` ```VALUE`` ``value~init~``.
+  ... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
+  ... Let ``TC~1~`` be <<add_parameter_t, ``parameterIR`` added to the ``p`` layer of ``TC~0~``>>.
+  ... Result in the updated typing context ``TC~1~``,
 *  ``parameterIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 <<ParameterList_ok, ParameterList_ok>>:
@@ -8481,7 +8484,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ```B`` ``b~largest_priority_wins~`` be ``value``.
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``PRIORITIES.LARGEST_WINS`` set to ``b~largest_priority_wins~``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
- .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"largest_priority_wins"`` ``=`` ```B`` ``b~largest_priority_wins~`` ``;``.
+ .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"largest_priority_wins"`` ``=`` ```VALUE`` ```B`` ``b~largest_priority_wins~`` ``;``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
 . If ``"priority_delta"`` is equal to <<tableCustomName, the name of ``tableCustomName'``>>:
  .. Let ``typedExpressionIR`` be
@@ -8498,7 +8501,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Check that ``n~delta~`` is greater than ``0``.
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``PRIORITIES.DELTA`` set to ``n~delta~``.
  .. Let ``constOptIR`` be <<flatten_constOpt, the optional const qualifier in ``constOpt'``>>.
- .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ``D`` ``n~delta~`` ``;``.
+ .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``CUSTOM_CONST`` ``"priority_delta"`` ``=`` ```VALUE`` ``D`` ``n~delta~`` ``;``.
  .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
 . Let ``nameIR`` be <<tableCustomName, the name of ``tableCustomName'``>>.
 . If ``nameIR`` is not equal to ``"size"`` and ``nameIR`` is not equal to ``"largest_priority_wins"`` and ``nameIR`` is not equal to ``"priority_delta"``:
@@ -8694,7 +8697,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 * the result of <<Expr_eval_lctk, local compile-time evaluation of ``typedExpressionIR~value_cast~``, under cursor ``p`` and typing context ``TC~0~``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ```EMPTY`` ``typeIR`` ``LCTK`` ``value`` is added to the ``p`` layer>>.
-. Let ``constantDeclarationIR`` be ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``value`` ``;``.
+. Let ``constantDeclarationIR`` be ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``value`` ``;``.
 . Result in the updated typing context ``TC~1~`` and ``constantDeclarationIR``.
 
 <<InstDecl_ok, InstDecl_ok>>:
@@ -9308,14 +9311,14 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 * the result of <<Decls_ok, typing ``declaration^{asterisk}^`` under typing context ``TC~0~``>>.
 . Result in the typed P4 program ``declarationIR^{asterisk}^`` ``;``.
 
-<<Call_convention_expr_ok, Call_convention_expr_ok: ``p`` ``TC`` ``actctxt`` ``|-`` ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR`` ``@`` ``typedExpressionIR~arg~`` ``:`` ``%``>>
+<<Call_convention_expr_ok, Call_convention_expr_ok: ``p`` ``TC`` ``actctxt`` ``|-`` ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR`` ``@`` ``typedExpressionIR~arg~`` ``:`` ``%``>>
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``IN`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``IN`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
 . Result in ``typedExpressionIR~arg_cast~``.
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . Check that ``direction`` is equal to ``OUT`` or ``direction`` is equal to ``INOUT``.
 . Let ``typeIR~arg~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~arg~``>>.
@@ -9323,7 +9326,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Check that <<Expr_lvalue_ok, p TC |- typedExpressionIR~arg~>>.
 . Result in ``typedExpressionIR~arg~``.
 
-<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ```EMPTY`` ``typeIR~param~`` ``id`` ``constantInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
+<<Call_convention_expr_ok, Checking the calling convention of ``typedExpressionIR~arg~`` applied to parameter type ``annotationList`` ```EMPTY`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under cursor ``p``, typing context ``TC``, and action context ``actctxt``>>:
 
 . If ``actctxt`` is ``ACTION``:
  .. Let ``typedExpressionIR~arg_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``>>.
@@ -12649,7 +12652,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
 . Let ``objectId`` be ``IC.PATH`` concatenated with ``[typeId]``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
 . Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``nameIR`` annotated with type ``typeIR`` and compile-time known-ness ``CTK``>>.
 . Let ``callableTargetIR`` be ``typedExpressionIR~base~`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
@@ -12741,10 +12744,10 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<BlockElementStmt_inst, Compile-time evaluation of ``blockElementStatementIR``, under instantiation context ``instContext``, and store ``store``>>:
 
 . If let ``constantDeclarationIR`` be ``blockElementStatementIR``:
- .. Let the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
+ .. Let the updated instantiation context ``IC~1~`` be
 * the result of <<ConstDecl_inst, loading ``constantDeclarationIR``, under cursor ``LOCAL``, and instantiation context ``instContext``>>.
  .. Result in 
-* the updated instantiation context ``IC~1~``, store ``store``, and ``constantDeclarationIR~inst~``.
+* the updated instantiation context ``IC~1~``, store ``store``, and ``constantDeclarationIR``.
 . Else if let ``variableDeclarationIR`` be ``blockElementStatementIR``:
  .. Result in 
 * the updated instantiation context ``instContext``, store ``store``, and ``variableDeclarationIR``.
@@ -12822,9 +12825,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``constantDeclarationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Let the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
+. Let the updated instantiation context ``IC~1~`` be
 * the result of <<ConstDecl_inst, loading ``constantDeclarationIR``, under cursor ``LOCAL``, and instantiation context ``IC~0~``>>.
-. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
+. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR``.
 
 <<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``variableDeclarationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -12867,7 +12870,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
 . Let ``typeIR`` be ``typeId``.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
 . Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
 . Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
 . Let ``parserBlockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
@@ -12935,9 +12938,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<ParserLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``constantDeclarationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Let the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
+. Let the updated instantiation context ``IC~1~`` be
 * the result of <<ConstDecl_inst, loading ``constantDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
-. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
+. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR``.
 
 <<ParserLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``instantiationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -12962,7 +12965,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``valueSetObject`` is added>>.
 . Let ``typeIR~set~`` be ``SET`` ``<`` ``typeIR`` ``>``.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR~set~`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR~set~`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
 . Result in ``IC~0~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ParserLocalDecls_inst, ParserLocalDecls_inst>>:
@@ -13011,7 +13014,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 . Let ``IC~inner~`` be <<enter_path_i, ``IC`` with ``nameIR`` added to the path>>.
 . Let <<Expr_inst, LOCAL IC~inner~ STO |- typedExpressionIR : STO~1~ value>>.
-. Result in ``STO~1~`` and ``annotationList`` ``constOptIR`` ``CUSTOM_CONST`` ``nameIR`` ``=`` ``value`` ``;``.
+. Result in ``STO~1~`` and ``annotationList`` ``constOptIR`` ``CUSTOM_CONST`` ``nameIR`` ``=`` ```VALUE`` ``value`` ``;``.
 
 <<TableProperty_inst, ``IC`` ``STO`` ``|-`` ``annotationList`` ``constOptIR`` ``CUSTOM_CONST`` ``nameIR`` ``constantInitializerIR`` ``;`` ``:`` ``%`` ``%``>>:
 
@@ -13033,9 +13036,9 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<ControlLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``constantDeclarationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Let the updated instantiation context ``IC~1~`` and ``constantDeclarationIR~inst~`` be
+. Let the updated instantiation context ``IC~1~`` be
 * the result of <<ConstDecl_inst, loading ``constantDeclarationIR``, under cursor ``BLOCK``, and instantiation context ``IC~0~``>>.
-. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR~inst~``.
+. Result in ``IC~1~``, ``STO``, and ``constantDeclarationIR``.
 
 <<ControlLocalDecl_inst, ``IC~0~`` ``STO`` ``|-`` ``instantiationIR`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -13067,7 +13070,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR~object~]``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object~table~`` is added>>.
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``BLOCK`` layer>>.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
 . Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
 
 <<ControlLocalDecls_inst, ControlLocalDecls_inst>>:
@@ -13106,13 +13109,12 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 <<ConstDecl_inst, ConstDecl_inst>>:
 
 * Loading ``constantDeclarationIR``, under cursor ``cursor``, and instantiation context ``instContext``:
-* Results in the updated instantiation context ``instContext`` and ``constantDeclarationIR``.
+* Results in the updated instantiation context ``instContext``.
 
-<<ConstDecl_inst, Loading ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``value`` ``;``, under cursor ``p``, and instantiation context ``IC~0~``>>:
+<<ConstDecl_inst, Loading ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``value`` ``;``, under cursor ``p``, and instantiation context ``IC~0~``>>:
 
 . Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``value`` is added to the ``p`` layer>>.
-. Let ``constantDeclarationIR`` be ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``value`` ``;``.
-. Result in the updated instantiation context ``IC~1~`` and ``constantDeclarationIR``.
+. Result in the updated instantiation context ``IC~1~``.
 
 <<InstDecl_inst, InstDecl_inst>>:
 
@@ -13139,7 +13141,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
  .. Let ``STO~3~`` be <<add_store, ``STO~2~`` where ``objectId`` to ``object~merged~`` is added>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+ .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
  .. Result in 
 * the updated instantiation context ``IC~1~``, store ``STO~3~``, 
 * and the reference to the object ``constantDeclarationIR``.
@@ -13147,7 +13149,7 @@ for each ``objectId`` in ``objectId^{asterisk}^``
  .. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
  .. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
- .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``REF`` ``objectId`` ``;``.
+ .. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
  .. Result in 
 * the updated instantiation context ``IC~1~``, store ``STO~2~``, 
 * and the reference to the object ``constantDeclarationIR``.
@@ -13184,9 +13186,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<Decl_inst, Loading ``constantDeclarationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
-. Let the updated instantiation context ``IC~1~`` and ``constantDeclarationIR'`` be
+. Let the updated instantiation context ``IC~1~`` be
 * the result of <<ConstDecl_inst, loading ``constantDeclarationIR``, under cursor ``GLOBAL``, and instantiation context ``IC~0~``>>.
-. Check that ``constantDeclarationIR'`` is equal to ``constantDeclarationIR``.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
 <<Decl_inst, Loading ``instantiationIR``, under instantiation context ``IC~0~``, and store ``STO``>>:
@@ -13505,20 +13506,52 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<Copy_in_inst, Copy_in_inst>>:
 
 * Copy-in from ``cursor`` layer of ``instContext`` with ``argumentIR^{asterisk}^`` to ``cursor`` layer of ``instContext`` with ``id^{asterisk}^``, under store ``store``:
-* Results in the updated store ``store`` and the instantiation context ``instContext``.
+* Results in the updated store ``store`` and instantiation context ``instContext``.
 
 <<Copy_in_inst, Copy-in from ``p~caller~`` layer of ``IC~caller~`` with ``argumentIR^{asterisk}^`` to ``p~callee~`` layer of ``instContext`` with ``id^{asterisk}^``, under store ``store``>>:
 
 . If ``argumentIR^{asterisk}^`` is equal to ``·``:
  .. Check that ``id^{asterisk}^`` is equal to ``·``.
- .. Result in the updated store ``store`` and the instantiation context ``instContext``.
+ .. Result in the updated store ``store`` and instantiation context ``instContext``.
 . If let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``:
  .. Check that ``id^{asterisk}^`` is a non-empty list.
  .. Let ``id~h~`` ``{two-colons}`` ``id~t~^{asterisk}^`` be ``id^{asterisk}^``.
  .. Let <<Copy_in_argument_inst, store p~caller~ IC~caller~ argumentIR~h~ @ p~callee~ instContext id~h~ ~> STO~1~ IC~callee_1~>>.
- .. Let the updated store ``STO~2~`` and the instantiation context ``IC~callee_2~`` be
+ .. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
 * the result of <<Copy_in_inst, copy-in from ``p~caller~`` layer of ``IC~caller~`` with ``argumentIR~t~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~t~^{asterisk}^``, under store ``STO~1~``>>.
- .. Result in the updated store ``STO~2~`` and the instantiation context ``IC~callee_2~``.
+ .. Result in the updated store ``STO~2~`` and instantiation context ``IC~callee_2~``.
+
+<<Copy_in_argument_inst_default, Copy_in_argument_inst_default: ``STO~0~`` ``p~caller~`` ``IC~caller~`` ``parameterInitializerIR`` ``@`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``~>`` ``%`` ``%``>>
+
+<<Copy_in_argument_inst_default, ``STO~0~`` ``p~caller~`` ``IC~caller~`` ``=`` ``typedExpressionIR`` ``@`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``~>`` ``%`` ``%``>>:
+
+. Let ``IC~caller_inner~`` be <<enter_path_i, ``IC~caller~`` with ``id`` added to the path>>.
+. Let <<Expr_inst, p~caller~ IC~caller_inner~ STO~0~ |- typedExpressionIR : STO~1~ value>>.
+. Let ``IC~callee_1~`` be <<add_var_i, ``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer>>.
+. Result in ``STO~1~`` and ``IC~callee_1~``.
+
+<<Copy_in_argument_inst_default, ``STO~0~`` ``p~caller~`` ``IC~caller~`` ``=`` ```VALUE`` ``value`` ``@`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``~>`` ``%`` ``%``>>:
+
+. Let ``IC~callee_1~`` be <<add_var_i, ``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer>>.
+. Result in ``STO~0~`` and ``IC~callee_1~``.
+
+<<Copy_in_inst_default, Copy_in_inst_default>>:
+
+* Copy-in defaults from ``cursor`` layer of ``instContext`` with ``parameterInitializerIR^{asterisk}^`` to ``cursor`` layer of ``instContext`` with ``id^{asterisk}^``, under store ``store``:
+* Results in the updated store ``store`` and instantiation context ``instContext``.
+
+<<Copy_in_inst_default, Copy-in defaults from ``p~caller~`` layer of ``IC~caller~`` with ``parameterInitializerIR^{asterisk}^`` to ``p~callee~`` layer of ``instContext`` with ``id^{asterisk}^``, under store ``store``>>:
+
+. If ``parameterInitializerIR^{asterisk}^`` is equal to ``·``:
+ .. Check that ``id^{asterisk}^`` is equal to ``·``.
+ .. Result in the updated store ``store`` and instantiation context ``instContext``.
+. If let ``parameterInitializerIR~h~`` ``{two-colons}`` ``parameterInitializerIR~t~^{asterisk}^`` be ``parameterInitializerIR^{asterisk}^``:
+ .. Check that ``id^{asterisk}^`` is a non-empty list.
+ .. Let ``id~h~`` ``{two-colons}`` ``id~t~^{asterisk}^`` be ``id^{asterisk}^``.
+ .. Let <<Copy_in_argument_inst_default, store p~caller~ IC~caller~ parameterInitializerIR~h~ @ p~callee~ instContext id~h~ ~> STO~1~ IC~callee_1~>>.
+ .. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p~caller~`` layer of ``IC~caller~`` with ``parameterInitializerIR~t~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~t~^{asterisk}^``, under store ``STO~1~``>>.
+ .. Result in the updated store ``STO~2~`` and instantiation context ``IC~callee_2~``.
 
 <<Constructor_inst, Constructor_inst>>:
 
@@ -13558,7 +13591,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
 . Let ``theta`` be ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``BLOCK.TYPE`` set to ``theta``.
-. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
 --
@@ -13566,16 +13599,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and the instantiation context ``IC~callee_2~`` be
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_2~`` be
 * the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let ``id~cparam_default~^{asterisk}^`` be the list of ``id~cparam_default~``, obtained by repeating:
-+
---
- ** Let ``id~cparam_default~`` be the name of ``constructorParameterIR~default~``.
---
-+
-for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default~^{asterisk}^``
-. Let ``IC~callee_3~`` be <<add_vars_i, ``IC~callee_2~`` where each of ``id~cparam_default~^{asterisk}^`` to each of ``value~default~^{asterisk}^`` are added to the ``p~callee~`` layer>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_3~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_2~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
 . Let the updated instantiation context ``IC~callee_4~`` be
 * the result of <<ExternMethods_inst, compile-time evaluation of ``externMethodPrototypeIR^{asterisk}^``, under instantiation context ``IC~callee_3~``>>.
 . Let ``{`` ``(`` ``callableId`` ``:`` ``callableDef`` ``)^{asterisk}^`` ``}`` be ``IC~callee_4~.BLOCK.CALLABLE``.
@@ -13612,7 +13639,7 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 . Let ``externState`` be ``<<init_externState,`` ``init_externState(nameIR,`` ``typeArgumentIR^{asterisk}^,`` ``value~cparam~^{asterisk}^)>>``.
 . Let ``object~extern~`` be ``EXTERN`` ``nameIR`` ``<`` ``IC~callee_4~.BLOCK.TYPE`` ``>`` ``{`` ``externState`` ``IC~callee_4~.BLOCK.FRAME`` ``{`` ``(`` ``callableId`` ``:`` ``externMethodDef`` ``)^{asterisk}^`` ``}`` ``}``.
 . Result in 
-* the updated store ``STO~1~``,
+* the updated store ``STO~2~``,
 * and the constructed ``object~extern~``.
 
 <<Constructor_call, Loading ``parserObjectConstructorDef`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
@@ -13620,7 +13647,7 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 . Let ``PARSER`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``}`` be ``parserObjectConstructorDef``.
 . Let ``p~callee~`` be ``BLOCK``.
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
-. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
 --
@@ -13628,23 +13655,17 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and the instantiation context ``IC~callee_1~`` be
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_1~`` be
 * the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_0~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let ``id~cparam_default~^{asterisk}^`` be the list of ``id~cparam_default~``, obtained by repeating:
-+
---
- ** Let ``id~cparam_default~`` be the name of ``constructorParameterIR~default~``.
---
-+
-for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default~^{asterisk}^``
-. Let ``IC~callee_2~`` be <<add_vars_i, ``IC~callee_1~`` where each of ``id~cparam_default~^{asterisk}^`` to each of ``value~default~^{asterisk}^`` are added to the ``p~callee~`` layer>>.
-. Let the updated instantiation context ``IC~local~``,the store ``STO~2~``,and ``parserLocalDeclarationIR~inst~^{asterisk}^`` be
-* the result of <<ParserLocalDecls_inst, compile-time evaluation of ``parserLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~1~``>>.
-. Let the updated instantiation context ``IC~state~``and the store ``STO~3~`` be
-* the result of <<ParserStates_inst, compile-time evaluation of ``parserStateIR^{asterisk}^``, under instantiation context ``IC~local~``and store ``STO~2~``>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated instantiation context ``IC~local~``,the store ``STO~3~``,and ``parserLocalDeclarationIR~inst~^{asterisk}^`` be
+* the result of <<ParserLocalDecls_inst, compile-time evaluation of ``parserLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~2~``>>.
+. Let the updated instantiation context ``IC~state~``and the store ``STO~4~`` be
+* the result of <<ParserStates_inst, compile-time evaluation of ``parserStateIR^{asterisk}^``, under instantiation context ``IC~local~``and store ``STO~3~``>>.
 . Let ``object~parser~`` be ``PARSER`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_2~.BLOCK.FRAME`` ``parserLocalDeclarationIR~inst~^{asterisk}^`` ``IC~state~.BLOCK.STATE`` ``}``.
 . Result in 
-* the updated store ``STO~3~``,
+* the updated store ``STO~4~``,
 * and the constructed ``object~parser~``.
 
 <<Constructor_call, Loading ``controlObjectConstructorDef`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
@@ -13652,7 +13673,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 . Let ``CONTROL`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``controlLocalDeclarationIR^{asterisk}^`` ``APPLY`` ``controlBodyIR`` ``}`` be ``controlObjectConstructorDef``.
 . Let ``p~callee~`` be ``BLOCK``.
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
-. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
 --
@@ -13660,20 +13681,14 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and the instantiation context ``IC~callee_1~`` be
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_1~`` be
 * the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_0~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let ``id~cparam_default~^{asterisk}^`` be the list of ``id~cparam_default~``, obtained by repeating:
-+
---
- ** Let ``id~cparam_default~`` be the name of ``constructorParameterIR~default~``.
---
-+
-for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default~^{asterisk}^``
-. Let ``IC~callee_2~`` be <<add_vars_i, ``IC~callee_1~`` where each of ``id~cparam_default~^{asterisk}^`` to each of ``value~default~^{asterisk}^`` are added to the ``p~callee~`` layer>>.
-. Let the updated instantiation context ``IC~local_0~``,the store ``STO~2~``,and ``controlLocalDeclarationIR'^{asterisk}^`` be
-* the result of <<ControlLocalDecls_inst, compile-time evaluation of ``controlLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~1~``>>.
-. Let the updated instantiation context ``IC~local_1~``, store ``STO~3~``, and ``controlBodyIR'`` be
-* the result of <<Block_inst, compile-time evaluation of ``controlBodyIR``, under instantiation context ``IC~local_0~``, and store ``STO~2~``>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated instantiation context ``IC~local_0~``,the store ``STO~3~``,and ``controlLocalDeclarationIR'^{asterisk}^`` be
+* the result of <<ControlLocalDecls_inst, compile-time evaluation of ``controlLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~2~``>>.
+. Let the updated instantiation context ``IC~local_1~``, store ``STO~4~``, and ``controlBodyIR'`` be
+* the result of <<Block_inst, compile-time evaluation of ``controlBodyIR``, under instantiation context ``IC~local_0~``, and store ``STO~3~``>>.
 . Let ``{`` ``(`` ``callableId`` ``:`` ``callableDef`` ``)^{asterisk}^`` ``}`` be ``IC~local_1~.BLOCK.CALLABLE``.
 . Check that ``callableDef`` has type ``actionDef``, for all ``callableDef`` in ``callableDef^{asterisk}^``.
 . Let ``actionDef^{asterisk}^`` be the list of ``actionDef``, obtained by repeating:
@@ -13685,7 +13700,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 for each ``callableDef`` in ``callableDef^{asterisk}^``
 . Let ``object~control~`` be ``CONTROL`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_2~.BLOCK.FRAME`` ``controlLocalDeclarationIR'^{asterisk}^`` ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}`` ``controlBodyIR'`` ``}``.
 . Result in 
-* the updated store ``STO~3~``,
+* the updated store ``STO~4~``,
 * and the constructed ``object~control~``.
 
 <<Constructor_call, Loading ``packageObjectConstructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
@@ -13694,7 +13709,7 @@ for each ``callableDef`` in ``callableDef^{asterisk}^``
 . Let ``p~callee~`` be ``BLOCK``.
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``BLOCK.TYPE`` set to ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
-. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
 --
@@ -13702,19 +13717,13 @@ for each ``callableDef`` in ``callableDef^{asterisk}^``
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and the instantiation context ``IC~callee_2~`` be
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_2~`` be
 * the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let ``id~cparam_default~^{asterisk}^`` be the list of ``id~cparam_default~``, obtained by repeating:
-+
---
- ** Let ``id~cparam_default~`` be the name of ``constructorParameterIR~default~``.
---
-+
-for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default~^{asterisk}^``
-. Let ``IC~callee_3~`` be <<add_vars_i, ``IC~callee_2~`` where each of ``id~cparam_default~^{asterisk}^`` to each of ``value~default~^{asterisk}^`` are added to the ``p~callee~`` layer>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_3~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_2~`` with ``id~default~^{asterisk}^``, under store ``STO~1~``>>.
 . Let ``object~package~`` be ``PACKAGE`` ``<`` ``IC~callee_3~.BLOCK.TYPE`` ``>`` ``{`` ``IC~callee_3~.BLOCK.FRAME`` ``}``.
 . Result in 
-* the updated store ``STO~1~``,
+* the updated store ``STO~2~``,
 * and the constructed ``object~package~``.
 
 <<SwitchCase_inst, SwitchCase_inst: ``p`` ``IC`` ``store`` ``|-`` ``switchCaseIR`` ``:`` ``%`` ``%``>>
@@ -15377,7 +15386,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
 * Evaluating ``constantDeclarationIR``, under cursor ``cursor``, and evaluation context ``evalContext``:
 * Results in the updated evaluation context ``evalContext``.
 
-<<ConstDecl_eval, Evaluating ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ``value`` ``;``, under cursor ``p``, and evaluation context ``EC~0~``>>:
+<<ConstDecl_eval, Evaluating ``annotationList`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``value`` ``;``, under cursor ``p``, and evaluation context ``EC~0~``>>:
 
 . Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value`` is added to the ``p`` layer>>.
 . Result in the updated evaluation context ``EC~1~``.
@@ -15587,9 +15596,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``tableApplyMethodCallee`` be ``TABLE`` ``objectId`` ``.`` ``APPLY`` ``{`` ``frame`` ``;`` ``TBL`` ``}``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``tableApplyMethodCallee``.
 
-<<Copy_in_argument, Copy_in_argument: ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>
+<<Copy_in_argument, Copy_in_argument: ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>
 
-<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
+<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
 
 . Check that ``direction`` is equal to ```EMPTY`` or ``direction`` is equal to ``IN``.
 . Let <<Argument_eval, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ expressionResult>>.
@@ -15600,7 +15609,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
  .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
 
-<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``INOUT`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
+<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``INOUT`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
 
 . Let <<Argument_eval_lvalue, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult>>.
 . If let ``abortResult`` be ``storageReferenceResult``:
@@ -15614,7 +15623,7 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
  .. Let ``EC~callee_1~`` be <<add_var_e, ``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer>>.
  .. Result in ``STO~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``storageReference'``.
 
-<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``OUT`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
+<<Copy_in_argument, ``STO~0~`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``OUT`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``~>`` ``%`` ``%`` ``%`` ``#`` ``%``>>:
 
 . Let <<Argument_eval_lvalue, p~caller~ EC~caller_0~ STO~0~ |- argumentIR : EC~caller_1~ STO~1~ storageReferenceResult>>.
 . If let ``abortResult`` be ``storageReferenceResult``:
@@ -15652,9 +15661,9 @@ for each ``constructorParameterIR~default~`` in ``constructorParameterIR~default
    .... Let ``storageReference'^?^^{asterisk}^`` be ``storageReference~h~^?^`` ``{two-colons}`` ``storageReference~t~^{asterisk}^``.
    .... Result in ``STO~2~``, ``EC~caller_2~``, ``EC~callee_2~``, and ``storageReference'^?^^{asterisk}^``.
 
-<<Copy_in_default, Copy_in_default: ``parameterIR^{asterisk}^`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``value^{asterisk}^`` ``~>`` ``%``>>
+<<Copy_in_default, Copy_in_default: ``parameterIR^{asterisk}^`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``parameterInitializerIR^{asterisk}^`` ``~>`` ``%``>>
 
-<<Copy_in_default, ``parameterIR^{asterisk}^`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``value^{asterisk}^`` ``~>`` ``%``>>:
+<<Copy_in_default, ``parameterIR^{asterisk}^`` ``@`` ``p~callee~`` ``EC~callee_0~`` ``(`` ``=`` ```VALUE`` ``value`` ``)^{asterisk}^`` ``~>`` ``%``>>:
 
 . Let ``nameIR^{asterisk}^`` be the list of ``nameIR``, obtained by repeating:
 +
@@ -15666,14 +15675,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``<<add_vars_e,`` ``add_vars_e(p~callee~,`` ``EC~callee_0~,`` ``nameIR^{asterisk}^,`` ``value^{asterisk}^)>>``.
 . Result in ``EC~callee_1~``.
 
-<<Copy_out_argument, Copy_out_argument: ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``~>`` ``%``>>
+<<Copy_out_argument, Copy_out_argument: ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``~>`` ``%``>>
 
-<<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``·`` ``~>`` ``%``>>:
+<<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``·`` ``~>`` ``%``>>:
 
 . Check that ``direction`` is equal to ``IN`` or ``direction`` is equal to ```EMPTY``.
 . Result in ``EC~caller_0~``.
 
-<<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``constantInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``~>`` ``%``>>:
+<<Copy_out_argument, ``STO`` ``|-`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``@`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``~>`` ``%``>>:
 
 . If ``storageReference^?^`` is none:
  .. Check that ``direction`` is equal to ``OUT`` or ``direction`` is equal to ``INOUT``.
@@ -15704,13 +15713,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``ACTION`` ``cursor`` ``.`` ``nameIR`` ``(`` ``parameterIR^{asterisk}^`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``blockStatementIR`` be ``actionCallee``.
 . Check that ``cursor`` is ``GLOBAL``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_1~ # copyInResult>>.
 . If let ``exitResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
 . Else if let ``storageReference^?^^{asterisk}^`` be ``copyInResult``:
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> EC~callee_2~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_2~>>.
  .. Let <<ActionBody_eval, EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult>>.
  .. If let ``exitResult`` be ``actionResult``:
   ... Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
@@ -15724,13 +15733,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``ACTION`` ``cursor`` ``.`` ``nameIR`` ``(`` ``parameterIR^{asterisk}^`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``blockStatementIR`` be ``actionCallee``.
 . Check that ``cursor`` is ``BLOCK``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(BLOCK,`` ``EC~0~)>>``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``BLOCK``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_0~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_1~ # copyInResult>>.
 . If let ``exitResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
 . Else if let ``storageReference^?^^{asterisk}^`` be ``copyInResult``:
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ value~default~^{asterisk}^ ~> EC~callee_2~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_1~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_2~>>.
  .. Let <<ActionBody_eval, EC~callee_2~ STO~1~ |- blockStatementIR : EC~callee_3~ STO~2~ actionResult>>.
  .. If let ``exitResult`` be ``actionResult``:
   ... Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
@@ -15744,14 +15753,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``FUNCTION`` ``nameIR`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``blockStatementIR`` be ``definedFunctionCallee``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``LOCAL.TYPE`` set to ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``storageReference^?^^{asterisk}^`` be ``copyInResult``.
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> EC~callee_3~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_3~>>.
  .. Let <<DefinedFunctionBody_eval, EC~callee_3~ STO~1~ |- blockStatementIR : EC~callee_4~ STO~2~ definedFunctionResult>>.
  .. Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
  .. Result in the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``definedFunctionResult``.
@@ -15761,14 +15770,14 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EXTERN_FUNCTION`` ``nameIR`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``#`` ``id~default~^{asterisk}^`` ``)`` be ``externFunctionCallee``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``LOCAL.TYPE`` set to ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``storageReference^?^^{asterisk}^`` be ``copyInResult``.
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ value~default~^{asterisk}^ ~> EC~callee_3~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_2~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_3~>>.
  .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~``, obtained by repeating:
 +
 --
@@ -15904,14 +15913,14 @@ for each ``value~back~`` in ``value~back~^{asterisk}^``
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``BLOCK.TYPE`` set to ``theta``.
 . Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``BLOCK.FRAME`` set to ``frame``.
 . Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``LOCAL.TYPE`` set to ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_3~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_4~ # copyInResult>>.
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``abortResult``.
 . Else:
  .. Let ``storageReference^?^^{asterisk}^`` be ``copyInResult``.
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_4~ value~default~^{asterisk}^ ~> EC~callee_5~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ LOCAL EC~callee_4~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_5~>>.
  .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~``, obtained by repeating:
 +
 --
@@ -15929,13 +15938,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``PARSER`` ``++_++`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``frame`` ``;`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}`` be ``parserApplyMethodCallee``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.STATE`` set to ``stateEnv``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
 . If let ``rejectTransitionResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``rejectTransitionResult``.
 . Else if let ``storageReference^?^^{asterisk}^`` be ``copyInResult``:
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> EC~callee_3~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_3~>>.
  .. Let <<ParserLocalDecls_eval, EC~callee_3~ STO~1~ |- parserLocalDeclarationListIR : EC~callee_4~ STO~2~ parserStatementResult>>.
  .. If let ``rejectTransitionResult`` be ``parserStatementResult``:
   ... Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
@@ -15955,13 +15964,13 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
 . Let ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}`` be ``actionDefEnv``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.CALLABLE`` set to ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}``.
-. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``value~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
+. Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
 . If let ``exitResult`` be ``copyInResult``:
  .. Result in the updated evaluation context ``EC~1~``, store ``STO~1~``, and call result ``EXIT``.
 . Else if let ``storageReference^?^^{asterisk}^`` be ``copyInResult``:
- .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ value~default~^{asterisk}^ ~> EC~callee_3~>>.
+ .. Let <<Copy_in_default, parameterIR~default~^{asterisk}^ @ BLOCK EC~callee_2~ parameterInitializerIR~default~^{asterisk}^ ~> EC~callee_3~>>.
  .. Let <<ControlLocalDecls_eval, EC~callee_3~ STO~1~ |- controlLocalDeclarationListIR : EC~callee_4~ STO~2~ controlLocalDeclarationResult>>.
  .. If let ``exitResult`` be ``controlLocalDeclarationResult``:
   ... Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
@@ -16541,7 +16550,7 @@ for each ``tableKeyValue`` in ``tableKeyValue^{asterisk}^``
 . Let ``tableCustomPropertyIR'^{asterisk}^`` be <<filter_, ``tableCustomPropertyIR^{asterisk}^`` filtered by $is_largest_priority_wins>>.
 . If let ``[tableCustomPropertyIR'']`` be ``tableCustomPropertyIR'^{asterisk}^``:
  .. Check that ``tableCustomPropertyIR''`` matches pattern ``%`` ```` ``%`` ``CUSTOM_CONST`` ``%`` ```` ``%`` ``;``.
- .. Let ``++_++`` ``++_++`` ``CUSTOM_CONST`` ``++_++`` ``=`` ``value`` ``;`` be ``tableCustomPropertyIR''``.
+ .. Let ``++_++`` ``++_++`` ``CUSTOM_CONST`` ``++_++`` ``=`` ```VALUE`` ``value`` ``;`` be ``tableCustomPropertyIR''``.
  .. Check that ``value`` has type ``boolValue``.
  .. Let ```B`` ``b`` be ``value``.
  .. Return ``b``.

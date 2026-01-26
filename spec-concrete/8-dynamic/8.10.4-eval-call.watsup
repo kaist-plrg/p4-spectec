@@ -56,7 +56,7 @@ rulegroup Call_eval/actionCallee-global {
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -78,7 +78,7 @@ rulegroup Call_eval/actionCallee-global {
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -88,7 +88,7 @@ rulegroup Call_eval/actionCallee-global {
           `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_1 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_1 parameterInitializerIR_default*
         ~> EC_callee_2
     ---- ;; evaluate action body
     -- ActionBody_eval:
@@ -114,7 +114,7 @@ rulegroup Call_eval/actionCallee-global {
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -124,7 +124,7 @@ rulegroup Call_eval/actionCallee-global {
           `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_1 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_1 parameterInitializerIR_default*
         ~> EC_callee_2
     ---- ;; evaluate action body
     -- ActionBody_eval:
@@ -154,7 +154,7 @@ rulegroup Call_eval/actionCallee-block {
     -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = BLOCK
@@ -177,7 +177,7 @@ rulegroup Call_eval/actionCallee-block {
     -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = BLOCK
@@ -187,7 +187,7 @@ rulegroup Call_eval/actionCallee-block {
           `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_1 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_1 parameterInitializerIR_default*
         ~> EC_callee_2
     ---- ;; evaluate action body
     -- ActionBody_eval:
@@ -213,7 +213,7 @@ rulegroup Call_eval/actionCallee-block {
     -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = BLOCK
@@ -223,7 +223,7 @@ rulegroup Call_eval/actionCallee-block {
           `@ LOCAL EC_callee_0 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_1 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_1 parameterInitializerIR_default*
         ~> EC_callee_2
     ---- ;; evaluate action body
     -- ActionBody_eval:
@@ -292,7 +292,7 @@ rulegroup Call_eval/definedFunctionCallee {
         = EC_callee_0[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -316,7 +316,7 @@ rulegroup Call_eval/definedFunctionCallee {
         = EC_callee_0[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -326,7 +326,7 @@ rulegroup Call_eval/definedFunctionCallee {
           `@ LOCAL EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_2 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate function body
     -- DefinedFunctionBody_eval:
@@ -363,7 +363,7 @@ rulegroup Call_eval/externFunctionCallee {
         = EC_callee_0[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -388,7 +388,7 @@ rulegroup Call_eval/externFunctionCallee {
         = EC_callee_0[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -398,7 +398,7 @@ rulegroup Call_eval/externFunctionCallee {
           `@ LOCAL EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_2 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate function body
     -- if (_ _ _ nameIR_param _ = parameterIR)*
@@ -611,7 +611,7 @@ rulegroup Call_eval/externMethodCallee {
         = EC_callee_2[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -640,7 +640,7 @@ rulegroup Call_eval/externMethodCallee {
         = EC_callee_2[ .LOCAL.TYPE = `{ (typeParameterIR `: typeArgumentIR)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -650,7 +650,7 @@ rulegroup Call_eval/externMethodCallee {
           `@ LOCAL EC_callee_3 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_4 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_4 value_default*
+        parameterIR_default* `@ LOCAL EC_callee_4 parameterInitializerIR_default*
         ~> EC_callee_5
     ---- ;; evaluate method body
     -- if (_ _ _ nameIR_param _ = parameterIR)*
@@ -684,7 +684,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
         = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -708,7 +708,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
         = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -718,7 +718,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ParserLocalDecls_eval:
@@ -745,7 +745,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
         = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -755,7 +755,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ParserLocalDecls_eval:
@@ -786,7 +786,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
         = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -796,7 +796,7 @@ rulegroup Call_eval/parserApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ParserLocalDecls_eval:
@@ -836,7 +836,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -863,7 +863,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -873,7 +873,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ControlLocalDecls_eval:
@@ -903,7 +903,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -913,7 +913,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ControlLocalDecls_eval:
@@ -947,7 +947,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
-           parameterIR_default*, value_default*)
+           parameterIR_default*, parameterInitializerIR_default*)
         = $align_parameterListIR(parameterListIR, argumentListIR, id_default*)
     ---- ;; copy-in
     -- if p_shared = GLOBAL
@@ -957,7 +957,7 @@ rulegroup Call_eval/controlApplyMethodCallee {
           `@ BLOCK EC_callee_1 argumentIR_aligned*
         ~> STO_1 EC_1 EC_callee_2 `# (`` storageReference?*)
     -- Copy_in_default:
-        parameterIR_default* `@ BLOCK EC_callee_2 value_default*
+        parameterIR_default* `@ BLOCK EC_callee_2 parameterInitializerIR_default*
         ~> EC_callee_3
     ---- ;; evaluate local declarations
     -- ControlLocalDecls_eval:

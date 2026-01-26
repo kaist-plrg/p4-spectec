@@ -8,10 +8,9 @@
 
 rule ControlLocalDecl_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
-            : IC_1 STO constantDeclarationIR_inst
+            : IC_1 STO constantDeclarationIR
   -- ConstDecl_inst:
-      BLOCK IC_0 |- constantDeclarationIR
-                  : IC_1 constantDeclarationIR_inst
+      BLOCK IC_0 |- constantDeclarationIR : IC_1
 
 ;;; instantiationIR
 
@@ -64,7 +63,7 @@ rule ControlLocalDecl_inst/tableDeclarationIR:
   -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
   ---- ;; replace declaration with constant declaration holding the reference
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+      = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 ;;
 ;; Control local declaration list instantiation
 ;;

@@ -6,11 +6,18 @@
 ;;;; Parameter types
 ;;
 
-syntax constantInitializerIR = `= value
-syntax constantInitializerOptIR = constantInitializerIR?
+syntax typedExpressionIR
+
+syntax initializerIR = `= typedExpressionIR
+syntax constantInitializerIR = `= `VALUE value
+
+syntax parameterInitializerIR =
+  | initializerIR
+  | constantInitializerIR
+syntax parameterInitializerOptIR = parameterInitializerIR?
 
 syntax parameterIR =
-  annotationList direction typeIR id constantInitializerOptIR
+  annotationList direction typeIR id parameterInitializerOptIR
   hint(prose_fields "annotations" "direction" "type" "name" "default initializer")
 
 ;;

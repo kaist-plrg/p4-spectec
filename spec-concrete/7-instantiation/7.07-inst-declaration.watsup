@@ -9,18 +9,15 @@
 ;;;   annotationList CONST typeIR nameIR initializerIR `;
 
 rule ConstDecl_inst:
-  p IC_0 |- annotationList CONST typeIR nameIR (`= value) `;
-          : IC_1 constantDeclarationIR
+  p IC_0 |- annotationList CONST typeIR nameIR (`= `VALUE value) `;
+          : IC_1
   -- if IC_1 = $add_var_i(p, IC_0, nameIR, value)
-  -- if constantDeclarationIR 
-      = annotationList CONST typeIR nameIR (`= value) `;
 
 rule Decl_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
             : IC_1 STO
   -- ConstDecl_inst:
-      GLOBAL IC_0 |- constantDeclarationIR
-                   : IC_1 constantDeclarationIR
+      GLOBAL IC_0 |- constantDeclarationIR : IC_1 
 
 ;;; instantiationIR
 ;;; syntax instantiationIR =
@@ -142,7 +139,7 @@ rulegroup InstDecl_inst {
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 
   rule InstDecl_inst/non-extern:
     p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
@@ -166,7 +163,7 @@ rulegroup InstDecl_inst {
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 
 }
 

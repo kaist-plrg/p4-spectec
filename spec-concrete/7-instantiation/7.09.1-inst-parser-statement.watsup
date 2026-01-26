@@ -8,10 +8,9 @@
 
 rule ParserStmt_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
-            : IC_1 STO constantDeclarationIR_inst
+            : IC_1 STO constantDeclarationIR
   -- ConstDecl_inst:
-      LOCAL IC_0 |- constantDeclarationIR
-                  : IC_1 constantDeclarationIR_inst
+      LOCAL IC_0 |- constantDeclarationIR : IC_1
 
 ;;; variableDeclarationIR
 
@@ -71,7 +70,7 @@ rule ParserStmt_inst/directApplicationStatementIR:
   ---- ;; replace with constant declaration and call statement
   -- if typeIR = `` typeId
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+      = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
   -- if callableTargetIR
       = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR

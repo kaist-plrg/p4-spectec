@@ -30,14 +30,14 @@ def $partition_parameterListIR_default(
 ;;; Aligning parameters with arguments
 
 dec $align_parameterListIR(parameterIR*, argumentIR*, nameIR*)
-  : (parameterIR*, argumentIR*, parameterIR*, value*)
+  : (parameterIR*, argumentIR*, parameterIR*, parameterInitializerIR*)
   hint(prose_in "the result of aligning" %0 "with" %1 "where default parameters are" %2)
 dec $align_parameterListIR'(map<id, parameterIR>, parameterIR*, argumentIR*)
   : (parameterIR*, argumentIR*)
 
 def $align_parameterListIR(parameterIR*, argumentIR*, nameIR_default*)
   = (parameterIR_aligned*, argumentIR_aligned*,
-     parameterIR_default*, value_default*)
+     parameterIR_default*, parameterInitializerIR_default*)
   -- if (parameterIR_non_default*, parameterIR_default*)
       = $partition_parameterListIR_default(parameterIR*, nameIR_default*)
   -- if (_ _ _ nameIR_param _ = parameterIR_non_default)*
@@ -46,7 +46,7 @@ def $align_parameterListIR(parameterIR*, argumentIR*, nameIR_default*)
           `{ (nameIR_param `: parameterIR_non_default)* },
           parameterIR_non_default*,
           argumentIR*)
-  -- if (_ _ _ _ (`= value_default) = parameterIR_default)*
+  -- if (_ _ _ _ parameterInitializerIR_default = parameterIR_default)*
 
 def $align_parameterListIR'(`{ (id `: parameterIR)* }, eps, eps)
   = (eps, eps)

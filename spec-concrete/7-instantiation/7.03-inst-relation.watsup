@@ -150,12 +150,11 @@ relation ControlLocalDecls_inst:
 
 relation ConstDecl_inst:
   cursor instContext |- constantDeclarationIR
-                      : instContext constantDeclarationIR
+                      : instContext
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under cursor" %0#
                 ", and instantiation context" %1)
-  hint(prose_out "the updated instantiation context" %3
-                 "and" %4)
+  hint(prose_out "the updated instantiation context" %3)
 
 relation InstDecl_inst:
   cursor instContext store |- instantiationIR
@@ -227,7 +226,23 @@ relation Copy_in_inst:
   hint(prose_in "copy-in from" %1 "layer of" %2 "with" %3
                 "to" %4 "layer of" %5 "with" %6#", under store" %0)
   hint(prose_out "the updated store" %7
-                 "and the instantiation context" %8)
+                 "and instantiation context" %8)
+
+relation Copy_in_argument_inst_default:
+  store cursor instContext parameterInitializerIR
+     `@ cursor instContext id
+  ~> store instContext
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+
+relation Copy_in_inst_default:
+  store cursor instContext parameterInitializerIR*
+     `@ cursor instContext id*
+  ~> store instContext
+  hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "copy-in defaults from" %1 "layer of" %2 "with" %3
+                "to" %4 "layer of" %5 "with" %6#", under store" %0)
+  hint(prose_out "the updated store" %7
+                 "and instantiation context" %8)
 
 ;;
 ;;;; Constructor instantiation
