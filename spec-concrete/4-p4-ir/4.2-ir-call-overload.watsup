@@ -95,6 +95,12 @@ def $match_overloaded_unnamed<V>(
     nameIR_f `( n_arg ),
     def $get_parameterListIR)
   = MATCH eps
+  ---- ;; If a procedure-like construct has both optional parameters and
+  ---- ;; default values then it can only be called using named arguments
+  -- if parameterIR* = $get_parameterListIR(V)
+  -- if (b_default = $default_of_parameterIR(parameterIR))*
+  -- if (b_optional = $optional_annotation_of_parameterIR(parameterIR))*
+  -- if ~($exists_(b_default*) /\ $exists_(b_optional*))
   -- if nameIR_f `( id_param* ) = callTargetId
   -- if |id_param*| = n_arg
 
@@ -109,8 +115,11 @@ def $match_overloaded_unnamed<V>(
   -- if nameIR_f `( id_param* ) = callTargetId
   -- if $(|id_param*| > n_arg)
   -- if parameterIR* = $get_parameterListIR(V)
-  -- if (_, parameterIR_default*)
+  ---- ;; If a procedure-like construct has both optional parameters and
+  ---- ;; default values then it can only be called using named arguments
+  -- if (parameterIR_given*, parameterIR_default*)
       = $partition_<parameterIR>(parameterIR*, n_arg)
+  -- if (~$optional_annotation_of_parameterIR(parameterIR_given))*
   -- if $default_of_parameterIR(parameterIR_default)*
   -- if (id_param_default = $id_of_parameterIR(parameterIR_default))*
 
@@ -125,8 +134,11 @@ def $match_overloaded_unnamed<V>(
   -- if nameIR_f `( id_param* ) = callTargetId
   -- if $(|id_param*| > n_arg)
   -- if parameterIR* = $get_parameterListIR(V)
-  -- if (_, parameterIR_optional*)
+  ---- ;; If a procedure-like construct has both optional parameters and
+  ---- ;; default values then it can only be called using named arguments
+  -- if (parameterIR_given*, parameterIR_optional*)
       = $partition_<parameterIR>(parameterIR*, n_arg)
+  -- if (~$default_of_parameterIR(parameterIR_given))*
   -- if $optional_annotation_of_parameterIR(parameterIR_optional)*
   -- if (id_param_optional = $id_of_parameterIR(parameterIR_optional))*
 

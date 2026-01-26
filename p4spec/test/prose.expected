@@ -3902,31 +3902,50 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 <<match_overloaded_unnamed, match_overloaded_unnamed<V>(callTargetId : V, nameIR~f~ ( n~arg~ ), get_parameterListIR)>>
 
 
+. Let ``parameterIR^{asterisk}^`` be ``<<get_parameterListIR,`` ``get_parameterListIR(V)>>``.
+. Let ``b~default~^{asterisk}^`` be the list of ``b~default~``, obtained by repeating:
++
+--
+ ** Let ``b~default~`` be ``<<default_of_parameterIR,`` ``default_of_parameterIR(parameterIR)>>``.
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+. Let ``b~optional~^{asterisk}^`` be the list of ``b~optional~``, obtained by repeating:
++
+--
+ ** Let ``b~optional~`` be ``<<optional_annotation_of_parameterIR,`` ``optional_annotation_of_parameterIR(parameterIR)>>``.
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+. If ``~<<exists_,`` ``exists_(b~default~^{asterisk}^)>>`` ``/\`` ``<<exists_,`` ``exists_(b~optional~^{asterisk}^)>>``:
+ .. Let ``nameIR`` ``(`` ``id~param~^{asterisk}^`` ``)`` be ``callTargetId``.
+ .. Check that ``nameIR`` is equal to ``nameIR~f~``.
+ .. Check that the length of ``id~param~^{asterisk}^`` is equal to ``n~arg~``.
+ .. Return ``MATCH`` ``·``.
 . Let ``nameIR`` ``(`` ``id~param~^{asterisk}^`` ``)`` be ``callTargetId``.
 . If ``nameIR`` is equal to ``nameIR~f~``:
- .. If the length of ``id~param~^{asterisk}^`` is equal to ``n~arg~``:
-  ... Return ``MATCH`` ``·``.
- .. If the length of ``id~param~^{asterisk}^`` is greater than ``n~arg~``:
-  ... Let ``parameterIR^{asterisk}^`` be ``<<get_parameterListIR,`` ``get_parameterListIR(V)>>``.
-  ... Let ``(`` ``++_++^{asterisk}^,`` ``parameterIR~default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<parameterIR>(parameterIR^{asterisk}^,`` ``n~arg~)>>``.
-  ... If ``<<default_of_parameterIR,`` ``default_of_parameterIR(parameterIR~default~)>>``, for all ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``:
-   .... Let ``id~param_default~^{asterisk}^`` be the list of ``id~param_default~``, obtained by repeating:
+ .. Check that the length of ``id~param~^{asterisk}^`` is greater than ``n~arg~``.
+ .. Let ``(`` ``parameterIR~given~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^`` ``)`` be ``<<partition_,`` ``partition_<parameterIR>(parameterIR^{asterisk}^,`` ``n~arg~)>>``.
+ .. If ``~<<optional_annotation_of_parameterIR,`` ``optional_annotation_of_parameterIR(parameterIR~given~)>>``, for all ``parameterIR~given~`` in ``parameterIR~given~^{asterisk}^``:
+  ... Check that ``<<default_of_parameterIR,`` ``default_of_parameterIR(parameterIR~default~)>>``, for all ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``.
+  ... Let ``id~param_default~^{asterisk}^`` be the list of ``id~param_default~``, obtained by repeating:
 +
 --
-    ***** Let ``id~param_default~`` be <<id_of_parameterIR, the identifier of ``parameterIR~default~``>>.
+   **** Let ``id~param_default~`` be <<id_of_parameterIR, the identifier of ``parameterIR~default~``>>.
 --
 +
 for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
-   .... Return ``MATCH`` ``id~param_default~^{asterisk}^``.
-  ... If ``<<optional_annotation_of_parameterIR,`` ``optional_annotation_of_parameterIR(parameterIR~default~)>>``, for all ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``:
-   .... Let ``id~param_optional~^{asterisk}^`` be the list of ``id~param_optional~``, obtained by repeating:
+  ... Return ``MATCH`` ``id~param_default~^{asterisk}^``.
+ .. If ``~<<default_of_parameterIR,`` ``default_of_parameterIR(parameterIR~given~)>>``, for all ``parameterIR~given~`` in ``parameterIR~given~^{asterisk}^``:
+  ... Check that ``<<optional_annotation_of_parameterIR,`` ``optional_annotation_of_parameterIR(parameterIR~default~)>>``, for all ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``.
+  ... Let ``id~param_optional~^{asterisk}^`` be the list of ``id~param_optional~``, obtained by repeating:
 +
 --
-    ***** Let ``id~param_optional~`` be <<id_of_parameterIR, the identifier of ``parameterIR~default~``>>.
+   **** Let ``id~param_optional~`` be <<id_of_parameterIR, the identifier of ``parameterIR~default~``>>.
 --
 +
 for each ``parameterIR~default~`` in ``parameterIR~default~^{asterisk}^``
-   .... Return ``MATCH`` ``id~param_optional~^{asterisk}^``.
+  ... Return ``MATCH`` ``id~param_optional~^{asterisk}^``.
 . Otherwise:
  .. Return ``NOMATCH``.
 

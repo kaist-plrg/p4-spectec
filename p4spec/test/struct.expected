@@ -11448,37 +11448,51 @@ def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $ge
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:84.1-88.20
 def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR)
 
-1. (Let (nameIR ( (id_param)* )) be callTargetId)
+1. (Let (parameterIR)* be $get_parameterListIR(V))
 
-2. If ((nameIR = nameIR_f)), then
+2. (Let b_default be $default_of_parameterIR(parameterIR))*
 
-  1. If ((|(id_param)*| = n_arg)), then
+3. (Let b_optional be $optional_annotation_of_parameterIR(parameterIR))*
 
-    1. Return (match [])
+4. If (~($exists_((b_default)*) /\ $exists_((b_optional)*))), then
 
-  2. If ((|(id_param)*| > n_arg)), then
+  1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
-    1. (Let (parameterIR)* be $get_parameterListIR(V))
+  2. If ((nameIR = nameIR_f)), then
 
-    2. (Let ((_parameterIR)*, (parameterIR_default)*) be $partition_<parameterIR>((parameterIR)*, n_arg))
+    1. If ((|(id_param)*| = n_arg)), then
 
-    3. If ($default_of_parameterIR(parameterIR_default))*, then
+      1. Return (match [])
 
-      1. (Let id_param_default be $id_of_parameterIR(parameterIR_default))*
+5. (Let (nameIR ( (id_param)* )) be callTargetId)
 
-      2. Return (match (id_param_default)*)
+6. If ((nameIR = nameIR_f)), then
 
-    4. If ($optional_annotation_of_parameterIR(parameterIR_default))*, then
+  1. If ((|(id_param)*| > n_arg)), then
 
-      1. (Let id_param_optional be $id_of_parameterIR(parameterIR_default))*
+    1. (Let ((parameterIR_given)*, (parameterIR_default)*) be $partition_<parameterIR>((parameterIR)*, n_arg))
 
-      2. Return (match (id_param_optional)*)
+    2. If (~$optional_annotation_of_parameterIR(parameterIR_given))*, then
 
-3. Otherwise
+      1. If ($default_of_parameterIR(parameterIR_default))*, then
+
+        1. (Let id_param_default be $id_of_parameterIR(parameterIR_default))*
+
+        2. Return (match (id_param_default)*)
+
+    3. If (~$default_of_parameterIR(parameterIR_given))*, then
+
+      1. If ($optional_annotation_of_parameterIR(parameterIR_default))*, then
+
+        1. (Let id_param_optional be $id_of_parameterIR(parameterIR_default))*
+
+        2. Return (match (id_param_optional)*)
+
+7. Otherwise
 
   1. Return (nomatch)
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:146.1-150.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:158.1-162.30
 def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
@@ -11511,7 +11525,7 @@ def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )
 
 3. Else Phantom#471
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:189.1-193.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:201.1-205.30
 def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
@@ -11544,7 +11558,7 @@ def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $
 
 3. Else Phantom#475
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:232.1-236.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:244.1-248.30
 def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), $get_parameterListIR)
 
 1. If ((|((id_arg)?)*| > 0)), then
@@ -11593,7 +11607,7 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 2. Else Phantom#482
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:294.1-295.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:306.1-307.21
 def $find_non_overloaded<V>(({ ((callableId : V))* }), nameIR_f)
 
 1. (Let ((callableId, V))* be $find_non_overloadeds<V>(({ ((callableId : V))* }), nameIR_f))
@@ -11608,7 +11622,7 @@ def $find_non_overloaded<V>(({ ((callableId : V))* }), nameIR_f)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:296.1-297.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:308.1-309.21
 def $find_non_overloadeds<V>(set<pair<callableId, V>>, nameIR_f)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then

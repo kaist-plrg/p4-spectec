@@ -9251,50 +9251,56 @@ def $match_overloaded_named<V>(pair<callTargetId, V>, namedCallTargetKey, $get_p
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:84.1-88.20
 def $match_overloaded_unnamed<V>(pair<callTargetId, V>, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : callTargetMatch =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:93.1-99.28
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:93.1-105.28
   clause 0 : (callTargetId : V, nameIR_f ( n_arg ), $get_parameterListIR) = match []
+  -- let parameterIR*{parameterIR <- parameterIR*} = $get_parameterListIR(V)
+  -- (let b_default = $default_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_default -> b_default*}
+  -- (let b_optional = $optional_annotation_of_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_optional -> b_optional*}
+  -- if ~($exists_(b_default*{b_default <- b_default*}) /\ $exists_(b_optional*{b_optional <- b_optional*}))
   -- let nameIR ( id_param*{id_param <- id_param*} ) = callTargetId
   -- if (nameIR = nameIR_f)
   -- if (|id_param*{id_param <- id_param*}| = n_arg)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:104.1-115.70
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:110.1-124.70
   clause 1 : (callTargetId : V, nameIR_f ( n_arg ), $get_parameterListIR) = match id_param_default*{id_param_default <- id_param_default*}
   -- let nameIR ( id_param*{id_param <- id_param*} ) = callTargetId
   -- if (nameIR = nameIR_f)
   -- if (|id_param*{id_param <- id_param*}| > n_arg)
   -- let parameterIR*{parameterIR <- parameterIR*} = $get_parameterListIR(V)
-  -- let (_parameterIR*{_parameterIR <- _parameterIR*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}) = $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg)
+  -- let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}) = $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg)
+  -- (if ~$optional_annotation_of_parameterIR(parameterIR_given))*{parameterIR_given <- parameterIR_given*}
   -- (if $default_of_parameterIR(parameterIR_default))*{parameterIR_default <- parameterIR_default*}
   -- (let id_param_default = $id_of_parameterIR(parameterIR_default))*{parameterIR_default <- parameterIR_default*, id_param_default -> id_param_default*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:120.1-131.72
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:129.1-143.72
   clause 2 : (callTargetId : V, nameIR_f ( n_arg ), $get_parameterListIR) = match id_param_optional*{id_param_optional <- id_param_optional*}
   -- let nameIR ( id_param*{id_param <- id_param*} ) = callTargetId
   -- if (nameIR = nameIR_f)
   -- if (|id_param*{id_param <- id_param*}| > n_arg)
   -- let parameterIR*{parameterIR <- parameterIR*} = $get_parameterListIR(V)
-  -- let (_parameterIR*{_parameterIR <- _parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg)
+  -- let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg)
+  -- (if ~$default_of_parameterIR(parameterIR_given))*{parameterIR_given <- parameterIR_given*}
   -- (if $optional_annotation_of_parameterIR(parameterIR_optional))*{parameterIR_optional <- parameterIR_optional*}
   -- (let id_param_optional = $id_of_parameterIR(parameterIR_optional))*{parameterIR_optional <- parameterIR_optional*, id_param_optional -> id_param_optional*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:135.1-140.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:147.1-152.15
   clause 3 : (callTargetId : V, nameIR_f ( n_arg ), $get_parameterListIR) = nomatch
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:146.1-150.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:158.1-162.30
 def $find_overloadeds_named<V>(map<callableId, V>, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)* =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:152.1-156.8
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:164.1-168.8
   clause 0 : (set<pair<callableId, V>>, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR) = []
   -- if (set<pair<callableId, V>> = { [] })
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:158.1-169.46
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:170.1-181.46
   clause 1 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR) = $find_overloadeds_named<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
   -- if (nomatch = $match_overloaded_named<V>(callTargetId_h : V_h, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:171.1-183.56
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:183.1-195.56
   clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR) = (callTargetId_h, V_h, id_omitted*{id_omitted <- id_omitted*}) :: $find_overloadeds_named<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
@@ -9302,20 +9308,20 @@ def $find_overloadeds_named<V>(map<callableId, V>, namedCallTargetKey, $get_para
   -- if callTargetMatch matches `MATCH%`
   -- let match id_omitted*{id_omitted <- id_omitted*} = callTargetMatch
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:189.1-193.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:201.1-205.30
 def $find_overloadeds_unnamed<V>(map<callableId, V>, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)* =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:195.1-199.8
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:207.1-211.8
   clause 0 : (set<pair<callableId, V>>, nameIR_f ( nat ), $get_parameterListIR) = []
   -- if (set<pair<callableId, V>> = { [] })
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:201.1-212.46
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:213.1-224.46
   clause 1 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( n_arg ), $get_parameterListIR) = $find_overloadeds_unnamed<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( n_arg ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
   -- if (nomatch = $match_overloaded_unnamed<V>(callTargetId_h : V_h, nameIR_f ( n_arg ), $get_parameterListIR))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:214.1-226.56
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:226.1-238.56
   clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( n_arg ), $get_parameterListIR) = (callTargetId_h, V_h, id_omitted*{id_omitted <- id_omitted*}) :: $find_overloadeds_unnamed<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( n_arg ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
@@ -9323,10 +9329,10 @@ def $find_overloadeds_unnamed<V>(map<callableId, V>, unnamedCallTargetKey, $get_
   -- if callTargetMatch matches `MATCH%`
   -- let match id_omitted*{id_omitted <- id_omitted*} = callTargetMatch
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:232.1-236.30
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:244.1-248.30
 def $find_overloaded<V>(map<callTargetId, V>, callTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:240.1-250.42
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:252.1-262.42
   clause 0 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?()
   -- if (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| > 0)
   -- (let id?{id <- id?} = id_arg?{id_arg <- id_arg?})*{id_arg? <- id_arg?*, id? -> id?*}
@@ -9334,7 +9340,7 @@ def $find_overloaded<V>(map<callTargetId, V>, callTargetKey, $get_parameterListI
   -- (let ?(id_arg_inner) = id?{id <- id?})*{id? <- id?*, id_arg_inner -> id_arg_inner*}
   -- if ([] = $find_overloadeds_named<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg_inner*{id_arg_inner <- id_arg_inner*} ), $get_parameterListIR))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:252.1-263.36
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:264.1-275.36
   clause 1 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?((callableId_found, V_found, id_omitted*{id_omitted <- id_omitted*}))
   -- if (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| > 0)
   -- (let id?{id <- id?} = id_arg?{id_arg <- id_arg?})*{id_arg? <- id_arg?*, id? -> id?*}
@@ -9344,39 +9350,39 @@ def $find_overloaded<V>(map<callTargetId, V>, callTargetKey, $get_parameterListI
   -- if (callableId, V, nameIR*)*{(callableId, V, nameIR*) <- (callableId, V, nameIR*)*} matches [ _/1 ]
   -- let [(callableId_found, V_found, id_omitted*{id_omitted <- id_omitted*})] = (callableId, V, nameIR*)*{(callableId, V, nameIR*) <- (callableId, V, nameIR*)*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:267.1-276.44
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:279.1-288.44
   clause 2 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?()
   -- (if (id_arg?{id_arg <- id_arg?} = ?()))*{id_arg? <- id_arg?*}
   -- if ([] = $find_overloadeds_unnamed<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( |id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| ), $get_parameterListIR))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:278.1-288.36
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:290.1-300.36
   clause 3 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?((callableId_found, V_found, id_omitted*{id_omitted <- id_omitted*}))
   -- (if (id_arg?{id_arg <- id_arg?} = ?()))*{id_arg? <- id_arg?*}
   -- let (callableId, V, nameIR*)*{(callableId, V, nameIR*) <- (callableId, V, nameIR*)*} = $find_overloadeds_unnamed<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( |id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| ), $get_parameterListIR)
   -- if (callableId, V, nameIR*)*{(callableId, V, nameIR*) <- (callableId, V, nameIR*)*} matches [ _/1 ]
   -- let [(callableId_found, V_found, id_omitted*{id_omitted <- id_omitted*})] = (callableId, V, nameIR*)*{(callableId, V, nameIR*) <- (callableId, V, nameIR*)*}
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:294.1-295.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:306.1-307.21
 def $find_non_overloaded<V>(map<callableId, V>, nameIR) : (callableId, V)? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:299.1-303.68
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:311.1-315.68
   clause 0 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f) = ?((callableId_found, V_found))
   -- let (callableId, V)*{(callableId, V) <- (callableId, V)*} = $find_non_overloadeds<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f)
   -- if (callableId, V)*{(callableId, V) <- (callableId, V)*} matches [ _/1 ]
   -- let [(callableId_found, V_found)] = (callableId, V)*{(callableId, V) <- (callableId, V)*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:304.1-307.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:316.1-319.15
   clause 1 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:296.1-297.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:308.1-309.21
 def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:309.1-309.55
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:321.1-321.55
   clause 0 : (set<pair<callableId, V>>, nameIR_f) = []
   -- if (set<pair<callableId, V>> = { [] })
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:310.1-315.72
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:322.1-327.72
   clause 1 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f) = (callableId_h, V_h) :: (callableId_t_found, V_t_found)*{V_t_found <- V_t_found*, callableId_t_found <- callableId_t_found*}
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callableId_h : V_h :: callableId_t : V_t*{V_t <- V_t*, callableId_t <- callableId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
@@ -9384,7 +9390,7 @@ def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
   -- if (nameIR = nameIR_f)
   -- let (callableId_t_found, V_t_found)*{V_t_found <- V_t_found*, callableId_t_found <- callableId_t_found*} = $find_non_overloadeds<V>({ callableId_t : V_t*{V_t <- V_t*, callableId_t <- callableId_t*} }, nameIR_f)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:316.1-322.72
+  ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:328.1-334.72
   clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f) = (callableId_t_found, V_t_found)*{V_t_found <- V_t_found*, callableId_t_found <- callableId_t_found*}
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callableId_h : V_h :: callableId_t : V_t*{V_t <- V_t*, callableId_t <- callableId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
