@@ -68,10 +68,12 @@ def $empty_instContext = IC
 ;;
 
 dec $enter_i(instContext) : instContext
+  hint(prose_in %0 "with a new local frame")
 
 def $enter_i(IC) = IC[ .LOCAL.FRAMES = $empty_frame :: IC.LOCAL.FRAMES ]
 
 dec $exit_i(instContext) : instContext
+  hint(prose_in %0 "with the innermost frame removed")
 
 def $exit_i(IC) = IC[ .LOCAL.FRAMES = frame_t* ]
   -- if IC.LOCAL.FRAMES = frame_h :: frame_t*

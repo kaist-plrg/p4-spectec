@@ -21,19 +21,21 @@ rule Stmt_inst/callStatementIR:
 
 ;;; directApplicationStatementIR
 ;;; syntax directApplicationStatementIR =
-;;;   prefixedNameIR `. APPLY `( argumentListIR ) `;
+;;;   prefixedNameIR `< typeArgumentListIR > `. APPLY `( argumentListIR ) `;
 
 rule Stmt_inst/directApplicationStatementIR:
-  p IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
+  p IC STO_0 |- prefixedNameIR `< typeArgumentListIR > `. APPLY `( argumentListIR ) `;
               : IC STO_2 blockStatementIR
   ---- ;; find and instantiate constructor
   -- Constructor_inst:
-      p IC |- prefixedNameIR `< eps > `( eps )
-            : constructorDef `< eps > `( `# eps )
+      p IC |- prefixedNameIR `< typeArgumentListIR > `( eps )
+            : constructorDef `< typeArgumentListIR_inst > `( `# eps )
   -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
   -- if IC_callee = $enter_path_i(IC, typeId)
   -- Constructor_call:
-      p IC_callee STO_0 |- constructorDef `< eps > `( eps `# eps ) : STO_1 object
+      p IC_callee STO_0 |- constructorDef `< typeArgumentListIR_inst >
+                            `( eps `# eps )
+                         : STO_1 object
   ---- ;; assign new typeId with random string appended
   -- if typeId_fresh = $fresh_typeId()
   -- if typeIR = `` typeId
@@ -44,10 +46,12 @@ rule Stmt_inst/directApplicationStatementIR:
   ---- ;; replace with constant declaration and call statement
   -- if constantDeclarationIR
       = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+  -- if typedExpressionIR_base
+      = (`` nameIR) `# `( typeIR CTK )
   -- if callableTargetIR
-      = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
+      = typedExpressionIR_base `. "apply"
   -- if callStatementIR
-      = callableTargetIR `< eps > `( argumentListIR ) `;
+      = callableTargetIR `< typeArgumentListIR_inst > `( argumentListIR ) `;
   -- if blockStatementIR
       = `EMPTY `{ [ constantDeclarationIR, callStatementIR ] }
 
@@ -223,45 +227,47 @@ rule Stmt_inst/switchStatementIR:
 ;;
 
 ;;; constantDeclarationIR
-
-rule BlockElementStmt_inst/constantDeclarationIR:
-  IC_0 STO_0 |- constantDeclarationIR
-              : IC_1 STO_0 constantDeclarationIR_inst
-  -- ConstDecl_inst:
-      LOCAL IC_0 |- constantDeclarationIR
-                  : IC_1 constantDeclarationIR_inst
-
 ;;; variableDeclarationIR
-
-rule BlockElementStmt_inst/variableDeclarationIR:
-  IC STO |- variableDeclarationIR
-          : IC STO variableDeclarationIR
-
 ;;; statementIR
 
-rule BlockElementStmt_inst/statementIR:
-  IC_0 STO_0 |- statementIR
-              : IC_1 STO_1 statementIR_inst
-  -- Stmt_inst: LOCAL IC_0 STO_0 |- statementIR
-                                  : IC_1 STO_1 statementIR_inst
+rulegroup BlockElementStmt_inst {
+
+  rule BlockElementStmt_inst/constantDeclarationIR:
+    IC_0 STO_0 |- constantDeclarationIR
+                : IC_1 STO_0 constantDeclarationIR_inst
+    -- ConstDecl_inst:
+        LOCAL IC_0 |- constantDeclarationIR
+                    : IC_1 constantDeclarationIR_inst
+
+  rule BlockElementStmt_inst/variableDeclarationIR:
+    IC STO |- variableDeclarationIR
+            : IC STO variableDeclarationIR
+
+  rule BlockElementStmt_inst/statementIR:
+    IC_0 STO_0 |- statementIR
+                : IC_1 STO_1 statementIR_inst
+    -- Stmt_inst: LOCAL IC_0 STO_0 |- statementIR
+                                    : IC_1 STO_1 statementIR_inst
+
+}
 
 ;;
 ;; syntax blockElementStatementListIR
 ;;
 
-rulegroup BlockElementStmts_inst {
+rulegroup BlockElementStmtList_inst {
 
-  rule BlockElementStmts_inst/nil:
+  rule BlockElementStmtList_inst/nil:
     IC STO |- eps : IC STO eps
 
-  rule BlockElementStmts_inst/cons:
+  rule BlockElementStmtList_inst/cons:
     IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
               : IC_2 STO_2 (blockElementStatementIR_h_inst
                             :: blockElementStatementIR_t_inst*)
     -- BlockElementStmt_inst:
         IC_0 STO_0 |- blockElementStatementIR_h
                     : IC_1 STO_1 blockElementStatementIR_h_inst
-    -- BlockElementStmts_inst:
+    -- BlockElementStmtList_inst:
         IC_1 STO_1 |- blockElementStatementIR_t*
                     : IC_2 STO_2 blockElementStatementIR_t_inst*
 
@@ -276,6 +282,6 @@ rulegroup BlockElementStmts_inst {
 rule Block_inst:
   IC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
               : IC_1 STO_1 (annotationList `{ blockElementStatementListIR_inst })
-  -- BlockElementStmts_inst:
+  -- BlockElementStmtList_inst:
       IC_0 STO_0 |- blockElementStatementListIR
                   : IC_1 STO_1 blockElementStatementListIR_inst

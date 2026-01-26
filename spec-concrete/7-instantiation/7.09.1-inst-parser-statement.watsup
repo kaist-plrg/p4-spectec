@@ -51,14 +51,15 @@ rule ParserStmt_inst/callStatementIR:
 ;;;   prefixedNameIR `. APPLY `( argumentListIR ) `;
 
 rule ParserStmt_inst/directApplicationStatementIR:
-  IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
+  IC STO_0 |- prefixedNameIR `< typeArgumentListIR > `. APPLY `( argumentListIR ) `;
             : IC STO_2 parserBlockStatementIR
   ---- ;; find and instantiate constructor
   -- Constructor_inst:
-      LOCAL IC |- prefixedNameIR `< eps > `( eps )
-                : constructorDef `< eps > `( `# eps )
+      LOCAL IC |- prefixedNameIR `< typeArgumentListIR > `( eps )
+                : constructorDef `< typeArgumentListIR_inst > `( `# eps )
   -- Constructor_call:
-      LOCAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
+      LOCAL IC STO_0 |- constructorDef `< typeArgumentListIR_inst >
+                          `( eps `# eps )
                       : STO_1 object
   ---- ;; assign new typeId with random string appended
   -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
@@ -74,7 +75,7 @@ rule ParserStmt_inst/directApplicationStatementIR:
   -- if callableTargetIR
       = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
   -- if callStatementIR
-      = callableTargetIR `< eps > `( argumentListIR ) `;
+      = callableTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
   ---- ;; create parser block
   -- if parserBlockStatementIR
       = `EMPTY `{ [ constantDeclarationIR, callStatementIR ] }

@@ -30,10 +30,12 @@ var EC : evalContext
 ;;
 
 dec $enter_e(evalContext) : evalContext
+  hint(prose_in %0 "with a new local frame")
 
 def $enter_e(EC) = EC[ .LOCAL.FRAMES = $empty_frame :: EC.LOCAL.FRAMES ]
 
 dec $exit_e(evalContext) : evalContext
+  hint(prose_in %0 "with the innermost frame removed")
 
 def $exit_e(EC) = EC[ .LOCAL.FRAMES = frame_t* ]
   -- if EC.LOCAL.FRAMES = frame_h :: frame_t*

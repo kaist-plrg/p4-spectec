@@ -27,29 +27,36 @@ relation Stmt_inst:
                             : instContext store statementIR
   hint(input %0 %1 %2 %3)
   hint(prose_in "compile-time evaluation of" %3#
-              ", under cursor" %0#", instantiation context" %1#", and store" %2)
-  hint(prose_out "\nthe instantiation context" %4#",\nthe store" %5#
-               ",\nand" %6)
+                ", under cursor" %0#", instantiation context" %1#", and store" %2)
+  hint(prose_out "\nthe updated instantiation context" %4#
+                 ", store" %5#", and" %6)
 
 relation BlockElementStmt_inst:
   instContext store |- blockElementStatementIR
-                      : instContext store blockElementStatementIR?
+                      : instContext store blockElementStatementIR
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#
+                ", under instantiation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+                 ", store" %4#", and" %5)
 
-relation BlockElementStmts_inst:
-  instContext store |- blockElementStatementIR*
+relation BlockElementStmtList_inst:
+  instContext store |- blockElementStatementListIR
                      : instContext store blockElementStatementIR*
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#
+                ", under instantiation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated instantiation context" %3#
+                 ", store" %4#", and" %5)
 
 relation Block_inst:
   instContext store |- blockStatementIR
                      : instContext store blockStatementIR
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#
-              ", under instantiation context" %0#", and store" %1)
+                ", under instantiation context" %0#", and store" %1)
   hint(prose_out "\nthe updated instantiation context" %3#
-               ",\nthe store" %4#
-               ",\nand" %5)
+                 ", store" %4#", and" %5)
 
 ;;
 ;;;; Extern method/constructor instantiation

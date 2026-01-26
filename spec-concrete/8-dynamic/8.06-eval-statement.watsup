@@ -159,13 +159,13 @@ rulegroup Stmt_eval/returnStatementIR {
 ;;; exitStatementIR
 ;;; syntax exitStatementIR = EXIT `;
 
-rule Stmt_eval/exitStatement:
+rule Stmt_eval/exitStatementIR:
   p EC STO |- EXIT `; : EC STO EXIT
 
 ;;; syntax blockStatementIR =
 ;;;   annotationList `{ blockElementStatementListIR }
 
-rule Stmt_eval/blockStatement:
+rule Stmt_eval/blockStatementIR:
   p EC_0 STO_0 |- blockStatementIR
                 : EC_3 STO_1 statementResult
   -- if EC_1 = $enter_e(EC_0)
@@ -877,87 +877,59 @@ rulegroup Stmt_eval/switchStatementIR-general {
 ;;
 ;; syntax blockElementStatementIR
 ;;
+
 ;;; constantDeclarationIR
-
-rule BlockElementStmt_eval/constantDeclarationIR:
-  EC_0 STO |- constantDeclarationIR
-            : EC_1 STO `EMPTY
-  -- ConstDecl_eval:
-      LOCAL EC_0 |- constantDeclarationIR : EC_1
-
 ;;; variableDeclarationIR
-
-rulegroup BlockElementStmt_eval/variableDeclarationIR {
-
-  rule BlockElementStmt_eval/abort:
-    EC_0 STO_0 |- variableDeclarationIR
-                : EC_1 STO_1 abortResult
-    -- VarDecl_eval:
-        LOCAL EC_0 STO_0 |- variableDeclarationIR
-                          : EC_1 STO_1 abortResult
-
-  rule BlockElementStmt_eval/cont:
-    EC_0 STO_0 |- variableDeclarationIR
-                : EC_1 STO_1 `EMPTY
-    -- VarDecl_eval:
-        LOCAL EC_0 STO_0 |- variableDeclarationIR
-                          : EC_1 STO_1 `EMPTY
-
-}
-
 ;;; statementIR
 
-rule BlockElementStmt_eval/statementIR:
-  EC_0 STO_0 |- statementIR
-              : EC_1 STO_1 statementResult
-  -- Stmt_eval:
-      LOCAL EC_0 STO_0 |- statementIR
-                        : EC_1 STO_1 statementResult
+rulegroup BlockElementStmt_eval {
+
+  rule BlockElementStmt_eval/constantDeclarationIR:
+    EC_0 STO |- constantDeclarationIR
+              : EC_1 STO `EMPTY
+    -- ConstDecl_eval:
+        LOCAL EC_0 |- constantDeclarationIR : EC_1
+
+  rule BlockElementStmt_eval/variableDeclarationIR:
+    EC_0 STO_0 |- variableDeclarationIR
+                : EC_1 STO_1 declarationResult
+    -- VarDecl_eval:
+        LOCAL EC_0 STO_0 |- variableDeclarationIR
+                          : EC_1 STO_1 declarationResult
+
+  rule BlockElementStmt_eval/statementIR:
+    EC_0 STO_0 |- statementIR
+                : EC_1 STO_1 statementResult
+    -- Stmt_eval:
+        LOCAL EC_0 STO_0 |- statementIR
+                          : EC_1 STO_1 statementResult
+
+}
 
 ;;
 ;; syntax blockElementStatementListIR
 ;;
 
-rulegroup BlockElementStmts_eval {
+rulegroup BlockElementStmtList_eval {
 
-  rule BlockElementStmts_eval/nil:
+  rule BlockElementStmtList_eval/nil:
     EC STO |- eps : EC STO `EMPTY
 
-  rule BlockElementStmts_eval/cons-head-abort:
+  rule BlockElementStmtList_eval/cons-head-non-cont:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-                : EC_1 STO_1 abortResult
+                : EC_1 STO_1 statementResult
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 abortResult
+                    : EC_1 STO_1 statementResult
+    -- if statementResult =/= `EMPTY
 
-  rule BlockElementStmts_eval/cons-head-return:
-    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-                : EC_1 STO_1 returnResult
-    -- BlockElementStmt_eval:
-        EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 returnResult
-
-  rule BlockElementStmts_eval/cons-head-break:
-    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-                : EC_1 STO_1 BREAK
-    -- BlockElementStmt_eval:
-        EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 BREAK
-
-  rule BlockElementStmts_eval/cons-head-continue:
-    EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
-                : EC_1 STO_1 CONTINUE
-    -- BlockElementStmt_eval:
-        EC_0 STO_0 |- blockElementStatementIR_h
-                    : EC_1 STO_1 CONTINUE
-
-  rule BlockElementStmts_eval/cons-head-cont:
+  rule BlockElementStmtList_eval/cons-head-cont:
     EC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t*
                 : EC_2 STO_2 statementResult
     -- BlockElementStmt_eval:
         EC_0 STO_0 |- blockElementStatementIR_h
                     : EC_1 STO_1 `EMPTY
-    -- BlockElementStmts_eval:
+    -- BlockElementStmtList_eval:
         EC_1 STO_1 |- blockElementStatementIR_t*
                     : EC_2 STO_2 statementResult
 
@@ -970,6 +942,6 @@ rulegroup BlockElementStmts_eval {
 rule Block_eval:
   EC_0 STO_0 |- annotationList `{ blockElementStatementListIR }
               : EC_1 STO_1 statementResult
-  -- BlockElementStmts_eval:
+  -- BlockElementStmtList_eval:
       EC_0 STO_0 |- blockElementStatementListIR
                   : EC_1 STO_1 statementResult

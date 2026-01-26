@@ -128,25 +128,37 @@ relation Stmt_eval:
   cursor evalContext store |- statementIR
                             : evalContext store statementResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "the compile-time evaluation of" %3#
-              ", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "\nthe updated evaluation context" %4#",\nthe store" %5#
-               ",\nand the instantiated statement" %6)
+  hint(prose_in "the runtime evaluation of" %3#
+                ", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_out "\nthe updated evaluation context" %4#
+                 ", store" %5#", and" %6)
 
 relation BlockElementStmt_eval:
   evalContext store |- blockElementStatementIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "the runtime evaluation of" %2#
+                ", under evaluation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
-relation BlockElementStmts_eval:
+relation BlockElementStmtList_eval:
   evalContext store |- blockElementStatementListIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "the runtime evaluation of" %2#
+                ", under evaluation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 relation Block_eval:
   evalContext store |- blockStatementIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "the runtime evaluation of" %2#
+                ", under evaluation context" %0#", and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 ;;
 ;;;; Parser evaluation

@@ -116,11 +116,13 @@ def $bound(LOCAL, TC) = $union_set<typeId>(B_block, B_local)
 ;;
 
 dec $enter_t(typingContext) : typingContext
+  hint(prose_in %0 "with a new local frame")
 
 def $enter_t(TC)
   = TC[ .LOCAL.FRAMES = $empty_typeFrame :: TC.LOCAL.FRAMES ]
 
 dec $exit_t(typingContext) : typingContext
+  hint(prose_in %0 "with the innermost frame removed")
 
 def $exit_t(TC) = TC [ .LOCAL.FRAMES = typeFrame_t* ]
   -- if typeFrame_h :: typeFrame_t* = TC.LOCAL.FRAMES

@@ -134,34 +134,33 @@ rulegroup Stmt_ok/callStatement {
 ;;; directApplicationStatement
 ;;; syntax directApplicationStatement = namedType `. APPLY `( argumentList ) `;
 
-tbl dec $compat_direct_application(typeIR) : bool
-tbl def $compat_direct_application =
-  | TYPEDEF _ typeIR => $compat_direct_application(typeIR)
-  | parserObjectTypeIR => true
-  | controlObjectTypeIR => true
-  | _ => false
-
-rule Stmt_ok/directApplicationStatement-prefixedTypeName:
+rule Stmt_ok/directApplicationStatement:
   p TC_0 f l |- namedType `. APPLY `( argumentList ) `;
               : TC_0 f directApplicationStatementIR
   ---- ;; check instantiation
   -- Expr_ok: p TC_0 |- namedType `( `EMPTY )
-                      : ((prefixedNameIR `< eps >) `( eps )) 
+                      : (constructorTargetIR `( eps )) 
                           `# `( typeIR_object _ )
+  -- if prefixedNameIR `< typeArgumentIR* >
+      = constructorTargetIR
   ---- ;; only parser and controls can be direclty invoked
-  -- if $compat_direct_application(typeIR_object)
+  -- if typeIR_object_unroll = $unroll_typeIR(typeIR_object)
+  -- if (typeIR_object_unroll <: parserObjectTypeIR)
+        \/ (typeIR_object_unroll <: controlObjectTypeIR)
   ---- ;; insert temporary variable for the constructed type
   -- if nameIR_object = "__direct_application"
   -- if TC_1 = $add_var_t(p, TC_0, nameIR_object, `EMPTY typeIR_object CTK eps)
   ---- ;; check apply method
   -- if lvalue = (`ID nameIR_object) `. (`ID "apply")
   -- Stmt_ok: p TC_1 f l |- lvalue `( argumentList ) `; : _ _ callStatementIR
-  -- if (((`` nameIR_object) `# `( typeIR_object CTK )) `. "apply")
+  -- if (typedExpressionIR_base `. "apply")
           `< eps > `( argumentIR_cast* ) `;
       = callStatementIR
+  -- if (`` nameIR_object) `# `( typeIR_object CTK )
+      = typedExpressionIR_base
   ---- ;; create IR
   -- if directApplicationStatementIR
-      = prefixedNameIR `. APPLY `( argumentIR_cast* ) `;
+      = prefixedNameIR `< typeArgumentIR* > `. APPLY `( argumentIR_cast* ) `;
 
 ;;; returnStatement
 ;;; syntax returnStatement
@@ -770,28 +769,30 @@ rule Stmt_ok/switchStatement-general:
 ;;
 
 ;;; constantDeclaration
-
-rule BlockElementStmt_ok/constantDeclaration:
-  TC_0 f l |- constantDeclaration : TC_1 f constantDeclarationIR
-  -- ConstDecl_ok:
-      LOCAL TC_0 |- constantDeclaration
-                  : TC_1 constantDeclarationIR
-
 ;;; variableDeclaration
-;;; syntax variableDeclaration =
-;;;   annotationList type name initializerOpt `;
-
-rule BlockElementStmt_ok/variableDeclaration:
-  TC_0 f l |- variableDeclaration : TC_1 f variableDeclarationIR
-  -- VarDecl_ok:
-      LOCAL TC_0 |- variableDeclaration
-                  : TC_1 variableDeclarationIR
-
 ;;; statement
 
-rule BlockElementStmt_ok/statement:
-  TC_0 f l |- statement : TC_1 f_post statementIR
-  -- Stmt_ok: LOCAL TC_0 f l |- statement : TC_1 f_post statementIR
+rulegroup BlockElementStmt_ok {
+
+  rule BlockElementStmt_ok/constantDeclaration:
+    TC_0 f l |- constantDeclaration : TC_1 f constantDeclarationIR
+    -- ConstDecl_ok:
+        LOCAL TC_0 |- constantDeclaration
+                    : TC_1 constantDeclarationIR
+
+  rule BlockElementStmt_ok/variableDeclaration:
+    TC_0 f l |- variableDeclaration : TC_1 f variableDeclarationIR
+    -- VarDecl_ok:
+        LOCAL TC_0 |- variableDeclaration
+                    : TC_1 variableDeclarationIR
+
+  rule BlockElementStmt_ok/statement:
+    TC_0 f l |- statement : TC_1 f_post statementIR
+    -- Stmt_ok:
+        LOCAL TC_0 f l |- statement
+                        : TC_1 f_post statementIR
+
+}
 
 ;;
 ;; syntax blockElementStatementList
@@ -801,12 +802,6 @@ relation BlockElementStmts_ok:
   typingContext flow loopctxt |- blockElementStatement*
                                : typingContext flow blockElementStatementIR*
   hint(input %0 %1 %2 %3)
-  hint(prose_in
-        "typing" %3#", under typing context"
-        %0#", abstract control flow" %1#", and loop context" %2)
-  hint(prose_out
-        "\nthe typing context" %4#",\nthe abstract control flow"
-        %5#",\nand the typed block element statements" %6)
 
 rulegroup BlockElementStmts_ok {
 

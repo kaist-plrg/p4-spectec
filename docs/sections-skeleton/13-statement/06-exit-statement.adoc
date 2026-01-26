@@ -1,24 +1,29 @@
 [#sec-exit-statement]
 === Exit statements
 
-${syntax: exitStatement
-          exitStatementIR}
 
-The `exit` statement immediately terminates the execution of all
-the blocks currently executing: the current `action` (if invoked
-within an `action`), the current `control`, and all its
-callers. `exit` statements are not allowed within parsers or
-functions.
+// Section 12.5 of the P4-16 Language Specification
+The `exit` statement immediately terminates the execution of all the blocks
+currently executing: the current `action` (if invoked within an `action`), the
+current `control`, and all its callers. `exit` statements are not allowed
+within parsers or functions.
 
-Any copy-out behavior due to direction `out` or `inout` parameters of
-the enclosing `action` or `control`, and all of its callers, are still
-performed after the execution of the `exit` statement.  See <<sec-calling-convention>> for details on copy-out behavior.
+Any copy-out behavior due to direction `out` or `inout` parameters of the
+enclosing `action` or `control`, and all of its callers, are still performed
+after the execution of the `exit` statement. See <<sec-call-convention>> for
+details on copy-out behavior.
+// ----
 
-There are some expressions whose evaluation might cause an `exit`
-statement to be executed.  Examples include:
+// Added ----
+${syntax: exitStatement}
+// ----
+
+// Section 12.5 of the P4-16 Language Specification ----
+There are some expressions whose evaluation might cause an `exit` statement to
+be executed. Examples include:
 
 * `table.apply().action_run`, which can only appear as the expression
-  of a `switch` statement (see <<sec-switch-stmt>>), and when
+  of a `switch` statement (see <<sec-switch-statement>>), and when
   it appears there, it must be the entire expression.
 * Any expression containing `table.apply().hit` or
   `table.apply().miss` (see <<sec-invoke-mau>>), which can be
@@ -32,12 +37,12 @@ statement to be executed.  Examples include:
 
 This list is not intended to be exhaustive.
 
-If applying the table causes an action to be executed, which in turn
-causes an `exit` statement to be executed, then evaluation of the
-expression ends immediately, and the rest of the current expression or
-statement does not complete its execution.  See <<sec-expr-eval-order>> for the order of evaluation of the parts of an
-expression.  For the examples listed above, it also means the
-following behavior after the expression evaluation is interrupted.
+If applying the table causes an action to be executed, which in turn causes an
+`exit` statement to be executed, then evaluation of the expression ends
+immediately, and the rest of the current expression or statement does not
+complete its execution. See <<sec-expr-eval-order>> for the order of evaluation
+of the parts of an expression.  For the examples listed above, it also means
+the following behavior after the expression evaluation is interrupted.
 
 * For a `switch` statement, if `table.apply()` exits, then none of the
   blocks in the `switch` statement are executed.
@@ -55,14 +60,21 @@ following behavior after the expression evaluation is interrupted.
    call, then the function/method call does not occur.
 ** If the expression is a table key, then the table is not applied.
 
-[discrete]
 ==== Type checking
+
+After type checking, an `exit` statement is represented in P4~IR~ as:
+
+${syntax: exitStatementIR}
 
 ${rulegroup-source: Stmt_ok/exitStatement}
 ${rulegroup-prose: Stmt_ok/exitStatement}
 
-[discrete]
 ==== Compile-time evaluation
 
 ${rulegroup-source: Stmt_inst/exitStatementIR}
 ${rulegroup-prose: Stmt_inst/exitStatementIR}
+
+==== Runtime evaluation
+
+${rulegroup-source: Stmt_eval/exitStatementIR}
+${rulegroup-prose: Stmt_eval/exitStatementIR}
