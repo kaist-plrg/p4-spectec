@@ -251,23 +251,30 @@ relation ForUpdateStmt_eval:
   evalContext store |- forUpdateStatementIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 ;;;;;; callableTargetIR `< typeArgumentListIR > `( argumentListIR )
-
-rule ForUpdateStmt_eval/call:
-  EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR )
-              : EC_1 STO_1 statementResult
-  -- Stmt_eval: 
-      LOCAL EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
-                        : EC_1 STO_1 statementResult
-
 ;;;;;; typedLvalueIR assignop typedExpressionIR
 
-rule ForUpdateStmt_eval/assign:
-  EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR
-              : EC_1 STO_1 statementResult
-  -- Stmt_eval: LOCAL EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
-                                  : EC_1 STO_1 statementResult
+rulegroup ForUpdateStmt_eval {
+
+  rule ForUpdateStmt_eval/call:
+    EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR )
+                : EC_1 STO_1 statementResult
+    -- Stmt_eval: 
+        LOCAL EC_0 STO_0 |- callableTargetIR `< typeArgumentListIR > `( argumentListIR ) `;
+                          : EC_1 STO_1 statementResult
+
+  rule ForUpdateStmt_eval/assign:
+    EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR
+                : EC_1 STO_1 statementResult
+    -- Stmt_eval: LOCAL EC_0 STO_0 |- typedLvalueIR assignop typedExpressionIR `;
+                                    : EC_1 STO_1 statementResult
+
+}
 
 ;;;;; syntax forUpdateStatementListIR = forUpdateStatementIR*
 
@@ -275,6 +282,10 @@ relation ForUpdateStmts_eval:
   evalContext store |- forUpdateStatementListIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 rulegroup ForUpdateStmts_eval {
 
@@ -303,12 +314,16 @@ relation ForInitStmt_eval:
   evalContext store |- forInitStatementIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 ;;;;;; annotationList typeIR nameIR initializerOptIR
 
-rulegroup ForInitStmt_eval/variableDeclarationIR {
+rulegroup ForInitStmt_eval {
 
-  rule ForInitStmt_eval/non-initializer:
+  rule ForInitStmt_eval/variableDeclarationIR-non-initializer:
     EC_0 STO |- annotationList typeIR nameIR eps
               : EC_1 STO `EMPTY
     ---- ;; get initial value
@@ -317,7 +332,7 @@ rulegroup ForInitStmt_eval/variableDeclarationIR {
     ---- ;; update evaluation context
     -- if EC_1 = $add_var_e(LOCAL, EC_0, `` nameIR, value_init)
 
-  rule ForInitStmt_eval/initializer-abort:
+  rule ForInitStmt_eval/variableDeclarationIR-initializer-abort:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init)
                 : EC_1 STO_1 abortResult
     ---- ;; evaluate initializer
@@ -325,7 +340,7 @@ rulegroup ForInitStmt_eval/variableDeclarationIR {
         LOCAL EC_0 STO_0 |- typedExpressionIR_init 
                           : EC_1 STO_1 abortResult
 
-  rule ForInitStmt_eval/initializer-cont:
+  rule ForInitStmt_eval/variableDeclarationIR-initializer-cont:
     EC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR_init)
                 : EC_2 STO_1 `EMPTY
     ---- ;; evaluate initializer
@@ -335,15 +350,15 @@ rulegroup ForInitStmt_eval/variableDeclarationIR {
     ---- ;; update evaluation context
     -- if EC_2 = $add_var_e(LOCAL, EC_1, `` nameIR, value_init)
 
+  rule ForInitStmt_eval/forUpdateStatementIR:
+    EC_0 STO_0 |- forUpdateStatementIR
+                : EC_1 STO_1 statementResult
+    -- ForUpdateStmt_eval: 
+        EC_0 STO_0 |- forUpdateStatementIR : EC_1 STO_1 statementResult
+
 }
 
 ;;;;;; forUpdateStatementIR
-
-rule ForInitStmt_eval/forUpdateStatementIR:
-  EC_0 STO_0 |- forUpdateStatementIR
-              : EC_1 STO_1 statementResult
-  -- ForUpdateStmt_eval: 
-      EC_0 STO_0 |- forUpdateStatementIR : EC_1 STO_1 statementResult
 
 ;;;;; syntax forInitStatementListIR = forInitStatementIR*
 
@@ -351,6 +366,10 @@ relation ForInitStmts_eval:
   evalContext store |- forInitStatementListIR
                      : evalContext store statementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 rulegroup ForInitStmts_eval {
 
@@ -377,26 +396,30 @@ rulegroup ForInitStmts_eval {
 ;;;;   `( forInitStatementListIR `; typedExpressionIR `; forUpdateStatementListIR )
 ;;;;   statementIR
 
-relation ForThreeClauseLoop_eval:
+relation ForThreeClauseStmt_eval:
   evalContext store |- typedExpressionIR statementIR forUpdateStatementListIR
                      : evalContext store statementResult
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "looping" %3 "with condition" %2 "and updates" %4#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %5#
+                 ", store" %6#", and" %7)
 
-rulegroup ForThreeClauseLoop_eval {
+rulegroup ForThreeClauseStmt_eval {
 
-  rule ForThreeClauseLoop_eval/cond-abort:
+  rule ForThreeClauseStmt_eval/cond-abort:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_1 STO_1 abortResult
     -- Expr_eval: 
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 abortResult
 
-  rule ForThreeClauseLoop_eval/cond-false:
+  rule ForThreeClauseStmt_eval/cond-false:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_1 STO_1 `EMPTY
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B false))
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-abort:
+  rule ForThreeClauseStmt_eval/cond-true-loop-abort:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_2 STO_2 abortResult
     -- Expr_eval:
@@ -404,7 +427,7 @@ rulegroup ForThreeClauseLoop_eval {
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 abortResult
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-return:
+  rule ForThreeClauseStmt_eval/cond-true-loop-return:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_2 STO_2 returnResult
     -- Expr_eval:
@@ -412,7 +435,7 @@ rulegroup ForThreeClauseLoop_eval {
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 returnResult
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-break:
+  rule ForThreeClauseStmt_eval/cond-true-loop-break:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_2 STO_2 `EMPTY
     -- Expr_eval:
@@ -420,28 +443,30 @@ rulegroup ForThreeClauseLoop_eval {
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 BREAK
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-exit:
+  rule ForThreeClauseStmt_eval/cond-true-loop-cont-update-exit:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_3 STO_3 EXIT
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
+    -- if statementResult_loop = `EMPTY
+          \/ statementResult_loop = CONTINUE
     -- ForUpdateStmts_eval: 
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 EXIT
 
-  rule ForThreeClauseLoop_eval/cond-true-loop-cont-update-cont:
+  rule ForThreeClauseStmt_eval/cond-true-loop-cont-update-cont:
     EC_0 STO_0 |- typedExpressionIR statementIR forUpdateStatementListIR
                 : EC_4 STO_4 statementResult
     -- Expr_eval:
         LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 (`` (`B true))
     -- Stmt_eval:
         LOCAL EC_1 STO_1 |- statementIR : EC_2 STO_2 statementResult_loop
-    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
+    -- if statementResult_loop = `EMPTY
+          \/ statementResult_loop = CONTINUE
     -- ForUpdateStmts_eval:
         EC_2 STO_2 |- forUpdateStatementListIR : EC_3 STO_3 `EMPTY
-    -- ForThreeClauseLoop_eval: 
+    -- ForThreeClauseStmt_eval: 
         EC_3 STO_3 |- typedExpressionIR statementIR forUpdateStatementListIR
                     : EC_4 STO_4 statementResult
 
@@ -469,7 +494,7 @@ rulegroup Stmt_eval/forStatementIR-three-clause {
     -- if EC_1 = $enter_e(EC_0)
     -- ForInitStmts_eval:
         EC_1 STO_0 |- forInitStatementListIR : EC_2 STO_1 `EMPTY
-    -- ForThreeClauseLoop_eval:
+    -- ForThreeClauseStmt_eval:
         EC_2 STO_1 |- typedExpressionIR statementIR forUpdateStatementListIR
                     : EC_3 STO_2 statementResult
     -- if EC_4 = $exit_e(EC_3)
@@ -489,10 +514,14 @@ relation ForCollectionExpr_eval:
   evalContext store |- forCollectionExpressionIR
                      : evalContext store expressionListResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", store" %4#", and" %5)
 
 ;;;;;; typedExpressionIR
 
-rulegroup ForCollectionExpr_eval/expr {
+rulegroup ForCollectionExpr_eval {
 
   rule ForCollectionExpr_eval/abort:
     EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 abortResult
@@ -516,6 +545,7 @@ rulegroup ForCollectionExpr_eval/expr {
 ;;;;;; typedExpressionIR `.. typedExpressionIR
 
 dec $values_of_setValue(setTypeIR, setValue) : value*
+  hint(prose_in "the values in" %1 "of type" %0)
 
 def $values_of_setValue(SET `< typeIR >, SET `{ value_l `.. value_r })
   = value_l :: $values_of_setValue(SET `< typeIR >, SET `{ value_l_inc `.. value_r })
@@ -556,41 +586,46 @@ rulegroup ForCollectionExpr_eval/range {
 
 }
 
-relation ForInLoop_eval:
+relation ForInStmt_eval:
   evalContext store |- nameIR value* statementIR
                      : evalContext store statementResult
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "looping over" %3 "with loop variable" %2
+                "and body" %4#", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %5#
+                 ", store" %6#", and" %7)
 
-rulegroup ForInLoop_eval {
+rulegroup ForInStmt_eval {
 
-  rule ForInLoop_eval/nil:
+  rule ForInStmt_eval/nil:
     EC STO |- nameIR eps statementIR : EC STO `EMPTY
 
-  rule ForInLoop_eval/cons-loop-abort:
+  rule ForInStmt_eval/cons-loop-abort:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
                 : EC_2 STO_1 abortResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 abortResult
 
-  rule ForInLoop_eval/cons-loop-return:
+  rule ForInStmt_eval/cons-loop-return:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
                 : EC_2 STO_1 returnResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 returnResult
 
-  rule ForInLoop_eval/cons-loop-break:
+  rule ForInStmt_eval/cons-loop-break:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
                 : EC_2 STO_1 `EMPTY
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 BREAK
 
-  rule ForInLoop_eval/cons-loop-cont:
+  rule ForInStmt_eval/cons-loop-cont:
     EC_0 STO_0 |- nameIR (value_h :: value_t*) statementIR
                 : EC_3 STO_2 statementResult
     -- if EC_1 = $update_var_e(LOCAL, EC_0, `` nameIR, value_h)
     -- Stmt_eval: LOCAL EC_1 STO_0 |- statementIR : EC_2 STO_1 statementResult_loop
-    -- if statementResult_loop <- [ `EMPTY, CONTINUE ]
-    -- ForInLoop_eval:
+    -- if statementResult_loop = `EMPTY
+          \/ statementResult_loop = CONTINUE
+    -- ForInStmt_eval:
         EC_2 STO_1 |- nameIR value_t* statementIR : EC_3 STO_2 statementResult
 
 }
@@ -621,7 +656,7 @@ rulegroup Stmt_eval/forStatementIR-in {
     -- if value_init = $default(typeIR_subst)
     -- if EC_3 = $add_var_e(LOCAL, EC_2, `` nameIR, value_init)
     ---- ;; evaluate loop
-    -- ForInLoop_eval:
+    -- ForInStmt_eval:
         EC_3 STO_1 |- nameIR value* statementIR : EC_4 STO_2 statementResult
     -- if EC_5 = $exit_e(EC_4)
 
@@ -641,12 +676,12 @@ rulegroup Stmt_eval/forStatementIR-in {
 
 ;;; breakStatementIR
 
-rule Stmt_eval/breakStatement:
+rule Stmt_eval/breakStatementIR:
   LOCAL EC STO |- BREAK `; : EC STO BREAK
 
 ;;; continueStatementIR
 
-rule Stmt_eval/continueStatement:
+rule Stmt_eval/continueStatementIR:
   LOCAL EC STO |- CONTINUE `; : EC STO CONTINUE
 
 ;;; switchStatementIR
@@ -660,6 +695,8 @@ rule Stmt_eval/continueStatement:
 ;;;;;; typedExpressionIR
 
 dec $match_switchLabelIR_table(id, switchLabelIR) : bool
+  hint(prose_true %0 "matches" %1)
+  hint(prose_false %0 "does not match" %1)
 def $match_switchLabelIR_table(id, DEFAULT) = true
 def $match_switchLabelIR_table(id, (`` id) `# _) = true
 def $match_switchLabelIR_table(id, _) = false
@@ -672,8 +709,12 @@ def $match_switchLabelIR_table(id, _) = false
 relation SwitchCases_table_eval:
   id |- switchCaseListIR : blockStatementIR?
   hint(input %0 %1)
+  hint(prose_in "runtime evaluation of" %1 "for invocation of table" %0)
+  hint(prose_out "the matched block" %2)
 
 dec $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool
+  hint(prose_true %0 "is not a fall-through case")
+  hint(prose_false %0 "is a fall-through case")
 def $is_non_fallthrough_switchCaseIR(switchLabelIR `: blockStatementIR) = true
 def $is_non_fallthrough_switchCaseIR(switchLabelIR `: ) = false
 
@@ -706,7 +747,8 @@ rulegroup SwitchCases_table_eval {
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
     ---- ;; take the closest non-fallthrough case
     -- if (_ `: blockStatementIR) :: _
-        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+        = $filter_<switchCaseIR>(
+            switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
 
   rule SwitchCases_table_eval/cons-fallthrough-no-match:
     id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
@@ -716,85 +758,6 @@ rulegroup SwitchCases_table_eval {
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
     -- SwitchCases_table_eval:
         id |- switchCaseIR_t* : blockStatementIR?
-
-}
-
-relation SwitchLabelIR_general_eval:
-  cursor evalContext store |- switchLabelIR : evalContext store expressionResult
-  hint(input %0 %1 %2 %3)
-
-rulegroup SwitchLabelIR_general_eval {
-
-  rule SwitchLabelIR_general_eval/default:
-    LOCAL EC_0 STO_0 |- DEFAULT : EC_0 STO_0 (`` DEFAULT)
-
-  rule SwitchLabelIR_general_eval/typedExpressionIR:
-    LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-    -- Expr_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
-
-}
-
-dec $match_switchLabelIR_general(value, value) : bool
-def $match_switchLabelIR_general(value, DEFAULT) = true
-def $match_switchLabelIR_general(w_a W i_a, w_b W i_b) = (w_a = w_b) /\ (i_a = i_b)
-def $match_switchLabelIR_general(w_a S i_a, w_b W i_b) = (w_a = w_b) /\ (i_a = i_b)
-def $match_switchLabelIR_general(enumValue_a, enumValue_b) = $bin_eq(enumValue_a, enumValue_b)
-def $match_switchLabelIR_general(errorValue_a, errorValue_b) = $bin_eq(errorValue_a, errorValue_b)
-def $match_switchLabelIR_general(value, _) = false
-  -- otherwise
-
-relation SwitchCases_general_eval:
-  cursor evalContext store value |- switchCaseListIR : evalContext store blockStatementIR?
-  hint(input %0 %1 %2 %3 %4)
-
-rulegroup SwitchCases_general_eval {
-
-  rule SwitchCases_general_eval/nil:
-    LOCAL EC_0 STO_0 value |- eps : EC_0 STO_0 eps
-
-  rule SwitchCases_general_eval/cons-non-fallthrough-match:
-    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_1 STO_1 blockStatementIR_h
-    ---- ;; if not fall-through
-    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
-    -- SwitchLabelIR_general_eval:
-        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
-    ---- ;; if match
-    -- if $match_switchLabelIR_general(value, value_label)
-
-  rule SwitchCases_general_eval/cons-non-fallthrough-no-match:
-    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_2 STO_2 blockStatementIR?
-    ---- ;; if not fall-through
-    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
-    -- SwitchLabelIR_general_eval:
-        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
-    ---- ;; if not match
-    -- if ~$match_switchLabelIR_general(value, value_label)
-    -- SwitchCases_general_eval:
-        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
-
-  rule SwitchCases_general_eval/cons-fallthrough-match:
-    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_1 STO_1 blockStatementIR
-    ---- ;; if fallthrough
-    -- if switchLabelIR_h `: = switchCaseIR_h
-    -- SwitchLabelIR_general_eval:
-        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
-    ---- ;; if match
-    -- if $match_switchLabelIR_general(value, value_label)
-    ---- ;; take the closest non-fallthrough case
-    -- if (_ `: blockStatementIR) :: _
-        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
-
-  rule SwitchCases_general_eval/cons-fallthrough-no-match:
-    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_2 STO_2 blockStatementIR?
-    ---- ;; if fallthrough
-    -- if switchLabelIR_h `: = switchCaseIR_h
-    -- SwitchLabelIR_general_eval:
-        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
-    ---- ;; if no match
-    -- if ~$match_switchLabelIR_general(value, value_label)
-    -- SwitchCases_general_eval:
-        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
 
 }
 
@@ -833,6 +796,106 @@ rulegroup Stmt_eval/switchStatementIR-table {
     ---- ;; find matching case
     -- SwitchCases_table_eval:
         id_enum |- switchCaseIR* : eps
+
+}
+
+;;;; Switch on error, numeric or enumerated type expression
+
+;;;;; syntax switchLabelIR
+;;;;;; DEFAULT
+;;;;;; typedExpressionIR
+
+relation SwitchLabel_general_eval:
+  cursor evalContext store |- switchLabelIR
+                            : evalContext store expressionResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0 "and store" %1)
+  hint(prose_out "\nthe updated evaluation context" %4#
+                 ", store" %5#", and" %6)
+
+rulegroup SwitchLabel_general_eval {
+
+  rule SwitchLabel_general_eval/default:
+    LOCAL EC_0 STO_0 |- DEFAULT
+                      : EC_0 STO_0 (`` DEFAULT)
+
+  rule SwitchLabel_general_eval/typedExpressionIR:
+    LOCAL EC_0 STO_0 |- typedExpressionIR
+                      : EC_1 STO_1 expressionResult
+    -- Expr_eval:
+        LOCAL EC_0 STO_0 |- typedExpressionIR : EC_1 STO_1 expressionResult
+
+}
+
+dec $match_switchLabelIR_general(value, value) : bool
+  hint(prose_true %0 "matches" %1)
+  hint(prose_false %0 "does not match" %1)
+def $match_switchLabelIR_general(value, DEFAULT) = true
+def $match_switchLabelIR_general(value_a, value_b) = $bin_eq(value_a, value_b)
+  -- otherwise
+
+relation SwitchCases_general_eval:
+  cursor evalContext store value |- switchCaseListIR
+                                  : evalContext store blockStatementIR?
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "runtime evaluation of" %4#
+                ", under evaluation context" %0 "and store" %1
+                "with switch key" %3)
+  hint(prose_out "\nthe updated evaluation context" %5#
+                 ", store" %6#", and" %7)
+
+rulegroup SwitchCases_general_eval {
+
+  rule SwitchCases_general_eval/nil:
+    LOCAL EC_0 STO_0 value |- eps : EC_0 STO_0 eps
+
+  rule SwitchCases_general_eval/cons-non-fallthrough-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
+                            : EC_1 STO_1 blockStatementIR_h
+    ---- ;; if not fall-through
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    -- SwitchLabel_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if match
+    -- if $match_switchLabelIR_general(value, value_label)
+
+  rule SwitchCases_general_eval/cons-non-fallthrough-no-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
+                            : EC_2 STO_2 blockStatementIR?
+    ---- ;; if not fall-through
+    -- if switchLabelIR_h `: blockStatementIR_h = switchCaseIR_h
+    -- SwitchLabel_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if not match
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval:
+        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
+
+  rule SwitchCases_general_eval/cons-fallthrough-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
+                            : EC_1 STO_1 blockStatementIR
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    -- SwitchLabel_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if match
+    -- if $match_switchLabelIR_general(value, value_label)
+    ---- ;; take the closest non-fallthrough case
+    -- if (_ `: blockStatementIR) :: _
+        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+
+  rule SwitchCases_general_eval/cons-fallthrough-no-match:
+    LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
+                            : EC_2 STO_2 blockStatementIR?
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    -- SwitchLabel_general_eval:
+        LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (`` value_label)
+    ---- ;; if no match
+    -- if ~$match_switchLabelIR_general(value, value_label)
+    -- SwitchCases_general_eval:
+        LOCAL EC_1 STO_1 value |- switchCaseIR_t* : EC_2 STO_2 blockStatementIR?
 
 }
 

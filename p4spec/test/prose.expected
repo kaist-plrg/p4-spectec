@@ -7467,12 +7467,14 @@ for each ``argument`` in ``argument^{asterisk}^``
 <<Stmt_ok, Typing ``annotationList`` ``FOR`` ``(`` ``forInitStatementList`` ``;`` ``expression`` ``;`` ``forUpdateStatementList`` ``)`` ``statement'``, under cursor ``LOCAL``, typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>:
 
 . Let ``TC~1~`` be <<enter_t, ``TC`` with a new local frame>>.
-. Let <<ForInitStmtList_ok, TC~1~ |- forInitStatementList : TC~2~ forInitStatementIR^{asterisk}^>>.
+. Let the updated typing context ``TC~2~`` and ``forInitStatementIR^{asterisk}^`` be
+* the result of <<ForInitStmtList_ok, typing ``forInitStatementList`` under typing context ``TC~1~``>>.
 . Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC~2~``>>.
-. Let <<expressionNoteIR, type ``typeIR`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
+. Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR``>>.
 . Check that ``BOOL`` is equal to <<unroll_typeIR, ``typeIR`` with typedefs unrolled>>.
-. Let <<ForUpdateStmtList_ok, TC~2~ |- forUpdateStatementList : forUpdateStatementIR^{asterisk}^>>.
+. Let ``forUpdateStatementIR^{asterisk}^`` be
+* the result of <<ForUpdateStmtList_ok, typing ``forUpdateStatementList`` under typing context ``TC~2~``>>.
 . Let the updated typing context ``TC~3~``, abstract control flow ``f~post~``, and ``statementIR`` be
 * the result of <<Stmt_ok, typing ``statement'``, under cursor ``LOCAL``, typing context ``TC~2~``, abstract control flow ``f``, and loop context ``LOOP``>>.
 . Let ``TC~4~`` be <<exit_t, ``TC~3~`` with the innermost frame removed>>.
@@ -7489,7 +7491,8 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let ``bound`` be <<bound, bound type variables from the ``LOCAL`` layer of ``TC``>>.
  .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``bound``>>.
  .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
- .. Let <<ForCollectionExpr_ok, TC typeIR |- forCollectionExpression : forCollectionExpressionIR>>.
+ .. Let ``forCollectionExpressionIR`` be
+* the result of <<ForCollectionExpr_ok, typing ``forCollectionExpression`` under typing context ``TC`` with iterator type ``typeIR``>>.
  .. Let ``TC~1~`` be <<enter_t, ``TC`` with a new local frame>>.
  .. Let ``nameIR`` be <<name, the name of ``name``>>.
  .. Let ``TC~2~`` be <<add_var_t, ``TC~1~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
@@ -7517,7 +7520,9 @@ for each ``argument`` in ``argument^{asterisk}^``
 . Let ``TABLE_ENUM`` ``typeId~table_enum~`` ``{`` ``++_++^{asterisk}^`` ``}`` be ``typeIR``.
 . Let ``text`` be <<strip_suffix, the text ``typeId~table_enum~`` with the suffix ``")"`` removed>>.
 . Let ``typeId~table~`` be <<strip_prefix, the text ``text`` with the prefix ``"action_list("`` removed>>.
-. Let <<SwitchCaseList_table_ok, TC f l typeId~table~ |- switchCaseList : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Let the abstract control flow ``f~post~``,  ``switchCaseIR^{asterisk}^``, and labels ``switchLabel^{asterisk}^`` be
+* the result of <<SwitchCaseList_table_ok, typing ``switchCaseList`` for table ``typeId~table~``, under typing context ``TC`` with abstract control flow ``f`` and loop context ``l``>>.
+. Check that <<check_switchLabel_default, default label is only in the last position of ``switchLabel^{asterisk}^``>>.
 . Check that <<distinct_, the elements of ``switchLabel^{asterisk}^`` are distinct>>.
 . Let ``switchStatementIR`` be ``SWITCH`` ``(`` ``typedExpressionIR~switch~`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``.
 . Result in 
@@ -7529,7 +7534,9 @@ for each ``argument`` in ``argument^{asterisk}^``
 * the result of <<Expr_ok, typing ``expression~switch~``, under cursor ``LOCAL`` and typing context ``TC``>>.
 . Let ``typeIR~switch~`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~switch~``>>.
 . Check that ``<<compat_switch,`` ``compat_switch(typeIR~switch~)>>``.
-. Let <<SwitchCaseList_general_ok, TC f l typeIR~switch~ |- switchCaseList : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
+. Let the abstract control flow ``f~post~``, and labels ``switchCaseIR^{asterisk}^`` be
+* the result of <<SwitchCaseList_general_ok, typing ``switchCaseList`` under typing context ``TC`` with abstract control flow ``f``, loop context ``l`` , and switch key type ``typeIR~switch~``>>.
+. Check that <<check_switchLabel_default, default label is only in the last position of ``switchLabel^{asterisk}^``>>.
 . Check that <<distinct_, the elements of ``switchLabel^{asterisk}^`` are distinct>>.
 . Let ``switchStatementIR`` be ``SWITCH`` ``(`` ``typedExpressionIR~switch~`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``.
 . Result in 
@@ -10271,9 +10278,12 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
  .. Result in ``TC~2~``, ``parameterIR^{asterisk}^``, and ``typeId~fresh~^{asterisk}^``.
 
-<<ForUpdateStmt_ok, ForUpdateStmt_ok: ``TC`` ``|-`` ``forUpdateStatement`` ``:`` ``%``>>
+<<ForUpdateStmt_ok, ForUpdateStmt_ok>>:
 
-<<ForUpdateStmt_ok, ``TC`` ``|-`` ``forUpdateStatement`` ``:`` ``%``>>:
+* Typing ``forUpdateStatement`` under typing context ``typingContext``:
+* Results in ``forUpdateStatementIR``.
+
+<<ForUpdateStmt_ok, Typing ``forUpdateStatement`` under typing context ``TC``>>:
 
 . If let ``lvalue~callable~`` ``(`` ``argumentList`` ``)`` be ``forUpdateStatement``:
  .. Let the updated typing context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
@@ -10287,63 +10297,70 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Check that ``statementIR`` has type ``callStatementIR``.
  .. Let ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;`` be ``statementIR``.
  .. Result in ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)``.
-
-<<ForUpdateStmt_ok, ``TC`` ``|-`` ``lvalue`` ``assignop`` ``expression`` ``:`` ``%``>>:
-
-. Let the updated typing context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
+. Else:
+ .. Let ``lvalue`` ``assignop`` ``expression`` be ``forUpdateStatement``.
+ .. Let the updated typing context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
 * the result of <<Stmt_ok, typing ``lvalue`` ``assignop`` ``expression`` ``;``, under cursor ``LOCAL``, typing context ``TC``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
-. Check that ``statementIR`` has type ``assignmentStatementIR``.
-. Let ``typedLvalueIR`` ``assignop'`` ``typedExpressionIR`` ``;`` be ``statementIR``.
-. Check that ``assignop'`` is equal to ``assignop``.
-. Result in ``typedLvalueIR`` ``assignop`` ``typedExpressionIR``.
+ .. Check that ``statementIR`` has type ``assignmentStatementIR``.
+ .. Let ``typedLvalueIR`` ``assignop'`` ``typedExpressionIR`` ``;`` be ``statementIR``.
+ .. Check that ``assignop'`` is equal to ``assignop``.
+ .. Result in ``typedLvalueIR`` ``assignop`` ``typedExpressionIR``.
 
-<<ForUpdateStmtList_ok, ForUpdateStmtList_ok: ``TC`` ``|-`` ``forUpdateStatementList`` ``:`` ``%``>>
+<<ForUpdateStmtList_ok, ForUpdateStmtList_ok>>:
 
-<<ForUpdateStmtList_ok, ``TC`` ``|-`` ``forUpdateStatementList`` ``:`` ``%``>>:
+* Typing ``forUpdateStatementList`` under typing context ``typingContext``:
+* Results in ``forUpdateStatementIR^{asterisk}^``.
+
+<<ForUpdateStmtList_ok, Typing ``forUpdateStatementList`` under typing context ``TC``>>:
 
 . Let ``forUpdateStatement^{asterisk}^`` be ``<<flatten_forUpdateStatementList,`` ``flatten_forUpdateStatementList(forUpdateStatementList)>>``.
 . Let ``forUpdateStatementIR^{asterisk}^`` be the list of ``forUpdateStatementIR``, obtained by repeating:
 +
 --
- ** Let <<ForUpdateStmt_ok, TC |- forUpdateStatement : forUpdateStatementIR>>.
+ ** Let ``forUpdateStatementIR`` be
+* the result of <<ForUpdateStmt_ok, typing ``forUpdateStatement`` under typing context ``TC``>>.
 --
 +
 for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . Result in ``forUpdateStatementIR^{asterisk}^``.
 
-<<ForInitStmt_ok, ForInitStmt_ok: ``TC~0~`` ``|-`` ``forInitStatement`` ``:`` ``%`` ``%``>>
+<<ForInitStmt_ok, ForInitStmt_ok>>:
 
-<<ForInitStmt_ok, ``TC~0~`` ``|-`` ``annotationList`` ``type`` ``name`` ``initializerOpt`` ``:`` ``%`` ``%``>>:
+* Typing ``forInitStatement`` under typing context ``typingContext``:
+* Results in the updated typing context ``typingContext`` and ``forInitStatementIR``.
 
-. If ``initializerOpt`` is ```EMPTY``:
- .. Let ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
- .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Let ``bound`` be <<bound, bound type variables from the ``LOCAL`` layer of ``TC~0~``>>.
- .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``bound``>>.
- .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
- .. Result in ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``·``.
+<<ForInitStmt_ok, Typing ``forInitStatement`` under typing context ``typingContext``>>:
+
+. If let ``annotationList`` ``type`` ``name`` ``initializerOpt`` be ``forInitStatement``:
+ .. If ``initializerOpt`` is ```EMPTY``:
+  ... Let ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+* the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``typingContext``>>.
+  ... Check that ``typeId^{asterisk}^`` is an empty list.
+  ... Let ``bound`` be <<bound, bound type variables from the ``LOCAL`` layer of ``typingContext``>>.
+  ... Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``bound``>>.
+  ... Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
+  ... Let ``nameIR`` be <<name, the name of ``name``>>.
+  ... Let ``TC~1~`` be <<add_var_t, ``typingContext`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
+  ... Result in the updated typing context ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``·``.
+ .. Else:
+  ... Let ``=`` ``expression~init~`` be ``initializerOpt``.
+  ... Let ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
+* the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``typingContext``>>.
+  ... Check that ``typeId^{asterisk}^`` is an empty list.
+  ... Let ``bound`` be <<bound, bound type variables from the ``LOCAL`` layer of ``typingContext``>>.
+  ... Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``bound``>>.
+  ... Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
+  ... Let ``typedExpressionIR~init~`` be
+* the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``typingContext``>>.
+  ... Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
+  ... Let ``nameIR`` be <<name, the name of ``name``>>.
+  ... Let ``TC~1~`` be <<add_var_t, ``typingContext`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
+  ... Result in the updated typing context ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~``.
 . Else:
- .. Let ``=`` ``expression~init~`` be ``initializerOpt``.
- .. Let ``typeIR`` and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<Type_ok, typing ``type``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
- .. Check that ``typeId^{asterisk}^`` is an empty list.
- .. Let ``bound`` be <<bound, bound type variables from the ``LOCAL`` layer of ``TC~0~``>>.
- .. Check that <<Type_wf, ``typeIR`` is a well-formed type, with bound type variables ``bound``>>.
- .. Check that <<is_assignable_typeIR, ``typeIR`` supports assignment>>.
- .. Let ``typedExpressionIR~init~`` be
-* the result of <<Expr_ok, typing ``expression~init~``, under cursor ``LOCAL`` and typing context ``TC~0~``>>.
- .. Let ``typedExpressionIR~init_cast~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~init~`` implicitly cast to ``typeIR``>>.
- .. Let ``nameIR`` be <<name, the name of ``name``>>.
- .. Let ``TC~1~`` be <<add_var_t, ``TC~0~`` where ``nameIR`` to ``INOUT`` ``typeIR`` ``DYN`` ``·`` is added to the ``LOCAL`` layer>>.
- .. Result in ``TC~1~`` and ``annotationList`` ``typeIR`` ``nameIR`` ``=`` ``typedExpressionIR~init_cast~``.
-
-<<ForInitStmt_ok, ``TC~0~`` ``|-`` ``forUpdateStatement`` ``:`` ``%`` ``%``>>:
-
-. Let <<ForUpdateStmt_ok, TC~0~ |- forUpdateStatement : forUpdateStatementIR>>.
-. Result in ``TC~0~`` and ``forUpdateStatementIR``.
+ .. Let ``forUpdateStatement`` be ``forInitStatement``.
+ .. Let ``forUpdateStatementIR`` be
+* the result of <<ForUpdateStmt_ok, typing ``forUpdateStatement`` under typing context ``typingContext``>>.
+ .. Result in the updated typing context ``typingContext`` and ``forUpdateStatementIR``.
 
 <<ForInitStmts_ok, ForInitStmts_ok: ``typingContext`` ``|-`` ``forInitStatement^{asterisk}^`` ``:`` ``%`` ``%``>>
 
@@ -10352,45 +10369,52 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . If ``forInitStatement^{asterisk}^`` is equal to ``·``:
  .. Result in ``typingContext`` and ``·``.
 . If let ``forInitStatement~h~`` ``{two-colons}`` ``forInitStatement~t~^{asterisk}^`` be ``forInitStatement^{asterisk}^``:
- .. Let <<ForInitStmt_ok, typingContext |- forInitStatement~h~ : TC~1~ forInitStatementIR~h~>>.
+ .. Let the updated typing context ``TC~1~`` and ``forInitStatementIR~h~`` be
+* the result of <<ForInitStmt_ok, typing ``forInitStatement~h~`` under typing context ``typingContext``>>.
  .. Let <<ForInitStmts_ok, TC~1~ |- forInitStatement~t~^{asterisk}^ : TC~2~ forInitStatementIR~t~^{asterisk}^>>.
  .. Result in ``TC~2~`` and ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^``.
 
-<<ForInitStmtList_ok, ForInitStmtList_ok: ``TC~0~`` ``|-`` ``forInitStatementList`` ``:`` ``%`` ``%``>>
+<<ForInitStmtList_ok, ForInitStmtList_ok>>:
 
-<<ForInitStmtList_ok, ``TC~0~`` ``|-`` ``forInitStatementList`` ``:`` ``%`` ``%``>>:
+* Typing ``forInitStatementList`` under typing context ``typingContext``:
+* Results in the updated typing context ``typingContext`` and ``forInitStatementIR^{asterisk}^``.
+
+<<ForInitStmtList_ok, Typing ``forInitStatementList`` under typing context ``TC~0~``>>:
 
 . Let ``forInitStatement^{asterisk}^`` be ``<<flatten_forInitStatementList,`` ``flatten_forInitStatementList(forInitStatementList)>>``.
 . Let <<ForInitStmts_ok, TC~0~ |- forInitStatement^{asterisk}^ : TC~1~ forInitStatementIR^{asterisk}^>>.
-. Result in ``TC~1~`` and ``forInitStatementIR^{asterisk}^``.
+. Result in the updated typing context ``TC~1~`` and ``forInitStatementIR^{asterisk}^``.
 
-<<ForCollectionExpr_ok, ForCollectionExpr_ok: ``TC`` ``typeIR~var~`` ``|-`` ``forCollectionExpression`` ``:`` ``%``>>
+<<ForCollectionExpr_ok, ForCollectionExpr_ok>>:
 
-<<ForCollectionExpr_ok, ``TC`` ``typeIR~var~`` ``|-`` ``expression`` ``:`` ``%``>>:
+* Typing ``forCollectionExpression`` under typing context ``typingContext`` with iterator type ``typeIR``:
+* Results in ``forCollectionExpressionIR``.
 
-. Let ``typedExpressionIR`` be
+<<ForCollectionExpr_ok, Typing ``forCollectionExpression`` under typing context ``TC`` with iterator type ``typeIR~var~``>>:
+
+. If let ``expression`` be ``forCollectionExpression``:
+ .. Let ``typedExpressionIR`` be
 * the result of <<Expr_ok, typing ``expression``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let <<expressionNoteIR, type ``typeIR~list~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
-. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~list~`` with typedefs unrolled>>.
-. If let ``LIST`` ``<`` ``typeIR~e~`` ``>`` be ``typeIR``:
- .. Check that <<Cast_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
- .. Result in ``typedExpressionIR``.
-. Else if let ``typeIR~e~`` ``[`` ``++_++`` ``]`` be ``typeIR``:
- .. Check that <<Type_alpha, ``typeIR~e~`` and ``typeIR~var~`` are the same type>>.
- .. Result in ``typedExpressionIR``.
-
-<<ForCollectionExpr_ok, ``TC`` ``typeIR~var~`` ``|-`` ``expression~l~`` ``..`` ``expression~r~`` ``:`` ``%``>>:
-
-. Let ``typedExpressionIR~l~`` be
+ .. Let <<expressionNoteIR, type ``typeIR~list~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR``.
+ .. Let ``typeIR`` be <<unroll_typeIR, ``typeIR~list~`` with typedefs unrolled>>.
+ .. If let ``LIST`` ``<`` ``typeIR~e~`` ``>`` be ``typeIR``:
+  ... Check that <<Cast_impl, ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``>>.
+  ... Result in ``typedExpressionIR``.
+ .. Else if let ``typeIR~e~`` ``[`` ``++_++`` ``]`` be ``typeIR``:
+  ... Check that <<Type_alpha, ``typeIR~e~`` and ``typeIR~var~`` are the same type>>.
+  ... Result in ``typedExpressionIR``.
+. Else:
+ .. Let ``expression~l~`` ``..`` ``expression~r~`` be ``forCollectionExpression``.
+ .. Let ``typedExpressionIR~l~`` be
 * the result of <<Expr_ok, typing ``expression~l~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~r~`` be
+ .. Let ``typedExpressionIR~r~`` be
 * the result of <<Expr_ok, typing ``expression~r~``, under cursor ``LOCAL`` and typing context ``TC``>>.
-. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
-. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
-. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_castd~``.
-. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_castd~``.
-. Check that ``<<compat_range,`` ``compat_range(typeIR~l~,`` ``typeIR~r~)>>``.
-. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
+ .. Let ``typedExpressionIR~l_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``>>.
+ .. Let ``typedExpressionIR~r_castd~`` be <<option_get, *!*>> <<cast_unary, ``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``>>.
+ .. Let <<expressionNoteIR, type ``typeIR~l~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~l_castd~``.
+ .. Let <<expressionNoteIR, type ``typeIR~r~`` and compile-time known-ness ``++_++``>> be the note of ``typedExpressionIR~r_castd~``.
+ .. Check that ``<<compat_range,`` ``compat_range(typeIR~l~,`` ``typeIR~r~)>>``.
+ .. Result in ``typedExpressionIR~l_castd~`` ``..`` ``typedExpressionIR~r_castd~``.
 
 <<compat_range, compat_range(typeIR'', typeIR''')>>:
 [cols="3", options="header"]
@@ -10406,14 +10430,27 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 
 |===
 
-<<SwitchLabel_table_ok, SwitchLabel_table_ok: ``TC`` ``typeId~table~`` ``bool`` ``|-`` ``switchLabel`` ``:`` ``%``>>
+<<check_switchLabel_default, Default label is only in the last position of ``switchLabel^{asterisk}^``>>
 
-<<SwitchLabel_table_ok, ``TC`` ``typeId~table~`` ``bool`` ``|-`` ``switchLabel`` ``:`` ``%``>>:
 
-. If ``bool`` is equal to ``true``:
- .. Check that ``switchLabel`` is ``DEFAULT``.
+. If ``switchLabel^{asterisk}^`` is an empty list: return ``true``.
+. Else:
+ .. Let ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^`` be ``switchLabel^{asterisk}^``.
+ .. If ``switchLabel~h~`` is ``DEFAULT``:
+  ... Return ``switchLabel~t~^{asterisk}^`` ``=`` ``·``.
+ .. Else:
+  ... Return ``<<check_switchLabel_default,`` ``check_switchLabel_default(switchLabel~t~^{asterisk}^)>>``.
+
+<<SwitchLabel_table_ok, SwitchLabel_table_ok>>:
+
+* Typing ``switchLabel`` for table ``typeId``, under typing context ``typingContext``:
+* Results in ``switchLabelIR``.
+
+<<SwitchLabel_table_ok, Typing ``switchLabel`` for table ``typeId~table~``, under typing context ``TC``>>:
+
+. If ``switchLabel`` is ``DEFAULT``:
  .. Result in ``DEFAULT``.
-. If let ``prefixedNonTypeName`` be ``switchLabel``:
+. Else if let ``prefixedNonTypeName`` be ``switchLabel``:
  .. Let ``prefixedNameIR`` be <<prefixedNonTypeName, the prefixed name of  ``prefixedNonTypeName``>>.
  .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
  .. Let ``nameIR~label~`` be ``prefixedNameIR``.
@@ -10426,21 +10463,26 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Let ``typedExpressionIR~label~`` be <<typedExpressionIR, ``nameIR~label~`` annotated with type ``typeIR~label~`` and compile-time known-ness ``ctk~label~``>>.
  .. Result in ``typedExpressionIR~label~``.
 
-<<SwitchCase_table_ok, SwitchCase_table_ok: ``TC`` ``f`` ``l`` ``typeId~table~`` ``b~last~`` ``|-`` ``switchCase`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+<<SwitchCase_table_ok, SwitchCase_table_ok>>:
 
-<<SwitchCase_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``b~last~`` ``|-`` ``switchCase`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+* Typing ``switchCase`` for table ``typeId``, under typing context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
+* Results in the abstract control flow ``flow``, and label ``switchCaseIR``.
+
+<<SwitchCase_table_ok, Typing ``switchCase`` for table ``typeId~table~``, under typing context ``TC`` with abstract control flow ``f`` and loop context ``l``>>:
 
 . If let ``switchLabel`` ``:`` ``blockStatement`` be ``switchCase``:
- .. Let <<SwitchLabel_table_ok, TC typeId~table~ b~last~ |- switchLabel : switchLabelIR>>.
+ .. Let ``switchLabelIR`` be
+* the result of <<SwitchLabel_table_ok, typing ``switchLabel`` for table ``typeId~table~``, under typing context ``TC``>>.
  .. Let the updated typing context ``TC~post~``, abstract control flow ``f~post~``, and ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>.
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``:`` ``blockStatementIR``.
- .. Result in ``f~post~``, ``switchCaseIR``, and ``switchLabel``.
+ .. Result in the abstract control flow ``f~post~``, and label ``switchCaseIR``.
 . Else:
  .. Let ``switchLabel`` ``:`` be ``switchCase``.
- .. Let <<SwitchLabel_table_ok, TC typeId~table~ b~last~ |- switchLabel : switchLabelIR>>.
+ .. Let ``switchLabelIR`` be
+* the result of <<SwitchLabel_table_ok, typing ``switchLabel`` for table ``typeId~table~``, under typing context ``TC``>>.
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``:``.
- .. Result in ``f``, ``switchCaseIR``, and ``switchLabel``.
+ .. Result in the abstract control flow ``f``, and label ``switchCaseIR``.
 
 <<SwitchCases_table_ok, SwitchCases_table_ok: ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
@@ -10449,27 +10491,33 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . If ``switchCase^{asterisk}^`` is equal to ``·``:
  .. Result in ``f``, ``·``, and ``·``.
 . If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
- .. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
- .. Let <<SwitchCase_table_ok, TC f l typeId~table~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
+ .. Let the abstract control flow ``f~h~``, and label ``switchCaseIR~h~`` be
+* the result of <<SwitchCase_table_ok, typing ``switchCase~h~`` for table ``typeId~table~``, under typing context ``TC`` with abstract control flow ``f`` and loop context ``l``>>.
  .. Let <<SwitchCases_table_ok, TC f~h~ l typeId~table~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
  .. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
 
-<<SwitchCaseList_table_ok, SwitchCaseList_table_ok: ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+<<SwitchCaseList_table_ok, SwitchCaseList_table_ok>>:
 
-<<SwitchCaseList_table_ok, ``TC`` ``f`` ``l`` ``typeId~table~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+* Typing ``switchCaseList`` for table ``typeId``, under typing context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
+* Results in the abstract control flow ``flow``,  ``switchCaseListIR``, and labels ``switchLabel^{asterisk}^``.
+
+<<SwitchCaseList_table_ok, Typing ``switchCaseList`` for table ``typeId~table~``, under typing context ``TC`` with abstract control flow ``f`` and loop context ``l``>>:
 
 . Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
 . Let <<SwitchCases_table_ok, TC f l typeId~table~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
-. Result in ``f~post~``, ``switchCaseIR^{asterisk}^``, and ``switchLabel^{asterisk}^``.
+. Result in the abstract control flow ``f~post~``,  ``switchCaseIR^{asterisk}^``, and labels ``switchLabel^{asterisk}^``.
 
-<<SwitchLabel_general_ok, SwitchLabel_general_ok: ``TC`` ``typeIR`` ``bool`` ``|-`` ``switchLabel`` ``:`` ``%``>>
+<<SwitchLabel_general_ok, SwitchLabel_general_ok>>:
 
-<<SwitchLabel_general_ok, ``TC`` ``typeIR`` ``bool`` ``|-`` ``switchLabel`` ``:`` ``%``>>:
+* Typing ``switchLabel`` under typing context ``typingContext`` with switch key type ``typeIR``:
+* Results in ``switchLabelIR``.
 
-. If ``bool`` is equal to ``true``:
- .. Check that ``switchLabel`` is ``DEFAULT``.
+<<SwitchLabel_general_ok, Typing ``switchLabel`` under typing context ``TC`` with switch key type ``typeIR``>>:
+
+. If ``switchLabel`` is ``DEFAULT``:
  .. Result in ``DEFAULT``.
-. If let ``expressionNonBrace~label~`` be ``switchLabel``:
+. Else:
+ .. Let ``expressionNonBrace~label~`` be ``switchLabel``.
  .. Let ``expression~label~`` be <<expressionNonBrace_as_expression, the expression corresponding to ``expressionNonBrace~label~``>>.
  .. Let ``typedExpressionIR~label~`` be
 * the result of <<Expr_ok, typing ``expression~label~``, under cursor ``LOCAL`` and typing context ``TC``>>.
@@ -10478,21 +10526,26 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
  .. Check that ``ctk`` is ``LCTK``.
  .. Result in ``typedExpressionIR~label_cast~``.
 
-<<SwitchCase_general_ok, SwitchCase_general_ok: ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``b~last~`` ``|-`` ``switchCase`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+<<SwitchCase_general_ok, SwitchCase_general_ok>>:
 
-<<SwitchCase_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``b~last~`` ``|-`` ``switchCase`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+* Typing ``switchCase`` under typing context ``typingContext`` with abstract control flow ``flow``, loop context ``loopctxt``, and switch key type ``typeIR``:
+* Results in the abstract control flow ``flow``, and label ``switchCaseIR``.
+
+<<SwitchCase_general_ok, Typing ``switchCase`` under typing context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``>>:
 
 . If let ``switchLabel`` ``:`` ``blockStatement`` be ``switchCase``:
- .. Let <<SwitchLabel_general_ok, TC typeIR~switch~ b~last~ |- switchLabel : switchLabelIR>>.
+ .. Let ``switchLabelIR`` be
+* the result of <<SwitchLabel_general_ok, typing ``switchLabel`` under typing context ``TC`` with switch key type ``typeIR~switch~``>>.
  .. Let the updated typing context ``TC~post~``, abstract control flow ``f~post~``, and ``blockStatementIR`` be
 * the result of <<Block_ok, typing ``blockStatement``, under typing context ``TC``, abstract control flow ``f``, and loop context ``l``>>.
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``:`` ``blockStatementIR``.
- .. Result in ``f~post~``, ``switchCaseIR``, and ``switchLabel``.
+ .. Result in the abstract control flow ``f~post~``, and label ``switchCaseIR``.
 . Else:
  .. Let ``switchLabel`` ``:`` be ``switchCase``.
- .. Let <<SwitchLabel_general_ok, TC typeIR~switch~ b~last~ |- switchLabel : switchLabelIR>>.
+ .. Let ``switchLabelIR`` be
+* the result of <<SwitchLabel_general_ok, typing ``switchLabel`` under typing context ``TC`` with switch key type ``typeIR~switch~``>>.
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``:``.
- .. Result in ``f``, ``switchCaseIR``, and ``switchLabel``.
+ .. Result in the abstract control flow ``f``, and label ``switchCaseIR``.
 
 <<SwitchCases_general_ok, SwitchCases_general_ok: ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCase^{asterisk}^`` ``:`` ``%`` ``%`` ``#`` ``%``>>
 
@@ -10501,18 +10554,21 @@ for each ``forUpdateStatement`` in ``forUpdateStatement^{asterisk}^``
 . If ``switchCase^{asterisk}^`` is equal to ``·``:
  .. Result in ``f``, ``·``, and ``·``.
 . If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
- .. Let ``b~last~`` be ``switchCase~t~^{asterisk}^`` is equal to ``·``.
- .. Let <<SwitchCase_general_ok, TC f l typeIR~switch~ b~last~ |- switchCase~h~ : f~h~ switchCaseIR~h~ # switchLabel~h~>>.
+ .. Let the abstract control flow ``f~h~``, and label ``switchCaseIR~h~`` be
+* the result of <<SwitchCase_general_ok, typing ``switchCase~h~`` under typing context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``>>.
  .. Let <<SwitchCases_general_ok, TC f~h~ l typeIR~switch~ |- switchCase~t~^{asterisk}^ : f~t~ switchCaseIR~t~^{asterisk}^ # switchLabel~t~^{asterisk}^>>.
  .. Result in ``f~t~``, ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``, and ``switchLabel~h~`` ``{two-colons}`` ``switchLabel~t~^{asterisk}^``.
 
-<<SwitchCaseList_general_ok, SwitchCaseList_general_ok: ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>
+<<SwitchCaseList_general_ok, SwitchCaseList_general_ok>>:
 
-<<SwitchCaseList_general_ok, ``TC`` ``f`` ``l`` ``typeIR~switch~`` ``|-`` ``switchCaseList`` ``:`` ``%`` ``%`` ``#`` ``%``>>:
+* Typing ``switchCaseList`` under typing context ``typingContext`` with abstract control flow ``flow``, loop context ``loopctxt`` , and switch key type ``typeIR``:
+* Results in the abstract control flow ``flow``, and labels ``switchCaseListIR``.
+
+<<SwitchCaseList_general_ok, Typing ``switchCaseList`` under typing context ``TC`` with abstract control flow ``f``, loop context ``l`` , and switch key type ``typeIR~switch~``>>:
 
 . Let ``switchCase^{asterisk}^`` be <<flatten_switchCaseList, the list of switch cases in ``switchCaseList``>>.
 . Let <<SwitchCases_general_ok, TC f l typeIR~switch~ |- switchCase^{asterisk}^ : f~post~ switchCaseIR^{asterisk}^ # switchLabel^{asterisk}^>>.
-. Result in ``f~post~``, ``switchCaseIR^{asterisk}^``, and ``switchLabel^{asterisk}^``.
+. Result in the abstract control flow ``f~post~``, and labels ``switchCaseIR^{asterisk}^``.
 
 <<compat_switch, compat_switch(typeIR'')>>:
 [cols="2", options="header"]
@@ -12739,7 +12795,8 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 <<Stmt_inst, Compile-time evaluation of ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseListIR`` ``}``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
-. Let <<SwitchCases_inst, p IC STO |- switchCaseListIR : STO~1~ switchCaseListIR~inst~>>.
+. Let the updated store ``STO~1~`` and ``switchCaseListIR~inst~`` be
+* the result of <<SwitchCases_inst, compile-time evaluation of switch cases ``switchCaseListIR``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>.
 . Result in 
 * the updated instantiation context ``IC``, store ``STO~1~``, and ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseListIR~inst~`` ``}``.
 
@@ -13742,31 +13799,38 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 * the updated store ``STO~2~``,
 * and the constructed ``object~package~``.
 
-<<SwitchCase_inst, SwitchCase_inst: ``p`` ``IC`` ``store`` ``|-`` ``switchCaseIR`` ``:`` ``%`` ``%``>>
+<<SwitchCase_inst, SwitchCase_inst>>:
 
-<<SwitchCase_inst, ``p`` ``IC`` ``store`` ``|-`` ``switchCaseIR`` ``:`` ``%`` ``%``>>:
+* Compile-time evaluation of ``switchCaseIR``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``:
+* Results in the updated store ``store`` and ``switchCaseIR``.
+
+<<SwitchCase_inst, Compile-time evaluation of ``switchCaseIR``, under cursor ``p``, instantiation context ``IC``, and store ``store``>>:
 
 . If let ``switchLabelIR`` ``:`` ``blockStatementIR`` be ``switchCaseIR``:
  .. Let the updated instantiation context ``IC~switch~``, store ``STO~1~``, and ``statementIR`` be
 * the result of <<Stmt_inst, compile-time evaluation of ``blockStatementIR``, under cursor ``p``, instantiation context ``IC``, and store ``store``>>.
  .. Check that ``statementIR`` has type ``blockStatementIR``.
  .. Let ``blockStatementIR~inst~`` be ``statementIR``.
- .. Result in ``STO~1~`` and ``switchLabelIR`` ``:`` ``blockStatementIR~inst~``.
+ .. Result in the updated store ``STO~1~`` and ``switchLabelIR`` ``:`` ``blockStatementIR~inst~``.
 . Else:
  .. Let ``switchLabelIR`` ``:`` be ``switchCaseIR``.
- .. Result in ``store`` and ``switchLabelIR`` ``:``.
+ .. Result in the updated store ``store`` and ``switchLabelIR`` ``:``.
 
-<<SwitchCases_inst, SwitchCases_inst: ``p`` ``IC`` ``STO`` ``|-`` ``switchCaseIR^{asterisk}^`` ``:`` ``%`` ``%``>>
+<<SwitchCases_inst, SwitchCases_inst>>:
 
-<<SwitchCases_inst, ``p`` ``IC`` ``STO`` ``|-`` ``·`` ``:`` ``%`` ``%``>>:
+* Compile-time evaluation of switch cases ``switchCaseIR^{asterisk}^``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``:
+* Results in the updated store ``store`` and ``switchCaseIR^{asterisk}^``.
 
-. Result in ``STO`` and ``·``.
+<<SwitchCases_inst, Compile-time evaluation of switch cases ``switchCaseIR^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``store``>>:
 
-<<SwitchCases_inst, ``p`` ``IC`` ``STO`` ``|-`` ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` ``:`` ``%`` ``%``>>:
-
-. Let <<SwitchCase_inst, p IC STO |- switchCaseIR~h~ : STO~1~ switchCaseIR~h'~>>.
-. Let <<SwitchCases_inst, p IC STO~1~ |- switchCaseIR~t~^{asterisk}^ : STO~2~ switchCaseIR~t'~^{asterisk}^>>.
-. Result in ``STO~2~`` and ``switchCaseIR~h'~`` ``{two-colons}`` ``switchCaseIR~t'~^{asterisk}^``.
+. If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated store ``store`` and ``·``.
+. If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
+ .. Let the updated store ``STO~1~`` and ``switchCaseIR~h'~`` be
+* the result of <<SwitchCase_inst, compile-time evaluation of ``switchCaseIR~h~``, under cursor ``p``, instantiation context ``IC``, and store ``store``>>.
+ .. Let the updated store ``STO~2~`` and ``switchCaseIR~t'~^{asterisk}^`` be
+* the result of <<SwitchCases_inst, compile-time evaluation of switch cases ``switchCaseIR~t~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~1~``>>.
+ .. Result in the updated store ``STO~2~`` and ``switchCaseIR~h'~`` ``{two-colons}`` ``switchCaseIR~t'~^{asterisk}^``.
 
 <<merge_frames, The merged frame of ``frame`` and ``{`` ``(`` ``id`` ``:`` ``value`` ``)^{asterisk}^`` ``}``>>
 
@@ -14798,16 +14862,16 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 
 <<Stmt_eval, Stmt_eval>>:
 
-* The runtime evaluation of ``statementIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``:
+* Runtime evaluation of ``statementIR``, under cursor ``cursor``, evaluation context ``evalContext``, and store ``store``:
 * Results in 
  ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<Stmt_eval, The runtime evaluation of ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Result in 
 * the updated evaluation context ``EC``, store ``STO``, and ```EMPTY``.
 
-<<Stmt_eval, The runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and result ``storageReferenceResult`` be
 * the result of <<Lvalue_eval, evaluating ``typedLvalueIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>.
@@ -14851,7 +14915,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
   ... Result in 
 * the updated evaluation context ``EC~3~``, store ``STO~2~``, and ```EMPTY``.
 
-<<Stmt_eval, The runtime evaluation of ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``callableTargetIR`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let <<Callee_eval, p EC STO |- callableTargetIR < _ > ( argumentIR^{asterisk}^ ) : EC~1~ STO~1~ calleeResult>>.
 . If let ``abortResult`` be ``calleeResult``:
@@ -14868,21 +14932,21 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
   ... Result in 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and ```EMPTY``.
 
-<<Stmt_eval, The runtime evaluation of ``EXIT`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``EXIT`` ``;``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Result in 
 * the updated evaluation context ``EC``, store ``STO``, and ``EXIT``.
 
-<<Stmt_eval, The runtime evaluation of ``blockStatementIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``blockStatementIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~`` be <<enter_e, ``EC`` with a new local frame>>.
 . Let the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~1~``, and store ``STO``>>.
+* the result of <<Block_eval, runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~1~``, and store ``STO``>>.
 . Let ``EC~3~`` be <<exit_e, ``EC~2~`` with the innermost frame removed>>.
 . Result in 
 * the updated evaluation context ``EC~3~``, store ``STO~1~``, and ``statementResult``.
 
-<<Stmt_eval, The runtime evaluation of ``conditionalStatementIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``conditionalStatementIR``, under cursor ``p``, evaluation context ``EC``, and store ``STO``>>:
 
 . If let ``IF`` ``(`` ``typedExpressionIR~cond~`` ``)`` ``statementIR~then~`` be ``conditionalStatementIR``:
  .. Let the updated evaluation context ``EC~cond~``, store ``STO~cond~`` and expression result ``expressionResult`` be
@@ -14892,7 +14956,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~``, and ``abortResult``.
  .. If ``expressionResult`` is equal to ```B`` ``true``:
   ... Let the updated evaluation context ``EC~then~``, store ``STO~then~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
   ... Result in 
 * the updated evaluation context ``EC~then~``, store ``STO~then~``, and ``statementResult``.
  .. If ``expressionResult`` is equal to ```B`` ``false``:
@@ -14907,16 +14971,16 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 * the updated evaluation context ``EC~cond~``, store ``STO~cond~``, and ``abortResult``.
  .. If ``expressionResult`` is equal to ```B`` ``true``:
   ... Let the updated evaluation context ``EC~then~``, store ``STO~then~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR~then~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
   ... Result in 
 * the updated evaluation context ``EC~then~``, store ``STO~then~``, and ``statementResult``.
  .. If ``expressionResult`` is equal to ```B`` ``false``:
   ... Let the updated evaluation context ``EC~else~``, store ``STO~else~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR~else~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR~else~``, under cursor ``p``, evaluation context ``EC~cond~``, and store ``STO~cond~``>>.
   ... Result in 
 * the updated evaluation context ``EC~else~``, store ``STO~else~``, and ``statementResult``.
 
-<<Stmt_eval, The runtime evaluation of ``returnStatementIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``returnStatementIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . If ``returnStatementIR`` is ``RETURN`` ``;``:
  .. Result in 
@@ -14933,25 +14997,28 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
   ... Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``RETURN`` ``value``.
 
-<<Stmt_eval, The runtime evaluation of ``annotationList`` ``FOR`` ``(`` ``forInitStatementListIR`` ``;`` ``typedExpressionIR`` ``;`` ``forUpdateStatementListIR`` ``)`` ``statementIR'``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``annotationList`` ``FOR`` ``(`` ``forInitStatementListIR`` ``;`` ``typedExpressionIR`` ``;`` ``forUpdateStatementListIR`` ``)`` ``statementIR'``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let ``EC~1~`` be <<enter_e, ``EC`` with a new local frame>>.
-. Let <<ForInitStmts_eval, EC~1~ STO |- forInitStatementListIR : EC~2~ STO~1~ statementResult>>.
+. Let the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<ForInitStmts_eval, runtime evaluation of ``forInitStatementListIR``, under evaluation context ``EC~1~`` and store ``STO``>>.
 . If let ``abortResult`` be ``statementResult``:
  .. Let ``EC~3~`` be <<exit_e, ``EC~2~`` with the innermost frame removed>>.
  .. Result in 
 * the updated evaluation context ``EC~3~``, store ``STO~1~``, and ``abortResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
- .. Let <<ForThreeClauseLoop_eval, EC~2~ STO~1~ |- typedExpressionIR statementIR' forUpdateStatementListIR : EC~3~ STO~2~ statementResult'>>.
+ .. Let the updated evaluation context ``EC~3~``, store ``STO~2~``, and ``statementResult'`` be
+* the result of <<ForThreeClauseStmt_eval, looping ``statementIR'`` with condition ``typedExpressionIR`` and updates ``forUpdateStatementListIR``, under evaluation context ``EC~2~`` and store ``STO~1~``>>.
  .. Let ``EC~4~`` be <<exit_e, ``EC~3~`` with the innermost frame removed>>.
  .. Result in 
 * the updated evaluation context ``EC~4~``, store ``STO~2~``, and ``statementResult'``.
 
-<<Stmt_eval, The runtime evaluation of ``forStatementIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``forStatementIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . If let ``annotationList`` ``FOR`` ``(`` ``typeIR`` ``nameIR`` ``IN`` ``forCollectionExpressionIR`` ``)`` ``statementIR'`` be ``forStatementIR``:
  .. Let ``EC~1~`` be <<enter_e, ``EC`` with a new local frame>>.
- .. Let <<ForCollectionExpr_eval, EC~1~ STO |- forCollectionExpressionIR : EC~2~ STO~1~ expressionListResult>>.
+ .. Let the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``expressionListResult`` be
+* the result of <<ForCollectionExpr_eval, runtime evaluation of ``forCollectionExpressionIR``, under evaluation context ``EC~1~`` and store ``STO``>>.
  .. If let ``abortResult`` be ``expressionListResult``:
   ... Let ``EC~3~`` be <<exit_e, ``EC~2~`` with the innermost frame removed>>.
   ... Result in 
@@ -14961,27 +15028,28 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
   ... Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC`` from the ``LOCAL`` layer>>.
   ... Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
   ... Let ``EC~3~`` be <<add_var_e, ``EC~2~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
-  ... Let <<ForInLoop_eval, EC~3~ STO~1~ |- nameIR value^{asterisk}^ statementIR' : EC~4~ STO~2~ statementResult>>.
+  ... Let the updated evaluation context ``EC~4~``, store ``STO~2~``, and ``statementResult`` be
+* the result of <<ForInStmt_eval, looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR'``, under evaluation context ``EC~3~`` and store ``STO~1~``>>.
   ... Let ``EC~5~`` be <<exit_e, ``EC~4~`` with the innermost frame removed>>.
   ... Result in 
 * the updated evaluation context ``EC~5~``, store ``STO~2~``, and ``statementResult``.
 . Else if let ``annotationList`` ``FOR`` ``(`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``IN`` ``forCollectionExpressionIR`` ``)`` ``statementIR'`` be ``forStatementIR``:
  .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``annotationList`` ``FOR`` ``(`` ``typeIR`` ``nameIR`` ``IN`` ``forCollectionExpressionIR`` ``)`` ``statementIR'``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``annotationList`` ``FOR`` ``(`` ``typeIR`` ``nameIR`` ``IN`` ``forCollectionExpressionIR`` ``)`` ``statementIR'``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
  .. Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
 
-<<Stmt_eval, The runtime evaluation of ``BREAK`` ``;``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``BREAK`` ``;``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Result in 
 * the updated evaluation context ``EC``, store ``STO``, and ``BREAK``.
 
-<<Stmt_eval, The runtime evaluation of ``CONTINUE`` ``;``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``CONTINUE`` ``;``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Result in 
 * the updated evaluation context ``EC``, store ``STO``, and ``CONTINUE``.
 
-<<Stmt_eval, The runtime evaluation of ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
@@ -14992,17 +15060,18 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
  .. Let ``value`` be ``expressionResult``.
  .. Check that ``value`` has type ``tableMetadataEnumValue``.
  .. Let ``TABLE_ENUM`` ``++_++`` ``.`` ``id~enum~`` be ``value``.
- .. Let <<SwitchCases_table_eval, id~enum~ |- switchCaseIR^{asterisk}^ : blockStatementIR^?^>>.
+ .. Let the matched block ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_table_eval, runtime evaluation of ``switchCaseIR^{asterisk}^`` for invocation of table ``id~enum~``>>.
  .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
   ... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``blockStatementIR'``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``blockStatementIR'``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
   ... Result in 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult``.
  .. Else:
   ... Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ```EMPTY``.
 
-<<Stmt_eval, The runtime evaluation of ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
+<<Stmt_eval, Runtime evaluation of ``SWITCH`` ``(`` ``typedExpressionIR`` ``)`` ``{`` ``switchCaseIR^{asterisk}^`` ``}``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC``, and store ``STO``>>.
@@ -15011,10 +15080,11 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
- .. Let <<SwitchCases_general_eval, LOCAL EC~1~ STO~1~ value |- switchCaseIR^{asterisk}^ : EC~2~ STO~2~ blockStatementIR^?^>>.
+ .. Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_general_eval, runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``LOCAL`` and store ``EC~1~`` with switch key ``value``>>.
  .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
   ... Let the updated evaluation context ``EC~3~``, store ``STO~3~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``blockStatementIR'``, under cursor ``LOCAL``, evaluation context ``EC~2~``, and store ``STO~2~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``blockStatementIR'``, under cursor ``LOCAL``, evaluation context ``EC~2~``, and store ``STO~2~``>>.
   ... Result in 
 * the updated evaluation context ``EC~3~``, store ``STO~3~``, and ``statementResult``.
  .. Else:
@@ -15023,11 +15093,11 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 
 <<BlockElementStmt_eval, BlockElementStmt_eval>>:
 
-* The runtime evaluation of ``blockElementStatementIR``, under evaluation context ``evalContext``, and store ``store``:
+* Runtime evaluation of ``blockElementStatementIR``, under evaluation context ``evalContext``, and store ``store``:
 * Results in 
  ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<BlockElementStmt_eval, The runtime evaluation of ``blockElementStatementIR``, under evaluation context ``EC~0~``, and store ``store``>>:
+<<BlockElementStmt_eval, Runtime evaluation of ``blockElementStatementIR``, under evaluation context ``EC~0~``, and store ``store``>>:
 
 . If let ``constantDeclarationIR`` be ``blockElementStatementIR``:
  .. Let the updated evaluation context ``EC~1~`` be
@@ -15042,43 +15112,43 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 . Else:
  .. Let ``statementIR`` be ``blockElementStatementIR``.
  .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.
  .. Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
 
 <<BlockElementStmtList_eval, BlockElementStmtList_eval>>:
 
-* The runtime evaluation of ``blockElementStatementListIR``, under evaluation context ``evalContext``, and store ``store``:
+* Runtime evaluation of ``blockElementStatementListIR``, under evaluation context ``evalContext``, and store ``store``:
 * Results in 
  ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<BlockElementStmtList_eval, The runtime evaluation of ``blockElementStatementIR^{asterisk}^``, under evaluation context ``evalContext``, and store ``store``>>:
+<<BlockElementStmtList_eval, Runtime evaluation of ``blockElementStatementIR^{asterisk}^``, under evaluation context ``evalContext``, and store ``store``>>:
 
 . If ``blockElementStatementIR^{asterisk}^`` is equal to ``·``:
  .. Result in 
 * the updated evaluation context ``evalContext``, store ``store``, and ```EMPTY``.
 . If let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``:
  .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<BlockElementStmt_eval, the runtime evaluation of ``blockElementStatementIR~h~``, under evaluation context ``evalContext``, and store ``store``>>.
+* the result of <<BlockElementStmt_eval, runtime evaluation of ``blockElementStatementIR~h~``, under evaluation context ``evalContext``, and store ``store``>>.
  .. If ``statementResult`` is not equal to ```EMPTY``:
   ... Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
  .. If let ``continueEmptyResult`` be ``statementResult``:
   ... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'`` be
-* the result of <<BlockElementStmtList_eval, the runtime evaluation of ``blockElementStatementIR~t~^{asterisk}^``, under evaluation context ``EC~1~``, and store ``STO~1~``>>.
+* the result of <<BlockElementStmtList_eval, runtime evaluation of ``blockElementStatementIR~t~^{asterisk}^``, under evaluation context ``EC~1~``, and store ``STO~1~``>>.
   ... Result in 
 * the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'``.
 
 <<Block_eval, Block_eval>>:
 
-* The runtime evaluation of ``blockStatementIR``, under evaluation context ``evalContext``, and store ``store``:
+* Runtime evaluation of ``blockStatementIR``, under evaluation context ``evalContext``, and store ``store``:
 * Results in 
  ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<Block_eval, The runtime evaluation of ``annotationList`` ``{`` ``blockElementStatementListIR`` ``}``, under evaluation context ``EC~0~``, and store ``STO~0~``>>:
+<<Block_eval, Runtime evaluation of ``annotationList`` ``{`` ``blockElementStatementListIR`` ``}``, under evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<BlockElementStmtList_eval, the runtime evaluation of ``blockElementStatementListIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<BlockElementStmtList_eval, runtime evaluation of ``blockElementStatementListIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Result in 
 * the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
 
@@ -15109,7 +15179,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``emptyStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``emptyStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``emptyStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
 . Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
@@ -15117,7 +15187,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``assignmentStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``assignmentStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``assignmentStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . If let ``rejectTransitionResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
@@ -15126,7 +15196,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ParserStmt_eval, ``EC~0~`` ``STO`` ``|-`` ``callStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callStatementIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO``>>.
 . If let ``rejectTransitionResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
@@ -15298,7 +15368,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
   ... Let ``tableMatch^{asterisk}^`` be ``tableMatchesResult``.
   ... Let ``prefixedNameIR`` ``(`` ``argumentListIR`` ``)`` be ``<<select_action,`` ``select_action(TBL,`` ``tableMatch^{asterisk}^)>>``.
   ... Let the updated evaluation context ``EC~3~``, store ``STO~3~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~2~``, and store ``STO~2~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``prefixedNameIR`` ``<`` ``·`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~2~``, and store ``STO~2~``>>.
   ... If let ``exitResult`` be ``statementResult``:
    .... Result in ``EC~3~``, ``STO~3~``, and ``EXIT``.
   ... Else if let ``continueEmptyResult`` be ``statementResult``:
@@ -15314,7 +15384,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ControlBody_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``controlBodyIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Block_eval, runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
 . Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
@@ -15322,7 +15392,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ControlBody_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``controlBodyIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Block_eval, runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Check that ``statementResult`` has type ``exitResult``.
 . Let ``exitResult`` be ``statementResult``.
 . Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
@@ -15330,7 +15400,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 <<ControlBody_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``controlBodyIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Block_eval, runtime evaluation of ``controlBodyIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . Check that ``statementResult`` is equal to ``RETURN`` ``·``.
 . Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 
@@ -16143,136 +16213,192 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
    .... Let ``keysetExpressionResult'`` be ``setValue~h~`` ``{two-colons}`` ``setValue~t~^{asterisk}^``.
    .... Result in ``EC~2~``, ``STO~2~``, and ``keysetExpressionResult'``.
 
-<<ForUpdateStmt_eval, ForUpdateStmt_eval: ``EC~0~`` ``STO~0~`` ``|-`` ``forUpdateStatementIR`` ``:`` ``%`` ``%`` ``%``>>
+<<ForUpdateStmt_eval, ForUpdateStmt_eval>>:
 
-<<ForUpdateStmt_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``:`` ``%`` ``%`` ``%``>>:
+* Runtime evaluation of ``forUpdateStatementIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. Result in ``EC~1~``, ``STO~1~``, and ``statementResult``.
+<<ForUpdateStmt_eval, Runtime evaluation of ``forUpdateStatementIR``, under evaluation context ``EC~0~`` and store ``STO~0~``>>:
 
-<<ForUpdateStmt_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``:`` ``%`` ``%`` ``%``>>:
+. If let ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` be ``forUpdateStatementIR``:
+ .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
+. Else:
+ .. Let ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` be ``forUpdateStatementIR``.
+ .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<Stmt_eval, runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
 
-. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpressionIR`` ``;``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
-. Result in ``EC~1~``, ``STO~1~``, and ``statementResult``.
+<<ForUpdateStmts_eval, ForUpdateStmts_eval>>:
 
-<<ForUpdateStmts_eval, ForUpdateStmts_eval: ``evalContext`` ``store`` ``|-`` ``forUpdateStatementIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
+* Runtime evaluation of ``forUpdateStatementListIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<ForUpdateStmts_eval, ``evalContext`` ``store`` ``|-`` ``forUpdateStatementIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>:
+<<ForUpdateStmts_eval, Runtime evaluation of ``forUpdateStatementIR^{asterisk}^``, under evaluation context ``evalContext`` and store ``store``>>:
 
 . If ``forUpdateStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ```EMPTY``.
+ .. Result in 
+* the updated evaluation context ``evalContext``, store ``store``, and ```EMPTY``.
 . If let ``forUpdateStatementIR~h~`` ``{two-colons}`` ``forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR^{asterisk}^``:
- .. Let <<ForUpdateStmt_eval, evalContext store |- forUpdateStatementIR~h~ : EC~1~ STO~1~ statementResult>>.
+ .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<ForUpdateStmt_eval, runtime evaluation of ``forUpdateStatementIR~h~``, under evaluation context ``evalContext`` and store ``store``>>.
  .. If let ``exitResult`` be ``statementResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
+  ... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``EXIT``.
  .. Else if let ``continueEmptyResult`` be ``statementResult``:
-  ... Let <<ForUpdateStmts_eval, EC~1~ STO~1~ |- forUpdateStatementIR~t~^{asterisk}^ : EC~2~ STO~2~ statementResult'>>.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``statementResult'``.
+  ... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'`` be
+* the result of <<ForUpdateStmts_eval, runtime evaluation of ``forUpdateStatementIR~t~^{asterisk}^``, under evaluation context ``EC~1~`` and store ``STO~1~``>>.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'``.
 
-<<ForInitStmt_eval, ForInitStmt_eval: ``EC~0~`` ``store`` ``|-`` ``forInitStatementIR`` ``:`` ``%`` ``%`` ``%``>>
+<<ForInitStmt_eval, ForInitStmt_eval>>:
 
-<<ForInitStmt_eval, ``EC~0~`` ``store`` ``|-`` ``annotationList`` ``typeIR`` ``nameIR`` ``initializerIR^?^`` ``:`` ``%`` ``%`` ``%``>>:
+* Runtime evaluation of ``forInitStatementIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-. If ``initializerIR^?^`` is none:
- .. Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``LOCAL`` layer>>.
- .. Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
- .. Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
- .. Result in ``EC~1~``, ``store``, and ```EMPTY``.
-. Else:
- .. Let ``=`` ``typedExpressionIR~init~`` be ``initializerIR^?^``.
- .. Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
+<<ForInitStmt_eval, Runtime evaluation of ``forInitStatementIR``, under evaluation context ``EC~0~`` and store ``store``>>:
+
+. If let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerIR^?^`` be ``forInitStatementIR``:
+ .. If ``initializerIR^?^`` is none:
+  ... Let ``typeIR~subst~`` be <<subst_type_e, ``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``LOCAL`` layer>>.
+  ... Let ``value~init~`` be <<default, the default value for type ``typeIR~subst~``>>.
+  ... Let ``EC~1~`` be <<add_var_e, ``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
+  ... Result in 
+* the updated evaluation context ``EC~1~``, store ``store``, and ```EMPTY``.
+ .. Let ``annotationList'`` ``typeIR'`` ``nameIR'`` ``initializerOptIR`` be ``forInitStatementIR``.
+ .. If let ``=`` ``typedExpressionIR~init~`` be ``initializerOptIR``:
+  ... Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~init~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``store``>>.
- .. If let ``abortResult`` be ``expressionResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
- .. Else:
-  ... Let ``value~init~`` be ``expressionResult``.
-  ... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
-  ... Result in ``EC~2~``, ``STO~1~``, and ```EMPTY``.
+  ... If let ``abortResult`` be ``expressionResult``:
+   .... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
+  ... Else:
+   .... Let ``value~init~`` be ``expressionResult``.
+   .... Let ``EC~2~`` be <<add_var_e, ``EC~1~`` where ``nameIR'`` to ``value~init~`` is added to the ``LOCAL`` layer>>.
+   .... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~1~``, and ```EMPTY``.
+. Else:
+ .. Let ``forUpdateStatementIR`` be ``forInitStatementIR``.
+ .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<ForUpdateStmt_eval, runtime evaluation of ``forUpdateStatementIR``, under evaluation context ``EC~0~`` and store ``store``>>.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult``.
 
-<<ForInitStmt_eval, ``EC~0~`` ``store`` ``|-`` ``forUpdateStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
+<<ForInitStmts_eval, ForInitStmts_eval>>:
 
-. Let <<ForUpdateStmt_eval, EC~0~ store |- forUpdateStatementIR : EC~1~ STO~1~ statementResult>>.
-. Result in ``EC~1~``, ``STO~1~``, and ``statementResult``.
+* Runtime evaluation of ``forInitStatementListIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
 
-<<ForInitStmts_eval, ForInitStmts_eval: ``evalContext`` ``store`` ``|-`` ``forInitStatementIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
-
-<<ForInitStmts_eval, ``evalContext`` ``store`` ``|-`` ``forInitStatementIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>:
+<<ForInitStmts_eval, Runtime evaluation of ``forInitStatementIR^{asterisk}^``, under evaluation context ``evalContext`` and store ``store``>>:
 
 . If ``forInitStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ```EMPTY``.
+ .. Result in 
+* the updated evaluation context ``evalContext``, store ``store``, and ```EMPTY``.
 . If let ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``:
- .. Let <<ForInitStmt_eval, evalContext store |- forInitStatementIR~h~ : EC~1~ STO~1~ statementResult>>.
+ .. Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
+* the result of <<ForInitStmt_eval, runtime evaluation of ``forInitStatementIR~h~``, under evaluation context ``evalContext`` and store ``store``>>.
  .. If let ``abortResult`` be ``statementResult``:
-  ... Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+  ... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
  .. Else if let ``continueEmptyResult`` be ``statementResult``:
-  ... Let <<ForInitStmts_eval, EC~1~ STO~1~ |- forInitStatementIR~t~^{asterisk}^ : EC~2~ STO~2~ statementResult'>>.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``statementResult'``.
+  ... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'`` be
+* the result of <<ForInitStmts_eval, runtime evaluation of ``forInitStatementIR~t~^{asterisk}^``, under evaluation context ``EC~1~`` and store ``STO~1~``>>.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult'``.
 
-<<ForThreeClauseLoop_eval, ForThreeClauseLoop_eval: ``EC~0~`` ``STO~0~`` ``|-`` ``typedExpressionIR`` ``statementIR`` ``forUpdateStatementListIR`` ``:`` ``%`` ``%`` ``%``>>
+<<ForThreeClauseStmt_eval, ForThreeClauseStmt_eval>>:
 
-<<ForThreeClauseLoop_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``typedExpressionIR`` ``statementIR`` ``forUpdateStatementListIR`` ``:`` ``%`` ``%`` ``%``>>:
+* Looping ``statementIR`` with condition ``typedExpressionIR`` and updates ``forUpdateStatementListIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
+
+<<ForThreeClauseStmt_eval, Looping ``statementIR`` with condition ``typedExpressionIR`` and updates ``forUpdateStatementListIR``, under evaluation context ``EC~0~`` and store ``STO~0~``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
 . If ``expressionResult`` is equal to ```B`` ``false``:
- .. Result in ``EC~1~``, ``STO~1~``, and ```EMPTY``.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ```EMPTY``.
 . If ``expressionResult`` is equal to ```B`` ``true``:
  .. Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
  .. If let ``abortResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``abortResult``.
  .. Else if let ``returnResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``returnResult``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ```EMPTY``.
- .. If ``statementResult`` is in ``[`EMPTY,`` ``CONTINUE]``:
-  ... Let <<ForUpdateStmts_eval, EC~2~ STO~2~ |- forUpdateStatementListIR : EC~3~ STO~3~ statementResult'>>.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ```EMPTY``.
+ .. If ``statementResult`` is equal to ```EMPTY`` or ``statementResult`` is equal to ``CONTINUE``:
+  ... Let the updated evaluation context ``EC~3~``, store ``STO~3~``, and ``statementResult'`` be
+* the result of <<ForUpdateStmts_eval, runtime evaluation of ``forUpdateStatementListIR``, under evaluation context ``EC~2~`` and store ``STO~2~``>>.
   ... If let ``exitResult`` be ``statementResult'``:
-   .... Result in ``EC~3~``, ``STO~3~``, and ``EXIT``.
+   .... Result in 
+* the updated evaluation context ``EC~3~``, store ``STO~3~``, and ``EXIT``.
   ... Else if let ``continueEmptyResult`` be ``statementResult'``:
-   .... Let <<ForThreeClauseLoop_eval, EC~3~ STO~3~ |- typedExpressionIR statementIR forUpdateStatementListIR : EC~4~ STO~4~ statementResult''>>.
-   .... Result in ``EC~4~``, ``STO~4~``, and ``statementResult''``.
+   .... Let the updated evaluation context ``EC~4~``, store ``STO~4~``, and ``statementResult''`` be
+* the result of <<ForThreeClauseStmt_eval, looping ``statementIR`` with condition ``typedExpressionIR`` and updates ``forUpdateStatementListIR``, under evaluation context ``EC~3~`` and store ``STO~3~``>>.
+   .... Result in 
+* the updated evaluation context ``EC~4~``, store ``STO~4~``, and ``statementResult''``.
 
-<<ForCollectionExpr_eval, ForCollectionExpr_eval: ``EC~0~`` ``STO~0~`` ``|-`` ``forCollectionExpressionIR`` ``:`` ``%`` ``%`` ``%``>>
+<<ForCollectionExpr_eval, ForCollectionExpr_eval>>:
 
-<<ForCollectionExpr_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``typedExpressionIR`` ``:`` ``%`` ``%`` ``%``>>:
+* Runtime evaluation of ``forCollectionExpressionIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``expressionListResult``.
+
+<<ForCollectionExpr_eval, Runtime evaluation of ``typedExpressionIR``, under evaluation context ``EC~0~`` and store ``STO~0~``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. If let ``listValue`` be ``value``:
   ... Let ``LIST`` ``[`` ``value'^{asterisk}^`` ``]`` be ``listValue``.
-  ... Result in ``EC~1~``, ``STO~1~``, and ``value'^{asterisk}^``.
+  ... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``value'^{asterisk}^``.
  .. Else if let ``headerStackValue`` be ``value``:
   ... Let ``HEADER_STACK`` ``[`` ``value'^{asterisk}^`` ``(`` ``++_++`` ``;`` ``++_++`` ``)`` ``]`` be ``headerStackValue``.
-  ... Result in ``EC~1~``, ``STO~1~``, and ``value'^{asterisk}^``.
+  ... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``value'^{asterisk}^``.
 
-<<ForCollectionExpr_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``typedExpressionIR~l~`` ``..`` ``typedExpressionIR~r~`` ``:`` ``%`` ``%`` ``%``>>:
+<<ForCollectionExpr_eval, Runtime evaluation of ``typedExpressionIR~l~`` ``..`` ``typedExpressionIR~r~``, under evaluation context ``EC~0~`` and store ``STO~0~``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~l~``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``STO~1~``, and ``abortResult``.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let the updated evaluation context ``EC~2~``, store ``STO~2~`` and expression result ``expressionResult'`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR~r~``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``STO~1~``>>.
  .. If let ``abortResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``STO~2~``, and ``abortResult``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``typeIR`` be <<type_of_typedExpressionIR, the type of ``typedExpressionIR~l~``>>.
-  ... Let ``value^{asterisk}^`` be ``<<values_of_setValue,`` ``values_of_setValue(SET`` ``<`` ``typeIR`` ``>,`` ``SET`` ``{`` ``value~l~`` ``..`` ``value~r~`` ``})>>``.
-  ... Result in ``EC~2~``, ``STO~2~``, and ``value^{asterisk}^``.
+  ... Let ``value^{asterisk}^`` be <<values_of_setValue, the values in ``SET`` ``{`` ``value~l~`` ``..`` ``value~r~`` ``}`` of type ``SET`` ``<`` ``typeIR`` ``>``>>.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``value^{asterisk}^``.
 
-<<values_of_setValue, values_of_setValue(SET < typeIR >, setValue)>>
+<<values_of_setValue, The values in ``setValue`` of type ``SET`` ``<`` ``typeIR`` ``>``>>
 
 
 . Check that ``setValue`` matches pattern ``SET`` ``{`` ``%`` ``..`` ``%`` ``}``.
@@ -16286,27 +16412,37 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . If ``<<bin_gt,`` ``bin_gt(value~l~,`` ``value~r~)>>``:
  .. Return ``·``.
 
-<<ForInLoop_eval, ForInLoop_eval: ``evalContext`` ``store`` ``|-`` ``nameIR`` ``value^{asterisk}^`` ``statementIR`` ``:`` ``%`` ``%`` ``%``>>
+<<ForInStmt_eval, ForInStmt_eval>>:
 
-<<ForInLoop_eval, ``evalContext`` ``store`` ``|-`` ``nameIR`` ``value^{asterisk}^`` ``statementIR`` ``:`` ``%`` ``%`` ``%``>>:
+* Looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``evalContext`` and store ``store``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``statementResult``.
+
+<<ForInStmt_eval, Looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``evalContext`` and store ``store``>>:
 
 . If ``value^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``store``, and ```EMPTY``.
+ .. Result in 
+* the updated evaluation context ``evalContext``, store ``store``, and ```EMPTY``.
 . If let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``:
  .. Let ``EC~1~`` be <<update_var_e, ``evalContext`` where ``nameIR`` is updated to ``value~h~`` from the ``LOCAL`` layer>>.
  .. Let the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``statementIR``, under cursor ``LOCAL``, evaluation context ``EC~1~``, and store ``store``>>.
  .. If let ``abortResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ``abortResult``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``abortResult``.
  .. Else if let ``returnResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ``returnResult``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~1~``, and ``returnResult``.
  .. Else if let ``forBreakResult`` be ``statementResult``:
-  ... Result in ``EC~2~``, ``STO~1~``, and ```EMPTY``.
- .. If ``statementResult`` is in ``[`EMPTY,`` ``CONTINUE]``:
-  ... Let <<ForInLoop_eval, EC~2~ STO~1~ |- nameIR value~t~^{asterisk}^ statementIR : EC~3~ STO~2~ statementResult'>>.
-  ... Result in ``EC~3~``, ``STO~2~``, and ``statementResult'``.
+  ... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~1~``, and ```EMPTY``.
+ .. If ``statementResult`` is equal to ```EMPTY`` or ``statementResult`` is equal to ``CONTINUE``:
+  ... Let the updated evaluation context ``EC~3~``, store ``STO~2~``, and ``statementResult'`` be
+* the result of <<ForInStmt_eval, looping over ``value~t~^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~2~`` and store ``STO~1~``>>.
+  ... Result in 
+* the updated evaluation context ``EC~3~``, store ``STO~2~``, and ``statementResult'``.
 
-<<match_switchLabelIR_table, match_switchLabelIR_table(id, switchLabelIR)>>
+<<match_switchLabelIR_table, ``id`` matches ``switchLabelIR``>>
 
 
 . If ``switchLabelIR`` is ``DEFAULT``: return ``true``.
@@ -16320,110 +16456,112 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Return ``true``.
 . Otherwise: return ``false``.
 
-<<SwitchCases_table_eval, SwitchCases_table_eval: ``id`` ``|-`` ``switchCaseIR^{asterisk}^`` ``:`` ``%``>>
+<<SwitchCases_table_eval, SwitchCases_table_eval>>:
 
-<<SwitchCases_table_eval, ``id`` ``|-`` ``switchCaseIR^{asterisk}^`` ``:`` ``%``>>:
+* Runtime evaluation of ``switchCaseListIR`` for invocation of table ``id``:
+* Results in the matched block ``blockStatementIR^?^``.
+
+<<SwitchCases_table_eval, Runtime evaluation of ``switchCaseIR^{asterisk}^`` for invocation of table ``id``>>:
 
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``·``.
+ .. Result in the matched block ``·``.
 . If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
  .. If let ``switchLabelIR~h~`` ``:`` ``blockStatementIR~h~`` be ``switchCaseIR~h~``:
-  ... If ``<<match_switchLabelIR_table,`` ``match_switchLabelIR_table(id,`` ``switchLabelIR~h~)>>``:
-   .... Result in ``blockStatementIR~h~``.
+  ... If <<match_switchLabelIR_table, ``id`` matches ``switchLabelIR~h~``>>:
+   .... Result in the matched block ``blockStatementIR~h~``.
   ... Else:
-   .... Let <<SwitchCases_table_eval, id |- switchCaseIR~t~^{asterisk}^ : blockStatementIR^?^>>.
-   .... Result in ``blockStatementIR^?^``.
+   .... Let the matched block ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_table_eval, runtime evaluation of ``switchCaseIR~t~^{asterisk}^`` for invocation of table ``id``>>.
+   .... Result in the matched block ``blockStatementIR^?^``.
  .. Else:
   ... Let ``switchLabelIR~h~`` ``:`` be ``switchCaseIR~h~``.
-  ... If ``<<match_switchLabelIR_table,`` ``match_switchLabelIR_table(id,`` ``switchLabelIR~h~)>>``:
+  ... If <<match_switchLabelIR_table, ``id`` matches ``switchLabelIR~h~``>>:
    .... Let ``switchCaseIR'^{asterisk}^`` be <<filter_, ``switchCaseIR~t~^{asterisk}^`` filtered by $is_non_fallthrough_switchCaseIR>>.
    .... Check that ``switchCaseIR'^{asterisk}^`` is a non-empty list.
    .... Let ``switchCaseIR''`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``switchCaseIR'^{asterisk}^``.
    .... Check that ``switchCaseIR''`` matches pattern ``%`` ``:`` ``%``.
    .... Let ``++_++`` ``:`` ``blockStatementIR`` be ``switchCaseIR''``.
-   .... Result in ``blockStatementIR``.
+   .... Result in the matched block ``blockStatementIR``.
   ... Else:
-   .... Let <<SwitchCases_table_eval, id |- switchCaseIR~t~^{asterisk}^ : blockStatementIR^?^>>.
-   .... Result in ``blockStatementIR^?^``.
+   .... Let the matched block ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_table_eval, runtime evaluation of ``switchCaseIR~t~^{asterisk}^`` for invocation of table ``id``>>.
+   .... Result in the matched block ``blockStatementIR^?^``.
 
-<<is_non_fallthrough_switchCaseIR, is_non_fallthrough_switchCaseIR(switchCaseIR)>>
+<<is_non_fallthrough_switchCaseIR, ``switchCaseIR`` is not a fall-through case>>
 
 
 . If ``switchCaseIR`` matches pattern ``%`` ``:`` ``%``: return ``true``.
 . Else: return ``false``.
 
-<<SwitchLabelIR_general_eval, SwitchLabelIR_general_eval: ``cursor`` ``EC~0~`` ``STO~0~`` ``|-`` ``switchLabelIR`` ``:`` ``%`` ``%`` ``%``>>
+<<SwitchLabel_general_eval, SwitchLabel_general_eval>>:
 
-<<SwitchLabelIR_general_eval, ``LOCAL`` ``EC~0~`` ``STO~0~`` ``|-`` ``switchLabelIR`` ``:`` ``%`` ``%`` ``%``>>:
+* Runtime evaluation of ``store``, under evaluation context ``cursor`` and store ``evalContext``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``expressionResult``.
+
+<<SwitchLabel_general_eval, Runtime evaluation of ``STO~0~``, under evaluation context ``LOCAL`` and store ``EC~0~``>>:
 
 . If ``switchLabelIR`` is ``DEFAULT``:
- .. Result in ``EC~0~``, ``STO~0~``, and ``DEFAULT``.
+ .. Result in 
+* the updated evaluation context ``EC~0~``, store ``STO~0~``, and ``DEFAULT``.
 . Else:
  .. Let ``typedExpressionIR`` be ``switchLabelIR``.
  .. Let the updated evaluation context ``EC~1~``, store ``STO~1~`` and expression result ``expressionResult`` be
 * the result of <<Expr_eval, evaluating ``typedExpressionIR``, under cursor ``LOCAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
- .. Result in ``EC~1~``, ``STO~1~``, and ``expressionResult``.
+ .. Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``expressionResult``.
 
-<<match_switchLabelIR_general, match_switchLabelIR_general(value, value')>>
+<<match_switchLabelIR_general, ``value`` matches ``value'``>>
 
 
 . If let ``defaultValue`` be ``value'``: return ``true``.
-. If let ``integerLiteral`` be ``value``:
- .. If let ``w~a~`` ``W`` ``i~a~`` be ``integerLiteral``:
-  ... Check that ``value'`` has type ``integerLiteral``.
-  ... Let ``integerLiteral'`` be ``value'``.
-  ... Check that ``integerLiteral'`` matches pattern ``%`` ``W`` ``%``.
-  ... Let ``w~b~`` ``W`` ``i~b~`` be ``integerLiteral'``.
-  ... Return ``w~a~`` ``=`` ``w~b~`` ``/\`` ``i~a~`` ``=`` ``i~b~``.
- .. Else:
-  ... Let ``w~a~`` ``S`` ``i~a~`` be ``integerLiteral``.
-  ... Check that ``value'`` has type ``integerLiteral``.
-  ... Let ``integerLiteral'`` be ``value'``.
-  ... Check that ``integerLiteral'`` matches pattern ``%`` ``W`` ``%``.
-  ... Let ``w~b~`` ``W`` ``i~b~`` be ``integerLiteral'``.
-  ... Return ``w~a~`` ``=`` ``w~b~`` ``/\`` ``i~a~`` ``=`` ``i~b~``.
-. Else if let ``enumValue~a~`` be ``value``:
- .. Check that ``value'`` has type ``enumValue``.
- .. Let ``enumValue~b~`` be ``value'``.
- .. Return ``<<bin_eq,`` ``bin_eq(enumValue~a~,`` ``enumValue~b~)>>``.
-. Else:
- .. Let ``errorValue~a~`` be ``value``.
- .. Check that ``value'`` has type ``errorValue``.
- .. Let ``errorValue~b~`` be ``value'``.
- .. Return ``<<bin_eq,`` ``bin_eq(errorValue~a~,`` ``errorValue~b~)>>``.
-. Otherwise: return ``false``.
+. Otherwise:
+ .. Return ``<<bin_eq,`` ``bin_eq(value,`` ``value')>>``.
 
-<<SwitchCases_general_eval, SwitchCases_general_eval: ``cursor`` ``EC~0~`` ``STO~0~`` ``value`` ``|-`` ``switchCaseIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>
+<<SwitchCases_general_eval, SwitchCases_general_eval>>:
 
-<<SwitchCases_general_eval, ``LOCAL`` ``EC~0~`` ``STO~0~`` ``value`` ``|-`` ``switchCaseIR^{asterisk}^`` ``:`` ``%`` ``%`` ``%``>>:
+* Runtime evaluation of ``switchCaseListIR``, under evaluation context ``cursor`` and store ``evalContext`` with switch key ``value``:
+* Results in 
+ ** the updated evaluation context ``evalContext``, store ``store``, and ``blockStatementIR^?^``.
+
+<<SwitchCases_general_eval, Runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``LOCAL`` and store ``EC~0~`` with switch key ``value``>>:
 
 . If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``EC~0~``, ``STO~0~``, and ``·``.
+ .. Result in 
+* the updated evaluation context ``EC~0~``, store ``STO~0~``, and ``·``.
 . If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
  .. If let ``switchLabelIR~h~`` ``:`` ``blockStatementIR~h~`` be ``switchCaseIR~h~``:
-  ... Let <<SwitchLabelIR_general_eval, LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult>>.
+  ... Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``expressionResult`` be
+* the result of <<SwitchLabel_general_eval, runtime evaluation of ``STO~0~``, under evaluation context ``LOCAL`` and store ``EC~0~``>>.
   ... Check that ``expressionResult`` has type ``continueResult<value>``.
   ... Let ``value~label~`` be ``expressionResult``.
-  ... If ``<<match_switchLabelIR_general,`` ``match_switchLabelIR_general(value,`` ``value~label~)>>``:
-   .... Result in ``EC~1~``, ``STO~1~``, and ``blockStatementIR~h~``.
+  ... If <<match_switchLabelIR_general, ``value`` matches ``value~label~``>>:
+   .... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``blockStatementIR~h~``.
   ... Else:
-   .... Let <<SwitchCases_general_eval, LOCAL EC~1~ STO~1~ value |- switchCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ blockStatementIR^?^>>.
-   .... Result in ``EC~2~``, ``STO~2~``, and ``blockStatementIR^?^``.
+   .... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_general_eval, runtime evaluation of ``switchCaseIR~t~^{asterisk}^``, under evaluation context ``LOCAL`` and store ``EC~1~`` with switch key ``value``>>.
+   .... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``blockStatementIR^?^``.
  .. Else:
   ... Let ``switchLabelIR~h~`` ``:`` be ``switchCaseIR~h~``.
-  ... Let <<SwitchLabelIR_general_eval, LOCAL EC~0~ STO~0~ |- switchLabelIR~h~ : EC~1~ STO~1~ expressionResult>>.
+  ... Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``expressionResult`` be
+* the result of <<SwitchLabel_general_eval, runtime evaluation of ``STO~0~``, under evaluation context ``LOCAL`` and store ``EC~0~``>>.
   ... Check that ``expressionResult`` has type ``continueResult<value>``.
   ... Let ``value~label~`` be ``expressionResult``.
-  ... If ``<<match_switchLabelIR_general,`` ``match_switchLabelIR_general(value,`` ``value~label~)>>``:
+  ... If <<match_switchLabelIR_general, ``value`` matches ``value~label~``>>:
    .... Let ``switchCaseIR'^{asterisk}^`` be <<filter_, ``switchCaseIR~t~^{asterisk}^`` filtered by $is_non_fallthrough_switchCaseIR>>.
    .... Check that ``switchCaseIR'^{asterisk}^`` is a non-empty list.
    .... Let ``switchCaseIR''`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``switchCaseIR'^{asterisk}^``.
    .... Check that ``switchCaseIR''`` matches pattern ``%`` ``:`` ``%``.
    .... Let ``++_++`` ``:`` ``blockStatementIR`` be ``switchCaseIR''``.
-   .... Result in ``EC~1~``, ``STO~1~``, and ``blockStatementIR``.
+   .... Result in 
+* the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``blockStatementIR``.
   ... Else:
-   .... Let <<SwitchCases_general_eval, LOCAL EC~1~ STO~1~ value |- switchCaseIR~t~^{asterisk}^ : EC~2~ STO~2~ blockStatementIR^?^>>.
-   .... Result in ``EC~2~``, ``STO~2~``, and ``blockStatementIR^?^``.
+   .... Let the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``blockStatementIR^?^`` be
+* the result of <<SwitchCases_general_eval, runtime evaluation of ``switchCaseIR~t~^{asterisk}^``, under evaluation context ``LOCAL`` and store ``EC~1~`` with switch key ``value``>>.
+   .... Result in 
+* the updated evaluation context ``EC~2~``, store ``STO~2~``, and ``blockStatementIR^?^``.
 
 <<SelectCase_match, SelectCase_match: ``EC~0~`` ``STO~0~`` ``value~key~^{asterisk}^`` ``|-`` ``keysetExpressionIR`` ``:`` ``nameIR`` ``;`` ``:`` ``%`` ``%`` ``%``>>
 
@@ -16628,7 +16766,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 <<ActionBody_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``blockStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Block_eval, runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -16641,7 +16779,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 <<DefinedFunctionBody_eval, ``EC~0~`` ``STO~0~`` ``|-`` ``blockStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Block_eval, the runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Block_eval, runtime evaluation of ``blockStatementIR``, under evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -16908,7 +17046,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~p~`` be ``<<V1Model_setup_parser_callee,`` ``V1Model_setup_parser_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~p~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``ACCEPT``.
 . Else if let ``rejectTransitionResult`` be ``statementResult``:
@@ -16925,7 +17063,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~vr~`` be ``<<V1Model_setup_verify_callee,`` ``V1Model_setup_verify_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~vr~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -16943,7 +17081,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~ig~`` be ``<<V1Model_setup_ingress_callee,`` ``V1Model_setup_ingress_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~ig~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``exitResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``EXIT``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
@@ -16961,7 +17099,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~eg~`` be ``<<V1Model_setup_egress_callee,`` ``V1Model_setup_egress_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~eg~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -16978,7 +17116,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~ck~`` be ``<<V1Model_setup_check_callee,`` ``V1Model_setup_check_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~ck~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -16995,7 +17133,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Let ``typedExpressionIR~dep~`` be ``<<V1Model_setup_deparse_callee,`` ``V1Model_setup_deparse_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~dep~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
@@ -17210,7 +17348,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Let ``typedExpressionIR~prs~`` be ``<<eBPF_setup_parse_callee,`` ``eBPF_setup_parse_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~prs~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``ACCEPT``.
 . Else if let ``rejectTransitionResult`` be ``statementResult``:
@@ -17227,7 +17365,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Let ``typedExpressionIR~filt~`` be ``<<eBPF_setup_filter_callee,`` ``eBPF_setup_filter_callee(EC~0~,`` ``STO~0~,`` ``typedExpressionIR~main~)>>``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~filt~`` ``.`` ``"apply"``.
 . Let the updated evaluation context ``EC~1~``, store ``STO~1~``, and ``statementResult`` be
-* the result of <<Stmt_eval, the runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
+* the result of <<Stmt_eval, runtime evaluation of ``callableTargetIR`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` ``;``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO~0~``>>.
 . If let ``continueEmptyResult`` be ``statementResult``:
  .. Result in ``EC~1~``, ``STO~1~``, and ``RETURN`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:

@@ -182,6 +182,9 @@ relation SwitchCase_inst:
   cursor instContext store |- switchCaseIR
                             : store switchCaseIR
   hint(input %0 %1 %2 %3)
+  hint(prose_in "compile-time evaluation of" %3#
+                ", under cursor" %0#", instantiation context" %1#", and store" %2)
+  hint(prose_out "the updated store" %4 "and" %5)
 
 ;;;;; switchLabelIR `: blockStatementIR
 ;;;;; switchLabelIR `:
@@ -206,17 +209,24 @@ relation SwitchCases_inst:
   cursor instContext store |- switchCaseIR*
                             : store switchCaseIR*
   hint(input %0 %1 %2 %3)
+  hint(prose_in "compile-time evaluation of switch cases" %3#
+                ", under cursor" %0#", instantiation context" %1#", and store" %2)
+  hint(prose_out "the updated store" %4 "and" %5)
 
-rule SwitchCases_inst/nil:
-  p IC STO |- eps : STO eps
+rulegroup SwitchCases_inst {
 
-rule SwitchCases_inst/cons:
-  p IC STO_0 |- switchCaseIR_h :: switchCaseIR_t*
-              : STO_2 (switchCaseIR_h' :: switchCaseIR_t'*)
-  -- SwitchCase_inst: p IC STO_0 |- switchCaseIR_h
-                                  : STO_1 switchCaseIR_h'
-  -- SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*
-                                   : STO_2 switchCaseIR_t'*
+  rule SwitchCases_inst/nil:
+    p IC STO |- eps : STO eps
+
+  rule SwitchCases_inst/cons:
+    p IC STO_0 |- switchCaseIR_h :: switchCaseIR_t*
+                : STO_2 (switchCaseIR_h' :: switchCaseIR_t'*)
+    -- SwitchCase_inst: p IC STO_0 |- switchCaseIR_h
+                                    : STO_1 switchCaseIR_h'
+    -- SwitchCases_inst: p IC STO_1 |- switchCaseIR_t*
+                                     : STO_2 switchCaseIR_t'*
+
+}
 
 rule Stmt_inst/switchStatementIR:
   p IC STO_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseListIR } 
