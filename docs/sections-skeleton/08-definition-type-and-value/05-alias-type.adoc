@@ -1,18 +1,21 @@
 === Alias types
 
-// Added
+// 368 - Modified
 A `typedef` or `type` declaration can be used to give an alias to a type.
 
+// 369 - Modified
 ${syntax: typedef typedefDeclaration}
 
+// Added
 Internally, the alias is represented as:
 
+// Added
 ${syntax: aliasTypeIR}
 
 [#sec-typedef]
 ==== `typedef` declaration
 
-// Section 7.5 of the P4-16 Language Specification
+// 370
 [source,p4]
 ----
 typedef bit<32> u32;
@@ -20,12 +23,15 @@ typedef struct Point { int<32> x; int<32> y; } Pt;
 typedef Empty_h[32] HeaderStack;
 ----
 
+// 371
 The two types are treated as synonyms, and all operations that can be executed
 using the original type can be also executed using the newly created type.
 
+// 372
 If `typedef` is used with a generic type the type must be specialized with the
 suitable number of type arguments:
 
+// 373
 [source,p4]
 ----
 struct S<T> {
@@ -39,6 +45,7 @@ typedef S<bit<32>> X;  // -- legal
 // Added
 Internally, the alias is represented as:
 
+// Added
 ${syntax: typedefTypeIR}
 
 ===== Type checking
@@ -47,7 +54,7 @@ ${syntax: typedefTypeIR}
 ``typedef``s are introduced by `typedef` declarations. Its typing rule is
 explained in <<sec-typedef-declaration>>. ``typedef``s are then used by
 referencing their names. Thus `typedef` types can be obtained from named types,
-as illustrated in <<sec-def-namedType>>.
+as illustrated in <<sec-named-type>>.
 
 ===== Well-formedness
 
@@ -58,33 +65,39 @@ ${rulegroup-prose: Type_wf/typedefTypeIR}
 [#sec-newtype]
 ==== `type` declaration
 
-// Section 7.6 of the P4-16 Language Specification
+// 374
 Similarly to `typedef`, the keyword `type` can be used to introduce a new type.
 
+// 375
 [source,p4]
 ----
 type bit<32> U32;
 U32 x = (U32)0;
 ----
 
+// 377
 While similar to `typedef`, the `type` keyword introduces a new type which is
 not a synonym with the original type: values of the original type and the newly
 introduced type cannot be mixed in expressions.
 
+// 378
 Currently the types that can be created by the `type` keyword are restricted to
 one of: `bit<>`, `int<>`, `bool`, or types defined using `type` from such
 types.
 
+// 379
 One important use of such types is in describing P4 values that need to be
 exchanged with the control plane through communication channels (e.g., through
 the control-plane API or through network packets sent to the control plane).
 For example, a P4 architecture may define a type for the switch ports:
 
+// 380
 [source,p4]
 ----
 type bit<9> PortId_t;
 ----
 
+// 381
 This declaration will prevent `PortId_t` values from being used in arithmetic
 expressions without casts.  Moreover, this declaration may enable special
 manipulation or such values by software that lies outside of the datapath
@@ -95,6 +108,7 @@ with the control-plane software).
 // Added
 Internally, the alias is represented as:
 
+// Added
 ${syntax: newTypeIR}
 
 ===== Type checking
@@ -103,7 +117,7 @@ ${syntax: newTypeIR}
 ``type``s are introduced by `type` declarations. Its typing rule is explained
 in <<sec-newtype-declaration>>. ``type``s are then used by referencing their
 names. Thus `type` types can be obtained from named types, as illustrated in
-<<sec-def-namedType>>.
+<<sec-named-type>>.
 
 ===== Well-formedness
 

@@ -1,12 +1,13 @@
 [#sec-direct-type-invocation]
 === Direct type invocation
 
-// Section 15.1 of the P4-16 Language Specification ----
+// 1016
 Controls and parsers are often instantiated exactly once. As a light syntactic
 sugar, control and parser declarations with no constructor parameters may be
 applied directly, as if they were an instance. This has the effect of creating
 and applying a local instance of that type.
 
+// 1017
 [source,p4]
 ----
 control Callee(/* parameters omitted */) { /* body omitted */ }
@@ -18,8 +19,10 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
 }
 ----
 
+// 1018
 The definition of `Caller` is equivalent to the following.
 
+// 1019
 [source,p4]
 ----
 control Caller(/* parameters omitted */)(/* parameters omitted */) {
@@ -29,17 +32,17 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
     }
 }
 ----
-// ----
 
-// Added ----
+// 1020 - Modified
 ${syntax: directApplicationStatement}
-// ----
 
-// Modified section 15.1 of the P4-16 Language Specification ----
+// 1021
+// 1022 - Modified
 This feature is intended to streamline the common case where a type is
 instantiated exactly once. The grammar allows direct calls for generic controls
 or parsers:
 
+// 1023
 [source,p4]
 ----
 control Callee<T>(/* parameters omitted */) { /* body omitted */ }
@@ -52,51 +55,62 @@ control Caller(/* parameters omitted */)(/* parameters omitted */) {
 }
 ----
 
+// 1024
 For completeness, the behavior of directly invoking the same type more
 than once is defined as follows.
 
-- Direct type invocation in different scopes will result in different local
+// 1025
+* Direct type invocation in different scopes will result in different local
   instances with different fully-qualified control names.
-- In the same scope, direct type invocation will result in a different local
+* In the same scope, direct type invocation will result in a different local
   instance per invocation--however, instances of the same type will share the
   same global name, via the `@name` annotation. If the type contains controllable
   entities, then invoking it directly more than once in the same scope is
   illegal, because it will produce multiple controllable entities with the same
   fully-qualified control name.
 
+// 1026
 See <<sec-name-annotations>> for details of `@name` annotations.
 
+// 1027
 No direct invocation is possible for controls or parsers that require
 constructor arguments. These need to be instantiated before they are invoked.
-// ----
 
-// Added ----
+// Added
 NOTE: Specify the contollable name part carefully in P4-SpecTec.
-// ----
 
 ==== Type checking
 
+// Added
 After type checking, a direct application statement is represented as:
 
+// Added
 ${syntax: directApplicationStatementIR}
 
+// Added
 ${rulegroup-source: Stmt_ok/directApplicationStatement}
 ${rulegroup-prose: Stmt_ok/directApplicationStatement}
 
 ==== Compile-time evaluation
 
+// Added
 At compile-time, a direct application is instantiated, and then
 desugared into a method call on that instance with the relation:
 
+// Added
 ${relation-title-source: DirectApplicationStmt_inst}
 ${relation-title-prose: DirectApplicationStmt_inst}
 
+// Added
 It is implemented as:
 
+// Added
 ${rulegroup-source: DirectApplicationStmt_inst}
 ${rulegroup-prose: DirectApplicationStmt_inst}
 
+// Added
 A direct application statement is instantiated as:
 
+// Added
 ${rulegroup-source: Stmt_inst/directApplicationStatementIR}
 ${rulegroup-prose: Stmt_inst/directApplicationStatementIR}

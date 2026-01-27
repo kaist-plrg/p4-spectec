@@ -1,10 +1,9 @@
 === Base types and values
 
-// Section 7.1 of the P4-16 Language Specification
+// 187
 P4 supports the following built-in base types:
 
-${syntax: baseType}
-
+// 188 - Modified
 * `bool`, which represents Boolean values
 * The `error` type, which is used to convey errors in a
   target-independent, compiler-managed way.
@@ -17,26 +16,30 @@ ${syntax: baseType}
 * Bit-strings of fixed width, denoted by `bit<>`
 * Bit-strings of dynamically-computed width with a fixed maximum width `varbit<>`
 
+// 189 - Modified
+${syntax: baseType}
+
 // Added
 In addition, P4 supports void types:
 
+// Added
 ${syntax: typeOrVoid}
 
+// 188 - Modified
 * The `void` type, which has no values and can be used only in a few
   restricted circumstances.
 
-In P4~IR~, base types are represented as:
+// Added
+In P4~IR~, base types and values are represented as:
 
-${syntax: baseTypeIR}
-
-The base values corresponding to the base types are:
-
-${syntax: baseValue}
+${syntax: baseTypeIR baseValue}
 
 ==== Well-formedness
 
+// Added
 The well-formedness rules for base types are as follows:
 
+// Added
 ${rulegroup-source: Type_wf/baseTypeIR}
 ${rulegroup-prose: Type_wf/baseTypeIR}
 
@@ -45,7 +48,7 @@ ${rulegroup-prose: Type_wf/baseTypeIR}
 // Added
 ${syntax: voidTypeIR}
 
-// Section 7.1.1 of the P4-16 Language Specification
+// 190
 The void type is written `void`. It contains no values. It is not included in
 the production rule `baseType` as it can only appear in few restricted places
 in P4 programs.
@@ -64,7 +67,7 @@ ${rulegroup-prose: Type_ok/void}
 // Added
 ${syntax: boolTypeIR boolValue}
 
-// Section 7.1.4 of the P4-16 Language Specification
+// 203 - Modified
 The Boolean type `bool` contains just two values, `false` and `true`. Boolean
 values are not integers or bit-strings.
 // Operations that can be performed on booleans are described in Section
@@ -82,15 +85,15 @@ ${rulegroup-prose: Type_ok/boolean}
 // Added
 ${syntax: errorTypeIR errorValue}
 
-// Section 7.1.2 of the P4-16 Language Specification
+// 191
 The error type contains opaque distinct values that can be used to signal
 errors. It is written as `error`. New elements of the error type
 are defined with the following syntax:
 
-// Added
+// 192 - Modified
 ${syntax: errorDeclaration}
 
-// Modified section 7.1.2 of the P4-16 Language Specification
+// 193 - Modified
 All elements of the `error` type are inserted into the `error` namespace,
 irrespective of the place where an error is defined. `error` is similar to an
 enumeration (`enum`) type in other languages. A program can contain multiple
@@ -98,21 +101,21 @@ enumeration (`enum`) type in other languages. A program can contain multiple
 declare the same identifier multiple times.
 // Expressions of type `error` are described in <<sec-error-exprs>>.
 
-// Section 7.1.2 of the P4-16 Language Specification
+// Added
+Error declaration is described in detail in <<sec-error-declaration>>.
+
+// 194
 For example, the following declaration creates two elements of the `error`
 type (these errors are declared in the P4 core library):
 
-// Section 7.1.2 of the P4-16 Language Specification
+// 195
 [source,p4]
 ----
 error { ParseError, PacketTooShort }
 ----
 
-// Section 7.1.2 of the P4-16 Language Specification
+// 195
 The underlying representation of errors is target-dependent.
-
-// Added
-Error declaration is described in detail in <<sec-error-declaration>>.
 
 ===== Type checking
 
@@ -126,17 +129,20 @@ ${rulegroup-prose: Type_ok/error}
 // Added
 ${syntax: matchKindTypeIR matchKindValue}
 
-// Section 7.1.3 of the P4-16 Language Specification
+// 197
 The `match_kind` type is very similar to the `error` type and is used to
 declare a set of distinct names that may be used in a table's key property
 (described in <<sec-table-props>>). All identifiers are inserted into the
 top-level namespace. It is an error to declare the same `match_kind` identifier
 multiple times.
 
+// 198 - Modified
 ${syntax: matchKindDeclaration}
 
-The P4 core library contains the following match_kind declaration:
+// 199
+The P4 core library contains the following `match_kind` declaration:
 
+// 200
 [source,p4]
 ----
 match_kind {
@@ -146,11 +152,10 @@ match_kind {
 }
 ----
 
+// 201
 Architectures may support additional ``match_kind``s. The declaration of new
 ``match_kind``s can only occur within model description files; P4 programmers
 cannot declare new match kinds.
-// Operations on values of type `match_kind` are described in
-// <<sec-match-kind-exprs>>.
 
 // Added
 Match kind declaration is described in detail in
@@ -167,12 +172,13 @@ ${rulegroup-prose: Type_ok/matchKind}
 // Added
 ${syntax: stringTypeIR stringValue}
 
-// Section 7.1.5 of the P4-16 Language Specification
+// 204 - Modified
 The type `string` represents strings. The values of type `string` are either
 string literals, or concatenations of multiple `string`-typed expressions.
 // Operations that can be performed on strings are described in Section
 // <<sec-string-ops>>.
 
+// 205
 One cannot declare variables with a `string` type. Parameters with type
 `string` can be only directionless (see Section <<sec-call-convention>>).
 P4 does not support string manipulation in the dataplane; the `string` type is
@@ -181,14 +187,17 @@ as discussed in Section <<sec-string-literals>>). Even so, the string type is
 useful, for example, in giving the type signature for extern functions such as
 the following:
 
+// 206
 [source,p4]
 ----
 extern void log(string message);
 ----
 
+// 207
 As another example, the following annotation indicates that the specified name
 should be used for a given table in the generated control-plane API:
 
+// 208
 [source,p4]
 ----
 @name("acl") table t1 { /* body omitted */ }
@@ -205,10 +214,11 @@ ${rulegroup-prose: Type_ok/string}
 // Added
 ${syntax: integerTypeIR integerLiteral integerValue}
 
-// Section 7.1.6 of the P4-16 Language Specification
+// 209
 P4 supports arbitrary-size integer values. The typing rules for the integer
 types are chosen according to the following principles:
 
+// 210
 * *Inspired by C*: Typing of integers is modeled after the
   well-defined parts of C, expanded to cope with arbitrary fixed-width
   integers. In particular, the type of the result of an expression only depends
@@ -227,23 +237,26 @@ types are chosen according to the following principles:
   interpretations. For example, P4 does not allow binary operations that
   combine signed and unsigned integers.
 
-The priority of arithmetic operations is identical to C---e.g., multiplication
+// 211
+The priority of arithmetic operations is identical to C--e.g., multiplication
 binds tighter than addition.
 
 ===== Portability
 
-// Section 7.1.6.1 of the P4-16 Language Specification
+// 212
 No P4 target can support all possible types and operations. For example, the
 type `bit<23132312>` is legal in P4, but it is highly unlikely to be supported
 on any target in practice. Hence, each target can impose restrictions on the
 types it can support. Such restrictions may include:
 
+// 213
 * The maximum width supported
 * Alignment and padding constraints (e.g., arithmetic may only be
   supported on widths which are an integral number of bytes).
 * Constraints on some operands (e.g., some architectures may only
   support multiplications by small values, or shifts with small values).
 
+// 214
 The documentation supplied with a target should clearly specify restrictions, and
 target-specific compilers should provide clear error messages when
 such restrictions are encountered. An architecture may reject a
@@ -251,22 +264,27 @@ well-typed P4 program and still be conformant to the P4 spec. However,
 if an architecture accepts a P4 program as valid, the runtime program
 behavior should match this specification.
 
+NOTE: P4-SpecTec hangs on large integers.
+
 ===== Arbitrary-precision integers
 
-// Section 7.1.6.2 of the P4-16 Language Specification
+// 232
 The arbitrary-precision data type describes integers with an unlimited
 precision. This type is written as `int`.
 
+// 233
 This type is reserved for integer literals and expressions that involve only
 literals. No P4 runtime value can have an `int` type; at compile time the
 compiler will convert all `int` values that have a runtime component to
 fixed-width types, according to the rules described below.
 
+// 234 - Modified
 // All operations that can be performed on arbitrary-precision integers are
 // described in <<sec-varint-ops>>. 
 The following example shows three constant definitions whose values are
 arbitrary-precision integers.
 
+// 235
 [source,p4]
 ----
 const int a = 5;
@@ -274,20 +292,22 @@ const int b = 2 * a;
 const int c = b - a + 3;
 ----
 
+// 236
 Parameters with type `int` are not supported for actions. Parameters with type
 `int` for other callable entities of a program, e.g. controls, parsers, or
 functions, must be directionless, indicating that all calls must provide a
-compile-time known value as an argument for such a parameter.  See
+compile-time known value as an argument for such a parameter. See
 <<sec-call-convention>> for more details on directionless parameters.
 
 ====== Type checking
 
+// Added
 ${rulegroup-source: Type_ok/arbitraryInt}
 ${rulegroup-prose: Type_ok/arbitraryInt}
 
 ===== Fixed-width unsigned integers (bit-strings)
 
-// Section 7.1.6.2 of the P4-16 Language Specification
+// 215
 An unsigned integer (which we also call a "bit-string") has an arbitrary width,
 expressed in bits. A bit-string of width `W` is declared as: `bit<W>`. `W` must
 be an expression that evaluates to a local compile-time known value (see
@@ -298,6 +318,7 @@ See <<sec-uninitialized-values-and-writing-invalid-headers>> for additional
 details. Note that `bit<W>` type refers to both cases of `bit<W>` and
 `bit<(expression)>` where the width is a local compile-time known value.
 
+// 216
 [source,p4]
 ----
 const bit<32> x = 10;   // 32-bit constant with value 10.
@@ -305,26 +326,31 @@ const bit<(x + 2)> y = 15;  // 12-bit constant with value 15.
                             // expression for width must use ()
 ----
 
+// 217
 Bits within a bit-string are numbered from `0` to `W-1`. Bit `0` is the least
 significant, and bit `W-1` is the most significant.
 
+// 218
 For example, the type `bit<128>` denotes the type of bit-string values with 128
 bits numbered from 0 to 127, where bit 127 is the most significant.
 
+// 219
 The type `bit` is a shorthand for `bit<1>`.
 
+// 220
 P4 architectures may impose additional constraints on bit types: for example,
 they may limit the maximum size, or they may only support some arithmetic
 operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 
 ====== Type checking
 
+// Added
 ${rulegroup-source: Type_ok/fixedBit}
 ${rulegroup-prose: Type_ok/fixedBit}
 
 ===== Fixed-width signed integers
 
-// Section 7.1.6.3 of the P4-16 Language Specification
+// 222
 Signed integers are represented using two's complement. An integer with `W`
 bits is declared as: `int<W>`. `W` must be an expression that evaluates to a
 local compile-time known (see Section <<sec-compile-time-known>>) value that is
@@ -332,30 +358,37 @@ a non-negative integer.  Note that `int<W>` type refers to both cases of
 `int<W>` and `int<(expression)>` where the width is a local compile-time known
 value.
 
+// 223
 Bits within an integer are numbered from `0` to `W-1`. Bit `0` is the least
 significant, and bit `W-1` is the sign bit.
 
+// 224
 For example, the type `int<64>` describes the type of integers represented
 using exactly 64 bits with bits numbered from 0 to 63, where bit 63 is the most
 significant (sign) bit.
 
+// 225
 P4 architectures may impose additional constraints on signed types: for
 example, they may limit the maximum size, or they may only support some
 arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 
+// 227
 A signed integer with width 1 can only have two legal values: 0 and -1.
 
 ====== Type checking
 
+// Added
 ${rulegroup-source: Type_ok/fixedInt}
 ${rulegroup-prose: Type_ok/fixedInt}
 
 ===== Dynamically-sized bit-strings
 
+// 228
 Some network protocols use fields whose size is only known at runtime (e.g.,
 IPv4 options). To support restricted manipulations of such values, P4 provides
 a special bit-string type whose size is set at runtime, called a `varbit`.
 
+// 229
 The type `varbit<W>` denotes a bit-string with a width of at most `W` bits,
 where `W` is a local compile-time known value (see Section
 <<#sec-compile-time-known>>) that is a non-negative integer. For example, the
@@ -365,11 +398,13 @@ type `varbit<120>` denotes the type of bit-string values that may have between
 Note that `varbit<W>` type refers to both cases of `varbit<W>` and
 `varbit<(expression)>` where the width is a local compile-time known value.
 
+// 230
 P4 architectures may impose additional constraints on varbit types: for
 example, they may limit the maximum size, or they may require `varbit` values
 to always contain an integer number of bytes at runtime.
 
 ====== Type checking
 
+// Added
 ${rulegroup-source: Type_ok/variableBit}
 ${rulegroup-prose: Type_ok/variableBit}

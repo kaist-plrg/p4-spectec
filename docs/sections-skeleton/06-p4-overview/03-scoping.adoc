@@ -1,13 +1,14 @@
 [#sec-scoping]
-[#syn-cursor]
 === Scoping
 
+// Added
 Scopes are used to organize P4 programs into nested namespaces. There are three
 kinds of scopes in P4, from outermost to innermost: the top-level scope (global
 namespace), the scope within a `parser`, `control`, or `extern` declaration
 (block namespace), and the scope within a block statement (local namespace).
 Local namespaces can be nested within other local namespaces.
 
+// Added
 [source,p4]
 ----
 // top-level (global) scope
@@ -34,26 +35,29 @@ bit<8> f() {
 }
 ----
 
+// Added
 Cursors are used to track scopes while defining the semantic rules of P4.
 
+// Added
 ${syntax: cursor}
 
+// Added
 NOTE: The division of global/block/local scopes and `cursor` is newly introduced.
 Maybe add more explanation here later. Also introduce a metavariable for `cursor`.
 
-[#sec-scoping-name-resolution]
-[#syn-prefixedNonTypeName]
-[#syn-prefixedTypeName]
+[#sec-name-resolution]
 ==== Name resolution
 
+// Added
 P4 namespaces are organized in a hierarchical fashion.
 
-${syntax: prefixedNonTypeName
-          prefixedTypeName}
+// Added
+${syntax: prefixedNonTypeName prefixedTypeName}
 
-// Section 6.9 in the P4-16 Language Specification
+// 181
 Identifiers prefixed with a dot are always resolved in the top-level namespace.
 
+// 182
 [source,p4]
 ----
 const bit<32> x = 2;
@@ -66,12 +70,13 @@ control c() {
 }
 ----
 
-// Section 6.9 in the P4-16 Language Specification
+// 183
 References to resolve an identifier are attempted inside-out, starting with the
 current scope and proceeding to all lexically enclosing scopes. The compiler
 may provide a warning if multiple resolutions are possible for the same name
 (name shadowing).
 
+// 184
 [source,p4]
 ----
 const bit<4> x = 1;
@@ -83,7 +88,7 @@ control c() {
 }
 ----
 
-// Seciton 6.6.1 in the P4-16 Language Specification
+// 134
 The order of declarations is important; with the exception of parser states,
 all uses of a symbol must follow the symbol's declaration. (This is a departure
 from P4~14~, which allows declarations in any order. This requirement
@@ -94,7 +99,7 @@ ambiguities.)
 [#sec-scoping-name-visibility]
 ==== Name visibility
 
-// Section 6.10 in the P4-16 Language Specification
+// 185
 Identifiers defined in the top-level namespace are globally visible.
 Declarations within a `parser` or `control` are private and cannot be referred
 to from outside of the enclosing `parser` or `control`.

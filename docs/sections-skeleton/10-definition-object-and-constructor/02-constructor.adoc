@@ -1,48 +1,55 @@
 [#sec-constructor]
 === Constructors
 
-// Modified Seection 8.23 of the P4-16 Language Specification
+// 615 - Modified
 Objects can be instantiated in three ways:
 
+// 616 - Modified
 * Using instantiations, described in <<sec-instantiation-declaration>>.
 * Using constructor call expressions, described in <<sec-constructor-call-expression>>.
 * Using direct type invocation statements, described in <<sec-direct-type-invocation>>.
 
+// Added
 Instantiations and constructor call expressions invoke constructors, which
 creates an object as a result. Direct application statements are syntactic
 sugar for instantiations of ``parser`` and ``control`` objects.
 
+// 617 - Modified
 Constructor invocation is similar to callable invocation; constructors can
 also be overloaded, and called using named arguments.
 
 [#sec-constructor-parameter]
 ==== Constructor parameters
 
-// Modified Section 15 of the P4-16 Language Specification
+// 1006
 In order to support libraries of useful P4 components, ``extern``s, ``parser``s,
 ``control``s, and ``package``s can additionally be parameterized through the
 use of constructor parameters.
 
+// 1007
 Consider the parser declaration syntax:
 
-// Added
-${syntax: constructorParameterListOpt
-          parserDeclaration}
+// 1008 - Modified
+${syntax: parserDeclaration constructorParameterListOpt}
 
-// Modified Section 15 of the P4-16 Language Specification
+// 1009
 From this grammar fragment we infer that a ``parser`` declaration may have two
 sets of parameters:
 
--	The runtime parser parameters (``parameterList``)
--	Optional parser constructor parameters (``constructorParameterListOpt``)
+// 1010
+*	The runtime parser parameters (``parameterList``)
+*	Optional parser constructor parameters (``constructorParameterListOpt``)
 
+// 1011 - Modified
 Because constructors are evaluated entirely at compilation time, all
 constructor arguments must be expressions that can be evaluated at compilation
 time. In consequence, constructor parameters must be directionless 
 (i.e., they cannot be ``in``, ``out``, or ``inout``).
 
+// 1012
 Consider the following example:
 
+// 1013
 [source,p4]
 ----
 parser GenericParser(packet_in b, out Packet_header p)
@@ -72,19 +79,22 @@ parser GenericParser(packet_in b, out Packet_header p)
 }
 ----
 
+// 1014
 When instantiating the `GenericParser` it is necessary to supply a value for
 the `udpSupport` parameter, as in the following example:
 
+// 1015
 [source,p4]
 ----
 // topParser is a GenericParser where udpSupport = false
 GenericParser(false) topParser;
 ----
 
+// Added
 Internally, constructor parameters are represented as:
 
-${syntax: parameterIR
-          constructorParameterIR}
+// Added
+${syntax: constructorParameterIR parameterIR}
 
 ===== Well-formedness
 
@@ -95,18 +105,20 @@ ${relation-title-prose: ConstructorParameterType_wf}
 ${rulegroup-source: ConstructorParameterType_wf}
 ${rulegroup-prose: ConstructorParameterType_wf}
 
-[#sec-constructor-definitions]
+[#sec-constructor-definition]
 ==== Constructor definitions
 
 // Added
 Similar to how type declarations introduce type definitions and callable
-declarations introduce callable definitions (see <<sec-callable-definitions>>),
+declarations introduce callable definitions (see <<sec-callable-definition>>),
 constructor declarations introduce constructor definitions. These are
 parameterized by type parameters, and produces a constructor type when
 specialized with specific type arguments.
 
+// Added
 The runtime representation of constructors is defined as follows:
 
+// Added
 ${syntax: constructorDef}
 
 // Added
@@ -118,8 +130,8 @@ Similar to how callable types are internally used during type checking to
 represent callables, constructor types internally represent the types of
 constructors.
 
-${syntax: constructorTypeIR
-          constructorTypeDefIR}
+// Added
+${syntax: constructorTypeIR constructorTypeDefIR}
 
 ===== Well-formedness
 
