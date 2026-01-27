@@ -375,12 +375,21 @@ let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    resubmit_preserving_field_list(2) will only preserve field y.
 
    extern void resubmit_preserving_field_list(bit<8> index); *)
-let resubmit_preserving_field_list (value_ctx_caller : Value.t)
-    (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t * Value.t =
+let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
-  (* handle post-resubmit logic in pipe *)
-  raise
-    (Exception.Resubmit (value_ctx_caller, value_ctx, value_sto, value_index))
+  (* write resubmit index in arch state *)
+  let value_arch_state =
+    value_sto |> Spec.Func.find_store_archState |> State.of_value
+    |> State.with_resubmit value_index
+    |> State.to_value
+  in
+  let value_sto = Spec.Func.update_store_archState value_sto value_arch_state in
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
 
 (* Calling recirculate_preserving_field_list during execution of the
    egress control will cause the packet to be recirculated, i.e. it

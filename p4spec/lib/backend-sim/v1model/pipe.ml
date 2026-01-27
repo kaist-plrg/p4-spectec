@@ -56,13 +56,7 @@ struct
 
   (* Extern objects *)
 
-  (* CloneType * Session * Field Index *)
-  type clone_pkt = Value.t * Value.t * Value.t [@@deriving yojson]
-
-  type arch_state = { clone_opt : clone_pkt option } [@@deriving yojson]
-
-  let empty_arch_state =
-    { clone_opt = None } |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let empty_arch_state = State.empty |> State.to_value
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
@@ -71,19 +65,23 @@ struct
     | Register of Object.Register.t
   [@@deriving yojson]
 
-  let get_extern (value_sto : Value.t) (value_objectId : Value.t) : extern =
+  let get_arch_state (value_sto : Value.t) : State.t =
+    value_sto |> Spec.Func.find_store_archState |> unwrap_extern_v
+    |> State.of_yojson |> Result.get_ok
+
+  let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : extern =
     Spec.Func.find_store_objectState value_sto value_objectId
     |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
 
   let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-    match get_extern value_sto value_objectId with
+    match get_object_state value_sto value_objectId with
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "packet_in extern not found"
 
   let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
-    match get_extern value_sto value_objectId with
+    match get_object_state value_sto value_objectId with
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "packet_out extern not found"
 
@@ -135,24 +133,10 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let ( value_ctx_caller,
-          value_ctx,
-          value_sto,
-          value_name_func,
-          value_names_param ) =
+    let value_ctx, value_sto, value_name_func, value_names_param =
       match values_input with
-      | [
-       value_ctx_caller;
-       value_ctx;
-       value_sto;
-       value_name_func;
-       value_names_param;
-      ] ->
-          ( value_ctx_caller,
-            value_ctx,
-            value_sto,
-            value_name_func,
-            value_names_param )
+      | [ value_ctx; value_sto; value_name_func; value_names_param ] ->
+          (value_ctx, value_sto, value_name_func, value_names_param)
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
@@ -181,8 +165,7 @@ struct
           let packet_in = get_packet_in value_sto in
           Func.update_checksum_with_payload value_ctx value_sto packet_in
       | "resubmit_preserving_field_list", [ "index" ] ->
-          Func.resubmit_preserving_field_list value_ctx_caller value_ctx
-            value_sto
+          Func.resubmit_preserving_field_list value_ctx value_sto
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_sto
       | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_sto
@@ -217,7 +200,7 @@ struct
       | _ ->
           error_no_region "unexpected number of arguments to extern method call"
     in
-    let extern = get_extern value_sto value_objectId in
+    let extern = get_object_state value_sto value_objectId in
     let name_method = unwrap_text_v value_name_method in
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
@@ -482,36 +465,43 @@ struct
 
   let rec drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * bool =
-    try drive_pipe_pre_inner value_ctx value_sto
-    with
-    | Exception.Resubmit (value_ctx_caller, value_ctx, value_sto, value_index)
-    ->
-      (* When resubmitted *)
-      let value_ctx =
-        Spec.Rel.v1model_setup_preserved_meta_fields value_ctx_caller value_ctx
-          value_sto value_index
-      in
-      (* Reset packet_in extern in store *)
-      let value_sto =
-        let packet_in = get_packet_in value_sto in
-        let packet_in = Core.Object.PacketIn.reset packet_in in
-        let packet_in = PacketIn packet_in in
-        let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-        let value_packet_in =
-          packet_in |> extern_to_yojson |> wrap_extern_v "externState"
+    let value_ctx, value_sto, drop = drive_pipe_pre_inner value_ctx value_sto in
+    let arch_state = get_arch_state value_sto in
+    match arch_state.resubmit_opt with
+    | None -> (value_ctx, value_sto, drop)
+    | Some value_index ->
+        let value_ctx =
+          Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_sto
+            value_index
         in
-        Spec.Func.update_store_externState value_sto value_objectId
-          value_packet_in
-      in
-      (* Set standard_metadata.instance_type as 6 *)
-      let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
-      in
-      let value_ctx =
-        Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
-          "instance_type" value_instance_type
-      in
-      drive_pipe_pre value_ctx value_sto
+        (* Set standard_metadata.instance_type as 6 *)
+        let value_ctx =
+          let value_instance_type =
+            Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
+          in
+          Spec.Rel.lvalue_write_dot_global value_ctx value_sto
+            "standard_metadata" "instance_type" value_instance_type
+        in
+        (* Reset submit info to none *)
+        let value_arch_state =
+          State.(arch_state |> with_resubmit_opt None |> to_value)
+        in
+        let value_sto =
+          Spec.Func.update_store_archState value_sto value_arch_state
+        in
+        (* Reset packet_in extern in store *)
+        let value_sto =
+          let packet_in = get_packet_in value_sto in
+          let packet_in = Core.Object.PacketIn.reset packet_in in
+          let packet_in = PacketIn packet_in in
+          let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+          let value_packet_in =
+            packet_in |> extern_to_yojson |> wrap_extern_v "externState"
+          in
+          Spec.Func.update_store_objectState value_sto value_objectId
+            value_packet_in
+        in
+        drive_pipe_pre value_ctx value_sto
 
   let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
       Value.t * Value.t * IO.tx option =

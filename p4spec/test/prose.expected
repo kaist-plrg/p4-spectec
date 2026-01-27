@@ -11825,7 +11825,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let ``PACKAGE`` ``<`` ``++_++`` ``>`` ``(`` ``constructorParameterListIR`` ``)`` be ``constructorDef``.
  .. Return ``constructorParameterListIR``.
 
-<<init_externState, init_externState(nameIR, typeIR^{asterisk}^, value^{asterisk}^)>>
+<<init_objectState, init_objectState(nameIR, typeIR^{asterisk}^, value^{asterisk}^)>>
 
 <<text_of_number_tableKeyValueInterface, text_of_number_tableKeyValueInterface(tableKeyValueInterface)>>
 
@@ -12151,28 +12151,33 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 
 . Return ``<<empty_map,`` ``empty_map<callableId,`` ``constructorDef>>>``.
 
+<<empty_archState, empty_archState>>
+
 <<empty_store, An empty store>>
 
 
-. Return ``<<empty_map,`` ``empty_map<objectId,`` ``object>>>``.
+. Let ``archState`` be ``<<empty_archState,`` ``empty_archState>>``.
+. Let ``objectStore`` be <<empty_map, an empty map>>.
+. Return ``archState`` ``objectStore``.
 
-<<add_store, ``STO`` where ``objectId`` to ``object`` is added>>
-
-
-. Return ``<<add_map,`` ``add_map<objectId,`` ``object>(STO,`` ``objectId,`` ``object)>>``.
-
-<<find_store, The object ``objectId`` in ``STO``>>
+<<add_store, ``archState`` ``objectStore`` where ``objectId`` to ``object`` is added>>
 
 
-. Let ``object'`` be <<option_get, *!*>> <<find_map, ``objectId`` in map ``STO``>>.
+. Let ``objectStore'`` be <<add_map, ``objectStore`` where ``objectId`` to ``object`` is added>>.
+. Return ``archState`` ``objectStore'``.
+
+<<find_store, The object ``objectId`` in ``++_++`` ``objectStore``>>
+
+
+. Let ``object'`` be <<option_get, *!*>> <<find_map, ``objectId`` in map ``objectStore``>>.
 . Return ``object'``.
 
-<<find_store_qualified, find_store_qualified(store, objectId)>>
+<<find_store_qualified, find_store_qualified(STO, objectId)>>
 
 
-. Return ``<<find_store,`` ``find_store(store,`` ``objectId)>>``.
+. Return ``<<find_store,`` ``find_store(STO,`` ``objectId)>>``.
 
-<<find_store_unqualified, find_store_unqualified({ ( objectId : object )^{asterisk}^ }, id)>>
+<<find_store_unqualified, find_store_unqualified(archState { ( objectId : object )^{asterisk}^ }, id)>>
 
 
 . Let ``bool`` be <<objectId_ends_with, ``objectId`` is an object name that ends with ``id``>>.
@@ -12196,15 +12201,20 @@ for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{as
 
 . Return ``<<is_some_,`` ``is_some_<object>(object^?^)>>``.
 
-<<find_store_externState, find_store_externState(STO, objectId)>>
+<<find_store_objectState, find_store_objectState(STO, objectId)>>
 
 
 . Let ``object`` be <<find_store, the object ``objectId`` in ``STO``>>.
 . If let ``externObject`` be ``object``:
- .. Let ``EXTERN`` ``++_++`` ``<`` ``++_++`` ``>`` ``{`` ``externState`` ``++_++`` ``++_++`` ``}`` be ``externObject``.
- .. Return ``externState``.
+ .. Let ``EXTERN`` ``++_++`` ``<`` ``++_++`` ``>`` ``{`` ``objectState`` ``++_++`` ``++_++`` ``}`` be ``externObject``.
+ .. Return ``objectState``.
 . Otherwise:
  .. Return ``·``.
+
+<<find_store_archState, find_store_archState(archState objectStore)>>
+
+
+. Return ``archState``.
 
 <<update_store_qualified, update_store_qualified(STO~0~, objectId, object)>>
 
@@ -12216,7 +12226,7 @@ for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{as
 <<update_store_unqualified, update_store_unqualified(STO~0~, id, object)>>
 
 
-. Let ``{`` ``(`` ``objectId`` ``:`` ``++_++`` ``)^{asterisk}^`` ``}`` be ``STO~0~``.
+. Let ``++_++`` ``{`` ``(`` ``objectId`` ``:`` ``++_++`` ``)^{asterisk}^`` ``}`` be ``STO~0~``.
 . Let ``bool`` be <<objectId_ends_with, ``objectId`` is an object name that ends with ``id``>>.
 . Let ``objectId~id~^?^^{asterisk}^`` be the list of ``objectId~id~^?^``, obtained by repeating:
 +
@@ -12238,17 +12248,22 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 
 . Return ``<<is_some_,`` ``is_some_<objectId>(objectId^?^)>>``.
 
-<<update_store_externState, update_store_externState(STO~0~, objectId, externState)>>
+<<update_store_objectState, update_store_objectState(STO~0~, objectId, objectState)>>
 
 
 . Let ``object`` be <<find_store, the object ``objectId`` in ``STO~0~``>>.
 . If let ``externObject`` be ``object``:
  .. Let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``externObject``.
- .. Let ``externObject~update~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState`` ``frame`` ``externMethodDefEnv`` ``}``.
+ .. Let ``externObject~update~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState`` ``frame`` ``externMethodDefEnv`` ``}``.
  .. Let ``STO~1~`` be <<add_store, ``STO~0~`` where ``objectId`` to ``externObject~update~`` is added>>.
  .. Return ``STO~1~``.
 . Otherwise:
  .. Return ``·``.
+
+<<update_store_archState, update_store_archState(archState objectStore, archState')>>
+
+
+. Return ``archState'`` ``objectStore``.
 
 <<empty_instContext, An empty instantiation context>>
 
@@ -13233,14 +13248,14 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``IC~inner~`` be <<enter_path_i, ``IC~0~`` with ``nameIR`` added to the path>>.
 . Let the updated store ``STO~1~``,and the constructed ``object`` be
 * the result of <<Constructor_call, loading ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC~inner~``, and store ``STO~0~``>>.
-. If let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState`` ``frame`` ``externMethodDefEnv`` ``}`` be ``object``:
+. If let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState`` ``frame`` ``externMethodDefEnv`` ``}`` be ``object``:
  .. Let ``IC~decl~`` be <<inherit_i, an instantiation context same as ``IC~0~`` up to the ``GLOBAL`` layer>>.
  .. Let ``objectDeclarationListIR`` be <<flatten_objectInitializerOptIR, the list of object declarations in ``objectInitializerOptIR``>>.
  .. Let the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be
 * the result of <<ObjectDecls_inst, loading ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``>>.
  .. Let ``frame~merged~`` be <<merge_frames, the merged frame of ``frame`` and ``IC~decl_post~.BLOCK.FRAME``>>.
  .. Let ``externMethodDefEnv~merged~`` be <<merge_externMethodDefEnvs, the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.BLOCK.CALLABLE``>>.
- .. Let ``object~merged~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``}``.
+ .. Let ``object~merged~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``}``.
  .. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
  .. Let ``STO~3~`` be <<add_store, ``STO~2~`` where ``objectId`` to ``object~merged~`` is added>>.
  .. Let ``IC~1~`` be <<add_var_i, ``IC~0~`` where ``nameIR`` to ``REF`` ``objectId`` is added to the ``p`` layer>>.
@@ -13714,8 +13729,8 @@ for each ``id~cparam~`` in ``id~cparam~^{asterisk}^``
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``
-. Let ``externState`` be ``<<init_externState,`` ``init_externState(nameIR,`` ``typeArgumentIR^{asterisk}^,`` ``value~cparam~^{asterisk}^)>>``.
-. Let ``object~extern~`` be ``EXTERN`` ``nameIR`` ``<`` ``IC~callee_4~.BLOCK.TYPE`` ``>`` ``{`` ``externState`` ``IC~callee_4~.BLOCK.FRAME`` ``{`` ``(`` ``callableId`` ``:`` ``externMethodDef`` ``)^{asterisk}^`` ``}`` ``}``.
+. Let ``objectState`` be ``<<init_objectState,`` ``init_objectState(nameIR,`` ``typeArgumentIR^{asterisk}^,`` ``value~cparam~^{asterisk}^)>>``.
+. Let ``object~extern~`` be ``EXTERN`` ``nameIR`` ``<`` ``IC~callee_4~.BLOCK.TYPE`` ``>`` ``{`` ``objectState`` ``IC~callee_4~.BLOCK.FRAME`` ``{`` ``(`` ``callableId`` ``:`` ``externMethodDef`` ``)^{asterisk}^`` ``}`` ``}``.
 . Result in 
 * the updated store ``STO~1~``,
 * and the constructed ``object~extern~``.
@@ -15937,7 +15952,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let the updated evaluation context ``EC~callee_4~``, store ``STO~2~``, and call result ``callResult`` be
-* the result of <<ExternFunctionCall_eval, calling an extern function ``nameIR`` ``(`` ``nameIR~param~^{asterisk}^`` ``)``, under caller's evaluation context ``EC~1~``, evaluation context ``EC~callee_3~``, and store ``STO~1~``>>.
+* the result of <<ExternFunctionCall_eval, calling an extern function ``nameIR`` ``(`` ``nameIR~param~^{asterisk}^`` ``)``, under evaluation context ``EC~callee_3~``, and store ``STO~1~``>>.
  .. Let <<Copy_out, p~shared~ STO~2~ |- p EC~1~ parameterIR~aligned~^{asterisk}^ @ LOCAL EC~callee_4~ storageReference^?^^{asterisk}^ ~> EC~2~>>.
  .. Result in the updated evaluation context ``EC~2~``, store ``STO~2~``, and call result ``callResult``.
 
@@ -16158,7 +16173,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<ExternFunctionCall_eval, ExternFunctionCall_eval>>:
 
-* Calling an extern function ``nameIR`` ``(`` ``nameIR^{asterisk}^`` ``)``, under caller's evaluation context ``evalContext``, evaluation context ``evalContext``, and store ``store``:
+* Calling an extern function ``nameIR`` ``(`` ``nameIR^{asterisk}^`` ``)``, under evaluation context ``evalContext``, and store ``store``:
 * Results in the updated evaluation context ``evalContext``, store ``store``, and call result ``callResult``.
 
 <<ExternMethodCall_eval, ExternMethodCall_eval>>:
@@ -16841,9 +16856,9 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 * the result of <<Program_init, initializing the evaluation context and store for ``p4program``>>.
 . Result in the resulting evaluation context ``EC~0~`` and store ``STO~0~``.
 
-<<V1Model_init_packet_in, V1Model_init_packet_in: ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>
+<<V1Model_init_packet_in, V1Model_init_packet_in: ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_in~`` ``:`` ``%`` ``%``>>
 
-<<V1Model_init_packet_in, ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>:
+<<V1Model_init_packet_in, ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_in~`` ``:`` ``%`` ``%``>>:
 
 . Let the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_in"``>>.
@@ -16852,13 +16867,13 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Check that ``object`` has type ``externObject``.
 . Let ``externObject~packet_in~`` be ``object``.
 . Let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``externObject~packet_in~``.
-. Let ``externObject~packet_in_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``}``.
+. Let ``externObject~packet_in_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``}``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``["packet_in"]`` to ``externObject~packet_in_init~`` is added>>.
 . Result in ``EC~1~`` and ``STO~2~``.
 
-<<V1Model_init_packet_out, V1Model_init_packet_out: ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_out~`` ``:`` ``%`` ``%``>>
+<<V1Model_init_packet_out, V1Model_init_packet_out: ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_out~`` ``:`` ``%`` ``%``>>
 
-<<V1Model_init_packet_out, ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_out~`` ``:`` ``%`` ``%``>>:
+<<V1Model_init_packet_out, ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_out~`` ``:`` ``%`` ``%``>>:
 
 . Let the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_out"``>>.
@@ -16867,7 +16882,7 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
 . Check that ``object`` has type ``externObject``.
 . Let ``externObject~packet_out~`` be ``object``.
 . Let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``externObject~packet_out~``.
-. Let ``externObject~packet_out_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState~packet_out~`` ``frame`` ``externMethodDefEnv`` ``}``.
+. Let ``externObject~packet_out_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState~packet_out~`` ``frame`` ``externMethodDefEnv`` ``}``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``["packet_out"]`` to ``externObject~packet_out_init~`` is added>>.
 . Result in ``EC~1~`` and ``STO~2~``.
 
@@ -17196,16 +17211,16 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 <<V1Model_meta_fields_of_index, V1Model_meta_fields_of_index(STO, integerLiteral~index~)>>
 
 
-. Let ``object'`` be <<option_get, *!*>> <<find_map, ``["main"]`` in map ``STO``>>.
-. Check that ``object'`` has type ``packageObject``.
-. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object'``.
+. Let ``object`` be <<find_store, the object ``["main"]`` in ``STO``>>.
+. Check that ``object`` has type ``packageObject``.
+. Let ``PACKAGE`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``}`` be ``object``.
 . Let ``typeIR~meta~`` be <<option_get, *!*>> <<find_map, ``"M"`` in map ``theta``>>.
 . Check that ``typeIR~meta~`` has type ``structTypeIR``.
 . Let ``STRUCT`` ``typeId`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``{`` ``fieldTypeIR^{asterisk}^`` ``}`` be ``typeIR~meta~``.
 . Let ``(`` ``++_++`` ``++_++`` ``nameIR~field~`` ``;`` ``)^{asterisk}^`` be ``<<fields_with_field_list_index,`` ``fields_with_field_list_index(fieldTypeIR^{asterisk}^,`` ``integerLiteral~index~)>>``.
-. Let ``object'''`` be <<option_get, *!*>> <<find_map, ``["main",`` ``"ig"]`` in map ``STO``>>.
-. Check that ``object'''`` has type ``controlObject``.
-. Let ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``++_++`` ``++_++`` ``}`` be ``object'''``.
+. Let ``object'`` be <<find_store, the object ``["main",`` ``"ig"]`` in ``STO``>>.
+. Check that ``object'`` has type ``controlObject``.
+. Let ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``++_++`` ``++_++`` ``}`` be ``object'``.
 . Let ``parameterIR^{asterisk}^`` be ``parameterListIR``.
 . Check that ``parameterIR^{asterisk}^`` is a non-empty list.
 . Let ``++_++`` ``{two-colons}`` ``parameterIR'^{asterisk}^`` be ``parameterIR^{asterisk}^``.
@@ -17214,28 +17229,28 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Let ``storageReference~meta~`` be ``id``.
 . Return ``(`` ``storageReference~meta~,`` ``nameIR~field~^{asterisk}^`` ``)``.
 
-<<V1Model_copy_meta_fields, V1Model_copy_meta_fields: ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>
+<<V1Model_copy_meta_fields, V1Model_copy_meta_fields: ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>
 
-<<V1Model_copy_meta_fields, ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>:
+<<V1Model_copy_meta_fields, ``EC~0~`` ``STO`` ``|-`` ``storageReference`` ``nameIR^{asterisk}^`` ``:`` ``%``>>:
 
 . If ``nameIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``EC~0~``.
 . If let ``nameIR~h~`` ``{two-colons}`` ``nameIR~t~^{asterisk}^`` be ``nameIR^{asterisk}^``:
  .. Let ``storageReference~h~`` be ``storageReference`` ``.`` ``nameIR~h~``.
  .. Let the value ``value~h~`` be
-* the result of <<Lvalue_read, reading from ``storageReference~h~``, under cursor ``BLOCK``, evaluation context ``EC~capture~``, and store ``STO``>>.
+* the result of <<Lvalue_read, reading from ``storageReference~h~``, under cursor ``BLOCK``, evaluation context ``EC~0~``, and store ``STO``>>.
  .. Let ``storageReference~global~`` be ``"meta"`` ``.`` ``nameIR~h~``.
  .. Let the updated evaluation context ``EC~1~`` be
 * the result of <<Lvalue_write, writing ``value~h~`` to ``storageReference~global~``, under cursor ``GLOBAL``, evaluation context ``EC~0~``, and store ``STO``>>.
- .. Let <<V1Model_copy_meta_fields, EC~capture~ EC~1~ STO |- storageReference nameIR~t~^{asterisk}^ : EC~2~>>.
+ .. Let <<V1Model_copy_meta_fields, EC~1~ STO |- storageReference nameIR~t~^{asterisk}^ : EC~2~>>.
  .. Result in ``EC~2~``.
 
-<<V1Model_setup_preserved_meta_fields, V1Model_setup_preserved_meta_fields: ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>
+<<V1Model_setup_preserved_meta_fields, V1Model_setup_preserved_meta_fields: ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>
 
-<<V1Model_setup_preserved_meta_fields, ``EC~capture~`` ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>:
+<<V1Model_setup_preserved_meta_fields, ``EC~0~`` ``STO`` ``|-`` ``integerLiteral~index~`` ``:`` ``%``>>:
 
 . Let ``(`` ``storageReference~meta~,`` ``nameIR~field~^{asterisk}^`` ``)`` be ``<<V1Model_meta_fields_of_index,`` ``V1Model_meta_fields_of_index(STO,`` ``integerLiteral~index~)>>``.
-. Let <<V1Model_copy_meta_fields, EC~capture~ EC~0~ STO |- storageReference~meta~ nameIR~field~^{asterisk}^ : EC~1~>>.
+. Let <<V1Model_copy_meta_fields, EC~0~ STO |- storageReference~meta~ nameIR~field~^{asterisk}^ : EC~1~>>.
 . Result in ``EC~1~``.
 
 <<EBPF_init, EBPF_init>>:
@@ -17249,9 +17264,9 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 * the result of <<Program_init, initializing the evaluation context and store for ``p4program``>>.
 . Result in the resulting evaluation context ``EC~0~`` and store ``STO~0~``.
 
-<<EBPF_init_packet_in, EBPF_init_packet_in: ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>
+<<EBPF_init_packet_in, EBPF_init_packet_in: ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_in~`` ``:`` ``%`` ``%``>>
 
-<<EBPF_init_packet_in, ``EC~0~`` ``STO~0~`` ``|-`` ``externState~packet_in~`` ``:`` ``%`` ``%``>>:
+<<EBPF_init_packet_in, ``EC~0~`` ``STO~0~`` ``|-`` ``objectState~packet_in~`` ``:`` ``%`` ``%``>>:
 
 . Let the resulting store ``STO~1~`` be
 * the result of <<Extern_init, instantiating extern ``EC~0~`` in the evaluation context ``STO~0~`` and store ``"packet_in"``>>.
@@ -17260,7 +17275,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Check that ``object`` has type ``externObject``.
 . Let ``externObject~packet_in~`` be ``object``.
 . Let ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``}`` be ``externObject~packet_in~``.
-. Let ``externObject~packet_in_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``externState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``}``.
+. Let ``externObject~packet_in_init~`` be ``EXTERN`` ``typeId`` ``<`` ``theta`` ``>`` ``{`` ``objectState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``}``.
 . Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``["packet_in"]`` to ``externObject~packet_in_init~`` is added>>.
 . Result in ``EC~1~`` and ``STO~2~``.
 

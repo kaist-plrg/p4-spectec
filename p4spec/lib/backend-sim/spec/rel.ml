@@ -174,12 +174,11 @@ let v1model_deparse (value_ctx : Value.t) (value_sto : Value.t) :
       (value_ctx, value_sto, value_callResult)
   | _ -> assert false
 
-let v1model_setup_preserved_meta_fields (value_ctx_capture : Value.t)
-    (value_ctx : Value.t) (value_sto : Value.t) (value_index : Value.t) :
-    Value.t =
+let v1model_setup_preserved_meta_fields (value_ctx : Value.t)
+    (value_sto : Value.t) (value_index : Value.t) : Value.t =
   match
     !call "V1Model_setup_preserved_meta_fields"
-      [ value_ctx_capture; value_ctx; value_sto; value_index ]
+      [ value_ctx; value_sto; value_index ]
   with
   | [ value_ctx ] -> value_ctx
   | _ -> assert false

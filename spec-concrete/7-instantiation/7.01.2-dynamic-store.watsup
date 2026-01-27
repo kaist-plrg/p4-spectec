@@ -66,6 +66,9 @@ def $find_store_objectState(STO, objectId) = objectState
 def $find_store_objectState(STO, objectId) = eps
   -- otherwise
 
+dec $find_store_archState(store) : archState
+def $find_store_archState(archState objectStore) = archState
+
 ;;
 ;; Updater
 ;;
@@ -86,7 +89,7 @@ def $update_store_unqualified(STO_0, id, object) = STO_1
   -- if objectId_found = $filter_<objectId?>(objectId_id?*, def $is_some_objectId)
   -- if STO_1 = $add_store(STO_0, objectId_found, object)
 
-;;; Updater for extern state
+;;; Updater for object state
 
 dec $update_store_objectState(store, objectId, objectState) : store?
 
@@ -99,3 +102,6 @@ def $update_store_objectState(STO_0, objectId, objectState) = STO_1
   -- if STO_1 = $add_store(STO_0, objectId, externObject_update)
 def $update_store_objectState(STO_0, objectId, objectState) = eps
   -- otherwise
+
+dec $update_store_archState(store, archState) : store
+def $update_store_archState(archState objectStore, archState') = archState' objectStore

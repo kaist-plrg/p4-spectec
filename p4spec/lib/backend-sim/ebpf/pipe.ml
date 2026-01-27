@@ -116,21 +116,18 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let ( _value_ctx_caller,
-          value_ctx,
+    let ( value_ctx,
           value_sto,
           value_name_func,
           value_names_param ) =
       match values_input with
       | [
-       value_ctx_caller;
        value_ctx;
        value_sto;
        value_name_func;
        value_names_param;
       ] ->
-          ( value_ctx_caller,
-            value_ctx,
+          ( value_ctx,
             value_sto,
             value_name_func,
             value_names_param )
