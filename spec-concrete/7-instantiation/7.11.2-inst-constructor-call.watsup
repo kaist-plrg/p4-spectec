@@ -131,20 +131,25 @@ rule Constructor_call/externConstructorDef:
 
 ;;; parserObjectConstructorDef
 ;;; syntax parserObjectConstructorDef =
-;;;   PARSER `( parameterListIR ) `( constructorParameterListIR )
+;;;   PARSER `< typeParameterListIR >
+;;;     `( parameterListIR ) `( constructorParameterListIR )
 ;;;     `{ parserLocalDeclarationListIR
 ;;;         parserStateListIR }
 
 rule Constructor_call/parserConstructorDef:
   p IC STO_0 |- parserObjectConstructorDef
-                  `< eps > `( argumentIR* `# id_default* )
+                  `< typeArgumentIR* > `( argumentIR* `# id_default* )
               : STO_4 object_parser
   ---- ;; initialize callee context
-  -- if PARSER `( parameterIR* )`( constructorParameterIR* )
-                  `{ parserLocalDeclarationIR* parserStateIR* }
+  -- if PARSER `< typeParameterIR* >
+          `( parameterIR* )`( constructorParameterIR* )
+          `{ parserLocalDeclarationIR* parserStateIR* }
       = parserObjectConstructorDef
   -- if p_callee = BLOCK
   -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
+  ---- ;; bind type arguments to the callee context
+  -- if theta = `{ (typeParameterIR `: typeArgumentIR)* }
+  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta ]
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, parameterInitializerIR_default*)
@@ -152,16 +157,16 @@ rule Constructor_call/parserConstructorDef:
   ---- ;; bind non-default arguments to callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Copy_in_inst:
-      STO_0 p IC argumentIR_aligned* `@ p_callee IC_callee_0 id_aligned*
-      ~> STO_1 IC_callee_1
+      STO_0 p IC argumentIR_aligned* `@ p_callee IC_callee_1 id_aligned*
+      ~> STO_1 IC_callee_2
   ---- ;; bind default values to the callee context
   -- Copy_in_inst_default:
       STO_0 p IC parameterInitializerIR_default*
-         `@ p_callee IC_callee_1 id_default*
-      ~> STO_2 IC_callee_2
+         `@ p_callee IC_callee_2 id_default*
+      ~> STO_2 IC_callee_3
   ---- ;; instantiate local declarations
   -- ParserLocalDecls_inst:
-      IC_callee_2 STO_2 |- parserLocalDeclarationIR*
+      IC_callee_3 STO_2 |- parserLocalDeclarationIR*
                          : IC_local STO_3 parserLocalDeclarationIR_inst*
   ---- ;; instantiate parser states
   -- ParserStates_inst:
@@ -169,26 +174,32 @@ rule Constructor_call/parserConstructorDef:
   ---- ;; create parser object with the callee value environment
   ---- ;; and instantiated state environment
   -- if object_parser
-      = PARSER `( parameterIR* ) `{ IC_callee_2.BLOCK.FRAME
-                                    parserLocalDeclarationIR_inst*
-                                    IC_state.BLOCK.STATE }
+      = PARSER `< theta > `( parameterIR* )
+          `{ IC_callee_3.BLOCK.FRAME
+             parserLocalDeclarationIR_inst*
+             IC_state.BLOCK.STATE }
 
 ;;; controlObjectConstructorDef
 ;;; syntax controlObjectConstructorDef =
-;;;   CONTROL `( parameterListIR ) `( constructorParameterListIR )
+;;;   CONTROL `< typeParameterListIR >
+;;;     `( parameterListIR ) `( constructorParameterListIR )
 ;;;     `{ controlLocalDeclarationListIR
 ;;;       APPLY controlBodyIR }
 
 rule Constructor_call/controlConstructorDef:
   p IC STO_0 |- controlObjectConstructorDef
-                  `< eps > `( argumentIR* `# id_default* )
+                  `< typeArgumentIR* > `( argumentIR* `# id_default* )
               : STO_4 object_control
-  -- if CONTROL `( parameterIR* ) `( constructorParameterIR* )
-                  `{ controlLocalDeclarationIR* APPLY controlBodyIR }
+  -- if CONTROL `< typeParameterIR* >
+          `( parameterIR* ) `( constructorParameterIR* )
+          `{ controlLocalDeclarationIR* APPLY controlBodyIR }
       = controlObjectConstructorDef
   ---- ;; initialize the callee context
   -- if p_callee = BLOCK
   -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
+  ---- ;; bind type arguments to the callee context
+  -- if theta = `{ (typeParameterIR `: typeArgumentIR)* }
+  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta ]
   ---- ;; align constructor parameters with arguments
   -- if (constructorParameterIR_aligned*, argumentIR_aligned*,
          constructorParameterIR_default*, parameterInitializerIR_default*)
@@ -196,16 +207,16 @@ rule Constructor_call/controlConstructorDef:
   ---- ;; bind non-default arguments to the callee context
   -- if (_ _ _ id_aligned _ = constructorParameterIR_aligned)*
   -- Copy_in_inst:
-      STO_0 p IC argumentIR_aligned* `@ p_callee IC_callee_0 id_aligned*
-      ~> STO_1 IC_callee_1
+      STO_0 p IC argumentIR_aligned* `@ p_callee IC_callee_1 id_aligned*
+      ~> STO_1 IC_callee_2
   ---- ;; bind default values to the callee context
   -- Copy_in_inst_default:
       STO_0 p IC parameterInitializerIR_default*
-         `@ p_callee IC_callee_1 id_default*
-      ~> STO_2 IC_callee_2
+         `@ p_callee IC_callee_2 id_default*
+      ~> STO_2 IC_callee_3
   ---- ;; instantiate local declarations
   -- ControlLocalDecls_inst:
-      IC_callee_2 STO_2 |- controlLocalDeclarationIR*
+      IC_callee_3 STO_2 |- controlLocalDeclarationIR*
                          : IC_local_0 STO_3 controlLocalDeclarationIR'*
   ---- ;; instantiate control body
   -- Block_inst:
@@ -215,10 +226,11 @@ rule Constructor_call/controlConstructorDef:
   ---- ;; and local action definition environment
   -- if `{ (callableId `: actionDef)* } = IC_local_1.BLOCK.CALLABLE
   -- if object_control
-      = CONTROL `( parameterIR* ) `{ IC_callee_2.BLOCK.FRAME
-                                     controlLocalDeclarationIR'*
-                                     `{ (callableId `: actionDef)* }
-                                     controlBodyIR' }
+      = CONTROL `< theta > `( parameterIR* )
+          `{ IC_callee_3.BLOCK.FRAME
+             controlLocalDeclarationIR'*
+             `{ (callableId `: actionDef)* }
+             controlBodyIR' }
 
 ;;; packageObjectConstructorDef
 ;;; syntax packageObjectConstructorDef =

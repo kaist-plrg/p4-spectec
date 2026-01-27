@@ -1515,8 +1515,11 @@ for each ``typeIR~free~`` in ``typeIR~free~^{asterisk}^``
 . If let ``baseTypeIR`` be ``typeIR``:
  .. Return ``baseTypeIR``.
 . Else if let ``typeId`` be ``typeIR``:
- .. Let ``typeIR''`` be <<option_get, *!*>> <<find_map, ``typeId`` in map ``theta``>>.
- .. Return ``typeIR''``.
+ .. Let ``typeIR'^?^`` be <<find_map, ``typeId`` in map ``theta``>>.
+ .. If let ``typeIR''`` be ``typeIR'^?^``:
+  ... Return ``typeIR''``.
+ .. If ``·`` is equal to <<find_map, ``typeId`` in map ``theta``>>:
+  ... Return ``typeId``.
 . Else if let ``TYPEDEF`` ``typeId`` ``typeIR'`` be ``typeIR``:
  .. Let ``typeIR~subst~`` be <<subst_typeIR', ``typeIR'`` substituted by a non-empty ``theta``>>.
  .. Return ``TYPEDEF`` ``typeId`` ``typeIR~subst~``.
@@ -8948,57 +8951,63 @@ for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{ast
 . Let ``externObjectDeclarationIR`` be ``annotationList`` ``EXTERN`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``>`` ``{`` ``externConstructorPrototypeIR^{asterisk}^`` ``externMethodPrototypeIR^{asterisk}^`` ``}``.
 . Result in the updated typing context ``TC~6~`` and ``externObjectDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList`` ``PARSER`` ``name`` ```EMPTY`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``parserLocalDeclarationList`` ``parserStateList`` ``}`` under typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList`` ``PARSER`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``parserLocalDeclarationList`` ``parserStateList`` ``}`` under typing context ``TC~0~``>>:
 
-. Let ``B`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``PARSER``.
-. Let the updated typing context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
+. Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
+. Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~2~``>>.
+. Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~3~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId'^{asterisk}^`` be
-* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
-. Check that ``typeId'^{asterisk}^`` is an empty list.
-. Let the updated typing context ``TC~4~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
-* the result of <<ParserLocalDeclList_ok, typing ``parserLocalDeclarationList``, under typing context ``TC~3~``>>.
-. Let ``TC~5~`` be ``TC~4~`` with ``LOCAL.KIND`` set to ``PARSER_STATE``.
+. Let the updated typing context ``TC~5~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
+* the result of <<ParserLocalDeclList_ok, typing ``parserLocalDeclarationList``, under typing context ``TC~4~``>>.
+. Let ``TC~6~`` be ``TC~5~`` with ``LOCAL.KIND`` set to ``PARSER_STATE``.
 . Let the typed parser states ``parserStateIR^{asterisk}^`` be
-* the result of <<ParserStateList_ok, typing ``parserStateList``, under typing context ``TC~5~``>>.
+* the result of <<ParserStateList_ok, typing ``parserStateList``, under typing context ``TC~6~``>>.
 . Let ``callableTypeDefIR`` be ``PARSER_APPLY`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
-. Check that <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``B``>>.
+. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~2~``>>.
+. Check that <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``constructorId`` be <<constructorId, the constructor identifier for ``name`` ``constructorParameterListOpt``>>.
-. Let ``typeIR~parser~`` be ``PARSER`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
-. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR`` ``<`` ``·`` ``,`` ``·`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~parser~``.
-. Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``B``>>.
-. Let ``TC~6~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``>>.
-. Let ``parserDeclarationIR`` be ``annotationList`` ``PARSER`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``}``.
-. Result in the updated typing context ``TC~6~`` and ``parserDeclarationIR``.
+. Let ``typeDefIR~parser~`` be ``PARSER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
+. Let ``typeIR~parser~`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR~parser~``>>.
+. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~parser~``.
+. Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
+. Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``bound``>>.
+. Let ``TC~7~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``>>.
+. Let ``parserDeclarationIR`` be ``annotationList`` ``PARSER`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``}``.
+. Result in the updated typing context ``TC~7~`` and ``parserDeclarationIR``.
 
-<<Decl_ok, Typing ``annotationList`` ``CONTROL`` ``name`` ```EMPTY`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``controlLocalDeclarationList`` ``APPLY`` ``controlBody`` ``}`` under typing context ``TC~0~``>>:
+<<Decl_ok, Typing ``annotationList`` ``CONTROL`` ``name`` ``typeParameterListOpt`` ``(`` ``parameterList`` ``)`` ``constructorParameterListOpt`` ``{`` ``controlLocalDeclarationList`` ``APPLY`` ``controlBody`` ``}`` under typing context ``TC~0~``>>:
 
-. Let ``B`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
 . Let ``TC~1~`` be ``TC~0~`` with ``BLOCK.KIND`` set to ``CONTROL``.
-. Let the updated typing context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~1~``>>.
+. Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
+* the result of <<TypeParameterListOpt_ok, typing ``typeParameterListOpt``, under cursor ``BLOCK`` and typing context ``TC~1~``>>.
+. Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
+* the result of <<ConstructorParameterListOpt_ok, typing ``constructorParameterListOpt`` under typing context ``TC~2~``>>.
+. Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
+* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~3~``>>.
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId'^{asterisk}^`` be
-* the result of <<ParameterList_ok, typing ``parameterList``, under cursor ``BLOCK`` and typing context ``TC~2~``>>.
-. Check that ``typeId'^{asterisk}^`` is an empty list.
-. Let the updated typing context ``TC~4~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
-* the result of <<ControlLocalDeclList_ok, typing ``controlLocalDeclarationList``, under typing context ``TC~3~``>>.
-. Let ``TC~5~`` be ``TC~4~`` with ``LOCAL.KIND`` set to ``CONTROL_APPLY_METHOD``.
+. Let the updated typing context ``TC~5~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
+* the result of <<ControlLocalDeclList_ok, typing ``controlLocalDeclarationList``, under typing context ``TC~4~``>>.
+. Let ``TC~6~`` be ``TC~5~`` with ``LOCAL.KIND`` set to ``CONTROL_APPLY_METHOD``.
 . Let the updated typing context ``++_++``, abstract control flow ``++_++``, and ``controlBodyIR`` be
-* the result of <<Block_ok, typing ``controlBody``, under typing context ``TC~5~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
+* the result of <<Block_ok, typing ``controlBody``, under typing context ``TC~6~``, abstract control flow ``CONT``, and loop context ``NOLOOP``>>.
 . Let ``callableTypeDefIR`` be ``CONTROL_APPLY`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
-. Check that <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``B``>>.
+. Let ``bound`` be <<bound, bound type variables from the ``BLOCK`` layer of ``TC~2~``>>.
+. Check that <<CallableTypeDef_wf, ``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``>>.
 . Let ``nameIR`` be <<name, the name of ``name``>>.
 . Let ``constructorId`` be <<constructorId, the constructor identifier for ``name`` ``constructorParameterListOpt``>>.
-. Let ``typeIR~control~`` be ``CONTROL`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
-. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR`` ``<`` ``·`` ``,`` ``·`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~control~``.
-. Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``B``>>.
-. Let ``TC~6~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``>>.
-. Let ``controlDeclarationIR`` be ``annotationList`` ``CONTROL`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``controlLocalDeclarationIR^{asterisk}^`` ``APPLY`` ``controlBodyIR`` ``}``.
-. Result in the updated typing context ``TC~6~`` and ``controlDeclarationIR``.
+. Let ``typeDefIR~control~`` be ``CONTROL`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)``.
+. Let ``typeIR~control~`` be <<typeIR_of_typeDefIR, the underlying type of ``typeDefIR~control~``>>.
+. Let ``constructorTypeDefIR`` be ``CONSTRUCTOR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``:`` ``typeIR~control~``.
+. Let ``bound`` be <<bound, bound type variables from the ``GLOBAL`` layer of ``TC~0~``>>.
+. Check that <<ConstructorTypeDef_wf, ``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``bound``>>.
+. Let ``TC~7~`` be <<add_constructorDef_t, where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``>>.
+. Let ``controlDeclarationIR`` be ``annotationList`` ``CONTROL`` ``nameIR`` ``<`` ``typeId~expl~^{asterisk}^`` ``,`` ``typeId~impl~^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``controlLocalDeclarationIR^{asterisk}^`` ``APPLY`` ``controlBodyIR`` ``}``.
+. Result in the updated typing context ``TC~7~`` and ``controlDeclarationIR``.
 
 <<Decl_ok, Typing ``annotationList`` ``ENUM`` ``name`` ``{`` ``nameList~field~`` ``trailingCommaOpt`` ``}`` under typing context ``TC~0~``>>:
 
@@ -11522,7 +11531,7 @@ for each ``infer`` in ``infer^{asterisk}^``
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
- .. Return ``blockKind`` ``=`` ``PARSER``.
+ .. Return ``blockKind`` ``=`` ``PARSER`` ``\/`` ``blockKind`` ``=`` ``PACKAGE``.
 . Else:
  .. Let ``localKind`` be ``TC.LOCAL.KIND``.
  .. Return ``localKind`` ``=`` ``PARSER_STATE``.
@@ -11534,7 +11543,7 @@ for each ``infer`` in ``infer^{asterisk}^``
  .. Return ``instctxt`` ``=`` ``ANON``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Let ``blockKind`` be ``TC.BLOCK.KIND``.
- .. Return ``blockKind`` ``=`` ``CONTROL``.
+ .. Return ``blockKind`` ``=`` ``CONTROL`` ``\/`` ``blockKind`` ``=`` ``PACKAGE``.
 . Else:
  .. Let ``localKind`` be ``TC.LOCAL.KIND``.
  .. Return ``localKind`` ``=`` ``CONTROL_APPLY_METHOD``.
@@ -11740,9 +11749,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 . If let ``EXTERN`` ``++_++`` ``<`` ``++_++`` ``>`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``++_++`` ``}`` be ``constructorDef``:
  .. Return ``constructorParameterListIR``.
-. Else if let ``PARSER`` ``(`` ``++_++`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``}`` be ``constructorDef``:
+. Else if let ``PARSER`` ``<`` ``++_++`` ``>`` ``(`` ``++_++`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``}`` be ``constructorDef``:
  .. Return ``constructorParameterListIR``.
-. Else if let ``CONTROL`` ``(`` ``++_++`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``++_++`` ``APPLY`` ``++_++`` ``}`` be ``constructorDef``:
+. Else if let ``CONTROL`` ``<`` ``++_++`` ``>`` ``(`` ``++_++`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``++_++`` ``APPLY`` ``++_++`` ``}`` be ``constructorDef``:
  .. Return ``constructorParameterListIR``.
 . Else:
  .. Let ``PACKAGE`` ``<`` ``++_++`` ``>`` ``(`` ``constructorParameterListIR`` ``)`` be ``constructorDef``.
@@ -12617,6 +12626,33 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let <<Expr_inst, p IC STO~0~ |- typedExpressionIR : STO~1~ value>>.
 . Result in ``STO~1~`` and ``value``.
 
+<<DirectApplicationStmt_inst, DirectApplicationStmt_inst>>:
+
+* Compile-time evaluation of ``directApplicationStatementIR``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``:
+* Results in 
+ ** the updated store ``store`` and desugared ``constantDeclarationIR`` ``callStatementIR``.
+
+<<DirectApplicationStmt_inst, Compile-time evaluation of ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``.`` ``APPLY`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
+
+. Let the constructor ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` with default parameters ``id^{asterisk}^`` be
+* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``·`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
+. Check that ``id^{asterisk}^`` is an empty list.
+. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
+. Let ``IC~callee~`` be <<enter_path_i, ``IC`` with ``typeId`` added to the path>>.
+. Let the updated store ``STO~1~``,and the constructed ``object`` be
+* the result of <<Constructor_call, loading ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC~callee~``, and store ``STO~0~``>>.
+. Let ``typeId~fresh~`` be <<fresh_typeId, a fresh type variable>>.
+. Let ``typeIR`` be ``typeId``.
+. Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
+. Let ``objectId`` be ``IC.PATH`` concatenated with ``[typeId]``.
+. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
+. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
+. Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``nameIR`` annotated with type ``typeIR`` and compile-time known-ness ``CTK``>>.
+. Let ``callableTargetIR`` be ``typedExpressionIR~base~`` ``.`` ``"apply"``.
+. Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
+. Result in 
+* the updated store ``STO~2~`` and desugared ``constantDeclarationIR`` ``callStatementIR``.
+
 <<Stmt_inst, Stmt_inst>>:
 
 * Compile-time evaluation of ``statementIR``, under cursor ``cursor``, instantiation context ``instContext``, and store ``store``:
@@ -12638,27 +12674,13 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Result in 
 * the updated instantiation context ``IC``, store ``STO``, and ``callStatementIR``.
 
-<<Stmt_inst, Compile-time evaluation of ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``.`` ``APPLY`` ``(`` ``argumentListIR`` ``)`` ``;``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
+<<Stmt_inst, Compile-time evaluation of ``directApplicationStatementIR``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
-. Let the constructor ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` with default parameters ``id^{asterisk}^`` be
-* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``·`` ``)`` under cursor ``p``, and instantiation context ``IC``>>.
-. Check that ``id^{asterisk}^`` is an empty list.
-. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
-. Let ``IC~callee~`` be <<enter_path_i, ``IC`` with ``typeId`` added to the path>>.
-. Let the updated store ``STO~1~``,and the constructed ``object`` be
-* the result of <<Constructor_call, loading ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``p``, instantiation context ``IC~callee~``, and store ``STO``>>.
-. Let ``typeId~fresh~`` be <<fresh_typeId, a fresh type variable>>.
-. Let ``typeIR`` be ``typeId``.
-. Let ``nameIR`` be <<concat_text, the concatenation of ``[typeId,`` ``"_",`` ``typeId~fresh~]``>>.
-. Let ``objectId`` be ``IC.PATH`` concatenated with ``[typeId]``.
-. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
-. Let ``typedExpressionIR~base~`` be <<typedExpressionIR, ``nameIR`` annotated with type ``typeIR`` and compile-time known-ness ``CTK``>>.
-. Let ``callableTargetIR`` be ``typedExpressionIR~base~`` ``.`` ``"apply"``.
-. Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
+. Let the updated store ``STO~1~`` and desugared ``constantDeclarationIR`` ``callStatementIR`` be
+* the result of <<DirectApplicationStmt_inst, compile-time evaluation of ``directApplicationStatementIR``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>.
 . Let ``blockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
 . Result in 
-* the updated instantiation context ``IC``, store ``STO~2~``, and ``blockStatementIR``.
+* the updated instantiation context ``IC``, store ``STO~1~``, and ``blockStatementIR``.
 
 <<Stmt_inst, Compile-time evaluation of ``exitStatementIR``, under cursor ``p``, instantiation context ``IC``, and store ``STO``>>:
 
@@ -12857,24 +12879,12 @@ for each ``objectId`` in ``objectId^{asterisk}^``
 . Let ``callStatementIR~inst~`` be ``statementIR``.
 . Result in ``IC~1~``, ``STO~1~``, and ``callStatementIR~inst~``.
 
-<<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``.`` ``APPLY`` ``(`` ``argumentListIR`` ``)`` ``;`` ``:`` ``%`` ``%`` ``%``>>:
+<<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``directApplicationStatementIR`` ``:`` ``%`` ``%`` ``%``>>:
 
-. Let the constructor ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` with default parameters ``id^{asterisk}^`` be
-* the result of <<Constructor_inst, finding constructor for ``prefixedNameIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``·`` ``)`` under cursor ``LOCAL``, and instantiation context ``IC~0~``>>.
-. Check that ``id^{asterisk}^`` is an empty list.
-. Let the updated store ``STO~1~``,and the constructed ``object`` be
-* the result of <<Constructor_call, loading ``constructorDef`` ``<`` ``typeArgumentListIR~inst~`` ``>`` ``(`` ``·`` ``)`` with default parameters ``·``, under cursor ``LOCAL``, instantiation context ``IC~0~``, and store ``STO``>>.
-. Let ``typeId`` be <<flatten_prefixedNameIR, the string form of  ``prefixedNameIR``>>.
-. Let ``typeId~fresh~`` be <<fresh_typeId, a fresh type variable>>.
-. Let ``nameIR`` be ``typeId`` concatenated with ``"_"`` concatenated with ``typeId~fresh~``.
-. Let ``objectId`` be ``IC~0~.PATH`` concatenated with ``[nameIR]``.
-. Let ``STO~2~`` be <<add_store, ``STO~1~`` where ``objectId`` to ``object`` is added>>.
-. Let ``typeIR`` be ``typeId``.
-. Let ``constantDeclarationIR`` be ```EMPTY`` ``CONST`` ``typeIR`` ``nameIR`` ``=`` ```VALUE`` ``REF`` ``objectId`` ``;``.
-. Let ``callableTargetIR`` be ``nameIR`` ``#`` ``(`` ``typeIR`` ``CTK`` ``)`` ``.`` ``"apply"``.
-. Let ``callStatementIR`` be ``callableTargetIR`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)`` ``;``.
+. Let the updated store ``STO~1~`` and desugared ``constantDeclarationIR`` ``callStatementIR`` be
+* the result of <<DirectApplicationStmt_inst, compile-time evaluation of ``directApplicationStatementIR``, under cursor ``LOCAL``, instantiation context ``IC~0~``, and store ``STO``>>.
 . Let ``parserBlockStatementIR`` be ```EMPTY`` ``{`` ``[constantDeclarationIR,`` ``callStatementIR]`` ``}``.
-. Result in ``IC~0~``, ``STO~2~``, and ``parserBlockStatementIR``.
+. Result in ``IC~0~``, ``STO~1~``, and ``parserBlockStatementIR``.
 
 <<ParserStmt_inst, ``IC~0~`` ``STO`` ``|-`` ``annotationList`` ``{`` ``parserStatementListIR`` ``}`` ``:`` ``%`` ``%`` ``%``>>:
 
@@ -13306,17 +13316,19 @@ for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{ast
  .. Let ``IC~2~`` be <<add_constructorDefs_i, where each of ``callableId~constructor~^{asterisk}^`` to each of ``constructorDef^{asterisk}^`` are added to ``IC~1~``>>.
  .. Result in the updated instantiation context ``IC~2~`` and the store ``STO``.
 
-<<Decl_inst, Loading ``annotationList`` ``PARSER`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``parserLocalDeclarationListIR`` ``parserStateListIR`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
+<<Decl_inst, Loading ``annotationList`` ``PARSER`` ``nameIR`` ``<`` ``typeParameterListIR~expl~`` ``,`` ``typeParameterListIR~impl~`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``parserLocalDeclarationListIR`` ``parserStateListIR`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``callableId`` be <<callableId_IR, the callable identifier for ``nameIR`` ``(`` ``constructorParameterListIR`` ``)``>>.
-. Let ``constructorDef`` be ``PARSER`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``parserLocalDeclarationListIR`` ``parserStateListIR`` ``}``.
+. Let ``typeParameterListIR`` be ``typeParameterListIR~expl~`` concatenated with ``typeParameterListIR~impl~``.
+. Let ``constructorDef`` be ``PARSER`` ``<`` ``typeParameterListIR`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``parserLocalDeclarationListIR`` ``parserStateListIR`` ``}``.
 . Let ``IC~1~`` be <<add_constructorDef_i, where ``callableId`` to ``constructorDef`` is added to ``IC~0~``>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
-<<Decl_inst, Loading ``annotationList`` ``CONTROL`` ``nameIR`` ``<`` ``·`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``controlLocalDeclarationListIR`` ``APPLY`` ``controlBodyIR`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
+<<Decl_inst, Loading ``annotationList`` ``CONTROL`` ``nameIR`` ``<`` ``typeParameterListIR~expl~`` ``,`` ``typeParameterListIR~impl~`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``controlLocalDeclarationListIR`` ``APPLY`` ``controlBodyIR`` ``}``, under instantiation context ``IC~0~``, and store ``STO``>>:
 
 . Let ``callableId`` be <<callableId_IR, the callable identifier for ``nameIR`` ``(`` ``constructorParameterListIR`` ``)``>>.
-. Let ``constructorDef`` be ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``controlLocalDeclarationListIR`` ``APPLY`` ``controlBodyIR`` ``}``.
+. Let ``typeParameterListIR`` be ``typeParameterListIR~expl~`` concatenated with ``typeParameterListIR~impl~``.
+. Let ``constructorDef`` be ``CONTROL`` ``<`` ``typeParameterListIR`` ``>`` ``(`` ``parameterListIR`` ``)`` ``(`` ``constructorParameterListIR`` ``)`` ``{`` ``controlLocalDeclarationListIR`` ``APPLY`` ``controlBodyIR`` ``}``.
 . Let ``IC~1~`` be <<add_constructorDef_i, where ``callableId`` to ``constructorDef`` is added to ``IC~0~``>>.
 . Result in the updated instantiation context ``IC~1~`` and the store ``STO``.
 
@@ -13642,11 +13654,13 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 * the updated store ``STO~2~``,
 * and the constructed ``object~extern~``.
 
-<<Constructor_call, Loading ``parserObjectConstructorDef`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
+<<Constructor_call, Loading ``parserObjectConstructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
 
-. Let ``PARSER`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``}`` be ``parserObjectConstructorDef``.
+. Let ``PARSER`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``}`` be ``parserObjectConstructorDef``.
 . Let ``p~callee~`` be ``BLOCK``.
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
+. Let ``theta`` be ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
+. Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``BLOCK.TYPE`` set to ``theta``.
 . Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
@@ -13655,24 +13669,26 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_1~`` be
-* the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_0~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
-* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_2~`` be
+* the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_3~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_2~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
 . Let the updated instantiation context ``IC~local~``,the store ``STO~3~``,and ``parserLocalDeclarationIR~inst~^{asterisk}^`` be
-* the result of <<ParserLocalDecls_inst, compile-time evaluation of ``parserLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~2~``>>.
+* the result of <<ParserLocalDecls_inst, compile-time evaluation of ``parserLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_3~``and store ``STO~2~``>>.
 . Let the updated instantiation context ``IC~state~``and the store ``STO~4~`` be
 * the result of <<ParserStates_inst, compile-time evaluation of ``parserStateIR^{asterisk}^``, under instantiation context ``IC~local~``and store ``STO~3~``>>.
-. Let ``object~parser~`` be ``PARSER`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_2~.BLOCK.FRAME`` ``parserLocalDeclarationIR~inst~^{asterisk}^`` ``IC~state~.BLOCK.STATE`` ``}``.
+. Let ``object~parser~`` be ``PARSER`` ``<`` ``theta`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_3~.BLOCK.FRAME`` ``parserLocalDeclarationIR~inst~^{asterisk}^`` ``IC~state~.BLOCK.STATE`` ``}``.
 . Result in 
 * the updated store ``STO~4~``,
 * and the constructed ``object~parser~``.
 
-<<Constructor_call, Loading ``controlObjectConstructorDef`` ``<`` ``·`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
+<<Constructor_call, Loading ``controlObjectConstructorDef`` ``<`` ``typeArgumentIR^{asterisk}^`` ``>`` ``(`` ``argumentIR^{asterisk}^`` ``)`` with default parameters ``id~default~^{asterisk}^``, under cursor ``p``, instantiation context ``IC``, and store ``STO~0~``>>:
 
-. Let ``CONTROL`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``controlLocalDeclarationIR^{asterisk}^`` ``APPLY`` ``controlBodyIR`` ``}`` be ``controlObjectConstructorDef``.
+. Let ``CONTROL`` ``<`` ``typeParameterIR^{asterisk}^`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``(`` ``constructorParameterIR^{asterisk}^`` ``)`` ``{`` ``controlLocalDeclarationIR^{asterisk}^`` ``APPLY`` ``controlBodyIR`` ``}`` be ``controlObjectConstructorDef``.
 . Let ``p~callee~`` be ``BLOCK``.
 . Let ``IC~callee_0~`` be <<inherit_i, an instantiation context same as ``IC`` up to the ``GLOBAL`` layer>>.
+. Let ``theta`` be ``{`` ``(`` ``typeParameterIR`` ``:`` ``typeArgumentIR`` ``)^{asterisk}^`` ``}``.
+. Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``BLOCK.TYPE`` set to ``theta``.
 . Let ``(`` ``constructorParameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``constructorParameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``id~aligned~^{asterisk}^`` be the list of ``id~aligned~``, obtained by repeating:
 +
@@ -13681,12 +13697,12 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 --
 +
 for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``
-. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_1~`` be
-* the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_0~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
-. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_2~`` be
-* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated store ``STO~1~`` and instantiation context ``IC~callee_2~`` be
+* the result of <<Copy_in_inst, copy-in from ``p`` layer of ``IC`` with ``argumentIR~aligned~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_1~`` with ``id~aligned~^{asterisk}^``, under store ``STO~0~``>>.
+. Let the updated store ``STO~2~`` and instantiation context ``IC~callee_3~`` be
+* the result of <<Copy_in_inst_default, copy-in defaults from ``p`` layer of ``IC`` with ``parameterInitializerIR~default~^{asterisk}^`` to ``p~callee~`` layer of ``IC~callee_2~`` with ``id~default~^{asterisk}^``, under store ``STO~0~``>>.
 . Let the updated instantiation context ``IC~local_0~``,the store ``STO~3~``,and ``controlLocalDeclarationIR'^{asterisk}^`` be
-* the result of <<ControlLocalDecls_inst, compile-time evaluation of ``controlLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_2~``and store ``STO~2~``>>.
+* the result of <<ControlLocalDecls_inst, compile-time evaluation of ``controlLocalDeclarationIR^{asterisk}^``, under instantiation context ``IC~callee_3~``and store ``STO~2~``>>.
 . Let the updated instantiation context ``IC~local_1~``, store ``STO~4~``, and ``controlBodyIR'`` be
 * the result of <<Block_inst, compile-time evaluation of ``controlBodyIR``, under instantiation context ``IC~local_0~``, and store ``STO~3~``>>.
 . Let ``{`` ``(`` ``callableId`` ``:`` ``callableDef`` ``)^{asterisk}^`` ``}`` be ``IC~local_1~.BLOCK.CALLABLE``.
@@ -13698,7 +13714,7 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
 --
 +
 for each ``callableDef`` in ``callableDef^{asterisk}^``
-. Let ``object~control~`` be ``CONTROL`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_2~.BLOCK.FRAME`` ``controlLocalDeclarationIR'^{asterisk}^`` ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}`` ``controlBodyIR'`` ``}``.
+. Let ``object~control~`` be ``CONTROL`` ``<`` ``theta`` ``>`` ``(`` ``parameterIR^{asterisk}^`` ``)`` ``{`` ``IC~callee_3~.BLOCK.FRAME`` ``controlLocalDeclarationIR'^{asterisk}^`` ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}`` ``controlBodyIR'`` ``}``.
 . Result in 
 * the updated store ``STO~4~``,
 * and the constructed ``object~control~``.
@@ -15535,12 +15551,12 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
  .. Let ``REF`` ``objectId`` be ``value``.
  .. Let ``object`` be <<find_store, the object ``objectId`` in ``STO~1~``>>.
  .. Check that ``object`` has type ``parserObject``.
- .. Let ``PARSER`` ``(`` ``parameterListIR`` ``)`` ``{`` ``frame`` ``parserLocalDeclarationListIR`` ``stateEnv`` ``}`` be ``object``.
+ .. Let ``PARSER`` ``<`` ``theta`` ``>`` ``(`` ``parameterListIR`` ``)`` ``{`` ``frame`` ``parserLocalDeclarationListIR`` ``stateEnv`` ``}`` be ``object``.
  .. Let ``callableId`` be <<callableId_IR, the callable identifier for ``"apply"`` ``(`` ``parameterListIR`` ``)``>>.
  .. Let ``parserApplyMethodDef`` be ``PARSER_APPLY`` ``(`` ``parameterListIR`` ``)`` ``{`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}``.
  .. Let ``callTargetKey`` be ``<<callTargetKey,`` ``callTargetKey("apply",`` ``argumentListIR)>>``.
  .. Let ``(`` ``++_++,`` ``++_++,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_overloaded,`` ``find_overloaded<parserApplyMethodDef>({`` ``[callableId`` ``:`` ``parserApplyMethodDef]`` ``},`` ``callTargetKey,`` ``parameterListIR_of_parserApplyMethodDef)>>``.
- .. Let ``parserApplyMethodCallee`` be ``PARSER`` ``objectId`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``frame`` ``;`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}``.
+ .. Let ``parserApplyMethodCallee`` be ``PARSER`` ``objectId`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``theta`` ``;`` ``frame`` ``;`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``parserApplyMethodCallee``.
 
 <<Callee_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedExpressionIR`` ``.`` ``"apply"`` ``<`` ``_`` ``>`` ``(`` ``argumentListIR`` ``)`` ``:`` ``%`` ``%`` ``%``>>:
@@ -15560,12 +15576,12 @@ for each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned
  .. Let ``REF`` ``objectId`` be ``value``.
  .. Let ``object`` be <<find_store, the object ``objectId`` in ``STO~1~``>>.
  .. Check that ``object`` has type ``controlObject``.
- .. Let ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``{`` ``frame`` ``controlLocalDeclarationListIR`` ``actionDefEnv`` ``controlBodyIR`` ``}`` be ``object``.
+ .. Let ``CONTROL`` ``<`` ``theta`` ``>`` ``(`` ``parameterListIR`` ``)`` ``{`` ``frame`` ``controlLocalDeclarationListIR`` ``actionDefEnv`` ``controlBodyIR`` ``}`` be ``object``.
  .. Let ``callableId`` be <<callableId_IR, the callable identifier for ``"apply"`` ``(`` ``parameterListIR`` ``)``>>.
  .. Let ``controlApplyMethodDef`` be ``CONTROL_APPLY`` ``(`` ``parameterListIR`` ``)`` ``{`` ``controlLocalDeclarationListIR`` ``;`` ``actionDefEnv`` ``;`` ``controlBodyIR`` ``}``.
  .. Let ``callTargetKey`` be ``<<callTargetKey,`` ``callTargetKey("apply",`` ``argumentListIR)>>``.
  .. Let ``(`` ``++_++,`` ``++_++,`` ``id~default~^{asterisk}^`` ``)`` be <<option_get, *!*>> ``<<find_overloaded,`` ``find_overloaded<controlApplyMethodDef>({`` ``[callableId`` ``:`` ``controlApplyMethodDef]`` ``},`` ``callTargetKey,`` ``parameterListIR_of_controlApplyMethodDef)>>``.
- .. Let ``controlApplyMethodCallee`` be ``CONTROL`` ``objectId`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``frame`` ``;`` ``controlLocalDeclarationListIR`` ``;`` ``actionDefEnv`` ``;`` ``controlBodyIR`` ``}``.
+ .. Let ``controlApplyMethodCallee`` be ``CONTROL`` ``objectId`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``theta`` ``;`` ``frame`` ``;`` ``controlLocalDeclarationListIR`` ``;`` ``actionDefEnv`` ``;`` ``controlBodyIR`` ``}``.
  .. Result in ``EC~1~``, ``STO~1~``, and ``controlApplyMethodCallee``.
 
 <<Callee_eval, ``p`` ``EC`` ``STO`` ``|-`` ``typedExpressionIR`` ``.`` ``"apply"`` ``<`` ``_`` ``>`` ``(`` ``argumentListIR`` ``)`` ``:`` ``%`` ``%`` ``%``>>:
@@ -15935,9 +15951,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Call_eval, Calling ``parserApplyMethodCallee`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)``, under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
-. Let ``PARSER`` ``++_++`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``frame`` ``;`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}`` be ``parserApplyMethodCallee``.
+. Let ``PARSER`` ``++_++`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``theta`` ``;`` ``frame`` ``;`` ``parserLocalDeclarationListIR`` ``;`` ``stateEnv`` ``}`` be ``parserApplyMethodCallee``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
-. Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.STATE`` set to ``stateEnv``.
+. Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.TYPE`` ``=`` ``theta][BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.STATE`` set to ``stateEnv``.
 . Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
@@ -15960,10 +15976,10 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 
 <<Call_eval, Calling ``controlApplyMethodCallee`` ``<`` ``typeArgumentListIR`` ``>`` ``(`` ``argumentListIR`` ``)``, under cursor ``p``, evaluation context ``EC~0~``, and store ``STO~0~``>>:
 
-. Let ``CONTROL`` ``++_++`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``frame`` ``;`` ``controlLocalDeclarationListIR`` ``;`` ``actionDefEnv`` ``;`` ``controlBodyIR`` ``}`` be ``controlApplyMethodCallee``.
+. Let ``CONTROL`` ``++_++`` ``.`` ``APPLY`` ``(`` ``parameterListIR`` ``#`` ``id~default~^{asterisk}^`` ``)`` ``{`` ``theta`` ``;`` ``frame`` ``;`` ``controlLocalDeclarationListIR`` ``;`` ``actionDefEnv`` ``;`` ``controlBodyIR`` ``}`` be ``controlApplyMethodCallee``.
 . Let ``EC~callee_0~`` be ``<<inherit_e,`` ``inherit_e(GLOBAL,`` ``EC~0~)>>``.
 . Let ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}`` be ``actionDefEnv``.
-. Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.CALLABLE`` set to ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}``.
+. Let ``EC~callee_1~`` be ``EC~callee_0~[BLOCK.TYPE`` ``=`` ``theta][BLOCK.FRAME`` ``=`` ``frame]`` with ``BLOCK.CALLABLE`` set to ``{`` ``(`` ``callableId`` ``:`` ``actionDef`` ``)^{asterisk}^`` ``}``.
 . Let ``(`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR~aligned~^{asterisk}^,`` ``parameterIR~default~^{asterisk}^,`` ``parameterInitializerIR~default~^{asterisk}^`` ``)`` be <<align_parameterListIR, the result of aligning ``parameterListIR`` with ``argumentListIR`` where default parameters are ``id~default~^{asterisk}^``>>.
 . Let ``p~shared~`` be ``GLOBAL``.
 . Let <<Copy_in, p~shared~ STO~0~ |- p EC~0~ parameterIR~aligned~^{asterisk}^ @ BLOCK EC~callee_1~ argumentIR~aligned~^{asterisk}^ ~> STO~1~ EC~1~ EC~callee_2~ # copyInResult>>.
@@ -17056,7 +17072,7 @@ for each ``annotation`` in ``annotation^{asterisk}^``
 . Let ``(`` ``++_++`` ``++_++`` ``nameIR~field~`` ``;`` ``)^{asterisk}^`` be ``<<fields_with_field_list_index,`` ``fields_with_field_list_index(fieldTypeIR^{asterisk}^,`` ``integerLiteral~index~)>>``.
 . Let ``object'''`` be <<option_get, *!*>> <<find_map, ``["main",`` ``"ig"]`` in map ``STO``>>.
 . Check that ``object'''`` has type ``controlObject``.
-. Let ``CONTROL`` ``(`` ``parameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``++_++`` ``++_++`` ``}`` be ``object'''``.
+. Let ``CONTROL`` ``<`` ``++_++`` ``>`` ``(`` ``parameterListIR`` ``)`` ``{`` ``++_++`` ``++_++`` ``++_++`` ``++_++`` ``}`` be ``object'''``.
 . Let ``parameterIR^{asterisk}^`` be ``parameterListIR``.
 . Check that ``parameterIR^{asterisk}^`` is a non-empty list.
 . Let ``++_++`` ``{two-colons}`` ``parameterIR'^{asterisk}^`` be ``parameterIR^{asterisk}^``.

@@ -353,37 +353,45 @@ rulegroup Decl_inst/externObjectDeclarationIR {
 ;;; parserDeclarationIR
 ;;; syntax parserDeclarationIR
 ;;;   annotationList PARSER
-;;;   nameIR `< typeParameterListIR >
+;;;   nameIR `< typeParameterListIR `, typeParameterListIR >
 ;;;   `( parameterListIR ) `( constructorParameterListIR )
 ;;;   `{ parserLocalDeclarationListIR parserStateListIR }`
 
 rule Decl_inst/parserDeclarationIR:
-  IC_0 STO |- annotationList PARSER nameIR `< eps >
+  IC_0 STO |- annotationList PARSER nameIR
+                `< typeParameterListIR_expl `, typeParameterListIR_impl >
                 `( parameterListIR ) `( constructorParameterListIR )
                 `{ parserLocalDeclarationListIR parserStateListIR }
             : IC_1 STO
   -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if constructorDef
-      = PARSER `( parameterListIR ) `( constructorParameterListIR )
+      = PARSER `< typeParameterListIR >
+          `( parameterListIR ) `( constructorParameterListIR )
           `{ parserLocalDeclarationListIR parserStateListIR }
   -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)
 
 ;;; controlDeclarationIR
 ;;; syntax controlDeclarationIR =
 ;;;   annotationList CONTROL
-;;;   nameIR `< typeParameterListIR >
+;;;   nameIR `< typeParameterListIR `, typeParameterListIR >
 ;;;  `( parameterListIR ) `( constructorParameterListIR )
 ;;;  `{ controlLocalDeclarationListIR APPLY controlBodyIR }
 
 rule Decl_inst/controlDeclarationIR:
-  IC_0 STO |- annotationList CONTROL nameIR `< eps >
+  IC_0 STO |- annotationList CONTROL nameIR
+                `< typeParameterListIR_expl `, typeParameterListIR_impl >
                 `( parameterListIR ) `( constructorParameterListIR )
                 `{ controlLocalDeclarationListIR APPLY controlBodyIR }
             : IC_1 STO
   ---- ;; bind control to constructor environment
   -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if constructorDef
-      = CONTROL `( parameterListIR ) `( constructorParameterListIR )
+      = CONTROL `< typeParameterListIR >
+          `( parameterListIR ) `( constructorParameterListIR )
           `{ controlLocalDeclarationListIR APPLY controlBodyIR }
   -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)
 

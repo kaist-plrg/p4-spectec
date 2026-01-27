@@ -205,7 +205,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
     ---- ;; if the value is an object reference to a parser
     -- Lvalue_read:
         p EC_1 STO_1 |- storageReference : (REF objectId)
-    -- if PARSER `( parameterListIR )
+    -- if PARSER `< theta > `( parameterListIR )
             `{ frame parserLocalDeclarationListIR stateEnv }
         = $find_store(STO_1, objectId)
     ---- ;; perform default resolution
@@ -222,7 +222,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
     ---- ;; prepare the callee
     -- if parserApplyMethodCallee
         = PARSER objectId `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+            `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv }
 
 }
 
@@ -252,7 +252,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
     -- Lvalue_read:
         p EC_1 STO_1 |- storageReference : (REF objectId)
     ---- ;; if the value is an object reference to a control
-    -- if CONTROL `( parameterListIR )
+    -- if CONTROL `< theta > `( parameterListIR )
             `{ frame controlLocalDeclarationListIR
                actionDefEnv controlBodyIR }
         = $find_store(STO_1, objectId)
@@ -270,7 +270,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
     ---- ;; prepare the callee
     -- if controlApplyMethodCallee
         = CONTROL objectId `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; controlLocalDeclarationListIR `;
+            `{ theta `; frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
 
 }

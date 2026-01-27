@@ -262,8 +262,7 @@ and render_exp ctx exp : string =
   | UnE (unop, _, exp) ->
       render_unop unop ^ render_exp in_code exp |> adoc_as_code ctx
   | BinE ((#Bool.binop as binop), _, exp_l, exp_r) ->
-      render_exp ctx exp_l
-      ^ " " ^ render_binop ctx binop ^ " "
+      render_exp ctx exp_l ^ " " ^ render_binop ctx binop ^ " "
       ^ render_exp ctx exp_r
   | BinE ((#Num.binop as binop), _, exp_l, exp_r) ->
       render_exp in_code exp_l ^ " " ^ render_binop in_code binop ^ " "

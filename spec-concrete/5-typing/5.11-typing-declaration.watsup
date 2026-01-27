@@ -636,45 +636,49 @@ rule Decl_ok/externObjectDeclaration:
 ;;;     `{ parserLocalDeclarationList parserStateList }
 
 rule Decl_ok/parserDeclaration:
-  TC_0 |- annotationList PARSER name `EMPTY
+  TC_0 |- annotationList PARSER name typeParameterListOpt
            `( parameterList ) constructorParameterListOpt
            `{ parserLocalDeclarationList parserStateList }
-        : TC_6 parserDeclarationIR
-  ---- ;; collect bound variables
-  -- if B = $bound(GLOBAL, TC_0)
+        : TC_7 parserDeclarationIR
   ---- ;; set block context
-  -- if TC_1 = TC_0 [ .BLOCK.KIND = PARSER ]
+  -- if TC_1 = TC_0[ .BLOCK.KIND = PARSER ]
+  ---- ;; check type parameters
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_1 |- constructorParameterListOpt
-            : TC_2 constructorParameterIR* `# eps
+      TC_2 |- constructorParameterListOpt
+            : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_2 |- parameterList : TC_3 parameterIR* `# eps
+      BLOCK TC_3 |- parameterList : TC_4 parameterIR* `# eps
   ---- ;; check parser local declarations
   -- ParserLocalDeclList_ok:
-      TC_3 |- parserLocalDeclarationList
-            : TC_4 parserLocalDeclarationIR*
+      TC_4 |- parserLocalDeclarationList
+            : TC_5 parserLocalDeclarationIR*
   ---- ;; set local context
-  -- if TC_5 = TC_4 [ .LOCAL.KIND = PARSER_STATE ]
+  -- if TC_6 = TC_5[ .LOCAL.KIND = PARSER_STATE ]
   ---- ;; check parser states
   -- ParserStateList_ok:
-      TC_5 |- parserStateList : parserStateIR*
+      TC_6 |- parserStateList : parserStateIR*
   ---- ;; check apply method
   -- if callableTypeDefIR = PARSER_APPLY `( parameterIR* )
-  -- CallableTypeDef_wf: B |- callableTypeDefIR
+  -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
   ---- ;; create parser object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
-  -- if typeIR_parser = PARSER nameIR `< eps > `( parameterIR* )
+  -- if typeDefIR_parser
+      = PARSER nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* )
+  -- if typeIR_parser
+      = $typeIR_of_typeDefIR(typeDefIR_parser)
   -- if constructorTypeDefIR
-      = CONSTRUCTOR `< eps `, eps >
+      = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
           `( constructorParameterIR* ) `: typeIR_parser
-  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
-  -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+  -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if parserDeclarationIR
-      = annotationList PARSER nameIR `< eps >
+      = annotationList PARSER nameIR `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `( constructorParameterIR* )
           `{ parserLocalDeclarationIR* parserStateIR* }
 
@@ -685,44 +689,48 @@ rule Decl_ok/parserDeclaration:
 ;;;     `{ controlLocalDeclarationList APPLY controlBody }
 
 rule Decl_ok/controlDeclaration:
-  TC_0 |- annotationList CONTROL name `EMPTY
+  TC_0 |- annotationList CONTROL name typeParameterListOpt
            `( parameterList ) constructorParameterListOpt
            `{ controlLocalDeclarationList APPLY controlBody }
-        : TC_6 controlDeclarationIR
-  ---- ;; collect bound variables
-  -- if B = $bound(GLOBAL, TC_0)
+        : TC_7 controlDeclarationIR
   ---- ;; set block context
-  -- if TC_1 = TC_0 [ .BLOCK.KIND = CONTROL ]
+  -- if TC_1 = TC_0[ .BLOCK.KIND = CONTROL ]
+  ---- ;; check type parameters
+  -- TypeParameterListOpt_ok:
+      BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_1 |- constructorParameterListOpt
-            : TC_2 constructorParameterIR* `# eps
+      TC_2 |- constructorParameterListOpt
+            : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_2 |- parameterList : TC_3 parameterIR* `# eps
+      BLOCK TC_3 |- parameterList : TC_4 parameterIR* `# eps
   ---- ;; check control local declarations
   -- ControlLocalDeclList_ok:
-      TC_3 |- controlLocalDeclarationList
-            : TC_4 controlLocalDeclarationIR*
+      TC_4 |- controlLocalDeclarationList
+            : TC_5 controlLocalDeclarationIR*
   ---- ;; set local context
-  -- if TC_5 = TC_4 [ .LOCAL.KIND = CONTROL_APPLY_METHOD ]
+  -- if TC_6 = TC_5[ .LOCAL.KIND = CONTROL_APPLY_METHOD ]
   ---- ;; check control body
-  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
+  -- Block_ok: TC_6 CONT NOLOOP |- controlBody : _ _ controlBodyIR
   ---- ;; check apply method
   -- if callableTypeDefIR = CONTROL_APPLY `( parameterIR* )
-  -- CallableTypeDef_wf: B |- callableTypeDefIR
+  -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
   ---- ;; create control object constructor and add to context
   -- if nameIR = $name(name)
   -- if constructorId = $constructorId(name, constructorParameterListOpt)
-  -- if typeIR_control = CONTROL nameIR `< eps > `( parameterIR* )
+  -- if typeDefIR_control
+      = CONTROL nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* )
+  -- if typeIR_control
+      = $typeIR_of_typeDefIR(typeDefIR_control)
   -- if constructorTypeDefIR
-      = CONSTRUCTOR `< eps `, eps >
+      = CONSTRUCTOR `< typeId_expl* `, typeId_impl* >
           `( constructorParameterIR* ) `: typeIR_control
-  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
-  -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+  -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if controlDeclarationIR
-      = annotationList CONTROL nameIR `< eps >
+      = annotationList CONTROL nameIR `< typeId_expl* `, typeId_impl* >
         `( parameterIR* ) `( constructorParameterIR* )
         `{ controlLocalDeclarationIR* APPLY controlBodyIR }
 

@@ -676,12 +676,15 @@ rulegroup Call_eval/parserApplyMethodCallee {
                   : EC_1 STO_1 rejectTransitionResult
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+            `{ theta `; frame `;
+               parserLocalDeclarationListIR `; stateEnv }
         = parserApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, parameterInitializerIR_default*)
@@ -700,12 +703,14 @@ rulegroup Call_eval/parserApplyMethodCallee {
                   : EC_2 STO_2 rejectTransitionResult
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+            `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv }
         = parserApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, parameterInitializerIR_default*)
@@ -737,12 +742,14 @@ rulegroup Call_eval/parserApplyMethodCallee {
                   : EC_2 STO_3 rejectTransitionResult
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+            `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv }
         = parserApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, parameterInitializerIR_default*)
@@ -778,12 +785,14 @@ rulegroup Call_eval/parserApplyMethodCallee {
                   : EC_2 STO_3 (RETURN eps)
     ---- ;; unpack the parser apply method callee
     -- if PARSER _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; parserLocalDeclarationListIR `; stateEnv }
+            `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv }
         = parserApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ][ .BLOCK.STATE = stateEnv ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
+                     [ .BLOCK.STATE = stateEnv ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
            parameterIR_default*, parameterInitializerIR_default*)
@@ -825,14 +834,15 @@ rulegroup Call_eval/controlApplyMethodCallee {
                   : EC_1 STO_1 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; controlLocalDeclarationListIR `;
+            `{ theta `; frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
@@ -852,14 +862,15 @@ rulegroup Call_eval/controlApplyMethodCallee {
                   : EC_2 STO_2 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; controlLocalDeclarationListIR `;
+            `{ theta `; frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
@@ -892,14 +903,15 @@ rulegroup Call_eval/controlApplyMethodCallee {
                   : EC_2 STO_3 EXIT
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; controlLocalDeclarationListIR `;
+            `{ theta `; frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,
@@ -936,14 +948,15 @@ rulegroup Call_eval/controlApplyMethodCallee {
                   : EC_2 STO_3 (RETURN eps)
     ---- ;; unpack the control apply method callee
     -- if CONTROL _ `. APPLY `( parameterListIR `# id_default* )
-            `{ frame `; controlLocalDeclarationListIR `;
+            `{ theta `; frame `; controlLocalDeclarationListIR `;
                actionDefEnv `; controlBodyIR }
         = controlApplyMethodCallee
     ---- ;; create the callee context
     -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if `{ (callableId `: actionDef)* } = actionDefEnv
     -- if EC_callee_1
-        = EC_callee_0[ .BLOCK.FRAME = frame ]
+        = EC_callee_0[ .BLOCK.TYPE = theta ]
+                     [ .BLOCK.FRAME = frame ]
                      [ .BLOCK.CALLABLE = `{ (callableId `: actionDef)* } ]
     ---- ;; align parameters with arguments
     -- if (parameterIR_aligned*, argumentIR_aligned*,

@@ -10166,7 +10166,7 @@ name, and an optional default value.</p>
 <div id="parameterIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterIR
-   : annotationList direction typeIR id constantInitializerOptIR
+   : annotationList direction typeIR id parameterInitializerOptIR
    ;</code></pre>
 </div>
 </div>
@@ -10221,7 +10221,20 @@ the same type as the parameter type.</p>
  -- if nameIR = $name(name)
  -- if parameterIR = annotationList direction typeIR nameIR eps
  -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)
-  rule Parameter_ok/initializer:
+  rule Parameter_ok/initializer-ctk:
+  p TC_0 |- annotationList direction type name (= expression_init) : TC_1 parameterIR # typeId_fresh*
+ -- Type_ok: p TC_0 |- type : typeIR # typeId_fresh*
+ -- if B = $union_set&lt;typeId&gt;($bound(p, TC_0), `{typeId_fresh*})
+ -- Type_wf: B |- typeIR
+ -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
+ -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
+ -- if CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
+ -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
+ -- if nameIR = $name(name)
+ -- if parameterInitializerIR = = typedExpressionIR_init_cast
+ -- if parameterIR = annotationList direction typeIR nameIR parameterInitializerIR
+ -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)
+  rule Parameter_ok/initializer-lctk:
   p TC_0 |- annotationList direction type name (= expression_init) : TC_1 parameterIR # typeId_fresh*
  -- Type_ok: p TC_0 |- type : typeIR # typeId_fresh*
  -- if B = $union_set&lt;typeId&gt;($bound(p, TC_0), `{typeId_fresh*})
@@ -10232,7 +10245,8 @@ the same type as the parameter type.</p>
  -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
  -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_init_cast ~&gt; value_init
- -- if parameterIR = annotationList direction typeIR nameIR (= value_init)
+ -- if parameterInitializerIR = = `VALUE value_init
+ -- if parameterIR = annotationList direction typeIR nameIR parameterInitializerIR
  -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR)</pre>
 </div>
 </div>
@@ -10335,8 +10349,41 @@ the same type as the parameter type.</p>
 <p>Let <code>typeIR<sub>init</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>init</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> is <code>LCTK</code>.</p>
+<p>If <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> is <code>CTK</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
+</li>
+<li>
+<p>Let <code>parameterInitializerIR</code> be <code>=</code> <code>typedExpressionIR<sub>init_cast</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR</code> be <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>parameterInitializerIR</code>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#add_parameter_t"><code>parameterIR</code> added to the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>1</sub></code>,</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>parameterIR</code>, and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>init</sub></code></a> is <code>LCTK</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>typedExpressionIR<sub>init_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>init</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
@@ -10354,7 +10401,10 @@ the same type as the parameter type.</p>
 </div>
 </li>
 <li>
-<p>Let <code>parameterIR</code> be <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value<sub>init</sub></code>.</p>
+<p>Let <code>parameterInitializerIR</code> be <code>=</code> <code>`VALUE</code> <code>value<sub>init</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR</code> be <code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>nameIR</code> <code>parameterInitializerIR</code>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_parameter_t"><code>parameterIR</code> added to the <code>p</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -10367,6 +10417,9 @@ the same type as the parameter type.</p>
 <p><code>parameterIR</code>, and a set of fresh type variables <code>typeId<sub>fresh</sub><sup>*</sup></code>.</p>
 </li>
 </ul>
+</div>
+</li>
+</ol>
 </div>
 </li>
 </ol>
@@ -10387,7 +10440,7 @@ the same type as the parameter type.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>id</code> <code>constantInitializerIR<sup>?</sup></code> is a well-formed parameter type, with bound type variables <code>B</code></p>
+<p><code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>id</code> <code>parameterInitializerIR<sup>?</sup></code> is a well-formed parameter type, with bound type variables <code>B</code></p>
 </li>
 </ul>
 </div>
@@ -10412,7 +10465,7 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
  -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
  -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY
   rule ParameterType_wf/default:
-  B |- _ direction typeIR _ (= value)
+  B |- _ direction typeIR _ parameterInitializerIR
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
  -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
@@ -10430,12 +10483,12 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ParameterType_wf"><code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>id</code> <code>constantInitializerIR<sup>?</sup></code> is a well-formed parameter type, with bound type variables <code>B</code> when</a>:</p>
+<p><a href="#ParameterType_wf"><code>annotationList</code> <code>direction</code> <code>typeIR</code> <code>id</code> <code>parameterInitializerIR<sup>?</sup></code> is a well-formed parameter type, with bound type variables <code>B</code> when</a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>constantInitializerIR<sup>?</sup></code> is none:</p>
+<p>If <code>parameterInitializerIR<sup>?</sup></code> is none:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -11710,7 +11763,7 @@ the <code>udpSupport</code> parameter, as in the following example:</p>
 <div id="constructorParameterIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parameterIR
-   : annotationList direction typeIR id constantInitializerOptIR
+   : annotationList direction typeIR id parameterInitializerOptIR
    ;
 
 constructorParameterIR = parameterIR</code></pre>
@@ -12030,17 +12083,16 @@ is not defined.</p>
 <div class="content">
 <pre>rulegroup Constructor_call/externConstructorDef:
   rule Constructor_call/externConstructorDef:
-  p IC STO_0 |- externObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_1 object_extern
+  p IC STO_0 |- externObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_2 object_extern
  -- if EXTERN nameIR `&lt;typeParameterIR*&gt; `(constructorParameterIR*) `{externMethodPrototypeIR*} = externObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if theta = `{(typeParameterIR : typeArgumentIR)*}
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, value_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
  -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- (if (_ _ _ id_cparam_default _ = constructorParameterIR_default))*
- -- if IC_callee_3 = $add_vars_i(p_callee, IC_callee_2, id_cparam_default*, value_default*)
+ -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
  -- ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR* : IC_callee_4
  -- if `{(callableId : externMethodDef)*} = IC_callee_4.BLOCK.CALLABLE
  -- (if (_ _ _ id_cparam _ = constructorParameterIR))*
@@ -12079,7 +12131,7 @@ is not defined.</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>value<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -12099,7 +12151,7 @@ is not defined.</p>
 </div>
 </li>
 <li>
-<p>Let the updated store <code>STO<sub>1</sub></code> and the instantiation context <code>IC<sub>callee_2</sub></code> be</p>
+<p>Let the updated store <code>STO<sub>1</sub></code> and instantiation context <code>IC<sub>callee_2</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -12109,24 +12161,14 @@ is not defined.</p>
 </div>
 </li>
 <li>
-<p>Let <code>id<sub>cparam_default</sub><sup>*</sup></code> be the list of <code>id<sub>cparam_default</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let the updated store <code>STO<sub>2</sub></code> and instantiation context <code>IC<sub>callee_3</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>cparam_default</sub></code> be the name of <code>constructorParameterIR<sub>default</sub></code>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>constructorParameterIR<sub>default</sub></code> in <code>constructorParameterIR<sub>default</sub><sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>IC<sub>callee_3</sub></code> be <a href="#add_vars_i"><code>IC<sub>callee_2</sub></code> where each of <code>id<sub>cparam_default</sub><sup>*</sup></code> to each of <code>value<sub>default</sub><sup>*</sup></code> are added to the <code>p<sub>callee</sub></code> layer</a>.</p>
 </li>
 <li>
 <p>Let the updated instantiation context <code>IC<sub>callee_4</sub></code> be</p>
@@ -12226,7 +12268,7 @@ is not defined.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
 </li>
 <li>
 <p>and the constructed <code>object<sub>extern</sub></code>.</p>
@@ -12263,19 +12305,6 @@ parserState
 parserDeclaration
    : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
    ;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Although the syntax for a parser declaration allows for type parameters, the
-current version of the P4 language does not support generic parser
-declarations. Note that this restriction applies only to parser declarations;
-parser type declarations may still be generic. For example, the following
-parser declaration is illegal:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// generic parser type declaration is legal
-</span><span style="color: #cf222e">parser</span> P<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// generic parser declaration is illegal</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12321,7 +12350,7 @@ as:</p>
 <div id="parserObjectConstructorDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectConstructorDef
-   : PARSER `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   : PARSER `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
    ;</code></pre>
 </div>
 </div>
@@ -12331,7 +12360,7 @@ as:</p>
 <div id="parserObject" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   : PARSER `&lt; theta &gt; `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -12415,18 +12444,19 @@ as:</p>
 <div class="content">
 <pre>rulegroup Constructor_call/parserConstructorDef:
   rule Constructor_call/parserConstructorDef:
-  p IC STO_0 |- parserObjectConstructorDef `&lt;eps&gt; `(argumentIR* # id_default*) : STO_3 object_parser
- -- if PARSER `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*} = parserObjectConstructorDef
+  p IC STO_0 |- parserObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_4 object_parser
+ -- if PARSER `&lt;typeParameterIR*&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*} = parserObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, value_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if theta = `{(typeParameterIR : typeArgumentIR)*}
+ -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
+ -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_0 id_aligned* ~&gt; STO_1 IC_callee_1
- -- (if (_ _ _ id_cparam_default _ = constructorParameterIR_default))*
- -- if IC_callee_2 = $add_vars_i(p_callee, IC_callee_1, id_cparam_default*, value_default*)
- -- ParserLocalDecls_inst: IC_callee_2 STO_1 |- parserLocalDeclarationIR* : IC_local STO_2 parserLocalDeclarationIR_inst*
- -- ParserStates_inst: IC_local STO_2 |- parserStateIR* : IC_state STO_3
- -- if object_parser = PARSER `(parameterIR*) `{IC_callee_2.BLOCK.FRAME parserLocalDeclarationIR_inst* IC_state.BLOCK.STATE}</pre>
+ -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- ParserLocalDecls_inst: IC_callee_3 STO_2 |- parserLocalDeclarationIR* : IC_local STO_3 parserLocalDeclarationIR_inst*
+ -- ParserStates_inst: IC_local STO_3 |- parserStateIR* : IC_state STO_4
+ -- if object_parser = PARSER `&lt;theta&gt; `(parameterIR*) `{IC_callee_3.BLOCK.FRAME parserLocalDeclarationIR_inst* IC_state.BLOCK.STATE}</pre>
 </div>
 </div>
 </div>
@@ -12439,12 +12469,12 @@ as:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>parserObjectConstructorDef</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>parserObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>PARSER</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code> be <code>parserObjectConstructorDef</code>.</p>
+<p>Let <code>PARSER</code> <code>&lt;</code> <code>typeParameterIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code> be <code>parserObjectConstructorDef</code>.</p>
 </li>
 <li>
 <p>Let <code>p<sub>callee</sub></code> be <code>BLOCK</code>.</p>
@@ -12453,7 +12483,13 @@ as:</p>
 <p>Let <code>IC<sub>callee_0</sub></code> be <a href="#inherit_i">an instantiation context same as <code>IC</code> up to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>value<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>theta</code> be <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -12473,64 +12509,54 @@ as:</p>
 </div>
 </li>
 <li>
-<p>Let the updated store <code>STO<sub>1</sub></code> and the instantiation context <code>IC<sub>callee_1</sub></code> be</p>
+<p>Let the updated store <code>STO<sub>1</sub></code> and instantiation context <code>IC<sub>callee_2</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_0</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>id<sub>cparam_default</sub><sup>*</sup></code> be the list of <code>id<sub>cparam_default</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let the updated store <code>STO<sub>2</sub></code> and instantiation context <code>IC<sub>callee_3</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>cparam_default</sub></code> be the name of <code>constructorParameterIR<sub>default</sub></code>.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>constructorParameterIR<sub>default</sub></code> in <code>constructorParameterIR<sub>default</sub><sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>IC<sub>callee_2</sub></code> be <a href="#add_vars_i"><code>IC<sub>callee_1</sub></code> where each of <code>id<sub>cparam_default</sub><sup>*</sup></code> to each of <code>value<sub>default</sub><sup>*</sup></code> are added to the <code>p<sub>callee</sub></code> layer</a>.</p>
-</li>
-<li>
-<p>Let the updated instantiation context <code>IC<sub>local</sub></code>,the store <code>STO<sub>2</sub></code>,and <code>parserLocalDeclarationIR<sub>inst</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParserLocalDecls_inst">compile-time evaluation of <code>parserLocalDeclarationIR<sup>*</sup></code>, under instantiation context <code>IC<sub>callee_2</sub></code>and store <code>STO<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let the updated instantiation context <code>IC<sub>state</sub></code>and the store <code>STO<sub>3</sub></code> be</p>
+<p>Let the updated instantiation context <code>IC<sub>local</sub></code>,the store <code>STO<sub>3</sub></code>,and <code>parserLocalDeclarationIR<sub>inst</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParserStates_inst">compile-time evaluation of <code>parserStateIR<sup>*</sup></code>, under instantiation context <code>IC<sub>local</sub></code>and store <code>STO<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParserLocalDecls_inst">compile-time evaluation of <code>parserLocalDeclarationIR<sup>*</sup></code>, under instantiation context <code>IC<sub>callee_3</sub></code>and store <code>STO<sub>2</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>object<sub>parser</sub></code> be <code>PARSER</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>IC<sub>callee_2</sub>.BLOCK.FRAME</code> <code>parserLocalDeclarationIR<sub>inst</sub><sup>*</sup></code> <code>IC<sub>state</sub>.BLOCK.STATE</code> <code>}</code>.</p>
+<p>Let the updated instantiation context <code>IC<sub>state</sub></code>and the store <code>STO<sub>4</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStates_inst">compile-time evaluation of <code>parserStateIR<sup>*</sup></code>, under instantiation context <code>IC<sub>local</sub></code>and store <code>STO<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>object<sub>parser</sub></code> be <code>PARSER</code> <code>&lt;</code> <code>theta</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>IC<sub>callee_3</sub>.BLOCK.FRAME</code> <code>parserLocalDeclarationIR<sub>inst</sub><sup>*</sup></code> <code>IC<sub>state</sub>.BLOCK.STATE</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated store <code>STO<sub>3</sub></code>,</p>
+<p>the updated store <code>STO<sub>4</sub></code>,</p>
 </li>
 <li>
 <p>and the constructed <code>object<sub>parser</sub></code>.</p>
@@ -12577,15 +12603,7 @@ controlDeclaration
 </div>
 </div>
 <div class="paragraph">
-<p>It is illegal to instantiate a <code>parser</code> within a <code>control</code> block. Similar to
-parser declarations, control declarations may not be generic&#8212;&#8203;e.g., the
-following declaration is illegal:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// generic control type declaration is legal
-</span><span style="color: #cf222e">control</span> C<span style="color: #0550ae">&lt;</span>H<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// generic control declaration is illegal</span></code></pre>
-</div>
+<p>It is illegal to instantiate a <code>parser</code> within a <code>control</code> block.</p>
 </div>
 <div class="paragraph">
 <p>P4 does not support exceptional control-flow within a <code>control</code> block. The only
@@ -12602,7 +12620,7 @@ as:</p>
 <div id="controlObjectConstructorDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectConstructorDef
-   : CONTROL `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   : CONTROL `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -12612,7 +12630,7 @@ as:</p>
 <div id="controlObject" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   : CONTROL `&lt; theta &gt; `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -12696,19 +12714,20 @@ as:</p>
 <div class="content">
 <pre>rulegroup Constructor_call/controlConstructorDef:
   rule Constructor_call/controlConstructorDef:
-  p IC STO_0 |- controlObjectConstructorDef `&lt;eps&gt; `(argumentIR* # id_default*) : STO_3 object_control
- -- if CONTROL `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR} = controlObjectConstructorDef
+  p IC STO_0 |- controlObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_4 object_control
+ -- if CONTROL `&lt;typeParameterIR*&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR} = controlObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, value_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if theta = `{(typeParameterIR : typeArgumentIR)*}
+ -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
+ -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_0 id_aligned* ~&gt; STO_1 IC_callee_1
- -- (if (_ _ _ id_cparam_default _ = constructorParameterIR_default))*
- -- if IC_callee_2 = $add_vars_i(p_callee, IC_callee_1, id_cparam_default*, value_default*)
- -- ControlLocalDecls_inst: IC_callee_2 STO_1 |- controlLocalDeclarationIR* : IC_local_0 STO_2 controlLocalDeclarationIR'*
- -- Block_inst: IC_local_0 STO_2 |- controlBodyIR : IC_local_1 STO_3 controlBodyIR'
+ -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR* : IC_local_0 STO_3 controlLocalDeclarationIR'*
+ -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR'
  -- if `{(callableId : actionDef)*} = IC_local_1.BLOCK.CALLABLE
- -- if object_control = CONTROL `(parameterIR*) `{IC_callee_2.BLOCK.FRAME controlLocalDeclarationIR'* `{(callableId : actionDef)*} controlBodyIR'}</pre>
+ -- if object_control = CONTROL `&lt;theta&gt; `(parameterIR*) `{IC_callee_3.BLOCK.FRAME controlLocalDeclarationIR'* `{(callableId : actionDef)*} controlBodyIR'}</pre>
 </div>
 </div>
 </div>
@@ -12721,12 +12740,12 @@ as:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>controlObjectConstructorDef</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>controlObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>CONTROL</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code> be <code>controlObjectConstructorDef</code>.</p>
+<p>Let <code>CONTROL</code> <code>&lt;</code> <code>typeParameterIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code> be <code>controlObjectConstructorDef</code>.</p>
 </li>
 <li>
 <p>Let <code>p<sub>callee</sub></code> be <code>BLOCK</code>.</p>
@@ -12735,7 +12754,13 @@ as:</p>
 <p>Let <code>IC<sub>callee_0</sub></code> be <a href="#inherit_i">an instantiation context same as <code>IC</code> up to the <code>GLOBAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>value<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>theta</code> be <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -12755,51 +12780,41 @@ as:</p>
 </div>
 </li>
 <li>
-<p>Let the updated store <code>STO<sub>1</sub></code> and the instantiation context <code>IC<sub>callee_1</sub></code> be</p>
+<p>Let the updated store <code>STO<sub>1</sub></code> and instantiation context <code>IC<sub>callee_2</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_0</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>id<sub>cparam_default</sub><sup>*</sup></code> be the list of <code>id<sub>cparam_default</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let the updated store <code>STO<sub>2</sub></code> and instantiation context <code>IC<sub>callee_3</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>cparam_default</sub></code> be the name of <code>constructorParameterIR<sub>default</sub></code>.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>constructorParameterIR<sub>default</sub></code> in <code>constructorParameterIR<sub>default</sub><sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>IC<sub>callee_2</sub></code> be <a href="#add_vars_i"><code>IC<sub>callee_1</sub></code> where each of <code>id<sub>cparam_default</sub><sup>*</sup></code> to each of <code>value<sub>default</sub><sup>*</sup></code> are added to the <code>p<sub>callee</sub></code> layer</a>.</p>
-</li>
-<li>
-<p>Let the updated instantiation context <code>IC<sub>local_0</sub></code>,the store <code>STO<sub>2</sub></code>,and <code>controlLocalDeclarationIR'<sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ControlLocalDecls_inst">compile-time evaluation of <code>controlLocalDeclarationIR<sup>*</sup></code>, under instantiation context <code>IC<sub>callee_2</sub></code>and store <code>STO<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let the updated instantiation context <code>IC<sub>local_1</sub></code>, store <code>STO<sub>3</sub></code>, and <code>controlBodyIR'</code> be</p>
+<p>Let the updated instantiation context <code>IC<sub>local_0</sub></code>,the store <code>STO<sub>3</sub></code>,and <code>controlLocalDeclarationIR'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_inst">compile-time evaluation of <code>controlBodyIR</code>, under instantiation context <code>IC<sub>local_0</sub></code>, and store <code>STO<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ControlLocalDecls_inst">compile-time evaluation of <code>controlLocalDeclarationIR<sup>*</sup></code>, under instantiation context <code>IC<sub>callee_3</sub></code>and store <code>STO<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated instantiation context <code>IC<sub>local_1</sub></code>, store <code>STO<sub>4</sub></code>, and <code>controlBodyIR'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Block_inst">compile-time evaluation of <code>controlBodyIR</code>, under instantiation context <code>IC<sub>local_0</sub></code>, and store <code>STO<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -12828,14 +12843,14 @@ as:</p>
 </div>
 </li>
 <li>
-<p>Let <code>object<sub>control</sub></code> be <code>CONTROL</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>IC<sub>callee_2</sub>.BLOCK.FRAME</code> <code>controlLocalDeclarationIR'<sup>*</sup></code> <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code> <code>controlBodyIR'</code> <code>}</code>.</p>
+<p>Let <code>object<sub>control</sub></code> be <code>CONTROL</code> <code>&lt;</code> <code>theta</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>IC<sub>callee_3</sub>.BLOCK.FRAME</code> <code>controlLocalDeclarationIR'<sup>*</sup></code> <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code> <code>controlBodyIR'</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated store <code>STO<sub>3</sub></code>,</p>
+<p>the updated store <code>STO<sub>4</sub></code>,</p>
 </li>
 <li>
 <p>and the constructed <code>object<sub>control</sub></code>.</p>
@@ -13223,16 +13238,15 @@ with them.</p>
 <div class="content">
 <pre>rulegroup Constructor_call/packageConstructorDef:
   rule Constructor_call/packageConstructorDef:
-  p IC STO_0 |- packageObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_1 object_package
+  p IC STO_0 |- packageObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_2 object_package
  -- if PACKAGE `&lt;typeParameterIR*&gt; `(constructorParameterIR*) = packageObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, value_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
  -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- (if (_ _ _ id_cparam_default _ = constructorParameterIR_default))*
- -- if IC_callee_3 = $add_vars_i(p_callee, IC_callee_2, id_cparam_default*, value_default*)
+ -- Copy_in_inst_default: STO_1 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
  -- if object_package = PACKAGE `&lt;IC_callee_3.BLOCK.TYPE&gt; `{IC_callee_3.BLOCK.FRAME}</pre>
 </div>
 </div>
@@ -13263,7 +13277,7 @@ with them.</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>value<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -13283,7 +13297,7 @@ with them.</p>
 </div>
 </li>
 <li>
-<p>Let the updated store <code>STO<sub>1</sub></code> and the instantiation context <code>IC<sub>callee_2</sub></code> be</p>
+<p>Let the updated store <code>STO<sub>1</sub></code> and instantiation context <code>IC<sub>callee_2</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -13293,24 +13307,14 @@ with them.</p>
 </div>
 </li>
 <li>
-<p>Let <code>id<sub>cparam_default</sub><sup>*</sup></code> be the list of <code>id<sub>cparam_default</sub></code>, obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let the updated store <code>STO<sub>2</sub></code> and instantiation context <code>IC<sub>callee_3</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>id<sub>cparam_default</sub></code> be the name of <code>constructorParameterIR<sub>default</sub></code>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>constructorParameterIR<sub>default</sub></code> in <code>constructorParameterIR<sub>default</sub><sup>*</sup></code></p>
-</div>
-</li>
-<li>
-<p>Let <code>IC<sub>callee_3</sub></code> be <a href="#add_vars_i"><code>IC<sub>callee_2</sub></code> where each of <code>id<sub>cparam_default</sub><sup>*</sup></code> to each of <code>value<sub>default</sub><sup>*</sup></code> are added to the <code>p<sub>callee</sub></code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>object<sub>package</sub></code> be <code>PACKAGE</code> <code>&lt;</code> <code>IC<sub>callee_3</sub>.BLOCK.TYPE</code> <code>&gt;</code> <code>{</code> <code>IC<sub>callee_3</sub>.BLOCK.FRAME</code> <code>}</code>.</p>
@@ -13320,7 +13324,7 @@ with them.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated store <code>STO<sub>1</sub></code>,</p>
+<p>the updated store <code>STO<sub>2</sub></code>,</p>
 </li>
 <li>
 <p>and the constructed <code>object<sub>package</sub></code>.</p>
@@ -14079,7 +14083,7 @@ The following are all legal constant declarations:</p>
 <div id="constantDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantInitializerIR
-   : = value
+   : = `VALUE value
    ;
 
 constantDeclarationIR
@@ -14108,7 +14112,7 @@ defined by the following rule:</p>
  -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~&gt; value
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR LCTK value)
- -- if constantDeclarationIR = annotationList CONST typeIR nameIR (= value) ;</pre>
+ -- if constantDeclarationIR = annotationList CONST typeIR nameIR (= `VALUE value) ;</pre>
 </div>
 </div>
 </div>
@@ -14177,7 +14181,7 @@ defined by the following rule:</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#add_var_t"><code>TC<sub>0</sub></code> where <code>nameIR</code> to <code>`EMPTY</code> <code>typeIR</code> <code>LCTK</code> <code>value</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value</code> <code>;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>value</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in the updated typing context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
@@ -14242,7 +14246,7 @@ defined by the following rule:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation ConstDecl_inst: cursor instContext |- constantDeclarationIR : instContext constantDeclarationIR</pre>
+<pre>relation ConstDecl_inst: cursor instContext |- constantDeclarationIR : instContext</pre>
 </div>
 </div>
 </div>
@@ -14263,7 +14267,7 @@ defined by the following rule:</p>
 <p>Loading <code>constantDeclarationIR</code>, under cursor <code>cursor</code>, and instantiation context <code>instContext</code>:</p>
 </li>
 <li>
-<p>Results in the updated instantiation context <code>instContext</code> and <code>constantDeclarationIR</code>.</p>
+<p>Results in the updated instantiation context <code>instContext</code>.</p>
 </li>
 </ul>
 </div>
@@ -14279,9 +14283,8 @@ defined by the following rule:</p>
 <div class="content">
 <pre>rulegroup ConstDecl_inst:
   rule ConstDecl_inst:
-  p IC_0 |- annotationList CONST typeIR nameIR (= value) ; : IC_1 constantDeclarationIR
- -- if IC_1 = $add_var_i(p, IC_0, nameIR, value)
- -- if constantDeclarationIR = annotationList CONST typeIR nameIR (= value) ;</pre>
+  p IC_0 |- annotationList CONST typeIR nameIR (= `VALUE value) ; : IC_1
+ -- if IC_1 = $add_var_i(p, IC_0, nameIR, value)</pre>
 </div>
 </div>
 </div>
@@ -14294,7 +14297,7 @@ defined by the following rule:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstDecl_inst">Loading <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value</code> <code>;</code>, under cursor <code>p</code>, and instantiation context <code>IC<sub>0</sub></code></a>:</p>
+<p><a href="#ConstDecl_inst">Loading <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>value</code> <code>;</code>, under cursor <code>p</code>, and instantiation context <code>IC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -14302,10 +14305,7 @@ defined by the following rule:</p>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>value</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value</code> <code>;</code>.</p>
-</li>
-<li>
-<p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
+<p>Result in the updated instantiation context <code>IC<sub>1</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -14323,7 +14323,7 @@ evaluated with:</p>
 <pre>rulegroup Decl_inst/constantDeclarationIR:
   rule Decl_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR : IC_1 STO
- -- ConstDecl_inst: GLOBAL IC_0 |- constantDeclarationIR : IC_1 constantDeclarationIR</pre>
+ -- ConstDecl_inst: GLOBAL IC_0 |- constantDeclarationIR : IC_1</pre>
 </div>
 </div>
 </div>
@@ -14341,7 +14341,7 @@ evaluated with:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the updated instantiation context <code>IC<sub>1</sub></code> and <code>constantDeclarationIR'</code> be</p>
+<p>Let the updated instantiation context <code>IC<sub>1</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -14349,9 +14349,6 @@ evaluated with:</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Check that <code>constantDeclarationIR'</code> is equal to <code>constantDeclarationIR</code>.</p>
 </li>
 <li>
 <p>Result in the updated instantiation context <code>IC<sub>1</sub></code> and the store <code>STO</code>.</p>
@@ -14405,7 +14402,7 @@ evaluated with:</p>
 <div class="content">
 <pre>rulegroup ConstDecl_eval:
   rule ConstDecl_eval:
-  p EC_0 |- annotationList CONST typeIR nameIR (= value) ; : EC_1
+  p EC_0 |- annotationList CONST typeIR nameIR (= `VALUE value) ; : EC_1
  -- if EC_1 = $add_var_e(p, EC_0, ` nameIR, value)</pre>
 </div>
 </div>
@@ -14419,7 +14416,7 @@ evaluated with:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#ConstDecl_eval">Evaluating <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>value</code> <code>;</code>, under cursor <code>p</code>, and evaluation context <code>EC<sub>0</sub></code></a>:</p>
+<p><a href="#ConstDecl_eval">Evaluating <code>annotationList</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>value</code> <code>;</code>, under cursor <code>p</code>, and evaluation context <code>EC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -15556,7 +15553,7 @@ provided or not.</p>
  -- if objectId = IC_0.PATH ++ nameIR
  -- if STO_3 = $add_store(STO_2, objectId, object_merged)
  -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
- -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= `VALUE (REF objectId)) ;
   rule InstDecl_inst/non-extern:
   p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_2 constantDeclarationIR
  -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
@@ -15566,7 +15563,7 @@ provided or not.</p>
  -- if objectId = IC_0.PATH ++ nameIR
  -- if STO_2 = $add_store(STO_1, objectId, object)
  -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
- -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;</pre>
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= `VALUE (REF objectId)) ;</pre>
 </div>
 </div>
 </div>
@@ -15645,7 +15642,7 @@ provided or not.</p>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>REF</code> <code>objectId</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -15677,7 +15674,7 @@ provided or not.</p>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_var_i"><code>IC<sub>0</sub></code> where <code>nameIR</code> to <code>REF</code> <code>objectId</code> is added to the <code>p</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in</p>
@@ -17929,7 +17926,7 @@ parserStateIR
    ;
 
 parserDeclarationIR
-   : annotationList PARSER nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   : annotationList PARSER nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
    ;</code></pre>
 </div>
 </div>
@@ -17940,23 +17937,24 @@ parserDeclarationIR
 <div class="content">
 <pre>rulegroup Decl_ok/parserDeclaration:
   rule Decl_ok/parserDeclaration:
-  TC_0 |- annotationList PARSER name `EMPTY `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_6 parserDeclarationIR
- -- if B = $bound(GLOBAL, TC_0)
+  TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_7 parserDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
- -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
- -- ParserLocalDeclList_ok: TC_3 |- parserLocalDeclarationList : TC_4 parserLocalDeclarationIR*
- -- if TC_5 = TC_4[LOCAL.KIND = PARSER_STATE]
- -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
+ -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR* # typeId_impl*
+ -- ParameterList_ok: BLOCK TC_3 |- parameterList : TC_4 parameterIR* # eps
+ -- ParserLocalDeclList_ok: TC_4 |- parserLocalDeclarationList : TC_5 parserLocalDeclarationIR*
+ -- if TC_6 = TC_5[LOCAL.KIND = PARSER_STATE]
+ -- ParserStateList_ok: TC_6 |- parserStateList : parserStateIR*
  -- if callableTypeDefIR = PARSER_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: B |- callableTypeDefIR
+ -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
- -- if typeIR_parser = PARSER nameIR `&lt;eps&gt; `(parameterIR*)
- -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_parser
- -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
- -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
- -- if parserDeclarationIR = annotationList PARSER nameIR `&lt;eps&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*}</pre>
+ -- if typeDefIR_parser = PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
+ -- if typeIR_parser = $typeIR_of_typeDefIR(typeDefIR_parser)
+ -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_parser
+ -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+ -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+ -- if parserDeclarationIR = annotationList PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*}</pre>
 </div>
 </div>
 </div>
@@ -17969,22 +17967,39 @@ parserDeclarationIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_ok">Typing <code>annotationList</code> <code>PARSER</code> <code>name</code> <code>`EMPTY</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>constructorParameterListOpt</code> <code>{</code> <code>parserLocalDeclarationList</code> <code>parserStateList</code> <code>}</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#Decl_ok">Typing <code>annotationList</code> <code>PARSER</code> <code>name</code> <code>typeParameterListOpt</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>constructorParameterListOpt</code> <code>{</code> <code>parserLocalDeclarationList</code> <code>parserStateList</code> <code>}</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>PARSER</code>.</p>
 </li>
 <li>
-<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated typing context <code>TC<sub>4</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -17993,37 +18008,24 @@ parserDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>5</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ParserLocalDeclList_ok">typing <code>parserLocalDeclarationList</code>, under typing context <code>TC<sub>4</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let the updated typing context <code>TC<sub>4</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParserLocalDeclList_ok">typing <code>parserLocalDeclarationList</code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>PARSER_STATE</code>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub></code> with <code>LOCAL.KIND</code> set to <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let the typed parser states <code>parserStateIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParserStateList_ok">typing <code>parserStateList</code>, under typing context <code>TC<sub>5</sub></code></a>.</p>
+<p>the result of <a href="#ParserStateList_ok">typing <code>parserStateList</code>, under typing context <code>TC<sub>6</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18032,7 +18034,10 @@ parserDeclarationIR
 <p>Let <code>callableTypeDefIR</code> be <code>PARSER_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>B</code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18041,22 +18046,28 @@ parserDeclarationIR
 <p>Let <code>constructorId</code> be <a href="#constructorId">the constructor identifier for <code>name</code> <code>constructorParameterListOpt</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>parser</sub></code> be <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
+<p>Let <code>typeDefIR<sub>parser</sub></code> be <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>parser</sub></code>.</p>
+<p>Let <code>typeIR<sub>parser</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>parser</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
+<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>parser</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>parserDeclarationIR</code> be <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code>.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>6</sub></code> and <code>parserDeclarationIR</code>.</p>
+<p>Let <code>TC<sub>7</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>parserDeclarationIR</code> be <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>7</sub></code> and <code>parserDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -18076,9 +18087,10 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/parserDeclarationIR:
   rule Decl_inst/parserDeclarationIR:
-  IC_0 STO |- annotationList PARSER nameIR `&lt;eps&gt; `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR} : IC_1 STO
+  IC_0 STO |- annotationList PARSER nameIR `&lt;typeParameterListIR_expl , typeParameterListIR_impl&gt; `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR} : IC_1 STO
  -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
- -- if constructorDef = PARSER `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR}
+ -- if typeParameterListIR = typeParameterListIR_expl ++ typeParameterListIR_impl
+ -- if constructorDef = PARSER `&lt;typeParameterListIR&gt; `(parameterListIR) `(constructorParameterListIR) `{parserLocalDeclarationListIR parserStateListIR}
  -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)</pre>
 </div>
 </div>
@@ -18092,7 +18104,7 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>parserLocalDeclarationListIR</code> <code>parserStateListIR</code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR<sub>expl</sub></code> <code>,</code> <code>typeParameterListIR<sub>impl</sub></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>parserLocalDeclarationListIR</code> <code>parserStateListIR</code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18100,7 +18112,10 @@ object constructors.</p>
 <p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>constructorDef</code> be <code>PARSER</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>parserLocalDeclarationListIR</code> <code>parserStateListIR</code> <code>}</code>.</p>
+<p>Let <code>typeParameterListIR</code> be <code>typeParameterListIR<sub>expl</sub></code> concatenated with <code>typeParameterListIR<sub>impl</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>constructorDef</code> be <code>PARSER</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>parserLocalDeclarationListIR</code> <code>parserStateListIR</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_constructorDef_i">where <code>callableId</code> to <code>constructorDef</code> is added to <code>IC<sub>0</sub></code></a>.</p>
@@ -18118,7 +18133,7 @@ object constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   : PARSER `&lt; theta &gt; `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -18167,7 +18182,7 @@ controlDeclaration
 controlBodyIR = blockStatementIR
 
 controlDeclarationIR
-   : annotationList CONTROL nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   : annotationList CONTROL nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -18178,23 +18193,24 @@ controlDeclarationIR
 <div class="content">
 <pre>rulegroup Decl_ok/controlDeclaration:
   rule Decl_ok/controlDeclaration:
-  TC_0 |- annotationList CONTROL name `EMPTY `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
- -- if B = $bound(GLOBAL, TC_0)
+  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_7 controlDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
- -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
- -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
- -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*
- -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
- -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
+ -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
+ -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR* # typeId_impl*
+ -- ParameterList_ok: BLOCK TC_3 |- parameterList : TC_4 parameterIR* # eps
+ -- ControlLocalDeclList_ok: TC_4 |- controlLocalDeclarationList : TC_5 controlLocalDeclarationIR*
+ -- if TC_6 = TC_5[LOCAL.KIND = CONTROL_APPLY_METHOD]
+ -- Block_ok: TC_6 CONT NOLOOP |- controlBody : _ _ controlBodyIR
  -- if callableTypeDefIR = CONTROL_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: B |- callableTypeDefIR
+ -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
- -- if typeIR_control = CONTROL nameIR `&lt;eps&gt; `(parameterIR*)
- -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_control
- -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
- -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
- -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;eps&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
+ -- if typeDefIR_control = CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
+ -- if typeIR_control = $typeIR_of_typeDefIR(typeDefIR_control)
+ -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_control
+ -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
+ -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+ -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
 </div>
 </div>
 </div>
@@ -18207,22 +18223,39 @@ controlDeclarationIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_ok">Typing <code>annotationList</code> <code>CONTROL</code> <code>name</code> <code>`EMPTY</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>constructorParameterListOpt</code> <code>{</code> <code>controlLocalDeclarationList</code> <code>APPLY</code> <code>controlBody</code> <code>}</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
+<p><a href="#Decl_ok">Typing <code>annotationList</code> <code>CONTROL</code> <code>name</code> <code>typeParameterListOpt</code> <code>(</code> <code>parameterList</code> <code>)</code> <code>constructorParameterListOpt</code> <code>{</code> <code>controlLocalDeclarationList</code> <code>APPLY</code> <code>controlBody</code> <code>}</code> under typing context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>B</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
-</li>
-<li>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>CONTROL</code>.</p>
 </li>
 <li>
-<p>Let the updated typing context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under typing context <code>TC<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated typing context <code>TC<sub>4</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18231,37 +18264,24 @@ controlDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let the updated typing context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and a set of fresh type variables <code>typeId'<sup>*</sup></code> be</p>
+<p>Let the updated typing context <code>TC<sub>5</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under cursor <code>BLOCK</code> and typing context <code>TC<sub>2</sub></code></a>.</p>
+<p>the result of <a href="#ControlLocalDeclList_ok">typing <code>controlLocalDeclarationList</code>, under typing context <code>TC<sub>4</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Let the updated typing context <code>TC<sub>4</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ControlLocalDeclList_ok">typing <code>controlLocalDeclarationList</code>, under typing context <code>TC<sub>3</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>CONTROL_APPLY_METHOD</code>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub></code> with <code>LOCAL.KIND</code> set to <code>CONTROL_APPLY_METHOD</code>.</p>
 </li>
 <li>
 <p>Let the updated typing context <code>_</code>, abstract control flow <code>_</code>, and <code>controlBodyIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under typing context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under typing context <code>TC<sub>6</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18270,7 +18290,10 @@ controlDeclarationIR
 <p>Let <code>callableTypeDefIR</code> be <code>CONTROL_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>B</code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -18279,22 +18302,28 @@ controlDeclarationIR
 <p>Let <code>constructorId</code> be <a href="#constructorId">the constructor identifier for <code>name</code> <code>constructorParameterListOpt</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeIR<sub>control</sub></code> be <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
+<p>Let <code>typeDefIR<sub>control</sub></code> be <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>control</sub></code>.</p>
+<p>Let <code>typeIR<sub>control</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>control</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
+<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>control</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>controlDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
+<p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Result in the updated typing context <code>TC<sub>6</sub></code> and <code>controlDeclarationIR</code>.</p>
+<p>Let <code>TC<sub>7</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>controlDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in the updated typing context <code>TC<sub>7</sub></code> and <code>controlDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -18314,9 +18343,10 @@ object constructors.</p>
 <div class="content">
 <pre>rulegroup Decl_inst/controlDeclarationIR:
   rule Decl_inst/controlDeclarationIR:
-  IC_0 STO |- annotationList CONTROL nameIR `&lt;eps&gt; `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR} : IC_1 STO
+  IC_0 STO |- annotationList CONTROL nameIR `&lt;typeParameterListIR_expl , typeParameterListIR_impl&gt; `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR} : IC_1 STO
  -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
- -- if constructorDef = CONTROL `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR}
+ -- if typeParameterListIR = typeParameterListIR_expl ++ typeParameterListIR_impl
+ -- if constructorDef = CONTROL `&lt;typeParameterListIR&gt; `(parameterListIR) `(constructorParameterListIR) `{controlLocalDeclarationListIR APPLY controlBodyIR}
  -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)</pre>
 </div>
 </div>
@@ -18330,7 +18360,7 @@ object constructors.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>controlLocalDeclarationListIR</code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
+<p><a href="#Decl_inst">Loading <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR<sub>expl</sub></code> <code>,</code> <code>typeParameterListIR<sub>impl</sub></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>controlLocalDeclarationListIR</code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>, under instantiation context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -18338,7 +18368,10 @@ object constructors.</p>
 <p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>constructorDef</code> be <code>CONTROL</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>controlLocalDeclarationListIR</code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
+<p>Let <code>typeParameterListIR</code> be <code>typeParameterListIR<sub>expl</sub></code> concatenated with <code>typeParameterListIR<sub>impl</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>constructorDef</code> be <code>CONTROL</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>(</code> <code>constructorParameterListIR</code> <code>)</code> <code>{</code> <code>controlLocalDeclarationListIR</code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_constructorDef_i">where <code>callableId</code> to <code>constructorDef</code> is added to <code>IC<sub>0</sub></code></a>.</p>
@@ -18356,7 +18389,7 @@ object constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   : CONTROL `&lt; theta &gt; `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -24572,17 +24605,59 @@ Specify the contollable name part carefully in P4-SpecTec.
 <div class="sect3">
 <h4 id="_compile_time_evaluation_27">13.5.2. Compile-time evaluation</h4>
 <div class="paragraph">
-<p>At compile-time, a direct application statement is instantiated, and then
-desugared into a method call on that instance.</p>
+<p>At compile-time, a direct application is instantiated, and then
+desugared into a method call on that instance with the relation:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Stmt_inst/directApplicationStatementIR:
-  rule Stmt_inst/directApplicationStatementIR:
-  p IC STO_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; . APPLY `(argumentListIR) ; : IC STO_2 blockStatementIR
+<pre>relation DirectApplicationStmt_inst: cursor instContext store |- directApplicationStatementIR : store constantDeclarationIR callStatementIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="DirectApplicationStmt_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#DirectApplicationStmt_inst">DirectApplicationStmt_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>directApplicationStatementIR</code>, under cursor <code>cursor</code>, instantiation context <code>instContext</code>, and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>store</code> and desugared <code>constantDeclarationIR</code> <code>callStatementIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It is implemented as:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup DirectApplicationStmt_inst:
+  rule DirectApplicationStmt_inst:
+  p IC STO_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; . APPLY `(argumentListIR) ; : STO_2 constantDeclarationIR callStatementIR
  -- Constructor_inst: p IC |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(eps) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# eps)
  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
  -- if IC_callee = $enter_path_i(IC, typeId)
@@ -24592,11 +24667,10 @@ desugared into a method call on that instance.</p>
  -- if nameIR = $concat_text([typeId, "_", typeId_fresh])
  -- if objectId = IC.PATH ++ typeId
  -- if STO_2 = $add_store(STO_1, objectId, object)
- -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= (REF objectId)) ;
+ -- if constantDeclarationIR = `EMPTY CONST typeIR nameIR (= `VALUE (REF objectId)) ;
  -- if typedExpressionIR_base = (` nameIR) # `(typeIR CTK)
  -- if callableTargetIR = typedExpressionIR_base . "apply"
- -- if callStatementIR = callableTargetIR `&lt;typeArgumentListIR_inst&gt; `(argumentListIR) ;
- -- if blockStatementIR = `EMPTY `{[constantDeclarationIR, callStatementIR]}</pre>
+ -- if callStatementIR = callableTargetIR `&lt;typeArgumentListIR_inst&gt; `(argumentListIR) ;</pre>
 </div>
 </div>
 </div>
@@ -24609,7 +24683,7 @@ desugared into a method call on that instance.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_inst">Compile-time evaluation of <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>argumentListIR</code> <code>)</code> <code>;</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>:</p>
+<p><a href="#DirectApplicationStmt_inst">Compile-time evaluation of <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>argumentListIR</code> <code>)</code> <code>;</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24637,7 +24711,7 @@ desugared into a method call on that instance.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with default parameters <code>·</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>callee</sub></code>, and store <code>STO</code></a>.</p>
+<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with default parameters <code>·</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>callee</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -24658,7 +24732,7 @@ desugared into a method call on that instance.</p>
 <p>Let <code>STO<sub>2</sub></code> be <a href="#add_store"><code>STO<sub>1</sub></code> where <code>objectId</code> to <code>object</code> is added</a>.</p>
 </li>
 <li>
-<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
+<p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> be <a href="#typedExpressionIR"><code>nameIR</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>CTK</code></a>.</p>
@@ -24670,6 +24744,59 @@ desugared into a method call on that instance.</p>
 <p>Let <code>callStatementIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code> and desugared <code>constantDeclarationIR</code> <code>callStatementIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A direct application statement is instantiated as:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Stmt_inst/directApplicationStatementIR:
+  rule Stmt_inst/directApplicationStatementIR:
+  p IC STO_0 |- directApplicationStatementIR : IC STO_1 blockStatementIR
+ -- DirectApplicationStmt_inst: p IC STO_0 |- directApplicationStatementIR : STO_1 constantDeclarationIR callStatementIR
+ -- if blockStatementIR = `EMPTY `{[constantDeclarationIR, callStatementIR]}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Stmt_inst">Compile-time evaluation of <code>directApplicationStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated store <code>STO<sub>1</sub></code> and desugared <code>constantDeclarationIR</code> <code>callStatementIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#DirectApplicationStmt_inst">compile-time evaluation of <code>directApplicationStatementIR</code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
 <p>Let <code>blockStatementIR</code> be <code>`EMPTY</code> <code>{</code> <code>[constantDeclarationIR,</code> <code>callStatementIR]</code> <code>}</code>.</p>
 </li>
 <li>
@@ -24677,7 +24804,7 @@ desugared into a method call on that instance.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC</code>, store <code>STO<sub>2</sub></code>, and <code>blockStatementIR</code>.</p>
+<p>the updated instantiation context <code>IC</code>, store <code>STO<sub>1</sub></code>, and <code>blockStatementIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -25711,8 +25838,8 @@ relation:</p>
 <div class="content">
 <pre>rulegroup BlockElementStmt_inst:
   rule BlockElementStmt_inst/constantDeclarationIR:
-  IC_0 STO_0 |- constantDeclarationIR : IC_1 STO_0 constantDeclarationIR_inst
- -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1 constantDeclarationIR_inst
+  IC_0 STO_0 |- constantDeclarationIR : IC_1 STO_0 constantDeclarationIR
+ -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1
   rule BlockElementStmt_inst/variableDeclarationIR:
   IC STO |- variableDeclarationIR : IC STO variableDeclarationIR
   rule BlockElementStmt_inst/statementIR:
@@ -25739,7 +25866,7 @@ relation:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let the updated instantiation context <code>IC<sub>1</sub></code> and <code>constantDeclarationIR<sub>inst</sub></code> be</p>
+<p>Let the updated instantiation context <code>IC<sub>1</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -25753,7 +25880,7 @@ relation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the updated instantiation context <code>IC<sub>1</sub></code>, store <code>store</code>, and <code>constantDeclarationIR<sub>inst</sub></code>.</p>
+<p>the updated instantiation context <code>IC<sub>1</sub></code>, store <code>store</code>, and <code>constantDeclarationIR</code>.</p>
 </li>
 </ul>
 </div>
