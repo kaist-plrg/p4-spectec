@@ -378,12 +378,13 @@ let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    extern void resubmit_preserving_field_list(bit<8> index); *)
 let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
+  let open ArchState in
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
   (* write resubmit index in arch state *)
   let value_arch_state =
-    value_sto |> Spec.Func.find_store_archState |> ArchState.of_value
-    |> ArchState.with_resubmit value_index
-    |> ArchState.to_value
+    value_sto |> Spec.Func.find_store_archState |> of_value
+    |> with_resubmit (Packet.ResubmitInfo.of_v value_index)
+    |> to_value
   in
   let value_sto = Spec.Func.update_store_archState value_sto value_arch_state in
   let value_callResult =

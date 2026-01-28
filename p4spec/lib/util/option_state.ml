@@ -15,9 +15,11 @@ let modify (f : 's -> 's) : ('s, unit) t = fun s -> (Some (), f s)
 let guard (cond : bool) : ('s, unit) t =
   if cond then return () else fun s -> (None, s)
 
+let fail : ('s, 'a) t = fun s -> (None, s)
 let run (m : ('s, 'a) t) (s : 's) : 'a option * 's = m s
 let ( let* ) = bind
 let ( let+ ) = map
+let ( >> ) (ma : ('s, 'a) t) (mb : ('s, 'b) t) = bind ma (fun _ -> mb)
 
 let ( <| ) (m : ('s, 'a -> 'b) t) (x : 'a) : ('s, 'b) t =
   let* f = m in
