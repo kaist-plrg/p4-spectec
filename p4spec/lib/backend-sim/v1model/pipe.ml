@@ -3,6 +3,8 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
 open Interface.Flatten
+module ArchState = Arch_state
+module OptionState = Util.Option_state
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
@@ -54,9 +56,11 @@ struct
 
   let init_call_func () = Spec.Func.register call_func
 
+  type 'a pipe_ctx = (Value.t * Value.t, 'a) OptionState.t
+
   (* Extern objects *)
 
-  let empty_arch_state = State.empty |> State.to_value
+  let empty_arch_state = ArchState.empty |> ArchState.to_value
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
@@ -65,9 +69,11 @@ struct
     | Register of Object.Register.t
   [@@deriving yojson]
 
-  let get_arch_state (value_sto : Value.t) : State.t =
+  let get_arch_state : ArchState.t pipe_ctx =
+    let open OptionState in
+    let* _, value_sto = get in
     value_sto |> Spec.Func.find_store_archState |> unwrap_extern_v
-    |> State.of_yojson |> Result.get_ok
+    |> ArchState.of_yojson |> Result.get_ok |> return
 
   let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : extern =
     Spec.Func.find_store_objectState value_sto value_objectId
@@ -164,6 +170,9 @@ struct
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
           let packet_in = get_packet_in value_sto in
           Func.update_checksum_with_payload value_ctx value_sto packet_in
+      | "clone_preserving_field_list", [ "type"; "session"; "index" ] ->
+          Func.clone_preserving_field_list value_ctx value_sto
+          (* TODO: when to resolve port id? *)
       | "resubmit_preserving_field_list", [ "index" ] ->
           Func.resubmit_preserving_field_list value_ctx value_sto
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
@@ -338,6 +347,18 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  let with_pipe_ctx (f : Value.t -> Value.t -> Value.t * Value.t * Value.t) :
+      Value.t pipe_ctx =
+    let open OptionState in
+    let* value_ctx, value_sto = get in
+    let value_ctx, value_sto, value_callResult = f value_ctx value_sto in
+    let* _ = put (value_ctx, value_sto) in
+    return value_callResult
+
+  let put_ctx (ctx : Value.t) : unit pipe_ctx =
+    let open OptionState in
+    modify (fun (_, sto) -> (ctx, sto))
+
   (* Pipeline initializer *)
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) :
@@ -355,13 +376,14 @@ struct
 
   (* Pipeline driver *)
 
-  let setup_rx (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t =
+  let setup_rx (rx : IO.rx) : unit pipe_ctx =
+    let open OptionState in
     let port_in, packet_in = rx in
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
+    let* value_ctx, value_sto = get in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
     in
@@ -375,12 +397,12 @@ struct
     in
     (* Setup global variables *)
     let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
-    (value_ctx, value_sto)
+    put (value_ctx, value_sto)
 
-  let drive_p (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t =
-    let value_ctx, value_sto, value_parser_result =
-      Spec.Rel.v1model_parser value_ctx value_sto
-    in
+  let drive_p : unit pipe_ctx =
+    let open OptionState in
+    let* value_parser_result = with_pipe_ctx Spec.Rel.v1model_parser in
+    let* value_ctx, value_sto = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
       | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
@@ -389,30 +411,17 @@ struct
       | Some _ -> value_ctx
       | None -> assert false
     in
-    (value_ctx, value_sto)
+    put (value_ctx, value_sto)
 
-  let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_verify value_ctx value_sto
+  let drive_vr : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_verify
+  let drive_ig : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_ingress
+  let drive_eg : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_egress
+  let drive_ck : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_check
+  let drive_dep : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_deparse
 
-  let drive_ig (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_ingress value_ctx value_sto
-
-  let drive_eg (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_egress value_ctx value_sto
-
-  let drive_ck (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_check value_ctx value_sto
-
-  let drive_dep (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_deparse value_ctx value_sto
-
-  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
-      IO.tx option =
+  let resulting_port_packet : IO.tx pipe_ctx =
+    let open OptionState in
+    let* value_ctx, value_sto = get in
     let value_egress_spec =
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
@@ -423,34 +432,30 @@ struct
     let drop =
       Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
     in
-    if drop then None
-    else
-      (* Get egress port *)
-      let port = Bigint.to_int_exn int_egress_spec in
-      (* Get input packet *)
-      let packet_in = get_packet_in value_sto in
-      (* Get output packet *)
-      let packet_out = get_packet_out value_sto in
-      let packet =
-        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
-      in
-      (* Return port and packet *)
-      let tx = (port, packet) in
-      Some tx
+    let* () = guard (not drop) in
+    (* Get egress port *)
+    let port = Bigint.to_int_exn int_egress_spec in
+    (* Get input packet *)
+    let packet_in = get_packet_in value_sto in
+    (* Get output packet *)
+    let packet_out = get_packet_out value_sto in
+    let packet =
+      Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+    in
+    (* Return port and packet *)
+    let tx = (port, packet) in
+    return tx
 
-  let drive_pipe_pre_inner (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * bool =
+  let drive_pipe_pre_inner : bool pipe_ctx =
+    let open OptionState in
     (* Parser block *)
-    let value_ctx, value_sto = drive_p value_ctx value_sto in
+    let* () = drive_p in
     (* Verify block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_vr value_ctx value_sto
-    in
+    let* _value_verify_result = drive_vr in
     (* Ingress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_ig value_ctx value_sto
-    in
+    let* _value_verify_result = drive_ig in
     (* Check if packet should be dropped *)
+    let* value_ctx, value_sto = get in
     let drop =
       let value_egress_spec =
         Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
@@ -461,15 +466,16 @@ struct
       in
       Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
     in
-    (value_ctx, value_sto, drop)
+    return drop
 
-  let rec drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * bool =
-    let value_ctx, value_sto, drop = drive_pipe_pre_inner value_ctx value_sto in
-    let arch_state = get_arch_state value_sto in
+  let rec drive_pipe_pre () : unit pipe_ctx =
+    let open OptionState in
+    let* drop = drive_pipe_pre_inner in
+    let* arch_state = get_arch_state in
     match arch_state.resubmit_opt with
-    | None -> (value_ctx, value_sto, drop)
+    | None -> guard (not drop)
     | Some value_index ->
+        let* value_ctx, value_sto = get in
         let value_ctx =
           Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_sto
             value_index
@@ -484,7 +490,7 @@ struct
         in
         (* Reset submit info to none *)
         let value_arch_state =
-          State.(arch_state |> with_resubmit_opt None |> to_value)
+          ArchState.(arch_state |> with_resubmit_opt None |> to_value)
         in
         let value_sto =
           Spec.Func.update_store_archState value_sto value_arch_state
@@ -501,33 +507,32 @@ struct
           Spec.Func.update_store_objectState value_sto value_objectId
             value_packet_in
         in
-        drive_pipe_pre value_ctx value_sto
+        let* _ = put (value_ctx, value_sto) in
+        drive_pipe_pre ()
 
-  let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * IO.tx option =
+  let drive_pipe_post : IO.tx pipe_ctx =
+    let open OptionState in
     (* Egress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_eg value_ctx value_sto
-    in
+    let* _value_verify_result = drive_eg in
     (* Check block *)
-    let value_ctx, value_sto, _value_check_result =
-      drive_ck value_ctx value_sto
-    in
+    let* _value_check_result = drive_ck in
     (* Deparser block *)
-    let value_ctx, value_sto, _value_deparse_result =
-      drive_dep value_ctx value_sto
-    in
+    let* _value_deparse_result = drive_dep in
     (* Get resulting port and packet *)
-    let result_opt = resulting_port_packet value_ctx value_sto in
-    (value_ctx, value_sto, result_opt)
+    resulting_port_packet
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
       Value.t * Value.t * IO.tx option =
-    (* Setup port and packet *)
-    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
-    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto in
-    if drop then (value_ctx, value_sto, None)
-    else drive_pipe_post value_ctx value_sto
+    let pipe_ctx = (value_ctx, value_sto) in
+    let pipe : IO.tx pipe_ctx = 
+      let open OptionState in
+      (* Setup port and packet *)
+      let* () = setup_rx rx in
+      let* () = drive_pipe_pre () in
+      drive_pipe_post
+    in
+    let result, (value_ctx, value_sto) = OptionState.run pipe pipe_ctx in
+    (value_ctx, value_sto, result)
 
   (* Initializer *)
 
