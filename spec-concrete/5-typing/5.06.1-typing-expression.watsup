@@ -6,44 +6,33 @@
 
 ;;; literalExpression
 ;;; syntax literalExpression
+;;;; booleanLiteral
+;;;; integerLiteral
+;;;; stringLiteral
 
-;;;; TRUE | FALSE
+rulegroup Expr_ok/literalExpression {
 
-rulegroup Expr_ok/literalExpression-boolean {
-
-  rule Expr_ok/true:
-    p TC |- TRUE : TRUE `# expressionNoteIR
+  rule Expr_ok/booleanLiteral:
+    p TC |- booleanLiteral : booleanLiteral `# expressionNoteIR
     -- if expressionNoteIR = `( BOOL LCTK )
 
-  rule Expr_ok/false:
-    p TC |- FALSE : FALSE `# expressionNoteIR
-    -- if expressionNoteIR = `( BOOL LCTK )
-
-}
-
-;;;; number
-
-rulegroup Expr_ok/literalExpression-number {
-
-  rule Expr_ok/arbint:
+  rule Expr_ok/integerLiteral-arbint:
     p TC |- D i : (D i) `# expressionNoteIR
     -- if expressionNoteIR = `( INT LCTK )
 
-  rule Expr_ok/fixint:
+  rule Expr_ok/integerLiteral-fixint:
     p TC |- n S i : (n S i) `# expressionNoteIR
     -- if expressionNoteIR = `( (INT `< n >) LCTK )
 
-  rule Expr_ok/fixbit:
+  rule Expr_ok/integerLiteral-fixbit:
     p TC |- n W i : (n W i) `# expressionNoteIR
     -- if expressionNoteIR = `( (BIT `< n >) LCTK )
 
+  rule Expr_ok/stringLiteral:
+    p TC |- stringLiteral : stringLiteral `# expressionNoteIR
+    -- if expressionNoteIR = `( STRING LCTK )
+
 }
-
-;;;; stringLiteral 
-
-rule Expr_ok/literalExpression-stringLiteral:
-  p TC |- (`" text `") : (`" text `") `# expressionNoteIR
-  -- if expressionNoteIR = `( STRING LCTK )
 
 ;;; referenceExpression
 ;;; syntax referenceExpression
@@ -56,13 +45,13 @@ rulegroup Expr_ok/referenceExpression {
   rule Expr_ok/prefixedNonTypeName:
     p TC |- prefixedNonTypeName : prefixedNameIR `# expressionNoteIR
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if _ typeIR ctk _ = $find_var_t(p, TC, prefixedNameIR)
+    -- if _ typeIR ctk _ = $find_var_t(prefixedNameIR, p, TC)
     -- if expressionNoteIR = `( typeIR ctk )
 
   rule Expr_ok/this:
     p TC |- THIS : prefixedNameIR `# expressionNoteIR
     -- if prefixedNameIR = `` "this"
-    -- if _ typeIR ctk _ = $find_var_t(p, TC, prefixedNameIR)
+    -- if _ typeIR ctk _ = $find_var_t(prefixedNameIR, p, TC)
     -- if expressionNoteIR = `( typeIR ctk )
 
 }
@@ -747,7 +736,7 @@ rule Expr_ok/errorAccessExpression:
   ---- ;; check that error member is defined
   -- if nameIR = $name(member)
   -- if nameIR_error = "error." ++ nameIR 
-  -- if ERROR `. nameIR = $find_var_value_t(p, TC, `` nameIR_error)
+  -- if ERROR `. nameIR = $find_var_value_t(`` nameIR_error, p, TC)
   ---- ;; create typed expression
   -- if expressionNoteIR = `( ERROR LCTK )
 

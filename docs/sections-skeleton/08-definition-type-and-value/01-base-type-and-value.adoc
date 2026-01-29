@@ -266,6 +266,40 @@ behavior should match this specification.
 
 NOTE: P4-SpecTec hangs on large integers.
 
+===== Integer literals
+
+// 237
+The types of integer literals are as follows:
+
+// 238
+* An integer with no type prefix has type `int`.
+* A non-negative integer prefixed with an integer width `W` and the
+  character `w` has type `bit<W>`.
+* An integer prefixed with an integer width `W` and the character `s`
+  has type `int<W>`.
+
+// 239
+The table below shows several examples of integer literals and their types. For
+additional examples of literals see <<sec-literals>>.
+
+// 240
+[.center,cols=">1,4",width=70%]
+|===
+| Literal | Interpretation
+
+| `10`    | Type is `int`, value is 10
+
+| `8w10`  | Type is `bit<8>`, value is 10
+
+| `8s10`  | Type is `int<8>`, value is 10
+
+| `2s3`   | Type is `int<2>`, value is -1 (last 2 bits), overflow warning
+
+| `1w10`  | Type is `bit<1>`, value is 0 (last bit), overflow warning
+
+| `1s1`   | Type is `int<1>`, value is -1, overflow warning
+|===
+
 ===== Arbitrary-precision integers
 
 // 232

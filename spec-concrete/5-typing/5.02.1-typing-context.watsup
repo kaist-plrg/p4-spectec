@@ -315,35 +315,35 @@ def $add_constructorDefs_t(
 
 ;;; Finder for variables
 
-dec $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR?
-  hint(prose_in "the type of variable" %2 "from the" %0 "layer of" %1)
+dec $find_var_t(prefixedNameIR, cursor, typingContext) : varTypeIR?
+  hint(prose_in "the type of variable" %0 "from the" %1 "layer of" %2)
 
-def $find_var_t(p, TC, `. id)
+def $find_var_t(`. id, p, TC)
   = $find_map<id, varTypeIR>(typeFrame, id)
   -- if typeFrame = TC.GLOBAL.FRAME
-def $find_var_t(GLOBAL, TC, `` id)
+def $find_var_t(`` id, GLOBAL, TC)
   = $find_map<id, varTypeIR>(typeFrame, id)
   -- if typeFrame = TC.GLOBAL.FRAME
-def $find_var_t(BLOCK, TC, `` id) = varTypeIR
+def $find_var_t(`` id, BLOCK, TC) = varTypeIR
   -- if typeFrame = TC.BLOCK.FRAME
   -- if varTypeIR = $find_map<id, varTypeIR>(typeFrame, id)
-def $find_var_t(BLOCK, TC, `` id) = $find_var_t(GLOBAL, TC, `` id)
+def $find_var_t(`` id, BLOCK, TC) = $find_var_t(`` id, GLOBAL, TC)
   -- if typeFrame = TC.BLOCK.FRAME
   -- if eps = $find_map<id, varTypeIR>(typeFrame, id)
-def $find_var_t(LOCAL, TC, `` id) = varTypeIR
+def $find_var_t(`` id, LOCAL, TC) = varTypeIR
   -- if typeFrame* = TC.LOCAL.FRAMES
   -- if varTypeIR = $find_maps<id, varTypeIR>(typeFrame*, id)
-def $find_var_t(LOCAL, TC, `` id) = $find_var_t(BLOCK, TC, `` id)
+def $find_var_t(`` id, LOCAL, TC) = $find_var_t(`` id, BLOCK, TC)
   -- if typeFrame* = TC.LOCAL.FRAMES
   -- if eps = $find_maps<id, varTypeIR>(typeFrame*, id)
 
 ;;; Finder for values
 
-dec $find_var_value_t(cursor, typingContext, prefixedNameIR) : value
-  hint(prose_in "the value of variable" %2 "from the" %0 "layer of" %1)
+dec $find_var_value_t(prefixedNameIR, cursor, typingContext) : value
+  hint(prose_in "the value of variable" %0 "from the" %1 "layer of" %2)
 
-def $find_var_value_t(p, TC, prefixedNameIR) = value
-  -- if _ _ _ value = $find_var_t(p, TC, prefixedNameIR)
+def $find_var_value_t(prefixedNameIR, p, TC) = value
+  -- if _ _ _ value = $find_var_t(prefixedNameIR, p, TC)
 
 ;;; Finder for types
 

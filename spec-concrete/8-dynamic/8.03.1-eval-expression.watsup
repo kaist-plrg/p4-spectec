@@ -9,51 +9,34 @@
 
 ;;;; literalExpressionIR
 ;;;; syntax literalExpression
-
-;;;;; TRUE | FALSE
-
-rulegroup Expr_eval/literalExpressionIR-boolean {
-
-  rule Expr_eval/true:
-    p EC STO |- TRUE `# _ : EC STO expressionResult
-    -- if expressionResult = `` (`B true)
-
-  rule Expr_eval/false:
-    p EC STO |- FALSE `# _ : EC STO expressionResult
-    -- if expressionResult = `` (`B false)
-
-}
-
-;;;;; number
-
-rulegroup Expr_eval/literalExpressionIR-number {
-
-  rule Expr_eval/arbitraryInt:
-    p EC STO |- (D i) `# _ : EC STO expressionResult
-    -- if expressionResult = `` (D i)
-
-  rule Expr_eval/fixedBit:
-    p EC STO |- (n W i) `# _ : EC STO expressionResult
-    -- if expressionResult = `` (n W i)
-
-  rule Expr_eval/fixedInt:
-    p EC STO |- (n S i) `# _ : EC STO expressionResult
-    -- if expressionResult = `` (n S i)
-
-}
-
+;;;;; booleanLiteral
+;;;;; integerLiteral
 ;;;;; stringLiteral
 
-rule Expr_eval/literalExpressionIR-stringLiteral:
-  p EC STO |- (`" text `") `# _ : EC STO expressionResult
-  -- if expressionResult = `` (`" text `")
+rulegroup Expr_eval/literalExpressionIR {
+
+  rule Expr_eval/booleanLiteral:
+    p EC STO |- booleanLiteral `# _ : EC STO expressionResult
+    -- if boolValue
+        = $ite<boolValue>(booleanLiteral = TRUE, `B true, `B false)
+    -- if expressionResult = `` boolValue
+
+  rule Expr_eval/integerLiteral:
+    p EC STO |- integerLiteral `# _ : EC STO expressionResult
+    -- if expressionResult = `` integerLiteral
+
+  rule Expr_eval/stringLiteral:
+    p EC STO |- stringLiteral `# _ : EC STO expressionResult
+    -- if expressionResult = `` stringLiteral
+
+}
 
 ;;;; referenceExpressionIR
 ;;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Expr_eval/referenceExpressionIR:
   p EC STO |- prefixedNameIR `# _ : EC STO expressionResult
-  -- if value = $find_var_e(p, EC, prefixedNameIR)
+  -- if value = $find_var_e(prefixedNameIR, p, EC)
   -- if expressionResult = `` value
 
 ;;;; defaultExpressionIR
@@ -309,7 +292,7 @@ rulegroup Expr_eval/dataExpressionIR-record {
 rule Expr_eval/errorAccessExpressionIR:
   p EC STO |- (ERROR `. nameIR) `# _ : EC STO expressionResult
   -- if nameIR_error = "error." ++ nameIR
-  -- if value_error = $find_var_e(p, EC, `` nameIR_error)
+  -- if value_error = $find_var_e(`` nameIR_error, p, EC)
   -- if expressionResult = `` value_error
 
 ;;;;; memberAccessExpressionIR

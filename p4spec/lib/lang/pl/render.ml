@@ -122,6 +122,7 @@ let string_of_text text = Il.Print.string_of_text text
 
 let string_of_varid varid = Il.Print.string_of_varid varid
 let string_of_relid relid = Il.Print.string_of_relid relid
+
 let string_of_defid ?(link = false) defid =
   if link then Il.Print.string_of_varid defid
   else Il.Print.string_of_defid defid
@@ -545,9 +546,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_prose exp_r)
   | RuleI rel_call ->
       F.asprintf "%sLet %s." bullet (render_rel_call in_prose rel_call)
-  | ReturnI exp ->
-      F.asprintf "%sReturn %s." bullet
-        (render_exp in_prose exp)
+  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (render_exp in_prose exp)
   | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
   | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet

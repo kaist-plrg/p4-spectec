@@ -9,45 +9,31 @@
 
 ;;;; literalExpressionIR
 ;;;; syntax literalExpression
-
-;;;;; TRUE | FALSE
-
-rulegroup Expr_inst/literalExpressionIR-boolean {
-
-  rule Expr_inst/true:
-    p IC STO |- TRUE `# _ : STO (`B true)
-
-  rule Expr_inst/false:
-    p IC STO |- FALSE `# _ : STO (`B false)
-
-}
-
-;;;;; number
-
-rulegroup Expr_inst/literalExpressionIR-number {
-
-  rule Expr_inst/arbitraryInt:
-    p IC STO |- (D i) `# _ : STO (D i)
-
-  rule Expr_inst/fixedBit:
-    p IC STO |- (n W i) `# _ : STO (n W i)
-
-  rule Expr_inst/fixedInt:
-    p IC STO |- (n S i) `# _ : STO (n S i)
-
-}
-
+;;;;; booleanLiteral
+;;;;; integerLiteral
 ;;;;; stringLiteral
 
-rule Expr_inst/literalExpressionIR-stringLiteral:
-  p IC STO |- (`" text `") `# _ : STO (`" text `")
+rulegroup Expr_inst/literalExpressionIR {
+
+  rule Expr_inst/booleanLiteral:
+    p IC STO |- booleanLiteral `# _ : STO boolValue
+    -- if boolValue
+        = $ite<boolValue>(booleanLiteral = TRUE, `B true, `B false)
+
+  rule Expr_inst/integerLiteral:
+    p IC STO |- integerLiteral `# _ : STO integerLiteral
+
+  rule Expr_inst/stringLiteral:
+    p IC STO |- stringLiteral `# _ : STO stringLiteral
+
+}
 
 ;;;; referenceExpressionIR
 ;;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Expr_inst/referenceExpressionIR:
   p IC STO |- prefixedNameIR `# _ : STO value
-  -- if value = $find_var_i(p, IC, prefixedNameIR)
+  -- if value = $find_var_i(prefixedNameIR, p, IC)
 
 ;;;; defaultExpressionIR
 
@@ -179,7 +165,7 @@ rulegroup Expr_inst/dataExpressionIR-record {
 rule Expr_inst/errorAccessExpressionIR:
   p IC STO |- (ERROR `. nameIR) `# _ : STO value_error
   -- if nameIR_error = "error." ++ nameIR
-  -- if value_error = $find_var_i(p, IC, `` nameIR_error)
+  -- if value_error = $find_var_i(`` nameIR_error, p, IC)
 
 ;;;;; memberAccessExpressionIR
 ;;;;; syntax memberAccessExpressionIR = memberAccessBaseIR `. nameIR

@@ -32,20 +32,26 @@ def $ite<X>(false, X_t, X_f) = X_f
 ;;
 
 builtin dec $sum_nat(nat*) : nat
+  hint(prose_in "sum"#`( %0 ))
 
 builtin dec $max_nat(nat*) : nat
+  hint(prose_in "max"#`( %0 ))
 
 builtin dec $min_nat(nat*) : nat
+  hint(prose_in "min"#`( %0 ))
 
 ;;
 ;; General int functions
 ;;
 
 builtin dec $sum_int(int*) : int
+  hint(prose_in "sum"#`( %0 ))
 
 builtin dec $max_int(int*) : int
+  hint(prose_in "max"#`( %0 ))
 
 builtin dec $min_int(int*) : int
+  hint(prose_in "min"#`( %0 ))
 
 ;;
 ;; General text functions
@@ -153,12 +159,14 @@ def $opt_as_seq_<X>(X) = [ X ]
 ;;
 
 dec $exists_(bool*) : bool
-  hint(prose_true "there exists an element of" %0 "that is true")
+  hint(prose_true "some of" %0 "is true")
+  hint(prose_false "none of" %0 "is true")
 def $exists_(eps) = false
 def $exists_(b_h :: b_t*) = b_h \/ $exists_(b_t*)
 
 dec $forall_(bool*) : bool
-  hint(prose_true "true for all of" %0)
+  hint(prose_true "all" %0 "are true")
+  hint(prose_false "not all" %0 "are true")
 def $forall_(eps) = true
 def $forall_(b_h :: b_t*) = b_h /\ $forall_(b_t*)
 

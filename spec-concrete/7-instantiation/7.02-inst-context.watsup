@@ -233,21 +233,22 @@ def $add_constructorDefs_i(
 
 ;;; Finder for values
 
-dec $find_var_i(cursor, instContext, prefixedNameIR) : value
+dec $find_var_i(prefixedNameIR, cursor, instContext) : value
+  hint(prose_in "the value of" %0 "from the" %1 "layer of" %2)
 
-def $find_var_i(p, IC, `. id) = value
+def $find_var_i(`. id, p, IC) = value
   -- if value = $find_map<id, value>(IC.GLOBAL.FRAME, id)
-def $find_var_i(GLOBAL, IC, `` id) = value
+def $find_var_i(`` id, GLOBAL, IC) = value
   -- if value = $find_map<id, value>(IC.GLOBAL.FRAME, id)
-def $find_var_i(BLOCK, IC, `` id) = value
+def $find_var_i(`` id, BLOCK, IC) = value
   -- if value = $find_map<id, value>(IC.BLOCK.FRAME, id)
-def $find_var_i(BLOCK, IC, `` id)
-  = $find_var_i(GLOBAL, IC, `` id)
+def $find_var_i(`` id, BLOCK, IC)
+  = $find_var_i(`` id, GLOBAL, IC)
   -- if eps = $find_map<id, value>(IC.BLOCK.FRAME, id)
-def $find_var_i(LOCAL, IC, `` id) = value
+def $find_var_i(`` id, LOCAL, IC) = value
   -- if value = $find_maps<id, value>(IC.LOCAL.FRAMES, id)
-def $find_var_i(LOCAL, IC, `` id)
-  = $find_var_i(BLOCK, IC, `` id)
+def $find_var_i(`` id, LOCAL, IC)
+  = $find_var_i(`` id, BLOCK, IC)
   -- if eps = $find_maps<id, value>(IC.LOCAL.FRAMES, id)
 
 ;;; Finder for type definitions

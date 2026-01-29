@@ -9,45 +9,31 @@
 
 ;;;; literalExpressionIR
 ;;;; syntax literalExpression
+;;;;; booleanLiteral
+;;;;; integerLiteral
+;;;;; stringLiteral
 
-;;;;; TRUE | FALSE
+rulegroup Expr_eval_lctk/literalExpressionIR {
 
-rulegroup Expr_eval_lctk/literalExpressionIR-boolean {
+  rule Expr_eval_lctk/booleanLiteral:
+    p TC |- booleanLiteral `# _ ~> boolValue
+    -- if boolValue
+        = $ite<boolValue>(booleanLiteral = TRUE, `B true, `B false)
 
-  rule Expr_eval_lctk/true:
-    p TC |- TRUE `# _ ~> `B true
+  rule Expr_eval_lctk/integerLiteral:
+    p TC |- integerLiteral `# _ ~> integerLiteral
 
-  rule Expr_eval_lctk/false:
-    p TC |- FALSE `# _ ~> `B false
-
-}
-
-;;;;; number
-
-rulegroup Expr_eval_lctk/literalExpressionIR-number {
-
-  rule Expr_eval_lctk/arbitraryInt:
-    p TC |- (D i) `# _ ~> D i
-
-  rule Expr_eval_lctk/fixedBit:
-    p TC |- (n W i) `# _ ~> n W i
-
-  rule Expr_eval_lctk/fixedInt:
-    p TC |- (n S i) `# _ ~> n S i
+  rule Expr_eval_lctk/stringLiteral:
+    p TC |- stringLiteral `# _ ~> stringLiteral
 
 }
-
-;;;;; stringLiteral 
-
-rule Expr_eval_lctk/literalExpressionIR-stringLiteral:
-  p TC |- (`" text `") `# _ ~> `" text `"
 
 ;;;; referenceExpressionIR
 ;;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Expr_eval_lctk/referenceExpressionIR:
   p TC |- prefixedNameIR `# _ ~> value
-  -- if value = $find_var_value_t(p, TC, prefixedNameIR)
+  -- if value = $find_var_value_t(prefixedNameIR, p, TC)
 
 ;;;; defaultExpressionIR
 ;;;; syntax defaultExpressionIR = defaultExpression
@@ -177,7 +163,7 @@ rulegroup Expr_eval_lctk/dataExpressionIR-record {
 rule Expr_eval_lctk/errorAccessExpressionIR:
   p TC |- (ERROR `. nameIR) `# `( _ _ ) ~> value_error
   -- if nameIR_error = "error." ++ nameIR
-  -- if value_error = $find_var_value_t(p, TC, `` nameIR_error)
+  -- if value_error = $find_var_value_t(`` nameIR_error, p, TC)
 
 ;;;;; memberAccessExpressionIR
 ;;;;; syntax memberAccessExpressionIR = memberAccessBaseIR `. nameIR
