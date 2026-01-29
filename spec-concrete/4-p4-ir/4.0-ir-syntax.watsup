@@ -103,12 +103,20 @@ syntax castExpressionIR = `( typeIR ) typedExpressionIR
 
 syntax typedExpressionListIR
 
-syntax dataExpressionIR =
-  | `{#}
+syntax invalidHeaderExpressionIR = invalidHeaderExpression
+
+syntax sequenceExpressionIR =
   | SEQ `{ typedExpressionListIR }
   | SEQ `{ typedExpressionListIR `, `... }
+
+syntax recordExpressionIR =
   | RECORD `{ namedExpressionListIR }
   | RECORD `{ namedExpressionListIR `, `... }
+
+syntax dataExpressionIR =
+  | invalidHeaderExpressionIR
+  | sequenceExpressionIR
+  | recordExpressionIR
 
 ;;
 ;;;; Member and index access expressions

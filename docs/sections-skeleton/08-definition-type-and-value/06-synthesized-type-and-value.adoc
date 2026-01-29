@@ -11,7 +11,7 @@ These types and values are represented as:
 ${syntax: synthesizedTypeIR synthesizedValue}
 
 [#sec-default]
-==== Default types and values
+==== Default
 
 // 652 - Modified
 A left-value can be initialized automatically with a default value of the
@@ -62,7 +62,8 @@ a type and value, we need to represent those of `+...+`.
 ${rulegroup-source: Type_wf/defaultTypeIR}
 ${rulegroup-prose: Type_wf/defaultTypeIR}
 
-==== Invalid header types and values
+[#sec-invalid-header]
+==== Invalid headers
 
 // 554
 The expression `+{#}+` represents an invalid header of some type, but it can be
@@ -71,7 +72,7 @@ this expression in cases where it cannot determine the particular header or
 header union type from the context.
 
 // 555 - Modified
-${syntax: dataExpression}
+${syntax: invalidHeaderExpression}
 
 // 556
 For example:
@@ -106,14 +107,17 @@ must have a type and value, we need to represent those of `+{#}+`.
 ${rulegroup-source: Type_wf/invalidHeaderTypeIR}
 ${rulegroup-prose: Type_wf/invalidHeaderTypeIR}
 
-==== Sequence types and values
+[#sec-sequence]
+==== Sequences
 
 // 494 - Modified
 A sequence expression is written using curly braces, with each element
 separated by a comma:
 
 // 495 - Modified
-${syntax: sequenceElementExpression dataElementExpression dataExpression}
+${syntax: sequenceElementExpression
+          sequenceOrRecordElementExpression
+          sequenceOrRecordExpression}
 
 // 496 - Modified
 Sequence expressions can be assigned to expressions of type `tuple`, `struct`
@@ -189,14 +193,17 @@ represent the expression sequence within curly braces, apart from tuple types.
 ${rulegroup-source: Type_wf/sequenceTypeIR}
 ${rulegroup-prose: Type_wf/sequenceTypeIR}
 
-==== Record types and values
+[#sec-record]
+==== Records
 
 // 506 - Modified
 One can write record expressions that evaluate to a structure or header. The
 syntax of these expressions is given by:
 
 // 507 - Modified
-${syntax: recordElementExpression dataElementExpression dataExpression}
+${syntax: recordElementExpression
+          sequenceOrRecordElementExpression
+          sequenceOrRecordExpression}
 
 // 509
 The following example shows a structure-valued expression used in an equality
@@ -259,7 +266,7 @@ optTrailingComma }`.
 ${rulegroup-source: Type_wf/recordTypeIR}
 ${rulegroup-prose: Type_wf/recordTypeIR}
 
-==== Set types and values
+==== Sets
 
 // Added
 ${syntax: setTypeIR}
@@ -286,7 +293,7 @@ ${rulegroup-source: Type_wf/setTypeIR}
 ${rulegroup-prose: Type_wf/setTypeIR}
 
 [#sec-table-metadata]
-==== Table metadata types and values
+==== Table metadata
 
 // 982
 A `table` can be invoked by calling its `apply` method. Calling an apply method

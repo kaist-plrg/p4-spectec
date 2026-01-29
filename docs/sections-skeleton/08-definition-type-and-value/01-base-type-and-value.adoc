@@ -117,6 +117,26 @@ error { ParseError, PacketTooShort }
 // 195
 The underlying representation of errors is target-dependent.
 
+// 390
+Symbolic names declared by an `error` declaration belong to the `error`
+namespace. The `error` type only supports equality (`==`) and inequality (`!=`)
+comparisons. The result of such a comparison is a Boolean value.
+
+// 391
+For example, the following operation tests for the occurrence of an error:
+
+// 392
+[source,p4]
+----
+error errorFromParser;
+
+if (errorFromParser != error.NoError) { /* code omitted */ }
+----
+
+// Added
+See <<sec-error-declaration>> for the semantics of error declarations and
+<<sec-error-access-expression>> for accessing error values.
+
 ===== Type checking
 
 // Added
@@ -209,7 +229,7 @@ should be used for a given table in the generated control-plane API:
 ${rulegroup-source: Type_ok/string}
 ${rulegroup-prose: Type_ok/string}
 
-==== Integer types and values (signed and unsigned)
+==== Integers (signed and unsigned)
 
 // Added
 ${syntax: integerTypeIR integerLiteral integerValue}

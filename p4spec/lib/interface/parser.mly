@@ -113,7 +113,7 @@
   callableTargetNonBrace callTargetNonBrace callExpressionNonBrace
   (* >> Parenthesized Expressions *) parenthesizedExpression
   (* >> Expressions *)
-  expression expressionList memberAccessBase sequenceElementExpression recordElementExpression dataElementExpression
+  expression expressionList memberAccessBase sequenceElementExpression recordElementExpression sequenceOrRecordElementExpression
   (* >> Non-brace Expressions *) expressionNonBrace memberAccessBaseNonBrace
   (* Keyset Expressions *) simpleKeysetExpression simpleKeysetExpressionList tupleKeysetExpression keysetExpression
   (* Type arguments *)
@@ -543,9 +543,9 @@ namedExpressionList:
 
 (* >> Data (aggregate) expressions *)
 %inline dataExpression:
-	| INVALID { [ Term "{#}" ] #@ "dataExpression" }
-	| L_BRACE e = dataElementExpression c = trailingCommaOpt R_BRACE
-    { [ Term "{"; NT e; NT c; Term "}" ] #@ "dataExpression" }
+	| INVALID { [ Term "{#}" ] #@ "invalidHeaderExpression" }
+	| L_BRACE e = sequenceOrRecordElementExpression c = trailingCommaOpt R_BRACE
+    { [ Term "{"; NT e; NT c; Term "}" ] #@ "sequenceOrRecordExpression" }
 ;
 
 (* >> Member and index access expressions *)
@@ -695,7 +695,7 @@ expressionList:
       #@ "recordElementExpression" }
 ;
 
-%inline dataElementExpression:
+%inline sequenceOrRecordElementExpression:
 	| e = sequenceElementExpression
 	| e = recordElementExpression 
     { e }
@@ -1715,7 +1715,7 @@ annotationBody:
 ;
 
 structuredAnnotationBody:
-	| e = dataElementExpression c = trailingCommaOpt
+	| e = sequenceOrRecordElementExpression c = trailingCommaOpt
     { [ NT e; NT c ] #@ "structuredAnnotationBody" }
 ;
 

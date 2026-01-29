@@ -17,6 +17,18 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
+(* Escaping *)
+
+let rec adoc_escape c text =
+  match String.index_opt text c with
+  | None -> text
+  | Some idx ->
+      let text_before = String.sub text 0 idx in
+      let text_after =
+        String.sub text (idx + 1) (String.length text - idx - 1)
+      in
+      text_before ^ "+" ^ String.make 1 c ^ "+" ^ adoc_escape c text_after
+
 (* Widths *)
 
 let adoc_width_short = 30
@@ -49,30 +61,18 @@ let adoc_unordered_bullet level =
 (* Links *)
 
 let adoc_link ~(link : string) (text : string) : string =
-  let rec escape_opening_bracket text =
-    match String.index_opt text '[' with
-    | None -> text
-    | Some idx ->
-        let text_before = String.sub text 0 idx in
-        let text_after =
-          String.sub text (idx + 1) (String.length text - idx - 1)
-        in
-        text_before ^ "\\[" ^ escape_opening_bracket text_after
-  in
-  let rec escape_closing_bracket text =
-    match String.index_opt text ']' with
-    | None -> text
-    | Some idx ->
-        let text_before = String.sub text 0 idx in
-        let text_after =
-          String.sub text (idx + 1) (String.length text - idx - 1)
-        in
-        text_before ^ "\\]" ^ escape_closing_bracket text_after
-  in
-  let escape_bracket text =
-    text |> escape_opening_bracket |> escape_closing_bracket
-  in
-  "xref:" ^ link ^ "[" ^ escape_bracket text ^ "]"
+  let brackets = String.contains text '[' || String.contains text ']' in
+  let angles = String.contains text '<' || String.contains text '>' in
+  match (brackets, angles) with
+  | false, false | false, true -> "xref:" ^ link ^ "[" ^ text ^ "]"
+  | true, false -> "<<" ^ link ^ "," ^ text ^ ">>"
+  | true, true ->
+      Format.eprintf
+        "Warning: Asciidoc link text contains both brackets and angle \
+         brackets. Link may not render correctly.\n\
+         \t%s\n"
+        text;
+      text
 
 let adoc_as_link (ctx : context) ~link (s : string) : string =
   if ctx.in_link then s else adoc_link ~link s
@@ -141,7 +141,9 @@ let render_varid (ctx : context) (id_var : Sl.id) =
 (* Notation *)
 
 let code_of_atom atom =
-  match atom.it with Atom.Tick -> "" | _ -> Atom.string_of_atom atom.it
+  match atom.it with
+  | Atom.Tick -> ""
+  | _ -> "+" ^ (atom.it |> Atom.string_of_atom) ^ "+"
 
 let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
@@ -227,10 +229,7 @@ let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
     (render_base : string -> string) (render : context -> 'a -> string)
     (items : 'a list) : string =
   let render_atom (atom : atom) : string =
-    match atom.it with
-    | LAngle | RAngle | LParen | RParen | LBrack | RBrack | LBrace | RBrace ->
-        atom |> Sl.Print.string_of_atom |> adoc_as_code ctx
-    | _ -> atom |> Sl.Print.string_of_atom
+    "+" ^ (atom.it |> Atom.string_of_atom) ^ "+" |> adoc_as_code ctx
   in
   items
   |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hint
@@ -330,18 +329,18 @@ and render_exp ctx exp : string =
             |> adoc_as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
-      "{"
+      "+{+"
       ^ String.concat ", "
           (List.map
              (fun (atom, exp) -> code_of_atom atom ^ " " ^ render_exp ctx exp)
              expfields)
-      ^ "}"
+      ^ "+}+"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
   | OptE None -> "·" |> adoc_as_code ctx
   | ListE [] -> "·" |> adoc_as_code ctx
   | ListE [ exp ] -> render_exp in_code exp |> adoc_as_code ctx
   | ListE exps ->
-      "[ " ^ render_exps in_code ~sep:", " exps ^ " ]" |> adoc_as_code ctx
+      "+[+ " ^ render_exps in_code ~sep:", " exps ^ " +]+" |> adoc_as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
       render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t

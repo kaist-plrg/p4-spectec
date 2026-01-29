@@ -203,16 +203,19 @@ rulegroup Expr_eval/castExpressionIR {
 ;;;; dataExpressionIR
 ;;;; syntax dataExpressionIR
 
-;;;;; `{#}
+;;;;; invalidHeaderExpressionIR
+;;;;; syntax invalidHeaderExpressionIR = `{#}
 
-rule Expr_eval/dataExpressionIR-invalid:
+rule Expr_eval/invalidHeaderExpressionIR:
   p EC STO |- `{#} `# _ : EC STO expressionResult
   -- if expressionResult = `` `{#}
 
-;;;;; SEQ `{ typedExpressionListIR }
-;;;;; SEQ `{ typedExpressionListIR `, `... }
+;;;;; sequenceExpressionIR
+;;;;; syntax sequenceExpressionIR =
+;;;;;; SEQ `{ typedExpressionListIR }
+;;;;;; SEQ `{ typedExpressionListIR `, `... }
 
-rulegroup Expr_eval/dataExpressionIR-sequence {
+rulegroup Expr_eval/sequenceExpressionIR {
 
   rule Expr_eval/non-default-abort:
     p EC_0 STO_0 |- (SEQ `{ typedExpressionListIR }) `# _
@@ -246,10 +249,12 @@ rulegroup Expr_eval/dataExpressionIR-sequence {
 
 }
 
-;;;;; RECORD `{ namedExpressionListIR }
-;;;;; RECORD `{ namedExpressionListIR `, `... }
+;;;;; recordExpressionIR
+;;;;; syntax recordExpressionIR =
+;;;;;; RECORD `{ namedExpressionListIR }
+;;;;;; RECORD `{ namedExpressionListIR `, `... }
 
-rulegroup Expr_eval/dataExpressionIR-record {
+rulegroup Expr_eval/recordExpressionIR {
 
    rule Expr_eval/non-default-abort:
     p EC_0 STO_0 |- (RECORD `{ (nameIR `= typedExpressionIR)* }) `# _
@@ -321,7 +326,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
 
 ;;;;;;; typedExpressionIR
 
-rulegroup Expr_eval/memberAccessExpressionIR-expression {
+rulegroup Expr_eval/memberAccessExpressionIR-typedExpressionIR {
 
   rule Expr_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
@@ -331,32 +336,35 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
                       : EC_1 STO_1 abortResult
 
   rule Expr_eval/stack-size:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "size") `# `( typeIR_base _ )
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base) 
     -- if HEADER_STACK `[ _ `( _ `; n_size ) ] = value_base
+    -- if nameIR = "size"
     -- if expressionResult = `` (D n_size)
 
   rule Expr_eval/stack-last-out-of-bounds:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 rejectTransitionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
     -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ] = value_base
+    -- if nameIR = "last"
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if b_out_of_bounds
     -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
 
   rule Expr_eval/stack-last-in-bounds:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "last") `# `( typeIR_base _ )
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
     -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ] = value_base
+    -- if nameIR = "last"
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if ~b_out_of_bounds
     -- if n_idx_last = $(n_idx - 1)
@@ -364,12 +372,13 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if expressionResult = `` value_last
 
   rule Expr_eval/stack-lastIndex:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "lastIndex") `# `( typeIR_base _ )
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# `( typeIR_base _ )
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base) 
     -- if HEADER_STACK `[ value_elem* `( n_idx `; _ ) ] = value_base
+    -- if nameIR = "lastIndex"
     -- if n_idx_last = $($max_nat([n_idx, 1]) - 1)
     ---- ;; hs.lastIndex produces a 32-bit unsigned integer
     -- if value_idx_last = 32 W n_idx_last
@@ -409,33 +418,36 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- if expressionResult = `` value_member
 
   rule Expr_eval/tableMetadataStructValue-hit:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "hit") `# _
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# _
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
     -- if TABLE_STRUCT _ `{ HIT boolValue_hit `; MISS _ `; ACTION_RUN _ `; }
         = value_base
+    -- if nameIR = "hit"
     -- if expressionResult = `` boolValue_hit
 
   rule Expr_eval/tableMetadataStructValue-miss:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "miss") `# _
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# _
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
     -- if TABLE_STRUCT _ `{ HIT _ `; MISS boolValue_miss `; ACTION_RUN _ `; }
         = value_base
+    -- if nameIR = "miss"
     -- if expressionResult = `` boolValue_miss
 
   rule Expr_eval/tableMetadataStructValue-action_run:
-    p EC_0 STO_0 |- (typedExpressionIR_base `. "action_run") `# _
+    p EC_0 STO_0 |- (typedExpressionIR_base `. nameIR) `# _
                   : EC_1 STO_1 expressionResult
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
     -- if TABLE_STRUCT _ `{ HIT _ `; MISS _ `; ACTION_RUN tableMetadataEnumValue `; }
         = value_base
+    -- if nameIR = "action_run"
     -- if expressionResult = `` tableMetadataEnumValue
 
 }
@@ -471,7 +483,7 @@ rulegroup Expr_eval/indexAccessExpressionIR {
                       : EC_1 STO_1 (`` ([ value_base, integerValue_index ]))
     -- if HEADER_STACK `[ value_elem* `( _ `; n_size ) ] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if n_idx = $min_int([n_index, $(n_size - 1)])
+    -- if n_idx = $ite<int>($(n_index < n_size), n_index, $(n_size - 1))
     -- if expressionResult = `` value_elem*[n_idx]
 
 }

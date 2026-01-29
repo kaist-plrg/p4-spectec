@@ -7,7 +7,7 @@ ${syntax: dataTypeIR dataValue}
 Data types represent the types that aggregate other types, including lists,
 tuples, header stacks, structs, headers, header unions, and enums.
 
-==== List types and values
+==== Lists
 
 // 306
 A list holds zero or more values, where every element must have the same type.
@@ -34,7 +34,7 @@ ${rulegroup-prose: Type_ok/listType}
 ${rulegroup-source: Type_wf/listTypeIR}
 ${rulegroup-prose: Type_wf/listTypeIR}
 
-==== Tuple types and values
+==== Tuples
 
 // 301
 A tuple is similar to a `struct`, in that it holds multiple values. The type of
@@ -52,6 +52,21 @@ The type `tuple<>` is a tuple type with no components.
 // 303 - Modified
 ${syntax: tupleType tupleTypeIR tupleValue}
 
+// 491
+The fields of a tuple can be accessed using array index syntax `x[0]`, `x[1]`.
+The indexes *must* be local compile-time known values, to enable the
+type-checker to identify the field types statically.
+
+// 492
+Tuples can be compared for equality using `==` and `!=`; two tuples are equal
+if and only if all their fields are respectively equal.
+
+// 493 - Modified
+Currently tuple fields are not left-values, even if the tuple itself is. (i.e.,
+a tuple can only be assigned monolithically, and the field values cannot be
+changed individually.) This restriction may be lifted in a future version of
+the language.
+
 ===== Type checking
 
 // Added
@@ -65,7 +80,7 @@ ${rulegroup-source: Type_wf/tupleTypeIR}
 ${rulegroup-prose: Type_wf/tupleTypeIR}
 
 [#sec-header-stack]
-==== Header stack types and values
+==== Header stacks
 
 // 282
 A header stack represents an array of headers or header unions. A header stack
@@ -84,8 +99,10 @@ not supported.
 ${syntax: headerStackValue}
 
 // 284 - Modified
+// 560 - Modified
 At runtime a stack contains `n` values with type `namedType`, only some of
-which may be valid.
+which may be valid. The valid elements of a header stack need not be
+contiguous.
 
 // 285
 For example, the following declarations,
@@ -106,6 +123,141 @@ Mpls_h[10] mpls;
 introduce a header stack called `mpls` containing ten entries, each of type
 `Mpls_h`.
 
+// 560 - Modified
+P4 provides a set of computations for manipulating header stacks. A header
+stack `hs` of type `h[n]` can be understood in terms of the following
+pseudocode:
+
+// 561
+[source,p4pseudo]
+----
+// type declaration
+struct hs_t {
+  bit<32> nextIndex;
+  bit<32> size;
+  h[n] data;  // Ordinary array
+}
+
+// instance declaration and initialization
+hs_t hs;
+hs.nextIndex = 0;
+hs.size = n;
+----
+
+// 562
+Intuitively, a header stack can be thought of as a struct containing an
+ordinary array of headers `hs` and a counter `nextIndex` that can be used to
+simplify the construction of parsers for header stacks, as discussed below. The
+`nextIndex` counter is initialized to `0`.
+
+// 563
+Given a header stack value `hs` of size `n`, the following expressions are
+legal:
+
+// 564
+* `hs[index]`: produces a reference to the header at the
+  specified position within the stack; if `hs` is an l-value, the result is
+  also an l-value. The header may be invalid. Some implementations may impose
+  the constraint that the index expression must be a compile-time known value.
+  A P4 compiler must give an error if an index that is a compile-time known
+  value is out of range.
++
+Accessing a header stack `hs` with an index less than `0` or greater than or
+equal to `hs.size` results in an undefined value. See
+<<sec-uninitialized-values-and-writing-invalid-headers>> for more details.
++
+The `index` is an expression that must be of numeric types (<<sec-numeric-values>>).
+* `hs.size`: produces a 32-bit unsigned integer that returns the
+  size of the header stack (a local compile-time known value).
+* assignment from a header stack `hs` into another stack requires
+  the stacks to have the same types and sizes. All components of `hs` are
+  copied, including its elements and their validity bits, as well as
+  `nextIndex`.
+
+// 565
+To help programmers write parsers for header stacks, P4 also offers
+computations that automatically advance through the stack as elements are
+parsed:
+
+// 566
+* `hs.next`: produces a reference to the element with index `hs.nextIndex`
+  in the stack. May only be used in a `parser`. If the stack's `nextIndex`
+  counter is greater than or equal to `size`, then evaluating this expression
+  results in a transition to `reject` and sets the error to
+  `error.StackOutOfBounds`. If `hs` is an l-value, then `hs.next` is also an
+  l-value.
+* `hs.last`: produces a reference to the element with index `hs.nextIndex - 1`
+  in the stack, if such an element exists. May only be used in a `parser`. If
+  the `nextIndex` counter is less than `1`, or greater than `size`, then
+  evaluating this expression results in a transition to `reject` and sets the
+  error to `error.StackOutOfBounds`. Unlike `hs.next`, the resulting reference
+  is never an l-value.
+* `hs.lastIndex`: produces a 32-bit unsigned integer that encodes the index
+  `hs.nextIndex - 1`. May only be used in a `parser`. If the `nextIndex`
+  counter is `0`, then evaluating this expression produces an undefined value.
+
+// 567
+Finally, P4 offers the following computations that can be used to manipulate
+the elements at the front and back of the stack:
+
+// 568
+* `hs.push_front(int count)`: shifts `hs` "right" by `count`. The
+  first `count` elements become invalid. The last `count` elements in the stack
+  are discarded. The `hs.nextIndex` counter is incremented by `count`. The
+  `count` argument must be a compile-time known value that is a positive
+  integer. The return type is `void`.
+* `hs.pop_front(int count)`: shifts `hs` "left" by `count`
+  (i.e., element with index `count` is copied in stack at index `0`). The last
+  `count` elements become invalid. The `hs.nextIndex` counter is decremented by
+  `count`. The `count` argument must be a compile-time known value that is a
+  positive integer. The return type is `void`.
+
+// 569
+The following pseudocode defines the behavior of `push_front` and `pop_front`:
+
+// 570
+[source,p4pseudo]
+----
+void push_front(int count) {
+    for (int i = this.size-1; i >= 0; i -= 1) {
+        if (i >= count) {
+            this[i] = this[i-count];
+        } else {
+            this[i].setInvalid();
+        }
+    }
+    this.nextIndex = this.nextIndex + count;
+    if (this.nextIndex > this.size) this.nextIndex = this.size;
+    // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
+}
+
+void pop_front(int count) {
+    for (int i = 0; i < this.size; i++) {
+        if (i+count < this.size) {
+            this[i] = this[i+count];
+        } else {
+            this[i].setInvalid();
+        }
+    }
+    if (this.nextIndex >= count) {
+        this.nextIndex = this.nextIndex - count;
+    } else {
+        this.nextIndex = 0;
+    }
+    // Note: this.last, this.next, and this.lastIndex adjust with this.nextIndex
+}
+----
+
+// 571
+Similar to structs and headers, the size of a header stack is a compile-time
+known value (Section <<sec-minsizeinbits>>).
+
+// 572
+Two header stacks can be compared for equality (`==`) or inequality (`!=`) only
+if they have the same element type and the same length. Two stacks are equal if
+and only if all their corresponding elements are equal. Note that the
+`nextIndex` value is not used in the equality comparison.
+
 ===== Type checking
 
 // Added
@@ -119,12 +271,12 @@ ${rulegroup-source: Type_wf/headerStackTypeIR}
 ${rulegroup-prose: Type_wf/headerStackTypeIR}
 
 [#sec-array]
-==== Array types and values
+==== Arrays
 
 NOTE: This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
 
 [#sec-struct]
-==== Struct types and values
+==== Structs
 
 // 297
 P4 `struct` types are defined with the following syntax:
@@ -180,7 +332,7 @@ ${rulegroup-source: Type_wf/structTypeIR}
 ${rulegroup-prose: Type_wf/structTypeIR}
 
 [#sec-header]
-==== Header types and values
+==== Headers
 
 // 262
 The declaration of a `header` type is given by the following syntax:
@@ -341,7 +493,7 @@ ${rulegroup-source: Type_wf/headerTypeIR}
 ${rulegroup-prose: Type_wf/headerTypeIR}
 
 [#sec-header-union]
-==== Header union types and values
+==== Header unions
 
 // 289
 A header union represents an alternative containing at most one of several
@@ -403,7 +555,7 @@ ${rulegroup-source: Type_wf/headerUnionTypeIR}
 ${rulegroup-prose: Type_wf/headerUnionTypeIR}
 
 [#sec-enum]
-==== Enum types and values
+==== Enums
 
 // 246
 An enumeration type is defined using the following syntax:
