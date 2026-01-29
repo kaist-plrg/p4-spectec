@@ -24,9 +24,11 @@ rule Stmt_inst/callStatementIR:
 ;;;   prefixedNameIR `< typeArgumentListIR > `. APPLY `( argumentListIR ) `;
 
 rule DirectApplicationStmt_inst:
-  p IC STO_0 |- prefixedNameIR `< typeArgumentListIR > `. APPLY `( argumentListIR ) `;
+  p IC STO_0 |- constructorTargetIR `. APPLY `( argumentListIR ) `;
               : STO_2 constantDeclarationIR callStatementIR
   ---- ;; find and instantiate constructor
+  -- if prefixedNameIR `< typeArgumentListIR >
+      = constructorTargetIR
   -- Constructor_inst:
       p IC |- prefixedNameIR `< typeArgumentListIR > `( eps )
             : constructorDef `< typeArgumentListIR_inst > `( `# eps )

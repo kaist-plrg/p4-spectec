@@ -316,7 +316,7 @@ def $add_constructorDefs_t(
 ;;; Finder for variables
 
 dec $find_var_t(cursor, typingContext, prefixedNameIR) : varTypeIR?
-  hint(prose_in "the type of variable" %2 "in the" %0 "layer of" %1)
+  hint(prose_in "the type of variable" %2 "from the" %0 "layer of" %1)
 
 def $find_var_t(p, TC, `. id)
   = $find_map<id, varTypeIR>(typeFrame, id)
@@ -340,7 +340,7 @@ def $find_var_t(LOCAL, TC, `` id) = $find_var_t(BLOCK, TC, `` id)
 ;;; Finder for values
 
 dec $find_var_value_t(cursor, typingContext, prefixedNameIR) : value
-  hint(prose_in "the value of variable" %2 "in the" %0 "layer of" %1)
+  hint(prose_in "the value of variable" %2 "from the" %0 "layer of" %1)
 
 def $find_var_value_t(p, TC, prefixedNameIR) = value
   -- if _ _ _ value = $find_var_t(p, TC, prefixedNameIR)
@@ -348,7 +348,7 @@ def $find_var_value_t(p, TC, prefixedNameIR) = value
 ;;; Finder for types
 
 dec $find_typeDef_t(cursor, typingContext, prefixedNameIR) : typeDefIR?
-  hint(prose_in "the type definition of" %2 "in the" %0 "layer of" %1)
+  hint(prose_in "the type definition of" %2 "from the" %0 "layer of" %1)
 
 def $find_typeDef_t(p, TC, `. typeId)
   = $find_map<typeId, typeDefIR>(typeDefEnv, typeId)
@@ -377,7 +377,7 @@ def $find_typeDef_t(LOCAL, TC, `` typeId)
 
 dec $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argumentIR*)
   : (callableId, callableTypeDefIR, id*)?
-  hint(prose_in "the overloaded callable definition of" %2#"("%3")" "in the" %0 "layer of" %1)
+  hint(prose_in "the overloaded callable definition of" %2#"("%3")" "from the" %0 "layer of" %1)
 
 def $find_callableDef_overloaded_t(GLOBAL, TC, `. nameIR, argumentIR*)
   = $find_overloaded<callableTypeDefIR>(
@@ -408,7 +408,7 @@ def $find_callableDef_overloaded_t(LOCAL, TC, `` nameIR, argumentIR*)
 
 dec $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR)
   : (callableId, callableTypeDefIR)?
-  hint(prose_in "the non-overloaded callable definition of" %2 "in the" %0 "layer of" %1)
+  hint(prose_in "the non-overloaded callable definition of" %2 "from the" %0 "layer of" %1)
 
 def $find_callableDef_non_overloaded_t(p, TC, `. nameIR)
   = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, nameIR)
@@ -429,6 +429,7 @@ def $find_callableDef_non_overloaded_t(LOCAL, TC, `` nameIR)
 
 dec $find_constructorDef_overloaded_t(typingContext, prefixedNameIR, argumentIR*)
   : (callableId, constructorTypeDefIR, id*)?
+  hint(prose_in "the overloaded constructor definition of" %1 `( %2 ) "in" %0)
 
 def $find_constructorDef_overloaded_t(TC, `. nameIR, argumentIR*)
   = $find_overloaded<constructorTypeDefIR>(

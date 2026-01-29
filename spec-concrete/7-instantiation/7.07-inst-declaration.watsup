@@ -103,10 +103,12 @@ rulegroup ObjectDecls_inst {
 rulegroup InstDecl_inst {
 
   rule InstDecl_inst/extern:
-    p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
+    p IC_0 STO_0 |- annotationList typeIR constructorTargetIR
                       `( argumentListIR ) nameIR objectInitializerOptIR `;
                   : IC_1 STO_3 constantDeclarationIR
     ---- ;; find and instantiate constructor
+    -- if prefixedNameIR `< typeArgumentListIR >
+        = constructorTargetIR
     -- Constructor_inst:
         p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
                 : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )
@@ -142,10 +144,12 @@ rulegroup InstDecl_inst {
         = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 
   rule InstDecl_inst/non-extern:
-    p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
+    p IC_0 STO_0 |- annotationList typeIR constructorTargetIR
                           `( argumentListIR ) nameIR objectInitializerOptIR `;
                      : IC_1 STO_2 constantDeclarationIR
     ---- ;; find and instantiate constructor
+    -- if prefixedNameIR `< typeArgumentListIR >
+        = constructorTargetIR
     -- Constructor_inst:
         p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
                 : constructorDef `< typeArgumentListIR_inst > `( `# id_default* )

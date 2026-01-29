@@ -296,14 +296,12 @@ rule Expr_eval_lctk/sliceAccessExpressionIR:
 
 rule Expr_eval_lctk/callExpressionIR-static_assert:
   p TC |- (prefixedNameIR `< eps > `( argumentIR* )) `# _ ~> boolValue
-  ---- ;; if calling static_assert
-  -- if (prefixedNameIR = `. "static_assert")
-        \/ (prefixedNameIR = `` "static_assert")
   ---- ;; resolve the callee
   -- CallableType_ok:
       p TC |- prefixedNameIR `< eps > `( argumentIR* )
             : externFunctionTypeIR `< `# eps > `( `# eps )
-  -- if EXTERN_FUNCTION `( parameterIR* ) `: BOOL
+  ---- ;; if calling static_assert
+  -- if EXTERN_FUNCTION "static_assert" `( parameterIR* ) `: BOOL
       = externFunctionTypeIR
   -- (if _ _ _ nameIR_param _ = parameterIR)*
   ---- ;; create callee context

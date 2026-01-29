@@ -8,7 +8,7 @@
 
 ;;;; Action call
 
-rule Callee_eval/referenceExpressionIR-action:
+rule Callee_eval/actionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` actionCallee)
   ---- ;; find the action definition being called
@@ -22,7 +22,7 @@ rule Callee_eval/referenceExpressionIR-action:
 
 ;;;; Extern function call
 
-rule Callee_eval/referenceExpressionIR-externFunctionCallee:
+rule Callee_eval/externFunctionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` externFunctionCallee)
   ---- ;; find the extern function definition being called
@@ -37,7 +37,7 @@ rule Callee_eval/referenceExpressionIR-externFunctionCallee:
 
 ;;;; Defined function call
 
-rule Callee_eval/referenceExpressionIR-definedFunctionCallee:
+rule Callee_eval/definedFunctionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` definedFunctionCallee)
   ---- ;; find the function definition being called
@@ -53,7 +53,7 @@ rule Callee_eval/referenceExpressionIR-definedFunctionCallee:
 
 ;;;; Builtin method call
 
-rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
+rulegroup Callee_eval/builtinMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
@@ -135,7 +135,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-builtinMethod {
 
 ;;;; Extern method call
 
-rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
+rulegroup Callee_eval/externMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
@@ -180,7 +180,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-extern-method {
 
 ;;;; Parser apply method call
 
-rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
+rulegroup Callee_eval/parserApplyMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
@@ -228,7 +228,7 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-parser-apply-method {
 
 ;;;; Control apply method call
 
-rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
+rulegroup Callee_eval/controlApplyMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
@@ -277,10 +277,10 @@ rulegroup Callee_eval/typedExpressionIR-nameIR-control-apply-method {
 
 ;;;; Table apply method call
 
-rulegroup Callee_eval/typedExpressionIR-nameIR-table-apply-method {
+rulegroup Callee_eval/tableApplyMethodCallee {
 
   rule Callee_eval/abort:
-    p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( argumentListIR )
+    p EC_0 STO_0 |- (typedExpressionIR `. "apply") `< `_ > `( eps )
                   : EC_1 STO_1 abortResult
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR

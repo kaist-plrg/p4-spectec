@@ -253,6 +253,7 @@ def $find_var_i(LOCAL, IC, `` id)
 ;;; Finder for type definitions
 
 dec $find_typeDef_i(cursor, instContext, prefixedNameIR) : typeDefIR?
+  hint(prose_in "the type definition of" %2 "from the" %0 "layer of" %1)
 
 def $find_typeDef_i(_, IC, `` nameIR)
   = $find_map<typeId, typeDefIR>(IC.GLOBAL.TYPE, nameIR)
@@ -263,6 +264,7 @@ def $find_typeDef_i(_, IC, `. nameIR)
 
 dec $find_constructorDef_i(instContext, prefixedNameIR, argumentIR*)
   : (callableId, constructorDef, id*)?
+  hint(prose_in "the overloaded constructor definition of" %1 `( %2 ) "in" %0)
 
 def $find_constructorDef_i(IC, `` nameIR, argumentIR*)
   = $find_overloaded<constructorDef>(

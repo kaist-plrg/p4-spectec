@@ -108,8 +108,9 @@ rule InstDecl_non_objectInitializer_ok:
       p TC_0 |- argumentList : argumentIR*
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+  -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
   -- ConstructorType_ok:
-      p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+      p TC_0 |- constructorTargetIR `( argumentIR* )
              : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
@@ -121,9 +122,10 @@ rule InstDecl_non_objectInitializer_ok:
   -- if nameIR = $name(name)
   -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
   ---- ;; create IR
+  -- if constructorTargetIR_inferred = prefixedNameIR `< typeArgumentIR_inferred* >
   -- if instantiationIR
-      = annotationList typeIR_object prefixedNameIR
-          `< typeArgumentIR_inferred* > `( argumentIR_cast* ) nameIR eps `;
+      = annotationList typeIR_object constructorTargetIR_inferred
+          `( argumentIR_cast* ) nameIR eps `;
 
 ;;;; annotationList type `( argumentList ) name objectInitializer `;
 
@@ -152,7 +154,7 @@ rulegroup ObjectDecl_ok {
     -- InstDecl_ok: p TC_0 |- instantiation
                             : TC_1 instantiationIR
     ---- ;; add instance
-    -- if _ _ _ `< _ > `( _ ) nameIR _ `; = instantiationIR
+    -- if _ _ _ `( _ ) nameIR _ `; = instantiationIR
     -- if varTypeIR = $find_var_t(p, TC_1, `` nameIR)
     -- if typeFrame_init
         = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
@@ -181,15 +183,17 @@ rulegroup ObjectDecl_ok {
     -- if f = RET \/ typeIR_ret = VOID
     ---- ;; add function
     -- if callableId = $callableId(name, parameterList)
+    -- if nameIR = $name(name)
     -- if externMethodTypeDefIR
-        = EXTERN_METHOD `< typeId_expl* `, typeId_impl* > `( parameterIR* ) `: typeIR_ret
+        = EXTERN_METHOD nameIR
+            `< typeId_expl* `, typeId_impl* >
+            `( parameterIR* ) `: typeIR_ret
     -- CallableTypeDef_wf: $bound(p, TC_0) |- externMethodTypeDefIR
     -- if externMethodTypeDefEnv_init
         = $update_map<callableId, externMethodTypeDefIR>(
             externMethodTypeDefEnv,
             callableId, externMethodTypeDefIR)
     ---- ;; create IR
-    -- if nameIR = $name(name)
     -- if functionDeclarationIR
         = annotationList
             (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
@@ -268,15 +272,15 @@ def $subst_externMethodTypeDefEnv(
   -- if (callableId, externMethodTypeDefIR_abstract)
       = $find_non_overloaded<externMethodTypeDefIR>(
           externMethodTypeDefEnv_extern, nameIR_init_h)
-  -- if EXTERN_METHOD ABSTRACT `< typeId_expl* `, typeId_impl* >
+  -- if EXTERN_METHOD ABSTRACT nameIR `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
       = externMethodTypeDefIR_abstract
   ---- ;; concretize abstract extern method
   -- if externMethodTypeDefIR_concrete
-      = EXTERN_METHOD `< typeId_expl* `, typeId_impl* >
+      = EXTERN_METHOD nameIR `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
   ---- ;; concretized extern method should be the same as the one initialized
-  -- CallableTypeDef_alpha:
+  -- ExternMethodTypeDef_alpha:
       externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
   ---- ;; update the map
   -- if externMethodTypeDefEnv_extern_subst
@@ -306,7 +310,8 @@ rule InstDecl_objectInitializer_ok:
       p TC_0 |- argumentList : argumentIR*
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-  -- ConstructorType_ok: p TC_0 |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+  -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
+  -- ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR* )
                                  : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
@@ -335,9 +340,10 @@ rule InstDecl_objectInitializer_ok:
   -- if nameIR = $name(name)
   -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)
   ---- ;; create IR
+  -- if constructorTargetIR_inferred = prefixedNameIR `< typeArgumentIR_inferred* >
   -- if instantiationIR
-      = annotationList typeIR_object_init prefixedNameIR
-          `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+      = annotationList typeIR_object_init constructorTargetIR_inferred
+          `( argumentIR_cast* )
           nameIR (`= `{ objectDeclarationIR* }) `;
 
 rulegroup InstDecl_ok {
@@ -415,12 +421,16 @@ rule FuncDecl_ok:
   -- if f = RET \/ typeIR_ret = VOID
   ---- ;; add function to the context
   -- if callableId = $callableId(name, parameterList)
-  -- if definedFunctionTypeDefIR
-      = FUNCTION `< typeId_expl* `, typeId_impl* > `( parameterIR* ) `: typeIR_ret
-  -- CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR
-  -- if TC_4 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR)
-  ---- ;; create IR
   -- if nameIR = $name(name)
+  -- if definedFunctionTypeDefIR
+      = FUNCTION nameIR
+          `< typeId_expl* `, typeId_impl* >
+          `( parameterIR* ) `: typeIR_ret
+  -- CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR
+  -- if TC_4
+      = $add_callableDef_overload_t(
+          p, TC_0, callableId, definedFunctionTypeDefIR)
+  ---- ;; create IR
   -- if functionDeclarationIR
       = annotationList
           (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* ))
@@ -449,11 +459,11 @@ rule ActionDecl_ok:
   -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
   ---- ;; add action to the context
   -- if callableId = $callableId(name, parameterList)
-  -- if actionTypeDefIR = ACTION `( parameterIR* )
+  -- if nameIR = $name(name)
+  -- if actionTypeDefIR = ACTION nameIR `( parameterIR* )
   -- CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR
   -- if TC_3 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if actionDeclarationIR
       = annotationList ACTION nameIR `( parameterIR* ) blockStatementIR
 
@@ -518,12 +528,14 @@ rule Decl_ok/externFunctionDeclaration:
   -- if TC_3 = TC_2[ .LOCAL.KIND = EXTERN_FUNCTION `: typeIR_ret ]
   ---- ;; check extern function type and add to context
   -- if callableId = $callableId(name, parameterList)
+  -- if nameIR = $name(name)
   -- if externFunctionTypeDefIR
-      = EXTERN_FUNCTION `< typeId_expl* `, typeId_impl* > `( parameterIR* ) `: typeIR_ret
+      = EXTERN_FUNCTION nameIR
+          `< typeId_expl* `, typeId_impl* >
+          `( parameterIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(GLOBAL, TC_0) |- externFunctionTypeDefIR
   -- if TC_4 = $add_callableDef_overload_t(GLOBAL, TC_0, callableId, externFunctionTypeDefIR)
   ---- ;; create IR
-  -- if nameIR = $name(name)
   -- if externFunctionDeclarationIR
       = annotationList EXTERN
           (typeIR_ret nameIR `< typeId_expl* `, typeId_impl* > `( parameterIR* )) `;

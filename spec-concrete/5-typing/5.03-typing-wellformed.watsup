@@ -496,7 +496,7 @@ tbl def $nestable_action =
   | _ => true
 
 rule CallableType_wf/actionTypeIR:
-  B |- ACTION `( parameterIR* )
+  B |- ACTION _ `( parameterIR* )
   -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ direction typeIR _ _ = parameterIR)*
   -- if $directionless_trailing(direction*)
@@ -515,7 +515,7 @@ tbl def $nestable_definedFunction =
   | _ => true
 
 rule CallableType_wf/definedFunctionTypeIR:
-  B |- FUNCTION `( parameterIR* ) `: typeIR_ret
+  B |- FUNCTION _ `( parameterIR* ) `: typeIR_ret
   -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_definedFunction(typeIR)*
@@ -534,7 +534,7 @@ tbl def $nestable_externFunction =
   | _ => true
 
 rule CallableType_wf/externFunctionTypeIR:
-  B |- EXTERN_FUNCTION `( parameterIR* ) `: typeIR_ret
+  B |- EXTERN_FUNCTION _ `( parameterIR* ) `: typeIR_ret
   -- (ParameterType_wf: B |- parameterIR)*
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_externFunction(typeIR)*
@@ -543,7 +543,7 @@ rule CallableType_wf/externFunctionTypeIR:
 ;;; Method types
 
 rule CallableType_wf/builtinMethodTypeIR:
-  B |- BUILTIN_METHOD `( parameterIR* ) `: typeIR_ret
+  B |- BUILTIN_METHOD _ `( parameterIR* ) `: typeIR_ret
   -- (ParameterType_wf: B |- parameterIR)*
   -- ReturnType_wf: B |- typeIR_ret
 
@@ -562,14 +562,14 @@ tbl def $nestable_externMethod =
 rulegroup CallableType_wf/externMethodTypeIR {
 
   rule CallableType_wf/non-abstract:
-    B |- EXTERN_METHOD `( parameterIR* ) `: typeIR_ret
+    B |- EXTERN_METHOD _ `( parameterIR* ) `: typeIR_ret
     -- (ParameterType_wf: B |- parameterIR)*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*
     -- ReturnType_wf: B |- typeIR_ret
 
   rule CallableType_wf/abstract:
-    B |- EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret
+    B |- EXTERN_METHOD ABSTRACT _ `( parameterIR* ) `: typeIR_ret
     -- (ParameterType_wf: B |- parameterIR)*
     -- if (_ _ typeIR _ _ = parameterIR)* 
     -- if $nestable_externMethod(typeIR)*

@@ -135,7 +135,7 @@ def $free_parameterIR(_ _ typeIR _ _) = $free_typeIR(typeIR)
 
 ;;; Action types
 
-def $free_callableTypeIR(ACTION `( parameterIR* ))
+def $free_callableTypeIR(ACTION _ `( parameterIR* ))
   = B_params
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
@@ -143,14 +143,14 @@ def $free_callableTypeIR(ACTION `( parameterIR* ))
 ;;; Function types
 
 def $free_callableTypeIR(
-    FUNCTION `( parameterIR* ) `: typeIR)
+    FUNCTION _ `( parameterIR* ) `: typeIR)
   = $union_set<typeId>(B_params, B_ret)
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
   -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
-    EXTERN_FUNCTION `( parameterIR* ) `: typeIR)
+    EXTERN_FUNCTION _ `( parameterIR* ) `: typeIR)
   = $union_set<typeId>(B_params, B_ret)
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
@@ -159,21 +159,21 @@ def $free_callableTypeIR(
 ;;; Method types
 
 def $free_callableTypeIR(
-    BUILTIN_METHOD `( parameterIR* ) `: typeIR)
+    BUILTIN_METHOD _ `( parameterIR* ) `: typeIR)
   = $union_set<typeId>(B_params, B_ret)
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
   -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
-    EXTERN_METHOD `( parameterIR* ) `: typeIR)
+    EXTERN_METHOD _ `( parameterIR* ) `: typeIR)
   = $union_set<typeId>(B_params, B_ret)
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)
   -- if B_ret = $free_typeIR(typeIR)
 
 def $free_callableTypeIR(
-    EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR)
+    EXTERN_METHOD ABSTRACT _ `( parameterIR* ) `: typeIR)
   = $union_set<typeId>(B_params, B_ret)
   -- if B_params
       = $unions_set<typeId>($free_parameterIR(parameterIR)*)

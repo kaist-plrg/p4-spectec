@@ -66,7 +66,8 @@ rulegroup Stmt_ok/callStatement {
     p TC f l |- lvalue_callable `( argumentList ) `;
               : TC f emptyStatementIR
     ---- ;; check base lvalue
-    -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
+    -- CallableTarget_lvalue_ok:
+        p TC |- lvalue_callable : callableTargetIR
     ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
     -- (Argument_ok: p TC |- argument : argumentIR)*
@@ -77,7 +78,7 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check calling convention
     -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    -- if $is_static_assert_callableTarget(callableTargetIR)
+    -- if $is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callExpressionIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
@@ -90,7 +91,8 @@ rulegroup Stmt_ok/callStatement {
     p TC f l |- lvalue_callable `( argumentList ) `;
               : TC f callStatementIR
     ---- ;; check base lvalue
-    -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
+    -- CallableTarget_lvalue_ok:
+        p TC |- lvalue_callable : callableTargetIR
     ---- ;; check arguments
     -- ArgumentList_ok:
         p TC |- argumentList : argumentIR*
@@ -101,7 +103,7 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check calling convention
     -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
                       : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-    -- if ~$is_static_assert_callableTarget(callableTargetIR)
+    -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callStatementIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* ) `;
@@ -160,8 +162,9 @@ rule Stmt_ok/directApplicationStatement:
   -- if (`` nameIR_object) `# `( typeIR_object CTK )
       = typedExpressionIR_base
   ---- ;; create IR
+  -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
   -- if directApplicationStatementIR
-      = prefixedNameIR `< typeArgumentIR* > `. APPLY `( argumentIR_cast* ) `;
+      = constructorTargetIR `. APPLY `( argumentIR_cast* ) `;
 
 ;;; returnStatement
 ;;; syntax returnStatement
