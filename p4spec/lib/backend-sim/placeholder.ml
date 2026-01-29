@@ -56,8 +56,7 @@ struct
 
   type arch_state = unit [@@deriving yojson]
 
-  let empty_arch_state =
-    () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let empty_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
 
   let eval_extern_init (_values_input : Value.t list) : Value.t =
     wrap_extern_v "objectState" `Null
@@ -111,6 +110,10 @@ struct
     error_no_region
       "table_add_default_action not implemented for the placeholder simulator"
 
+  let add_mirror_session _session _port =
+    error_no_region
+      "add_mirror_session is not implemented for the placeholder simulator"
+
   (* Pipeline initializer *)
 
   let init_pipe (_includes_p4 : string list) (_filename_p4 : string) :
@@ -120,7 +123,7 @@ struct
   (* Pipeline driver *)
 
   let drive_pipe (_value_ctx : Value.t) (_value_sto : Value.t) (_rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
+      Value.t * Value.t * IO.tx list =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
 
   (* Initializer *)

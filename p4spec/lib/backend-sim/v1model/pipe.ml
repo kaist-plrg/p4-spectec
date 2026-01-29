@@ -1,15 +1,17 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+open Interface.Pack
 open Interface.Unpack
 open Interface.Flatten
-module ArchState = Arch_state
+open State
 module Deque = Util.Deque
 module OptionState = Util.Option_state
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error
+open OptionState
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
@@ -57,8 +59,6 @@ struct
 
   let init_call_func () = Spec.Func.register call_func
 
-  type 'a pipe_ctx = (Value.t * Value.t, 'a) OptionState.t
-
   (* Extern objects *)
 
   let empty_arch_state = ArchState.empty |> ArchState.to_value
@@ -69,12 +69,6 @@ struct
     | Counter of Object.Counter.t
     | Register of Object.Register.t
   [@@deriving yojson]
-
-  let get_arch_state : ArchState.t pipe_ctx =
-    let open OptionState in
-    let* _, value_sto = get in
-    value_sto |> Spec.Func.find_store_archState |> unwrap_extern_v
-    |> ArchState.of_yojson |> Result.get_ok |> return
 
   let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : extern
       =
@@ -349,30 +343,59 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  let add_mirror_session (value_sto : Value.t) (session : int) (port : int) :
+      Value.t =
+    let arch_state =
+      value_sto |> Spec.Func.find_store_archState |> ArchState.of_value
+    in
+    let mirror_tbl = MirrorTable.add session port arch_state.mirror_tbl in
+    arch_state
+    |> ArchState.with_mirror_tbl mirror_tbl
+    |> ArchState.to_value
+    |> Spec.Func.update_store_archState value_sto
+
   (* pipe_ctx helpers *)
 
+  type 'a pipe_ctx = (Value.t * Value.t * IO.tx list, 'a) OptionState.t
+
+  let get_arch_state : ArchState.t pipe_ctx =
+    let+ _, value_sto, _ = get in
+    value_sto |> Spec.Func.find_store_archState |> ArchState.of_value
+
+  let get_ctx : Value.t pipe_ctx =
+    let+ value_ctx, _, _ = get in
+    value_ctx
+
+  let get_sto : Value.t pipe_ctx =
+    let+ _, value_sto, _ = get in
+    value_sto
+
   let put_ctx (ctx : Value.t) : unit pipe_ctx =
-    let open OptionState in
-    modify (fun (_, sto) -> (ctx, sto))
+    modify (fun (_, sto, txs) -> (ctx, sto, txs))
 
   let put_sto (sto : Value.t) : unit pipe_ctx =
-    let open OptionState in
-    modify (fun (ctx, _) -> (ctx, sto))
+    modify (fun (ctx, _, txs) -> (ctx, sto, txs))
+
+  let get_ctx_sto : (Value.t * Value.t) pipe_ctx =
+    let+ value_ctx, value_sto, _ = get in
+    (value_ctx, value_sto)
+
+  let put_ctx_sto (ctx : Value.t) (sto : Value.t) : unit pipe_ctx =
+    put_ctx ctx >> put_sto sto
 
   let modify_sto (f : Value.t -> Value.t) : unit pipe_ctx =
-    let open OptionState in
-    modify (fun (ctx, sto) -> (ctx, f sto))
+    modify (fun (ctx, sto, txs) -> (ctx, f sto, txs))
 
-  let modify_arch_state (arch_state : ArchState.t) : unit pipe_ctx =
-    let open OptionState in
-    modify (fun (ctx, value_sto) ->
-        ( ctx,
-          arch_state |> ArchState.to_value
-          |> Spec.Func.update_store_archState value_sto ))
+  let put_arch_state (arch_state : ArchState.t) : unit pipe_ctx =
+    modify_sto (fun value_sto ->
+        arch_state |> ArchState.to_value
+        |> Spec.Func.update_store_archState value_sto)
+
+  let produce_tx (tx : IO.tx) : unit pipe_ctx =
+    modify (fun (ctx, sto, txs) -> (ctx, sto, tx :: txs))
 
   let get_drop : bool pipe_ctx =
-    let open OptionState in
-    let+ value_ctx, value_sto = get in
+    let+ value_ctx, value_sto = get_ctx_sto in
     let value_egress_spec =
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
@@ -384,14 +407,12 @@ struct
 
   let with_pipe_ctx (f : Value.t -> Value.t -> Value.t * Value.t * Value.t) :
       Value.t pipe_ctx =
-    let open OptionState in
-    let* value_ctx, value_sto = get in
+    let* value_ctx, value_sto = get_ctx_sto in
     let value_ctx, value_sto, value_callResult = f value_ctx value_sto in
-    let* _ = put (value_ctx, value_sto) in
-    return value_callResult
+    let+ _ = put_ctx_sto value_ctx value_sto in
+    value_callResult
 
   let with_packet (packet : Packet.t) : unit pipe_ctx =
-    let open OptionState in
     let { packet_in; value_ctx; _ } : Packet.t = packet in
     let packet_in = PacketIn packet_in in
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
@@ -404,8 +425,7 @@ struct
           value_packet_in)
 
   let reset_packet_in : unit pipe_ctx =
-    let open OptionState in
-    let* _, value_sto = get in
+    let* value_sto = get_sto in
     let value_sto =
       let packet_in =
         value_sto |> get_packet_in |> Core.Object.PacketIn.reset
@@ -417,6 +437,20 @@ struct
       in
       Spec.Func.update_store_objectState value_sto value_objectId
         value_packet_in
+    in
+    put_sto value_sto
+
+  let reset_packet_out : unit pipe_ctx =
+    let* value_sto = get_sto in
+    let value_sto =
+      let packet_out = Core.Object.PacketOut.init () in
+      let packet_out = PacketOut packet_out in
+      let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
+      let value_packet_out =
+        packet_out |> extern_to_yojson |> wrap_extern_v "externState"
+      in
+      Spec.Func.update_store_objectState value_sto value_objectId
+        value_packet_out
     in
     put_sto value_sto
 
@@ -438,13 +472,12 @@ struct
   (* Pipeline driver *)
 
   let setup_rx (rx : IO.rx) : unit pipe_ctx =
-    let open OptionState in
     let port_in, packet_in = rx in
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
-    let* value_ctx, value_sto = get in
+    let* value_ctx, value_sto = get_ctx_sto in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
     in
@@ -458,7 +491,7 @@ struct
     in
     (* Setup global variables *)
     let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
-    put (value_ctx, value_sto)
+    put_ctx_sto value_ctx value_sto
 
   (* capture current
    * 1. evaluation context
@@ -466,25 +499,19 @@ struct
    * and push to queue
    *)
   let schedule_packet (entrypoint : Packet.entrypoint) : unit pipe_ctx =
-    let open OptionState in
-    let* value_ctx, value_sto = get in
+    let* value_ctx, value_sto = get_ctx_sto in
     let packet_in = get_packet_in value_sto in
     let packet : Packet.t = { value_ctx; packet_in; entrypoint } in
     let* arch_state = get_arch_state in
     let queue =
       match entrypoint with
-      | Ingress -> Scheduler.push_back packet arch_state.queue
-      | Egress -> Scheduler.push_front packet arch_state.queue
+      | Ingress -> Scheduler.push_front packet arch_state.queue
+      | Egress -> Scheduler.push_back packet arch_state.queue
     in
-    let arch_state =
-      arch_state |> ArchState.with_queue queue |> ArchState.to_value
-    in
-    modify_sto (fun value_sto ->
-        Spec.Func.update_store_archState value_sto arch_state)
+    arch_state |> ArchState.with_queue queue |> put_arch_state
 
   let prepare_resubmit_ctx (index : int) : unit pipe_ctx =
-    let open OptionState in
-    let* value_ctx, value_sto = get in
+    let* value_ctx, value_sto = get_ctx_sto in
     let value_ctx =
       Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_sto
         (Packet.ResubmitInfo.to_v index)
@@ -499,10 +526,35 @@ struct
     in
     put_ctx value_ctx
 
+  let prepare_clone_ctx (index : int) (port : int) : unit pipe_ctx =
+    let* value_ctx, value_sto = get_ctx_sto in
+    let value_index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+    in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_sto
+        value_index
+    in
+    (* Set standard_metadata.instance_type as 1 *)
+    let value_ctx =
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 1)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    let value_ctx =
+      let value_egress_spec =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    put_ctx value_ctx
+
   let drive_p : unit pipe_ctx =
-    let open OptionState in
     let* value_parser_result = with_pipe_ctx Spec.Rel.v1model_parser in
-    let* value_ctx, value_sto = get in
+    let* value_ctx, value_sto = get_ctx_sto in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
       | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
@@ -511,30 +563,43 @@ struct
       | Some _ -> value_ctx
       | None -> assert false
     in
-    put (value_ctx, value_sto)
+    put_ctx_sto value_ctx value_sto
 
   let drive_vr : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_verify
 
   let drive_pipe_pre : Value.t pipe_ctx =
-    let open OptionState in
-    drive_p >> drive_vr
+    let* arch_state = get_arch_state in
+    put_arch_state (ArchState.reset arch_state)
+    >> reset_packet_in >> drive_p >> drive_vr
 
-  let handle_resubmit (arch_state : ArchState.t) : bool pipe_ctx =
-    let open OptionState in
+  let schedule_clone (arch_state : ArchState.t) : bool pipe_ctx =
+    let open ArchState in
+    match arch_state.clone_opt with
+    | Some (_, session, field_index) -> (
+        match MirrorTable.find_opt session arch_state.mirror_tbl with
+        | Some port ->
+            let* value_ctx_original = get_ctx in
+            prepare_clone_ctx field_index port
+            >> drive_pipe_pre >> schedule_packet Egress
+            >> put_ctx value_ctx_original >> return true
+        | None -> return false)
+    | _ -> return false
+
+  let schedule_resubmit (arch_state : ArchState.t) : bool pipe_ctx =
     let open ArchState in
     match arch_state.resubmit_opt with
     | None -> return false
     | Some field_index ->
+        let* value_ctx_original = get_ctx in
         prepare_resubmit_ctx field_index
-        >> reset_packet_in
-        >> modify_arch_state (with_resubmit_opt None arch_state)
-        >> drive_pipe_pre >> schedule_packet Ingress >> return true
+        >> drive_pipe_pre >> schedule_packet Ingress
+        >> put_ctx value_ctx_original >> return true
 
   let drive_ig : Value.t pipe_ctx =
-    let open OptionState in
     let* result = with_pipe_ctx Spec.Rel.v1model_ingress in
     let* arch_state = get_arch_state in
-    let* resubmitted = handle_resubmit arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* resubmitted = schedule_resubmit arch_state in
     if resubmitted then return result
     else
       let* drop = get_drop in
@@ -544,9 +609,9 @@ struct
   let drive_ck : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_check
   let drive_dep : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_deparse
 
-  let resulting_port_packet : IO.tx pipe_ctx =
-    let open OptionState in
-    let* value_ctx, value_sto = get in
+  let drive_pipe_post : Value.t pipe_ctx =
+    let* result = drive_ck >> reset_packet_out >> drive_dep in
+    let* value_ctx, value_sto = get_ctx_sto in
     let value_egress_spec =
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
@@ -569,80 +634,33 @@ struct
     in
     (* Return port and packet *)
     let tx = (port, packet) in
-    return tx
+    produce_tx tx >> return result
 
-  let drive_pipe_post : Value.t pipe_ctx =
-    let open OptionState in
-    drive_ck >> drive_dep
-
-  let drive_pipe_pre_inner : bool pipe_ctx =
-    let open OptionState in
-    (* Parser block *)
-    let* () = drive_p in
-    (* Verify block *)
-    let* _value_verify_result = drive_vr in
-    (* Ingress block *)
-    let* _value_verify_result = drive_ig in
-    (* Check if packet should be dropped *)
-    let* value_ctx, value_sto = get in
-    let drop =
-      let value_egress_spec =
-        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-          "egress_spec"
-      in
-      let width_egress_spec, int_egress_spec =
-        unpack_p4_fixedBit value_egress_spec
-      in
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-    in
-    return drop
-
-  let rec _drive_pipe_pre () : unit pipe_ctx =
-    let open OptionState in
-    let* drop = drive_pipe_pre_inner in
-    let* arch_state = get_arch_state in
-    match arch_state.resubmit_opt with
-    | None -> guard (not drop)
-    | Some _index -> handle_resubmit arch_state >> _drive_pipe_pre ()
-
-  let _drive_pipe_post : IO.tx pipe_ctx =
-    let open OptionState in
-    (* Egress block *)
-    let* _value_verify_result = drive_eg in
-    (* Check block *)
-    let* _value_check_result = drive_ck in
-    (* Deparser block *)
-    let* _value_deparse_result = drive_dep in
-    (* Get resulting port and packet *)
-    resulting_port_packet
-
-  let rec drive_packet (packet : Packet.t) : IO.tx pipe_ctx =
-    let open OptionState in
+  let drive_packet (packet : Packet.t) : unit pipe_ctx =
     match packet.entrypoint with
-    | Ingress -> with_packet packet >> drive_ig >> run_scheduler ()
-    | Egress ->
-        with_packet packet >> drive_eg >> drive_pipe_post
-        >> resulting_port_packet
+    | Ingress -> with_packet packet >> drive_ig >> return ()
+    | Egress -> with_packet packet >> drive_eg >> drive_pipe_post >> return ()
 
-  and run_scheduler () : IO.tx pipe_ctx =
-    let open OptionState in
+  let rec run_scheduler () : unit pipe_ctx =
     let* arch_state = get_arch_state in
     match Scheduler.pop_front_opt arch_state.queue with
-    | None -> fail
+    | None -> empty
     | Some (packet, queue) ->
         ArchState.(arch_state |> reset |> with_queue queue)
-        |> modify_arch_state >> drive_packet packet
+        |> put_arch_state >> drive_packet packet >> run_scheduler ()
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
-    let pipe_ctx = (value_ctx, value_sto) in
-    let pipe : IO.tx pipe_ctx =
-      let open OptionState in
+      Value.t * Value.t * IO.tx list =
+    let pipe_ctx = (value_ctx, value_sto, []) in
+    let pipe : unit pipe_ctx =
       (* Setup port and packet *)
-      setup_rx rx >> drive_pipe_pre >> schedule_packet Ingress >> run_scheduler ()
+      setup_rx rx
+      >> drive_pipe_pre
+      >> schedule_packet Ingress
+      >> run_scheduler ()
     in
-    let result, (value_ctx, value_sto) = OptionState.run pipe pipe_ctx in
-    (value_ctx, value_sto, result)
+    let _, (value_ctx, value_sto, txs) = OptionState.run pipe pipe_ctx in
+    (value_ctx, value_sto, List.rev txs)
 
   (* Initializer *)
 

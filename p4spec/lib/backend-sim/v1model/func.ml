@@ -1,9 +1,9 @@
-module ArchState = Arch_state
 module Value = Runtime.Sim.Value
 open Interface.Wrap
 open Interface.Pack
 open Interface.Unpack
 open Error
+open State
 
 (* Generate a random number in the range lo..hi, inclusive, and write
    it to the result parameter.  The value written to result is not
@@ -455,10 +455,27 @@ let _recirculate_preserving_field_list (_value_ctx : Value.t)
 
    extern void clone_preserving_field_list(in CloneType type,
                                            in bit<32> session, bit<8> index); *)
-let _clone_preserving_field_list (_value_ctx : Value.t) (_value_sto : Value.t) :
-    Value.t * Value.t =
-  error_no_region
-    "extern function clone_preserving_field_list is not implemented"
+let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  let open ArchState in
+  let arch_state = Spec.Func.find_store_archState value_sto |> ArchState.of_value in
+  let value_type = Spec.Func.find_var_e_local value_ctx "type" in
+  let value_session = Spec.Func.find_var_e_local value_ctx "session" in
+  let value_index = Spec.Func.find_var_e_local value_ctx "index" in
+  let packet_clone = Packet.CloneInfo.of_v (value_type, value_session, value_index) in
+  (* mark arch state with clone information *)
+  let value_arch_state =
+    arch_state
+    |> with_clone packet_clone
+    |> to_value
+  in
+  let value_sto = Spec.Func.update_store_archState value_sto value_arch_state in
+  (* Return void *)
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
 
 let _truncate (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t
     =

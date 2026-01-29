@@ -54,28 +54,28 @@ module Make
 
   (* STF test runner *)
 
-  let on_tx_output (tx_opt : IO.tx option) (tx_output_queue : IO.tx list)
+  let on_tx_output (txs : IO.tx list) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
-    match tx_opt with
+    match txs with
     (* Packet was transmitted *)
-    | Some tx -> (
+    | tx_h :: tx_t -> (
         match expect_queue with
         (* No expected packet (yet) *)
         | [] ->
-            let tx_output_queue = tx_output_queue @ [ tx ] in
+            let tx_output_queue = tx_output_queue @ txs in
             (tx_output_queue, expect_queue)
             (* There is an expected packet *)
-        | (tx_expect, exact) :: expect_queue when compare_tx ~exact tx tx_expect
+        | (tx_expect, exact) :: expect_queue when compare_tx ~exact tx_h tx_expect
           ->
             Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
             |> log;
-            (tx_output_queue, expect_queue)
+            (tx_output_queue @ tx_t, expect_queue)
         | (tx_expect, _) :: _ ->
             error_stf
               (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
-                 (string_of_tx tx)))
+                 (string_of_tx tx_h)))
     (* Packet was dropped *)
-    | None -> (tx_output_queue, expect_queue)
+    | [] -> (tx_output_queue, expect_queue)
 
   let on_tx_expect ((tx_expect, exact) : IO.expect)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list) :
@@ -100,15 +100,15 @@ module Make
       Il.value * Il.value * IO.tx list * IO.expect list =
     match stmt_stf with
     (* Packet I/O *)
-    | Stf.Ast.Packet (port_in, packet_in, _exact) ->
+    | Stf.Ast.Packet (port_in, packet_in) ->
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
         let rx = (port_in, packet_in) in
-        let value_ctx, value_sto, tx_output_opt =
+        let value_ctx, value_sto, tx_outputs =
           Arch.drive_pipe value_ctx value_sto rx
         in
         let tx_output_queue, expect_queue =
-          on_tx_output tx_output_opt tx_output_queue expect_queue
+          on_tx_output tx_outputs tx_output_queue expect_queue
         in
         (value_ctx, value_sto, tx_output_queue, expect_queue)
     | Stf.Ast.Expect (port_expect, packet_expect_opt, exact) ->
@@ -203,6 +203,11 @@ module Make
             value_tableEntryPriorityInterface value_tableKeysetInterface
             value_tableActionInterface
         in
+        (value_ctx, value_sto, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringAdd (session, port) ->
+        let session = int_of_string session in
+        let port = int_of_string port in
+        let value_sto = Arch.add_mirror_session value_sto session port in
         (value_ctx, value_sto, tx_output_queue, expect_queue)
     | Stf.Ast.SetDefault (table_name, table_entry_action) ->
         (* Encode name *)

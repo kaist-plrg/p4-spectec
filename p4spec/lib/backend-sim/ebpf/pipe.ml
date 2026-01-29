@@ -286,6 +286,9 @@ struct
     (* Update store with modified table object *)
     update_table value_sto value_tableName value_tableObject
 
+  let add_mirror_session _session _port =
+    error_no_region "add_mirror_session is not implemented for the ebpf simulator"
+
   (* Pipeline initializer *)
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) :
@@ -335,12 +338,12 @@ struct
     Spec.Rel.ebpf_filter value_ctx value_sto
 
   let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
+      Value.t * Value.t * IO.tx list =
     (* Setup packet *)
     let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
     (* Parse block *)
     let value_ctx, value_sto, drop = drive_prs value_ctx value_sto in
-    if drop then (value_ctx, value_sto, None)
+    if drop then (value_ctx, value_sto, [])
     else
       (* Filter block *)
       let value_ctx, value_sto, _value_filter_result =
@@ -351,8 +354,8 @@ struct
         Spec.Rel.lvalue_read_var_global value_ctx value_sto "accept"
       in
       let accept = unpack_p4_bool value_accept in
-      if accept then (value_ctx, value_sto, Some rx)
-      else (value_ctx, value_sto, None)
+      if accept then (value_ctx, value_sto, [rx])
+      else (value_ctx, value_sto, [])
 
   (* Initializer *)
 

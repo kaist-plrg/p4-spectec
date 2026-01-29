@@ -59,12 +59,14 @@ module type ARCH = sig
     (* table entry action *)
     Value.t (* store *)
 
+  val add_mirror_session : Value.t -> int -> int -> Value.t
+
   (* Pipeline evaluation *)
 
   val init_pipe : string list -> string -> Value.t * Value.t
 
   val drive_pipe :
-    Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx option
+    Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
 
   (* Initialization *)
 
