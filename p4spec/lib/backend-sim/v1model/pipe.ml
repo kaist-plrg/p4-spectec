@@ -63,29 +63,29 @@ struct
 
   let empty_arch_state = ArchState.empty |> ArchState.to_value
 
-  type extern =
+  type object_state =
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
     | Register of Object.Register.t
   [@@deriving yojson]
 
-  let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : extern
+  let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : object_state
       =
     Spec.Func.find_store_objectState value_sto value_objectId
-    |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
+    |> unwrap_extern_v |> object_state_of_yojson |> Result.get_ok
 
   let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
     match get_object_state value_sto value_objectId with
     | PacketIn packet_in -> packet_in
-    | _ -> error_no_region "packet_in extern not found"
+    | _ -> error_no_region "packet_in object not found"
 
   let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
     match get_object_state value_sto value_objectId with
     | PacketOut packet_out -> packet_out
-    | _ -> error_no_region "packet_out extern not found"
+    | _ -> error_no_region "packet_out object not found"
 
   (* Extern calls *)
 
@@ -101,11 +101,11 @@ struct
     | "counter" ->
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
-        counter |> extern_to_yojson |> wrap_extern_v "objectState"
+        counter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | "register" ->
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
-        register |> extern_to_yojson |> wrap_extern_v "objectState"
+        register |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -205,13 +205,13 @@ struct
       | _ ->
           error_no_region "unexpected number of arguments to extern method call"
     in
-    let extern = get_object_state value_sto value_objectId in
+    let obj = get_object_state value_sto value_objectId in
     let name_method = unwrap_text_v value_name_method in
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
     in
-    let extern, value_ctx, value_sto, value_callResult =
-      match (extern, name_method, names_param) with
+    let obj, value_ctx, value_sto, value_callResult =
+      match (obj, name_method, names_param) with
       | PacketIn packet_in, "extract", [ "hdr" ] ->
           let packet_in, value_ctx, value_sto, value_callResult =
             Core.Object.PacketIn.extract value_ctx value_sto packet_in
@@ -279,11 +279,11 @@ struct
             ^ String.concat ", " names_param
             ^ ")")
     in
-    let value_extern =
-      extern |> extern_to_yojson |> wrap_extern_v "objectState"
+    let value_obj =
+      obj |> object_state_to_yojson |> wrap_extern_v "objectState"
     in
     let value_sto =
-      Spec.Func.update_store_objectState value_sto value_objectId value_extern
+      Spec.Func.update_store_objectState value_sto value_objectId value_obj
     in
     [ value_ctx; value_sto; value_callResult ]
 
@@ -417,7 +417,7 @@ struct
     let packet_in = PacketIn packet_in in
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
     let value_packet_in =
-      packet_in |> extern_to_yojson |> wrap_extern_v "externState"
+      packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
     in
     put_ctx value_ctx
     >> modify_sto (fun value_sto ->
@@ -433,7 +433,7 @@ struct
       let packet_in = PacketIn packet_in in
       let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
       let value_packet_in =
-        packet_in |> extern_to_yojson |> wrap_extern_v "externState"
+        packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
       in
       Spec.Func.update_store_objectState value_sto value_objectId
         value_packet_in
@@ -447,7 +447,7 @@ struct
       let packet_out = PacketOut packet_out in
       let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
       let value_packet_out =
-        packet_out |> extern_to_yojson |> wrap_extern_v "externState"
+        packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
       in
       Spec.Func.update_store_objectState value_sto value_objectId
         value_packet_out
@@ -473,17 +473,17 @@ struct
 
   let setup_rx (rx : IO.rx) : unit pipe_ctx =
     let port_in, packet_in = rx in
-    (* Setup packet_in extern *)
+    (* Setup packet_in object *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
-    let packet_in_state = extern_to_yojson packet_in in
+    let packet_in_state = object_state_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
     let* value_ctx, value_sto = get_ctx_sto in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
     in
-    (* Setup packet_out extern *)
+    (* Setup packet_out object *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
-    let packet_out_state = extern_to_yojson packet_out in
+    let packet_out_state = object_state_to_yojson packet_out in
     let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
     let value_ctx, value_sto =
       Spec.Rel.v1model_init_packet_out value_ctx value_sto
@@ -616,7 +616,7 @@ struct
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
     in
-    let width_egress_spec, int_egress_spec =
+    let _, int_egress_spec =
       unpack_p4_fixedBit value_egress_spec
     in
     let drop =
