@@ -526,7 +526,8 @@ struct
     in
     put_ctx value_ctx
 
-  let prepare_clone_ctx (index : int) (port : int) : unit pipe_ctx =
+  let prepare_clone_ctx (clone_type : Packet.CloneInfo.clone_type) (port : int)
+      (index : int) : unit pipe_ctx =
     let* value_ctx, value_sto = get_ctx_sto in
     let value_index =
       pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
@@ -535,10 +536,11 @@ struct
       Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_sto
         value_index
     in
-    (* Set standard_metadata.instance_type as 1 *)
     let value_ctx =
+      let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 1)
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
+          (Bigint.of_int instance_type)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
         "instance_type" value_instance_type
@@ -570,18 +572,22 @@ struct
   let drive_pipe_pre : Value.t pipe_ctx =
     let* arch_state = get_arch_state in
     put_arch_state (ArchState.reset arch_state)
-    >> reset_packet_in >> drive_p >> drive_vr
+    >> reset_packet_in
+    >> drive_p
+    >> drive_vr
 
   let schedule_clone (arch_state : ArchState.t) : bool pipe_ctx =
     let open ArchState in
     match arch_state.clone_opt with
-    | Some (_, session, field_index) -> (
+    | Some (clone_type, session, field_index) -> (
         match MirrorTable.find_opt session arch_state.mirror_tbl with
         | Some port ->
             let* value_ctx_original = get_ctx in
-            prepare_clone_ctx field_index port
-            >> drive_pipe_pre >> schedule_packet Egress
-            >> put_ctx value_ctx_original >> return true
+            prepare_clone_ctx clone_type port field_index
+            >> drive_pipe_pre
+            >> schedule_packet Egress
+            >> put_ctx value_ctx_original
+            >> return true
         | None -> return false)
     | _ -> return false
 
@@ -592,9 +598,12 @@ struct
     | Some field_index ->
         let* value_ctx_original = get_ctx in
         prepare_resubmit_ctx field_index
-        >> drive_pipe_pre >> schedule_packet Ingress
-        >> put_ctx value_ctx_original >> return true
+        >> drive_pipe_pre
+        >> schedule_packet Ingress
+        >> put_ctx value_ctx_original
+        >> return true
 
+  (* Ingress block + Handle clone, resubmit, drop *)
   let drive_ig : Value.t pipe_ctx =
     let* result = with_pipe_ctx Spec.Rel.v1model_ingress in
     let* arch_state = get_arch_state in
@@ -603,9 +612,21 @@ struct
     if resubmitted then return result
     else
       let* drop = get_drop in
-      if drop then return result else schedule_packet Egress >> return result
+      if drop then
+        return result
+      else
+        schedule_packet Egress
+        >> return result
 
-  let drive_eg : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_egress
+  (* Egress block + Handle clone *)
+  let drive_eg : Value.t pipe_ctx =
+    let* result = with_pipe_ctx Spec.Rel.v1model_egress in
+    let* arch_state = get_arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* drop = get_drop in
+    guard (not drop)
+    >> return result
+
   let drive_ck : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_check
   let drive_dep : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_deparse
 
@@ -619,10 +640,6 @@ struct
     let _, int_egress_spec =
       unpack_p4_fixedBit value_egress_spec
     in
-    let drop =
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-    in
-    let* () = guard (not drop) in
     (* Get egress port *)
     let port = Bigint.to_int_exn int_egress_spec in
     (* Get input packet *)
@@ -634,7 +651,8 @@ struct
     in
     (* Return port and packet *)
     let tx = (port, packet) in
-    produce_tx tx >> return result
+    produce_tx tx
+    >> return result
 
   let drive_packet (packet : Packet.t) : unit pipe_ctx =
     match packet.entrypoint with
