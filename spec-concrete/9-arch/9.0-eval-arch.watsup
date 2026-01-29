@@ -26,20 +26,20 @@ rule Var_init:
 ;;
 
 relation Extern_init:
-  evalContext store |- nameIR : store
-  hint(input %0 %1 %2)
-  hint(prose_in "instantiating extern" %0 "in the evaluation context"
-                %1 "and store" %2)
-  hint(prose_out "the resulting store" %3)
+  evalContext store |- nameIR nameIR : store
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "instantiating extern" %2 "with name" %3
+                "in the evaluation context" %0 "and store" %1)
+  hint(prose_out "the resulting store" %4)
 
 rule Extern_init:
-  EC STO_0 |- nameIR : STO_2
+  EC STO_0 |- nameIR_extern nameIR : STO_2
   -- if IC = { PATH ([]),
                GLOBAL EC.GLOBAL,
                BLOCK EC.BLOCK,
                LOCAL EC.LOCAL }
   -- Constructor_inst:
-      GLOBAL IC |- (`` nameIR) `< eps > `( eps )
+      GLOBAL IC |- (`` nameIR_extern) `< eps > `( eps )
                  : constructorDef `< eps > `( `# eps )
   -- Constructor_call:
       GLOBAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
