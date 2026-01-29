@@ -300,6 +300,69 @@ additional examples of literals see <<sec-literals>>.
 | `1s1`   | Type is `int<1>`, value is -1, overflow warning
 |===
 
+===== Illegal arithmetic expressions
+
+// 485
+Many arithmetic expressions that would be allowed in other languages are
+illegal in P4. To illustrate, consider the following declarations:
+
+// 486
+[source,p4]
+----
+bit<8>  x;
+bit<16> y;
+int<8>  z;
+----
+
+// 487
+The table below shows several expressions which are illegal because they do not
+obey the P4 typing rules. For each expression we provide several ways that the
+expression could be manually rewritten into a legal expression. Note that for
+some expression there are several legal alternatives, which may produce
+different results! The compiler cannot guess the user intent, so P4 requires
+the user to disambiguate.
+
+// 488
+[.center,cols=">1,4,2",width=100%]
+|===
+| Expression    | Why it is illegal                                  | Alternatives
+
+| `x + y`       | Different widths                                   | `(bit<16>)x + y`
+
+|               |                                                    | `x + (bit<8>)y`
+
+| `x + z`       | Different signedness                               |  `(int<8>)x + z`
+
+|               |                                                    |  `x + (bit<8>)z`
+
+| `(int<8>)y`   | Cannot change both sign and width                  |  `(int<8>)(bit<8>)y`
+
+|               |                                                    |  `(int<8>)(int<16>)y`
+
+| `y + z`       | Different widths and signs                         |  `(int<8>)(bit<8>)y + z`
+
+|               |                                                    |  `y + (bit<16>)(bit<8>)z`
+
+|               |                                                    |  `(bit<8>)y + (bit<8>)z`
+
+|               |                                                    |  `(int<16>)y + (int<16>)z`
+
+| `x << z`      | RHS of shift cannot be signed                      |  `x << (bit<8>)z`
+
+| `x < z`       | Different signs                                    |  `x < (bit<8>)z`
+
+|               |                                                    |  `(int<8>)x < z`
+
+| `1 << x`      | Either LHS should have a fixed width (bit shift),  |  `32w1 << x`
+
+|               | Or RHS must be compile-time known (int shift)      |  None
+
+| `~1`          | Bitwise operation on int                           |  `~32w1`
+
+| `5 & -3`      | Bitwise operation on int                           |  `32w5 & -3`
+
+|===
+
 ===== Arbitrary-precision integers
 
 // 232

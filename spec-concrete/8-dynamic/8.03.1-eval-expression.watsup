@@ -193,10 +193,10 @@ rulegroup Expr_eval/castExpressionIR {
 
   rule Expr_eval/cont:
     p EC_0 STO_0 |- (`( typeIR ) typedExpressionIR) `# _
-                  : EC_1 STO_1 expressionResult
+                  : EC_1 STO_1 (`` value_cast)
     -- Expr_eval: p EC_0 STO_0 |- typedExpressionIR
                                 : EC_1 STO_1 (`` value)
-    -- if expressionResult = `` $cast_op(typeIR, value)
+    -- if value_cast = $cast_op(typeIR, value)
 
 }
 
@@ -336,7 +336,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base) 
-    -- if HEADER_STACK `[ _ `( _; n_size ) ] = value_base
+    -- if HEADER_STACK `[ _ `( _ `; n_size ) ] = value_base
     -- if expressionResult = `` (D n_size)
 
   rule Expr_eval/stack-last-out-of-bounds:
@@ -345,7 +345,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
-    -- if HEADER_STACK `[ value_elem* `( n_idx; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ] = value_base
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if b_out_of_bounds
     -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
@@ -356,7 +356,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base)
-    -- if HEADER_STACK `[ value_elem* `( n_idx; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ] = value_base
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if ~b_out_of_bounds
     -- if n_idx_last = $(n_idx - 1)
@@ -369,7 +369,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-expression {
     -- Expr_eval:
         p EC_0 STO_0 |- typedExpressionIR_base
                       : EC_1 STO_1 (`` value_base) 
-    -- if HEADER_STACK `[ value_elem* `( n_idx; _ ) ] = value_base
+    -- if HEADER_STACK `[ value_elem* `( n_idx `; _ ) ] = value_base
     -- if n_idx_last = $($max_nat([n_idx, 1]) - 1)
     ---- ;; hs.lastIndex produces a 32-bit unsigned integer
     -- if value_idx_last = 32 W n_idx_last
@@ -469,7 +469,7 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- Exprs_eval:
         p EC_0 STO_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                       : EC_1 STO_1 (`` ([ value_base, integerValue_index ]))
-    -- if HEADER_STACK `[ value_elem* `( _; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_elem* `( _ `; n_size ) ] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if n_idx = $min_int([n_index, $(n_size - 1)])
     -- if expressionResult = `` value_elem*[n_idx]

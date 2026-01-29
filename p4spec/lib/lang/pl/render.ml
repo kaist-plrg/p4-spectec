@@ -287,6 +287,8 @@ and render_exp ctx exp : string =
         (render_exp_as_code ctx exp_s)
   | UnE (unop, _, exp) ->
       render_unop unop ^ render_exp in_code exp |> adoc_as_code ctx
+  | BinE (`ImplOp, _, exp_l, exp_r) when not ctx.in_code ->
+      "if " ^ render_exp ctx exp_l ^ ", then " ^ render_exp ctx exp_r
   | BinE ((#Bool.binop as binop), _, exp_l, exp_r) ->
       render_exp ctx exp_l ^ " " ^ render_binop ctx binop ^ " "
       ^ render_exp ctx exp_r

@@ -556,7 +556,9 @@ rule Expr_ok/ternaryExpression:
             `# expressionNoteIR
   ---- ;; check condition
   -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-  -- if _ `# `( BOOL ctk_cond ) = typedExpressionIR_cond
+  -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
+  -- if ctk_cond = $ctk_of_typedExpressionIR(typedExpressionIR_cond)
+  -- if BOOL = $unroll_typeIR(typeIR_cond)
   ---- ;; check both branches
   -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
   -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
