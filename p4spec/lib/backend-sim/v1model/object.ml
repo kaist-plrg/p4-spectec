@@ -257,3 +257,101 @@ module Register = struct
     in
     (reg, value_ctx, value_sto, value_callResult)
 end
+
+module DirectCounter = struct
+  (* Type *)
+
+  type t =
+    | Packets of
+        (Bigint.t
+        [@to_yojson Util.Json.bigint_to_yojson]
+        [@of_yojson Util.Json.bigint_of_yojson])
+    | Bytes of
+        (Bigint.t
+        [@to_yojson Util.Json.bigint_to_yojson]
+        [@of_yojson Util.Json.bigint_of_yojson])
+    | PacketsAndBytes of
+        ((Bigint.t
+         [@to_yojson Util.Json.bigint_to_yojson]
+         [@of_yojson Util.Json.bigint_of_yojson])
+        * (Bigint.t
+          [@to_yojson Util.Json.bigint_to_yojson]
+          [@of_yojson Util.Json.bigint_of_yojson]))
+  [@@deriving yojson]
+
+  let pp fmt (_ctr : t) = Format.fprintf fmt "direct counter"
+
+  (* A direct_counter object is created by calling its constructor.
+     You must provide a choice of whether to maintain only a packet
+     count (CounterType.packets), only a byte count
+     (CounterType.bytes), or both (CounterType.packets_and_bytes).
+     After constructing the object, you can associate it with at
+     most one table, by adding the following table property to the
+     definition of that table:
+
+         counters = <object_name>;
+
+     Counters can be updated from your P4 program, but can only be
+     read from the control plane.  If you need something that can be
+     both read and written from the P4 program, consider using a
+     register. 
+
+     direct_counter(CounterType type); *)
+
+  let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let values_arg = unwrap_list_v value_args in
+    let value_type =
+      match values_arg with
+      | [ value_type ] -> value_type
+      | _ ->
+          error_no_region
+            (Format.asprintf
+               "direct_counter constructor expects 1 argument, but %d were given"
+               (List.length values_arg))
+    in
+    let id_enum, id_type = unpack_p4_enum value_type in
+    match (id_enum, id_type) with
+    | "CounterType", "packets" ->
+        Packets Bigint.zero
+    | "CounterType", "bytes" -> Bytes Bigint.zero
+    | "CounterType", "packets_and_bytes" ->
+        PacketsAndBytes (Bigint.zero, Bigint.zero)
+    | _ ->
+        error_no_region
+          (Format.asprintf "invalid CounterType enum value: %s.%s" id_enum
+             id_type)
+
+  (* The count() method is actually unnecessary in the v1model
+     architecture.  This is because after a direct_counter object
+     has been associated with a table as described in the
+     documentation for the direct_counter constructor, every time
+     the table is applied and a table entry is matched, the counter
+     state associated with the matching entry is read, modified, and
+     written back, atomically relative to the processing of other
+     packets, regardless of whether the count() method is called in
+     the body of that action. 
+
+     void count(); *)
+
+  let count (value_ctx : Value.t) (value_sto : Value.t)
+      (packet_in : Core.Object.PacketIn.t) (counter : t) :
+      t * Value.t * Value.t * Value.t =
+    (* Update counter *)
+    let counter =
+      match counter with
+      | Packets counts ->
+          Packets Bigint.(counts + one)
+      | Bytes counts ->
+          let len = packet_in.len |> Bigint.of_int in
+          Bytes Bigint.(counts + len)
+      | PacketsAndBytes (counts_packets, count_bytes) ->
+          let len = packet_in.len |> Bigint.of_int in
+          PacketsAndBytes (Bigint.(counts_packets + one), Bigint.(count_bytes + one))
+    in
+    (* Create call result *)
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (counter, value_ctx, value_sto, value_callResult)
+end

@@ -68,6 +68,7 @@ struct
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
     | Register of Object.Register.t
+    | DirectCounter of Object.DirectCounter.t
   [@@deriving yojson]
 
   let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : object_state
@@ -106,6 +107,10 @@ struct
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
         register |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "direct_counter" ->
+        let direct_counter = Object.DirectCounter.init value_type_args value_args in
+        let direct_counter = DirectCounter direct_counter in
+        direct_counter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -269,6 +274,13 @@ struct
           in
           let register = Register register in
           (register, value_ctx, value_sto, value_callResult)
+      | DirectCounter direct_counter, "count", [] ->
+          let packet_in = get_packet_in value_sto in
+          let direct_counter, value_ctx, value_sto, value_callResult =
+            Object.DirectCounter.count value_ctx value_sto packet_in direct_counter
+          in
+          let direct_counter = DirectCounter direct_counter in
+          (direct_counter, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
