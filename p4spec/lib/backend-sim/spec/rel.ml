@@ -216,3 +216,111 @@ let ebpf_filter (value_ctx : Value.t) (value_sto : Value.t) :
   | [ value_ctx; value_sto; value_callResult ] ->
       (value_ctx, value_sto, value_callResult)
   | _ -> assert false
+
+(* PSA_ingress_init_packet_in/out *)
+
+let psa_ingress_init_packet_in (value_ctx : Value.t) (value_sto : Value.t)
+    (value_packet_in_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_ingress_init_packet_in"
+      [ value_ctx; value_sto; value_packet_in_state ]
+  with
+  | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+  | _ -> assert false
+
+let psa_ingress_init_packet_out (value_ctx : Value.t) (value_sto : Value.t)
+    (value_packet_out_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_ingress_init_packet_out"
+      [ value_ctx; value_sto; value_packet_out_state ]
+  with
+  | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+  | _ -> assert false
+
+(* PSA_ingress_init_globals *)
+
+let psa_ingress_init_globals (value_ctx : Value.t) (value_sto : Value.t)
+    (port : IO.port) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  match
+    !call "PSA_ingress_init_globals" [ value_ctx; value_sto; value_port ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_ip/ig/id *)
+
+let psa_ingress_parser (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress_parser" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+let psa_ingress (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+let psa_ingress_deparser (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress_deparser" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+(* PSA_egress_init_packet_in/out *)
+
+let psa_egress_init_packet_in (value_ctx : Value.t) (value_sto : Value.t)
+    (value_packet_in_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_egress_init_packet_in"
+      [ value_ctx; value_sto; value_packet_in_state ]
+  with
+  | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+  | _ -> assert false
+
+let psa_egress_init_packet_out (value_ctx : Value.t) (value_sto : Value.t)
+    (value_packet_out_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_egress_init_packet_out"
+      [ value_ctx; value_sto; value_packet_out_state ]
+  with
+  | [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+  | _ -> assert false
+
+(* PSA_egress_init_globals *)
+
+let psa_egress_init_globals (value_ctx : Value.t) (value_sto : Value.t)
+    (port : IO.port) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  match
+    !call "PSA_egress_init_globals" [ value_ctx; value_sto; value_port ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_ep/eg/ed *)
+
+let psa_egress_parser (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress_parser" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+let psa_egress (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
+
+let psa_egress_deparser (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress_deparser" [ value_ctx; value_sto ] with
+  | [ value_ctx; value_sto; value_callResult ] ->
+      (value_ctx, value_sto, value_callResult)
+  | _ -> assert false
