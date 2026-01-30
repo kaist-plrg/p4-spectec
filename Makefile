@@ -40,7 +40,7 @@ fmt:
 .PHONY: test-all
 .PHONY: test-speclang
 .PHONY: test-p4static test-p4static-il test-p4static-sl
-.PHONY: test-p4dynamic test-p4dynamic-v1model test-p4dynamic-ebpf
+.PHONY: test-p4dynamic test-p4dynamic-v1model test-p4dynamic-ebpf test-p4dynamic-psa
 .PHONY: test-p4parse
 .PHONY: promote 
 
@@ -83,6 +83,11 @@ test-p4dynamic-ebpf:
 	echo "#### Running (dune build @p4dynamic-ebpf)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4dynamic-ebpf --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4dynamic-psa:
+	echo "#### Running (dune build @p4dynamic-psa)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4dynamic-psa --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4parse:
 	echo "#### Running (dune build @p4parse)"
