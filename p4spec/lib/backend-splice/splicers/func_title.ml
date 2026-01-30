@@ -130,7 +130,7 @@ module Prose = struct
 
   module Anchor : ANCHOR = struct
     let name = "func-title-prose"
-    let prefix = prefix_prose
+    let prefix = "[.sidebar-title]\n" ^ prefix_prose
     let suffix = suffix_prose
     let header = true
   end

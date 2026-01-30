@@ -11,6 +11,7 @@ syntax callTargetMatch =
   | NOMATCH
 
 dec $callTargetKey(nameIR, argumentListIR) : callTargetKey
+  hint(prose_in "the call target key for" %0 `( %1 ))
 dec $callTargetKey'(argumentIR) : id?
 
 def $callTargetKey(nameIR_f, argumentIR*)
@@ -31,6 +32,7 @@ dec $match_overloaded_named<V>(
     namedCallTargetKey,
     def $get_parameterListIR(V) : parameterListIR)
   : callTargetMatch
+  hint(prose_in "matching" %0 "against named key" %1 "using parameter getter" %2)
 
 ;;; When call target names and arity match on named arguments,
 ;;; i.e., no default parameters used
@@ -86,6 +88,7 @@ dec $match_overloaded_unnamed<V>(
     unnamedCallTargetKey,
     def $get_parameterListIR(V) : parameterListIR)
   : callTargetMatch
+  hint(prose_in "matching" %0 "against unnamed key" %1 "using parameter getter" %2)
 
 ;;; When call target names and arity match on unnamed arguments,
 ;;; i.e., no default parameters used
@@ -132,6 +135,7 @@ dec $find_overloadeds_named<V>(
     namedCallTargetKey,
     def $get_parameterListIR(V) : parameterListIR)
   : (callableId, V, nameIR*)*
+  hint(prose_in "finding all items in" %0 "matching named key" %1 "using parameter getter" %2)
 
 def $find_overloadeds_named<V>(
     `{ eps },
@@ -175,6 +179,7 @@ dec $find_overloadeds_unnamed<V>(
     unnamedCallTargetKey,
     def $get_parameterListIR(V) : parameterListIR)
   : (callableId, V, nameIR*)*
+  hint(prose_in "finding all items in" %0 "matching unnamed key" %1 "using parameter getter" %2)
 
 def $find_overloadeds_unnamed<V>(
     `{ eps },
@@ -218,6 +223,7 @@ dec $find_overloaded<V>(
     callTargetKey,
     def $get_parameterListIR(V) : parameterListIR)
   : (callableId, V, nameIR*)?
+  hint(prose_in "finding the item in" %0 "matching" %1 "using parameter getter" %2)
 
 ;;; When all arguments are named
 

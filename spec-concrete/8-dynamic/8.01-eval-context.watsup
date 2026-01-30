@@ -30,10 +30,12 @@ var EC : evalContext
 ;;
 
 dec $enter_e(evalContext) : evalContext
+  hint(prose_in %0 "with a new local frame")
 
 def $enter_e(EC) = EC[ .LOCAL.FRAMES = $empty_frame :: EC.LOCAL.FRAMES ]
 
 dec $exit_e(evalContext) : evalContext
+  hint(prose_in %0 "with the innermost frame removed")
 
 def $exit_e(EC) = EC[ .LOCAL.FRAMES = frame_t* ]
   -- if EC.LOCAL.FRAMES = frame_h :: frame_t*
@@ -144,39 +146,22 @@ def $update_var_e(LOCAL, EC, `` id, value)
 
 ;;; Finder for values
 
-dec $find_var_e(cursor, evalContext, prefixedNameIR) : value
-  hint(prose_in "the value of" %2 "in" %1 "at" %0)
+dec $find_var_e(prefixedNameIR, cursor, evalContext) : value
+  hint(prose_in "the value of" %0 "from the" %1 "layer of" %2)
 
-def $find_var_e(p, EC, `. id) = value
+def $find_var_e(`. id, p, EC) = value
   -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
-def $find_var_e(GLOBAL, EC, `` id) = value
+def $find_var_e(`` id, GLOBAL, EC) = value
   -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
-def $find_var_e(BLOCK, EC, `` id) = value
+def $find_var_e(`` id, BLOCK, EC) = value
   -- if value = $find_map<id, value>(EC.BLOCK.FRAME, id)
-def $find_var_e(BLOCK, EC, `` id)
-  = $find_var_e(GLOBAL, EC, `` id)
+def $find_var_e(`` id, BLOCK, EC)
+  = $find_var_e(`` id, GLOBAL, EC)
   -- if eps = $find_map<id, value>(EC.BLOCK.FRAME, id)
-def $find_var_e(LOCAL, EC, `` id) = value
+def $find_var_e(`` id, LOCAL, EC) = value
   -- if value = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
-def $find_var_e(LOCAL, EC, `` id)
-  = $find_var_e(BLOCK, EC, `` id)
-  -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
-
-dec $find_var_cursor_e(cursor, evalContext, prefixedNameIR) : cursor
-
-def $find_var_cursor_e(p, EC, `. id) = GLOBAL
-  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
-def $find_var_cursor_e(GLOBAL, EC, `` id) = GLOBAL
-  -- if value = $find_map<id, value>(EC.GLOBAL.FRAME, id)
-def $find_var_cursor_e(BLOCK, EC, `` id) = BLOCK
-  -- if value = $find_map<id, value>(EC.BLOCK.FRAME, id)
-def $find_var_cursor_e(BLOCK, EC, `` id)
-  = $find_var_cursor_e(GLOBAL, EC, `` id)
-  -- if eps = $find_map<id, value>(EC.BLOCK.FRAME, id)
-def $find_var_cursor_e(LOCAL, EC, `` id) = LOCAL
-  -- if value = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
-def $find_var_cursor_e(LOCAL, EC, `` id)
-  = $find_var_cursor_e(BLOCK, EC, `` id)
+def $find_var_e(`` id, LOCAL, EC)
+  = $find_var_e(`` id, BLOCK, EC)
   -- if eps = $find_maps<id, value>(EC.LOCAL.FRAMES, id)
 
 ;;; Finder for type definitions
@@ -204,6 +189,7 @@ def $find_type_e(LOCAL, EC, nameIR)
 
 dec $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*)
   : (cursor, callableId, callableDef, id*)?
+  hint(prose_in "the overloaded callable definition of" %2#"("%3")" "in the" %0 "layer of" %1)
 
 def $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
   = (GLOBAL, callableId, callableDef, id_default*)

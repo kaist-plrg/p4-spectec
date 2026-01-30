@@ -1,44 +1,32 @@
 [#sec-parser-object]
 === Parser objects
 
-// Section 13.2 of the P4-16 Language Specification
+// 747
 A parser declaration comprises a name, a list of parameters, an optional list
 of constructor parameters, local elements, and parser states (as well as
 optional annotations).
 
-// Added
-${syntax: parserLocalDeclaration
-          parserState
-          parserDeclaration}
+// 748 - Modified
+${syntax: parserDeclaration parserLocalDeclaration parserState}
 
-// Modified ection 13.2 of the P4-16 Language Specification
-Although the syntax for a parser declaration allows for type parameters, the
-current version of the P4 language does not support generic parser
-declarations. Note that this restriction applies only to parser declarations;
-parser type declarations may still be generic. For example, the following
-parser declaration is illegal:
-
-[source,p4]
-----
-parser P<H>(inout H data); // generic parser type declaration is legal
-parser P<H>(inout H data) { /* body omitted */ } // generic parser declaration is illegal
-----
-
-// Section 13.2 of the P4-16 Language Specification
+// 753
 At least one state, named `start`, must be present in any `parser`. A parser
 may not define two states with the same name. It is also illegal for a parser
 to give explicit definitions for the `accept` and `reject` states--those
 states are logically distinct from the states defined by the programmer.
 
+// 754 - Modified
 Preceding the parser states, a `parser` may also contain a list of local
 elements. These can be constants, variables, or instantiations of objects that
 may be used within the parser. Such objects may be instantiations of `extern`
 objects, or other ``parser``s that may be invoked as subroutines. However, it
 is illegal to instantiate a `control` block within a `parser`.
 
+// 756
 The states and local elements are all in the same namespace, thus the following
 example will produce an error:
 
+// 757
 [source,p4]
 ----
 // erroneous example
@@ -54,6 +42,7 @@ parser p() {
 }
 ----
 
+// 758
 For an example containing a complete declaration of a parser see
 <<sec-vss-all>>.
 
@@ -61,10 +50,13 @@ For an example containing a complete declaration of a parser see
 A `parser` declaration introduces a parser object constructor, represented
 as:
 
+// Added
 ${syntax: parserObjectConstructorDef}
 
+// Added
 Parser objects are then instantiated by constructor invocations to yield:
 
+// Added
 ${syntax: parserObject}
 
 ==== Well-formedness

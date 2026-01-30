@@ -130,7 +130,7 @@ let find_var_value_t (value_cursor : Value.t) (value_ctx : Value.t)
     let value_nameIR = wrap_text_v name in
     [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
   in
-  !call "find_var_value_t" [] [ value_cursor; value_ctx; value_prefixedNameIR ]
+  !call "find_var_value_t" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
 let find_var_value_t_global (value_ctx : Value.t) (name : string) : Value.t =
   let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
@@ -148,7 +148,7 @@ let find_var_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string) :
     let value_nameIR = wrap_text_v name in
     [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
   in
-  !call "find_var_e" [] [ value_cursor; value_ctx; value_prefixedNameIR ]
+  !call "find_var_e" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
 let find_var_e_global (value_ctx : Value.t) (name : string) : Value.t =
   let value_cursor = [ Term "LOCAL" ] #@ "cursor" in

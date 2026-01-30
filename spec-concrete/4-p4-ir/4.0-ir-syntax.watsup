@@ -53,8 +53,6 @@ syntax namedValueListIR = namedValueIR*
 ;; Expression key-value pairs
 ;;
 
-syntax typedExpressionIR
-
 syntax namedExpressionIR = nameIR `= typedExpressionIR
 
 syntax namedExpressionListIR = namedExpressionIR*
@@ -105,12 +103,20 @@ syntax castExpressionIR = `( typeIR ) typedExpressionIR
 
 syntax typedExpressionListIR
 
-syntax dataExpressionIR =
-  | `{#}
+syntax invalidHeaderExpressionIR = invalidHeaderExpression
+
+syntax sequenceExpressionIR =
   | SEQ `{ typedExpressionListIR }
   | SEQ `{ typedExpressionListIR `, `... }
+
+syntax recordExpressionIR =
   | RECORD `{ namedExpressionListIR }
   | RECORD `{ namedExpressionListIR `, `... }
+
+syntax dataExpressionIR =
+  | invalidHeaderExpressionIR
+  | sequenceExpressionIR
+  | recordExpressionIR
 
 ;;
 ;;;; Member and index access expressions
@@ -268,11 +274,12 @@ syntax typedLvalueIR = lvalueIR `# lvalueNoteIR
   hint(prose_fields "lvalue" "note")
 
 dec $type_of_typedLvalueIR(typedLvalueIR) : typeIR
-  hint(prose_in "the type of lvalue " %0)
+  hint(prose_in "the type of lvalue" %0)
 def $type_of_typedLvalueIR(_ `# `( typeIR )) = typeIR
 
 dec $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
   : typedExpressionIR?
+  hint(prose_in "the expression form of" %0)
 def $typedLvalueIR_as_typedExpressionIR(
     referenceExpressionIR `# `( typeIR ))
   = referenceExpressionIR `# `( typeIR DYN )
@@ -294,6 +301,7 @@ def $typedLvalueIR_as_typedExpressionIR(
 
 dec $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
   : typedLvalueIR?
+  hint(prose_in "the l-value form of" %0)
 def $typedExpressionIR_as_typedLvalueIR(
     referenceExpressionIR `# `( typeIR _ ))
   = referenceExpressionIR `# `( typeIR )
@@ -347,7 +355,7 @@ syntax callStatementIR =
 ;;
 
 syntax directApplicationStatementIR =
-  prefixedNameIR `. APPLY `( argumentListIR ) `;
+  constructorTargetIR `. APPLY `( argumentListIR ) `;
 
 ;;
 ;;;; Return statements
@@ -469,8 +477,6 @@ syntax statementIR =
 syntax constantDeclarationIR =
   annotationList CONST typeIR nameIR constantInitializerIR `;
 
-syntax initializerIR = `= typedExpressionIR
-
 syntax initializerOptIR = initializerIR?
 
 syntax variableDeclarationIR =
@@ -512,12 +518,11 @@ syntax objectInitializerIR = `= `{ objectDeclarationListIR }
 syntax objectInitializerOptIR = objectInitializerIR?
 
 syntax instantiationIR =
-  annotationList typeIR prefixedNameIR
-    `< typeArgumentListIR > `( argumentListIR ) nameIR
+  annotationList typeIR constructorTargetIR
+    `( argumentListIR ) nameIR
     objectInitializerOptIR `;
-  hint(prose_fields "annotations" "type" "constructor name"
-                    "type arguments" "arguments"
-                    "name" "object initializer")
+  hint(prose_fields "annotations" "type" "constructor target"
+                    "arguments" "name" "object initializer")
 
 syntax objectDeclarationIR =
   | functionDeclarationIR
@@ -704,7 +709,7 @@ syntax parserLocalDeclarationListIR =
 
 syntax parserDeclarationIR =
   annotationList PARSER
-    nameIR `< typeParameterListIR >
+    nameIR `< typeParameterListIR `, typeParameterListIR >
     `( parameterListIR ) `( constructorParameterListIR )
     `{ parserLocalDeclarationListIR parserStateListIR }
 
@@ -821,7 +826,7 @@ syntax controlLocalDeclarationListIR =
 
 syntax controlDeclarationIR =
   annotationList CONTROL
-    nameIR `< typeParameterListIR >
+    nameIR `< typeParameterListIR `, typeParameterListIR >
     `( parameterListIR ) `( constructorParameterListIR )
     `{ controlLocalDeclarationListIR APPLY controlBodyIR }
 

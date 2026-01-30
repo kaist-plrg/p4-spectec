@@ -3,30 +3,41 @@
 ;;
 
 builtin dec $pow2(nat) : int
+  hint(prose_in "2 to the power of" %0)
 
 builtin dec $shl(int, int) : int
+  hint(prose_in "the left shift of" %0 "by" %1)
 builtin dec $shr(int, int) : int
+  hint(prose_in "the logical right shift of" %0 "by" %1)
 builtin dec $shr_arith(int, int, int) : int
+  hint(prose_in "the arithmetic right shift of" %0 "by" %1 "with sign extension" %2)
 
 builtin dec $bneg(int) : int
+  hint(prose_in "the two's complement negation of" %0)
 builtin dec $band(int, int) : int
+  hint(prose_in "the bitwise and of" %0 "and" %1)
 builtin dec $bxor(int, int) : int
+  hint(prose_in "the bitwise xor of" %0 "and" %1)
 builtin dec $bor(int, int) : int
+  hint(prose_in "the bitwise or of" %0 "and" %1)
 
 builtin dec $bitacc(int, int, int) : int
+  hint(prose_in "the bitslice of" %0 "from" %1 "to" %2)
 builtin dec $bitacc_replace(int, int, int, int) : int
+  hint(prose_in "the bitslice of" %0 "from" %1 "to" %2 "replaced with" %3)
 
 ;;
 ;; Unary operations
 ;;
 
 dec $un_op(unop, value) : value
-  hint(testgen_ignore)
   hint(prose_in %0 %1)
+  hint(testgen_ignore)
 
 ;;; Unary bitwise not
 
 dec $un_bnot(value) : value
+  hint(prose_in `~ %0)
   hint(testgen_ignore)
 
 def $un_bnot(w W i) = w W i''
@@ -38,6 +49,7 @@ def $un_op(`~, value) = $un_bnot(value)
 ;;; Unary logical not
 
 dec $un_lnot(value) : value
+  hint(prose_in `! %0)
   hint(testgen_ignore)
 
 def $un_lnot(`B b) = `B (~b)
@@ -47,6 +59,7 @@ def $un_op(`!, value) = $un_lnot(value)
 ;;; Unary plus
 
 dec $un_plus(value) : value
+  hint(prose_in `+ %0)
   hint(testgen_ignore)
 
 def $un_plus(D i) = D i
@@ -58,6 +71,7 @@ def $un_op(`+, value) = $un_plus(value)
 ;;; Unary minus
 
 dec $un_minus(value) : value
+  hint(prose_in `- %0)
   hint(testgen_ignore)
 
 def $un_minus(D i) = D $(-i)
@@ -73,12 +87,13 @@ def $un_op(`-, value) = $un_minus(value)
 ;;
 
 dec $bin_op(binop, value, value) : value
-  hint(testgen_ignore)
   hint(prose_in %1 %0 %2)
+  hint(testgen_ignore)
 
 ;;; Binary plus
 
 dec $bin_plus(value, value) : value
+  hint(prose_in %0 `+ %1)
   hint(testgen_ignore)
 
 def $bin_plus(D i_l, D i_r) = D $(i_l + i_r)
@@ -96,18 +111,21 @@ def $bin_op(`+, value_l, value_r) = $bin_plus(value_l, value_r)
 ;;; Binary saturating plus
 
 dec $bin_satplus(value, value) : value 
+  hint(prose_in %0 `|+| %1)
   hint(testgen_ignore)
 
 def $bin_satplus(w W i_l, w W i_r) = w W i'
   -- if i = $(i_l + i_r)
-  -- if i' = $min_int([ i, $($pow2(w) - 1) ])
+  -- if i_max = $pow2(w)
+  -- if i' = $ite<int>($(i < i_max), i, $(i_max - 1))
 def $bin_satplus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
   -- if i_r' = $bitstr_to_int(w, i_r)
   -- if i' = $(i_l' + i_r')
   -- if $(i' > 0)
   -- if w' = $(w - 1)
-  -- if i'' = $min_int([ i', $($pow2(w') - 1) ])
+  -- if i_max = $pow2(w')
+  -- if i'' = $ite<int>($(i' < i_max), i', $(i_max - 1))
   -- if i''' = $int_to_bitstr(w, i'')
 def $bin_satplus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
@@ -115,7 +133,8 @@ def $bin_satplus(w S i_l, w S i_r) = w S i'''
   -- if i' = $(i_l' + i_r')
   -- if $(i' <= 0)
   -- if w' = $(w - 1)
-  -- if i'' = $max_int([ i', $(-$pow2(w')) ])
+  -- if i_min = -$pow2(w')
+  -- if i'' = $ite<int>($(i' >= i_min), i', i_min)
   -- if i''' = $int_to_bitstr(w, i'')
 
 def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
@@ -123,6 +142,7 @@ def $bin_op(`|+|, value_l, value_r) = $bin_satplus(value_l, value_r)
 ;;; Binary minus
 
 dec $bin_minus(value, value) : value
+  hint(prose_in %0 `- %1)
   hint(testgen_ignore)
 
 def $bin_minus(D i_l, D i_r) = D $(i_l - i_r)
@@ -140,6 +160,7 @@ def $bin_op(`-, value_l, value_r) = $bin_minus(value_l, value_r)
 ;;; Binary saturating minus
 
 dec $bin_satminus(value, value) : value
+  hint(prose_in %0 `|-| %1)
   hint(testgen_ignore)
 
 def $bin_satminus(w W i_l, w W i_r) = w W i'
@@ -151,7 +172,8 @@ def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i' = $(i_l' - i_r')
   -- if $(i' > 0)
   -- if w' = $(w - 1)
-  -- if i'' = $min_int([ i', $($pow2(w') - 1) ])
+  -- if i_max = $pow2(w')
+  -- if i'' = $ite<int>($(i' < i_max), i', $(i_max - 1))
   -- if i''' = $int_to_bitstr(w, i'')
 def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i_l' = $bitstr_to_int(w, i_l)
@@ -159,7 +181,8 @@ def $bin_satminus(w S i_l, w S i_r) = w S i'''
   -- if i' = $(i_l' - i_r')
   -- if $(i' <= 0)
   -- if w' = $(w - 1)
-  -- if i'' = $max_int([ i', $(-$pow2(w')) ])
+  -- if i_min = -$pow2(w')
+  -- if i'' = $ite<int>($(i' >= i_min), i', i_min)
   -- if i''' = $int_to_bitstr(w, i'')
 
 def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)
@@ -167,6 +190,7 @@ def $bin_op(`|-|, value_l, value_r) = $bin_satminus(value_l, value_r)
 ;;; Binary multiplication
 
 dec $bin_mul(value, value) : value
+  hint(prose_in %0 `* %1)
   hint(testgen_ignore)
 
 def $bin_mul(D i_l, D i_r) = D $(i_l * i_r)
@@ -184,6 +208,7 @@ def $bin_op(`*, value_l, value_r) = $bin_mul(value_l, value_r)
 ;;; Binary division
 
 dec $bin_div(value, value) : value
+  hint(prose_in %0 `/ %1)
   hint(testgen_ignore)
 
 def $bin_div(D i_l, D i_r) = D $(i_l / i_r)
@@ -193,6 +218,7 @@ def $bin_op(`/, value_l, value_r) = $bin_div(value_l, value_r)
 ;;; Binary modulo
 
 dec $bin_mod(value, value) : value
+  hint(prose_in %0 `% %1)
   hint(testgen_ignore)
 
 def $bin_mod(D i_l, D i_r) = D $(i_l \ i_r)
@@ -202,6 +228,7 @@ def $bin_op(`%, value_l, value_r) = $bin_mod(value_l, value_r)
 ;;; Binary shift left
 
 dec $bin_shl(value, value) : value
+  hint(prose_in %0 `<< %1)
   hint(testgen_ignore)
 
 def $bin_shl(D i_l, D i_r) = D $shl(i_l, i_r)
@@ -232,6 +259,7 @@ def $bin_op(`<<, value_l, value_r) = $bin_shl(value_l, value_r)
 ;;; Binary shift right
 
 dec $bin_shr(value, value) : value
+  hint(prose_in %0 `>> %1)
   hint(testgen_ignore)
 
 def $bin_shr(D i_l, D i_r) = D $shr(i_l, i_r)
@@ -288,6 +316,8 @@ def $bin_op(`>>, value_l, value_r) = $bin_shr(value_l, value_r)
 ;;; Binary less than or equal
 
 dec $bin_le(value, value) : bool
+  hint(prose_true %0 `<= %1)
+  hint(prose_false "not" %0 `<= %1)
   hint(testgen_ignore)
 
 def $bin_le(D i_l, D i_r) = $(i_l <= i_r)
@@ -301,6 +331,8 @@ def $bin_op(`<=, value_l, value_r) = `B $bin_le(value_l, value_r)
 ;;; Binary greater than or equal
 
 dec $bin_ge(value, value) : bool
+  hint(prose_true %0 `>= %1)
+  hint(prose_false "not" %0 `>= %1)
   hint(testgen_ignore)
 
 def $bin_ge(D i_l, D i_r) = $(i_l >= i_r)
@@ -314,6 +346,8 @@ def $bin_op(`>=, value_l, value_r) = `B $bin_ge(value_l, value_r)
 ;;; Binary less than
 
 dec $bin_lt(value, value) : bool
+  hint(prose_true %0 ``< %1)
+  hint(prose_false "not" %0 ``< %1)
   hint(testgen_ignore)
 
 def $bin_lt(D i_l, D i_r) = $(i_l < i_r)
@@ -327,6 +361,8 @@ def $bin_op(``<, value_l, value_r) = `B $bin_lt(value_l, value_r)
 ;;; Binary greater than
 
 dec $bin_gt(value, value) : bool
+  hint(prose_true %0 ``> %1)
+  hint(prose_false "not" %0 ``> %1)
   hint(testgen_ignore)
 
 def $bin_gt(D i_l, D i_r) = $(i_l > i_r)
@@ -340,10 +376,8 @@ def $bin_op(``>, value_l, value_r) = `B $bin_gt(value_l, value_r)
 ;;; Binary equals
 
 dec $bin_eq(value, value) : bool
-  hint(testgen_ignore)
-dec $bin_eqs(value*, value*) : bool
-  hint(testgen_ignore)
-dec $bin_eqs_fields((value, id)*, (value, id)*) : bool
+  hint(prose_true %0 `== %1)
+  hint(prose_false "not" %0 `== %1)
   hint(testgen_ignore)
 
 def $bin_eq(`B b_a, `B b_b) = (b_a = b_b)
@@ -361,68 +395,59 @@ def $bin_eq(w_max_a `. _ V i_a, w_max_b `. _ V i_b)
   = (w_max_a = w_max_b) /\ (i_a = i_b)
 
 def $bin_eq(LIST `[ value_a* ], LIST `[ value_b* ])
-  = $bin_eqs(value_a*, value_b*)
+  = |value_a*| = |value_b*|
+    /\ $forall_($bin_eq(value_a, value_b)*)
 def $bin_eq(TUPLE `( value_a* ), TUPLE `( value_b* ))
-  = $bin_eqs(value_a*, value_b*)
+  = |value_a*| = |value_b*|
+    /\ $forall_($bin_eq(value_a, value_b)*)
 def $bin_eq(
-    HEADER_STACK `[ value_a* `( _; n_size_a ) ],
-    HEADER_STACK `[ value_b* `( _; n_size_b ) ]
-  )
-  = $bin_eqs(value_a*, value_b*) /\ (n_size_a = n_size_b)
+    HEADER_STACK `[ value_a* `( _ `; n_size_a ) ],
+    HEADER_STACK `[ value_b* `( _ `; n_size_b ) ])
+  = |value_a*| = |value_b*|
+    /\ $forall_($bin_eq(value_a, value_b)*)
+    /\ (n_size_a = n_size_b)
 def $bin_eq(
-    STRUCT typeId_a `{ (value_field_a nameIR_field_a `;)* },
-    STRUCT typeId_b `{ (value_field_b nameIR_field_b `;)* }
-  )
+    STRUCT typeId_a `{ fieldValue_a* },
+    STRUCT typeId_b `{ fieldValue_b* })
   = (typeId_a = typeId_b)
-    /\ $bin_eqs_fields(
-        (value_field_a, nameIR_field_a)*,
-        (value_field_b, nameIR_field_b)*)
+    /\ |fieldValue_a*| = |fieldValue_b*|
+    /\ $forall_($bin_eq(value_field_a, value_field_b)*)
+    /\ $forall_((nameIR_field_a = nameIR_field_b)*)
+  -- if (value_field_a nameIR_field_a `; = fieldValue_a)*
+  -- if (value_field_b nameIR_field_b `; = fieldValue_b)*
 def $bin_eq(
-    HEADER typeId_a `{ _ `; (value_field_a nameIR_field_a `;)* },
-    HEADER typeId_b `{ _ `; (value_field_b nameIR_field_b `;)* }
-  )
+    HEADER typeId_a `{ _ `; fieldValue_a* },
+    HEADER typeId_b `{ _ `; fieldValue_b* })
   = (typeId_a = typeId_b)
-    /\ $bin_eqs_fields(
-        (value_field_a, nameIR_field_a)*,
-        (value_field_b, nameIR_field_b)*)
+    /\ |fieldValue_a*| = |fieldValue_b*|
+    /\ $forall_($bin_eq(value_field_a, value_field_b)*)
+    /\ $forall_((nameIR_field_a = nameIR_field_b)*)
+  -- if (value_field_a nameIR_field_a `; = fieldValue_a)*
+  -- if (value_field_b nameIR_field_b `; = fieldValue_b)*
 def $bin_eq(
-    HEADER_UNION typeId_a `{ (value_field_a nameIR_field_a `;)* },
-    HEADER_UNION typeId_b `{ (value_field_b nameIR_field_b `;)* }
-  )
+    HEADER_UNION typeId_a `{ fieldValue_a* },
+    HEADER_UNION typeId_b `{ fieldValue_b* })
   = (typeId_a = typeId_b)
-    /\ $bin_eqs_fields(
-        (value_field_a, nameIR_field_a)*,
-        (value_field_b, nameIR_field_b)*)
+    /\ |fieldValue_a*| = |fieldValue_b*|
+    /\ $forall_($bin_eq(value_field_a, value_field_b)*)
+    /\ $forall_((nameIR_field_a = nameIR_field_b)*)
+  -- if (value_field_a nameIR_field_a `; = fieldValue_a)*
+  -- if (value_field_b nameIR_field_b `; = fieldValue_b)*
 def $bin_eq(typeId_a `. nameIR_field_a, typeId_b `. nameIR_field_b)
   = (typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b)
 def $bin_eq(
-    typeId_a `. nameIR_field_a `. value_field_a,
-    typeId_b `. nameIR_field_b `. value_field_b
-  )
+    typeId_a `. _ `. value_field_a,
+    typeId_b `. _ `. value_field_b)
   = (typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b)
-
 def $bin_eq(`{#}, `{#}) = true
-
-def $bin_eqs(eps, eps) = true
-def $bin_eqs(eps, _ :: _) = false
-def $bin_eqs(_ :: _, eps) = false
-def $bin_eqs(value_a_h :: value_a_t*, value_b_h :: value_b_t*)
-  = $bin_eq(value_a_h, value_b_h) /\ $bin_eqs(value_a_t*, value_b_t*)
-
-def $bin_eqs_fields(eps, eps) = true
-def $bin_eqs_fields(eps, _ :: _) = false
-def $bin_eqs_fields(_ :: _, eps) = false
-def $bin_eqs_fields(
-    (value_a_h, id_a_h) :: (value_a_t, id_a_t)*,
-    (value_b_h, id_b_h) :: (value_b_t, id_b_t)*)
-  = (id_a_h = id_b_h) /\ $bin_eq(value_a_h, value_b_h)
-    /\ $bin_eqs_fields((value_a_t, id_a_t)*, (value_b_t, id_b_t)*)
 
 def $bin_op(`==, value_l, value_r) = `B $bin_eq(value_l, value_r)
 
 ;;; Binary not equals
 
 dec $bin_ne(value, value) : bool
+  hint(prose_true %0 `!= %1)
+  hint(prose_false "not" %0 `!= %1)
   hint(testgen_ignore)
 
 def $bin_ne(value_l, value_r) = ~$bin_eq(value_l, value_r)
@@ -432,6 +457,7 @@ def $bin_op(`!=, value_l, value_r) = `B $bin_ne(value_l, value_r)
 ;;; Binary bitwise and
 
 dec $bin_band(value, value) : value
+  hint(prose_in %0 `& %1)
   hint(testgen_ignore)
 
 def $bin_band(w W i_l, w W i_r) = w W i'
@@ -446,6 +472,7 @@ def $bin_op(`&, value_l, value_r) = $bin_band(value_l, value_r)
 ;;; Binary bitwise xor
 
 dec $bin_bxor(value, value) : value
+  hint(prose_in %0 `^ %1)
   hint(testgen_ignore)
 
 def $bin_bxor(w W i_l, w W i_r) = w W i'
@@ -460,6 +487,7 @@ def $bin_op(`^, value_l, value_r) = $bin_bxor(value_l, value_r)
 ;;; Binary bitwise or
 
 dec $bin_bor(value, value) : value
+  hint(prose_in %0 `| %1)
   hint(testgen_ignore)
 
 def $bin_bor(w W i_l, w W i_r) = w W i'
@@ -474,6 +502,7 @@ def $bin_op(`|, value_l, value_r) = $bin_bor(value_l, value_r)
 ;;; Binary bitwise concat
 
 dec $bin_concat(value, value) : value
+  hint(prose_in %0 `++ %1)
   hint(testgen_ignore)
 
 def $bin_concat(`" t_l `", `" t_r `") = `" (t_l ++ t_r) `"
@@ -502,62 +531,21 @@ def $bin_concat(w_l S i_l, w_r S i_r) = w S i'''
 
 def $bin_op(`++, value_l, value_r) = $bin_concat(value_l, value_r)
 
-;;; Binary logical and
-
-dec $bin_land(value, value) : value
-  hint(testgen_ignore)
-
-def $bin_land(`B b_l, `B b_r) = `B (b_l /\ b_r)
-
-;;; Binary logical or
-
-dec $bin_lor(value, value) : value
-  hint(testgen_ignore)
-
-def $bin_lor(`B b_l, `B b_r) = `B (b_l \/ b_r)
-
 ;;
 ;; Type cast operations
 ;;
 
 dec $cast_op(typeIR, value) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
-  hint(prose_in "cast" %1 "to type" %0)
 
 dec $default(typeIR) : value
   hint(prose_in "the default value for type" %0)
 
-;;; Cast from boolean
-
-dec $cast_bool(typeIR, bool) : value
-  hint(testgen_ignore)
-
-def $cast_bool(BOOL, b) = `B b
-def $cast_bool(BIT `< w >, true) = w W 1
-def $cast_bool(BIT `< w >, false) = w W 0
-def $cast_bool(TYPEDEF _ typeIR, b) = $cast_bool(typeIR, b)
-def $cast_bool(TYPE _ typeIR, b) = $cast_bool(typeIR, b)
-def $cast_bool(SET `< typeIR >, b) = SET `{ $cast_bool(typeIR, b) }
-
-def $cast_op(typeIR, `B b) = $cast_bool(typeIR, b)
-
-;;; Cast from integer
-
-dec $cast_arbint(typeIR, int) : value
-  hint(testgen_ignore)
-
-def $cast_arbint(BOOL, i) = `B (i =/= 0)
-def $cast_arbint(INT, i) = D i
-def $cast_arbint(BIT `< w >, i) = w W ($int_to_bitstr(w, i))
-def $cast_arbint(INT `< w >, i) = w S ($int_to_bitstr(w, i))
-def $cast_arbint(TYPEDEF _ typeIR, i) = $cast_arbint(typeIR, i)
-def $cast_arbint(TYPE _ typeIR, i) = $cast_arbint(typeIR, i)
-def $cast_arbint(SET `< typeIR >, i) = SET `{ $cast_arbint(typeIR, i) }
-
-def $cast_op(typeIR, D i) = $cast_arbint(typeIR, i)
-
 ;;; Cast underlying value to enum
 
+dec $cast_to_enum(enumTypeIR, value) : value
+  hint(prose_in %1 "casted to enum type" %0)
 dec $cast_to_enum'(typeId, typeIR, valueFieldIR*, value) : value
 
 def $cast_to_enum'(typeId, typeIR, eps, value_target)
@@ -575,178 +563,186 @@ def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_targ
   -- if nameIR `= value `; = valueFieldIR_h
   -- if ~$bin_eq(value, value_target)
 
-dec $cast_to_enum(enumTypeIR, value) : value
-
 def $cast_to_enum(ENUM typeId `< typeIR > `{ valueFieldIR* }, value)
   = $cast_to_enum'(typeId, typeIR, valueFieldIR*, value)
 
-;;; Cast from fixed unsigned integer
+;;; Cast from boolean
 
-dec $cast_fixbit(typeIR, nat, int) : value
+dec $cast_bool(typeIR, boolValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_fixbit(BOOL, w, i) = `B (i =/= 0)
-def $cast_fixbit(INT, _, i) = D i
-def $cast_fixbit(BIT `< w_to >, _, i) = w_to W i'
-  -- if i' = $int_to_bitstr(w_to, i)
-def $cast_fixbit(INT `< w_to >, _, i) = w_to S i'
-  -- if i' = $int_to_bitstr(w_to, i)
-def $cast_fixbit(TYPEDEF _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
-def $cast_fixbit(TYPE _ typeIR, w, i) = $cast_fixbit(typeIR, w, i)
-def $cast_fixbit(SET `< typeIR >, w, i) = SET `{ $cast_fixbit(typeIR, w, i) }
-def $cast_fixbit(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w W i)
+def $cast_bool(BOOL, `B b) = `B b
+def $cast_bool(BIT `< w >, `B true) = w W 1
+def $cast_bool(BIT `< w >, `B false) = w W 0
+def $cast_bool(TYPE _ typeIR, boolValue) = $cast_bool(typeIR, boolValue)
+def $cast_bool(SET `< typeIR >, boolValue) = SET `{ $cast_bool(typeIR, boolValue) }
 
-def $cast_op(typeIR, w W i) = $cast_fixbit(typeIR, w, i)
+def $cast_op(typeIR, boolValue) = $cast_bool(typeIR_unroll, boolValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
-;;; Cast from fixed signed integer
+;;; Cast from integer
 
-dec $cast_fixint(typeIR, nat, int) : value
+dec $cast_int(typeIR, integerValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_fixint(INT, w, i) = D $bitstr_to_int(w, i)
-def $cast_fixint(BIT `< w_to >, w_from, i) = w_to W i'
-  -- if i' = $int_to_bitstr(w_to, $bitstr_to_int(w_from, i))
-def $cast_fixint(INT `< w_to >, w_from, i) = w_to S i'
-  -- if i' = $int_to_bitstr(w_to, $bitstr_to_int(w_from, i))
-def $cast_fixint(TYPEDEF _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
-def $cast_fixint(TYPE _ typeIR, w, i) = $cast_fixint(typeIR, w, i)
-def $cast_fixint(SET `< typeIR >, w, i) = SET `{ $cast_fixint(typeIR, w, i) }
-def $cast_fixint(enumTypeIR, w, i) = $cast_to_enum(enumTypeIR, w S i)
+def $cast_int(BOOL, D i) = `B (i =/= 0)
+def $cast_int(BOOL, w W i) = `B (i =/= 0)
 
-def $cast_op(typeIR, w S i) = $cast_fixint(typeIR, w, i)
+def $cast_int(INT, D i) = D i
+def $cast_int(INT, _ W i) = D i
+def $cast_int(INT, w S i) = D $bitstr_to_int(w, i)
 
-;;; Cast from variable-length unsigned integer
+def $cast_int(BIT `< w_to >, D i) = w_to W i_cast
+  -- if i_cast = $int_to_bitstr(w_to, i)
+def $cast_int(BIT `< w_to >, _ W i) = w_to W i_cast
+  -- if i_cast = $int_to_bitstr(w_to, i)
+def $cast_int(BIT `< w_to >, w_from S i) = w_to W i_cast
+  -- if i_from = $bitstr_to_int(w_from, i)
+  -- if i_cast = $int_to_bitstr(w_to, i_from)
 
-dec $cast_varbit(typeIR, nat, nat, int) : value
-  hint(testgen_ignore)
+def $cast_int(INT `< w_to >, D i) = w_to S i_cast
+  -- if i_cast = $int_to_bitstr(w_to, i)
+def $cast_int(INT `< w_to >, _ W i) = w_to S i_cast
+  -- if i_cast = $int_to_bitstr(w_to, i)
+def $cast_int(INT `< w_to >, w_from S i) = w_to S i_cast
+  -- if i_from = $bitstr_to_int(w_from, i)
+  -- if i_cast = $int_to_bitstr(w_to, i_from)
 
-def $cast_varbit(VARBIT `< w_max >, w_max, w, i) = w_max `. w V i
-def $cast_varbit(TYPEDEF _ typeIR, w_max, w, i)
-  = $cast_varbit(typeIR, w_max, w, i)
+def $cast_int(VARBIT `< w_max >, w_max `. w V i)
+  = w_max `. w V i
 
-def $cast_op(typeIR, w_max `. w V i) = $cast_varbit(typeIR, w_max, w, i)
+def $cast_int(TYPE _ typeIR, D i) = $cast_op(typeIR, D i)
+def $cast_int(TYPE _ typeIR, w W i) = $cast_op(typeIR, w W i)
+def $cast_int(TYPE _ typeIR, w S i) = $cast_op(typeIR, w S i)
+
+def $cast_int(enumTypeIR, w W i) = $cast_to_enum(enumTypeIR, w W i)
+def $cast_int(enumTypeIR, w S i) = $cast_to_enum(enumTypeIR, w S i)
+
+def $cast_int(SET `< typeIR >, D i) = SET `{ $cast_op(typeIR, D i) }
+def $cast_int(SET `< typeIR >, w W i) = SET `{ $cast_op(typeIR, w W i) }
+def $cast_int(SET `< typeIR >, w S i) = SET `{ $cast_op(typeIR, w S i) }
+
+def $cast_op(typeIR, integerValue) = $cast_int(typeIR_unroll, integerValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;;; Cast from error
 
-dec $cast_error(typeIR, nameIR) : value
+dec $cast_error(typeIR, errorValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_error(ERROR, nameIR) = ERROR `. nameIR
-def $cast_error(SET `< typeIR >, nameIR) = SET `{ $cast_error(typeIR, nameIR) }
+def $cast_error(ERROR, ERROR `. nameIR) = ERROR `. nameIR
+def $cast_error(SET `< typeIR >, errorValue) = SET `{ $cast_op(typeIR, errorValue) }
 
-def $cast_op(typeIR, ERROR `. nameIR) = $cast_error(typeIR, nameIR)
+def $cast_op(typeIR, errorValue) = $cast_error(typeIR_unroll, errorValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;;; Cast from list
 
-dec $cast_list(typeIR, value*) : value
+dec $cast_list(typeIR, listValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_list(TYPEDEF _ typeIR, value*)
-  = $cast_list(typeIR, value*)
-def $cast_list(LIST `< typeIR >, value*)
+def $cast_list(LIST `< typeIR >, LIST `[ value* ])
   = LIST `[ $cast_op(typeIR, value)* ]
 
-def $cast_op(typeIR, LIST `[ value* ])
-  = $cast_list(typeIR, value*)
-
-;;; Cast from struct
-
-dec $cast_struct(typeIR, typeId, (value, id)*) : value
-  hint(testgen_ignore)
-
-def $cast_struct(TYPEDEF _ typeIR, typeId, (value, id)*)
-  = $cast_struct(typeIR, typeId, (value, id)*)
-def $cast_struct(STRUCT typeId `< _ > `{ _ }, typeId, (value_field, nameIR_field)*)
-  = STRUCT typeId `{ (value_field nameIR_field `;)* }
-
-def $cast_op(typeIR, STRUCT typeId `{ (value_field nameIR_field `;)* })
-  = $cast_struct(typeIR, typeId, (value_field, nameIR_field)*)
-
-;;; Cast from header
-
-dec $cast_header(typeIR, typeId, bool, (value, id)*) : value
-  hint(testgen_ignore)
-
-def $cast_header(TYPEDEF _ typeIR, typeId, b, (value, id)*)
-  = $cast_header(typeIR, typeId, b, (value, id)*)
-def $cast_header(HEADER typeId `< _ > `{ _ }, typeId, b, (value_field, nameIR_field)*)
-  = HEADER typeId `{ b `; (value_field nameIR_field `;)* }
-
-def $cast_op(typeIR, HEADER typeId `{ b `; (value_field nameIR_field `;)* })
-  = $cast_header(typeIR, typeId, b, (value_field, nameIR_field)*)
+def $cast_op(typeIR, listValue) = $cast_list(typeIR_unroll, listValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;;; Cast from header stack
 
-dec $cast_header_stack(typeIR, value*, nat) : value
+dec $cast_header_stack(typeIR, headerStackValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_header_stack(typeIR `[ n_size ], value*, n_size')
-  = HEADER_STACK `[ value* `( 0; n_size )]
-  -- if n_size = n_size'
+def $cast_header_stack(
+    typeIR `[ n_size ],
+    HEADER_STACK `[ value* `( n_idx `; n_size) ])
+  = HEADER_STACK `[ value* `( n_idx `; n_size )]
 
-def $cast_op(typeIR, HEADER_STACK `[ value* `( _; n_size ) ])
-  = $cast_header_stack(typeIR, value*, n_size)
+def $cast_op(typeIR, headerStackValue)
+  = $cast_header_stack(typeIR_unroll, headerStackValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
-;;; Cast from serializable enum field
+;;; Cast from struct
 
-def $cast_op(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
+dec $cast_struct(typeIR, structValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
 
-;; Cast from non-serializable enum field
+def $cast_struct(
+    STRUCT typeId `< _ > `{ _ }, 
+    STRUCT typeId `{ (value_field nameIR_field `;)* })
+  = STRUCT typeId `{ (value_field nameIR_field `;)* }
+
+def $cast_op(typeIR, structValue) = $cast_struct(typeIR_unroll, structValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
+;;; Cast from header
+
+dec $cast_header(typeIR, headerValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_header(
+    HEADER typeId `< _ > `{ _ },
+    HEADER typeId `{ b `; (value_field nameIR_field `;)* })
+  = HEADER typeId `{ b `; (value_field nameIR_field `;)* }
+
+def $cast_op(typeIR, headerValue) = $cast_header(typeIR_unroll, headerValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
+;; Cast from enum field
 
 dec $cast_enum(typeIR, enumValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_enum(
-    ENUM typeId_t `{ _ },
-    typeId_v `. nameIR)
-  = typeId_v `. nameIR
-  -- if typeId_t = typeId_v
+def $cast_enum(ENUM typeId `{ _ }, typeId `. nameIR) = typeId `. nameIR
+def $cast_enum(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
 
-def $cast_op(typeIR, typeId `. nameIR)
-  = $cast_enum(typeIR, typeId `. nameIR)
+def $cast_op(typeIR, enumValue) = $cast_enum(typeIR_unroll, enumValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;; Cast from sequence
 
-dec $cast_sequence(typeIR, value*) : value
+dec $cast_sequence(typeIR, sequenceValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_sequence(TYPEDEF _ typeIR, value*)
-  = $cast_sequence(typeIR, value*)
-
-def $cast_sequence(LIST `< typeIR >, value*)
+def $cast_sequence(LIST `< typeIR >, SEQ `( value* ))
   = LIST `[ $cast_op(typeIR, value)* ]
-
-def $cast_sequence(TUPLE `< typeIR* >, value*)
+def $cast_sequence(TUPLE `< typeIR* >, SEQ `( value* ))
   = TUPLE `( $cast_op(typeIR, value)* )
-
-def $cast_sequence(typeIR `[ n_size ], value*)
-  = HEADER_STACK `[ value_cast* `( n_idx; n_size ) ]
+def $cast_sequence(typeIR `[ n_size ], SEQ `( value* ))
+  = HEADER_STACK `[ value_cast* `( n_idx `; n_size ) ]
   -- if (value_cast = $cast_op(typeIR, value))*
   -- if n_idx = |value*|
-
-def $cast_sequence(STRUCT typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(
+    STRUCT typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* },
+    SEQ `( value* ))
   = STRUCT typeId `{ (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
-
-def $cast_sequence(HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, value*)
+def $cast_sequence(
+    HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, 
+    SEQ `( value* ))
   = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 
-def $cast_op(typeIR, SEQ `( value* )) = $cast_sequence(typeIR, value*)
-
-;; Cast from default sequence
+def $cast_op(typeIR, sequenceValue) = $cast_sequence(typeIR_unroll, sequenceValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;; Cast from record
 
-dec $cast_record(typeIR, (value, id)*) : value
+dec $cast_record(typeIR, recordValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
-
-def $cast_record(TYPEDEF _ typeIR, (value, id)*)
-  = $cast_record(typeIR, (value, id)*)
 
 def $cast_record(
     STRUCT typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
-    (value_field, nameIR_field)*)
+    RECORD `{ (value_field nameIR_field `;)* })
   = STRUCT typeId `{ (value_field_cast nameIR_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
@@ -754,61 +750,59 @@ def $cast_record(
 
 def $cast_record(
     HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
-    (value_field, nameIR_field)*)
+    RECORD `{ (value_field nameIR_field `;)* })
   = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
-def $cast_op(typeIR, RECORD `{ (value id `;)* })
-  = $cast_record(typeIR, (value, id)*)
-
-;; Cast from default record
+def $cast_op(typeIR, recordValue) = $cast_record(typeIR_unroll, recordValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;; Cast from default
 
-def $cast_op(typeIR, DEFAULT) = $default(typeIR)
+dec $cast_default(typeIR, defaultValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_default(typeIR, defaultValue) = $default(typeIR)
+
+def $cast_op(typeIR, DEFAULT) = $cast_default(typeIR_unroll, DEFAULT)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;; Cast from invalid
 
-dec $cast_invalid(typeIR) : value
+dec $cast_invalid_header(typeIR) : value
+  hint(prose_in `{#} "casted to type" %0)
+  hint(testgen_ignore)
 
-def $cast_invalid(TYPEDEF _ typeIR) = $cast_invalid(typeIR)
-def $cast_invalid(headerTypeIR) = $default(headerTypeIR)
-def $cast_invalid(headerUnionTypeIR) = $default(headerUnionTypeIR)
+def $cast_invalid_header(headerTypeIR) = $default(headerTypeIR)
+def $cast_invalid_header(headerUnionTypeIR) = $default(headerUnionTypeIR)
 
-def $cast_op(typeIR, `{#}) = $cast_invalid(typeIR)
+def $cast_op(typeIR, invalidHeaderValue) = $cast_invalid_header(typeIR_unroll)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;; Cast from set
 
-dec $cast_set_singleton(typeIR, value) : value
+dec $cast_set(typeIR, setValue) : value
+  hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_set_singleton(SET `< typeIR >, value)
+def $cast_set(SET `< typeIR >, SET `{ value })
   = SET `{ $cast_op(typeIR, value) }
 
-dec $cast_set_mask(typeIR, value, value) : value
-  hint(testgen_ignore)
-
-def $cast_set_mask(SET `< typeIR >, value_b, value_m)
+def $cast_set(SET `< typeIR >, SET `{ value_b `&&& value_m })
   = SET `{ value_b_cast `&&& value_m_cast }
   -- if value_b_cast = $cast_op(typeIR, value_b)
   -- if value_m_cast = $cast_op(typeIR, value_m)
 
-dec $cast_set_range(typeIR, value, value) : value
-  hint(testgen_ignore)
-
-def $cast_set_range(SET `< typeIR >, value_l, value_u)
+def $cast_set(SET `< typeIR >, SET `{ value_l `.. value_u })
   = SET `{ value_l_cast `.. value_u_cast }
   -- if value_l_cast = $cast_op(typeIR, value_l)
   -- if value_u_cast = $cast_op(typeIR, value_u)
 
-def $cast_op(typeIR, SET `{ value })
-  = $cast_set_singleton(typeIR, value)
-def $cast_op(typeIR, SET `{ value_b `&&& value_m })
-  = $cast_set_mask(typeIR, value_b, value_m)
-def $cast_op(typeIR, SET `{ value_l `.. value_u })
-  = $cast_set_range(typeIR, value_l, value_u)
+def $cast_op(typeIR, setValue) = $cast_set(typeIR_unroll, setValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
 ;;
 ;; Default values for types
@@ -831,7 +825,7 @@ def $default(TYPE _ typeIR) = $default(typeIR)
 
 def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 
-def $default(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0; n_s ) ]
+def $default(typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0 `; n_s ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
 def $default(STRUCT typeId `< _ > `{ (_ typeIR_f id_f `;)* })
@@ -847,12 +841,12 @@ def $default(ENUM typeId `{ id_f_h :: _ }) = typeId `. id_f_h
 
 def $default(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
   = typeId `. id_zero `. value_zero
-  -- if value_zero = $cast_arbint(typeIR, 0)
+  -- if value_zero = $cast_int(typeIR, D 0)
   -- if id_zero = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
 
 def $default(ENUM typeId `< typeIR > `{ (nameIR_field `= value_field `;)* })
   = typeId `. id_zero `. value_zero
-  -- if value_zero = $cast_arbint(typeIR, 0)
+  -- if value_zero = $cast_int(typeIR, D 0)
   -- if eps = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*)
   -- if id_zero = "__UNSPECIFIED"
 

@@ -14,14 +14,14 @@ relation ParameterType_alpha:
   hint(prose_true %0 "and" %1 "are the same type")
   hint(prose_false %0 "and" %1 "are not the same type")
 
-relation CallableType_alpha:
-  callableTypeIR ~~ callableTypeIR
+relation ExternMethodType_alpha:
+  externMethodTypeIR ~~ externMethodTypeIR
   hint(input %0 %1)
   hint(prose_true %0 "and" %1 "are the same type")
   hint(prose_false %0 "and" %1 "are not the same type")
 
-relation CallableTypeDef_alpha:
-  callableTypeDefIR ~~ callableTypeDefIR
+relation ExternMethodTypeDef_alpha:
+  externMethodTypeDefIR ~~ externMethodTypeDefIR
   hint(input %0 %1)
   hint(prose_true %0 "and" %1 "are the same type")
   hint(prose_false %0 "and" %1 "are not the same type")
@@ -170,86 +170,38 @@ rule ParameterType_alpha:
   -- Type_alpha: typeIR_a ~~ typeIR_b
 
 ;;
-;;;; Alpha-equivalence of callable types
+;;;; Alpha-equivalence of extern method callable types
 ;;
 
-;;; Action types
+rulegroup ExternMethodType_alpha {
 
-rule CallableType_alpha/actionTypeIR:
-  (ACTION `( parameterIR_a* ))
-  ~~ (ACTION `( parameterIR_b* ))
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-
-;;; Function types
-
-rule CallableType_alpha/definedFunctionTypeIR:
-  (FUNCTION `( parameterIR_a* ) `: typeIR_a)
-  ~~ (FUNCTION `( parameterIR_b* ) `: typeIR_b)
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-  -- Type_alpha: typeIR_a ~~ typeIR_b
-
-rule CallableType_alpha/externFunctionTypeIR:
-  (EXTERN_FUNCTION `( parameterIR_a* ) `: typeIR_a)
-  ~~ (EXTERN_FUNCTION `( parameterIR_b* ) `: typeIR_b)
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-  -- Type_alpha: typeIR_a ~~ typeIR_b
-
-;;; Method types
-
-rule CallableType_alpha/builtinMethodTypeIR:
-  (BUILTIN_METHOD `( parameterIR_a* ) `: typeIR_a)
-  ~~ (BUILTIN_METHOD `( parameterIR_b* ) `: typeIR_b)
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-  -- Type_alpha: typeIR_a ~~ typeIR_b
-
-rulegroup CallableType_alpha/externMethodTypeIR {
-
-  rule CallableType_alpha/non-abstract:
-    (EXTERN_METHOD `( parameterIR_a* ) `: typeIR_a)
-    ~~ (EXTERN_METHOD `( parameterIR_b* ) `: typeIR_b)
+  rule ExternMethodType_alpha/non-abstract:
+    (EXTERN_METHOD nameIR `( parameterIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD nameIR `( parameterIR_b* ) `: typeIR_b)
     -- (ParameterType_alpha:
           parameterIR_a ~~ parameterIR_b)*
     -- Type_alpha: typeIR_a ~~ typeIR_b
 
-  rule CallableType_alpha/abstract:
-    (EXTERN_METHOD ABSTRACT `( parameterIR_a* ) `: typeIR_a)
-    ~~ (EXTERN_METHOD ABSTRACT `( parameterIR_b* ) `: typeIR_b)
+  rule ExternMethodType_alpha/abstract:
+    (EXTERN_METHOD ABSTRACT nameIR `( parameterIR_a* ) `: typeIR_a)
+    ~~ (EXTERN_METHOD ABSTRACT nameIR `( parameterIR_b* ) `: typeIR_b)
     -- (ParameterType_alpha:
           parameterIR_a ~~ parameterIR_b)*
     -- Type_alpha: typeIR_a ~~ typeIR_b
 
 }
 
-rule CallableType_alpha/parserApplyMethodTypeIR:
-  (PARSER_APPLY `( parameterIR_a* ))
-  ~~ (PARSER_APPLY `( parameterIR_b* ))
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-
-rule CallableType_alpha/controlApplyMethodTypeIR:
-  (CONTROL_APPLY `( parameterIR_a* ))
-  ~~ (CONTROL_APPLY `( parameterIR_b* ))
-  -- (ParameterType_alpha:
-        parameterIR_a ~~ parameterIR_b)*
-
-rule CallableType_alpha/tableApplyMethodTypeIR:
-  tableApplyMethodTypeIR ~~ tableApplyMethodTypeIR
-
 ;;
 ;;;; Alpha-equivalence of callable type definitions
 ;;
 
-rule CallableTypeDef_alpha:
-  callableTypeDefIR_a ~~ callableTypeDefIR_b
+rule ExternMethodTypeDef_alpha:
+  externMethodTypeDefIR_a ~~ externMethodTypeDefIR_b
   ---- ;; retrieve type parameters
   -- if (typeParameterIR_expl_a*, typeParameterIR_impl_a*)
-      = $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR_a)
+      = $typeParameterListIR_of_callableTypeDefIR(externMethodTypeDefIR_a)
   -- if (typeParameterIR_expl_b*, typeParameterIR_impl_b*)
-      = $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR_b)
+      = $typeParameterListIR_of_callableTypeDefIR(externMethodTypeDefIR_b)
   ---- ;; check type parameter arity
   -- if |typeParameterIR_expl_a*| = |typeParameterIR_expl_b*|
   -- if |typeParameterIR_impl_a*| = |typeParameterIR_impl_b*|
@@ -259,17 +211,17 @@ rule CallableTypeDef_alpha:
   ---- ;; substitute the left hand side
   -- if typeParameterIR_a* = typeParameterIR_expl_a* ++ typeParameterIR_impl_a*
   -- if theta_a = `{ (typeParameterIR_a `: (`` typeParameterIR_fresh))* }
-  -- if callableTypeIR_a
-      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_a)
-  -- if callableTypeIR_a_subst
-      = $subst_callableTypeIR(theta_a, callableTypeIR_a)
+  -- if externMethodTypeIR_a
+      = $callableTypeIR_of_callableTypeDefIR(externMethodTypeDefIR_a)
+  -- if externMethodTypeIR_a_subst
+      = $subst_callableTypeIR(theta_a, externMethodTypeIR_a)
   ---- ;; substitute the right hand side
   -- if typeParameterIR_b* = typeParameterIR_expl_b* ++ typeParameterIR_impl_b*
   -- if theta_b = `{ (typeParameterIR_b `: (`` typeParameterIR_fresh))* }
-  -- if callableTypeIR_b
-      = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_b)
-  -- if callableTypeIR_b_subst
-      = $subst_callableTypeIR(theta_b, callableTypeIR_b)
+  -- if externMethodTypeIR_b
+      = $callableTypeIR_of_callableTypeDefIR(externMethodTypeDefIR_b)
+  -- if externMethodTypeIR_b_subst
+      = $subst_callableTypeIR(theta_b, externMethodTypeIR_b)
   ---- ;; compare the substituted definitions
-  -- CallableType_alpha:
-      callableTypeIR_a_subst ~~ callableTypeIR_b_subst
+  -- ExternMethodType_alpha:
+      externMethodTypeIR_a_subst ~~ externMethodTypeIR_b_subst

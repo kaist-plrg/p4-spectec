@@ -19,19 +19,21 @@ syntax externObject =
 
 ;;
 ;;;; Parser object
-;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; Bound type variables (theta),
+;;;; apply parameters (parameterListIR), value environment (frame),
 ;;;; local declarations (parserLocalDeclarationListIR), and state environment (stateEnv)
 ;;
 
 syntax parserObject =
-  PARSER `( parameterListIR )
+  PARSER `< theta > `( parameterListIR )
     `{ frame
        parserLocalDeclarationListIR
        stateEnv }
 
 ;;
 ;;;; Control object
-;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; Bound type variables (theta),
+;;;; apply parameters (parameterListIR), value environment (frame),
 ;;;; local declarations (controlLocalDeclarationListIR),
 ;;;; routine environment for actions (actionDefEnv), and body (controlBodyIR)
 ;;
@@ -39,7 +41,7 @@ syntax parserObject =
 syntax actionDefEnv = map<callableId, actionDef>
 
 syntax controlObject =
-  CONTROL `( parameterListIR )
+  CONTROL `< theta > `( parameterListIR )
     `{ frame
        controlLocalDeclarationListIR
        actionDefEnv

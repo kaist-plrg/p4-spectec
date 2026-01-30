@@ -8,10 +8,9 @@
 
 rule ParserStmt_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
-            : IC_1 STO constantDeclarationIR_inst
+            : IC_1 STO constantDeclarationIR
   -- ConstDecl_inst:
-      LOCAL IC_0 |- constantDeclarationIR
-                  : IC_1 constantDeclarationIR_inst
+      LOCAL IC_0 |- constantDeclarationIR : IC_1
 
 ;;; variableDeclarationIR
 
@@ -51,31 +50,11 @@ rule ParserStmt_inst/callStatementIR:
 ;;;   prefixedNameIR `. APPLY `( argumentListIR ) `;
 
 rule ParserStmt_inst/directApplicationStatementIR:
-  IC STO_0 |- prefixedNameIR `. APPLY `( argumentListIR ) `;
-            : IC STO_2 parserBlockStatementIR
-  ---- ;; find and instantiate constructor
-  -- Constructor_inst:
-      LOCAL IC |- prefixedNameIR `< eps > `( eps )
-                : constructorDef `< eps > `( `# eps )
-  -- Constructor_call:
-      LOCAL IC STO_0 |- constructorDef `< eps > `( eps `# eps )
-                      : STO_1 object
-  ---- ;; assign new typeId with random string appended
-  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if typeId_fresh = $fresh_typeId()
-  -- if nameIR = typeId ++ "_" ++ typeId_fresh
-  ---- ;; add object to store
-  -- if objectId = IC.PATH ++ nameIR
-  -- if STO_2 = $add_store(STO_1, objectId, object)
-  ---- ;; replace with constant declaration and call statement
-  -- if typeIR = `` typeId
-  -- if constantDeclarationIR
-      = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
-  -- if callableTargetIR
-      = ((`` nameIR) `# `( typeIR CTK )) `. "apply"
-  -- if callStatementIR
-      = callableTargetIR `< eps > `( argumentListIR ) `;
-  ---- ;; create parser block
+  IC STO_0 |- directApplicationStatementIR
+            : IC STO_1 parserBlockStatementIR
+  -- DirectApplicationStmt_inst:
+      LOCAL IC STO_0 |- directApplicationStatementIR
+                      : STO_1 constantDeclarationIR callStatementIR
   -- if parserBlockStatementIR
       = `EMPTY `{ [ constantDeclarationIR, callStatementIR ] }
 

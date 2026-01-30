@@ -8,10 +8,9 @@
 
 rule ParserLocalDecl_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
-            : IC_1 STO constantDeclarationIR_inst
+            : IC_1 STO constantDeclarationIR
   -- ConstDecl_inst:
-      BLOCK IC_0 |- constantDeclarationIR
-                  : IC_1 constantDeclarationIR_inst
+      BLOCK IC_0 |- constantDeclarationIR : IC_1
 
 ;;; instantiationIR
 
@@ -52,7 +51,7 @@ rule ParserLocalDecl_inst/valueSetDeclarationIR:
   ---- ;; create the constant declaration
   -- if typeIR_set = SET `< typeIR >
   -- if constantDeclarationIR
-      = `EMPTY CONST typeIR_set nameIR (`= (REF objectId)) `;
+      = `EMPTY CONST typeIR_set nameIR (`= `VALUE (REF objectId)) `;
 
 ;;
 ;; Parser local declaration list instantiation

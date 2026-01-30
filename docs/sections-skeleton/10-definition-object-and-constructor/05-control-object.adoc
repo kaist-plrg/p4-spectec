@@ -1,7 +1,7 @@
 [#sec-control-object]
 === Control objects
 
-// Section 14 of the P4-16 Language Specification
+// 863
 P4 parsers are responsible for extracting bits from a packet into headers.
 These headers (and other metadata) can be manipulated and transformed within
 `control` blocks. The body of a control block resembles a traditional
@@ -9,26 +9,18 @@ imperative program. Within the body of a control block, match-action units can
 be invoked to perform data transformations. Match-action units are represented
 in P4 by constructs called `tables`.
 
+// 864
 Syntactically, a `control` block is declared with a name, parameters, optional
 type parameters, and a sequence of declarations of constants, variables,
 ``action``s, ``table``s, and other instantiations:
 
-// Added
-${syntax: controlLocalDeclaration
-          controlBody
-          controlDeclaration}
+// 865 - Modified
+${syntax: controlDeclaration controlLocalDeclaration controlBody}
 
-// Section 14 of the P4-16 Language Specification
-It is illegal to instantiate a `parser` within a `control` block. Similar to
-parser declarations, control declarations may not be generic--e.g., the
-following declaration is illegal:
+// 866 - Modified
+It is illegal to instantiate a `parser` within a `control` block.
 
-[source,p4]
-----
-control C<H>(inout H data); // generic control type declaration is legal
-control C<H>(inout H data) { /* body omitted */ } // generic control declaration is illegal
-----
-
+// 867
 P4 does not support exceptional control-flow within a `control` block. The only
 statement which has a non-local effect on control flow is `exit`, which causes
 execution of the enclosing control block to immediately terminate. That is,
@@ -40,10 +32,13 @@ programmer.
 A `control` declaration introduces a control object constructor, represented
 as:
 
+// Added
 ${syntax: controlObjectConstructorDef}
 
+// Added
 Control objects are then instantiated by constructor invocations to yield:
 
+// Added
 ${syntax: controlObject}
 
 ==== Well-formedness

@@ -7,22 +7,27 @@ functions. The former are functions whose implementation is provided in P4
 source code, while the latter are functions whose implementation is provided
 externally by the target architecture.
 
+// Added
 The internal representation of functions is as follows:
 
+// Added
 ${syntax: functionTypeDefIR functionTypeIR functionDef}
 
 [#sec-user-defined-function]
 ==== User-defined functions
 
-// Section 10 of the P4-16 Language Specification
+// 664
 Functions can only be declared at the top level and all parameters must have a
 direction. P4 functions are modeled after functions as found in most other
 programming languages, but the language does not permit recursive functions.
 
+// 665 - Modified
 ${syntax: functionPrototype functionDeclaration}
 
+// 666
 Here is an example of a function that returns the maximum of two 32-bit values:
 
+// 667
 [source,p4]
 ----
 bit<32> max(in bit<32> left, in bit<32> right) {
@@ -30,6 +35,7 @@ bit<32> max(in bit<32> left, in bit<32> right) {
 }
 ----
 
+// 668
 A function returns a value using the `return` statement.  A function with a
 return type of `void` can simply use the `return` statement with no arguments.
 A function with a non-void return type must return a value of the suitable type
@@ -40,10 +46,13 @@ The typing and instantiation rules for `function` declarations is explained in
 <<sec-function-declaration>>. This introduces a function type definition, which
 can be specialized to a function type.
 
+// Added
 ${syntax: definedFunctionTypeDefIR definedFunctionTypeIR}
 
+// Added
 Also, the runtime representation of a defined function is as follows:
 
+// Added
 ${syntax: definedFunctionDef}
 
 ===== Well-formedness
@@ -55,22 +64,27 @@ ${rulegroup-prose: CallableType_wf/definedFunctionTypeIR}
 [#sec-extern-function]
 ==== Extern functions
 
-// Section 7.2.11.1 of the P4-16 Language Specification
+// 326
 An extern function declaration describes the name and type signature of the
 function, but not its implementation.
 
+// 327 - Modified
 ${syntax: externDeclaration}
 
 // Added
 `extern` declarations introduce extern function type definitions, which can be
 specialized to extern function types.
 
+// Added
 ${syntax: externFunctionTypeDefIR externFunctionTypeIR}
 
+// Added
 Also, the runtime representation of an extern function is as follows:
 
+// Added
 ${syntax: externFunctionDef}
 
+// Added
 See <<sec-extern-function-declaration>> for the typing and instantiation
 rules for `extern` function declarations.
 
