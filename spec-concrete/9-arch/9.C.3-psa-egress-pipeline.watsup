@@ -71,11 +71,11 @@ rule PSA_egress_init_parser_input_metadata:
       GLOBAL EC_2 STO |- storageReference_parser_input_path -> value_path : EC_3
 
 relation PSA_egress_init_input_metadata:
-  evalContext store |- int int : evalContext
-  hint(input %0 %1 %2 %3)
+  evalContext store |- int : evalContext
+  hint(input %0 %1 %2)
 
 rule PSA_egress_init_input_metadata:
-  EC_0 STO |- i_cos i_port : EC_6
+  EC_0 STO |- i_port : EC_6
   ---- ;; initialize variable
   -- if typeDefIR_psa_egress_input_metadata
       = $find_typeDef_e(GLOBAL, EC_0, `` "psa_egress_input_metadata_t")
@@ -86,9 +86,11 @@ rule PSA_egress_init_input_metadata:
               "egress_input_metadata"
             : EC_1
   ---- ;; setup class of service
+  -- if storageReference_cos
+      = (`` "ingress_output_metadata") `. "class_of_service"
+  -- Lvalue_read: GLOBAL EC_1 STO |- storageReference_cos : value_cos
   -- if storageReference_input_cos
       = (`` "egress_input_metadata") `. "class_of_service"
-  -- if value_cos = 8 W i_cos
   -- Lvalue_write:
       GLOBAL EC_1 STO |- storageReference_input_cos -> value_cos : EC_2
   ---- ;; setup port
@@ -168,11 +170,11 @@ rule PSA_egress_init_deparser_input_metadata:
       GLOBAL EC_1 STO |- storageReference_deparser_input_port -> value_port : EC_2
 
 relation PSA_egress_init_globals:
-  evalContext store |- int int : evalContext
-  hint(input %0 %1 %2 %3)
+  evalContext store |- int : evalContext
+  hint(input %0 %1 %2)
 
 rule PSA_egress_init_globals:
-  EC_0 STO |- i_port i_cos : EC_7
+  EC_0 STO |- i_port : EC_7
   -- if PACKAGE `< theta > `{ _ }
       = $find_store(STO, [ "main" ])
   ---- ;; hdr and user_meta
@@ -183,7 +185,7 @@ rule PSA_egress_init_globals:
   ---- ;; psa egress parser input metadata
   -- PSA_egress_init_parser_input_metadata: EC_2 STO |- i_port : EC_3
   ---- ;; psa egress input metadata
-  -- PSA_egress_init_input_metadata: EC_3 STO |- i_cos i_port : EC_4
+  -- PSA_egress_init_input_metadata: EC_3 STO |- i_port : EC_4
   ---- ;; psa egress output metadata
   -- PSA_egress_init_output_metadata: EC_4 STO |- EC_5
   ---- ;; psa egress deparser input metadata
