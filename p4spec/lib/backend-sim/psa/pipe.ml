@@ -59,6 +59,7 @@ struct
   type extern =
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
+    | Counter of Object.Counter.t
   [@@deriving yojson]
 
   let get_extern (value_sto : Value.t) (value_objectId : Value.t) : extern =
@@ -94,14 +95,19 @@ struct
   (* Extern calls *)
 
   let eval_extern_init (values_input : Value.t list) : Value.t =
-    let value_name_extern, _value_type_args, _value_args =
+    let value_name_extern, value_type_args, value_args =
       match values_input with
       | [ value_name; value_type_args; value_args ] ->
           (value_name, value_type_args, value_args)
       | _ -> error_no_region "unexpected number of arguments to extern init"
     in
     let name_extern = unwrap_text_v value_name_extern in
-    match name_extern with _ -> wrap_extern_v "externState" `Null
+    match name_extern with
+    | "Counter" ->
+        let counter = Object.Counter.init value_type_args value_args in
+        let counter = Counter counter in
+        counter |> extern_to_yojson |> wrap_extern_v "externState"
+    | _ -> wrap_extern_v "externState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -235,6 +241,12 @@ struct
           in
           let packet_out = PacketOut packet_out in
           (packet_out, value_ctx, value_sto, value_callResult)
+      | Counter counter, "count", [ "index" ] ->
+          let counter, value_ctx, value_sto, value_callResult =
+            Object.Counter.count value_ctx value_sto counter
+          in
+          let counter = Counter counter in
+          (counter, value_ctx, value_sto, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
