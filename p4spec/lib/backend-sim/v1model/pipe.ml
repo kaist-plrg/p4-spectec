@@ -566,6 +566,24 @@ struct
     in
     put_ctx value_ctx
 
+  let prepare_egress_ctx : unit pipe_ctx =
+    let* value_ctx, value_sto = get_ctx_sto in
+    let value_egress_spec =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
+        "egress_spec"
+    in
+    (* This field is assigned a predictable value just before the packet
+       begins egress processing, equal to the output port that this packet
+       is destined to
+
+       - 'Standard metadata' at
+       https://github.com/p4lang/behavioral-model/blob/168eca/docs/simple_switch.md *)
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
+        "egress_port" value_egress_spec
+    in
+    put_ctx_sto value_ctx value_sto
+
   let drive_p : unit pipe_ctx =
     let* value_parser_result = with_pipe_ctx Spec.Rel.v1model_parser in
     let* value_ctx, value_sto = get_ctx_sto in
@@ -632,6 +650,7 @@ struct
 
   (* Egress block + Handle clone *)
   let drive_eg : Value.t pipe_ctx =
+    let* () = prepare_egress_ctx in
     let* result = with_pipe_ctx Spec.Rel.v1model_egress in
     let* arch_state = get_arch_state in
     let* _cloned = schedule_clone arch_state in
