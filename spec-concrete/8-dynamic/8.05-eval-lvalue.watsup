@@ -31,7 +31,7 @@ rulegroup Lvalue_eval/memberAccess {
                       : EC_1 STO_1 (`` storageReference)
     -- Lvalue_read:
         p EC_1 STO_1 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = headerStackValue
+    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ] = headerStackValue
     -- if nameIR = "next"
     -- if $(n_idx >= n_size)
     -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
@@ -44,7 +44,7 @@ rulegroup Lvalue_eval/memberAccess {
                       : EC_1 STO_1 (`` storageReference)
     -- Lvalue_read:
         p EC_1 STO_1 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ]
         = headerStackValue
     -- if nameIR = "next"
     -- if $(n_idx < n_size)
@@ -157,7 +157,7 @@ rule Lvalue_eval/parenthesized:
 
 rule Lvalue_read/referenceExpressionIR:
   p EC STO |- prefixedNameIR : value
-  -- if value = $find_var_e(p, EC, prefixedNameIR)
+  -- if value = $find_var_e(prefixedNameIR, p, EC)
 
 ;;; storageReference `. nameIR
 
@@ -181,7 +181,7 @@ rulegroup Lvalue_read/memberAccess {
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ] = value_base
     -- if nameIR = "next"
     -- if $(n_idx < n_size)
     -- if value = value_element*[ n_idx ]
@@ -229,7 +229,7 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 STO |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ] = value_base
     -- if n_idx = $nat_of_integerValue(integerValue_index)
     -- if $(n_idx < n_size)
     -- if value = value_element*[ n_idx ]
@@ -238,7 +238,7 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 STO |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ] = value_base
     -- if n_idx = $nat_of_integerValue(integerValue_index)
     ---- ;; index access overflow
     -- if $(n_idx >= n_size)
@@ -278,10 +278,11 @@ rulegroup Lvalue_write/memberAccess {
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
     ---- ;; if the base value is a header stack
-    -- if HEADER_STACK `[ value_element* `( n_idx; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ] = value_base
     -- if nameIR = "next"
     -- if value_element_update* = value_element* [ [n_idx] = value ]
-    -- if value_base_update = HEADER_STACK `[ value_element_update* `( $(n_idx + 1); n_size ) ]
+    -- if value_base_update
+        = HEADER_STACK `[ value_element_update* `( $(n_idx + 1) `; n_size ) ]
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
@@ -371,12 +372,13 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_1
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( n_base_idx; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( n_base_idx `; n_size ) ] = value_base
     -- if n_idx = $nat_of_integerValue(integerValue_index)
     -- if $(n_idx < n_size)
     -- if value_element_update*
         = value_element* [ [n_idx] = value ]
-    -- if value_base_update = HEADER_STACK `[ value_element_update* `( n_base_idx; n_size ) ]
+    -- if value_base_update
+        = HEADER_STACK `[ value_element_update* `( n_base_idx `; n_size ) ]
     -- Lvalue_write:
         p EC_0 STO |- storageReference -> value_base_update : EC_1
 
@@ -384,7 +386,7 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 STO |- (storageReference `[ integerValue_index ]) -> value : EC_0
     -- Lvalue_read:
         p EC_0 STO |- storageReference : value_base
-    -- if HEADER_STACK `[ value_element* `( _; n_size ) ] = value_base
+    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ] = value_base
     -- if n_idx = $nat_of_integerValue(integerValue_index)
     -- if $(n_idx >= n_size)
 

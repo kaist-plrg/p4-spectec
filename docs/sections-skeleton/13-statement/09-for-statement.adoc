@@ -1,11 +1,231 @@
 [#sec-for-statement]
 === For statements
 
-${syntax: forInitStatement
+// 737
+A `for` statement executes a statement zero or more times, based on a
+condition or a range or collection.
+
+// 738 - Modified
+${syntax: forStatement
+          forInitStatementList
+          forInitStatementListNonEmpty
+          forInitStatement
+          forUpdateStatementList
+          forUpdateStatementListNonEmpty
           forUpdateStatement
-          forCollectionExpression
-          forStatement
+          forCollectionExpression}
+
+// Added
+There are two forms of `for` statements:
+
+// Added
+* Basic 3-clause `for` statements with initialization, condition, and update.
+* `for`-`in` statements that iterate over a range, list, or header stack.
+
+// 741 - Modified
+A `break;` statement may be executed in a loop body to immediately exit the
+loop, without executing the rest of the body or the update statements. `break;`
+statements are explained in detail in <<sec-break-statement>>.
+
+// 742 - Modified
+A `continue;` statement may be executed in a loop body to skip the rest of the
+current loop body, executing the update statements and then evaluating the
+condition to either execute the loop body again, or terminate the loop. `continue;`
+statements are explained in detail in <<sec-continue-statement>>.
+
+// 743
+The scope of any declaration in a `for` statement is limited to the `for`
+statement and its body.
+
+// Added
+After type checking, a `for` statement has the form:
+
+// Added
+${syntax: forStatementIR}
+
+==== 3-clause `for` statements
+
+// 739
+The basic 3-clause `for` statement is similar to a C `for` statement. The init
+statements will be executed prior to executing the loop. The condition will be
+evaluated before each iteration, to determine if the loop should exit. If the
+condition is false, the loop will exit without executing any statements from
+the loop body or update. The update statements will be executed after the loop
+body and before evaluating the condition again for the next iteration.
+
+===== Type checking
+
+// Added
+After type checking, a 3-clause `for` statement has the form:
+
+// Added
+${syntax: forStatementIR
+          forInitStatementListIR
           forInitStatementIR
-          forUpdateStatementIR
-          forCollectionExpressionIR
-          forStatementIR}
+          forUpdateStatementListIR
+          forUpdateStatementIR}
+
+// Added
+${rulegroup-source: Stmt_ok/forStatement-three-clause}
+${rulegroup-prose: Stmt_ok/forStatement-three-clause}
+
+// Added
+A list of initialization statements are type checked with the relation:
+
+// Added
+${relation-title-source: ForInitStmtList_ok}
+${relation-title-prose: ForInitStmtList_ok}
+
+// Added
+This relation invokes the following relation for each initialization statement:
+
+// Added
+${relation-title-source: ForInitStmt_ok}
+${relation-title-prose: ForInitStmt_ok}
+
+// Added
+${rulegroup-source: ForInitStmt_ok}
+${rulegroup-prose: ForInitStmt_ok}
+
+// Added
+A list of update statements are type checked with the relation:
+
+// Added
+${relation-title-source: ForUpdateStmtList_ok}
+${relation-title-prose: ForUpdateStmtList_ok}
+
+// Added
+This relation invokes the following relation for each update statement:
+
+// Added
+${relation-title-source: ForUpdateStmt_ok}
+${relation-title-prose: ForUpdateStmt_ok}
+
+// Added
+${rulegroup-source: ForUpdateStmt_ok}
+${rulegroup-prose: ForUpdateStmt_ok}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: Stmt_inst/forStatementIR-three-clause}
+${rulegroup-prose: Stmt_inst/forStatementIR-three-clause}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: Stmt_eval/forStatementIR-three-clause}
+${rulegroup-prose: Stmt_eval/forStatementIR-three-clause}
+
+// Added
+A list of initialization statements is evaluated with the relation:
+
+// Added
+${relation-title-source: ForInitStmts_eval}
+${relation-title-prose: ForInitStmts_eval}
+
+// Added
+An initialization statement is evaluated with the relation:
+
+// Added
+${relation-title-source: ForInitStmt_eval}
+${relation-title-prose: ForInitStmt_eval}
+
+// Added
+${rulegroup-source: ForInitStmt_eval}
+${rulegroup-prose: ForInitStmt_eval}
+
+// Added
+A list of update statements is evaluated with the relation:
+
+// Added
+${relation-title-source: ForUpdateStmts_eval}
+${relation-title-prose: ForUpdateStmts_eval}
+
+// Added
+An update statement is evaluated with the relation:
+
+// Added
+${relation-title-source: ForUpdateStmt_eval}
+${relation-title-prose: ForUpdateStmt_eval}
+
+// Added
+${rulegroup-source: ForUpdateStmt_eval}
+${rulegroup-prose: ForUpdateStmt_eval}
+
+// Added
+With these, the 3-clause `for` statement is evaluated with the relation:
+
+// Added
+${relation-title-source: ForThreeClauseStmt_eval}
+${relation-title-prose: ForThreeClauseStmt_eval}
+
+// Added
+${rulegroup-source: ForThreeClauseStmt_eval}
+${rulegroup-prose: ForThreeClauseStmt_eval}
+
+==== `for`-`in` statements
+
+// 740
+The `for`-`in` statement executes the body once for each value in a range or
+each element in a list expression or header stack.  The list or range
+expression itself will only be evaluated once, before the first iteration of
+the loop. All side effects in the list or range expression will occur before
+the first iteration of the loop body.
+
+===== Type checking
+
+// Added
+After type checking, a `for`-`in` statement has the form:
+
+${syntax: forStatementIR
+          forCollectionExpressionIR}
+
+// Added
+${rulegroup-source: Stmt_ok/forStatement-in}
+${rulegroup-prose: Stmt_ok/forStatement-in}
+
+// Added
+Collection expressions are type checked with the relation:
+
+// Added
+${relation-title-source: ForCollectionExpr_ok}
+${relation-title-prose: ForCollectionExpr_ok}
+
+// Added
+${rulegroup-source: ForCollectionExpr_ok}
+${rulegroup-prose: ForCollectionExpr_ok}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: Stmt_inst/forStatementIR-in}
+${rulegroup-prose: Stmt_inst/forStatementIR-in}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: Stmt_eval/forStatementIR-in}
+${rulegroup-prose: Stmt_eval/forStatementIR-in}
+
+// Added
+Collection expressions are evaluated with the relation:
+
+// Added
+${relation-title-source: ForCollectionExpr_eval}
+${relation-title-prose: ForCollectionExpr_eval}
+
+// Added
+${rulegroup-source: ForCollectionExpr_eval}
+${rulegroup-prose: ForCollectionExpr_eval}
+
+// Added
+With these, the `for`-`in` statement is evaluated with the relation:
+
+// Added
+${relation-title-source: ForInStmt_eval}
+${relation-title-prose: ForInStmt_eval}
+
+// Added
+${rulegroup-source: ForInStmt_eval}
+${rulegroup-prose: ForInStmt_eval}

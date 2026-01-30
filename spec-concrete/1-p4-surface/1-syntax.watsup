@@ -322,11 +322,16 @@ syntax castExpression = `( type ) expression
 ;;;; Data (aggregate) expressions
 ;;
 
-syntax dataElementExpression
+syntax sequenceOrRecordElementExpression
+
+syntax invalidHeaderExpression = `{#}
+
+syntax sequenceOrRecordExpression =
+  | `{ sequenceOrRecordElementExpression trailingCommaOpt }
 
 syntax dataExpression =
-  | `{#}
-  | `{ dataElementExpression trailingCommaOpt }
+  | invalidHeaderExpression
+  | sequenceOrRecordExpression
 
 ;;
 ;;;; Member and index access expressions
@@ -434,7 +439,7 @@ syntax recordElementExpression =
   | name `= expression `, namedExpressionList
   | name `= expression `, namedExpressionList `, `...
 
-syntax dataElementExpression =
+syntax sequenceOrRecordElementExpression =
   | sequenceElementExpression
   | recordElementExpression
 
@@ -1388,7 +1393,7 @@ syntax annotationBody =
   | annotationBody annotationToken
 
 syntax structuredAnnotationBody =
-  dataElementExpression trailingCommaOpt
+  sequenceOrRecordElementExpression trailingCommaOpt
 
 syntax annotation =
   | `@ name

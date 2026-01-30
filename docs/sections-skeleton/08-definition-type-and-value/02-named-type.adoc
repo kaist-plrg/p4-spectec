@@ -1,13 +1,15 @@
-[#sec-named-types]
+[#sec-named-type]
 === Named types
 
 // Added
 ${syntax: prefixedTypeName specializedType namedType}
 
+// Added
 Named types are types that reference another type by name. User-defined types
 can be introduced with their names. For example, the following declares a new
 struct type `S`:
 
+// Added
 [source,p4]
 ----
 struct S {
@@ -16,21 +18,25 @@ struct S {
 }
 ----
 
+// Added
 This type can then be referenced by its name, as can be seen in the parameter
 type of the following example:
 
+// Added
 [source,p4]
 ----
 void f(S s) {}
 ----
 
+// Added
 Here, `S` is a named type (`typeName`) that refers to the struct type defined earlier.
 
-// Section 7.2.12 of the P4-16 Language Specification
+// 347 - Modified
 Types such as struct, header, and header union types can be generic. In order
 to use such a generic type it must be specialized with appropriate type
 arguments. For example,
 
+// 348
 [source,p4]
 ----
 // generic structure type
@@ -69,33 +75,41 @@ header_union HU<T> {
 HU<bit> hu;
 ----
 
-[#sec-type-definitions]
+[#sec-type-definition]
 ==== Type definitions (type constructors)
 
 // Added
 ${syntax: typeDeclaration}
 
+// Added
 `typeDeclaration` introduces a user-defined type definition. These can be
 referenced by name. Generic type definitions can be specialized with type
 arguments to produce a type instance.
 
+// Added
 The internal representation of type definitions is as follows:
 
+// Added
 ${syntax: nameTypeDefIR aliasTypeDefIR dataTypeDefIR objectTypeDefIR typeDefIR}
 
+// Added
 For example, `structTypeDeclaration` introduces a struct type definition,
 `structTypeDefIR`:
 
+// Added
 ${syntax: structTypeDefIR structTypeDeclaration}
 
+// Added
 Some type definitions like struct and header type definitions can be
 polymorphic, meaning they can have type variables as parameters. On the other
 hand, type definitions such as enum and type alias definitions can only be
 monomorphic. Below table summarizes which kinds of type definitions can be
 polymorphic:
 
+// Added
 NOTE: Add a table for $is_monomorphic_typeDefIR here.
 
+// Added
 NOTE: Add explainer on explicit and implicit type parameters for type definitions here.
 
 ==== Type resoultion
@@ -106,28 +120,34 @@ explicit construct for struct types. Instead, struct types are always
 referenced by name. To easily handle named types in P4~IR~, the internal
 representation of types contain representations for the referred types.
 
+// Added
 ${syntax: structTypeIR}
 
+// Added
 For example, a struct type is represented as `structTypeIR` in P4~IR~. Thus,
 after type checking, a named type in P4~16~ is resolved to its referred type in
 P4~IR~. For named types referring to monomorphic type definitions, the resolved
 type is simply the type defined by the type definition.
 
+// Added
 [source,p4]
 ----
 enum E_t { A, B, C; }
 void f(E_t e) {}
 ----
 
+// Added
 In the above example, the named type `E_t` is resolved to the enum type
 `enumTypeIR`.
 
+// Added
 [source,p4]
 ----
 struct S<T> { T t; }
 void f(S<bit<32>> s) {}
 ----
 
+// Added
 In the above example, the named type `S<bit<32>>` is resolved to a
 `structTypeIR`, where it specializes a `structTypeDefIR` with the type argument
 `bit<32>`. Type specialization is discussed in detail in the next section.
@@ -144,10 +164,12 @@ ${func-prose: specialize_typeDefIR}
 // Added
 ${syntax: prefixedTypeName}
 
+// Added
 A `prefixedTypeName` may refer to either a monomorphic type definition or a
 polymorphic type definition without type arguments. The names can be prefixed
 by a dot (`.`) to refer to the top-level namespace.
 
+// Added
 On type checking, the referenced type definition is looked up by name. If the
 referenced type definition is monomorphic, then the resolved type is simply the
 type defined by the type definition. If the referenced type definition is
@@ -162,21 +184,25 @@ ${rulegroup-prose: Type_ok/prefixedTypeName}
 
 ==== Specialized types
 
-// Section 7.2.12 of the P4-16 Language Specification
+// 340
 A generic type may be specialized by specifying arguments for its type
 variables. In cases where the compiler can infer type arguments, type
 specialization is not necessary. When a type is specialized, all its type
 variables must be bound.
 
+// Added
 NOTE: P4-SpecTec currently does *not* infer type arguments for type
 specialization, where it only performs inference for function and method calls.
 
+// 341 - Modified
 ${syntax: specializedType}
 
+// 342
 For example, the following extern declaration describes a generic block of
 registers, where the type of the elements stored in each register is an
 arbitrary `T`.
 
+// 343
 [source,p4]
 ----
 extern Register<T> {
@@ -186,14 +212,17 @@ extern Register<T> {
 }
 ----
 
+// 344
 The type `T` has to be specified when instantiating a set of registers, by
 specializing the Register type:
 
+// 345
 [source,p4]
 ----
 Register<bit<32>>(128) registerBank;
 ----
 
+// 346
 The instantiation of `registerBank` is made using the `Register` type
 specialized with the `bit<32>` bound to the `T` type argument.
 

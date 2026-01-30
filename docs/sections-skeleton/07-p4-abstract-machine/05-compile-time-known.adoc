@@ -1,15 +1,17 @@
 [#sec-compile-time-known]
 === Compile-time known and local compile-time known values
 
-// Modified section 18.1 in the P4-16 Language Specification
+// 1070
 Certain expressions in a P4 program have the property that their value can be
 determined at compile time. Moreover, for some of these expressions, their
 value can be determined only using information in the current scope. We call
 these _compile-time known values_ and _local compile-time known values_
 respectively.
 
+// 1071
 The following are local compile-time known values:
 
+// 1072 - Modified
 - Integer literals, Boolean literals, and string literals.
 - Identifiers declared as constants using the `const` keyword.
 - Identifiers declared in an `error`, `enum`, or `match_kind` declaration.
@@ -17,7 +19,7 @@ The following are local compile-time known values:
 - The `size` field of a value with type header stack.
 - The `_` identifier when used as a `select` expression label.
 - The expression `{#}` representing an invalid header or header union value.
-- Instances constructed by instance declarations and constructor invocations.
+// - Instances constructed by instance declarations and constructor invocations.
 - Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.
 - Sequence expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
@@ -35,10 +37,13 @@ The following are local compile-time known values:
 
 NOTE: It is questionable whether instances constructed by instance declarations
 and constructor invocations should be considered local compile-time known
-values. A related spec issue is made here: https://github.com/p4lang/p4-spec/issues/1309.
+values. So, the corresponding bullet is commented out in this document.
+A related spec issue is made here: https://github.com/p4lang/p4-spec/issues/1309.
 
+// 1073
 The following are compile-time known values:
 
+// 1074
 - All local compile-time known values.
 - Constructor parameters (i.e., the declared parameters for a `parser`, `control`, etc.)
 - Tuple expression where all components are compile-time known values.
@@ -56,6 +61,7 @@ The following are compile-time known values:
   `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is
   generic.
 
+// 1075
 Intuitively, the main difference between _compile-time known values_ and _local
 compile-time known values_ is that the former also contains constructor
 parameters. The distinction is important when it comes to defining the meaning
@@ -73,14 +79,17 @@ instantiation phase. Once the constructor parameters are bound to actual
 arguments and type parameters are bound to actual types, compile-time known
 values can be evaluated to concrete values.
 
+// Added
 `ctk` is a marker used in P4~IR~ to indicate whether an expression is local
 compile-time known, compile-time known, or neither.
 
+// Added
 ${syntax: ctk}
 
+// Added
 ``typedExpressionIR``s in P4~IR~, produced by typing ``expression``s in P4~16~,
 annotated with their type ``typeIR`` and a ``ctk`` marker indicating the
 compile-time known status.
 
-${syntax: expressionNoteIR
-          typedExpressionIR}
+// Added
+${syntax: expressionNoteIR typedExpressionIR}

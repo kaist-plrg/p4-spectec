@@ -179,8 +179,20 @@ module Make
     Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused name
       total percentage
     |> warn no_region;
-    keys_unused
-    |> List.iter (fun key ->
-           Format.asprintf "\t- unused splice key: %s" (K.to_string key)
-           |> warn no_region)
+    let s =
+      keys_unused
+      |> List.mapi (fun idx key -> (idx, key))
+      |> List.fold_left
+           (fun s (idx, key) ->
+             let s =
+               if idx mod 5 = 0 && idx > 0 then (
+                 warn no_region ("\t" ^ s);
+                 "")
+               else s
+             in
+             let s = s ^ K.to_string key in
+             s ^ if idx mod 5 < 4 && idx < count_unused - 1 then ", " else "")
+           ""
+    in
+    warn no_region ("\t" ^ s)
 end
