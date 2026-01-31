@@ -10,34 +10,22 @@
 ;;;; prefixedNonTypeName
 ;;;; THIS
 
-rulegroup CallableTarget_ok/referenceExpression {
-
-  rule CallableTarget_ok/prefixedNonTypeName-non-verify:
-    p TC |- prefixedNonTypeName : prefixedNameIR
-    -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if ~((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
-
-  rule CallableTarget_ok/prefixedNonTypeName-verify:
-    p TC |- prefixedNonTypeName : prefixedNameIR
-    -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    ---- ;; call to "verify" is only allowed in parsers
-    -- if ((prefixedNameIR = `` "verify") \/ (prefixedNameIR = `. "verify"))
-    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
-            \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
-
-  rule CallableTarget_ok/this:
-    p TC |- THIS : (`` "this")
-
-}
-
 ;;; memberAccessExpression
 ;;; syntax memberAccessExpression = memberAccessBase `. member
 ;;;; syntax memberAccessBase
-
 ;;;;; prefixedTypeName
 ;;;;; expression
 
-rulegroup CallableTarget_ok/memberAccessExpression {
+;;; syntax parenthesizedExpression = `( expression )
+
+rulegroup CallableTarget_ok {
+
+  rule CallableTarget_ok/prefixedNonTypeName:
+    p TC |- prefixedNonTypeName : prefixedNameIR
+    -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+
+  rule CallableTarget_ok/this:
+    p TC |- THIS : (`` "this")
 
   rule CallableTarget_ok/memberAccessExpression-prefixedTypeName:
     p TC |- prefixedTypeName `. member : TYPE prefixedNameIR `. nameIR
@@ -49,13 +37,11 @@ rulegroup CallableTarget_ok/memberAccessExpression {
     -- if nameIR = $name(member)
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
 
+  rule CallableTarget_ok/parenthesizedExpression:
+    p TC |- `( expression ) : `( callableTargetIR )
+    -- CallableTarget_ok: p TC |- expression : callableTargetIR
+
 }
-
-;;;;; syntax parenthesizedExpression = `( expression )
-
-rule CallableTarget_ok/parenthesizedExpression:
-  p TC |- `( expression ) : `( callableTargetIR )
-  -- CallableTarget_ok: p TC |- expression : callableTargetIR
 
 ;;
 ;; Callable target typing (when used as a lvalue)
@@ -77,97 +63,98 @@ rule CallableTarget_lvalue_ok:
 ;;; referenceExpressionIR
 ;;; syntax referenceExpressionIR = prefixedNameIR
 
-rulegroup CallableType_ok/referenceExpressionIR {
+rule CallableType_ok/actionTypeIR:
+  p TC |- prefixedNameIR `< eps > `( argumentIR* )
+        : actionTypeIR `< `# eps > `( `# id_omitted* )
+  ---- ;; find the action type definition
+  -- if (callableId, actionTypeIR, id_omitted*)
+      = $find_callableDef_overloaded_t(
+          p, TC, prefixedNameIR, argumentIR*)
+  ---- ;; check that the action type is well-formed
+  -- CallableType_wf: $bound(p, TC) |- actionTypeIR
 
-  rule CallableType_ok/actionTypeIR:
-    p TC |- prefixedNameIR `< eps > `( argumentIR* )
-          : actionTypeIR `< `# eps > `( `# id_default* )
-    ---- ;; find the action type definition
-    -- if (callableId, actionTypeIR, id_default*)
-        = $find_callableDef_overloaded_t(
-            p, TC, prefixedNameIR, argumentIR*)
-    ---- ;; check that the action type is well-formed
-    -- CallableType_wf: $bound(p, TC) |- actionTypeIR
-
-  rule CallableType_ok/functionTypeIR:
-    p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-          : functionTypeIR `< `# typeId_impl* > `( `# id_omitted* )
-    ---- ;; find and specialize the function type definition
-    -- if (callableId, functionTypeDefIR, id_omitted*)
-        = $find_callableDef_overloaded_t(
-            p, TC, prefixedNameIR, argumentIR*)
-    -- if (functionTypeIR, typeId_impl*)
-        = $specialize_callableTypeDefIR(
-            functionTypeDefIR, typeArgumentIR*)
-    ---- ;; check that the function type is well-formed
-    -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-    -- CallableType_wf: bound |- functionTypeIR
-
-}
+rule CallableType_ok/functionTypeIR:
+  p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+        : functionTypeIR `< `# typeId_impl* > `( `# id_omitted* )
+  ---- ;; find and specialize the function type definition
+  -- if (callableId, functionTypeDefIR, id_omitted*)
+      = $find_callableDef_overloaded_t(
+          p, TC, prefixedNameIR, argumentIR*)
+  -- if (functionTypeIR, typeId_impl*)
+      = $specialize_callableTypeDefIR(
+          functionTypeDefIR, typeArgumentIR*)
+  ---- ;; check that the function type is well-formed
+  -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
+  -- CallableType_wf: bound |- functionTypeIR
 
 ;;; typedLvalueIR `. nameIR
 
-rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-minmax-SizeIn-BitsBytes:
-  p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
-        : methodTypeIR `< `# eps > `( `# eps )
-  ---- ;; if the method is min/maxSizeInBits/Bytes builtin
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
-                    "maxSizeInBits", "maxSizeInBytes" ]
-  ---- ;; create callable type
-  -- if methodTypeIR = BUILTIN_METHOD `( eps ) `: INT
+rulegroup CallableType_ok/builtinMethodTypeIR {
 
-rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-stack-push-pop-front:
-  p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( argumentIR )
-        : methodTypeIR `< `# eps > `( `# eps )
-  ---- ;; if the method is push/pop_front builtin
-  -- if nameIR <- [ "push_front", "pop_front" ]
-  ---- ;; check that the base type is a stack
-  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if typeIR `[ _ ] = $unroll_typeIR(typeIR_base)
-  ---- ;; (TODO) check if the argument is named
-  ---- ;; create callable type
-  -- if parameterIR = `EMPTY `EMPTY INT "count" eps
-  -- if methodTypeIR = BUILTIN_METHOD `( parameterIR ) `: INT
+  rule CallableType_ok/minmax-SizeIn-BitsBytes:
+    p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
+          : methodTypeIR `< `# eps > `( `# eps )
+    ---- ;; if the method is min/maxSizeInBits/Bytes builtin
+    -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
+                      "maxSizeInBits", "maxSizeInBytes" ]
+    ---- ;; create callable type
+    -- if methodTypeIR = BUILTIN_METHOD nameIR `( eps ) `: INT
 
-rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-header-isValid:
-  p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
-        : methodTypeIR `< `# eps > `( `# eps )
-  ---- ;; if the method is isValid builtin
-  -- if nameIR <- [ "isValid" ]
-  ---- ;; check that the base type is a header
-  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if HEADER _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
-  ---- ;; create callable type
-  -- if methodTypeIR = BUILTIN_METHOD `( eps ) `: BOOL
+  rule CallableType_ok/stack-push-pop-front:
+    p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( argumentIR )
+          : methodTypeIR `< `# eps > `( `# eps )
+    ---- ;; if the method is push/pop_front builtin
+    -- if nameIR <- [ "push_front", "pop_front" ]
+    ---- ;; check that the base type is a stack
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR `[ _ ] = $unroll_typeIR(typeIR_base)
+    ---- ;; (TODO) check if the argument is named
+    ---- ;; create callable type
+    -- if parameterIR = `EMPTY `EMPTY INT "count" eps
+    -- if methodTypeIR = BUILTIN_METHOD nameIR `( parameterIR ) `: INT
 
-rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-union-isValid:
-  p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
-        : methodTypeIR `< `# eps > `( `# eps )
-  ---- ;; if the method is isValid builtin
-  -- if nameIR <- [ "isValid" ]
-  ---- ;; check that the base type is a header
-  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if HEADER_UNION _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
-  ---- ;; create callable type
-  -- if methodTypeIR = BUILTIN_METHOD `( eps ) `: BOOL
+  rule CallableType_ok/header-isValid:
+    p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
+          : methodTypeIR `< `# eps > `( `# eps )
+    ---- ;; if the method is isValid builtin
+    -- if nameIR <- [ "isValid" ]
+    ---- ;; check that the base type is a header
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if HEADER _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
+    ---- ;; create callable type
+    -- if methodTypeIR = BUILTIN_METHOD nameIR `( eps ) `: BOOL
 
-rule CallableType_ok/typedExpressionIR-nameIR-builtin-method-header-set-ValidInvalid:
-  p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
-        : methodTypeIR `< `# eps > `( `# eps )
-  ---- ;; if the method is setValid/Invalid builtin
-  -- if nameIR <- [ "setValid", "setInvalid" ]
-  ---- ;; check that the base type is a header
-  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if HEADER _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
-  ---- ;; create callable type
-  -- if methodTypeIR = BUILTIN_METHOD `( eps ) `: VOID
+  rule CallableType_ok/header-union-isValid:
+    p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
+          : methodTypeIR `< `# eps > `( `# eps )
+    ---- ;; if the method is isValid builtin
+    -- if nameIR <- [ "isValid" ]
+    ---- ;; check that the base type is a header
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if HEADER_UNION _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
+    ---- ;; create callable type
+    -- if methodTypeIR = BUILTIN_METHOD nameIR `( eps ) `: BOOL
 
-rule CallableType_ok/typedExpressionIR-nameIR-extern-method:
+  rule CallableType_ok/header-set-ValidInvalid:
+    p TC |- (typedExpressionIR_base `. nameIR) `< eps > `( eps )
+          : methodTypeIR `< `# eps > `( `# eps )
+    ---- ;; if the method is setValid/Invalid builtin
+    -- if nameIR <- [ "setValid", "setInvalid" ]
+    ---- ;; check that the base type is a header
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if HEADER _ `< _ > `{ _ } = $unroll_typeIR(typeIR_base)
+    ---- ;; create callable type
+    -- if methodTypeIR = BUILTIN_METHOD nameIR `( eps ) `: VOID
+
+}
+
+rule CallableType_ok/externMethodTypeIR:
   p TC |- (typedExpressionIR_base `. nameIR) `< typeArgumentIR* > `( argumentIR* )
         : externMethodTypeIR `< `# typeId_impl* > `( `# id_omitted* )
   ---- ;; if the base type is an extern
   -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-  -- if EXTERN typeId `< _ > `{ (callableId_extern `: externMethodTypeDefIR_extern)* }
+  -- if EXTERN typeId `< _ >
+        `{ (callableId_extern `: externMethodTypeDefIR_extern)* }
       = $unroll_typeIR(typeIR_base)
   ---- ;; find method type
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
@@ -184,7 +171,7 @@ rule CallableType_ok/typedExpressionIR-nameIR-extern-method:
   -- if bound = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
   -- CallableType_wf: bound |- externMethodTypeIR
 
-rule CallableType_ok/typedExpressionIR-nameIR-parser-apply-method:
+rule CallableType_ok/parserApplyMethodTypeIR:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( argumentIR* )
         : parserApplyMethodTypeIR `< `# eps > `( `# id_omitted* )
   ---- ;; if the base type is a parser 
@@ -203,7 +190,7 @@ rule CallableType_ok/typedExpressionIR-nameIR-parser-apply-method:
           callTargetKey,
           def $parameterListIR_of_parserApplyMethodTypeIR)
 
-rule CallableType_ok/typedExpressionIR-nameIR-control-apply-method:
+rule CallableType_ok/controlApplyMethodTypeIR:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( argumentIR* )
         : controlApplyMethodTypeIR `< `# eps > `( `# id_omitted* )
   ---- ;; if the base type is a control 
@@ -222,7 +209,7 @@ rule CallableType_ok/typedExpressionIR-nameIR-control-apply-method:
           callTargetKey,
           def $parameterListIR_of_controlApplyMethodTypeIR)
 
-rule CallableType_ok/typedExpressionIR-nameIR-table-apply-method:
+rule CallableType_ok/tableApplyMethodTypeIR:
   p TC |- (typedExpressionIR_base `. "apply") `< eps > `( eps )
         : tableApplyMethodTypeIR `< `# eps > `( `# eps )
   ---- ;; if the base type is a table
@@ -249,7 +236,7 @@ rule CallableType_ok/parenthesized:
 ;;; Action call
 
 ;;;; syntax actionTypeIR =
-;;;;  ACTION `( parameterIR* )
+;;;;  ACTION nameIR `( parameterIR* )
 
 dec $callable_action(cursor, typingContext) : bool
 
@@ -260,7 +247,7 @@ def $callable_action(LOCAL, TC)
   -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/action:
-  p TC |- (ACTION `( parameterIR* ))
+  p TC |- (ACTION _ `( parameterIR* ))
             `< eps `# eps > `( argumentIR* `# id_default* )
         : VOID `< eps > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -278,7 +265,7 @@ rule Call_ok/action:
 
 ;;;; definedFunctionTypeIR
 ;;;; syntax definedFunctionTypeIR =
-;;;;  FUNCTION `( parameterIR* ) `: typeIR
+;;;;  FUNCTION nameIR `( parameterIR* ) `: typeIR
 
 dec $callable_definedFunction(cursor, typingContext) : bool
 
@@ -291,7 +278,7 @@ def $callable_definedFunction(LOCAL, TC)
   -- if localKind = TC.LOCAL.KIND
 
 rule Call_ok/definedFunctionTypeIR:
-  p TC |- (FUNCTION `( parameterIR* ) `: typeIR_ret)
+  p TC |- (FUNCTION nameIR `( parameterIR* ) `: typeIR_ret)
           `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -308,7 +295,7 @@ rule Call_ok/definedFunctionTypeIR:
       = $subst_typeIR(inference, typeIR_ret)
   ---- ;; check that the substituted function is still well-formed
   -- if functionTypeIR_inferred
-      = FUNCTION `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
+      = FUNCTION nameIR `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
   -- CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred
   ---- ;; check call site
   -- if $callable_definedFunction(p, TC)
@@ -319,18 +306,31 @@ rule Call_ok/definedFunctionTypeIR:
 
 ;;;; externFunctionTypeIR
 ;;;; syntax externFunctionTypeIR =
-;;;;  EXTERN_FUNCTION `( parameterIR* ) `: typeIR
+;;;;  EXTERN_FUNCTION nameIR `( parameterIR* ) `: typeIR
 
-dec $callable_externFunction(cursor, typingContext) : bool
+dec $callable_externFunction(cursor, typingContext, nameIR) : bool
 
-def $callable_externFunction(GLOBAL, TC) = true
-def $callable_externFunction(BLOCK, TC)
-  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+def $callable_externFunction(GLOBAL, TC, nameIR) = false
+  -- if nameIR = "verify"
+def $callable_externFunction(GLOBAL, TC, nameIR) = true
+  -- if nameIR =/= "verify"
+def $callable_externFunction(BLOCK, TC, nameIR)
+  = blockKind = PARSER
+  -- if nameIR = "verify"
   -- if blockKind = TC.BLOCK.KIND
-def $callable_externFunction(LOCAL, TC) = true
+def $callable_externFunction(BLOCK, TC, nameIR)
+  = (blockKind = PARSER) \/ (blockKind = CONTROL)
+  -- if nameIR =/= "verify"
+  -- if blockKind = TC.BLOCK.KIND
+def $callable_externFunction(LOCAL, TC, nameIR)
+  = localKind = PARSER_STATE
+  -- if nameIR = "verify"
+  -- if localKind = TC.LOCAL.KIND
+def $callable_externFunction(LOCAL, TC, nameIR) = true
+  -- if nameIR =/= "verify"
 
 rule Call_ok/externFunctionTypeIR:
-  p TC |- (EXTERN_FUNCTION `( parameterIR* ) `: typeIR_ret)
+  p TC |- (EXTERN_FUNCTION nameIR `( parameterIR* ) `: typeIR_ret)
             `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_omitted* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -347,10 +347,10 @@ rule Call_ok/externFunctionTypeIR:
       = $subst_typeIR(inference, typeIR_ret)
   ---- ;; check that the substituted function is still well-formed
   -- if functionTypeIR_inferred
-      = EXTERN_FUNCTION `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
+      = EXTERN_FUNCTION nameIR `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
   -- CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred
   ---- ;; check call site
-  -- if $callable_externFunction(p, TC)
+  -- if $callable_externFunction(p, TC, nameIR)
   ---- ;; check call convention
   -- Call_convention_ok:
       p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
@@ -361,7 +361,7 @@ rule Call_ok/externFunctionTypeIR:
 
 ;;;; builtinMethodTypeIR
 ;;;; syntax builtinMethodTypeIR =
-;;;;  BUILTIN_METHOD `( parameterIR* ) `: typeIR
+;;;;  BUILTIN_METHOD nameIR `( parameterIR* ) `: typeIR
 
 dec $callable_builtinMethod(cursor, typingContext) : bool
 
@@ -370,7 +370,7 @@ def $callable_builtinMethod(BLOCK, TC) = true
 def $callable_builtinMethod(LOCAL, TC) = true
 
 rule Call_ok/builtinMethodTypeIR:
-  p TC |- (BUILTIN_METHOD `( parameterIR* ) `: typeIR_ret)
+  p TC |- (BUILTIN_METHOD nameIR `( parameterIR* ) `: typeIR_ret)
             `< typeArgumentIR* `# eps > `( argumentIR* `# id_default* )
         : typeIR_ret `< typeArgumentIR* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -397,7 +397,7 @@ def $callable_externMethod(BLOCK, TC)
 def $callable_externMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-non-abstract:
-  p TC |- (EXTERN_METHOD `( parameterIR* ) `: typeIR_ret)
+  p TC |- (EXTERN_METHOD nameIR `( parameterIR* ) `: typeIR_ret)
             `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_omitted* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -414,7 +414,7 @@ rule Call_ok/externMethodTypeIR-non-abstract:
       = $subst_typeIR(inference, typeIR_ret)
   ---- ;; check that the substituted method is still well-formed
   -- if externMethodTypeIR_inferred
-      = EXTERN_METHOD `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
+      = EXTERN_METHOD nameIR `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
   -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
   ---- ;; check call site
   -- if $callable_externMethod(p, TC)
@@ -423,7 +423,7 @@ rule Call_ok/externMethodTypeIR-non-abstract:
       p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
                      : argumentIR_cast*
 
-;;;;; EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR
+;;;;; EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR
 
 dec $callable_externAbstractMethod(cursor, typingContext) : bool
 
@@ -434,7 +434,7 @@ def $callable_externAbstractMethod(BLOCK, TC)
 def $callable_externAbstractMethod(LOCAL, TC) = true
 
 rule Call_ok/externMethodTypeIR-abstract:
-  p TC |- (EXTERN_METHOD ABSTRACT `( parameterIR* ) `: typeIR_ret)
+  p TC |- (EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR_ret)
             `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
         : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; align parameters with arguments
@@ -451,7 +451,7 @@ rule Call_ok/externMethodTypeIR-abstract:
       = $subst_typeIR(inference, typeIR_ret)
   ---- ;; check that the substituted method is still well-formed
   -- if externMethodTypeIR_inferred
-      = EXTERN_METHOD ABSTRACT
+      = EXTERN_METHOD ABSTRACT nameIR
           `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
   -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
   ---- ;; check call site

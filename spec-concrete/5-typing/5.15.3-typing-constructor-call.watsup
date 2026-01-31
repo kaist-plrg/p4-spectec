@@ -3,7 +3,7 @@
 ;;
 
 dec $resolve_type_alias(typeIR) : (nameIR, typeIR*)
-
+  hint(prose_in "type alias in" %0 "resolved to aliased name and type arguments")
 def $resolve_type_alias(TYPEDEF nameIR_alias typeIR_alias)
   = $resolve_type_alias(typeIR_alias)
 def $resolve_type_alias(EXTERN nameIR_alias `< typeIR_arg* > _)
@@ -11,50 +11,54 @@ def $resolve_type_alias(EXTERN nameIR_alias `< typeIR_arg* > _)
 def $resolve_type_alias(PACKAGE nameIR_alias `< typeIR_arg* > `{ _ })
   = (nameIR_alias, typeIR_arg*)
 
-rule ConstructorType_ok/non-aliased-none-type:
-  p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
-  ---- ;; if not aliased
-  -- if eps = $find_typeDef_t(p, TC, prefixedNameIR)
-  ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_omitted*)
-      = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
-  -- if (constructorTypeIR, typeId_impl*)
-      = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-  ---- ;; check that the constructor type is well-formed
-  -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-  -- ConstructorType_wf: B |- constructorTypeIR
+rulegroup ConstructorType_ok {
 
-rule ConstructorType_ok/non-aliased-some-type:
-  p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
-  ---- ;; if not aliased
-  -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
-  -- if ~(typeDefIR <: typedefTypeIR)
-  ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_omitted*)
-      = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
-  -- if (constructorTypeIR, typeId_impl*)
-      = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-  ---- ;; check that the constructor type is well-formed
-  -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-  -- ConstructorType_wf: B |- constructorTypeIR
+  rule ConstructorType_ok/non-aliased-none-type:
+    p TC |- (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* )
+          : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
+    ---- ;; if not aliased
+    -- if eps = $find_typeDef_t(p, TC, prefixedNameIR)
+    ---- ;; find and specialize the constructor type definition
+    -- if (callableId, constructorTypeDefIR, id_omitted*)
+        = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
+    -- if (constructorTypeIR, typeId_impl*)
+        = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
+    ---- ;; check that the constructor type is well-formed
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
+    -- ConstructorType_wf: B |- constructorTypeIR
 
-rule ConstructorType_ok/aliased:
-  p TC |- prefixedNameIR `< eps > `( argumentIR* )
-        : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
-  ---- ;; if aliased, resolve the alias
-  -- if TYPEDEF nameIR_alias typeIR_alias
-      = $find_typeDef_t(p, TC, prefixedNameIR)
-  -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
-  ---- ;; find and specialize the constructor type definition
-  -- if (callableId, constructorTypeDefIR, id_omitted*)
-      = $find_constructorDef_overloaded_t(TC, `` nameIR, argumentIR*)
-  -- if (constructorTypeIR, typeId_impl*)
-      = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-  ---- ;; check that the constructor type is well-formed
-  -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-  -- ConstructorType_wf: B |- constructorTypeIR
+  rule ConstructorType_ok/non-aliased-some-type:
+    p TC |- (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* )
+          : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
+    ---- ;; if not aliased
+    -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
+    -- if ~(typeDefIR <: typedefTypeIR)
+    ---- ;; find and specialize the constructor type definition
+    -- if (callableId, constructorTypeDefIR, id_omitted*)
+        = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
+    -- if (constructorTypeIR, typeId_impl*)
+        = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
+    ---- ;; check that the constructor type is well-formed
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
+    -- ConstructorType_wf: B |- constructorTypeIR
+
+  rule ConstructorType_ok/aliased:
+    p TC |- (prefixedNameIR `< eps >) `( argumentIR* )
+          : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
+    ---- ;; if aliased, resolve the alias
+    -- if TYPEDEF nameIR_alias typeIR_alias
+        = $find_typeDef_t(p, TC, prefixedNameIR)
+    -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
+    ---- ;; find and specialize the constructor type definition
+    -- if (callableId, constructorTypeDefIR, id_omitted*)
+        = $find_constructorDef_overloaded_t(TC, `` nameIR, argumentIR*)
+    -- if (constructorTypeIR, typeId_impl*)
+        = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
+    ---- ;; check that the constructor type is well-formed
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
+    -- ConstructorType_wf: B |- constructorTypeIR
+
+}
 
 ;;
 ;; Instantiation
@@ -71,7 +75,7 @@ dec $instantiable_parser(cursor, typingContext, instctxt) : bool
 def $instantiable_parser(GLOBAL, TC, instctxt)
   = instctxt = ANON
 def $instantiable_parser(BLOCK, TC, instctxt)
-  = blockKind = PARSER
+  = blockKind = PARSER \/ blockKind = PACKAGE
   -- if blockKind = TC.BLOCK.KIND
 def $instantiable_parser(LOCAL, TC, instctxt)
   = localKind = PARSER_STATE
@@ -82,7 +86,7 @@ dec $instantiable_control(cursor, typingContext, instctxt) : bool
 def $instantiable_control(GLOBAL, TC, instctxt)
   = instctxt = ANON
 def $instantiable_control(BLOCK, TC, instctxt)
-  = blockKind = CONTROL
+  = blockKind = CONTROL \/ blockKind = PACKAGE
   -- if blockKind = TC.BLOCK.KIND
 def $instantiable_control(LOCAL, TC, instctxt)
   = localKind = CONTROL_APPLY_METHOD

@@ -6,44 +6,33 @@
 
 ;;; literalExpression
 ;;; syntax literalExpression
+;;;; booleanLiteral
+;;;; integerLiteral
+;;;; stringLiteral
 
-;;;; TRUE | FALSE
+rulegroup Expr_ok/literalExpression {
 
-rulegroup Expr_ok/literalExpression-boolean {
-
-  rule Expr_ok/true:
-    p TC |- TRUE : TRUE `# expressionNoteIR
+  rule Expr_ok/booleanLiteral:
+    p TC |- booleanLiteral : booleanLiteral `# expressionNoteIR
     -- if expressionNoteIR = `( BOOL LCTK )
 
-  rule Expr_ok/false:
-    p TC |- FALSE : FALSE `# expressionNoteIR
-    -- if expressionNoteIR = `( BOOL LCTK )
-
-}
-
-;;;; number
-
-rulegroup Expr_ok/literalExpression-number {
-
-  rule Expr_ok/arbint:
+  rule Expr_ok/integerLiteral-arbint:
     p TC |- D i : (D i) `# expressionNoteIR
     -- if expressionNoteIR = `( INT LCTK )
 
-  rule Expr_ok/fixint:
+  rule Expr_ok/integerLiteral-fixint:
     p TC |- n S i : (n S i) `# expressionNoteIR
     -- if expressionNoteIR = `( (INT `< n >) LCTK )
 
-  rule Expr_ok/fixbit:
+  rule Expr_ok/integerLiteral-fixbit:
     p TC |- n W i : (n W i) `# expressionNoteIR
     -- if expressionNoteIR = `( (BIT `< n >) LCTK )
 
+  rule Expr_ok/stringLiteral:
+    p TC |- stringLiteral : stringLiteral `# expressionNoteIR
+    -- if expressionNoteIR = `( STRING LCTK )
+
 }
-
-;;;; stringLiteral 
-
-rule Expr_ok/literalExpression-stringLiteral:
-  p TC |- (`" text `") : (`" text `") `# expressionNoteIR
-  -- if expressionNoteIR = `( STRING LCTK )
 
 ;;; referenceExpression
 ;;; syntax referenceExpression
@@ -56,13 +45,13 @@ rulegroup Expr_ok/referenceExpression {
   rule Expr_ok/prefixedNonTypeName:
     p TC |- prefixedNonTypeName : prefixedNameIR `# expressionNoteIR
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if _ typeIR ctk _ = $find_var_t(p, TC, prefixedNameIR)
+    -- if _ typeIR ctk _ = $find_var_t(prefixedNameIR, p, TC)
     -- if expressionNoteIR = `( typeIR ctk )
 
   rule Expr_ok/this:
     p TC |- THIS : prefixedNameIR `# expressionNoteIR
     -- if prefixedNameIR = `` "this"
-    -- if _ typeIR ctk _ = $find_var_t(p, TC, prefixedNameIR)
+    -- if _ typeIR ctk _ = $find_var_t(prefixedNameIR, p, TC)
     -- if expressionNoteIR = `( typeIR ctk )
 
 }
@@ -567,7 +556,9 @@ rule Expr_ok/ternaryExpression:
             `# expressionNoteIR
   ---- ;; check condition
   -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
-  -- if _ `# `( BOOL ctk_cond ) = typedExpressionIR_cond
+  -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
+  -- if ctk_cond = $ctk_of_typedExpressionIR(typedExpressionIR_cond)
+  -- if BOOL = $unroll_typeIR(typeIR_cond)
   ---- ;; check both branches
   -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
   -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
@@ -607,19 +598,22 @@ rule Expr_ok/castExpression:
 ;;; dataExpression
 ;;; syntax dataExpression
 
-;;;; `{#}
+;;;; invalidHeaderExpression
+;;;; syntax invalidHeaderExpression = `{#}
 
-rule Expr_ok/dataExpression-invalid:
+rule Expr_ok/invalidHeaderExpression:
   p TC |- `{#} : `{#} `# expressionNoteIR
   -- if expressionNoteIR = `( HEADER_INVALID LCTK )
 
-;;;; `{ dataElementExpression trailingCommaOpt }
-;;;;; syntax dataElementExpression
+;;;; sequenceOrRecordExpression
+;;;; syntax sequenceOrRecordExpression
+;;;; = `{ dataElementExpression trailingCommaOpt }
+;;;;; syntax sequenceOrRecordElementExpression
 
 ;;;;; sequenceElementExpression
 ;;;;; syntax sequenceElementExpression = expressionList
 
-rulegroup Expr_ok/dataExpression-sequence {
+rulegroup Expr_ok/sequenceExpression {
 
   rule Expr_ok/non-default:
     p TC |- `{ expressionList _ }
@@ -666,7 +660,7 @@ rulegroup Expr_ok/dataExpression-sequence {
 ;;;;;; name `= expression `, namedExpressionList
 ;;;;;; name `= expression `, namedExpressionList `, `...
 
-rulegroup Expr_ok/dataExpression-record {
+rulegroup Expr_ok/recordExpression {
 
   rule Expr_ok/single-non-default:
     p TC |- `{ (name_f `= expression_f) _ }
@@ -747,7 +741,7 @@ rule Expr_ok/errorAccessExpression:
   ---- ;; check that error member is defined
   -- if nameIR = $name(member)
   -- if nameIR_error = "error." ++ nameIR 
-  -- if ERROR `. nameIR = $find_var_value_t(p, TC, `` nameIR_error)
+  -- if ERROR `. nameIR = $find_var_value_t(`` nameIR_error, p, TC)
   ---- ;; create typed expression
   -- if expressionNoteIR = `( ERROR LCTK )
 
@@ -800,65 +794,65 @@ rulegroup Expr_ok/memberAccessExpression-expression {
   rule Expr_ok/headerStack-size:
     p TC |- expression_base `. member
           : (typedExpressionIR_base `. "size") `# expressionNoteIR
-    ---- ;; check that member is "size"
-    -- if "size" = $name(member)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
     -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    ---- ;; check that member is "size"
+    -- if "size" = $name(member)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( (BIT `< 32 >) LCTK )
 
   rule Expr_ok/headerStack-lastIndex:
     p TC |- expression_base `. member
           : (typedExpressionIR_base `. "lastIndex") `# expressionNoteIR
-    ---- ;; check that member is "lastIndex"
-    -- if "lastIndex" = $name(member)
-    ---- ;; "lastIndex" can be only used within a parser
-    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
-          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
     -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    ---- ;; check that member is "lastIndex"
+    -- if "lastIndex" = $name(member)
+    ---- ;; "lastIndex" can be only used within a parser
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( (BIT `< 32 >) DYN )
 
   rule Expr_ok/headerStack-last:
     p TC |- expression_base `. member
           : (typedExpressionIR_base `. "last") `# expressionNoteIR
-    ---- ;; check that member is "last"
-    -- if "last" = $name(member)
-    ---- ;; "last" can be only used within a parser
-    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
-          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
     -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    ---- ;; check that member is "last"
+    -- if "last" = $name(member)
+    ---- ;; "last" can be only used within a parser
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR DYN )
 
   rule Expr_ok/headerStack-next:
     p TC |- expression_base `. member
           : (typedExpressionIR_base `. "next") `# expressionNoteIR
-    ---- ;; check that member is "next"
-    -- if "next" = $name(member)
-    ---- ;; "next" can be only used within a parser
-    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
-          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; check expression
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
     -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    ---- ;; check that member is "next"
+    -- if "next" = $name(member)
+    ---- ;; "next" can be only used within a parser
+    -- if (p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+          \/ (p = LOCAL /\ TC.LOCAL.KIND = PARSER_STATE)
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR DYN )
 
@@ -1180,8 +1174,8 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
     ---- ;; check whether the call is static
-    -- if ctk = $is_static_callableTarget(callableTargetIR)
-    -- if $is_static_assert_callableTarget(callableTargetIR)
+    -- if ctk = $is_static_callableTypeIR(callableTypeIR)
+    -- if $is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callExpressionIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
@@ -1208,8 +1202,8 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
     ---- ;; check whether the call is static
-    -- if ctk = $is_static_callableTarget(callableTargetIR)
-    -- if ~$is_static_assert_callableTarget(callableTargetIR)
+    -- if ctk = $is_static_callableTypeIR(callableTypeIR)
+    -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callExpressionIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
@@ -1239,7 +1233,7 @@ rulegroup Expr_ok/callExpression-callable {
     ---- ;; call must not return void on expression level
     -- if typeIR_ret =/= VOID
     ---- ;; check whether the call is static
-    -- if ctk = $is_static_callableTarget(callableTargetIR)
+    -- if ctk = $is_static_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callExpressionIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* )
@@ -1269,7 +1263,9 @@ def $is_concrete_extern_object'(
 def $is_concrete_extern_object'(typeIR) = false
   -- otherwise
 
-def $is_concrete_extern_object''(EXTERN_METHOD `< _ `, _ > `( _ ) `: _) = true
+def $is_concrete_extern_object''(
+    EXTERN_METHOD _ `< _ `, _ > `( _ ) `: _)
+  = true
 def $is_concrete_extern_object''(externMethodTypeDefIR) = false
   -- otherwise
 
@@ -1286,7 +1282,8 @@ rulegroup Expr_ok/callExpression-constructor {
         p TC |- argumentList : argumentIR*
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
-    -- ConstructorType_ok: p TC |- prefixedNameIR `< eps > `( argumentIR* )
+    -- if constructorTargetIR = prefixedNameIR `< eps >
+    -- ConstructorType_ok: p TC |- constructorTargetIR `( argumentIR* )
                                  : constructorTypeIR `< `# typeId_impl* > `( `# id_omitted* )
     ---- ;; check instantiation convention
     -- Inst_ok:
@@ -1311,8 +1308,9 @@ rulegroup Expr_ok/callExpression-constructor {
         p TC |- argumentList : argumentIR*
     ---- ;; check constructor type
     -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
+    -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
     -- ConstructorType_ok:
-        p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
+        p TC |- constructorTargetIR `( argumentIR* )
              : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
     ---- ;; check instantiation convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*

@@ -1,46 +1,114 @@
-[#sec-blockStatement]
+[#sec-block-statement]
 === Block statements
 
-${syntax: blockElementStatement
-          blockStatement
-          blockElementStatementIR
-          blockStatementIR}
+// 704
+A block statement is denoted by curly braces. It contains a sequence of
+statements and declarations, which are executed sequentially. The declarations
+(e.g., variables and constants) within a block statement are only visible
+within the block.
 
-A block statement is denoted by curly braces. It contains a sequence
-of statements and declarations, which are executed sequentially. The
-declarations (e.g., variables and constants) within a block statement
-are only visible within the block.
+// 705 - Modified
+${syntax: blockStatement blockElementStatementList blockElementStatement}
 
-[discrete]
 ==== Type checking
 
+// Added
+After type checking, block statements are represented in P4~IR~ as:
+
+// Added
+${syntax: blockStatementIR blockElementStatementListIR blockElementStatementIR}
+
+// Added
 ${rulegroup-source: Stmt_ok/blockStatement}
 ${rulegroup-prose: Stmt_ok/blockStatement}
 
+// Added
+A block is type checked by the relation:
+
+// Added
+${relation-title-source: Block_ok}
+${relation-title-prose: Block_ok}
+
+// Added
+A statement or declaration within a block statement is type checked by the
+relation:
+
+// Added
+${relation-title-source: BlockElementStmt_ok}
 ${relation-title-prose: BlockElementStmt_ok}
 
-${rulegroup-source: BlockElementStmt_ok/constantDeclaration}
-${rulegroup-prose: BlockElementStmt_ok/constantDeclaration}
+// Added
+It is implemented as:
 
-${rulegroup-source: BlockElementStmt_ok/variableDeclaration}
-${rulegroup-prose: BlockElementStmt_ok/variableDeclaration}
+// Added
+${rulegroup-source: BlockElementStmt_ok}
+${rulegroup-prose: BlockElementStmt_ok}
 
-${rulegroup-source: BlockElementStmt_ok/statement}
-${rulegroup-prose: BlockElementStmt_ok/statement}
+// Added
+A list of block elements is type checked by the relation:
 
-[discrete]
+// Added
+${relation-title-source: BlockElementStmtList_ok}
+${relation-title-prose: BlockElementStmtList_ok}
+
 ==== Compile-time evaluation
 
+// Added
 ${rulegroup-source: Stmt_inst/blockStatementIR}
 ${rulegroup-prose: Stmt_inst/blockStatementIR}
 
+// Added
+A block is compile-time evaluated by the relation:
+
+// Added
+${relation-title-source: Block_inst}
+${relation-title-prose: Block_inst}
+
+// Added
+A block element is compile-time evaluated by the relation:
+
+// Added
+${relation-title-source: BlockElementStmt_inst}
 ${relation-title-prose: BlockElementStmt_inst}
 
-${rulegroup-source: BlockElementStmt_inst/constantDeclarationIR}
-${rulegroup-prose: BlockElementStmt_inst/constantDeclarationIR}
+// Added
+${rulegroup-source: BlockElementStmt_inst}
+${rulegroup-prose: BlockElementStmt_inst}
 
-${rulegroup-source: BlockElementStmt_inst/variableDeclarationIR}
-${rulegroup-prose: BlockElementStmt_inst/variableDeclarationIR}
+// Added
+A list of block elements is compile-time evaluated by the relation:
 
-${rulegroup-source: BlockElementStmt_inst/statementIR}
-${rulegroup-prose: BlockElementStmt_inst/statementIR}
+// Added
+${relation-title-source: BlockElementStmtList_inst}
+${relation-title-prose: BlockElementStmtList_inst}
+
+==== Runtime evaluation
+
+// Added
+${rulegroup-source: Stmt_eval/blockStatementIR}
+${rulegroup-prose: Stmt_eval/blockStatementIR}
+
+// Added
+A block is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: Block_eval}
+${relation-title-prose: Block_eval}
+
+// Added
+A block element is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: BlockElementStmt_eval}
+${relation-title-prose: BlockElementStmt_eval}
+
+// Added
+${rulegroup-source: BlockElementStmt_eval}
+${rulegroup-prose: BlockElementStmt_eval}
+
+// Added
+A list of block elements is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: BlockElementStmtList_eval}
+${relation-title-prose: BlockElementStmtList_eval}

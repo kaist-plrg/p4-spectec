@@ -1,76 +1,89 @@
 [#sec-lvalue]
 == L-values
 
-// Section 12.3.1 of the P4-16 Language Specification ----
+// 140
 L-values are expressions that may appear on the left side of an assignment
 operation or as arguments corresponding to `out` and `inout` function
 parameters. An l-value represents a storage reference. The following
 expressions are legal l-values:
-// ----
 
-// Added ----
+// 141 - Modified
 ${syntax: lvalue}
-// ----
 
-// Modified section 12.3.1 of the P4-16 Language Specification ----
+// 142 - Modified
 * Identifiers of a base or derived type.
 * Structure, header, and header union field member access operations
   (using the dot notation).
 * References to elements within header stacks (see
   <<sec-header-stack>>): indexing, and references to `last` and `next`.
 * The result of a bit-slice operator `[m:l]`.
-// ----
 
-// Section 12.3.1 of the P4-16 Language Specification ----
+// 143
 The following is a legal l-value: `headers.stack[4].field`. Note that method
 and function calls cannot return l-values.
-// ----
 
-=== Type checking
+=== Semantics of l-values
 
+==== Type checking
+
+// Added
 After type checking, l-values are represented in P4~IR~ as:
 
+// Added
 ${syntax: typedLvalueIR lvalueIR lvalueNoteIR}
 
+// Added
 Notice that l-values in P4~IR~ carry type information. L-values are type
 checked according to the relation:
 
+// Added
 ${relation-title-source: Lvalue_ok}
 ${relation-title-prose: Lvalue_ok}
 
-=== Runtime evaluation
+==== Runtime evaluation
 
+// Added
 At runtime, l-values are represented as storage references:
 
+// Added
 ${syntax: storageReference}
 
-==== Creating storage references
+===== Creating storage references
 
+// Added
 The following relation evaluates an l-value to a storage reference:
 
+// Added
 ${relation-title-source: Lvalue_eval}
 ${relation-title-prose: Lvalue_eval}
 
+// Added
 The result of evaluating an l-value is:
 
+// Added
 ${syntax: storageReferenceResult
           continueResult
           abortResult}
 
-==== Reading from storage references
+===== Reading from storage references
 
+// Added
 The following relation reads a value from a storage reference:
 
+// Added
 ${relation-title-source: Lvalue_read}
 ${relation-title-prose: Lvalue_read}
 
-==== Writing to storage references
+===== Writing to storage references
 
+// Added
 The following relation writes a value to a storage reference:
 
+// Added
 ${relation-title-source: Lvalue_write}
 ${relation-title-prose: Lvalue_write}
 
+// Added
 The subsequent sections describe each kind of l-value in detail.
 
 include::01-identifier.adoc[]

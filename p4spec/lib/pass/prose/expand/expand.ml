@@ -136,6 +136,22 @@ let expand_nested_calls ids_used instrs =
       let notexp = (mixop, exps) in
       let instr_rule = RuleI (id, notexp, inputs, iterexps) $$ (at, note) in
       Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
+  | { it = ResultI (rel_signature, exps); at; note } :: instrs_rest ->
+      let* instrs_new, exps, ids =
+        replace_call_exps ~call_e_count:No ids_used exps
+      in
+      let instr_result = ResultI (rel_signature, exps) $$ (at, note) in
+      Some (ids, instrs_new @ [ instr_result ], instrs_rest)
+  | { it = ReturnI exp; at; note } :: instrs_rest ->
+      let* instrs_new, exps, ids =
+        replace_call_exps ~call_e_count:No ids_used [ exp ]
+      in
+      let instr_return =
+        match exps with
+        | [ exp ] -> ReturnI exp $$ (at, note)
+        | _ -> assert false
+      in
+      Some (ids, instrs_new @ [ instr_return ], instrs_rest)
   | _ -> None
 
 type 'ctx expansion =

@@ -141,8 +141,8 @@ relation Stmt_ok:
         "typing" %4#", under cursor" %0#", typing context"
         %1#", abstract control flow" %2#", and loop context" %3)
   hint(prose_out
-        "\nthe typing context" %5#", \nthe abstract control flow"
-        %6#", \nand the typed statement" %7)
+        "\nthe updated typing context" %5#", abstract control flow" %6#
+        ", and" %7)
 
 relation BlockElementStmt_ok:
   typingContext flow loopctxt |- blockElementStatement
@@ -152,8 +152,8 @@ relation BlockElementStmt_ok:
         "typing" %3#", under typing context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe typing context" %4#",\nthe abstract control flow"
-        %5#",\nand the typed block element statement" %6)
+        "\nthe updated typing context" %4#", abstract control flow" %5#
+        ", and" %6)
 
 relation BlockElementStmtList_ok:
   typingContext flow loopctxt |- blockElementStatementList
@@ -163,8 +163,7 @@ relation BlockElementStmtList_ok:
         "typing" %3#", under typing context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe typing context" %4#",\nthe abstract control flow"
-        %5#",\nand the typed block element statements" %6)
+        "\nthe updated typing context" %4#", abstract control flow" %5#", and" %6)
 
 relation Block_ok:
   typingContext flow loopctxt |- blockStatement
@@ -174,8 +173,8 @@ relation Block_ok:
         "typing" %3#", under typing context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe typing context" %4#", abstract control flow"
-        %5#", \nand " %6)
+        "\nthe updated typing context" %4#", abstract control flow"
+        %5#", and" %6)
 
 ;;
 ;;;; Parameter typing
@@ -236,7 +235,8 @@ def $type_of_externMethodPrototypeIR(
       `( parameterIR* )) `;)
   = externMethodTypeDefIR
   -- if externMethodTypeDefIR
-      = EXTERN_METHOD `< typeParameterListIR_expl `, typeParameterListIR_impl >
+      = EXTERN_METHOD nameIR
+          `< typeParameterListIR_expl `, typeParameterListIR_impl >
           `( parameterIR* ) `: typeIR_ret
 def $type_of_externMethodPrototypeIR(
     _ ABSTRACT (typeIR_ret nameIR
@@ -244,7 +244,7 @@ def $type_of_externMethodPrototypeIR(
       `( parameterIR* )) `;)
   = externMethodTypeDefIR
   -- if externMethodTypeDefIR
-      = EXTERN_METHOD ABSTRACT
+      = EXTERN_METHOD ABSTRACT nameIR
           `< typeParameterListIR_expl `, typeParameterListIR_impl >
           `( parameterIR* ) `: typeIR_ret
 
@@ -533,46 +533,43 @@ relation Call_convention_ok:
 ;; inserts fresh type variables for parameters with don't care types, (typeId*)
 ;; and also identifies the ids of default arguments (id*)
 
-dec $is_static_callableTarget(callableTargetIR) : ctk
-
-def $is_static_callableTarget(`. "static_assert") = LCTK
-def $is_static_callableTarget(`` "static_assert") = LCTK
-def $is_static_callableTarget(_ `. nameIR) = LCTK
+dec $is_static_callableTypeIR(callableTypeIR) : ctk
+  hint(prose_in "the compile-time known-ness of" %0)
+def $is_static_callableTypeIR(EXTERN_FUNCTION "static_assert" `( _ ) `: _)
+  = LCTK
+def $is_static_callableTypeIR(BUILTIN_METHOD nameIR `( _ ) `: _) = LCTK
   -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
                     "maxSizeInBits", "maxSizeInBytes" ]
-def $is_static_callableTarget(TYPE _ `. nameIR) = LCTK
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
-                    "maxSizeInBits", "maxSizeInBytes" ]
-def $is_static_callableTarget(_) = DYN
+def $is_static_callableTypeIR(_) = DYN
   -- otherwise
 
-dec $is_static_assert_callableTarget(callableTargetIR) : bool
-def $is_static_assert_callableTarget(`. "static_assert") = true
-def $is_static_assert_callableTarget(`` "static_assert") = true
-def $is_static_assert_callableTarget(`( callableTargetIR ))
-  = $is_static_assert_callableTarget(callableTargetIR)
-def $is_static_assert_callableTarget(_) = false
+dec $is_static_assert_callableTypeIR(callableTypeIR) : bool
+  hint(prose_true %0 "is a static_assert call")
+  hint(prose_false %0 "is not a static_assert call")
+def $is_static_assert_callableTypeIR(EXTERN_FUNCTION "static_assert" `( _ ) `: _)
+  = true
+def $is_static_assert_callableTypeIR(_) = false
   -- otherwise
 
 relation CallableTarget_ok:
   cursor typingContext |- callableTarget : callableTargetIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and typing context" %1)
   hint(prose_out "the typed callable target" %3)
 
 relation CallableTarget_lvalue_ok:
   cursor typingContext |- lvalue : callableTargetIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and typing context" %1)
   hint(prose_out "the typed callable target" %3)
 
 relation CallableType_ok:
   cursor typingContext |- callableTargetIR `< typeArgumentListIR > `( argumentIR* )
                         : callableTypeIR `< `# typeId* > `( `# id* )
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "finding the type of" %2 `< %3 > `( %4 ) #", under cursor" %0 "and typing context" %1)
+  hint(prose_in "finding the type of callable call" %2 `< %3 > `( %4 ) #", under cursor" %0 "and typing context" %1)
   hint(prose_out "the callable type" %5 "with fresh type variables" %6
-            "and default parameter ids" %7)
+            "and default parameters" %7)
 
 ;; Checks that an action/function/method invocation is valid,
 ;; gets the return type,
@@ -599,13 +596,13 @@ relation Call_ok:
 ;; and also identifies the ids of default arguments (id*)
 
 relation ConstructorType_ok:
-  cursor typingContext |- prefixedNameIR `< typeArgumentListIR > `( argumentIR* )
+  cursor typingContext |- constructorTargetIR `( argumentIR* )
                         : constructorTypeIR `< `# typeId* > `( `# id* )
-  hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "type checking constructor"
-                %2# `< %3 > `( %4 ) #", under cursor" %0 "and typing context" %1)
-  hint(prose_out %5 "with fresh type variables" %6
-                 "and default parameter ids" %7)
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "finding the type of constructor call"
+                %2 `( %3 ) #", under cursor" %0 "and typing context" %1)
+  hint(prose_out %4 "with fresh type variables" %5
+                 "and default parameters" %6)
 
 ;; Checks that a constructor invocation is valid,
 ;; gets the return type,

@@ -17,6 +17,18 @@ let link context = { context with in_link = true }
 
 (* Asciidoc utils *)
 
+(* Escaping *)
+
+let rec adoc_escape c text =
+  match String.index_opt text c with
+  | None -> text
+  | Some idx ->
+      let text_before = String.sub text 0 idx in
+      let text_after =
+        String.sub text (idx + 1) (String.length text - idx - 1)
+      in
+      text_before ^ "+" ^ String.make 1 c ^ "+" ^ adoc_escape c text_after
+
 (* Widths *)
 
 let adoc_width_short = 30
@@ -49,7 +61,18 @@ let adoc_unordered_bullet level =
 (* Links *)
 
 let adoc_link ~(link : string) (text : string) : string =
-  "<<" ^ link ^ ", " ^ text ^ ">>"
+  let brackets = String.contains text '[' || String.contains text ']' in
+  let angles = String.contains text '<' || String.contains text '>' in
+  match (brackets, angles) with
+  | false, false | false, true -> "xref:" ^ link ^ "[" ^ text ^ "]"
+  | true, false -> "<<" ^ link ^ "," ^ text ^ ">>"
+  | true, true ->
+      Format.eprintf
+        "Warning: Asciidoc link text contains both brackets and angle \
+         brackets. Link may not render correctly.\n\
+         \t%s\n"
+        text;
+      text
 
 let adoc_as_link (ctx : context) ~link (s : string) : string =
   if ctx.in_link then s else adoc_link ~link s
@@ -99,7 +122,10 @@ let string_of_text text = Il.Print.string_of_text text
 
 let string_of_varid varid = Il.Print.string_of_varid varid
 let string_of_relid relid = Il.Print.string_of_relid relid
-let string_of_defid defid = Il.Print.string_of_varid defid
+
+let string_of_defid ?(link = false) defid =
+  if link then Il.Print.string_of_varid defid
+  else Il.Print.string_of_defid defid
 
 let render_varid (ctx : context) (id_var : Sl.id) =
   if Id.is_underscored id_var then "++_++" |> adoc_as_code ctx
@@ -115,7 +141,9 @@ let render_varid (ctx : context) (id_var : Sl.id) =
 (* Notation *)
 
 let code_of_atom atom =
-  match atom.it with Atom.Tick -> "" | _ -> Atom.string_of_atom atom.it
+  match atom.it with
+  | Atom.Tick -> ""
+  | _ -> "+" ^ (atom.it |> Atom.string_of_atom) ^ "+"
 
 let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
@@ -201,10 +229,7 @@ let render_alter_hint ?(caps = false) (ctx : context) (hint : Hints.Alter.t)
     (render_base : string -> string) (render : context -> 'a -> string)
     (items : 'a list) : string =
   let render_atom (atom : atom) : string =
-    match atom.it with
-    | LAngle | RAngle | LParen | RParen | LBrack | RBrack | LBrace | RBrace ->
-        atom |> Sl.Print.string_of_atom |> adoc_as_code ctx
-    | _ -> atom |> Sl.Print.string_of_atom
+    "+" ^ (atom.it |> Atom.string_of_atom) ^ "+" |> adoc_as_code ctx
   in
   items
   |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hint
@@ -261,10 +286,11 @@ and render_exp ctx exp : string =
         (render_exp_as_code ctx exp_s)
   | UnE (unop, _, exp) ->
       render_unop unop ^ render_exp in_code exp |> adoc_as_code ctx
+  | BinE (`ImplOp, _, exp_l, exp_r) when not ctx.in_code ->
+      "if " ^ render_exp ctx exp_l ^ ", then " ^ render_exp ctx exp_r
   | BinE ((#Bool.binop as binop), _, exp_l, exp_r) ->
-      render_exp_as_code ctx exp_l
-      ^ " " ^ render_binop ctx binop ^ " "
-      ^ render_exp_as_code ctx exp_r
+      render_exp ctx exp_l ^ " " ^ render_binop ctx binop ^ " "
+      ^ render_exp ctx exp_r
   | BinE ((#Num.binop as binop), _, exp_l, exp_r) ->
       render_exp in_code exp_l ^ " " ^ render_binop in_code binop ^ " "
       ^ render_exp in_code exp_r
@@ -303,17 +329,18 @@ and render_exp ctx exp : string =
             |> adoc_as_link ctx ~link:id.it
         | None -> code_of_notexp ctx (mixop, exps))
   | StrE expfields ->
-      "{"
+      "+{+"
       ^ String.concat ", "
           (List.map
              (fun (atom, exp) -> code_of_atom atom ^ " " ^ render_exp ctx exp)
              expfields)
-      ^ "}"
+      ^ "+}+"
   | OptE (Some exp) -> "" ^ render_exp ctx exp ^ ""
   | OptE None -> "·" |> adoc_as_code ctx
   | ListE [] -> "·" |> adoc_as_code ctx
+  | ListE [ exp ] -> render_exp in_code exp |> adoc_as_code ctx
   | ListE exps ->
-      "[" ^ render_exps in_code ~sep:", " exps ^ "]" |> adoc_as_code ctx
+      "+[+ " ^ render_exps in_code ~sep:", " exps ^ " +]+" |> adoc_as_code ctx
   | ConsE (exp_h, exp_t) ->
       (* always print as code *)
       render_exp in_code exp_h ^ " {two-colons} " ^ render_exp in_code exp_t
@@ -357,13 +384,8 @@ and render_exp ctx exp : string =
       |> adoc_as_link ctx ~link:id.it
       |> adoc_as_code ctx
   | CallE (ProseFuncCall (`Check (id, hint_true, _, _, args))) ->
-      let exps =
-        args
-        |> List.filter_map (fun arg ->
-               match arg.it with ExpA exp -> Some exp | DefA _ -> None)
-      in
       render_alter_hint (link ctx) hint_true (reindent_lines ~level:0)
-        render_exp exps
+        render_arg args
       |> adoc_as_link ctx ~link:id.it
   | CallE (ProseFuncCall (`Yield (id, hint_in, _targs, args))) ->
       render_alter_hint (link ctx) hint_in (reindent_lines ~level:0) render_arg
@@ -431,7 +453,7 @@ and render_path ctx path =
 and render_param ctx param =
   match param.it with
   | ExpP (_typ, exp) -> render_exp ctx exp
-  | DefP defid -> string_of_defid defid
+  | DefP defid -> string_of_defid defid |> adoc_as_code ctx
 
 and render_params ctx params =
   match params with
@@ -444,7 +466,7 @@ and render_params ctx params =
 and render_arg ctx arg =
   match arg.it with
   | ExpA exp -> render_exp ctx exp
-  | DefA defid -> string_of_defid defid
+  | DefA defid -> string_of_defid defid |> adoc_as_code ctx
 
 and render_args ctx args =
   match args with
@@ -525,9 +547,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_exp in_prose exp_r)
   | RuleI rel_call ->
       F.asprintf "%sLet %s." bullet (render_rel_call in_prose rel_call)
-  | ReturnI exp ->
-      F.asprintf "%sReturn %s." bullet
-        (render_exp in_code exp |> adoc_as_code in_prose)
+  | ReturnI exp -> F.asprintf "%sReturn %s." bullet (render_exp in_prose exp)
   | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
   | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet
@@ -647,28 +667,50 @@ and render_defined_rel_def (rel : rel) : string =
 and render_func_title (func_title : func_title) : string =
   match func_title with
   | ProseFuncTitle (`Check (id_func, hint_true, params)) ->
+      F.asprintf "%s:\n\n%s%s"
+        (string_of_defid id_func
+        |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
+        (adoc_unordered_bullet 0)
+        (render_alter_hint ~caps:true in_prose hint_true
+           (reindent_lines ~level:0) render_param params)
+  | ProseFuncTitle (`Yield (id_func, hint_input, params)) ->
+      F.asprintf "%s:\n\n%s%s"
+        (string_of_defid id_func
+        |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
+        (adoc_unordered_bullet 0)
+        (render_alter_hint ~caps:true in_prose hint_input
+           (reindent_lines ~level:0) render_param params)
+  | MathFuncTitle (id_func, tparams, params) ->
+      (string_of_defid id_func
+      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
+      ^ Sl.Print.string_of_tparams tparams
+      ^ render_params (in_link |> code) params
+
+and render_func_header (func_title : func_title) : string =
+  match func_title with
+  | ProseFuncTitle (`Check (id_func, hint_true, params)) ->
       render_alter_hint ~caps:true in_prose hint_true (reindent_lines ~level:0)
         render_param params
-      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
   | ProseFuncTitle (`Yield (id_func, hint_input, params)) ->
       render_alter_hint ~caps:true in_prose hint_input (reindent_lines ~level:0)
         render_param params
-      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
   | MathFuncTitle (id_func, tparams, params) ->
       string_of_defid id_func
       ^ Sl.Print.string_of_tparams tparams
       ^ render_params (in_link |> code) params
-      |> adoc_as_link in_prose ~link:(string_of_defid id_func)
+      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
 
 (* Extern function definitions *)
 
 and render_extern_func_def (externfunc : externfunc) : string =
-  render_func_title externfunc
+  render_func_header externfunc
 
 (* Builtin function definitions *)
 
 and render_builtin_func_def (builtinfunc : builtinfunc) : string =
-  render_func_title builtinfunc
+  render_func_header builtinfunc
 
 (* Table function definitions *)
 
@@ -699,14 +741,14 @@ and render_table_func_def (tablefunc : tablefunc) : string =
     |> String.concat "\n"
   in
   let table_footer = "\n\n|===" in
-  render_func_title func_title
+  render_func_header func_title
   ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer
 
 (* Defined function definitions *)
 
 and render_defined_func_def (func : func) : string =
   let func_title, instrs = func in
-  render_func_title func_title ^ "\n\n" ^ render_instrs instrs
+  render_func_header func_title ^ "\n\n" ^ render_instrs instrs
 
 (* Entrypoint for binary *)
 

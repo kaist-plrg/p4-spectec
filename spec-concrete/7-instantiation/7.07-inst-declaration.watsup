@@ -9,18 +9,15 @@
 ;;;   annotationList CONST typeIR nameIR initializerIR `;
 
 rule ConstDecl_inst:
-  p IC_0 |- annotationList CONST typeIR nameIR (`= value) `;
-          : IC_1 constantDeclarationIR
+  p IC_0 |- annotationList CONST typeIR nameIR (`= `VALUE value) `;
+          : IC_1
   -- if IC_1 = $add_var_i(p, IC_0, nameIR, value)
-  -- if constantDeclarationIR 
-      = annotationList CONST typeIR nameIR (`= value) `;
 
 rule Decl_inst/constantDeclarationIR:
   IC_0 STO |- constantDeclarationIR
             : IC_1 STO
   -- ConstDecl_inst:
-      GLOBAL IC_0 |- constantDeclarationIR
-                   : IC_1 constantDeclarationIR
+      GLOBAL IC_0 |- constantDeclarationIR : IC_1 
 
 ;;; instantiationIR
 ;;; syntax instantiationIR =
@@ -106,10 +103,12 @@ rulegroup ObjectDecls_inst {
 rulegroup InstDecl_inst {
 
   rule InstDecl_inst/extern:
-    p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
+    p IC_0 STO_0 |- annotationList typeIR constructorTargetIR
                       `( argumentListIR ) nameIR objectInitializerOptIR `;
                   : IC_1 STO_3 constantDeclarationIR
     ---- ;; find and instantiate constructor
+    -- if prefixedNameIR `< typeArgumentListIR >
+        = constructorTargetIR
     -- Constructor_inst:
         p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
                 : constructorDef `< typeArgumentListIR_inst > `( `# id_omitted* )
@@ -142,13 +141,15 @@ rulegroup InstDecl_inst {
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 
   rule InstDecl_inst/non-extern:
-    p IC_0 STO_0 |- annotationList typeIR prefixedNameIR `< typeArgumentListIR >
+    p IC_0 STO_0 |- annotationList typeIR constructorTargetIR
                           `( argumentListIR ) nameIR objectInitializerOptIR `;
                      : IC_1 STO_2 constantDeclarationIR
     ---- ;; find and instantiate constructor
+    -- if prefixedNameIR `< typeArgumentListIR >
+        = constructorTargetIR
     -- Constructor_inst:
         p IC_0 |- prefixedNameIR `< typeArgumentListIR > `( argumentListIR )
                 : constructorDef `< typeArgumentListIR_inst > `( `# id_omitted* )
@@ -166,7 +167,7 @@ rulegroup InstDecl_inst {
     -- if IC_1 = $add_var_i(p, IC_0, nameIR, REF objectId)
     ---- ;; replace declaration with constant declaration holding the reference
     -- if constantDeclarationIR
-        = `EMPTY CONST typeIR nameIR (`= (REF objectId)) `;
+        = `EMPTY CONST typeIR nameIR (`= `VALUE (REF objectId)) `;
 
 }
 
@@ -356,37 +357,45 @@ rulegroup Decl_inst/externObjectDeclarationIR {
 ;;; parserDeclarationIR
 ;;; syntax parserDeclarationIR
 ;;;   annotationList PARSER
-;;;   nameIR `< typeParameterListIR >
+;;;   nameIR `< typeParameterListIR `, typeParameterListIR >
 ;;;   `( parameterListIR ) `( constructorParameterListIR )
 ;;;   `{ parserLocalDeclarationListIR parserStateListIR }`
 
 rule Decl_inst/parserDeclarationIR:
-  IC_0 STO |- annotationList PARSER nameIR `< eps >
+  IC_0 STO |- annotationList PARSER nameIR
+                `< typeParameterListIR_expl `, typeParameterListIR_impl >
                 `( parameterListIR ) `( constructorParameterListIR )
                 `{ parserLocalDeclarationListIR parserStateListIR }
             : IC_1 STO
   -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if constructorDef
-      = PARSER `( parameterListIR ) `( constructorParameterListIR )
+      = PARSER `< typeParameterListIR >
+          `( parameterListIR ) `( constructorParameterListIR )
           `{ parserLocalDeclarationListIR parserStateListIR }
   -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)
 
 ;;; controlDeclarationIR
 ;;; syntax controlDeclarationIR =
 ;;;   annotationList CONTROL
-;;;   nameIR `< typeParameterListIR >
+;;;   nameIR `< typeParameterListIR `, typeParameterListIR >
 ;;;  `( parameterListIR ) `( constructorParameterListIR )
 ;;;  `{ controlLocalDeclarationListIR APPLY controlBodyIR }
 
 rule Decl_inst/controlDeclarationIR:
-  IC_0 STO |- annotationList CONTROL nameIR `< eps >
+  IC_0 STO |- annotationList CONTROL nameIR
+                `< typeParameterListIR_expl `, typeParameterListIR_impl >
                 `( parameterListIR ) `( constructorParameterListIR )
                 `{ controlLocalDeclarationListIR APPLY controlBodyIR }
             : IC_1 STO
   ---- ;; bind control to constructor environment
   -- if callableId = $callableId_IR(nameIR, constructorParameterListIR)
+  -- if typeParameterListIR
+      = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- if constructorDef
-      = CONTROL `( parameterListIR ) `( constructorParameterListIR )
+      = CONTROL `< typeParameterListIR >
+          `( parameterListIR ) `( constructorParameterListIR )
           `{ controlLocalDeclarationListIR APPLY controlBodyIR }
   -- if IC_1 = $add_constructorDef_i(IC_0, callableId, constructorDef)
 
