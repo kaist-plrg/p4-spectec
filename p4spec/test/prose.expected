@@ -5110,8 +5110,9 @@ xref:ParameterType_wf[``annotationList`` ``direction`` ``typeIR`` ``id`` ``param
  .. Check that xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B``].
  .. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
  .. Check that ``typeIR~unroll~`` does not have type ``synthesizedTypeIR``.
- .. Check that ``direction`` is equal to ``+IN+`` or ``direction`` is equal to ``+`EMPTY+``.
  .. Check that if ``typeIR~unroll~`` is equal to ``+INT+`` or ``typeIR~unroll~`` has type ``stringTypeIR`` or ``typeIR~unroll~`` has type ``objectTypeIR``, then ``direction`` is equal to ``+`EMPTY+``.
+ .. Check that ``direction`` is equal to ``+IN+`` or ``direction`` is equal to ``+`EMPTY+``.
+ .. Check that ``~xref:optional_annotation_of_parameterIR'[$optional_annotation_of_parameterIR'(annotationList)]``.
  .. The relation holds.
 
 xref:ReturnType_wf[ReturnType_wf]:
@@ -5132,6 +5133,7 @@ xref:CallableType_wf[CallableType_wf]:
 xref:CallableType_wf[``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Let ``direction^{asterisk}^`` be the list of ``direction`` and ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -5146,6 +5148,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:CallableType_wf[``+FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -5174,6 +5177,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:CallableType_wf[``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Check that xref:ReturnType_wf[``typeIR~ret~`` is a well-formed return type, with bound type variables ``B``].
 . The relation holds.
 
@@ -5194,6 +5198,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Else:
  .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
  .. Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+ .. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -5208,6 +5213,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:CallableType_wf[``+PARSER_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -5221,6 +5227,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:CallableType_wf[``+CONTROL_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Let ``typeIR^{asterisk}^`` be the list of ``typeIR``, obtained by repeating:
 +
 --
@@ -5283,6 +5290,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:ConstructorType_wf[``+CONSTRUCTOR+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object~`` is a well-formed constructor type, with bound type variables ``B`` when]:
 
 . Check that xref:ConstructorParameterType_wf[``parameterIR`` is a well-formed constructor parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Check that xref:Type_wf[``typeIR~object~`` is a well-formed type, with bound type variables ``B``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
 . Check that ``typeIR`` has type ``parserObjectTypeIR``.
@@ -5299,6 +5307,7 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:ConstructorType_wf[``+CONSTRUCTOR+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object~`` is a well-formed constructor type, with bound type variables ``B`` when]:
 
 . Check that xref:ConstructorParameterType_wf[``parameterIR`` is a well-formed constructor parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
+. Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Check that xref:Type_wf[``typeIR~object~`` is a well-formed type, with bound type variables ``B``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
 . Check that ``typeIR`` has type ``controlObjectTypeIR``.
@@ -8015,11 +8024,11 @@ xref:Block_ok[Typing ``annotationList`` ``+{+`` ``blockElementStatementList`` ``
 
 xref:Parameter_ok[Parameter_ok]:
 
-* Typing ``paramctxt``, under cursor ``cursor``, typing context ``typingContext``, and parameter context ``parameter``:
+* Typing ``parameter``, under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the updated typing context ``typingContext``,
  **  ``parameterIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-xref:Parameter_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~0~``, and parameter context ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``]:
+xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under cursor ``p`` and typing context ``TC~0~``]:
 
 . If ``initializerOpt`` is ```EMPTY``:
  .. Let ``typeIR`` and a set of fresh type variables ``typeId~fresh~^{asterisk}^`` be
@@ -8027,7 +8036,6 @@ xref:Parameter_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~
  .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
  .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+{+`` ``typeId~fresh~^{asterisk}^`` ``+}+``].
  .. Check that xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B``].
- .. Check that if ``paramctxt`` is equal to ``+NOOPT+``, then ``~xref:optional_annotation_of_parameterIR'[$optional_annotation_of_parameterIR'(annotationList)]``.
  .. Let ``nameIR`` be xref:name[the name of ``name``].
  .. Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``·``.
  .. Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
@@ -8046,7 +8054,6 @@ xref:Parameter_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~
  .. If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] is ``CTK``:
   ... Let ``typedExpressionIR~init_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
   ... Let ``nameIR`` be xref:name[the name of ``name``].
-  ... Check that ``~xref:optional_annotation_of_parameterIR'[$optional_annotation_of_parameterIR'(annotationList)]``.
   ... Let ``parameterInitializerIR`` be ``+=+`` ``typedExpressionIR~init_cast~``.
   ... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
   ... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
@@ -8057,7 +8064,6 @@ xref:Parameter_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~
   ... Let ``nameIR`` be xref:name[the name of ``name``].
   ... Let ``value~init~`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~init_cast~``, under cursor ``p`` and typing context ``TC~0~``].
-  ... Check that ``~xref:optional_annotation_of_parameterIR'[$optional_annotation_of_parameterIR'(annotationList)]``.
   ... Let ``parameterInitializerIR`` be ``+=+`` ``+`VALUE+`` ``value~init~``.
   ... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
   ... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
@@ -8066,27 +8072,27 @@ xref:Parameter_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~
 
 xref:ParameterList_ok[ParameterList_ok]:
 
-* Typing ``paramctxt``, under cursor ``cursor``, typing context ``typingContext``, and parameter context ``parameterList``:
+* Typing ``parameterList``, under cursor ``cursor`` and typing context ``typingContext``:
 * Results in the updated typing context ``typingContext``,
  **  ``parameterListIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-xref:ParameterList_ok[Typing ``paramctxt``, under cursor ``p``, typing context ``TC~0~``, and parameter context ``parameterList``]:
+xref:ParameterList_ok[Typing ``parameterList``, under cursor ``p`` and typing context ``TC~0~``]:
 
 . Let ``parameter^{asterisk}^`` be xref:flatten_parameterList[the list of parameters in ``parameterList``].
-. Let xref:ParameterList_ok_inner[p TC~0~ paramctxt +|-+ parameter^{asterisk}^ +:+ TC~1~ parameterListIR +#+ typeId~fresh~^{asterisk}^].
+. Let xref:ParameterList_ok_inner[p TC~0~ +|-+ parameter^{asterisk}^ +:+ TC~1~ parameterListIR +#+ typeId~fresh~^{asterisk}^].
 . Result in the updated typing context ``TC~1~``,
 *  ``parameterListIR``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
 
-* Typing ``constructorParameterListOpt`` under typing context ``typingContext`` and parameter context ``paramctxt``:
+* Typing ``constructorParameterListOpt`` under typing context ``typingContext``:
 * Results in the updated typing context ``typingContext``,
  **  ``constructorParameterListIR``, and a set of fresh type variables ``typeId^{asterisk}^``.
 
-xref:ConstructorParameterListOpt_ok[Typing ``constructorParameterListOpt`` under typing context ``TC~0~`` and parameter context ``paramctxt``]:
+xref:ConstructorParameterListOpt_ok[Typing ``constructorParameterListOpt`` under typing context ``TC~0~``]:
 
 . Let ``constructorParameter^{asterisk}^`` be xref:flatten_constructorParameterListOpt[the list of constructor parameters in ``constructorParameterListOpt``].
-. Let xref:ParameterList_ok_inner[+BLOCK+ TC~0~ paramctxt +|-+ constructorParameter^{asterisk}^ +:+ TC~1~ constructorParameterIR^{asterisk}^ +#+ typeId~fresh~^{asterisk}^].
+. Let xref:ParameterList_ok_inner[+BLOCK+ TC~0~ +|-+ constructorParameter^{asterisk}^ +:+ TC~1~ constructorParameterIR^{asterisk}^ +#+ typeId~fresh~^{asterisk}^].
 . Result in the updated typing context ``TC~1~``,
 *  ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~fresh~^{asterisk}^``.
 
@@ -8133,7 +8139,7 @@ xref:ExternMethod_ok[Typing ``externMethodPrototype``, under typing context ``TC
  .. Check that ``typeId^{asterisk}^`` is an empty list.
  .. Let ``TC~2~`` be ``TC~1~`` with ``+LOCAL+.+KIND+`` set to ``+EXTERN_METHOD+`` ``+:+`` ``typeIR~ret~``.
  .. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+OPT+``, under cursor ``+LOCAL+``, typing context ``TC~2~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~2~``].
  .. Let ``externMethodTypeDefIR`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.
  .. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~0~``].
  .. Check that xref:CallableTypeDef_wf[``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
@@ -8151,7 +8157,7 @@ xref:ExternMethod_ok[Typing ``externMethodPrototype``, under typing context ``TC
  .. Check that ``typeId^{asterisk}^`` is an empty list.
  .. Let ``TC~2~`` be ``TC~1~`` with ``+LOCAL+.+KIND+`` set to ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``+:+`` ``typeIR~ret~``.
  .. Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+LOCAL+``, typing context ``TC~2~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~2~``].
  .. Let ``externMethodTypeDefIR`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.
  .. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~0~``].
  .. Check that xref:CallableTypeDef_wf[``externMethodTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
@@ -8168,7 +8174,7 @@ xref:ExternConstructor_ok[Typing ``annotationList`` ``typeIdentifier`` ``+(+`` `
 . Let ``nameIR`` be xref:name[the name of ``typeIdentifier``].
 . Check that ``nameIR`` is equal to ``typeId~extern~``.
 . Let the updated typing context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``+(+`` ``parameterList`` ``+)+`` under typing context ``TC~0~`` and parameter context ``+OPT+``].
+* the result of xref:ConstructorParameterListOpt_ok[typing ``+(+`` ``parameterList`` ``+)+`` under typing context ``TC~0~``].
 . Let ``typeDefIR'`` be xref:option_get[*!*] xref:find_typeDef_t[the type definition of ``typeId~extern~`` from the ``+GLOBAL+`` layer of ``TC~0~``].
 . Check that ``typeDefIR'`` has type ``externObjectTypeDefIR``.
 . Let ``externObjectTypeDefIR`` be ``typeDefIR'``.
@@ -9162,7 +9168,7 @@ xref:FuncDecl_ok[Typing ``annotationList`` ``typeOrVoid`` ``name`` ``typeParamet
 * the result of xref:Type_ok[typing ``typeOrVoid``, under cursor ``+LOCAL+`` and typing context ``TC~1~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+LOCAL+``, typing context ``TC~1~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~1~``].
 . Let ``TC~3~`` be ``TC~2~`` with ``+LOCAL+.+KIND+`` set to ``+FUNCTION+`` ``+:+`` ``typeIR~ret~``.
 . Let the updated typing context ``++_++``, abstract control flow ``f``, and ``blockStatementIR`` be
 * the result of xref:Block_ok[typing ``blockStatement``, under typing context ``TC~3~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
@@ -9185,7 +9191,7 @@ xref:ActionDecl_ok[Typing ``annotationList`` ``+ACTION+`` ``name`` ``+(+`` ``par
 
 . Let ``TC~1~`` be ``TC~0~`` with ``+LOCAL+.+KIND+`` set to ``+ACTION+``.
 . Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+LOCAL+``, typing context ``TC~1~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~1~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let the updated typing context ``++_++``, abstract control flow ``++_++``, and ``blockStatementIR`` be
 * the result of xref:Block_ok[typing ``blockStatement``, under typing context ``TC~2~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
@@ -9295,7 +9301,7 @@ xref:Decl_ok[Typing ``annotationList`` ``+EXTERN+`` ``typeOrVoid`` ``name`` ``ty
 . Let the updated typing context ``TC~1~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+LOCAL+`` and typing context ``TC~0~``].
 . Let the updated typing context ``TC~2~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+OPT+``, under cursor ``+LOCAL+``, typing context ``TC~1~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~1~``].
 . Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of xref:Type_ok[typing ``typeOrVoid``, under cursor ``+LOCAL+`` and typing context ``TC~1~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
@@ -9376,9 +9382,9 @@ xref:Decl_ok[Typing ``annotationList`` ``+PARSER+`` ``name`` ``typeParameterList
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+BLOCK+`` and typing context ``TC~1~``].
 . Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under typing context ``TC~2~`` and parameter context ``+NOOPT+``].
+* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under typing context ``TC~2~``].
 . Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+BLOCK+``, typing context ``TC~3~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+BLOCK+`` and typing context ``TC~3~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let the updated typing context ``TC~5~`` and the typed parser local declarations ``parserLocalDeclarationIR^{asterisk}^`` be
 * the result of xref:ParserLocalDeclList_ok[typing ``parserLocalDeclarationList``, under typing context ``TC~4~``].
@@ -9405,9 +9411,9 @@ xref:Decl_ok[Typing ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterLis
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+BLOCK+`` and typing context ``TC~1~``].
 . Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under typing context ``TC~2~`` and parameter context ``+NOOPT+``].
+* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under typing context ``TC~2~``].
 . Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+BLOCK+``, typing context ``TC~3~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+BLOCK+`` and typing context ``TC~3~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
 . Let the updated typing context ``TC~5~`` and the typed control local declarations ``controlLocalDeclarationIR^{asterisk}^`` be
 * the result of xref:ControlLocalDeclList_ok[typing ``controlLocalDeclarationList``, under typing context ``TC~4~``].
@@ -9659,7 +9665,7 @@ xref:Decl_ok[Typing ``annotationList`` ``+PARSER+`` ``name`` ``typeParameterList
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+BLOCK+`` and typing context ``TC~1~``].
 . Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+OPT+``, under cursor ``+BLOCK+``, typing context ``TC~2~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+BLOCK+`` and typing context ``TC~2~``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``parserObjectTypeDefIR`` be ``+PARSER+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC~0~``].
@@ -9674,7 +9680,7 @@ xref:Decl_ok[Typing ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterLis
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+BLOCK+`` and typing context ``TC~1~``].
 . Let the updated typing context ``TC~3~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+OPT+``, under cursor ``+BLOCK+``, typing context ``TC~2~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+BLOCK+`` and typing context ``TC~2~``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``controlObjectTypeDefIR`` be ``+CONTROL+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC~0~``].
@@ -9690,7 +9696,7 @@ xref:Decl_ok[Typing ``annotationList`` ``+PACKAGE+`` ``name`` ``typeParameterLis
 . Let the updated typing context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+BLOCK+`` and typing context ``TC~1~``].
 . Let the updated typing context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``+(+`` ``parameterList`` ``+)+`` under typing context ``TC~2~`` and parameter context ``+OPT+``].
+* the result of xref:ConstructorParameterListOpt_ok[typing ``+(+`` ``parameterList`` ``+)+`` under typing context ``TC~2~``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``typeIR~package_inner~^{asterisk}^`` be the list of ``typeIR~package_inner~``, obtained by repeating:
 +
@@ -10660,16 +10666,16 @@ xref:lvalue_to_expression[$lvalue_to_expression(lvalue)]
  .. Let ``expression`` be ``xref:lvalue_to_expression[$lvalue_to_expression(lvalue')]``.
  .. Return ``+(+`` ``expression`` ``+)+``.
 
-xref:ParameterList_ok_inner[ParameterList_ok_inner: ``p`` ``typingContext`` ``paramctxt`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]
+xref:ParameterList_ok_inner[ParameterList_ok_inner: ``p`` ``typingContext`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]
 
-xref:ParameterList_ok_inner[``p`` ``typingContext`` ``paramctxt`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]:
+xref:ParameterList_ok_inner[``p`` ``typingContext`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]:
 
 . If ``parameter^{asterisk}^`` is equal to ``·``:
  .. Result in ``typingContext``, ``·``, and ``·``.
 . If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
  .. Let the updated typing context ``TC~1~``, ``parameterIR~h~``, and a set of fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
-* the result of xref:Parameter_ok[typing ``paramctxt``, under cursor ``p``, typing context ``typingContext``, and parameter context ``parameter~h~``].
- .. Let xref:ParameterList_ok_inner[p TC~1~ paramctxt +|-+ parameter~t~^{asterisk}^ +:+ TC~2~ parameterIR~t~^{asterisk}^ +#+ typeId~fresh_t~^{asterisk}^].
+* the result of xref:Parameter_ok[typing ``parameter~h~``, under cursor ``p`` and typing context ``typingContext``].
+ .. Let xref:ParameterList_ok_inner[p TC~1~ +|-+ parameter~t~^{asterisk}^ +:+ TC~2~ parameterIR~t~^{asterisk}^ +#+ typeId~fresh_t~^{asterisk}^].
  .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
  .. Result in ``TC~2~``, ``parameterIR^{asterisk}^``, and ``typeId~fresh~^{asterisk}^``.
@@ -11037,7 +11043,7 @@ xref:ObjectDecl_ok[Typing ``objectDeclaration`` under cursor ``p`` and typing co
  .. Let the updated typing context ``TC~3~`` and type parameters ``typeId~expl~^{asterisk}^`` be
 * the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under cursor ``+LOCAL+`` and typing context ``TC~2~``].
  .. Let the updated typing context ``TC~4~``, ``parameterIR^{asterisk}^``, and a set of fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``+NOOPT+``, under cursor ``+LOCAL+``, typing context ``TC~3~``, and parameter context ``parameterList``].
+* the result of xref:ParameterList_ok[typing ``parameterList``, under cursor ``+LOCAL+`` and typing context ``TC~3~``].
  .. Let ``typeIR~ret~`` and a set of fresh type variables ``typeId^{asterisk}^`` be
 * the result of xref:Type_ok[typing ``typeOrVoid``, under cursor ``+LOCAL+`` and typing context ``TC~3~``].
  .. Check that ``typeId^{asterisk}^`` is an empty list.

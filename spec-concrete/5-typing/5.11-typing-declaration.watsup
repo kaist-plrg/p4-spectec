@@ -173,7 +173,7 @@ rulegroup ObjectDecl_ok {
         LOCAL TC_2 |- typeParameterListOpt : TC_3 typeId_expl*
     ---- ;; check parameters
     -- ParameterList_ok:
-        LOCAL TC_3 NOOPT |- parameterList : TC_4 parameterIR* `# typeId_impl*
+        LOCAL TC_3 |- parameterList : TC_4 parameterIR* `# typeId_impl*
     ---- ;; check return type
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
     ---- ;; check body
@@ -414,8 +414,8 @@ rule FuncDecl_ok:
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; check parameters
   -- ParameterList_ok:
-      LOCAL TC_1 NOOPT |- parameterList
-                        : TC_2 parameterIR* `# typeId_impl*
+      LOCAL TC_1 |- parameterList
+                  : TC_2 parameterIR* `# typeId_impl*
   ---- ;; check body
   -- if TC_3 = TC_2[ .LOCAL.KIND = FUNCTION `: typeIR_ret ]
   -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
@@ -456,7 +456,7 @@ rule ActionDecl_ok:
   -- if TC_1 = TC_0 [ .LOCAL.KIND = ACTION ]
   ---- ;; check parameters
   -- ParameterList_ok:
-      LOCAL TC_1 NOOPT |- parameterList : TC_2 parameterIR* `# eps
+      LOCAL TC_1 |- parameterList : TC_2 parameterIR* `# eps
   ---- ;; check body
   -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
   ---- ;; add action to the context
@@ -523,7 +523,7 @@ rule Decl_ok/externFunctionDeclaration:
       LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
   ---- ;; check parameters
   -- ParameterList_ok:
-      LOCAL TC_1 OPT |- parameterList : TC_2 parameterIR* `# typeId_impl*
+      LOCAL TC_1 |- parameterList : TC_2 parameterIR* `# typeId_impl*
   ---- ;; check return type
   -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret `# eps
   ---- ;; set local context
@@ -661,12 +661,12 @@ rule Decl_ok/parserDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_2 NOOPT |- constructorParameterListOpt
+      TC_2 |- constructorParameterListOpt
                   : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_3 NOOPT |- parameterList
-                        : TC_4 parameterIR* `# eps
+      BLOCK TC_3 |- parameterList
+                  : TC_4 parameterIR* `# eps
   ---- ;; check parser local declarations
   -- ParserLocalDeclList_ok:
       TC_4 |- parserLocalDeclarationList
@@ -715,12 +715,12 @@ rule Decl_ok/controlDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_2 NOOPT |- constructorParameterListOpt
-                  : TC_3 constructorParameterIR* `# typeId_impl*
+      TC_2 |- constructorParameterListOpt
+            : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_3 NOOPT |- parameterList
-                        : TC_4 parameterIR* `# eps
+      BLOCK TC_3 |- parameterList
+                  : TC_4 parameterIR* `# eps
   ---- ;; check control local declarations
   -- ControlLocalDeclList_ok:
       TC_4 |- controlLocalDeclarationList
@@ -1064,7 +1064,7 @@ rule Decl_ok/parserTypeDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_2 OPT |- parameterList : TC_3 parameterIR* `# typeId_impl*
+      BLOCK TC_2 |- parameterList : TC_3 parameterIR* `# typeId_impl*
   ---- ;; update the context with parser type
   -- if nameIR = $name(name)
   -- if parserObjectTypeDefIR
@@ -1089,7 +1089,7 @@ rule Decl_ok/controlTypeDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check parameters to apply method
   -- ParameterList_ok:
-      BLOCK TC_2 OPT |- parameterList : TC_3 parameterIR* `# typeId_impl*
+      BLOCK TC_2 |- parameterList : TC_3 parameterIR* `# typeId_impl*
   ---- ;; update the context with control type
   -- if nameIR = $name(name)
   -- if controlObjectTypeDefIR
@@ -1116,8 +1116,8 @@ rule Decl_ok/packageTypeDeclaration:
       BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_2 OPT |- `( parameterList )
-                : TC_3 constructorParameterIR* `# typeId_impl*
+      TC_2 |- `( parameterList )
+            : TC_3 constructorParameterIR* `# typeId_impl*
   ---- ;; update the context with package type
   -- if nameIR = $name(name)
   -- if (_ _ typeIR_package_inner _ _ = constructorParameterIR)*

@@ -27,7 +27,7 @@ rulegroup ExternMethod_ok {
     -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD `: typeIR_ret ]
     ---- ;; check parameters and add them to the context
     -- ParameterList_ok:
-        LOCAL TC_2 OPT |- parameterList : TC_3 parameterIR* `# typeId_impl*
+        LOCAL TC_2 |- parameterList : TC_3 parameterIR* `# typeId_impl*
     ---- ;; create method type and add it to the environment
     -- if externMethodTypeDefIR
         = EXTERN_METHOD nameIR
@@ -57,7 +57,7 @@ rulegroup ExternMethod_ok {
     -- if TC_2 = TC_1[ .LOCAL.KIND = EXTERN_METHOD ABSTRACT `: typeIR_ret ]
     ---- ;; check parameters and add them to the context
     -- ParameterList_ok:
-        LOCAL TC_2 NOOPT |- parameterList : TC_3 parameterIR* `# typeId_impl*
+        LOCAL TC_2 |- parameterList : TC_3 parameterIR* `# typeId_impl*
     ---- ;; create method type and add it to the context
     -- if externMethodTypeDefIR
         = EXTERN_METHOD ABSTRACT nameIR
@@ -87,8 +87,8 @@ rule ExternConstructor_ok:
   -- if nameIR = typeId_extern
   ---- ;; check constructor parameters
   -- ConstructorParameterListOpt_ok:
-      TC_0 OPT |- `( parameterList )
-                : TC_1 constructorParameterIR* `# typeId_impl*
+      TC_0 |- `( parameterList )
+            : TC_1 constructorParameterIR* `# typeId_impl*
   ---- ;; find extern type
   -- if externObjectTypeDefIR
       = $find_typeDef_t(GLOBAL, TC_0, `` typeId_extern)
