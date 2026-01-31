@@ -1117,11 +1117,14 @@ rulegroup Table_ok {
     TC |- tableProperty*
         : TBLC_2 (tablePropertyIR_updated* ++ [ tablePropertyIR_default_action ])
     ---- ;; check that the table has at most one key property
-    -- if $(|$filter_<tableProperty>(tableProperty*, def $is_tableKeysProperty)| <= 1)
+    -- if $(|$filter_<tableProperty>(
+              tableProperty*, $is_tableKeysProperty(tableProperty)*)| <= 1)
     ---- ;; check that the table has exactly one action property
-    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableActionsProperty)| = 1
+    -- if |$filter_<tableProperty>(
+              tableProperty*, $is_tableActionsProperty(tableProperty)*)| = 1
     ---- ;; check that the table no default action property
-    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableDefaultActionProperty)| = 0
+    -- if |$filter_<tableProperty>(
+            tableProperty*, $is_tableDefaultActionProperty(tableProperty)*)| = 0
     ---- ;; check table properties
     -- if TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
@@ -1134,11 +1137,14 @@ rulegroup Table_ok {
   rule Table_ok/one-default-action:
     TC |- tableProperty* : TBLC_1 tablePropertyIR*
     ---- ;; check that the table has at most one key property
-    -- if $(|$filter_<tableProperty>(tableProperty*, def $is_tableKeysProperty)| <= 1)
+    -- if $(|$filter_<tableProperty>(
+              tableProperty*, $is_tableKeysProperty(tableProperty)*)| <= 1)
     ---- ;; check that the table has exactly one action property
-    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableActionsProperty)| = 1
+    -- if |$filter_<tableProperty>(
+            tableProperty*, $is_tableActionsProperty(tableProperty)*)| = 1
     ---- ;; check that the table no default action property
-    -- if |$filter_<tableProperty>(tableProperty*, def $is_tableDefaultActionProperty)| = 1
+    -- if |$filter_<tableProperty>(
+            tableProperty*, $is_tableDefaultActionProperty(tableProperty)*)| = 1
     ---- ;; check table properties
     -- if TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*

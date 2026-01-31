@@ -285,40 +285,8 @@ rule Expr_eval_lctk/sliceAccessExpressionIR:
 
 ;;;;;;; referenceExpressionIR
 ;;;;;;; function/action calls, except static_assert, are not evaluated statically
-
-rule Expr_eval_lctk/callExpressionIR-static_assert:
-  p TC |- (prefixedNameIR `< typeArgumentIR* > `( argumentIR* )) `# _ ~> boolValue
-  ---- ;; resolve the callee
-  -- CallableType_ok:
-      p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-            : externFunctionTypeIR `< `# _ > `( `# eps )
-  ---- ;; if calling static_assert
-  -- if EXTERN_FUNCTION "static_assert" `( parameterIR* ) `: BOOL
-      = externFunctionTypeIR
-  -- (if _ _ _ nameIR_param _ = parameterIR)*
-  ---- ;; create callee context
-  -- if TC_callee_0 = $empty_typingContext
-  ---- ;; align parameters with arguments
-  -- if (parameterIR_aligned*, eps, eps) 
-      = $align_parameterListIR(parameterIR*, argumentIR*, eps)
-  ---- ;; evaluate arguments
-  -- (Argument_eval_lctk: p TC |- argumentIR ~> value_argument)*
-  ---- ;; add arguments to callee context
-  -- (if _ direction_param_aligned typeIR_param_aligned nameIR_param_aligned _
-      = parameterIR_aligned)*
-  -- if (varTypeIR
-      = direction_param_aligned typeIR_param_aligned LCTK value_argument)*
-  -- if TC_callee_1
-      = $add_vars_t(LOCAL, TC_callee_0, nameIR_param_aligned*, varTypeIR*)
-  ---- ;; call the extern
-  -- ExternFunctionCall_eval_lctk:
-      TC_callee_1 |- "static_assert" `( nameIR_param* ) ~> boolValue
-  ---- ;; static_assert should return true
-  -- if `B true = boolValue
-
 ;;;;;;; typedExpressionIR `. nameIR
 ;;;;;;; TYPE prefixedNameIR `. nameIR
-
 ;;;;;;; `( callableTargetIR )
 
 rulegroup Expr_eval_lctk/callExpressionIR {
@@ -329,7 +297,7 @@ rulegroup Expr_eval_lctk/callExpressionIR {
     ---- ;; resolve the callee
     -- CallableType_ok:
         p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
-              : externFunctionTypeIR `< `# _ > `( `# _ )
+              : externFunctionTypeIR `< `# _ > `( `# id_default* `# id_optional* )
     ---- ;; if calling static_assert
     -- if EXTERN_FUNCTION "static_assert" `( parameterIR* ) `: BOOL
         = externFunctionTypeIR
@@ -337,8 +305,8 @@ rulegroup Expr_eval_lctk/callExpressionIR {
     ---- ;; create callee context
     -- if TC_callee_0 = $empty_typingContext
     ---- ;; align parameters with arguments
-    -- if (parameterIR_aligned*, eps, eps) 
-        = $align_parameterListIR(parameterIR*, argumentIR*, eps)
+    -- if GIVEN parameterIR_aligned* DEFAULT eps
+        = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; evaluate arguments
     -- (Argument_eval_lctk: p TC |- argumentIR ~> value_argument)*
     ---- ;; add arguments to callee context

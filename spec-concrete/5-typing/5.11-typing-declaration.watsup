@@ -111,12 +111,12 @@ rule InstDecl_non_objectInitializer_ok:
   -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
   -- ConstructorType_ok:
       p TC_0 |- constructorTargetIR `( argumentIR* )
-              : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
+              : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* `# id_optional* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                        `( argumentIR* `# id_omitted* )
+                        `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
@@ -311,13 +311,15 @@ rule InstDecl_objectInitializer_ok:
   ---- ;; check constructor type
   -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
   -- if constructorTargetIR = prefixedNameIR `< typeArgumentIR* >
-  -- ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR* )
-                                 : constructorTypeIR `< `# typeId_inserted* > `( `# id_omitted* )
+  -- ConstructorType_ok:
+      p TC_0 |- constructorTargetIR `( argumentIR* )
+              : constructorTypeIR `< `# typeId_inserted* >
+                  `( `# id_default* `# id_optional* )
   ---- ;; check instantiation convention
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
-                        `( argumentIR* `# id_omitted* )
+                        `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; object initializer can be specified for an extern object
   -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
@@ -560,11 +562,11 @@ def $split_externConstructorOrMethodPrototypeList(
   -- if externConstructorPrototype*
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
-          def $is_externConstructorPrototype)
+          $is_externConstructorPrototype(externConstructorOrMethodPrototype)*)
   -- if externMethodPrototype*
       = $filter_<externConstructorOrMethodPrototype>(
           externConstructorOrMethodPrototype*,
-          def $is_externMethodPrototype)
+          $is_externMethodPrototype(externConstructorOrMethodPrototype)*)
 
 dec $constructorTypeDef_of_externConstructorPrototypeIR(
     typeParameterListIR,

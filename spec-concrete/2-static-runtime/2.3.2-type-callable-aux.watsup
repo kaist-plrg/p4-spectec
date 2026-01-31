@@ -12,6 +12,12 @@ def $default_of_parameterIR(_ _ _ _ eps) = false
 def $default_of_parameterIR(_ _ _ _ _) = true
   -- otherwise
 
+dec $is_default_parameterIR(parameterIR) : bool
+  hint(prose_true %0 "is a parameter with a default value")
+  hint(prose_false %0 "is a parameter without a default value")
+def $is_default_parameterIR(parameterIR)
+  = $default_of_parameterIR(parameterIR)
+
 ;;
 ;; Annotations and optionality of a parameter
 ;;
@@ -35,7 +41,7 @@ def $optional_annotation_of_parameterIR''(annotation) = false
   -- otherwise
 
 dec $is_optional_parameterIR(parameterIR) : bool
-  hint(prose_in "whether" %0 "is optional")
+  hint(prose_true %0 "is an optional parameter")
+  hint(prose_false %0 "is not an optional parameter")
 def $is_optional_parameterIR(parameterIR)
-  = $default_of_parameterIR(parameterIR)
-    \/ $optional_annotation_of_parameterIR(parameterIR)
+  = $optional_annotation_of_parameterIR(parameterIR)
