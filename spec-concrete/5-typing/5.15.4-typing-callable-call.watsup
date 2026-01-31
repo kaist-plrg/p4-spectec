@@ -67,7 +67,7 @@ rule CallableType_ok/actionTypeIR:
   p TC |- prefixedNameIR `< eps > `( argumentIR* )
         : actionTypeIR `< `# eps > `( `# id_default* `# id_optional* )
   ---- ;; find the action type definition
-  -- if callableId actionTypeIR id_default* id_optional*
+  -- if callableId `: actionTypeIR `# id_default* `# id_optional*
       = $find_callableDef_overloaded_t(
           p, TC, prefixedNameIR, argumentIR*)
   ---- ;; check that the action type is well-formed
@@ -77,7 +77,7 @@ rule CallableType_ok/functionTypeIR:
   p TC |- prefixedNameIR `< typeArgumentIR* > `( argumentIR* )
         : functionTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
   ---- ;; find and specialize the function type definition
-  -- if callableId functionTypeDefIR id_default* id_optional*
+  -- if callableId `: functionTypeDefIR `# id_default* `# id_optional*
       = $find_callableDef_overloaded_t(
           p, TC, prefixedNameIR, argumentIR*)
   -- if (functionTypeIR, typeId_impl*)
@@ -158,7 +158,7 @@ rule CallableType_ok/externMethodTypeIR:
       = $unroll_typeIR(typeIR_base)
   ---- ;; find method type
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
-  -- if _ externMethodTypeDefIR id_default* id_optional*
+  -- if _ `: externMethodTypeDefIR `# id_default* `# id_optional*
       = $find_overloaded<externMethodTypeDefIR>(
           `{ (callableId_extern `: externMethodTypeDefIR_extern)* },
           callTargetKey,
@@ -184,7 +184,7 @@ rule CallableType_ok/parserApplyMethodTypeIR:
   -- if callableId = "apply" `( id_param* )
   ---- ;; perform overload resoultion
   -- if callTargetKey = $callTargetKey("apply", argumentIR*)
-  -- if _ parserApplyMethodTypeIR id_default* id_optional*
+  -- if _ `: _ `# id_default* `# id_optional*
       = $find_overloaded<parserApplyMethodTypeIR>(
           `{ (callableId `: parserApplyMethodTypeIR) },
           callTargetKey,
@@ -203,7 +203,7 @@ rule CallableType_ok/controlApplyMethodTypeIR:
   -- if callableId = "apply" `( id_param* )
   ---- ;; perform default resoultion
   -- if callTargetKey = $callTargetKey("apply", argumentIR*)
-  -- if _ controlApplyMethodTypeIR id_default* id_optional*
+  -- if _ `: _ `# id_default* `# id_optional*
       = $find_overloaded<controlApplyMethodTypeDefIR>(
           `{ (callableId `: controlApplyMethodTypeIR) },
           callTargetKey,

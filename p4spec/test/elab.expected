@@ -9055,7 +9055,7 @@ syntax callTargetMatch =
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:14.3-15.75
 syntax callResolution<V> = 
-   | callableId V nameIR* nameIR* hint(prose_fields "call target id" "call target" "defaults" "optionals")
+   | callableId : V # nameIR* # nameIR* hint(prose_fields "call target id" "call target" "defaults" "optionals")
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:17.1-18.54
 def $callTargetKey(nameIR, argumentListIR) : callTargetKey =
@@ -9176,7 +9176,7 @@ def $find_overloadeds_named<V>(map<callableId, V>, namedCallTargetKey, $get_para
   -- if (nomatch = $match_overloaded_named<V>(callTargetId_h : V_h, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR))
 
   ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:209.1-222.36
-  clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR) = callTargetId_h V_h id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*} :: $find_overloadeds_named<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR)
+  clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR) = callTargetId_h : V_h # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} :: $find_overloadeds_named<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
   -- let callTargetMatch = $match_overloaded_named<V>(callTargetId_h : V_h, nameIR_f ( id_arg*{id_arg <- id_arg*} ), $get_parameterListIR)
@@ -9197,7 +9197,7 @@ def $find_overloadeds_unnamed<V>(map<callableId, V>, unnamedCallTargetKey, $get_
   -- if (nomatch = $match_overloaded_unnamed<V>(callTargetId_h : V_h, nameIR_f ( n_arg ), $get_parameterListIR))
 
   ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:255.1-268.36
-  clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( n_arg ), $get_parameterListIR) = callTargetId_h V_h id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*} :: $find_overloadeds_unnamed<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( n_arg ), $get_parameterListIR)
+  clause 2 : ({ pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} }, nameIR_f ( n_arg ), $get_parameterListIR) = callTargetId_h : V_h # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} :: $find_overloadeds_unnamed<V>({ callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} }, nameIR_f ( n_arg ), $get_parameterListIR)
   -- if pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*} matches _ :: _
   -- let callTargetId_h : V_h :: callTargetId_t : V_t*{V_t <- V_t*, callTargetId_t <- callTargetId_t*} = pair<callableId, V>*{pair<callableId, V> <- pair<callableId, V>*}
   -- let callTargetMatch = $match_overloaded_unnamed<V>(callTargetId_h : V_h, nameIR_f ( n_arg ), $get_parameterListIR)
@@ -9216,14 +9216,14 @@ def $find_overloaded<V>(map<callTargetId, V>, callTargetKey, $get_parameterListI
   -- if ([] = $find_overloadeds_named<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg_inner*{id_arg_inner <- id_arg_inner*} ), $get_parameterListIR))
 
   ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:296.1-307.36
-  clause 1 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?(callableId_found V_found id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*})
+  clause 1 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?(callableId_found : V_found # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if (|id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| > 0)
   -- (let id?{id <- id?} = id_arg?{id_arg <- id_arg?})*{id_arg? <- id_arg?*, id? -> id?*}
   -- (if id?{id <- id?} matches (_))*{id? <- id?*}
   -- (let ?(id_arg_inner) = id?{id <- id?})*{id? <- id?*, id_arg_inner -> id_arg_inner*}
   -- let callResolution<V>*{callResolution<V> <- callResolution<V>*} = $find_overloadeds_named<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg_inner*{id_arg_inner <- id_arg_inner*} ), $get_parameterListIR)
   -- if callResolution<V>*{callResolution<V> <- callResolution<V>*} matches [ _/1 ]
-  -- let [callableId_found V_found id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}] = callResolution<V>*{callResolution<V> <- callResolution<V>*}
+  -- let [callableId_found : V_found # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}] = callResolution<V>*{callResolution<V> <- callResolution<V>*}
 
   ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:311.1-321.36
   clause 2 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?()
@@ -9231,11 +9231,11 @@ def $find_overloaded<V>(map<callTargetId, V>, callTargetKey, $get_parameterListI
   -- if ([] = $find_overloadeds_unnamed<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( |id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| ), $get_parameterListIR))
 
   ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:323.1-333.36
-  clause 3 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?(callableId_found V_found id_omitted*{id_omitted <- id_omitted*} id_optional*{id_optional <- id_optional*})
+  clause 3 : ({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*} ), $get_parameterListIR) = ?(callableId_found : V_found # id_omitted*{id_omitted <- id_omitted*} # id_optional*{id_optional <- id_optional*})
   -- (if (id_arg?{id_arg <- id_arg?} = ?()))*{id_arg? <- id_arg?*}
   -- let callResolution<V>*{callResolution<V> <- callResolution<V>*} = $find_overloadeds_unnamed<V>({ callableId : V*{V <- V*, callableId <- callableId*} }, nameIR_f ( |id_arg?{id_arg <- id_arg?}*{id_arg? <- id_arg?*}| ), $get_parameterListIR)
   -- if callResolution<V>*{callResolution<V> <- callResolution<V>*} matches [ _/1 ]
-  -- let [callableId_found V_found id_omitted*{id_omitted <- id_omitted*} id_optional*{id_optional <- id_optional*}] = callResolution<V>*{callResolution<V> <- callResolution<V>*}
+  -- let [callableId_found : V_found # id_omitted*{id_omitted <- id_omitted*} # id_optional*{id_optional <- id_optional*}] = callResolution<V>*{callResolution<V> <- callResolution<V>*}
 
 ;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:339.1-340.21
 def $find_non_overloaded<V>(map<callableId, V>, nameIR) : (callableId, V)? =
@@ -9777,7 +9777,7 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
   ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:392.1-398.88
-  clause 2 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId callableTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*})
+  clause 2 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : callableTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
@@ -9785,7 +9785,7 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} = $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR)
   -- if callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches (_)
-  -- let ?(callableId callableTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
+  -- let ?(callableId : callableTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
 
   ;; ../../../../spec-concrete/5-typing/5.02.1-typing-context.watsup:399.1-405.88
   clause 3 : (cursor, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(global, TC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
@@ -18355,7 +18355,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     rulepath actionTypeIR
     -- let callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches (_)
-    -- let ?(callableId callableTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
+    -- let ?(callableId : callableTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
     -- if callableTypeDefIR <: actionTypeIR
     -- let actionTypeIR = callableTypeDefIR as actionTypeIR
     -- if CallableType_wf: $bound(p, TC) |- actionTypeIR as callableTypeIR holds
@@ -18376,7 +18376,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     rulepath functionTypeIR
     -- let callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches (_)
-    -- let ?(callableId callableTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
+    -- let ?(callableId : callableTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
     -- if callableTypeDefIR <: functionTypeDefIR
     -- let functionTypeDefIR = callableTypeDefIR as functionTypeDefIR
     -- let (callableTypeIR, typeId*) = $specialize_callableTypeDefIR(functionTypeDefIR as callableTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
@@ -18468,7 +18468,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
     -- let callResolution<externMethodTypeDefIR>?{callResolution<externMethodTypeDefIR> <- callResolution<externMethodTypeDefIR>?} = $find_overloaded<externMethodTypeDefIR>({ callableId_extern : externMethodTypeDefIR_extern*{callableId_extern <- callableId_extern*, externMethodTypeDefIR_extern <- externMethodTypeDefIR_extern*} }, callTargetKey, $parameterListIR_of_externMethodTypeDefIR)
     -- if callResolution<externMethodTypeDefIR>?{callResolution<externMethodTypeDefIR> <- callResolution<externMethodTypeDefIR>?} matches (_)
-    -- let ?(_callableId externMethodTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<externMethodTypeDefIR>?{callResolution<externMethodTypeDefIR> <- callResolution<externMethodTypeDefIR>?}
+    -- let ?(_callableId : externMethodTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<externMethodTypeDefIR>?{callResolution<externMethodTypeDefIR> <- callResolution<externMethodTypeDefIR>?}
     -- let (callableTypeIR, typeId*) = $specialize_callableTypeDefIR(externMethodTypeDefIR as callableTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- if (callableTypeIR, typeId*) <: (externMethodTypeIR, typeId*)
     -- let (externMethodTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = (callableTypeIR, typeId*) as (externMethodTypeIR, typeId*)
@@ -18501,8 +18501,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let callTargetKey = $callTargetKey("apply", argumentIR*{argumentIR <- argumentIR*})
     -- let callResolution<parserApplyMethodTypeIR>?{callResolution<parserApplyMethodTypeIR> <- callResolution<parserApplyMethodTypeIR>?} = $find_overloaded<parserApplyMethodTypeIR>({ [callableId : parserApplyMethodTypeIR] }, callTargetKey, $parameterListIR_of_parserApplyMethodTypeIR)
     -- if callResolution<parserApplyMethodTypeIR>?{callResolution<parserApplyMethodTypeIR> <- callResolution<parserApplyMethodTypeIR>?} matches (_)
-    -- let ?(_callableId parserApplyMethodTypeIR' id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<parserApplyMethodTypeIR>?{callResolution<parserApplyMethodTypeIR> <- callResolution<parserApplyMethodTypeIR>?}
-    -- if (parserApplyMethodTypeIR' = parserApplyMethodTypeIR)
+    -- let ?(_callableId : _parserApplyMethodTypeIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<parserApplyMethodTypeIR>?{callResolution<parserApplyMethodTypeIR> <- callResolution<parserApplyMethodTypeIR>?}
     -- output: % % |- % < % >( % ): parserApplyMethodTypeIR as callableTypeIR <# [] >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:193.1-210.60
@@ -18530,8 +18529,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let callTargetKey = $callTargetKey("apply", argumentIR*{argumentIR <- argumentIR*})
     -- let callResolution<controlApplyMethodTypeDefIR>?{callResolution<controlApplyMethodTypeDefIR> <- callResolution<controlApplyMethodTypeDefIR>?} = $find_overloaded<controlApplyMethodTypeDefIR>({ [callableId : controlApplyMethodTypeIR] }, callTargetKey, $parameterListIR_of_controlApplyMethodTypeIR)
     -- if callResolution<controlApplyMethodTypeDefIR>?{callResolution<controlApplyMethodTypeDefIR> <- callResolution<controlApplyMethodTypeDefIR>?} matches (_)
-    -- let ?(_callableId controlApplyMethodTypeIR' id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<controlApplyMethodTypeDefIR>?{callResolution<controlApplyMethodTypeDefIR> <- callResolution<controlApplyMethodTypeDefIR>?}
-    -- if (controlApplyMethodTypeIR' = controlApplyMethodTypeIR)
+    -- let ?(_callableId : _controlApplyMethodTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<controlApplyMethodTypeDefIR>?{callResolution<controlApplyMethodTypeDefIR> <- callResolution<controlApplyMethodTypeDefIR>?}
     -- output: % % |- % < % >( % ): controlApplyMethodTypeIR as callableTypeIR <# [] >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:212.1-219.74
@@ -18815,7 +18813,7 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if (?() = $find_typeDef_t(p, TC, prefixedNameIR))
     -- let callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
-    -- let ?(callableId constructorTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
+    -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
     -- if ConstructorType_wf: B |- constructorTypeIR holds
@@ -18829,7 +18827,7 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if ~typeDefIR <: typedefTypeIR
     -- let callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
-    -- let ?(callableId constructorTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
+    -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
     -- if ConstructorType_wf: B |- constructorTypeIR holds
@@ -18845,7 +18843,7 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- let (nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = $resolve_type_alias(typeIR_alias)
     -- let callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} = $find_constructorDef_overloaded_t(TC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
-    -- let ?(callableId constructorTypeDefIR id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
+    -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
     -- if ConstructorType_wf: B |- constructorTypeIR holds
@@ -25755,7 +25753,7 @@ relation Constructor_inst: cursor instContext |- prefixedNameIR < typeArgumentLi
     -- if (?() = $find_typeDef_i(p, IC, prefixedNameIR))
     -- let callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} matches (_)
-    -- let ?(_callableId constructorDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
+    -- let ?(_callableId : constructorDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
     -- output: % % |- % < % >( % ): constructorDef < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
     rulepath non-aliased-some-type
@@ -25766,7 +25764,7 @@ relation Constructor_inst: cursor instContext |- prefixedNameIR < typeArgumentLi
     -- if ~typeDefIR <: typedefTypeIR
     -- let callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} matches (_)
-    -- let ?(_callableId constructorDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
+    -- let ?(_callableId : constructorDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
     -- output: % % |- % < % >( % ): constructorDef < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
     rulepath aliased
@@ -25779,7 +25777,7 @@ relation Constructor_inst: cursor instContext |- prefixedNameIR < typeArgumentLi
     -- let (nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = $resolve_type_alias(typeIR_alias)
     -- let callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} = $find_constructorDef_i(IC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
     -- if callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?} matches (_)
-    -- let ?(_callableId constructorDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
+    -- let ?(_callableId : constructorDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorDef>?{callResolution<constructorDef> <- callResolution<constructorDef>?}
     -- output: % % |- % < % >( % ): constructorDef < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:278.1-288.44
@@ -26437,20 +26435,20 @@ def $find_type_e(cursor, evalContext, nameIR) : typeIR? =
   -- if (?() = $find_map<typeId, typeIR>(EC.local.type, nameIR))
 
 ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:190.1-192.95
-def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : (cursor?, callResolution<callableDef>?) =
+def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : callResolution<(cursor, callableDef)>? =
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:194.1-201.47
-  clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = (?(global), ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}))
+  clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-  -- let ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
+  -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:202.1-209.47
-  clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = (?(), ?())
+  clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
@@ -26458,17 +26456,17 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:210.1-217.47
-  clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = (?(global), ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}))
+  clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-  -- let ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
+  -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:218.1-225.47
-  clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = (?(), ?())
+  clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
@@ -26476,14 +26474,14 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:226.1-233.47
-  clause 4 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = (?(block), ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}))
+  clause 4 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (block, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.block.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-  -- let ?(callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
+  -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
   ;; ../../../../spec-concrete/8-dynamic/8.01-eval-context.watsup:234.1-241.47
   clause 5 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(global, EC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
@@ -29392,7 +29390,7 @@ syntax calleeResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:281.1-287.85
 relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argumentListIR ): evalContext store calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:11.1-21.84
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:11.1-22.84
   rulegroup actionCallee
 
    match
@@ -29405,18 +29403,16 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
    paths
 
     rulepath actionCallee
-    -- let (cursor?{cursor <- cursor?}, callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
-    -- if cursor?{cursor <- cursor?} matches (_)
-    -- let ?(p_ref) = cursor?{cursor <- cursor?}
-    -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-    -- let ?(_callableId callableDef id_default*{id_default <- id_default*} _nameIR*{_nameIR <- _nameIR*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
-    -- if callableDef <: actionDef
-    -- let actionDef = callableDef as actionDef
+    -- let callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+    -- if callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} matches (_)
+    -- let ?(_callableId : (cursor, callableDef) # id_default*{id_default <- id_default*} # _nameIR*{_nameIR <- _nameIR*}) = callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?}
+    -- if (cursor, callableDef) <: (cursor, actionDef)
+    -- let (p_ref, actionDef) = (cursor, callableDef) as (cursor, actionDef)
     -- let action nameIR ( parameterListIR ) blockStatementIR = actionDef
     -- let actionCallee = action p_ref . nameIR ( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR
     -- output: % % % |- % <_>( % ): EC STO ` actionCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:25.1-36.62
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:26.1-38.62
   rulegroup externFunctionCallee
 
    match
@@ -29429,16 +29425,16 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
    paths
 
     rulepath externFunctionCallee
-    -- let (_cursor?{_cursor <- _cursor?}, callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
-    -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-    -- let ?(_callableId callableDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
+    -- let callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+    -- if callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} matches (_)
+    -- let ?(_callableId : (_cursor, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?}
     -- if callableDef <: externFunctionDef
     -- let externFunctionDef = callableDef as externFunctionDef
     -- let extern_function nameIR < typeParameterListIR >( parameterListIR ) = externFunctionDef
     -- let externFunctionCallee = extern_function nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
     -- output: % % % |- % <_>( % ): EC STO ` externFunctionCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:40.1-50.102
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:42.1-52.102
   rulegroup definedFunctionCallee
 
    match
@@ -29451,18 +29447,16 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
    paths
 
     rulepath definedFunctionCallee
-    -- let (cursor?{cursor <- cursor?}, callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
-    -- if cursor?{cursor <- cursor?} matches (_)
-    -- let ?(p_ref) = cursor?{cursor <- cursor?}
-    -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
-    -- let ?(_callableId callableDef id_default*{id_default <- id_default*} _nameIR*{_nameIR <- _nameIR*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
+    -- let callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+    -- if callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?} matches (_)
+    -- let ?(_callableId : (_cursor, callableDef) # id_default*{id_default <- id_default*} # _nameIR*{_nameIR <- _nameIR*}) = callResolution<(cursor, callableDef)>?{callResolution<(cursor, callableDef)> <- callResolution<(cursor, callableDef)>?}
     -- if callableDef <: definedFunctionDef
     -- let definedFunctionDef = callableDef as definedFunctionDef
     -- let function nameIR < typeParameterListIR >( parameterListIR ) blockStatementIR = definedFunctionDef
     -- let definedFunctionCallee = function nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR
     -- output: % % % |- % <_>( % ): EC STO ` definedFunctionCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:56.1-134.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:58.1-136.2
   rulegroup builtinMethodCallee
 
    match
@@ -29561,7 +29555,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let builtinMethodCallee = builtin_method storageReference . "setInvalid" < [] >( [] )
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` builtinMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:138.1-179.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:140.1-181.2
   rulegroup externMethodCallee
 
    match
@@ -29600,7 +29594,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let callTargetKey = $callTargetKey(nameIR, argumentListIR)
     -- let callResolution<externMethodDef>?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} = $find_overloaded<externMethodDef>(externMethodDefEnv, callTargetKey, $parameterListIR_of_externMethodDef)
     -- if callResolution<externMethodDef>?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} matches (_)
-    -- let ?(_callableId externMethodDef id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}) = callResolution<externMethodDef>?{callResolution<externMethodDef> <- callResolution<externMethodDef>?}
+    -- let ?(_callableId : externMethodDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<externMethodDef>?{callResolution<externMethodDef> <- callResolution<externMethodDef>?}
     -- let externMethodDef' = externMethodDef
     -- if externMethodDef' matches `EXTERN_METHOD%<%>(%)%`
     -- let extern_method nameIR' < typeParameterListIR >( parameterListIR ) blockStatementIR?{blockStatementIR <- blockStatementIR?} = externMethodDef'
@@ -29608,7 +29602,7 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let externMethodCallee = extern_method objectId . nameIR < typeParameterListIR >( parameterListIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ){ theta ; frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` externMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:183.1-227.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:185.1-229.2
   rulegroup parserApplyMethodCallee
 
    match
@@ -29650,11 +29644,11 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let callTargetKey = $callTargetKey("apply", argumentListIR)
     -- let callResolution<parserApplyMethodDef>?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} = $find_overloaded<parserApplyMethodDef>({ [callableId : parserApplyMethodDef] }, callTargetKey, $parameterListIR_of_parserApplyMethodDef)
     -- if callResolution<parserApplyMethodDef>?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} matches (_)
-    -- let ?(_callableId _parserApplyMethodDef id_default*{id_default <- id_default*} _nameIR*{_nameIR <- _nameIR*}) = callResolution<parserApplyMethodDef>?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?}
+    -- let ?(_callableId : _parserApplyMethodDef # id_default*{id_default <- id_default*} # _nameIR*{_nameIR <- _nameIR*}) = callResolution<parserApplyMethodDef>?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?}
     -- let parserApplyMethodCallee = parser objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ theta ; frame ; parserLocalDeclarationListIR ; stateEnv }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` parserApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:231.1-276.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:233.1-278.2
   rulegroup controlApplyMethodCallee
 
    match
@@ -29696,11 +29690,11 @@ relation Callee_eval: cursor evalContext store |- callableTargetIR <_>( argument
     -- let callTargetKey = $callTargetKey("apply", argumentListIR)
     -- let callResolution<controlApplyMethodDef>?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} = $find_overloaded<controlApplyMethodDef>({ [callableId : controlApplyMethodDef] }, callTargetKey, $parameterListIR_of_controlApplyMethodDef)
     -- if callResolution<controlApplyMethodDef>?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} matches (_)
-    -- let ?(_callableId _controlApplyMethodDef id_default*{id_default <- id_default*} _nameIR*{_nameIR <- _nameIR*}) = callResolution<controlApplyMethodDef>?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?}
+    -- let ?(_callableId : _controlApplyMethodDef # id_default*{id_default <- id_default*} # _nameIR*{_nameIR <- _nameIR*}) = callResolution<controlApplyMethodDef>?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?}
     -- let controlApplyMethodCallee = control objectId .apply( parameterListIR # id_default*{id_default <- id_default*} ){ theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
     -- output: % % % |- % <_>( % ): EC_1 STO_1 ` controlApplyMethodCallee as callee as calleeResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:280.1-310.2
+  ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:282.1-312.2
   rulegroup tableApplyMethodCallee
 
    match

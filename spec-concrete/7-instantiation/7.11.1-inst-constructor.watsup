@@ -10,7 +10,7 @@ rulegroup Constructor_inst {
     ---- ;; if not aliased
     -- if eps = $find_typeDef_i(p, IC, prefixedNameIR)
     ---- ;; find and specialize the constructor type definition
-    -- if _ constructorDef id_default* id_optional*
+    -- if _ `: constructorDef `# id_default* `# id_optional*
         = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
 
   rule Constructor_inst/non-aliased-some-type:
@@ -20,7 +20,7 @@ rulegroup Constructor_inst {
     -- if typeDefIR = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if ~(typeDefIR <: typedefTypeIR)
     ---- ;; find and specialize the constructor type definition
-    -- if _ constructorDef id_default* id_optional*
+    -- if _ `: constructorDef `# id_default* `# id_optional*
         = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
 
   rule Constructor_inst/aliased:
@@ -32,7 +32,7 @@ rulegroup Constructor_inst {
     -- if (nameIR, typeArgumentIR*)
         = $resolve_type_alias(typeIR_alias)
     ---- ;; find and specialize the constructor type definition
-    -- if _ constructorDef id_default* id_optional*
+    -- if _ `: constructorDef `# id_default* `# id_optional*
         = $find_constructorDef_i(IC, `` nameIR, argumentIR*)
 
 }
