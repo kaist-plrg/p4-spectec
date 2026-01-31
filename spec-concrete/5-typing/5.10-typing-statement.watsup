@@ -74,10 +74,12 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-              : callableTypeIR `< `# typeId_impl* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
-                      : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- Call_ok:
+        p TC |- callableTypeIR `< eps `# typeId_impl* >
+                  `( argumentIR* `# id_default* `# id_optional* )
+              : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     -- if $is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callExpressionIR
@@ -99,10 +101,12 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
-              : callableTypeIR `< `# typeId_impl* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
-    -- Call_ok: p TC |- callableTypeIR `< eps `# typeId_impl* > `( argumentIR* `# id_default* )
-                      : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- Call_ok:
+        p TC |- callableTypeIR `< eps `# typeId_impl* >
+                  `( argumentIR* `# id_default* `# id_optional* )
+              : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
     ---- ;; create IR
     -- if callStatementIR
@@ -122,11 +126,13 @@ rulegroup Stmt_ok/callStatement {
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
-              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* )
+              : callableTypeIR `< `# typeId_inserted* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
-    -- Call_ok: p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* > `( argumentIR* `# id_default* )
-                      : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- Call_ok:
+        p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* >
+                  `( argumentIR* `# id_default* `# id_optional* )
+              : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; create IR
     -- if callStatementIR
         = callableTargetIR `< typeArgumentIR_inferred* > `( argumentIR_cast* ) `;

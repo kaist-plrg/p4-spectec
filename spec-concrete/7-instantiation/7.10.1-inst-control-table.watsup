@@ -95,26 +95,32 @@ dec $init_tableEntries(tablePropertyListIR) : tableEntriesPropertyIR
 
 def $init_tableKeys(tablePropertyIR*) = tableKeysPropertyIR
   -- if [ tableKeysPropertyIR ]
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableKeysPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableKeysPropertyIR(tablePropertyIR)*)
 def $init_tableKeys(tablePropertyIR*) = KEY `= `{ eps }
   -- if eps
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableKeysPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableKeysPropertyIR(tablePropertyIR)*)
 
 def $init_tableEntries(tablePropertyIR*) = tableEntriesPropertyIR
   -- if [ tableEntriesPropertyIR ]
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableEntriesPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableEntriesPropertyIR(tablePropertyIR)*)
 def $init_tableEntries(tablePropertyIR*)
   = `EMPTY eps ENTRIES `= `{ eps }
 
 def $init_table(tablePropertyIR*) = TBL
   -- if tableKeysPropertyIR = $init_tableKeys(tablePropertyIR*)
   -- if [ tableActionsPropertyIR ]
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableActionsPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableActionsPropertyIR(tablePropertyIR)*)
   -- if [ tableDefaultActionPropertyIR ]
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableDefaultActionPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableDefaultActionPropertyIR(tablePropertyIR)*)
   -- if tableEntriesPropertyIR = $init_tableEntries(tablePropertyIR*)
   -- if tableCustomPropertyIR*
-      = $filter_<tablePropertyIR>(tablePropertyIR*, def $is_tableCustomPropertyIR)
+      = $filter_<tablePropertyIR>(
+          tablePropertyIR*, $is_tableCustomPropertyIR(tablePropertyIR)*)
   -- if TBL = { KEYS tableKeysPropertyIR,
                 ACTIONS tableActionsPropertyIR,
                 DEFAULT_ACTION tableDefaultActionPropertyIR,

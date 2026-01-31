@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-01-29</span>
+<span id="revdate">2026-01-30</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -737,6 +737,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-call-convention-overview">6.5. Call convention: copy-in/copy-out</a>
 <ul class="sectlevel3">
 <li><a href="#_justification">6.5.1. Justification</a></li>
+<li><a href="#_optional_parameters">6.5.2. Optional parameters</a></li>
 </ul>
 </li>
 <li><a href="#sec-overloading">6.6. Overloading</a></li>
@@ -4084,6 +4085,67 @@ as in the following example:</p>
 </span>  f<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">);</span>       <span style="color: #6e7781">// ok, equivalent to the previous call
 </span>  <span style="color: #6e7781">// f(1, 3); // illegal, since the parameter b is not the last in the list
 </span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_optional_parameters">6.5.2. Optional parameters</h4>
+<div class="paragraph">
+<p>A parameter that is annotated with the <code>@optional</code> annotation is optional: the
+user may omit the value for that parameter in an invocation. Optional
+parameters can only appear for arguments of: packages, parser types, control
+types, extern functions, extern methods, and extern object constructors.
+Optional parameters cannot have default values. If a procedure-like construct
+has both optional parameters and default values then it can only be called
+using named arguments. It is recommended, but not mandatory, for all optional
+parameters to be at the end of a parameter list.</p>
+</div>
+<div class="paragraph">
+<p>The implementation of such objects is not expressed in P4, so the meaning and
+implementation of optional parameters should be specified by the target
+architecture. For example, we can imagine a two-stage switch architecture where
+the second stage is optional. This could be declared as a package with an
+optional parameter:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">package</span> pipeline<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* parameters omitted */</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #cf222e">package</span> <span style="color: #cf222e">switch</span><span style="color: #24292f;background-color: #f6f8fa">(</span>pipeline first<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">@optional</span> pipeline second<span style="color: #24292f;background-color: #f6f8fa">);</span>
+
+pipeline<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #6e7781">/* arguments omitted */</span><span style="color: #24292f;background-color: #f6f8fa">)</span> ingress<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">switch</span><span style="color: #24292f;background-color: #f6f8fa">(</span>ingress<span style="color: #24292f;background-color: #f6f8fa">)</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// a switch with a single-stage pipeline</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here the target architecture could implement the elided optional argument using
+an empty pipeline.</p>
+</div>
+<div class="paragraph">
+<p>The following example shows optional parameters and parameters with default
+values.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> h<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> a<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bool</span> b <span style="color: #0550ae">=</span> true<span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// default value
+</span>
+<span style="color: #6e7781">// function calls
+</span>h<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// same as h(10, true);
+</span>h<span style="color: #24292f;background-color: #f6f8fa">(</span>a <span style="color: #0550ae">=</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// same as h(10, true);
+</span>h<span style="color: #24292f;background-color: #f6f8fa">(</span>a <span style="color: #0550ae">=</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">,</span> b <span style="color: #0550ae">=</span> true<span style="color: #24292f;background-color: #f6f8fa">);</span>
+
+<span style="color: #cf222e">struct</span> Empty <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #cf222e">control</span> nothing<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> Empty h<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> Empty m<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #cf222e">parser</span> parserProto<span style="color: #0550ae">&lt;</span>H<span style="color: #24292f;background-color: #f6f8fa">,</span> M<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> p<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> H h<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> M m<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #cf222e">control</span> controlProto<span style="color: #0550ae">&lt;</span>H<span style="color: #24292f;background-color: #f6f8fa">,</span> M<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> H h<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> M m<span style="color: #24292f;background-color: #f6f8fa">);</span>
+
+<span style="color: #cf222e">package</span> pack<span style="color: #0550ae">&lt;</span>HP<span style="color: #24292f;background-color: #f6f8fa">,</span> MP<span style="color: #24292f;background-color: #f6f8fa">,</span> HC<span style="color: #24292f;background-color: #f6f8fa">,</span> MC<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span>
+    <span style="color: #0550ae">@optional</span> parserProto<span style="color: #0550ae">&lt;</span>HP<span style="color: #24292f;background-color: #f6f8fa">,</span> MP<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span><span style="color: #cf222e">parser</span><span style="color: #24292f;background-color: #f6f8fa">,</span>  <span style="color: #6e7781">// optional parameter
+</span>                             controlProto<span style="color: #0550ae">&lt;</span>HC<span style="color: #24292f;background-color: #f6f8fa">,</span> MC<span style="color: #0550ae">&gt;</span> <span style="color: #0550ae">_</span><span style="color: #cf222e">control</span> <span style="color: #0550ae">=</span> nothing<span style="color: #24292f;background-color: #f6f8fa">());</span> <span style="color: #6e7781">// default parameter value
+</span>
+pack<span style="color: #24292f;background-color: #f6f8fa">()</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span>   <span style="color: #6e7781">// No value for _parser, _control is an instance of nothing()</span></code></pre>
 </div>
 </div>
 </div>
@@ -10953,12 +11015,13 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
  -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
  -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY
   rule ParameterType_wf/default:
-  B |- _ direction typeIR _ parameterInitializerIR
+  B |- annotationList direction typeIR _ parameterInitializerIR
  -- Type_wf: B |- typeIR
  -- if typeIR_unroll = $unroll_typeIR(typeIR)
  -- if ~(typeIR_unroll &lt;: synthesizedTypeIR)
+ -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY
  -- if direction = IN \/ direction = `EMPTY
- -- if ((typeIR_unroll = INT) \/ (typeIR_unroll &lt;: stringTypeIR) \/ (typeIR_unroll &lt;: objectTypeIR)) =&gt; direction = `EMPTY</pre>
+ -- if ~$optional_annotation_of_parameterIR'(annotationList)</pre>
 </div>
 </div>
 </div>
@@ -11011,10 +11074,13 @@ value can be specified for <code>in</code> or directionless parameters only.</p>
 <p>Check that <code>typeIR<sub>unroll</sub></code> does not have type <code>synthesizedTypeIR</code>.</p>
 </li>
 <li>
+<p>Check that if <code>typeIR<sub>unroll</sub></code> is equal to <code>INT</code> or <code>typeIR<sub>unroll</sub></code> has type <code>stringTypeIR</code> or <code>typeIR<sub>unroll</sub></code> has type <code>objectTypeIR</code>, then <code>direction</code> is equal to <code>`EMPTY</code>.</p>
+</li>
+<li>
 <p>Check that <code>direction</code> is equal to <code>IN</code> or <code>direction</code> is equal to <code>`EMPTY</code>.</p>
 </li>
 <li>
-<p>Check that if <code>typeIR<sub>unroll</sub></code> is equal to <code>INT</code> or <code>typeIR<sub>unroll</sub></code> has type <code>stringTypeIR</code> or <code>typeIR<sub>unroll</sub></code> has type <code>objectTypeIR</code>, then <code>direction</code> is equal to <code>`EMPTY</code>.</p>
+<p>Check that <code>~<a href="#optional_annotation_of_parameterIR'">$optional_annotation_of_parameterIR'(annotationList)</a></code>.</p>
 </li>
 <li>
 <p>The relation holds.</p>
@@ -11241,6 +11307,7 @@ type definition:</p>
   rule CallableType_wf/actionTypeIR:
   B |- ACTION _ `(parameterIR*)
  -- (ParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ direction typeIR _ _ = parameterIR))*
  -- if $directionless_trailing(direction*)
  -- (if $nestable_action(typeIR))*</pre>
@@ -11262,6 +11329,9 @@ type definition:</p>
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>direction<sup>*</sup></code> be the list of <code>direction</code> and <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11395,6 +11465,7 @@ definedFunctionTypeIR
   rule CallableType_wf/definedFunctionTypeIR:
   B |- FUNCTION _ `(parameterIR*) : typeIR_ret
  -- (ParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
  -- (if $nestable_definedFunction(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret</pre>
@@ -11416,6 +11487,9 @@ definedFunctionTypeIR
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11706,6 +11780,7 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantion-abstract-
   rule CallableType_wf/abstract:
   B |- EXTERN_METHOD ABSTRACT _ `(parameterIR*) : typeIR_ret
  -- (ParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
  -- (if $nestable_externMethod(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret</pre>
@@ -11770,6 +11845,9 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantion-abstract-
 </li>
 <li>
 <p>Check that <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11858,6 +11936,7 @@ parserApplyMethodDef
   rule CallableType_wf/parserApplyMethodTypeIR:
   B |- PARSER_APPLY `(parameterIR*)
  -- (ParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
  -- (if $nestable_parserApplyMethod(typeIR))*</pre>
 </div>
@@ -11878,6 +11957,9 @@ parserApplyMethodDef
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -11960,6 +12042,7 @@ controlApplyMethodDef
   rule CallableType_wf/controlApplyMethodTypeIR:
   B |- CONTROL_APPLY `(parameterIR*)
  -- (ParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
  -- (if $nestable_controlApplyMethod(typeIR))*</pre>
 </div>
@@ -11980,6 +12063,9 @@ controlApplyMethodDef
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ParameterType_wf"><code>parameterIR</code> is a well-formed parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sup>*</sup></code> be the list of <code>typeIR</code>, obtained by repeating:</p>
@@ -12601,16 +12687,16 @@ is not defined.</p>
 <div class="content">
 <pre>rulegroup Constructor_call/externConstructorDef:
   rule Constructor_call/externConstructorDef:
-  p IC STO_0 |- externObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_2 object_extern
+  p IC STO_0 |- externObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default* # id_optional*) : STO_2 object_extern
  -- if EXTERN nameIR `&lt;typeParameterIR*&gt; `(constructorParameterIR*) `{externMethodPrototypeIR*} = externObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if theta = `{(typeParameterIR : typeArgumentIR)*}
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if GIVEN constructorParameterIR_aligned* DEFAULT constructorParameterIR_default* = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*, id_optional*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- Copy_in_inst: STO_0 p IC argumentIR* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default* ~&gt; STO_2 IC_callee_3
  -- ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR* : IC_callee_4
  -- if `{(callableId : externMethodDef)*} = IC_callee_4.BLOCK.CALLABLE
  -- (if (_ _ _ id_cparam _ = constructorParameterIR))*
@@ -12629,7 +12715,7 @@ is not defined.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>externObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>externObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -12649,7 +12735,7 @@ is not defined.</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>GIVEN</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -12673,7 +12759,7 @@ is not defined.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -12683,7 +12769,7 @@ is not defined.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> from <code>p</code> layer of <code>IC</code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -12893,6 +12979,7 @@ as:</p>
   rule ConstructorType_wf/parserObjectTypeIR:
   B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
  -- (ConstructorParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- Type_wf: B |- typeIR_object
  -- if parserObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -12915,6 +13002,9 @@ as:</p>
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>object</sub></code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -12962,16 +13052,16 @@ as:</p>
 <div class="content">
 <pre>rulegroup Constructor_call/parserConstructorDef:
   rule Constructor_call/parserConstructorDef:
-  p IC STO_0 |- parserObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_4 object_parser
+  p IC STO_0 |- parserObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default* # id_optional*) : STO_4 object_parser
  -- if PARSER `&lt;typeParameterIR*&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*} = parserObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if theta = `{(typeParameterIR : typeArgumentIR)*}
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if GIVEN constructorParameterIR_aligned* DEFAULT constructorParameterIR_default* = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*, id_optional*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- Copy_in_inst: STO_0 p IC argumentIR* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default* ~&gt; STO_2 IC_callee_3
  -- ParserLocalDecls_inst: IC_callee_3 STO_2 |- parserLocalDeclarationIR* : IC_local STO_3 parserLocalDeclarationIR_inst*
  -- ParserStates_inst: IC_local STO_3 |- parserStateIR* : IC_state STO_4
  -- if object_parser = PARSER `&lt;theta&gt; `(parameterIR*) `{IC_callee_3.BLOCK.FRAME parserLocalDeclarationIR_inst* IC_state.BLOCK.STATE}</pre>
@@ -12987,7 +13077,7 @@ as:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>parserObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>parserObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13007,7 +13097,7 @@ as:</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>GIVEN</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -13031,7 +13121,7 @@ as:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13041,7 +13131,7 @@ as:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> from <code>p</code> layer of <code>IC</code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13163,6 +13253,7 @@ as:</p>
   rule ConstructorType_wf/controlObjectTypeIR:
   B |- CONSTRUCTOR `(parameterIR*) : typeIR_object
  -- (ConstructorParameterType_wf: B |- parameterIR)*
+ -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- Type_wf: B |- typeIR_object
  -- if controlObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
@@ -13185,6 +13276,9 @@ as:</p>
 <ol class="arabic">
 <li>
 <p>Check that <a href="#ConstructorParameterType_wf"><code>parameterIR</code> is a well-formed constructor parameter type, with bound type variables <code>B</code></a>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>~<a href="#is_optional_parameterIR">$is_optional_parameterIR(parameterIR)</a></code>, for all <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>object</sub></code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -13232,16 +13326,16 @@ as:</p>
 <div class="content">
 <pre>rulegroup Constructor_call/controlConstructorDef:
   rule Constructor_call/controlConstructorDef:
-  p IC STO_0 |- controlObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_4 object_control
+  p IC STO_0 |- controlObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default* # id_optional*) : STO_4 object_control
  -- if CONTROL `&lt;typeParameterIR*&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR} = controlObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if theta = `{(typeParameterIR : typeArgumentIR)*}
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if GIVEN constructorParameterIR_aligned* DEFAULT constructorParameterIR_default* = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*, id_optional*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- Copy_in_inst_default: STO_0 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- Copy_in_inst: STO_0 p IC argumentIR* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default* ~&gt; STO_2 IC_callee_3
  -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR* : IC_local_0 STO_3 controlLocalDeclarationIR'*
  -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR'
  -- if `{(callableId : actionDef)*} = IC_local_1.BLOCK.CALLABLE
@@ -13258,7 +13352,7 @@ as:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>controlObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>controlObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13278,7 +13372,7 @@ as:</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>GIVEN</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -13302,7 +13396,7 @@ as:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13312,7 +13406,7 @@ as:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> from <code>p</code> layer of <code>IC</code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13755,15 +13849,15 @@ with them.</p>
 <div class="content">
 <pre>rulegroup Constructor_call/packageConstructorDef:
   rule Constructor_call/packageConstructorDef:
-  p IC STO_0 |- packageObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default*) : STO_2 object_package
+  p IC STO_0 |- packageObjectConstructorDef `&lt;typeArgumentIR*&gt; `(argumentIR* # id_default* # id_optional*) : STO_2 object_package
  -- if PACKAGE `&lt;typeParameterIR*&gt; `(constructorParameterIR*) = packageObjectConstructorDef
  -- if p_callee = BLOCK
  -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
  -- if IC_callee_1 = IC_callee_0[BLOCK.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
- -- if (constructorParameterIR_aligned*, argumentIR_aligned*, constructorParameterIR_default*, parameterInitializerIR_default*) = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*)
+ -- if GIVEN constructorParameterIR_aligned* DEFAULT constructorParameterIR_default* = $align_parameterListIR(constructorParameterIR*, argumentIR*, id_default*, id_optional*)
  -- (if (_ _ _ id_aligned _ = constructorParameterIR_aligned))*
- -- Copy_in_inst: STO_0 p IC argumentIR_aligned* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
- -- Copy_in_inst_default: STO_1 p IC parameterInitializerIR_default* @ p_callee IC_callee_2 id_default* ~&gt; STO_2 IC_callee_3
+ -- Copy_in_inst: STO_0 p IC argumentIR* @ p_callee IC_callee_1 id_aligned* ~&gt; STO_1 IC_callee_2
+ -- Copy_in_inst_default: STO_1 p IC @ p_callee IC_callee_2 constructorParameterIR_default* ~&gt; STO_2 IC_callee_3
  -- if object_package = PACKAGE `&lt;IC_callee_3.BLOCK.TYPE&gt; `{IC_callee_3.BLOCK.FRAME}</pre>
 </div>
 </div>
@@ -13777,7 +13871,7 @@ with them.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Constructor_call">Loading <code>packageObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
+<p><a href="#Constructor_call">Loading <code>packageObjectConstructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -13794,7 +13888,7 @@ with them.</p>
 <p>Let <code>IC<sub>callee_1</sub></code> be <code>IC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup>,</code> <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>id<sub>default</sub><sup>*</sup></code></a>.</p>
+<p>Let <code>GIVEN</code> <code>constructorParameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>constructorParameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Let <code>id<sub>aligned</sub><sup>*</sup></code> be the list of <code>id<sub>aligned</sub></code>, obtained by repeating:</p>
@@ -13818,7 +13912,7 @@ with them.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sub>aligned</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst">copy-in from <code>p</code> layer of <code>IC</code> with <code>argumentIR<sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_1</sub></code> with <code>id<sub>aligned</sub><sup>*</sup></code>, under store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -13828,7 +13922,7 @@ with them.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Copy_in_inst_default">copy-in defaults from <code>p</code> layer of <code>IC</code> with <code>parameterInitializerIR<sub>default</sub><sup>*</sup></code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code> with <code>id<sub>default</sub><sup>*</sup></code>, under store <code>STO<sub>1</sub></code></a>.</p>
+<p>the result of <a href="#Copy_in_inst_default">copy-in defaults <code>constructorParameterIR<sub>default</sub><sup>*</sup></code> from <code>p</code> layer of <code>IC</code> to <code>p<sub>callee</sub></code> layer of <code>IC<sub>callee_2</sub></code>, under store <code>STO<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -15750,9 +15844,9 @@ provided or not.</p>
  -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- if constructorTargetIR = prefixedNameIR `&lt;typeArgumentIR*&gt;
- -- ConstructorType_ok: p TC_0 |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
+ -- ConstructorType_ok: p TC_0 |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default* # id_optional*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
- -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
  -- if constructorTargetIR_inferred = prefixedNameIR `&lt;typeArgumentIR_inferred*&gt;
@@ -15800,7 +15894,7 @@ provided or not.</p>
 <p>Let <code>constructorTargetIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -15817,7 +15911,7 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
+<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
 </li>
 </ul>
 </div>
@@ -15886,9 +15980,9 @@ provided or not.</p>
  -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- if constructorTargetIR = prefixedNameIR `&lt;typeArgumentIR*&gt;
- -- ConstructorType_ok: p TC_0 |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
+ -- ConstructorType_ok: p TC_0 |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default* # id_optional*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
- -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if EXTERN typeId_extern `&lt;typeIR_arg*&gt; externMethodTypeDefEnv_extern = $unroll_typeIR(typeIR_object)
  -- if TC_1 = $add_var_t(LOCAL, TC_0, "this", `EMPTY typeIR_object CTK eps)
  -- ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
@@ -15942,7 +16036,7 @@ provided or not.</p>
 <p>Let <code>constructorTargetIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -15959,7 +16053,7 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
+<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC<sub>0</sub></code>, and <code>NAMED</code> instantiation site context</a>.</p>
 </li>
 </ul>
 </div>
@@ -16071,9 +16165,9 @@ provided or not.</p>
   rule InstDecl_inst/extern:
   p IC_0 STO_0 |- annotationList typeIR constructorTargetIR `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_3 constantDeclarationIR
  -- if prefixedNameIR `&lt;typeArgumentListIR&gt; = constructorTargetIR
- -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
+ -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default* # id_optional*)
  -- if IC_inner = $enter_path_i(IC_0, nameIR)
- -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
+ -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default* # id_optional*) : STO_1 object
  -- if EXTERN typeId `&lt;theta&gt; `{externState frame externMethodDefEnv} = object
  -- if IC_decl = $inherit_i(GLOBAL, IC_0)
  -- if objectDeclarationListIR = $flatten_objectInitializerOptIR(objectInitializerOptIR)
@@ -16088,9 +16182,9 @@ provided or not.</p>
   rule InstDecl_inst/non-extern:
   p IC_0 STO_0 |- annotationList typeIR constructorTargetIR `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_2 constantDeclarationIR
  -- if prefixedNameIR `&lt;typeArgumentListIR&gt; = constructorTargetIR
- -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
+ -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default* # id_optional*)
  -- if IC_inner = $enter_path_i(IC_0, nameIR)
- -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
+ -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default* # id_optional*) : STO_1 object
  -- if ~(object &lt;: externObject)
  -- if objectId = IC_0.PATH ++ nameIR
  -- if STO_2 = $add_store(STO_1, objectId, object)
@@ -16116,7 +16210,7 @@ provided or not.</p>
 <p>Let <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> be <code>constructorTargetIR</code>.</p>
 </li>
 <li>
-<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -16133,7 +16227,7 @@ provided or not.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC<sub>inner</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC<sub>inner</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -24340,8 +24434,8 @@ callableTargetIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- if argument* = $flatten_argumentList(argumentList)
  -- (Argument_ok: p TC |- argument : argumentIR)*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if $is_static_assert_callableTypeIR(callableTypeIR)
  -- if callExpressionIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if expressionNoteIR = `(typeIR_ret LCTK)
@@ -24351,8 +24445,8 @@ callableTargetIR
   p TC f l |- lvalue_callable `(argumentList) ; : TC f callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
  -- if callStatementIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) ;
   rule Stmt_ok/callStatement-typeArgumentList:
@@ -24360,9 +24454,9 @@ callableTargetIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR* # typeId_impl*
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default* # id_optional*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
- -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if callStatementIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) ;</pre>
 </div>
 </div>
@@ -24422,7 +24516,7 @@ callableTargetIR
 </div>
 </li>
 <li>
-<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -24436,7 +24530,7 @@ callableTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -24551,7 +24645,7 @@ callableTargetIR
 </div>
 </li>
 <li>
-<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -24568,7 +24662,7 @@ callableTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -25055,10 +25149,10 @@ desugared into a method call on that instance with the relation:</p>
   rule DirectApplicationStmt_inst:
   p IC STO_0 |- constructorTargetIR . APPLY `(argumentListIR) ; : STO_2 constantDeclarationIR callStatementIR
  -- if prefixedNameIR `&lt;typeArgumentListIR&gt; = constructorTargetIR
- -- Constructor_inst: p IC |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(eps) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# eps)
+ -- Constructor_inst: p IC |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(eps) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default* # id_optional*)
  -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
  -- if IC_callee = $enter_path_i(IC, typeId)
- -- Constructor_call: p IC_callee STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(eps # eps) : STO_1 object
+ -- Constructor_call: p IC_callee STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(eps # id_default* # id_optional*) : STO_1 object
  -- if typeId_fresh = $fresh_typeId
  -- if typeIR = ` typeId
  -- if nameIR = $concat_text([typeId, "_", typeId_fresh])
@@ -25088,7 +25182,7 @@ desugared into a method call on that instance with the relation:</p>
 <p>Let <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> be <code>constructorTargetIR</code>.</p>
 </li>
 <li>
-<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with default parameters <code>id<sup>*</sup></code> be</p>
+<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -25096,9 +25190,6 @@ desugared into a method call on that instance with the relation:</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Check that <code>id<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
 <p>Let <code>typeId</code> be <a href="#flatten_prefixedNameIR">the string form of  <code>prefixedNameIR</code></a>.</p>
@@ -25111,7 +25202,7 @@ desugared into a method call on that instance with the relation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with default parameters <code>·</code>, under cursor <code>p</code>, instantiation context <code>IC<sub>callee</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC<sub>callee</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -30857,7 +30948,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
   id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR
  -- if switchLabelIR_h : = switchCaseIR_h
  -- if $match_switchLabelIR_table(id, switchLabelIR_h)
- -- if (_ : blockStatementIR) :: _ = $filter_&lt;switchCaseIR&gt;(switchCaseIR_t*, $is_non_fallthrough_switchCaseIR)
+ -- if (_ : blockStatementIR) :: _ = $filter_&lt;switchCaseIR&gt;(switchCaseIR_t*, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
   rule SwitchCases_table_eval/cons-fallthrough-no-match:
   id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
  -- if switchLabelIR_h : = switchCaseIR_h
@@ -30942,7 +31033,24 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>switchCaseIR'<sup>*</sup></code> be <a href="#filter_"><code>switchCaseIR<sub>t</sub><sup>*</sup></code> filtered by $<code>$is_non_fallthrough_switchCaseIR</code></a>.</p>
+<p>Let <code>bool<sup>*</sup></code> be the list of <code>bool</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool</code> be <a href="#is_non_fallthrough_switchCaseIR"><code>switchCaseIR<sub>t</sub></code> is not a fall-through case</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>switchCaseIR<sub>t</sub></code> in <code>switchCaseIR<sub>t</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>switchCaseIR'<sup>*</sup></code> be <a href="#filter_"><code>switchCaseIR<sub>t</sub><sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>switchCaseIR'<sup>*</sup></code> is a non-empty list.</p>
@@ -31598,7 +31706,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
  -- if switchLabelIR_h : = switchCaseIR_h
  -- SwitchLabel_general_eval: LOCAL EC_0 STO_0 |- switchLabelIR_h : EC_1 STO_1 (` value_label)
  -- if $match_switchLabelIR_general(value, value_label)
- -- if (_ : blockStatementIR) :: _ = $filter_&lt;switchCaseIR&gt;(switchCaseIR_t*, $is_non_fallthrough_switchCaseIR)
+ -- if (_ : blockStatementIR) :: _ = $filter_&lt;switchCaseIR&gt;(switchCaseIR_t*, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
   rule SwitchCases_general_eval/cons-fallthrough-no-match:
   LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*) : EC_2 STO_2 blockStatementIR?
  -- if switchLabelIR_h : = switchCaseIR_h
@@ -31737,7 +31845,24 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>switchCaseIR'<sup>*</sup></code> be <a href="#filter_"><code>switchCaseIR<sub>t</sub><sup>*</sup></code> filtered by $<code>$is_non_fallthrough_switchCaseIR</code></a>.</p>
+<p>Let <code>bool<sup>*</sup></code> be the list of <code>bool</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool</code> be <a href="#is_non_fallthrough_switchCaseIR"><code>switchCaseIR<sub>t</sub></code> is not a fall-through case</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>switchCaseIR<sub>t</sub></code> in <code>switchCaseIR<sub>t</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>switchCaseIR'<sup>*</sup></code> be <a href="#filter_"><code>switchCaseIR<sub>t</sub><sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>switchCaseIR'<sup>*</sup></code> is a non-empty list.</p>
@@ -40033,8 +40158,8 @@ constructorTargetIR
  -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
  -- if argument* = $flatten_argumentList(argumentList)
  -- (Argument_ok: p TC |- argument : argumentIR)*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default*)
- -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default* # id_optional*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if typeIR_ret =/= VOID
  -- if ctk = $is_static_callableTypeIR(callableTypeIR)
  -- if $is_static_assert_callableTypeIR(callableTypeIR)
@@ -40046,8 +40171,8 @@ constructorTargetIR
   p TC |- callableTarget `(argumentList) : callExpressionIR # expressionNoteIR
  -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default*)
- -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_infer*&gt; `(# id_default* # id_optional*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;eps # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if typeIR_ret =/= VOID
  -- if ctk = $is_static_callableTypeIR(callableTypeIR)
  -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
@@ -40059,9 +40184,9 @@ constructorTargetIR
  -- if realTypeArgument* = $flatten_realTypeArgumentList(realTypeArgumentList)
  -- TypeArguments_ok: p TC |- realTypeArgument* : typeArgumentIR* # typeId_impl*
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
- -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
+ -- CallableType_ok: p TC |- callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_inserted*&gt; `(# id_default* # id_optional*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
- -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- Call_ok: p TC |- callableTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if typeIR_ret =/= VOID
  -- if ctk = $is_static_callableTypeIR(callableTypeIR)
  -- if callExpressionIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
@@ -40130,7 +40255,7 @@ constructorTargetIR
 </div>
 </li>
 <li>
-<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>infer</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40144,7 +40269,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -40263,7 +40388,7 @@ constructorTargetIR
 </div>
 </li>
 <li>
-<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40280,7 +40405,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Call_ok">typing the invocation <code>callableTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -40319,8 +40444,8 @@ constructorTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- if constructorTargetIR = prefixedNameIR `&lt;eps&gt;
- -- ConstructorType_ok: p TC |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- ConstructorType_ok: p TC |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
+ -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;eps # typeId_impl*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if $is_concrete_extern_object(typeIR_object)
  -- if callExpressionIR = (prefixedNameIR `&lt;typeArgumentIR_inferred*&gt;) `(argumentIR_cast*)
  -- if expressionNoteIR = `(typeIR_object CTK)
@@ -40330,9 +40455,9 @@ constructorTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- if prefixedNameIR = $prefixedTypeName(prefixedTypeName)
  -- if constructorTargetIR = prefixedNameIR `&lt;typeArgumentIR*&gt;
- -- ConstructorType_ok: p TC |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default*)
+ -- ConstructorType_ok: p TC |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId_inserted*&gt; `(# id_default* # id_optional*)
  -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
- -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- Inst_ok: p TC ANON |- constructorTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_object `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
  -- if $is_concrete_extern_object(typeIR_object)
  -- if callExpressionIR = (prefixedNameIR `&lt;typeArgumentIR_inferred*&gt;) `(argumentIR_cast*)
  -- if expressionNoteIR = `(typeIR_object CTK)</pre>
@@ -40373,7 +40498,7 @@ constructorTargetIR
 <p>Let <code>constructorTargetIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40387,7 +40512,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC</code>, and <code>ANON</code> instantiation site context</a>.</p>
+<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC</code>, and <code>ANON</code> instantiation site context</a>.</p>
 </li>
 </ul>
 </div>
@@ -40438,7 +40563,7 @@ constructorTargetIR
 <p>Let <code>constructorTargetIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>inserted</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40455,7 +40580,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code> and omitted arguments <code>id<sub>default</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC</code>, and <code>ANON</code> instantiation site context</a>.</p>
+<p>the result of <a href="#Inst_ok">typing the instantiation <code>constructorTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sub>infer</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> , under cursor <code>p</code>, typing context <code>TC</code>, and <code>ANON</code> instantiation site context</a>.</p>
 </li>
 </ul>
 </div>
@@ -40493,12 +40618,12 @@ constructorTargetIR
 <pre>rulegroup Expr_eval_lctk/callExpressionIR:
   rule Expr_eval_lctk/static_assert:
   p TC |- (prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*)) # _ ~&gt; boolValue
- -- CallableType_ok: p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : externFunctionTypeIR `&lt;# _&gt; `(# _)
+ -- CallableType_ok: p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : externFunctionTypeIR `&lt;# _&gt; `(# id_default* # id_optional*)
  -- if EXTERN_FUNCTION "static_assert" `(parameterIR*) : BOOL = externFunctionTypeIR
  -- (if _ _ _ nameIR_param _ = parameterIR)*
  -- if TC_callee_0 = $empty_typingContext
- -- if (parameterIR_aligned*, argumentIR_aligned*, eps, eps) = $align_parameterListIR(parameterIR*, argumentIR*, eps)
- -- (Argument_eval_lctk: p TC |- argumentIR_aligned ~&gt; value_argument)*
+ -- if GIVEN parameterIR_aligned* DEFAULT eps = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- (Argument_eval_lctk: p TC |- argumentIR ~&gt; value_argument)*
  -- (if _ direction_param_aligned typeIR_param_aligned nameIR_param_aligned _ = parameterIR_aligned)*
  -- (if (varTypeIR = direction_param_aligned typeIR_param_aligned LCTK value_argument))*
  -- if TC_callee_1 = $add_vars_t(LOCAL, TC_callee_0, nameIR_param_aligned*, varTypeIR*)
@@ -40545,7 +40670,7 @@ constructorTargetIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>_<sup>*</sup></code> and default parameters <code>_<sup>*</sup></code> be</p>
+<p>Let the callable type <code>callableTypeIR</code> with fresh type variables <code>_<sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40593,13 +40718,10 @@ constructorTargetIR
 <p>Let <code>TC<sub>callee_0</sub></code> be <a href="#empty_typingContext">an empty typing context</a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>parameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sub>aligned</sub><sup>*</sup>,</code> <code>parameterIR'<sup>*</sup>,</code> <code>parameterInitializerIR<sup>*</sup></code> <code>)</code> be <a href="#align_parameterListIR">the result of aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where default parameters are <code>·</code></a>.</p>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR'<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
 <p>Check that <code>parameterIR'<sup>*</sup></code> is an empty list.</p>
-</li>
-<li>
-<p>Check that <code>parameterInitializerIR<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
 <p>Let <code>value<sub>argument</sub><sup>*</sup></code> be the list of <code>value<sub>argument</sub></code>, obtained by repeating:</p>
@@ -40612,7 +40734,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Argument_eval_lctk">local compile-time evaluation of <code>argumentIR<sub>aligned</sub></code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
+<p>the result of <a href="#Argument_eval_lctk">local compile-time evaluation of <code>argumentIR</code>, under cursor <code>p</code> and typing context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -40622,7 +40744,7 @@ constructorTargetIR
 </div>
 </div>
 <div class="paragraph">
-<p>for each <code>argumentIR<sub>aligned</sub></code> in <code>argumentIR<sub>aligned</sub><sup>*</sup></code></p>
+<p>for each <code>argumentIR</code> in <code>argumentIR<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -40897,8 +41019,8 @@ type, while a callable call evaluates to the result of the call.</p>
 <pre>rulegroup Expr_inst/callExpressionIR-constructor:
   rule Expr_inst/callExpressionIR-constructor:
   p IC STO_0 |- ((prefixedNameIR `&lt;typeArgumentListIR&gt;) `(argumentListIR)) # _ : STO_2 value_ref
- -- Constructor_inst: p IC |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default*)
- -- Constructor_call: p IC STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default*) : STO_1 object
+ -- Constructor_inst: p IC |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default* # id_optional*)
+ -- Constructor_call: p IC STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default* # id_optional*) : STO_1 object
  -- if STO_2 = $add_store(STO_1, IC.PATH, object)
  -- if value_ref = REF IC.PATH</pre>
 </div>
@@ -40918,7 +41040,7 @@ type, while a callable call evaluates to the result of the call.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code> be</p>
+<p>Let the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -40932,7 +41054,7 @@ type, while a callable call evaluates to the result of the call.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
+<p>the result of <a href="#Constructor_call">loading <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code>, instantiation context <code>IC</code>, and store <code>STO</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -43941,7 +44063,8 @@ check it:</p>
 <p>As explained in <a href="#sec-overloading">Section 6.6</a>, functions, methods, and constructors can
 be overloaded. Overload should be resolved at compile time based on the number
 of arguments or the names of the arguments. Additionally, arguments may be
-omitted when the corresponding parameters have default values.</p>
+omitted when the corresponding parameters have default values or are declared
+as optional.</p>
 </div>
 <div class="paragraph">
 <p>The following algorithm is used to resolve overloads and omitted arguments:</p>
@@ -43951,7 +44074,7 @@ omitted when the corresponding parameters have default values.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>dec $find_overloaded&lt;V&gt;(map&lt;callTargetId, V&gt;, callTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)?</pre>
+<pre>dec $find_overloaded&lt;V&gt;(map&lt;callTargetId, V&gt;, callTargetKey, $get_parameterListIR(V) : parameterListIR) : callResolution&lt;V&gt;?</pre>
 </div>
 </div>
 </div>
@@ -43973,6 +44096,17 @@ omitted when the corresponding parameters have default values.</p>
 </li>
 </ul>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of this algorithm is a matched overload item with the default and
+optional parameter names, or an empty result if no match is found.</p>
+</div>
+<div id="callResolution" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callResolution&lt;V&gt;
+   : callableId : V # nameIR* # nameIR*
+   ;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -44006,7 +44140,7 @@ unnamedCallTargetKey
 <div id="callTargetMatch" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">callTargetMatch
-   : MATCH id*
+   : MATCH id* id*
    | NOMATCH
    ;</code></pre>
 </div>
@@ -44024,18 +44158,18 @@ unnamedCallTargetKey
  -- (if (id_arg_inner = id_arg?))*
  -- if eps = $find_overloadeds_named&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg_inner*), $get_parameterListIR)
 
-def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_parameterListIR) = (callableId_found, V_found, id_default*)
+def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_parameterListIR) = callableId_found : V_found # id_default* # id_optional*
  -- if |(id_arg?)*| &gt; 0
  -- (if (id_arg_inner = id_arg?))*
- -- if (callableId_found, V_found, id_default*) = $find_overloadeds_named&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg_inner*), $get_parameterListIR)
+ -- if callableId_found : V_found # id_default* # id_optional* = $find_overloadeds_named&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg_inner*), $get_parameterListIR)
 
 def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_parameterListIR) = eps
  -- (if (id_arg? = eps))*
  -- if eps = $find_overloadeds_unnamed&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(|id_arg?*|), $get_parameterListIR)
 
-def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_parameterListIR) = (callableId_found, V_found, id_default*)
+def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_parameterListIR) = callableId_found : V_found # id_omitted* # id_optional*
  -- (if (id_arg? = eps))*
- -- if (callableId_found, V_found, id_default*) = $find_overloadeds_unnamed&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(|id_arg?*|), $get_parameterListIR)</pre>
+ -- if callableId_found : V_found # id_omitted* # id_optional* = $find_overloadeds_unnamed&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(|id_arg?*|), $get_parameterListIR)</pre>
 </div>
 </div>
 </div>
@@ -44087,14 +44221,14 @@ def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_p
 </div>
 </li>
 <li>
-<p>Let <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code> be <a href="#find_overloadeds_named">finding all items in <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>V</code> <code>)<sup>*</sup></code> <code>}</code> matching named key <code>nameIR<sub>f</sub></code> <code>(</code> <code>id<sub>arg_inner</sub><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
+<p>Let <code>callResolution&lt;V&gt;<sup>*</sup></code> be <a href="#find_overloadeds_named">finding all items in <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>V</code> <code>)<sup>*</sup></code> <code>}</code> matching named key <code>nameIR<sub>f</sub></code> <code>(</code> <code>id<sub>arg_inner</sub><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>If let <code>(</code> <code>callableId<sub>found</sub>,</code> <code>V<sub>found</sub>,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code>:</p>
+<p>If let <code>callableId<sub>found</sub></code> <code>:</code> <code>V<sub>found</sub></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <code>callResolution&lt;V&gt;<sup>*</sup></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Return ( <code>callableId<sub>found</sub></code>, <code>V<sub>found</sub></code>, <code>id<sub>default</sub><sup>*</sup></code> ).</p>
+<p>Return <code>callableId<sub>found</sub></code> <code>:</code> <code>V<sub>found</sub></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44117,14 +44251,14 @@ def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_p
 </div>
 </li>
 <li>
-<p>Let <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code> be <a href="#find_overloadeds_unnamed">finding all items in <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>V</code> <code>)<sup>*</sup></code> <code>}</code> matching unnamed key <code>nameIR<sub>f</sub></code> <code>(</code> <code>the</code> <code>length</code> <code>of</code> <code>id<sub>arg</sub><sup>?</sup><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
+<p>Let <code>callResolution&lt;V&gt;<sup>*</sup></code> be <a href="#find_overloadeds_unnamed">finding all items in <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>V</code> <code>)<sup>*</sup></code> <code>}</code> matching unnamed key <code>nameIR<sub>f</sub></code> <code>(</code> <code>the</code> <code>length</code> <code>of</code> <code>id<sub>arg</sub><sup>?</sup><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>If let <code>(</code> <code>callableId<sub>found</sub>,</code> <code>V<sub>found</sub>,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code>:</p>
+<p>If let <code>callableId<sub>found</sub></code> <code>:</code> <code>V<sub>found</sub></code> <code>#</code> <code>id<sub>omitted</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <code>callResolution&lt;V&gt;<sup>*</sup></code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Return ( <code>callableId<sub>found</sub></code>, <code>V<sub>found</sub></code>, <code>id<sub>default</sub><sup>*</sup></code> ).</p>
+<p>Return <code>callableId<sub>found</sub></code> <code>:</code> <code>V<sub>found</sub></code> <code>#</code> <code>id<sub>omitted</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44146,7 +44280,7 @@ def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_p
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>dec $find_overloadeds_unnamed&lt;V&gt;(map&lt;callableId, V&gt;, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)*</pre>
+<pre>dec $find_overloadeds_unnamed&lt;V&gt;(map&lt;callableId, V&gt;, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : callResolution&lt;V&gt;*</pre>
 </div>
 </div>
 </div>
@@ -44180,8 +44314,8 @@ def $find_overloaded&lt;V&gt;(`{(callableId : V)*}, nameIR_f `(id_arg?*), $get_p
 def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR) = $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR)
  -- if NOMATCH = $match_overloaded_unnamed&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(n_arg), $get_parameterListIR)
 
-def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR) = (callTargetId_h, V_h, id_default*) :: $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR)
- -- if MATCH id_default* = $match_overloaded_unnamed&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(n_arg), $get_parameterListIR)</pre>
+def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR) = (callTargetId_h : V_h # id_default* # id_optional*) :: $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(n_arg), $get_parameterListIR)
+ -- if MATCH id_default* id_optional* = $match_overloaded_unnamed&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(n_arg), $get_parameterListIR)</pre>
 </div>
 </div>
 </div>
@@ -44229,14 +44363,14 @@ def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId
 <p>Let <code>callTargetMatch</code> be <a href="#match_overloaded_unnamed">matching <code>callTargetId<sub>h</sub></code> <code>:</code> <code>V<sub>h</sub></code> against unnamed key <code>nameIR<sub>f</sub></code> <code>(</code> <code>nat</code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>If let <code>MATCH</code> <code>id<sub>default</sub><sup>*</sup></code> be <code>callTargetMatch</code>:</p>
+<p>If let <code>MATCH</code> <code>id<sub>default</sub><sup>*</sup></code> <code>id<sub>optional</sub><sup>*</sup></code> be <code>callTargetMatch</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code> be <a href="#find_overloadeds_unnamed">finding all items in <code>{</code> <code>(</code> <code>callTargetId<sub>t</sub></code> <code>:</code> <code>V<sub>t</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching unnamed key <code>nameIR<sub>f</sub></code> <code>(</code> <code>nat</code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
+<p>Let <code>callResolution&lt;V&gt;<sup>*</sup></code> be <a href="#find_overloadeds_unnamed">finding all items in <code>{</code> <code>(</code> <code>callTargetId<sub>t</sub></code> <code>:</code> <code>V<sub>t</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching unnamed key <code>nameIR<sub>f</sub></code> <code>(</code> <code>nat</code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>Return <code>(</code> <code>callTargetId<sub>h</sub>,</code> <code>V<sub>h</sub>,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>::</code> <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code>.</p>
+<p>Return <code>callTargetId<sub>h</sub></code> <code>:</code> <code>V<sub>h</sub></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>::</code> <code>callResolution&lt;V&gt;<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44259,7 +44393,7 @@ def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>dec $find_overloadeds_named&lt;V&gt;(map&lt;callableId, V&gt;, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : (callableId, V, nameIR*)*</pre>
+<pre>dec $find_overloadeds_named&lt;V&gt;(map&lt;callableId, V&gt;, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : callResolution&lt;V&gt;*</pre>
 </div>
 </div>
 </div>
@@ -44293,8 +44427,8 @@ def $find_overloadeds_unnamed&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId
 def $find_overloadeds_named&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR) = $find_overloadeds_named&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR)
  -- if NOMATCH = $match_overloaded_named&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(id_arg*), $get_parameterListIR)
 
-def $find_overloadeds_named&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR) = (callTargetId_h, V_h, id_default*) :: $find_overloadeds_named&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR)
- -- if MATCH id_default* = $match_overloaded_named&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(id_arg*), $get_parameterListIR)</pre>
+def $find_overloadeds_named&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR) = (callTargetId_h : V_h # id_default* # id_optional*) :: $find_overloadeds_named&lt;V&gt;(`{(callTargetId_t : V_t)*}, nameIR_f `(id_arg*), $get_parameterListIR)
+ -- if MATCH id_default* id_optional* = $match_overloaded_named&lt;V&gt;((callTargetId_h : V_h), nameIR_f `(id_arg*), $get_parameterListIR)</pre>
 </div>
 </div>
 </div>
@@ -44342,14 +44476,14 @@ def $find_overloadeds_named&lt;V&gt;(`{(callTargetId_h : V_h) :: (callTargetId_t
 <p>Let <code>callTargetMatch</code> be <a href="#match_overloaded_named">matching <code>callTargetId<sub>h</sub></code> <code>:</code> <code>V<sub>h</sub></code> against named key <code>nameIR<sub>f</sub></code> <code>(</code> <code>id<sub>arg</sub><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>If let <code>MATCH</code> <code>id<sub>default</sub><sup>*</sup></code> be <code>callTargetMatch</code>:</p>
+<p>If let <code>MATCH</code> <code>id<sub>default</sub><sup>*</sup></code> <code>id<sub>optional</sub><sup>*</sup></code> be <code>callTargetMatch</code>:</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code> be <a href="#find_overloadeds_named">finding all items in <code>{</code> <code>(</code> <code>callTargetId<sub>t</sub></code> <code>:</code> <code>V<sub>t</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching named key <code>nameIR<sub>f</sub></code> <code>(</code> <code>id<sub>arg</sub><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
+<p>Let <code>callResolution&lt;V&gt;<sup>*</sup></code> be <a href="#find_overloadeds_named">finding all items in <code>{</code> <code>(</code> <code>callTargetId<sub>t</sub></code> <code>:</code> <code>V<sub>t</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching named key <code>nameIR<sub>f</sub></code> <code>(</code> <code>id<sub>arg</sub><sup>*</sup></code> <code>)</code> using parameter getter <code>$get_parameterListIR</code></a>.</p>
 </li>
 <li>
-<p>Return <code>(</code> <code>callTargetId<sub>h</sub>,</code> <code>V<sub>h</sub>,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>::</code> <code>(callableId,</code> <code>V,</code> <code>nameIR*)<sup>*</sup></code>.</p>
+<p>Return <code>callTargetId<sub>h</sub></code> <code>:</code> <code>V<sub>h</sub></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>::</code> <code>callResolution&lt;V&gt;<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44379,7 +44513,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation ConstructorType_ok: cursor typingContext |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId*&gt; `(# id*)</pre>
+<pre>relation ConstructorType_ok: cursor typingContext |- constructorTargetIR `(argumentIR*) : constructorTypeIR `&lt;# typeId*&gt; `(# id* # id*)</pre>
 </div>
 </div>
 </div>
@@ -44400,7 +44534,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Finding the type of constructor call <code>constructorTargetIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Results in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sup>*</sup></code> and default parameters <code>id<sup>*</sup></code>.</p>
+<p>Results in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sup>*</sup></code>, defaults <code>id<sup>*</sup></code> and optionals <code>id<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -44413,25 +44547,25 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="content">
 <pre>rulegroup ConstructorType_ok:
   rule ConstructorType_ok/non-aliased-none-type:
-  p TC |- (prefixedNameIR `&lt;typeArgumentIR*&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
+  p TC |- (prefixedNameIR `&lt;typeArgumentIR*&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
  -- if eps = $find_typeDef_t(p, TC, prefixedNameIR)
- -- if (callableId, constructorTypeDefIR, id_default*) = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
+ -- if callableId : constructorTypeDefIR # id_default* # id_optional* = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
  -- if (constructorTypeIR, typeId_impl*) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
  -- if B = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_impl*})
  -- ConstructorType_wf: B |- constructorTypeIR
   rule ConstructorType_ok/non-aliased-some-type:
-  p TC |- (prefixedNameIR `&lt;typeArgumentIR*&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
+  p TC |- (prefixedNameIR `&lt;typeArgumentIR*&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
  -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
  -- if ~(typeDefIR &lt;: typedefTypeIR)
- -- if (callableId, constructorTypeDefIR, id_default*) = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
+ -- if callableId : constructorTypeDefIR # id_default* # id_optional* = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
  -- if (constructorTypeIR, typeId_impl*) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
  -- if B = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_impl*})
  -- ConstructorType_wf: B |- constructorTypeIR
   rule ConstructorType_ok/aliased:
-  p TC |- (prefixedNameIR `&lt;eps&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
+  p TC |- (prefixedNameIR `&lt;eps&gt;) `(argumentIR*) : constructorTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
  -- if TYPEDEF nameIR_alias typeIR_alias = $find_typeDef_t(p, TC, prefixedNameIR)
  -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
- -- if (callableId, constructorTypeDefIR, id_default*) = $find_constructorDef_overloaded_t(TC, ` nameIR, argumentIR*)
+ -- if callableId : constructorTypeDefIR # id_default* # id_optional* = $find_constructorDef_overloaded_t(TC, ` nameIR, argumentIR*)
  -- if (constructorTypeIR, typeId_impl*) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
  -- if B = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_impl*})
  -- ConstructorType_wf: B |- constructorTypeIR</pre>
@@ -44456,7 +44590,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>(</code> <code>callableId,</code> <code>constructorTypeDefIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
+<p>Let <code>callableId</code> <code>:</code> <code>constructorTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>constructorTypeIR,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>)</code> be <a href="#specialize_constructorTypeDefIR"><code>constructorTypeDefIR</code> specialized by <code>typeArgumentIR<sup>*</sup></code></a>.</p>
@@ -44471,7 +44605,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Check that <a href="#ConstructorType_wf"><code>constructorTypeIR</code> is a well-formed constructor type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44487,7 +44621,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Check that <code>typeDefIR'</code> does not have type <code>typedefTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>callableId,</code> <code>constructorTypeDefIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
+<p>Let <code>callableId</code> <code>:</code> <code>constructorTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>constructorTypeIR,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>)</code> be <a href="#specialize_constructorTypeDefIR"><code>constructorTypeDefIR</code> specialized by <code>typeArgumentIR<sup>*</sup></code></a>.</p>
@@ -44502,7 +44636,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Check that <a href="#ConstructorType_wf"><code>constructorTypeIR</code> is a well-formed constructor type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44527,7 +44661,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Let <code>(</code> <code>nameIR,</code> <code>typeArgumentIR'<sup>*</sup></code> <code>)</code> be <a href="#resolve_type_alias">type alias in <code>typeIR<sub>alias</sub></code> resolved to aliased name and type arguments</a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>callableId,</code> <code>constructorTypeDefIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>nameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
+<p>Let <code>callableId</code> <code>:</code> <code>constructorTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_overloaded_t">the overloaded constructor definition of <code>nameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>TC</code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>constructorTypeIR,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>)</code> be <a href="#specialize_constructorTypeDefIR"><code>constructorTypeDefIR</code> specialized by <code>typeArgumentIR'<sup>*</sup></code></a>.</p>
@@ -44542,7 +44676,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Check that <a href="#ConstructorType_wf"><code>constructorTypeIR</code> is a well-formed constructor type, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in <code>constructorTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44559,7 +44693,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Constructor_inst: cursor instContext |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR&gt; `(# id*)</pre>
+<pre>relation Constructor_inst: cursor instContext |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR&gt; `(# id* # id*)</pre>
 </div>
 </div>
 </div>
@@ -44580,7 +44714,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Finding constructor for <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> under cursor <code>cursor</code>, and instantiation context <code>instContext</code>:</p>
 </li>
 <li>
-<p>Results in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> with default parameters <code>id<sup>*</sup></code>.</p>
+<p>Results in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> with defaults <code>id<sup>*</sup></code> and optionals <code>id<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -44593,19 +44727,19 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="content">
 <pre>rulegroup Constructor_inst:
   rule Constructor_inst/non-aliased-none-type:
-  p IC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default*)
+  p IC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default* # id_optional*)
  -- if eps = $find_typeDef_i(p, IC, prefixedNameIR)
- -- if (_, constructorDef, id_default*) = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
+ -- if _ : constructorDef # id_default* # id_optional* = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
   rule Constructor_inst/non-aliased-some-type:
-  p IC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default*)
+  p IC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default* # id_optional*)
  -- if typeDefIR = $find_typeDef_i(p, IC, prefixedNameIR)
  -- if ~(typeDefIR &lt;: typedefTypeIR)
- -- if (_, constructorDef, id_default*) = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
+ -- if _ : constructorDef # id_default* # id_optional* = $find_constructorDef_i(IC, prefixedNameIR, argumentIR*)
   rule Constructor_inst/aliased:
-  p IC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default*)
+  p IC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : constructorDef `&lt;typeArgumentIR*&gt; `(# id_default* # id_optional*)
  -- if TYPEDEF nameIR_alias typeIR_alias = $find_typeDef_i(p, IC, prefixedNameIR)
  -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
- -- if (_, constructorDef, id_default*) = $find_constructorDef_i(IC, ` nameIR, argumentIR*)</pre>
+ -- if _ : constructorDef # id_default* # id_optional* = $find_constructorDef_i(IC, ` nameIR, argumentIR*)</pre>
 </div>
 </div>
 </div>
@@ -44627,10 +44761,10 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>constructorDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>constructorDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
 </li>
 <li>
-<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44646,10 +44780,10 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Check that <code>typeDefIR'</code> does not have type <code>typedefTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>constructorDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>constructorDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
 </li>
 <li>
-<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44674,10 +44808,10 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Let <code>(</code> <code>nameIR,</code> <code>typeArgumentIR'<sup>*</sup></code> <code>)</code> be <a href="#resolve_type_alias">type alias in <code>typeIR<sub>alias</sub></code> resolved to aliased name and type arguments</a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>constructorDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>nameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>constructorDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_constructorDef_i">the overloaded constructor definition of <code>nameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> in <code>IC</code></a>.</p>
 </li>
 <li>
-<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> with default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the constructor <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44697,7 +44831,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation CallableType_ok: cursor typingContext |- callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId*&gt; `(# id*)</pre>
+<pre>relation CallableType_ok: cursor typingContext |- callableTargetIR `&lt;typeArgumentListIR&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId*&gt; `(# id* # id*)</pre>
 </div>
 </div>
 </div>
@@ -44718,7 +44852,7 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>Finding the type of callable call <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under cursor <code>cursor</code> and typing context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Results in the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sup>*</sup></code> and default parameters <code>id<sup>*</sup></code>.</p>
+<p>Results in the callable type <code>callableTypeIR</code> with fresh type variables <code>typeId<sup>*</sup></code>, defaults <code>id<sup>*</sup></code> and optionals <code>id<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -44793,8 +44927,8 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/actionTypeIR:
   rule CallableType_ok/actionTypeIR:
-  p TC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : actionTypeIR `&lt;# eps&gt; `(# id_default*)
- -- if (callableId, actionTypeIR, id_default*) = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*)
+  p TC |- prefixedNameIR `&lt;eps&gt; `(argumentIR*) : actionTypeIR `&lt;# eps&gt; `(# id_default* # id_optional*)
+ -- if callableId : actionTypeIR # id_default* # id_optional* = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*)
  -- CallableType_wf: $bound(p, TC) |- actionTypeIR</pre>
 </div>
 </div>
@@ -44813,13 +44947,13 @@ result of callee resolution is:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_t">the overloaded callable definition of <code>prefixedNameIR</code>( <code>argumentIR<sup>*</sup></code> ) from the <code>p</code> layer of <code>TC</code></a>.</p>
+<p>Let <code>callableId</code> <code>:</code> <code>callableTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_t">the overloaded callable definition of <code>prefixedNameIR</code>( <code>argumentIR<sup>*</sup></code> ) from the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code> has type <code>(callableId,</code> <code>actionTypeIR,</code> <code>id*)</code>.</p>
+<p>Check that <code>callableTypeDefIR</code> has type <code>actionTypeIR</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>callableId,</code> <code>actionTypeIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code>.</p>
+<p>Let <code>actionTypeIR</code> be <code>callableTypeDefIR</code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
@@ -44828,7 +44962,7 @@ result of callee resolution is:</p>
 <p>Check that <a href="#CallableType_wf"><code>actionTypeIR</code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>actionTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the callable type <code>actionTypeIR</code> with fresh type variables <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44852,7 +44986,7 @@ result of callee resolution is:</p>
 <pre>rulegroup Callee_eval/actionCallee:
   rule Callee_eval/actionCallee:
   p EC STO |- referenceExpressionIR `&lt;_&gt; `(argumentListIR) : EC STO (` actionCallee)
- -- if (p_ref, _, actionDef, id_default*) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+ -- if _ : (p_ref, actionDef) # id_default* # _ = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
  -- if ACTION nameIR `(parameterListIR) blockStatementIR = actionDef
  -- if actionCallee = ACTION p_ref . nameIR `(parameterListIR # id_default*) blockStatementIR</pre>
 </div>
@@ -44872,13 +45006,13 @@ result of callee resolution is:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(</code> <code>p<sub>ref</sub>,</code> <code>_,</code> <code>callableDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>(cursor,</code> <code>callableDef)</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>_<sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>callableDef</code> has type <code>actionDef</code>.</p>
+<p>Check that <code>(cursor,</code> <code>callableDef)</code> has type <code>(cursor,</code> <code>actionDef)</code>.</p>
 </li>
 <li>
-<p>Let <code>actionDef</code> be <code>callableDef</code>.</p>
+<p>Let <code>(</code> <code>p<sub>ref</sub>,</code> <code>actionDef</code> <code>)</code> be <code>(cursor,</code> <code>callableDef)</code>.</p>
 </li>
 <li>
 <p>Let <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code> be <code>actionDef</code>.</p>
@@ -44914,8 +45048,8 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/functionTypeIR:
   rule CallableType_ok/functionTypeIR:
-  p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : functionTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
- -- if (callableId, functionTypeDefIR, id_default*) = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*)
+  p TC |- prefixedNameIR `&lt;typeArgumentIR*&gt; `(argumentIR*) : functionTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
+ -- if callableId : functionTypeDefIR # id_default* # id_optional* = $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*)
  -- if (functionTypeIR, typeId_impl*) = $specialize_callableTypeDefIR(functionTypeDefIR, typeArgumentIR*)
  -- if bound = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_impl*})
  -- CallableType_wf: bound |- functionTypeIR</pre>
@@ -44936,13 +45070,13 @@ result of callee resolution is:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_t">the overloaded callable definition of <code>prefixedNameIR</code>( <code>argumentIR<sup>*</sup></code> ) from the <code>p</code> layer of <code>TC</code></a>.</p>
+<p>Let <code>callableId</code> <code>:</code> <code>callableTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_t">the overloaded callable definition of <code>prefixedNameIR</code>( <code>argumentIR<sup>*</sup></code> ) from the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code> has type <code>(callableId,</code> <code>functionTypeDefIR,</code> <code>id*)</code>.</p>
+<p>Check that <code>callableTypeDefIR</code> has type <code>functionTypeDefIR</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>callableId,</code> <code>functionTypeDefIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <code>(callableId,</code> <code>callableTypeDefIR,</code> <code>id*)'</code>.</p>
+<p>Let <code>functionTypeDefIR</code> be <code>callableTypeDefIR</code>.</p>
 </li>
 <li>
 <p>Let <code>(callableTypeIR,</code> <code>typeId*)</code> be <a href="#specialize_callableTypeDefIR"><code>functionTypeDefIR</code> specialized by <code>typeArgumentIR<sup>*</sup></code></a>.</p>
@@ -44963,7 +45097,7 @@ result of callee resolution is:</p>
 <p>Check that <a href="#CallableType_wf"><code>functionTypeIR</code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>functionTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the callable type <code>functionTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -44991,9 +45125,9 @@ result of callee resolution is:</p>
 <pre>rulegroup Callee_eval/externFunctionCallee:
   rule Callee_eval/externFunctionCallee:
   p EC STO |- referenceExpressionIR `&lt;_&gt; `(argumentListIR) : EC STO (` externFunctionCallee)
- -- if (_, _, externFunctionDef, id_default*) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+ -- if _ : (_, externFunctionDef) # id_default* # id_optional* = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
  -- if EXTERN_FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) = externFunctionDef
- -- if externFunctionCallee = EXTERN_FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR # id_default*)</pre>
+ -- if externFunctionCallee = EXTERN_FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR # id_default* # id_optional*)</pre>
 </div>
 </div>
 </div>
@@ -45011,7 +45145,7 @@ result of callee resolution is:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>_,</code> <code>callableDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>(</code> <code>_,</code> <code>callableDef</code> <code>)</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>callableDef</code> has type <code>externFunctionDef</code>.</p>
@@ -45023,7 +45157,7 @@ result of callee resolution is:</p>
 <p>Let <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> be <code>externFunctionDef</code>.</p>
 </li>
 <li>
-<p>Let <code>externFunctionCallee</code> be <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code>.</p>
+<p>Let <code>externFunctionCallee</code> be <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
 <p>Result in the updated evaluation context <code>EC</code>, store <code>STO</code>, and callee <code>externFunctionCallee</code>.</p>
@@ -45043,7 +45177,7 @@ result of callee resolution is:</p>
 <pre>rulegroup Callee_eval/definedFunctionCallee:
   rule Callee_eval/definedFunctionCallee:
   p EC STO |- referenceExpressionIR `&lt;_&gt; `(argumentListIR) : EC STO (` definedFunctionCallee)
- -- if (p_ref, _, definedFunctionDef, id_default*) = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+ -- if _ : (_, definedFunctionDef) # id_default* # _ = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
  -- if FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) blockStatementIR = definedFunctionDef
  -- if definedFunctionCallee = FUNCTION nameIR `&lt;typeParameterListIR&gt; `(parameterListIR # id_default*) blockStatementIR</pre>
 </div>
@@ -45063,7 +45197,7 @@ result of callee resolution is:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>(</code> <code>p<sub>ref</sub>,</code> <code>_,</code> <code>callableDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>(</code> <code>_,</code> <code>callableDef</code> <code>)</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>_<sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_overloaded_e">the overloaded callable definition of <code>referenceExpressionIR</code>( <code>argumentListIR</code> ) in the <code>p</code> layer of <code>EC</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>callableDef</code> has type <code>definedFunctionDef</code>.</p>
@@ -45104,30 +45238,30 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/builtinMethodTypeIR:
   rule CallableType_ok/minmax-SizeIn-BitsBytes:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
  -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : INT
   rule CallableType_ok/stack-push-pop-front:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(argumentIR) : methodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(argumentIR) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["push_front", "pop_front"]
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR `[_] = $unroll_typeIR(typeIR_base)
  -- if parameterIR = `EMPTY `EMPTY INT "count" eps
  -- if methodTypeIR = BUILTIN_METHOD nameIR `(parameterIR) : INT
   rule CallableType_ok/header-isValid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["isValid"]
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
  -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL
   rule CallableType_ok/header-union-isValid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["isValid"]
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if HEADER_UNION _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
  -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL
   rule CallableType_ok/header-set-ValidInvalid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["setValid", "setInvalid"]
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
@@ -45160,7 +45294,7 @@ result of callee resolution is:</p>
 <p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>INT</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -45183,7 +45317,7 @@ result of callee resolution is:</p>
 <p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -45196,7 +45330,7 @@ result of callee resolution is:</p>
 <p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -45221,7 +45355,7 @@ result of callee resolution is:</p>
 <p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>VOID</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -45252,7 +45386,7 @@ result of callee resolution is:</p>
 <p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>parameterIR</code> <code>)</code> <code>:</code> <code>INT</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -45604,11 +45738,11 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/externMethodTypeIR:
   rule CallableType_ok/externMethodTypeIR:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;typeArgumentIR*&gt; `(argumentIR*) : externMethodTypeIR `&lt;# typeId_impl*&gt; `(# id_default*)
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;typeArgumentIR*&gt; `(argumentIR*) : externMethodTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if EXTERN typeId `&lt;_&gt; `{(callableId_extern : externMethodTypeDefIR_extern)*} = $unroll_typeIR(typeIR_base)
  -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
- -- if (_, externMethodTypeDefIR, id_default*) = $find_overloaded&lt;externMethodTypeDefIR&gt;(`{(callableId_extern : externMethodTypeDefIR_extern)*}, callTargetKey, $parameterListIR_of_externMethodTypeDefIR)
+ -- if _ : externMethodTypeDefIR # id_default* # id_optional* = $find_overloaded&lt;externMethodTypeDefIR&gt;(`{(callableId_extern : externMethodTypeDefIR_extern)*}, callTargetKey, $parameterListIR_of_externMethodTypeDefIR)
  -- if (externMethodTypeIR, typeId_impl*) = $specialize_callableTypeDefIR(externMethodTypeDefIR, typeArgumentIR*)
  -- if bound = $union_set&lt;typeId&gt;($bound(p, TC), `{typeId_impl*})
  -- CallableType_wf: bound |- externMethodTypeIR</pre>
@@ -45644,7 +45778,7 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>nameIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>externMethodTypeDefIR,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>(</code> <code>callableId<sub>extern</sub></code> <code>:</code> <code>externMethodTypeDefIR<sub>extern</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodTypeDefIR</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>externMethodTypeDefIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>(</code> <code>callableId<sub>extern</sub></code> <code>:</code> <code>externMethodTypeDefIR<sub>extern</sub></code> <code>)<sup>*</sup></code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodTypeDefIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>(callableTypeIR,</code> <code>typeId*)</code> be <a href="#specialize_callableTypeDefIR"><code>externMethodTypeDefIR</code> specialized by <code>typeArgumentIR<sup>*</sup></code></a>.</p>
@@ -45665,7 +45799,7 @@ result of callee resolution is:</p>
 <p>Check that <a href="#CallableType_wf"><code>externMethodTypeIR</code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>externMethodTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the callable type <code>externMethodTypeIR</code> with fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -45677,7 +45811,7 @@ result of callee resolution is:</p>
 <div id="externMethodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodCallee
-   : EXTERN_METHOD objectId . nameIR `&lt; typeParameterListIR &gt; `( parameterListIR # id* ) `{ theta ; frame ; blockStatementIR? }
+   : EXTERN_METHOD objectId . nameIR `&lt; typeParameterListIR &gt; `( parameterListIR # id* # id* ) `{ theta ; frame ; blockStatementIR? }
    ;</code></pre>
 </div>
 </div>
@@ -45698,9 +45832,9 @@ result of callee resolution is:</p>
  -- Lvalue_read: p EC_1 STO_1 |- storageReference : (REF objectId)
  -- if EXTERN _ `&lt;theta&gt; `{_ frame externMethodDefEnv} = $find_store(STO_1, objectId)
  -- if callTargetKey = $callTargetKey(nameIR, argumentListIR)
- -- if (_, externMethodDef, id_default*) = $find_overloaded&lt;externMethodDef&gt;(externMethodDefEnv, callTargetKey, $parameterListIR_of_externMethodDef)
+ -- if _ : externMethodDef # id_default* # id_optional* = $find_overloaded&lt;externMethodDef&gt;(externMethodDefEnv, callTargetKey, $parameterListIR_of_externMethodDef)
  -- if EXTERN_METHOD nameIR `&lt;typeParameterListIR&gt; `(parameterListIR) blockStatementIR? = externMethodDef
- -- if externMethodCallee = EXTERN_METHOD objectId . nameIR `&lt;typeParameterListIR&gt; `(parameterListIR # id_default*) `{theta ; frame ; blockStatementIR?}</pre>
+ -- if externMethodCallee = EXTERN_METHOD objectId . nameIR `&lt;typeParameterListIR&gt; `(parameterListIR # id_default* # id_optional*) `{theta ; frame ; blockStatementIR?}</pre>
 </div>
 </div>
 </div>
@@ -45782,7 +45916,7 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>nameIR</code> <code>(</code> <code>argumentListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>externMethodDef,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>externMethodDefEnv</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodDef</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>externMethodDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>externMethodDefEnv</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodDef</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>externMethodDef</code> matches pattern <code>EXTERN_METHOD</code> <code>%</code> <code>&lt;</code> <code>%</code> <code>&gt;</code> <code>(</code> <code>%</code> <code>)</code> <code>%</code>.</p>
@@ -45794,7 +45928,7 @@ result of callee resolution is:</p>
 <p>Check that <code>nameIR'</code> is equal to <code>nameIR'</code>.</p>
 </li>
 <li>
-<p>Let <code>externMethodCallee</code> be <code>EXTERN_METHOD</code> <code>objectId</code> <code>.</code> <code>nameIR'</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>blockStatementIR<sup>?</sup></code> <code>}</code>.</p>
+<p>Let <code>externMethodCallee</code> be <code>EXTERN_METHOD</code> <code>objectId</code> <code>.</code> <code>nameIR'</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>blockStatementIR<sup>?</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in the updated evaluation context <code>EC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and callee <code>externMethodCallee</code>.</p>
@@ -45826,14 +45960,14 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/parserApplyMethodTypeIR:
   rule CallableType_ok/parserApplyMethodTypeIR:
-  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(argumentIR*) : parserApplyMethodTypeIR `&lt;# eps&gt; `(# id_default*)
+  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(argumentIR*) : parserApplyMethodTypeIR `&lt;# eps&gt; `(# id_default* # id_optional*)
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if PARSER _ `&lt;_&gt; `(parameterIR*) = $unroll_typeIR(typeIR_base)
  -- if parserApplyMethodTypeIR = PARSER_APPLY `(parameterIR*)
  -- (if (_ _ _ id_param _ = parameterIR))*
  -- if callableId = "apply" `(id_param*)
  -- if callTargetKey = $callTargetKey("apply", argumentIR*)
- -- if (_, parserApplyMethodTypeIR, id_default*) = $find_overloaded&lt;parserApplyMethodTypeIR&gt;(`{(callableId : parserApplyMethodTypeIR)}, callTargetKey, $parameterListIR_of_parserApplyMethodTypeIR)</pre>
+ -- if _ : _ # id_default* # id_optional* = $find_overloaded&lt;parserApplyMethodTypeIR&gt;(`{(callableId : parserApplyMethodTypeIR)}, callTargetKey, $parameterListIR_of_parserApplyMethodTypeIR)</pre>
 </div>
 </div>
 </div>
@@ -45889,13 +46023,10 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>"apply"</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>parserApplyMethodTypeIR',</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>parserApplyMethodTypeIR</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_parserApplyMethodTypeIR</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>_</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>parserApplyMethodTypeIR</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_parserApplyMethodTypeIR</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>parserApplyMethodTypeIR'</code> is equal to <code>parserApplyMethodTypeIR</code>.</p>
-</li>
-<li>
-<p>Result in the callable type <code>parserApplyMethodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the callable type <code>parserApplyMethodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -45930,7 +46061,7 @@ result of callee resolution is:</p>
  -- if callableId = $callableId_IR("apply", parameterListIR)
  -- if parserApplyMethodDef = PARSER_APPLY `(parameterListIR) `{parserLocalDeclarationListIR ; stateEnv}
  -- if callTargetKey = $callTargetKey("apply", argumentListIR)
- -- if (_, _, id_default*) = $find_overloaded&lt;parserApplyMethodDef&gt;(`{(callableId : parserApplyMethodDef)}, callTargetKey, $parameterListIR_of_parserApplyMethodDef)
+ -- if _ : _ # id_default* # _ = $find_overloaded&lt;parserApplyMethodDef&gt;(`{(callableId : parserApplyMethodDef)}, callTargetKey, $parameterListIR_of_parserApplyMethodDef)
  -- if parserApplyMethodCallee = PARSER objectId . APPLY `(parameterListIR # id_default*) `{theta ; frame ; parserLocalDeclarationListIR ; stateEnv}</pre>
 </div>
 </div>
@@ -46019,7 +46150,7 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>"apply"</code> <code>(</code> <code>argumentListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>_,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>parserApplyMethodDef</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_parserApplyMethodDef</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>_</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>_<sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>parserApplyMethodDef</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_parserApplyMethodDef</code></a>.</p>
 </li>
 <li>
 <p>Let <code>parserApplyMethodCallee</code> be <code>PARSER</code> <code>objectId</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>parserLocalDeclarationListIR</code> <code>;</code> <code>stateEnv</code> <code>}</code>.</p>
@@ -46054,14 +46185,14 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/controlApplyMethodTypeIR:
   rule CallableType_ok/controlApplyMethodTypeIR:
-  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(argumentIR*) : controlApplyMethodTypeIR `&lt;# eps&gt; `(# id_default*)
+  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(argumentIR*) : controlApplyMethodTypeIR `&lt;# eps&gt; `(# id_default* # id_optional*)
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if CONTROL _ `&lt;_&gt; `(parameterIR*) = $unroll_typeIR(typeIR_base)
  -- if controlApplyMethodTypeIR = CONTROL_APPLY `(parameterIR*)
  -- (if (_ _ _ id_param _ = parameterIR))*
  -- if callableId = "apply" `(id_param*)
  -- if callTargetKey = $callTargetKey("apply", argumentIR*)
- -- if (_, controlApplyMethodTypeIR, id_default*) = $find_overloaded&lt;controlApplyMethodTypeDefIR&gt;(`{(callableId : controlApplyMethodTypeIR)}, callTargetKey, $parameterListIR_of_controlApplyMethodTypeIR)</pre>
+ -- if _ : _ # id_default* # id_optional* = $find_overloaded&lt;controlApplyMethodTypeDefIR&gt;(`{(callableId : controlApplyMethodTypeIR)}, callTargetKey, $parameterListIR_of_controlApplyMethodTypeIR)</pre>
 </div>
 </div>
 </div>
@@ -46117,13 +46248,10 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>"apply"</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>controlApplyMethodTypeIR',</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>controlApplyMethodTypeIR</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_controlApplyMethodTypeIR</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>_</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>controlApplyMethodTypeIR</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_controlApplyMethodTypeIR</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>controlApplyMethodTypeIR'</code> is equal to <code>controlApplyMethodTypeIR</code>.</p>
-</li>
-<li>
-<p>Result in the callable type <code>controlApplyMethodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>id<sub>default</sub><sup>*</sup></code>.</p>
+<p>Result in the callable type <code>controlApplyMethodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -46158,7 +46286,7 @@ result of callee resolution is:</p>
  -- if callableId = $callableId_IR("apply", parameterListIR)
  -- if controlApplyMethodDef = CONTROL_APPLY `(parameterListIR) `{controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR}
  -- if callTargetKey = $callTargetKey("apply", argumentListIR)
- -- if (_, _, id_default*) = $find_overloaded&lt;controlApplyMethodDef&gt;(`{(callableId : controlApplyMethodDef)}, callTargetKey, $parameterListIR_of_controlApplyMethodDef)
+ -- if _ : _ # id_default* # _ = $find_overloaded&lt;controlApplyMethodDef&gt;(`{(callableId : controlApplyMethodDef)}, callTargetKey, $parameterListIR_of_controlApplyMethodDef)
  -- if controlApplyMethodCallee = CONTROL objectId . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR}</pre>
 </div>
 </div>
@@ -46247,7 +46375,7 @@ result of callee resolution is:</p>
 <p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>"apply"</code> <code>(</code> <code>argumentListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>_,</code> <code>_,</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>controlApplyMethodDef</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_controlApplyMethodDef</code></a>.</p>
+<p>Let <code>_</code> <code>:</code> <code>_</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>_<sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>{</code> <code>callableId</code> <code>:</code> <code>controlApplyMethodDef</code> <code>}</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_controlApplyMethodDef</code></a>.</p>
 </li>
 <li>
 <p>Let <code>controlApplyMethodCallee</code> be <code>CONTROL</code> <code>objectId</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>controlLocalDeclarationListIR</code> <code>;</code> <code>actionDefEnv</code> <code>;</code> <code>controlBodyIR</code> <code>}</code>.</p>
@@ -46282,7 +46410,7 @@ result of callee resolution is:</p>
 <div class="content">
 <pre>rulegroup CallableType_ok/tableApplyMethodTypeIR:
   rule CallableType_ok/tableApplyMethodTypeIR:
-  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(eps) : tableApplyMethodTypeIR `&lt;# eps&gt; `(# eps)
+  p TC |- (typedExpressionIR_base . "apply") `&lt;eps&gt; `(eps) : tableApplyMethodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if TABLE _ `{tableMetadataStructTypeIR} = $unroll_typeIR(typeIR_base)
  -- if tableApplyMethodTypeIR = TABLE_APPLY : tableMetadataStructTypeIR</pre>
@@ -46318,7 +46446,7 @@ result of callee resolution is:</p>
 <p>Let <code>tableApplyMethodTypeIR</code> be <code>TABLE_APPLY</code> <code>:</code> <code>tableMetadataStructTypeIR</code>.</p>
 </li>
 <li>
-<p>Result in the callable type <code>tableApplyMethodTypeIR</code> with fresh type variables <code>·</code> and default parameters <code>·</code>.</p>
+<p>Result in the callable type <code>tableApplyMethodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -52456,7 +52584,7 @@ p4program
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-01-29 11:49:39 +0900
+Last updated 2026-01-30 17:41:06 +0900
 </div>
 </div>
 </body>

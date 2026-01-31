@@ -376,7 +376,7 @@ def $find_typeDef_t(LOCAL, TC, `` typeId)
 ;;; Finder for callables
 
 dec $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argumentIR*)
-  : (callableId, callableTypeDefIR, id*)?
+  : callResolution<callableTypeDefIR>?
   hint(prose_in "the overloaded callable definition of" %2#"("%3")" "from the" %0 "layer of" %1)
 
 def $find_callableDef_overloaded_t(GLOBAL, TC, `. nameIR, argumentIR*)
@@ -390,10 +390,10 @@ def $find_callableDef_overloaded_t(GLOBAL, TC, `` nameIR, argumentIR*)
   -- if callableTypeDefEnv = TC.GLOBAL.CALLABLE
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
 def $find_callableDef_overloaded_t(BLOCK, TC, `` nameIR, argumentIR*)
-  = (callableId, callableTypeDefIR, id_default*)
+  = callableId `: callableTypeDefIR `# id_default* `# id_optional*
   -- if callableTypeDefEnv = TC.BLOCK.CALLABLE
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
-  -- if (callableId, callableTypeDefIR, id_default*)
+  -- if callableId `: callableTypeDefIR `# id_default* `# id_optional*
       = $find_overloaded<callableTypeDefIR>(
           callableTypeDefEnv, callTargetKey, def $parameterListIR_of_callableTypeDefIR)
 def $find_callableDef_overloaded_t(BLOCK, TC, `` nameIR, argumentIR*)
@@ -428,7 +428,7 @@ def $find_callableDef_non_overloaded_t(LOCAL, TC, `` nameIR)
 ;;; Finder for constructors
 
 dec $find_constructorDef_overloaded_t(typingContext, prefixedNameIR, argumentIR*)
-  : (callableId, constructorTypeDefIR, id*)?
+  : callResolution<constructorTypeDefIR>?
   hint(prose_in "the overloaded constructor definition of" %1 `( %2 ) "in" %0)
 
 def $find_constructorDef_overloaded_t(TC, `. nameIR, argumentIR*)

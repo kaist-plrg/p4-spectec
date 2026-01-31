@@ -748,7 +748,8 @@ rulegroup SwitchCases_table_eval {
     ---- ;; take the closest non-fallthrough case
     -- if (_ `: blockStatementIR) :: _
         = $filter_<switchCaseIR>(
-            switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+            switchCaseIR_t*,
+            $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
 
   rule SwitchCases_table_eval/cons-fallthrough-no-match:
     id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
@@ -883,7 +884,9 @@ rulegroup SwitchCases_general_eval {
     -- if $match_switchLabelIR_general(value, value_label)
     ---- ;; take the closest non-fallthrough case
     -- if (_ `: blockStatementIR) :: _
-        = $filter_<switchCaseIR>(switchCaseIR_t*, def $is_non_fallthrough_switchCaseIR)
+        = $filter_<switchCaseIR>(
+            switchCaseIR_t*,
+            $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
 
   rule SwitchCases_general_eval/cons-fallthrough-no-match:
     LOCAL EC_0 STO_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
