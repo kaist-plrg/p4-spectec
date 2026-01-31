@@ -225,8 +225,10 @@ rule TableAction_ok/prefixedNonTypeName:
              : TBLC_1 tableActionIR
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if (_, annotationList' ACTION _ `( parameterIR* ))
+  -- if (_, annotationList_actionDef ACTION _ `( parameterIR* ))
       = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+  -- if annotation_name? = $find_name_annotation_opt(annotationList_actionDef)
+  -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
   ---- ;; check that the action reference is a valid data-plane call
   -- Call_action_partial_ok: TC |- parameterIR* `@ eps
                                  : parameterIR_data* `, parameterIR_control*
@@ -235,7 +237,7 @@ rule TableAction_ok/prefixedNonTypeName:
   -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*, eps)
   ---- ;; create IR
   -- if tableActionIR
-      = annotationList (prefixedNameIR `( eps ))
+      = annotationList_update (prefixedNameIR `( eps ))
           `# `( parameterIR_data* `, parameterIR_control* ) `;
 
 ;;;; prefixedNonTypeName `( argumentList )
@@ -245,8 +247,10 @@ rule TableAction_ok/prefixedNonTypeName-argumentList:
              : TBLC_1 tableActionIR
   ---- ;; check that the action exists
   -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-  -- if (_, annotationList' ACTION _ `( parameterIR* ))
+  -- if (_, annotationList_actionDef ACTION _ `( parameterIR* ))
       = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+  -- if annotation_name? = $find_name_annotation_opt(annotationList_actionDef)
+  -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
   ---- ;; check arguments
   -- if argument* = $flatten_argumentList(argumentList)
   -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
@@ -258,7 +262,7 @@ rule TableAction_ok/prefixedNonTypeName-argumentList:
   -- if TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
   ---- ;; create IR
   -- if tableActionIR
-      = annotationList (prefixedNameIR `( argumentIR_cast* ))
+      = annotationList_update (prefixedNameIR `( argumentIR_cast* ))
           `# `( parameterIR_data* `, parameterIR_control* ) `;
 
 ;;

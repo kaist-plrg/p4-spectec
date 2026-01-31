@@ -1,0 +1,54 @@
+;;
+;; Annotation helpers
+;;
+
+;;; Name annotation helpers
+
+dec $name_annotation_nameIR_opt(annotationList) : nameIR?
+dec $name_annotation_nameIR_opt'(annotation) : nameIR?
+
+def $name_annotation_nameIR_opt(annotationList) = nameIR_name_found
+  -- if annotation* = $flatten_annotationList(annotationList)
+  -- if (nameIR_name? = $name_annotation_nameIR_opt'(annotation))*
+  -- if nameIR_name_found = nameIR_name?*
+def $name_annotation_nameIR_opt(annotationList) = eps
+  -- otherwise
+
+def $name_annotation_nameIR_opt'(`@ name `( annotationBody ))
+  = $strip_prefix($strip_suffix(nameIR_name, "\""), "\"")
+  -- if "name" = $name(name)
+  -- if `EMPTY annotationToken = annotationBody
+  -- if nameIR_name = $print_<annotationToken>(annotationToken)
+def $name_annotation_nameIR_opt'(annotation) = eps
+  -- otherwise
+
+dec $name_annotation_nameIR_default(annotationList, nameIR) : nameIR
+
+def $name_annotation_nameIR_default(annotationList, nameIR) = nameIR_found
+  -- if nameIR_found = $name_annotation_nameIR_opt(annotationList)
+def $name_annotation_nameIR_default(annotationList, nameIR) = nameIR
+  -- if eps = $name_annotation_nameIR_opt(annotationList)
+
+dec $find_name_annotation_opt(annotationList) : annotation?
+def $find_name_annotation_opt(`EMPTY) = eps
+def $find_name_annotation_opt(annotation) = annotation
+  -- if `@ name `( annotationBody ) = annotation
+  -- if text_name = $name(name)
+  -- if "name" = text_name
+def $find_name_annotation_opt(annotation) = eps
+  -- if `@ name `( annotationBody ) = annotation
+  -- if text_name = $name(name)
+  -- if "name" =/= text_name
+def $find_name_annotation_opt(annotationListNonEmpty annotation)
+  = $find_name_annotation_opt(annotationListNonEmpty)
+  -- if eps = $find_name_annotation_opt(annotation)
+def $find_name_annotation_opt(annotationListNonEmpty annotation) = annotation'
+  -- if annotation' = $find_name_annotation_opt(annotation)
+def $find_name_annotation_opt(_) = eps
+  -- otherwise
+
+dec $add_annotationList(annotationList, annotation?) : annotationList
+
+def $add_annotationList(annotationList, eps) = annotationList
+def $add_annotationList(`EMPTY, annotation) = annotation
+def $add_annotationList(annotationListNonEmpty, annotation) = annotationListNonEmpty annotation
