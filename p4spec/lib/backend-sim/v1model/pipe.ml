@@ -79,6 +79,7 @@ struct
     | Counter of Object.Counter.t
     | Register of Object.Register.t
     | DirectCounter of Object.DirectCounter.t
+    | DirectMeter of Object.DirectMeter.t
   [@@deriving yojson]
 
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
@@ -123,6 +124,10 @@ struct
         in
         let direct_counter = DirectCounter direct_counter in
         direct_counter |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "direct_meter" ->
+        let direct_meter = Object.DirectMeter.init value_type_args value_args in
+        let direct_meter = DirectMeter direct_meter in
+        direct_meter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -294,6 +299,13 @@ struct
           in
           let direct_counter = DirectCounter direct_counter in
           (direct_counter, value_ctx, value_arch, value_callResult)
+      | DirectMeter direct_meter, "read", [ "result" ] ->
+          let packet_in = get_packet_in value_arch in
+          let direct_meter, value_ctx, value_arch, value_callResult =
+            Object.DirectMeter.read value_ctx value_arch packet_in direct_meter
+          in
+          let direct_meter = DirectMeter direct_meter in
+          (direct_meter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
