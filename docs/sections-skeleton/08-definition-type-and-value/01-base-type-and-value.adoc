@@ -70,8 +70,49 @@ ${syntax: boolTypeIR boolValue}
 // 203 - Modified
 The Boolean type `bool` contains just two values, `false` and `true`. Boolean
 values are not integers or bit-strings.
-// Operations that can be performed on booleans are described in Section
-// <<sec-bool-exprs>>.
+
+===== Operations
+
+// 421
+The following operations are provided on Boolean expressions:
+
+// 422
+* And, denoted by `&&`
+* Or, denoted by `||`
+* Negation, denoted by `!`
+* Equality and inequality tests, denoted by `==` and `!=` respectively.
+
+// 423
+The precedence of these operators is similar to C and uses short-circuited
+evaluation where relevant.
+
+// 424
+Additionally, the size of a boolean can be determined at compile-time
+(<<sec-minsizeinbits>>).
+
+// 425
+P4 does not implicitly cast from bit-strings to Booleans or vice versa. As a
+consequence, a program that is valid in a language like C such as,
+
+// 426
+[source,p4]
+----
+if (x) /* body omitted */
+----
+
+// 427
+(where x has an integer type) must instead be written in P4 as:
+
+// 428
+[source,p4]
+----
+if (x != 0) /* body omitted */
+----
+
+// 429
+See the discussion on arbitrary-precision types and implicit casts in
+<<sec-implicit-cast>> for details on how the `0` in this expression is
+evaluated.
 
 ===== Type checking
 
@@ -117,10 +158,16 @@ error { ParseError, PacketTooShort }
 // 195
 The underlying representation of errors is target-dependent.
 
+// Added
+See <<sec-error-declaration>> for the semantics of error declarations and
+<<sec-error-access-expression>> for accessing error values.
+
+===== Operations
+
 // 390
 Symbolic names declared by an `error` declaration belong to the `error`
-namespace. The `error` type only supports equality (`==`) and inequality (`!=`)
-comparisons. The result of such a comparison is a Boolean value.
+namespace.  The `error` type only supports equality (`==`) and inequality
+(`!=`) comparisons. The result of such a comparison is a Boolean value.
 
 // 391
 For example, the following operation tests for the occurrence of an error:
@@ -132,10 +179,6 @@ error errorFromParser;
 
 if (errorFromParser != error.NoError) { /* code omitted */ }
 ----
-
-// Added
-See <<sec-error-declaration>> for the semantics of error declarations and
-<<sec-error-access-expression>> for accessing error values.
 
 ===== Type checking
 
@@ -181,6 +224,19 @@ cannot declare new match kinds.
 Match kind declaration is described in detail in
 <<sec-match-kind-declaration>>.
 
+===== Operations
+
+// 419
+Values of type `match_kind` are similar to `enum` values. They support only
+assignment and comparisons for equality and inequality.
+
+// 420
+[source,p4]
+----
+match_kind { fuzzy }
+const bool same = exact == fuzzy;  // always 'false'
+----
+
 ===== Type checking
 
 // Added
@@ -221,6 +277,25 @@ should be used for a given table in the generated control-plane API:
 [source,p4]
 ----
 @name("acl") table t1 { /* body omitted */ }
+----
+
+===== Operations
+
+// 432
+The only operation allowed on strings is concatenation, denoted by `++`. For
+string concatenation, both operands must be strings and the result is also a
+string. String concatenation can only be performed at compile time.
+
+// 433
+[source,p4]
+----
+extern void log(string message);
+
+void foo(int<8> v) {
+  // ...
+  log("my log message " ++
+      "continuation of the log message");
+}
 ----
 
 ===== Type checking
@@ -416,6 +491,78 @@ functions, must be directionless, indicating that all calls must provide a
 compile-time known value as an argument for such a parameter. See
 <<sec-call-convention>> for more details on directionless parameters.
 
+====== Operations
+
+// 455
+The type `int` denotes arbitrary-precision integers. In P4, all expressions of
+type `int` must be compile-time known values. The type `int` supports the
+following operations:
+
+// 456
+* Negation, denoted by unary `-`
+* Unary plus, denoted by `+`. This operation behaves like a no-op.
+* Addition, denoted by `+`.
+* Subtraction, denoted by `-`.
+* Comparison for equality and inequality, denoted by `==` and `!=`
+  respectively. These operations produce a Boolean result.
+* Numeric comparisons `+<,<=,>+`, and `>=`. These operations produce a Boolean result.
+* Multiplication, denoted by `*`.
+* Truncating integer division between positive values, denoted by `/`.
+* Modulo between positive values, denoted by `%`.
+* Arithmetic shift left and right denoted by `<<` and `>>`. These operations
+  produce an `int` result. The right operand must be either an unsigned value
+  of type `bit<S>` or a compile-time known value that is a non-negative
+  integer.
+// The expression `a << b` is equal to latexmath:[a \times 2^b] while
+// `a >> b` is equal to latexmath:[\lfloor{a / 2^b}\rfloor].
+* Bit slices, denoted by `[H:L]`, where `H` and `L` must be expressions   that
+  evaluate to non-negative, local compile-time known values, and `H >= L` must
+  be true. The types of `H` and `L` (which do not need to be identical) must be
+  one of the following:
++
+--
+** `int` - an arbitrary-precision integer
+   (<<sec-arbitrary-precision-integers>>)
+** `bit<W>` - a `W`-bit unsigned integer where `W >= 0`
+   (<<sec-unsigned-integers>>)
+** `int<W>` - a `W`-bit signed integer where `W >= 1`
+   (<<sec-signed-integers>>)
+** a serializable `enum` with an underlying type that is `bit<W>` or `int<W>`
+   (<<sec-enum-types>>).
+--
++
+The result is an unsigned bit-string of width `H - L + 1`, including the bits
+numbered from `L` (which becomes the least significant bit of the result) to
+`H` (the most significant bit of the result) from the source operand. The
+conditions `+0 <= L <= H+` are checked statically. If necessary, the source
+integer value that is sliced is automatically extended to have a width with `H`
+bits. Note that both endpoints of the extraction are inclusive. The bounds are
+required to be values that are known at compile time so that the width of the
+result can be computed at compile time. A slice of a negative or positive value
+is always a positive value.
+
+// 457
+Each operand that participates in any of these operation must have type `int`
+(except shifts). Binary operations cannot be used to combine values of type
+`int` with values of a fixed-width type (except shifts). However, the compiler
+automatically inserts casts from `int` to fixed-width types in certain
+situations--see <<sec-cast>>.
+
+// 458
+All computations on `int` values are carried out without loss of information.
+For example, multiplying two 1024-bit values may produce a 2048-bit value (note
+that concrete representation of `int` values is not specified). `int` values
+can be cast to `bit<w>` and `int<w>` values. Casting an `int` value to a
+fixed-width type will preserve the least-significant bits. If truncation causes
+significant bits to be lost, the compiler should emit a warning.
+
+// 459
+// 460 - Modified
+Note: bitwise-operations (`|`, `&`, `^`, `~`) are not defined on expressions of
+type `int`. In addition, it is illegal to apply division and modulo to negative
+values. Saturating arithmetic is not supported for arbitrary-precision
+integers.
+
 ====== Type checking
 
 // Added
@@ -459,6 +606,119 @@ P4 architectures may impose additional constraints on bit types: for example,
 they may limit the maximum size, or they may only support some arithmetic
 operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 
+====== Operations
+
+// 434
+This section discusses all operations that can be performed on expressions of
+type `bit<W>` for some width `W`, also known as bit-strings.
+
+// 435
+Arithmetic operations "wrap around", similar to C operations on unsigned values
+(i.e., representing a large value on W bits will only keep the
+least-significant W bits of the value). In particular, P4 does not have
+arithmetic exceptions--the result of an arithmetic operation is defined for
+all possible inputs.
+
+// 436
+P4 target architectures may optionally support saturating arithmetic. All
+saturating operations are limited to a fixed range between a minimum and
+maximum value. Saturating arithmetic has advantages, in particular when used as
+counters. The result of a saturating counter max-ing out is much closer to the
+real result than a counter that overflows and wraps around. According to
+Wikipedia https://en.wikipedia.org/wiki/Saturation_arithmetic[Saturating
+Arithmetic] is as numerically close to the true answer as possible; for 8-bit
+binary signed arithmetic, when the correct answer is 130, it is considerably
+less surprising to get an answer of 127 from saturating arithmetic than to get
+an answer of −126 from modular arithmetic. Likewise, for 8-bit binary unsigned
+arithmetic, when the correct answer is 258, it is less surprising to get an
+answer of 255 from saturating arithmetic than to get an answer of 2 from
+modular arithmetic.  At this time, P4 defines saturating operations only for
+addition and subtraction. For an unsigned integer with bit-width of `W`, the
+minimum value is `0` and the maximum value is `2^W-1`.  The precedence of
+saturating addition and subtraction operations is the same as for modular
+arithmetic addition and subtraction.
+
+// 437
+All binary operations except shifts and concatenation require both operands to
+have the same exact type and width; supplying operands with different widths
+produces an error at compile time. No implicit casts are inserted by the
+compiler to equalize the widths. There are no other binary operations that
+accept signed and unsigned values simultaneously besides shifts and
+concatenation.  The following operations are provided on bit-string
+expressions:
+
+// 438
+* Test for equality between bit-strings of the same width,
+  designated by `==`. The result is a Boolean value.
+* Test for inequality between bit-strings of the same width,
+  designated by `!=`. The result is a Boolean value.
+* Unsigned comparisons `+<,>,<=,>=+`. Both operands must have the
+  same width and the result is a Boolean value.
+
+// 439
+Each of the following operations produces a bit-string result when applied to
+bit-strings of the same width:
+
+// 440
+* Negation, denoted by unary `-`. The result is computed by
+  subtracting the value from 2^W^. The result is unsigned and has the same
+  width as the input. The semantics is the same as the C negation of unsigned
+  numbers.
+* Unary plus, denoted by `+`. This operation behaves like a no-op.
+* Addition, denoted by `+`. This operation is associative. The result is
+  computed by truncating the result of the addition to the width of the output
+  (similar to C).
+* Subtraction, denoted by `-`. The result is unsigned, and has the
+  same type as the operands. It is computed by adding the negation of the
+  second operand (similar to C).
+* Multiplication, denoted by `*`. The result has the same width as the operands
+  and is computed by truncating the result to the output's width. P4
+  architectures may impose additional restrictions--e.g., they may only
+  allow multiplication by a non-negative integer power of two.
+* Bitwise "and" between two bit-strings of the same width, denoted by `&`.
+* Bitwise "or" between two bit-strings of the same width, denoted by `|`.
+* Bitwise "complement" of a single bit-string, denoted by `~`.
+* Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
+* Saturating addition, denoted by `|+|`.
+* Saturating subtraction, denoted by `|-|`.
+
+// 441
+Bit-strings also support the following operations:
+
+// 442
+* Logical shift left and right by a non-negative integer value (which need not
+  be a compile-time known value), denoted by `<<` and `>>` respectively. In a
+  shift, the left operand is unsigned, and right operand must be either an
+  expression of type `bit<S>` or a non-negative integer value that is known at
+  compile time.  The result has the same type as the left operand. Shifting by
+  an amount greater than or equal to the width of the input produces a result
+  where all bits are zero.
+* Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
+  non-negative, local compile-time known values, and `H >= L`. The types of `H`
+  and `L` (which do not need to be identical) must be numeric
+  (<<sec-numeric-values>>). The result is a bit-string of width `H - L + 1`,
+  including the bits numbered from `L` (which becomes the least significant bit
+  of the result) to `H` (the most significant bit of the result) from the
+  source operand. The conditions `+0 <= L <= H < W+` are checked statically
+  (where `W` is the length of the source bit-string). Note that both endpoints
+  of the extraction are inclusive. The bounds are required to be local
+  compile-time known values so that the width of the result can be computed at
+  compile time. Slices are also l-values, which means that P4 supports
+  assigning to a slice: `e[H:L] = x`. The effect of this statement is to set
+  bits `H` through `L` (inclusive of both) of `e` to the bit-pattern
+  represented by `x`, and leaves all other bits of `e` unchanged. A slice of
+  an unsigned integer is an unsigned integer.
+* Concatenation of bit-strings and/or fixed-width signed integers, denoted by
+  `++`. The two operands must be either `bit<W>` or `int<W>`, and they can be
+  of different signedness and width. The result has the same signedness as the
+  left operand and the width equal to the sum of the two operands' width. In
+  concatenation, the left operand is placed as the most significant bits.
+
+// 443
+Additionally, the size of a bit-string can be determined at compile-time
+(<<sec-minsizeinbits>>).
+
 ====== Type checking
 
 // Added
@@ -492,6 +752,105 @@ arithmetic operations on certain sizes (e.g., 16-, 32-, and 64- bit values).
 // 227
 A signed integer with width 1 can only have two legal values: 0 and -1.
 
+====== Operations
+
+// 444
+This section discusses all operations that can be performed on expressions of
+type `int<W>` for some `W`. Recall that the `int<W>` denotes signed `W`-bit
+integers, represented using two's complement.
+
+// 445
+In general, P4 arithmetic operations do not detect "underflow" or "overflow":
+operations simply "wrap around", similar to C operations on unsigned values.
+Hence, attempting to represent large values using `W` bits will only keep the
+least-significant `W` bits of the value.
+
+// 446
+P4 supports saturating arithmetic (addition and subtraction) for signed
+integers. Targets may optionally reject programs using saturating arithmetic.
+For a signed integer with bit-width of `W`, the minimum value is `-2^(W-1)` and
+the maximum value is `2^(W-1)-1`.
+
+// 447
+P4 also does not support arithmetic exceptions. The runtime result of an
+arithmetic operation is defined for all combinations of input arguments.
+
+// 448
+All binary operations except shifts and concatenation require both operands to
+have the same exact type (signedness) and width and supplying operands with
+different widths or signedness produces a compile-time error. No implicit casts
+are inserted by the compiler to equalize the types. Except for shifts and
+concatenation, P4 does not have any binary operations that operate
+simultaneously on signed and unsigned values.
+
+// 449
+Note that bitwise operations on signed integers are well-defined, since the
+representation is mandated to be two's complement.
+
+// 450
+The `int<W>` datatype supports the following operations; all binary operations
+require both operands to have the exact same type. The result always has the
+same width as the left operand.
+
+// 451
+* Negation, denoted by unary `-`.
+* Unary plus, denoted by `+`. This operation behaves like a no-op.
+* Addition, denoted by `+`.
+* Subtraction, denoted by `-`.
+* Comparison for equality and inequality, denoted `==` and `!=` respectively.
+  These operations produce a Boolean result.
+* Numeric comparisons, denoted by `+<,<=,>,+` and `>=`. These operations produce a Boolean result.
+* Multiplication, denoted by `*`. Result has the same width as the
+  operands. P4 architectures may impose additional restrictions--e.g., they
+  may only allow multiplication by a power of two.
+* Bitwise "and" between two bit-strings of the same width, denoted by `&`.
+* Bitwise "or" between two bit-strings of the same width, denoted by `|`.
+* Bitwise "complement" of a single bit-string, denoted by `~`.
+* Bitwise "xor" of two bit-strings of the same width, denoted by `^`.
+* Saturating addition, denoted by `|+|`.
+* Saturating subtraction, denoted by `|-|`.
+
+// 452
+The `int<W>` datatype also support the following operations:
+
+// 453
+* Arithmetic shift left and right denoted by `<<` and `>>`.
+  The left operand is signed and the right operand must be either an unsigned
+  number of type `bit<S>` or a compile-time known value that is a non-negative
+  integer. The result has the same type as the left operand. Shifting left
+  produces the exact same bit pattern as a shift left of an unsigned value.
+  Shift left can thus overflow, when it leads to a change of the sign bit.
+  Shifting by an amount greater than the width of the input produces a
+  "correct" result:
+** all result bits are zero when shifting left
+** all result bits are zero when shifting a non-negative value right
+** all result bits are one when shifting a negative value right
+* Extraction of a set of contiguous bits, also known as a slice,
+  denoted by `[H:L]`, where `H` and `L` must be expressions that evaluate to
+  non-negative, local compile-time known values, and `H >= L` must be true. The
+  types of `H` and `L` (which do not need to be identical) must be numeric
+  (<<sec-numeric-values>>). The result is an unsigned bit-string of width `H -
+  L + 1`, including the bits numbered from `L` (which becomes the least
+  significant bit of the result) to `H` (the most significant bit of the
+  result) from the source operand. The conditions `+0 <= L <= H < W+` are
+  checked statically (where `W` is the length of the source bit-string). Note
+  that both endpoints of the extraction are inclusive. The bounds are required
+  to be values that are known at compile time so that the width of the result
+  can be computed at compile time. Slices are also l-values, which means that
+  P4 supports assigning to a slice: `e[H:L] = x`. The effect of this statement
+  is to set bits `H` through `L` of `e` to the bit-pattern represented by `x`,
+  and leaves all other bits of `e` unchanged. A slice of a signed integer is
+  treated as an unsigned integer.
+* Concatenation of bit-strings and/or fixed-width signed integers, denoted by
+  `++`. The two operands must be either `bit<W>` or `int<W>`, and they can be
+  of different signedness and width. The result has the same signedness as the
+  left operand and the width equal to the sum of the two operands' width. In
+  concatenation, the left operand is placed as the most significant bits.
+
+// 454
+Additionally, the size of a fixed-width signed integer can be determined at
+compile-time (<<sec-minsizeinbits>>).
+
 ====== Type checking
 
 // Added
@@ -519,6 +878,49 @@ Note that `varbit<W>` type refers to both cases of `varbit<W>` and
 P4 architectures may impose additional constraints on varbit types: for
 example, they may limit the maximum size, or they may require `varbit` values
 to always contain an integer number of bytes at runtime.
+
+====== Operations
+
+// 469
+To support parsing headers with variable-length fields, P4 offers a type
+`varbit`. Each occurrence of the type `varbit` has a statically-declared
+maximum width, as well as a dynamic width, which must not exceed the static
+bound. Prior to initialization a variable-size bit-string has an unknown
+dynamic width.
+
+// 470
+Variable-length bit-strings support a limited set of operations:
+
+// 471
+* Assignment to another variable-sized bit-string. The target of the
+  assignment must have the same static width as the source. When executed, the
+  assignment sets the dynamic width of the target to the dynamic width of the
+  source.
+* Comparison for equality or inequality with another `varbit` field.
+  Two `varbit` fields can be compared only if they have the same type. Two
+  varbits are equal if they have the same dynamic width and all the bits up to
+  the dynamic width are the same.
+
+// 472
+The following operations are _not_ supported directly on a value of type
+`varbit`, but instead on any type for which `extract` and `emit` operations are
+supported (e.g. a value with type header) that may contain a field of type
+`varbit`. They are mentioned here only to ease finding this information in a
+section dedicated to type `varbit`.
+
+// 473
+* Parser extraction into a header containing a variable-sized
+  bit-string using the two-argument `extract` method of a `packet_in` extern
+  object (see <<sec-packet-extract-two>>). This operation sets the dynamic
+  width of the field.
+* The `emit` method of a `packet_out` extern object can be performed
+  on a header and a few other types (see <<sec-deparse>>) that contain a field
+  with type `varbit`. Such an `emit` method call inserts a variable-sized
+  bit-string with a known dynamic width into the packet being constructed.
+
+// 474
+Additionally, the maximum size of a variable-length bit-string can be
+determined at compile-time (<<sec-minsizeinbits>>).
 
 ====== Type checking
 
