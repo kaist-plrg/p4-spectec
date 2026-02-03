@@ -48,12 +48,12 @@ def $find_store_qualified(STO, objectId)
   = $find_store(STO, objectId)
 
 def $is_some_object(object?) = $is_some_<object>(object?)
-def $find_store_unqualified(archState (`{ (objectId `: object)* }), id) = object_id_found
+def $find_store_unqualified(archState `{ (objectId `: object)* }, id) = object_id_found
   -- if (object_id?
       = $ite<object?>($objectId_ends_with(objectId, id), object, eps))*
   -- if object_id_found
-      = $filter_<object?>(object_id?*, def $is_some_object)
-def $find_store_unqualified(archState (`{ (objectId `: object)* }), id) = eps 
+      = $filter_<object?>(object_id?*, $is_some_object(object_id?)*)
+def $find_store_unqualified(archState `{ (objectId `: object)* }, id) = eps 
   -- otherwise
 
 ;;; Finder for extern state
@@ -86,7 +86,8 @@ def $update_store_unqualified(STO_0, id, object) = STO_1
   -- if _ `{ (objectId `: _)* } = STO_0
   -- if (objectId_id?
       = $ite<objectId?>($objectId_ends_with(objectId, id), objectId, eps))*
-  -- if objectId_found = $filter_<objectId?>(objectId_id?*, def $is_some_objectId)
+  -- if objectId_found
+      = $filter_<objectId?>(objectId_id?*, $is_some_objectId(objectId_id?)*)
   -- if STO_1 = $add_store(STO_0, objectId_found, object)
 
 ;;; Updater for object state

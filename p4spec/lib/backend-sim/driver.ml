@@ -65,8 +65,8 @@ module Make
             let tx_output_queue = tx_output_queue @ txs in
             (tx_output_queue, expect_queue)
             (* There is an expected packet *)
-        | (tx_expect, exact) :: expect_queue when compare_tx ~exact tx_h tx_expect
-          ->
+        | (tx_expect, exact) :: expect_queue
+          when compare_tx ~exact tx_h tx_expect ->
             Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
             |> log;
             (tx_output_queue @ tx_t, expect_queue)

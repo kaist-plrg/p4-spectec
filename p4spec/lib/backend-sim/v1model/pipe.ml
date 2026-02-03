@@ -71,8 +71,8 @@ struct
     | DirectCounter of Object.DirectCounter.t
   [@@deriving yojson]
 
-  let get_object_state (value_sto : Value.t) (value_objectId : Value.t) : object_state
-      =
+  let get_object_state (value_sto : Value.t) (value_objectId : Value.t) :
+      object_state =
     Spec.Func.find_store_objectState value_sto value_objectId
     |> unwrap_extern_v |> object_state_of_yojson |> Result.get_ok
 
@@ -108,7 +108,9 @@ struct
         let register = Register register in
         register |> object_state_to_yojson |> wrap_extern_v "objectState"
     | "direct_counter" ->
-        let direct_counter = Object.DirectCounter.init value_type_args value_args in
+        let direct_counter =
+          Object.DirectCounter.init value_type_args value_args
+        in
         let direct_counter = DirectCounter direct_counter in
         direct_counter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
@@ -277,7 +279,8 @@ struct
       | DirectCounter direct_counter, "count", [] ->
           let packet_in = get_packet_in value_sto in
           let direct_counter, value_ctx, value_sto, value_callResult =
-            Object.DirectCounter.count value_ctx value_sto packet_in direct_counter
+            Object.DirectCounter.count value_ctx value_sto packet_in
+              direct_counter
           in
           let direct_counter = DirectCounter direct_counter in
           (direct_counter, value_ctx, value_sto, value_callResult)
@@ -433,8 +436,8 @@ struct
     in
     put_ctx value_ctx
     >> modify_sto (fun value_sto ->
-        Spec.Func.update_store_objectState value_sto value_objectId
-          value_packet_in)
+           Spec.Func.update_store_objectState value_sto value_objectId
+             value_packet_in)
 
   let reset_packet_in : unit pipe_ctx =
     let* value_sto = get_sto in
@@ -602,9 +605,7 @@ struct
   let drive_pipe_pre : Value.t pipe_ctx =
     let* arch_state = get_arch_state in
     put_arch_state (ArchState.reset arch_state)
-    >> reset_packet_in
-    >> drive_p
-    >> drive_vr
+    >> reset_packet_in >> drive_p >> drive_vr
 
   let schedule_clone (arch_state : ArchState.t) : bool pipe_ctx =
     let open ArchState in
@@ -614,10 +615,8 @@ struct
         | Some port ->
             let* value_ctx_original = get_ctx in
             prepare_clone_ctx clone_type port field_index
-            >> drive_pipe_pre
-            >> schedule_packet Egress
-            >> put_ctx value_ctx_original
-            >> return true
+            >> drive_pipe_pre >> schedule_packet Egress
+            >> put_ctx value_ctx_original >> return true
         | None -> return false)
     | _ -> return false
 
@@ -628,10 +627,8 @@ struct
     | Some field_index ->
         let* value_ctx_original = get_ctx in
         prepare_resubmit_ctx field_index
-        >> drive_pipe_pre
-        >> schedule_packet Ingress
-        >> put_ctx value_ctx_original
-        >> return true
+        >> drive_pipe_pre >> schedule_packet Ingress
+        >> put_ctx value_ctx_original >> return true
 
   (* Ingress block + Handle clone, resubmit, drop *)
   let drive_ig : Value.t pipe_ctx =
@@ -642,11 +639,7 @@ struct
     if resubmitted then return result
     else
       let* drop = get_drop in
-      if drop then
-        return result
-      else
-        schedule_packet Egress
-        >> return result
+      if drop then return result else schedule_packet Egress >> return result
 
   (* Egress block + Handle clone *)
   let drive_eg : Value.t pipe_ctx =
@@ -655,8 +648,7 @@ struct
     let* arch_state = get_arch_state in
     let* _cloned = schedule_clone arch_state in
     let* drop = get_drop in
-    guard (not drop)
-    >> return result
+    guard (not drop) >> return result
 
   let drive_ck : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_check
   let drive_dep : Value.t pipe_ctx = with_pipe_ctx Spec.Rel.v1model_deparse
@@ -668,9 +660,7 @@ struct
       Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
         "egress_spec"
     in
-    let _, int_egress_spec =
-      unpack_p4_fixedBit value_egress_spec
-    in
+    let _, int_egress_spec = unpack_p4_fixedBit value_egress_spec in
     (* Get egress port *)
     let port = Bigint.to_int_exn int_egress_spec in
     (* Get input packet *)
@@ -682,8 +672,7 @@ struct
     in
     (* Return port and packet *)
     let tx = (port, packet) in
-    produce_tx tx
-    >> return result
+    produce_tx tx >> return result
 
   let drive_packet (packet : Packet.t) : unit pipe_ctx =
     match packet.entrypoint with
@@ -703,9 +692,7 @@ struct
     let pipe_ctx = (value_ctx, value_sto, []) in
     let pipe : unit pipe_ctx =
       (* Setup port and packet *)
-      setup_rx rx
-      >> drive_pipe_pre
-      >> schedule_packet Ingress
+      setup_rx rx >> drive_pipe_pre >> schedule_packet Ingress
       >> run_scheduler ()
     in
     let _, (value_ctx, value_sto, txs) = OptionState.run pipe pipe_ctx in

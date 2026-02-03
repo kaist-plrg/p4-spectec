@@ -294,7 +294,7 @@ module DirectCounter = struct
      Counters can be updated from your P4 program, but can only be
      read from the control plane.  If you need something that can be
      both read and written from the P4 program, consider using a
-     register. 
+     register.
 
      direct_counter(CounterType type); *)
 
@@ -306,13 +306,13 @@ module DirectCounter = struct
       | _ ->
           error_no_region
             (Format.asprintf
-               "direct_counter constructor expects 1 argument, but %d were given"
+               "direct_counter constructor expects 1 argument, but %d were \
+                given"
                (List.length values_arg))
     in
     let id_enum, id_type = unpack_p4_enum value_type in
     match (id_enum, id_type) with
-    | "CounterType", "packets" ->
-        Packets Bigint.zero
+    | "CounterType", "packets" -> Packets Bigint.zero
     | "CounterType", "bytes" -> Bytes Bigint.zero
     | "CounterType", "packets_and_bytes" ->
         PacketsAndBytes (Bigint.zero, Bigint.zero)
@@ -329,7 +329,7 @@ module DirectCounter = struct
      state associated with the matching entry is read, modified, and
      written back, atomically relative to the processing of other
      packets, regardless of whether the count() method is called in
-     the body of that action. 
+     the body of that action.
 
      void count(); *)
 
@@ -339,14 +339,14 @@ module DirectCounter = struct
     (* Update counter *)
     let counter =
       match counter with
-      | Packets counts ->
-          Packets Bigint.(counts + one)
+      | Packets counts -> Packets Bigint.(counts + one)
       | Bytes counts ->
           let len = packet_in.len |> Bigint.of_int in
           Bytes Bigint.(counts + len)
       | PacketsAndBytes (counts_packets, count_bytes) ->
           let len = packet_in.len |> Bigint.of_int in
-          PacketsAndBytes (Bigint.(counts_packets + one), Bigint.(count_bytes + one))
+          PacketsAndBytes
+            (Bigint.(counts_packets + one), Bigint.(count_bytes + len))
     in
     (* Create call result *)
     let value_callResult =

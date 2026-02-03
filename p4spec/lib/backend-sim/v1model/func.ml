@@ -458,22 +458,22 @@ let _recirculate_preserving_field_list (_value_ctx : Value.t)
 let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
   let open ArchState in
-  let arch_state = Spec.Func.find_store_archState value_sto |> ArchState.of_value in
+  let arch_state =
+    Spec.Func.find_store_archState value_sto |> ArchState.of_value
+  in
   let value_type = Spec.Func.find_var_e_local value_ctx "type" in
   let value_session = Spec.Func.find_var_e_local value_ctx "session" in
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
-  let packet_clone = Packet.CloneInfo.of_v (value_type, value_session, value_index) in
-  (* mark arch state with clone information *)
-  let value_arch_state =
-    arch_state
-    |> with_clone packet_clone
-    |> to_value
+  let packet_clone =
+    Packet.CloneInfo.of_v (value_type, value_session, value_index)
   in
+  (* mark arch state with clone information *)
+  let value_arch_state = arch_state |> with_clone packet_clone |> to_value in
   let value_sto = Spec.Func.update_store_archState value_sto value_arch_state in
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ]#@"returnResult"
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 

@@ -4,8 +4,8 @@ type ('s, 'a) t = 's -> 'a option * 's
 
 let return (a : 'a) : ('s, 'a) t = fun s -> (Some a, s)
 
-let bind (m : ('s, 'a) t) (f : 'a -> ('s, 'b) t) =
- fun s -> match m s with Some a, s -> f a s | None, s -> (None, s)
+let bind (m : ('s, 'a) t) (f : 'a -> ('s, 'b) t) s =
+  match m s with Some a, s -> f a s | None, s -> (None, s)
 
 let map (m : ('s, 'a) t) (f : 'a -> 'b) = bind m (fun a -> return (f a))
 let get : ('s, 's) t = fun s -> (Some s, s)

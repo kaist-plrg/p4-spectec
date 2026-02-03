@@ -176,6 +176,41 @@ type defined by the type definition. If the referenced type definition is
 polymorphic (but without type arguments), then the resolved type is a
 specialized type with no type arguments.
 
+// Added
+In some cases, the reference may be a type parameter. In other words, the type
+is indeed a variable type, not a concrete type until it is bound to a type
+argument. These are internally represented as:
+
+${syntax: nameTypeDefIR}
+
+===== Operations
+
+// 627
+Because functions and methods can be generic, they offer the possibility of
+declaring values with types that are type variables:
+
+// 628
+[source,p4]
+----
+void f<T>() {
+   T x; // the type of x is T, a type variable
+}
+----
+
+// 629
+The type of such objects is not known until the function is specialized with
+specific type arguments.
+
+// 630
+Currently the only operations that are available for such values are assignment
+(explicit through `=`, or implicit, through argument passing). This behavior is
+similar to languages such as Java, and different from languages such as C++.
+
+// 631
+A future version of P4 may introduce a notion of _type constraints_ which would
+enable more operations on such values. Because of this limitation, such values
+are currently of limited utility.
+
 ===== Type checking
 
 // Added

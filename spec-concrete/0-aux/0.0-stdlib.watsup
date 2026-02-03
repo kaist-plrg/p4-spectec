@@ -191,15 +191,15 @@ builtin dec $concat_<X>((X*)*) : X*
 
 builtin dec $partition_<X>(X*, nat) : (X*, X*)
 
-dec $filter_<X>(X*, def $cond(X) : bool) : X*
-  hint(prose_in %0 "filtered by $"#%1)
-def $filter_<X>(eps, def $cond) = eps
-def $filter_<X>(X_h :: X_t*, def $cond)
-  = X_h :: $filter_<X>(X_t*, def $cond)
-    -- if $cond(X_h)
-def $filter_<X>(X_h :: X_t*, def $cond)
-  = $filter_<X>(X_t*, def $cond)
-    -- if ~$cond(X_h)
+dec $filter_<X>(X*, bool*) : X*
+  hint(prose_in %0 "filtered by" %1)
+def $filter_<X>(eps, eps) = eps
+def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
+  = X_h :: $filter_<X>(X_t*, b_t*)
+  -- if b_h
+def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
+  = $filter_<X>(X_t*, b_t*)
+  -- if ~b_h
 
 builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
   hint(prose_in "the value associated to" %0 "in" %1)

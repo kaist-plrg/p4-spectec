@@ -13,8 +13,9 @@ rule Callee_eval/actionCallee:
             : EC STO (`` actionCallee)
   ---- ;; find the action definition being called
   ---- ;; (TODO) Is it correct to call overload resolution here
-  -- if (p_ref, _, actionDef, id_default*)
-      = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+  -- if _ `: (p_ref, actionDef) `# id_default* `# _
+      = $find_callableDef_overloaded_e(
+          p, EC, referenceExpressionIR, argumentListIR)
   ---- ;; prepare the callee
   -- if ACTION nameIR `( parameterListIR ) blockStatementIR = actionDef
   -- if actionCallee
@@ -26,14 +27,15 @@ rule Callee_eval/externFunctionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` externFunctionCallee)
   ---- ;; find the extern function definition being called
-  -- if (_, _, externFunctionDef, id_default*)
-      = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
+  -- if _ `: (_, externFunctionDef) `# id_default* `# id_optional*
+      = $find_callableDef_overloaded_e(
+          p, EC, referenceExpressionIR, argumentListIR)
   ---- ;; prepare the callee
   -- if EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR )
       = externFunctionDef
   -- if externFunctionCallee
       = EXTERN_FUNCTION nameIR `< typeParameterListIR >
-          `( parameterListIR `# id_default* )
+          `( parameterListIR `# id_default* `# id_optional* )
 
 ;;;; Defined function call
 
@@ -41,7 +43,7 @@ rule Callee_eval/definedFunctionCallee:
   p EC STO |- referenceExpressionIR `< `_ > `( argumentListIR )
             : EC STO (`` definedFunctionCallee)
   ---- ;; find the function definition being called
-  -- if (p_ref, _, definedFunctionDef, id_default*)
+  -- if _ `: (_, definedFunctionDef) `# id_default* `# _
       = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
   ---- ;; prepare the callee
   -- if FUNCTION nameIR `< typeParameterListIR > `( parameterListIR ) blockStatementIR
@@ -163,7 +165,7 @@ rulegroup Callee_eval/externMethodCallee {
         = $find_store(STO_1, objectId)
     ---- ;; find the method being called
     -- if callTargetKey = $callTargetKey(nameIR, argumentListIR)
-    -- if (_, externMethodDef, id_default*)
+    -- if _ `: externMethodDef `# id_default* `# id_optional*
         = $find_overloaded<externMethodDef>(
             externMethodDefEnv, callTargetKey,
             def $parameterListIR_of_externMethodDef)
@@ -173,7 +175,7 @@ rulegroup Callee_eval/externMethodCallee {
         = externMethodDef
     -- if externMethodCallee
         = EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >
-            `( parameterListIR `# id_default* )
+            `( parameterListIR `# id_default* `# id_optional* )
             `{ theta `; frame `; blockStatementIR? }
 
 }
@@ -214,7 +216,7 @@ rulegroup Callee_eval/parserApplyMethodCallee {
         = PARSER_APPLY `( parameterListIR )
             `{ parserLocalDeclarationListIR `; stateEnv }
     -- if callTargetKey = $callTargetKey("apply", argumentListIR)
-    -- if (_, _, id_default*)
+    -- if _ `: _ `# id_default* `# _
         = $find_overloaded<parserApplyMethodDef>(
             `{ (callableId `: parserApplyMethodDef) },
             callTargetKey,
@@ -262,7 +264,7 @@ rulegroup Callee_eval/controlApplyMethodCallee {
         = CONTROL_APPLY `( parameterListIR )
             `{ controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR }
     -- if callTargetKey = $callTargetKey("apply", argumentListIR)
-    -- if (_, _, id_default*)
+    -- if _ `: _ `# id_default* `# _
         = $find_overloaded<controlApplyMethodDef>(
             `{ (callableId `: controlApplyMethodDef) },
             callTargetKey,

@@ -188,13 +188,13 @@ def $find_type_e(LOCAL, EC, nameIR)
 ;;; Finder for callable definitions
 
 dec $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*)
-  : (cursor, callableId, callableDef, id*)?
+  : callResolution<(cursor, callableDef)>?
   hint(prose_in "the overloaded callable definition of" %2#"("%3")" "in the" %0 "layer of" %1)
 
 def $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
-  = (GLOBAL, callableId, callableDef, id_default*)
+  = callableId `: (GLOBAL, callableDef) `# id_default* `# id_optional*
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
-  -- if (callableId, callableDef, id_default*)
+  -- if callableId `: callableDef `# id_default* `# id_optional*
       = $find_overloaded<callableDef>(
           EC.GLOBAL.CALLABLE,
           callTargetKey,
@@ -208,9 +208,9 @@ def $find_callableDef_overloaded_e(GLOBAL, EC, `` nameIR, argumentIR*)
           callTargetKey,
           def $parameterListIR_of_callableDef)
 def $find_callableDef_overloaded_e(GLOBAL, EC, `. nameIR, argumentIR*)
-  = (GLOBAL, callableId, callableDef, id_default*)
+  = callableId `: (GLOBAL, callableDef) `# id_default* `# id_optional*
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
-  -- if (callableId, callableDef, id_default*)
+  -- if callableId `: callableDef `# id_default* `# id_optional*
       = $find_overloaded<callableDef>(
           EC.GLOBAL.CALLABLE,
           callTargetKey,
@@ -224,9 +224,9 @@ def $find_callableDef_overloaded_e(GLOBAL, EC, `. nameIR, argumentIR*)
           callTargetKey,
           def $parameterListIR_of_callableDef)
 def $find_callableDef_overloaded_e(BLOCK, EC, `` nameIR, argumentIR*)
-  = (BLOCK, callableId, callableDef, id_default*)
+  = callableId `: (BLOCK, callableDef) `# id_default* `# id_optional*
   -- if callTargetKey = $callTargetKey(nameIR, argumentIR*)
-  -- if (callableId, callableDef, id_default*)
+  -- if callableId `: callableDef `# id_default* `# id_optional*
       = $find_overloaded<callableDef>(
           EC.BLOCK.CALLABLE,
           callTargetKey,
@@ -245,7 +245,7 @@ def $find_callableDef_overloaded_e(LOCAL, EC, `` nameIR, argumentIR*)
 ;;; Finder for constructors 
 
 dec $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*)
-  : (callableId, constructorDef, id*)?
+  : callResolution<constructorDef>?
 
 def $find_constructorDef_e(EC, `` nameIR, argumentIR*)
   = $find_overloaded<constructorDef>(

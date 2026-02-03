@@ -58,8 +58,7 @@ struct
 
   type arch_state = unit [@@deriving yojson]
 
-  let empty_arch_state =
-    () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let empty_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
@@ -116,21 +115,10 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let ( value_ctx,
-          value_sto,
-          value_name_func,
-          value_names_param ) =
+    let value_ctx, value_sto, value_name_func, value_names_param =
       match values_input with
-      | [
-       value_ctx;
-       value_sto;
-       value_name_func;
-       value_names_param;
-      ] ->
-          ( value_ctx,
-            value_sto,
-            value_name_func,
-            value_names_param )
+      | [ value_ctx; value_sto; value_name_func; value_names_param ] ->
+          (value_ctx, value_sto, value_name_func, value_names_param)
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
@@ -287,7 +275,8 @@ struct
     update_table value_sto value_tableName value_tableObject
 
   let add_mirror_session _session _port =
-    error_no_region "add_mirror_session is not implemented for the ebpf simulator"
+    error_no_region
+      "add_mirror_session is not implemented for the ebpf simulator"
 
   (* Pipeline initializer *)
 
@@ -354,7 +343,7 @@ struct
         Spec.Rel.lvalue_read_var_global value_ctx value_sto "accept"
       in
       let accept = unpack_p4_bool value_accept in
-      if accept then (value_ctx, value_sto, [rx])
+      if accept then (value_ctx, value_sto, [ rx ])
       else (value_ctx, value_sto, [])
 
   (* Initializer *)

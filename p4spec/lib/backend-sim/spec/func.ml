@@ -104,12 +104,11 @@ let update_store_objectState (value_sto : Value.t) (value_objectId : Value.t)
   |> unwrap_opt_v |> Option.get
 
 let find_store_archState (value_sto : Value.t) : Value.t =
-  !call "find_store_archState" []
-    [ value_sto ]
+  !call "find_store_archState" [] [ value_sto ]
 
-let update_store_archState (value_sto : Value.t) (value_archState : Value.t) : Value.t =
-  !call "update_store_archState" []
-    [ value_sto; value_archState ]
+let update_store_archState (value_sto : Value.t) (value_archState : Value.t) :
+    Value.t =
+  !call "update_store_archState" [] [ value_sto; value_archState ]
 
 (* find_type_e *)
 
