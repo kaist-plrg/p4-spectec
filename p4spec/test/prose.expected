@@ -4338,7 +4338,7 @@ xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]
 --
 +
 for each ``annotation`` in ``annotation^{asterisk}^``
-. Let ``nameIR^?^^{asterisk}^`` be ``nameIR~name~^?^^{asterisk}^``.
+. Let ``nameIR^?^^{asterisk}^`` be xref:filter_[``nameIR~name~^?^^{asterisk}^`` filtered by $``$is_some_nameIR``].
 . If let ``nameIR'^?^`` be ``nameIR^?^^{asterisk}^``:
  .. Check that ``nameIR'^?^`` is defined.
  .. Let ``nameIR~name_found~`` be ``nameIR'^?^``.
@@ -4360,6 +4360,11 @@ xref:name_annotation_nameIR_opt'[$name_annotation_nameIR_opt'(annotation)]
  .. Return ``text``.
 . Otherwise:
  .. Return ``·``.
+
+xref:is_some_nameIR[$is_some_nameIR(nameIR^?^)]
+
+
+. Return ``xref:is_some_[$is_some_<nameIR>(nameIR^?^)]``.
 
 xref:name_annotation_nameIR_default[$name_annotation_nameIR_default(annotationList, nameIR)]
 
@@ -13672,9 +13677,17 @@ xref:ControlLocalDecl_inst[``IC~0~`` ``STO`` ``+|-+`` ``annotationList`` ``+TABL
 . Let ``nameIR~object~`` be ``xref:name_annotation_nameIR_default[$name_annotation_nameIR_default(annotationList,`` ``nameIR)]``.
 . Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
+. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+ .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
+ .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
+ .. Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
+. Let ``nameIR'^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``.
+. If let ``nameIR~annotation~`` be ``nameIR'^?^``:
+ .. Let ``objectId~annotation~`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~annotation~``.
+ .. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].
+ .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
+ .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
+ .. Result in ``IC~1~``, ``STO~3~``, and ``constantDeclarationIR``.
 
 xref:ControlLocalDecls_inst[ControlLocalDecls_inst]:
 

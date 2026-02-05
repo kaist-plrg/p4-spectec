@@ -9184,24 +9184,24 @@ def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
 ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:7.1-7.58
 def $name_annotation_nameIR_opt(annotationList) : nameIR? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:10.1-13.42
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:13.1-17.62
   clause 0 : (annotationList) = ?(nameIR_name_found)
   -- let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList)
   -- (let nameIR_name?{nameIR_name <- nameIR_name?} = $name_annotation_nameIR_opt'(annotation))*{annotation <- annotation*, nameIR_name? -> nameIR_name?*}
-  -- let nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} = nameIR_name?{nameIR_name <- nameIR_name?}*{nameIR_name? <- nameIR_name?*}
+  -- let nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} = $filter_<nameIR?>(nameIR_name?{nameIR_name <- nameIR_name?}*{nameIR_name? <- nameIR_name?*}, $is_some_nameIR)
   -- if nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} matches [ _/1 ]
   -- let [nameIR?{nameIR <- nameIR?}] = nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*}
   -- if nameIR?{nameIR <- nameIR?} matches (_)
   -- let ?(nameIR_name_found) = nameIR?{nameIR <- nameIR?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:14.1-15.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:18.1-19.15
   clause 1 : (annotationList) = ?()
   -- otherwise
 
 ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:8.1-8.55
 def $name_annotation_nameIR_opt'(annotation) : nameIR? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:17.1-21.64
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:21.1-25.64
   clause 0 : (annotation) = ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
   -- if annotation matches `@%(%)`
   -- let @ name ( annotationBody ) = annotation
@@ -9212,31 +9212,37 @@ def $name_annotation_nameIR_opt'(annotation) : nameIR? =
   -- if annotationBody' matches ``EMPTY`
   -- let nameIR_name = $print_<annotationToken>(annotationToken)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:22.1-23.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:26.1-27.15
   clause 1 : (annotation) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:25.1-25.69
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:9.1-9.36
+def $is_some_nameIR(nameIR?) : bool =
+
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:11.1-11.58
+  clause 0 : (nameIR?{nameIR <- nameIR?}) = $is_some_<nameIR>(nameIR?{nameIR <- nameIR?})
+
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:29.1-29.69
 def $name_annotation_nameIR_default(annotationList, nameIR) : nameIR =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:27.1-28.67
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:31.1-32.67
   clause 0 : (annotationList, nameIR) = nameIR_found
   -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
   -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
   -- let ?(nameIR_found) = nameIR'?{nameIR' <- nameIR'?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:29.1-30.58
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:33.1-34.58
   clause 1 : (annotationList, nameIR) = nameIR
   -- if (?() = $name_annotation_nameIR_opt(annotationList))
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:32.1-32.60
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:36.1-36.60
 def $find_name_annotation_opt(annotationList) : annotation? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:33.1-33.44
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:37.1-37.44
   clause 0 : (annotationList) = ?()
   -- if annotationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:34.1-37.27
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:38.1-41.27
   clause 1 : (annotationList) = ?(annotation)
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
@@ -9246,7 +9252,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let text_name = $name(name)
   -- if ("name" = text_name)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:38.1-41.29
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:42.1-45.29
   clause 2 : (annotationList) = ?()
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
@@ -9256,7 +9262,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let text_name = $name(name)
   -- if ("name" =/= text_name)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:42.1-44.52
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:46.1-48.52
   clause 3 : (annotationList) = $find_name_annotation_opt(annotationListNonEmpty as annotationList)
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
@@ -9264,7 +9270,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let annotationListNonEmpty annotation = annotationListNonEmpty'
   -- if (?() = $find_name_annotation_opt(annotation as annotationList))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:45.1-46.60
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:49.1-50.60
   clause 4 : (annotationList) = ?(annotation')
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
@@ -9274,24 +9280,24 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- if annotation''?{annotation'' <- annotation''?} matches (_)
   -- let ?(annotation') = annotation''?{annotation'' <- annotation''?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:47.1-48.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:51.1-52.15
   clause 5 : (_annotationList) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:50.1-50.70
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:54.1-54.70
 def $add_annotationList(annotationList, annotation?) : annotationList =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:52.1-52.62
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:56.1-56.62
   clause 0 : (annotationList, annotation?{annotation <- annotation?}) = annotationList
   -- if annotation?{annotation <- annotation?} matches ()
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:53.1-53.57
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:57.1-57.57
   clause 1 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotation as annotationList
   -- if annotationList matches ``EMPTY`
   -- if annotation'?{annotation' <- annotation'?} matches (_)
   -- let ?(annotation) = annotation'?{annotation' <- annotation'?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:54.1-54.96
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:58.1-58.96
   clause 2 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotationListNonEmpty annotation as annotationList
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty = annotationList as annotationListNonEmpty
@@ -25075,7 +25081,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- ActionDecl_inst: block IC_0 |- actionDeclarationIR : IC_1
     -- output: % % |- % : IC_1 STO ?()
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:42.1-66.65
+  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:42.1-100.2
   rulegroup tableDeclarationIR
 
    match
@@ -25099,14 +25105,36 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
     -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
+    -- if (?() = $name_annotation_nameIR_opt(annotationList))
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)
     -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
     -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
+    rulepath tableDeclarationIR-name-annotation
+    -- let IC_callee_0 = $inherit_i(block, IC_0)
+    -- let IC_frame = $enter_i(IC_callee_0)
+    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+    -- let TBL = $init_table(tablePropertyListIR_inst)
+    -- let frame'*{frame' <- frame'*} = IC_frame.local.frames
+    -- if frame'*{frame' <- frame'*} matches _ :: _
+    -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
+    -- let object_table = table nameIR { frame TBL } as object
+    -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
+    -- let objectId = IC_0.path ++ [nameIR_object]
+    -- let STO_2 = $add_store(STO_1, objectId, object_table)
+    -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
+    -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
+    -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
+    -- let objectId_annotation = IC_0.path ++ [nameIR_annotation]
+    -- let STO_3 = $add_store(STO_2, objectId_annotation, object_table)
+    -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)
+    -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
+    -- output: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
+
 ;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:152.1-160.30
 relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:73.1-99.2
+  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:108.1-134.2
   rulegroup 
 
    match
