@@ -1035,6 +1035,17 @@ xref:unroll_typeIR[``typeIR`` with typedefs unrolled]
 . Otherwise:
  .. Return ``typeIR``.
 
+xref:unroll_aliasType[``typeIR`` with newtypes unrolled]
+
+
+. If let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``:
+ .. Return xref:unroll_aliasType[``typeIR'`` with newtypes unrolled].
+. Else:
+ .. Let ``+TYPEDEF+`` ``++_++`` ``typeIR'`` be ``typeIR``.
+ .. Return xref:unroll_aliasType[``typeIR'`` with newtypes unrolled].
+. Otherwise:
+ .. Return ``typeIR``.
+
 xref:is_defaultable_typeIR[``typeIR''`` can be default-initialized]:
 [cols="2", options="header"]
 |===
@@ -12342,24 +12353,26 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with newtypes unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``+`BIN+`` ``text~key_value~`` be ``tableKeyValueInterface'``:
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with newtypes unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"lpm"``:
@@ -12370,12 +12383,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with newtypes unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``+`BIN+`` ``text~key_value~`` be ``tableKeyValueInterface'``:
@@ -12384,12 +12398,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with newtypes unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ``+`SLASH+`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
@@ -12401,12 +12416,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``n~key_remaining_width~`` be ``int``.
   ... Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with newtypes unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``int'`` be xref:pow2[2 to the power of ``n~key_type_width~``].
   ... Let ``int''`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
   ... Let ``i~key_mask_value~`` be ``int'`` ``-`` ``int''``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 
@@ -12539,6 +12555,13 @@ xref:tableObject_create_entry_action[$tableObject_create_entry_action(+ACTIONS+ 
 --
 +
 for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
+ .. Let ``typeIR~param_unrolled~^{asterisk}^`` be the list of ``typeIR~param_unrolled~``, obtained by repeating:
++
+--
+  *** Let ``typeIR~param_unrolled~`` be xref:unroll_aliasType[``typeIR~param~`` with newtypes unrolled].
+--
++
+for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``
  .. Let ``typedExpressionIR~arg~^{asterisk}^`` be the list of ``typedExpressionIR~arg~``, obtained by repeating:
 +
 --
@@ -12549,10 +12572,10 @@ for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
  .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
 +
 --
-  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param_unrolled~``].
 --
 +
-for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
+for each ``typeIR~param_unrolled~`` in ``typeIR~param_unrolled~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
  .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
  .. Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the list of ``typedExpressionIR~arg_cast~``, obtained by repeating:
 +
@@ -12574,6 +12597,13 @@ for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
 --
 +
 for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
+ .. Let ``typeIR~param_unrolled~^{asterisk}^`` be the list of ``typeIR~param_unrolled~``, obtained by repeating:
++
+--
+  *** Let ``typeIR~param_unrolled~`` be xref:unroll_aliasType[``typeIR~param~`` with newtypes unrolled].
+--
++
+for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``
  .. Let ``typedExpressionIR~arg~^{asterisk}^`` be the list of ``typedExpressionIR~arg~``, obtained by repeating:
 +
 --
@@ -12584,10 +12614,10 @@ for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
  .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
 +
 --
-  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param_unrolled~``].
 --
 +
-for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
+for each ``typeIR~param_unrolled~`` in ``typeIR~param_unrolled~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
  .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
  .. Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the list of ``typedExpressionIR~arg_cast~``, obtained by repeating:
 +

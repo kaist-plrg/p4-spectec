@@ -4221,7 +4221,28 @@ def $unroll_typeIR(typeIR)
 
   1. Return typeIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:17.1-19.55
+;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:15.1-16.45
+def $unroll_aliasType(typeIR)
+
+1. Case analysis on typeIR
+
+  1. Case (% has type newTypeIR)
+
+    1. (Let (type _typeId typeIR') be (typeIR as newTypeIR))
+
+    2. Return $unroll_aliasType(typeIR')
+
+  2. Case (% has type typedefTypeIR)
+
+    1. (Let (typedef _typeId typeIR') be (typeIR as typedefTypeIR))
+
+    2. Return $unroll_aliasType(typeIR')
+
+2. Otherwise
+
+  1. Return typeIR
+
+;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:28.1-30.55
 tbl def $is_defaultable_typeIR(typeIR'')
 =
 
@@ -4367,7 +4388,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
     1. Return false
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:38.1-40.62
+;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:49.1-51.62
 tbl def $is_equalable_typeIR(typeIR'')
 =
 
@@ -4507,7 +4528,7 @@ tbl def $is_equalable_typeIR(typeIR'')
 
     1. Return true
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:60.1-62.53
+;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:71.1-73.53
 tbl def $is_assignable_typeIR(typeIR'')
 =
 
@@ -28263,9 +28284,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
           4. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-          5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
+          5. (Let typeIR_unrolled be $unroll_aliasType(typeIR))
 
-          6. If (((typedExpressionIR)? matches pattern (_))), then
+          6. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR_unrolled))
+
+          7. If (((typedExpressionIR)? matches pattern (_))), then
 
             1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
 
@@ -28277,7 +28300,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
+            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR_unrolled))
 
             7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28289,7 +28312,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             7. Else Phantom#1718
 
-          6. Else Phantom#1719
+          7. Else Phantom#1719
 
         2. Case (% matches pattern ``BIN%`)
 
@@ -28301,9 +28324,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
           4. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-          5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
+          5. (Let typeIR_unrolled be $unroll_aliasType(typeIR))
 
-          6. If (((typedExpressionIR)? matches pattern (_))), then
+          6. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR_unrolled))
+
+          7. If (((typedExpressionIR)? matches pattern (_))), then
 
             1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
 
@@ -28315,7 +28340,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
+            6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR_unrolled))
 
             7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28327,7 +28352,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             7. Else Phantom#1720
 
-          6. Else Phantom#1721
+          7. Else Phantom#1721
 
       2. Else Phantom#1722
 
@@ -28357,9 +28382,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
+            4. (Let typeIR_unrolled be $unroll_aliasType(typeIR))
 
-            5. If (((typedExpressionIR)? matches pattern (_))), then
+            5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR_unrolled))
+
+            6. If (((typedExpressionIR)? matches pattern (_))), then
 
               1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
 
@@ -28371,7 +28398,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
+              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR_unrolled))
 
               7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28383,7 +28410,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               7. Else Phantom#1724
 
-            5. Else Phantom#1725
+            6. Else Phantom#1725
 
           3. Else Phantom#1726
 
@@ -28401,9 +28428,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
             3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-            4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
+            4. (Let typeIR_unrolled be $unroll_aliasType(typeIR))
 
-            5. If (((typedExpressionIR)? matches pattern (_))), then
+            5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR_unrolled))
+
+            6. If (((typedExpressionIR)? matches pattern (_))), then
 
               1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
 
@@ -28415,7 +28444,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               5. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
+              6. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR_unrolled))
 
               7. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28427,7 +28456,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               7. Else Phantom#1727
 
-            5. Else Phantom#1728
+            6. Else Phantom#1728
 
           3. Else Phantom#1729
 
@@ -28451,9 +28480,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
               3. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-              4. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR))
+              4. (Let typeIR_unrolled be $unroll_aliasType(typeIR))
 
-              5. If (((typedExpressionIR)? matches pattern (_))), then
+              5. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_base, typeIR_unrolled))
+
+              6. If (((typedExpressionIR)? matches pattern (_))), then
 
                 1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
 
@@ -28461,7 +28492,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                 3. (Let typedExpressionIR_mask be (((d i_key_mask_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
 
-                4. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR))
+                4. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR_mask, typeIR_unrolled))
 
                 5. If (((typedExpressionIR')? matches pattern (_))), then
 
@@ -28473,7 +28504,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                 5. Else Phantom#1730
 
-              5. Else Phantom#1731
+              6. Else Phantom#1731
 
             2. Else Phantom#1732
 
@@ -28485,7 +28516,7 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
 1. Else Phantom#1736
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:191.1-194.30
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:196.1-199.30
 def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInterface)
 
 1. If ((((nameIR, nameIR, typeIR))* matches pattern [])), then
@@ -28506,7 +28537,7 @@ def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInter
 
 3. Else Phantom#1738
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:212.1-212.68
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:217.1-217.68
 def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationList ;))
 
 1. (Let (nameIR)? be $name_annotation_nameIR_opt(annotationList))
@@ -28531,7 +28562,7 @@ def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationLis
 
 3. Else Phantom#1740
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:230.1-233.23
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:235.1-238.23
 def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface)*)
 
 1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*
@@ -28546,7 +28577,7 @@ def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface
 
 3. Else Phantom#1741
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:251.1-253.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:256.1-258.9
 def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
 1. (Let (int)? be $align_tableActionArgumentInterfaces'(({ ((nameIR_arg : i_arg))* }), parameterIR))*
@@ -28559,12 +28590,12 @@ def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
 2. Else Phantom#1742
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:254.1-256.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:259.1-261.9
 def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
 
 1. Return $find_map<id, int>(({ ((id_arg : i_arg))* }), nameIR_param)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:271.1-271.83
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:276.1-276.83
 def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
 1. Case analysis on (tableActionIR)*
@@ -28615,7 +28646,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
     6. Else Phantom#1744
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:272.1-272.88
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:277.1-277.88
 def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
 1. Case analysis on (tableActionIR)*
@@ -28670,7 +28701,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
     6. Else Phantom#1748
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:361.1-364.27
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:366.1-369.27
 def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
 
 1. (Let ((nameIR, tableActionIR))? be $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))
@@ -28685,11 +28716,13 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
   4. (Let (_annotationList _direction typeIR_param nameIR_param _parameterInitializerOptIR) be parameterIR_control)*
 
-  5. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
+  5. (Let typeIR_param_unrolled be $unroll_aliasType(typeIR_param))*
 
-  6. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))*
+  6. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
 
-  7. If (((typedExpressionIR)? matches pattern (_)))*, then
+  7. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+
+  8. If (((typedExpressionIR)? matches pattern (_)))*, then
 
     1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
 
@@ -28697,7 +28730,7 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
     3. Return ((` nameIR_found) ( (argumentIR)* ))
 
-  7. Else Phantom#1749
+  8. Else Phantom#1749
 
 2. Else Phantom#1750
 
@@ -28715,11 +28748,13 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
     4. (Let (_annotationList _direction typeIR_param nameIR_param _parameterInitializerOptIR) be parameterIR_control)*
 
-    5. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
+    5. (Let typeIR_param_unrolled be $unroll_aliasType(typeIR_param))*
 
-    6. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param))*
+    6. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
 
-    7. If (((typedExpressionIR)? matches pattern (_)))*, then
+    7. (Let (typedExpressionIR)? be $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+
+    8. If (((typedExpressionIR)? matches pattern (_)))*, then
 
       1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
 
@@ -28727,13 +28762,13 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
       3. Return ((` nameIR_found) ( (argumentIR)* ))
 
-    7. Else Phantom#1751
+    8. Else Phantom#1751
 
   2. Else Phantom#1752
 
 3. Else Phantom#1753
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:412.1-417.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:419.1-424.16
 def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
 1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
@@ -28756,7 +28791,7 @@ def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInter
 
 2. Else Phantom#1754
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:448.1-451.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:455.1-458.16
 def $tableObject_add_default_action((table typeId { frame TBL }), tableActionInterface)
 
 1. (Let (_annotationList (constIR)? default_action= _tableActionReferenceIR ;) be TBL.default_action)
