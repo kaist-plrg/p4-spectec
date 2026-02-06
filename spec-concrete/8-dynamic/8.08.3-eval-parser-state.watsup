@@ -5,23 +5,23 @@
 rulegroup ParserState_eval {
 
   rule ParserState_eval/reject:
-    EC_0 STO_0 |- annotationList STATE
+    EC_0 ARCH_0 |- annotationList STATE
                     `{ parserStatementListIR transitionStatementIR }
-                : EC_1 STO_1 rejectTransitionResult
+                : EC_1 ARCH_1 rejectTransitionResult
     -- ParserStmts_eval:
-        EC_0 STO_0 |- parserStatementListIR
-                    : EC_1 STO_1 rejectTransitionResult
+        EC_0 ARCH_0 |- parserStatementListIR
+                    : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserState_eval/cont:
-    EC_0 STO_0 |- annotationList STATE
+    EC_0 ARCH_0 |- annotationList STATE
                     `{ parserStatementListIR transitionStatementIR }
-                : EC_2 STO_2 transitionResult
+                : EC_2 ARCH_2 transitionResult
     -- ParserStmts_eval:
-        EC_0 STO_0 |- parserStatementListIR
-                    : EC_1 STO_1 `EMPTY
+        EC_0 ARCH_0 |- parserStatementListIR
+                    : EC_1 ARCH_1 `EMPTY
     -- ParserTransition_eval:
-        EC_1 STO_1 |- transitionStatementIR
-                    : EC_2 STO_2 transitionResult
+        EC_1 ARCH_1 |- transitionStatementIR
+                    : EC_2 ARCH_2 transitionResult
 
 }
 
@@ -30,28 +30,28 @@ rulegroup ParserState_eval {
 ;;
 
 rule ParserState_trans/accept:
-  EC_0 STO_0 |- TRANSITION nameIR
-              : EC_1 STO_1 ACCEPT
+  EC_0 ARCH_0 |- TRANSITION nameIR
+              : EC_1 ARCH_1 ACCEPT
   -- if state = $find_state_e(LOCAL, EC_0, nameIR)
   -- ParserState_eval:
-      EC_0 STO_0 |- state
-                  : EC_1 STO_1 ACCEPT
+      EC_0 ARCH_0 |- state
+                  : EC_1 ARCH_1 ACCEPT
 
 rule ParserState_trans/reject:
-  EC_0 STO_0 |- TRANSITION nameIR
-              : EC_1 STO_1 rejectTransitionResult
+  EC_0 ARCH_0 |- TRANSITION nameIR
+              : EC_1 ARCH_1 rejectTransitionResult
   -- if state = $find_state_e(LOCAL, EC_0, nameIR)
   -- ParserState_eval:
-      EC_0 STO_0 |- state
-                  : EC_1 STO_1 rejectTransitionResult
+      EC_0 ARCH_0 |- state
+                  : EC_1 ARCH_1 rejectTransitionResult
 
 rule ParserState_trans/state:
-  EC_0 STO_0 |- TRANSITION nameIR
-              : EC_2 STO_2 transitionResult
+  EC_0 ARCH_0 |- TRANSITION nameIR
+              : EC_2 ARCH_2 transitionResult
   -- if state = $find_state_e(LOCAL, EC_0, nameIR)
   -- ParserState_eval:
-      EC_0 STO_0 |- state
-                  : EC_1 STO_1 (STATE nameIR_next)
+      EC_0 ARCH_0 |- state
+                  : EC_1 ARCH_1 (STATE nameIR_next)
   -- ParserState_trans:
-      EC_1 STO_1 |- TRANSITION nameIR_next
-                  : EC_2 STO_2 transitionResult
+      EC_1 ARCH_1 |- TRANSITION nameIR_next
+                  : EC_2 ARCH_2 transitionResult

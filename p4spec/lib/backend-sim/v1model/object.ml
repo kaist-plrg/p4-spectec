@@ -88,7 +88,7 @@ module Counter = struct
 
      void count(in bit<32> index); *)
 
-  let count (value_ctx : Value.t) (value_sto : Value.t)
+  let count (value_ctx : Value.t) (value_arch : Value.t)
       (packet_in : Core.Object.PacketIn.t) (counter : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "index" *)
@@ -132,7 +132,7 @@ module Counter = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (counter, value_ctx, value_sto, value_callResult)
+    (counter, value_ctx, value_arch, value_callResult)
 end
 
 (* Counter *)
@@ -198,7 +198,7 @@ module Register = struct
 
      void read(out T result, in bit<32> index); *)
 
-  let read (value_ctx : Value.t) (value_sto : Value.t) (reg : t) :
+  let read (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
       t * Value.t * Value.t * Value.t =
     let value_index_target = Spec.Func.find_var_e_local value_ctx "index" in
     let _, index_target = unpack_p4_fixedBit value_index_target in
@@ -209,13 +209,13 @@ module Register = struct
       else Spec.Func.default reg.typ
     in
     let value_ctx =
-      Spec.Rel.lvalue_write_var_local value_ctx value_sto "result" value
+      Spec.Rel.lvalue_write_var_local value_ctx value_arch "result" value
     in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (reg, value_ctx, value_sto, value_callResult)
+    (reg, value_ctx, value_arch, value_callResult)
 
   (* write() writes the state of the register array at the specified
      index, with the value provided by the value parameter.
@@ -239,7 +239,7 @@ module Register = struct
                   array element specified by index.
      void write(in bit<32> index, in T value); *)
 
-  let write (value_ctx : Value.t) (value_sto : Value.t) (reg : t) :
+  let write (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
       t * Value.t * Value.t * Value.t =
     let value_index_target = Spec.Func.find_var_e_local value_ctx "index" in
     let _, index_target = unpack_p4_fixedBit value_index_target in
@@ -255,7 +255,7 @@ module Register = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (reg, value_ctx, value_sto, value_callResult)
+    (reg, value_ctx, value_arch, value_callResult)
 end
 
 module DirectCounter = struct
@@ -333,7 +333,7 @@ module DirectCounter = struct
 
      void count(); *)
 
-  let count (value_ctx : Value.t) (value_sto : Value.t)
+  let count (value_ctx : Value.t) (value_arch : Value.t)
       (packet_in : Core.Object.PacketIn.t) (counter : t) :
       t * Value.t * Value.t * Value.t =
     (* Update counter *)
@@ -353,5 +353,5 @@ module DirectCounter = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (counter, value_ctx, value_sto, value_callResult)
+    (counter, value_ctx, value_arch, value_callResult)
 end

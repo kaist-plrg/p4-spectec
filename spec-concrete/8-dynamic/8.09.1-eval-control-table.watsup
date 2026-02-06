@@ -9,23 +9,23 @@ syntax tableKeyResult =
   | exitResult
 
 relation TableKey_eval:
-  evalContext store |- tableKeyIR
-                     : evalContext store tableKeyResult
+  evalContext arch |- tableKeyIR
+                    : evalContext arch tableKeyResult
   hint(input %0 %1 %2)
 
 rule TableKey_eval/exit:
-  EC_0 STO_0 |- typedExpressionIR `: nameIR _ `;
-              : EC_1 STO_1 EXIT
+  EC_0 ARCH_0 |- typedExpressionIR `: nameIR _ `;
+               : EC_1 ARCH_1 EXIT
   -- Expr_eval:
-      LOCAL EC_0 STO_0 |- typedExpressionIR
-                        : EC_1 STO_1 EXIT
+      LOCAL EC_0 ARCH_0 |- typedExpressionIR
+                         : EC_1 ARCH_1 EXIT
 
 rule TableKey_eval/cont:
-  EC_0 STO_0 |- typedExpressionIR `: nameIR _ `;
-              : EC_1 STO_1 (`` tableKeyValue)
+  EC_0 ARCH_0 |- typedExpressionIR `: nameIR _ `;
+               : EC_1 ARCH_1 (`` tableKeyValue)
   -- Expr_eval:
-      LOCAL EC_0 STO_0 |- typedExpressionIR
-                        : EC_1 STO_1 (`` value)
+      LOCAL EC_0 ARCH_0 |- typedExpressionIR
+                         : EC_1 ARCH_1 (`` value)
   -- if tableKeyValue = value `: nameIR
 
 syntax tableKeysResult =
@@ -33,36 +33,40 @@ syntax tableKeysResult =
   | exitResult
 
 relation TableKeys_eval:
-  evalContext store |- tableKeyListIR
-                     : evalContext store tableKeysResult
+  evalContext arch |- tableKeyListIR
+                    : evalContext arch tableKeysResult
   hint(input %0 %1 %2)
 
 rulegroup TableKeys_eval {
 
   rule TableKeys_eval/nil:
-    EC STO |- eps : EC STO (`` eps)
+    EC ARCH |- eps : EC ARCH (`` eps)
 
   rule TableKeys_eval/cons-head-exit:
-    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
-                : EC_1 STO_1 EXIT
+    EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t*
+                 : EC_1 ARCH_1 EXIT
     -- TableKey_eval:
-        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 EXIT
+        EC_0 ARCH_0 |- tableKeyIR_h : EC_1 ARCH_1 EXIT
 
   rule TableKeys_eval/cons-head-cont-tail-exit:
-    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
-                : EC_2 STO_2 EXIT
+    EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t*
+                 : EC_2 ARCH_2 EXIT
     -- TableKey_eval:
-        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 (`` tableKeyValue_h)
+        EC_0 ARCH_0 |- tableKeyIR_h
+                     : EC_1 ARCH_1 (`` tableKeyValue_h)
     -- TableKeys_eval:
-        EC_1 STO_1 |- tableKeyIR_t* : EC_2 STO_2 EXIT
+        EC_1 ARCH_1 |- tableKeyIR_t*
+                     : EC_2 ARCH_2 EXIT
 
   rule TableKeys_eval/cons-head-cont-tail-cont:
-    EC_0 STO_0 |- tableKeyIR_h :: tableKeyIR_t*
-                : EC_2 STO_2 (`` tableKeyValue*)
+    EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t*
+                 : EC_2 ARCH_2 (`` tableKeyValue*)
     -- TableKey_eval:
-        EC_0 STO_0 |- tableKeyIR_h : EC_1 STO_1 (`` tableKeyValue_h)
+        EC_0 ARCH_0 |- tableKeyIR_h
+                     : EC_1 ARCH_1 (`` tableKeyValue_h)
     -- TableKeys_eval:
-        EC_1 STO_1 |- tableKeyIR_t* : EC_2 STO_2 (`` tableKeyValue_t*)
+        EC_1 ARCH_1 |- tableKeyIR_t*
+                     : EC_2 ARCH_2 (`` tableKeyValue_t*)
     -- if tableKeyValue* = tableKeyValue_h :: tableKeyValue_t*
 
 }
@@ -72,18 +76,18 @@ rulegroup TableKeys_eval {
 ;;
 
 relation TableEntryPriority_eval:
-  evalContext store |- tableEntryPriorityIR? : nat?
+  evalContext arch |- tableEntryPriorityIR? : nat?
   hint(input %0 %1 %2)
 
 ;;; syntax tableEntryPriorityIR =
 
 rule TableEntryPriority_eval/none:
-  EC STO |- eps : eps
+  EC ARCH |- eps : eps
 
 ;;;; PRIORITY `= integerLiteral `: 
 
 rule TableEntryPriority_eval/integerLiteral:
-  EC STO |- PRIORITY `= integerLiteral `: : n
+  EC ARCH |- PRIORITY `= integerLiteral `: : n
   -- if n = $nat_of_integerValue(integerLiteral)
 
 ;;;; PRIORITY `= `( typedExpressionIR ) `:
@@ -95,59 +99,59 @@ syntax tableMatchResult =
   | exitResult
 
 relation TableMatch_eval:
-  evalContext store |- tableKeyValue* `@ tableEntryIR
-                     : evalContext store tableMatchResult
+  evalContext arch |- tableKeyValue* `@ tableEntryIR
+                    : evalContext arch tableMatchResult
   hint(input %0 %1 %2 %3)
 
 rulegroup TableMatch_eval {
 
   rule TableMatch_eval/exit:
-    EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR
-                : EC_1 STO_1 EXIT
+    EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR
+                 : EC_1 ARCH_1 EXIT
     ---- ;; unpack table entry
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
     ---- ;; evaluate table entry priority
     -- TableEntryPriority_eval:
-        EC_0 STO_0 |- tableEntryPriorityIR? : n_priority?
+        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 EXIT
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 EXIT
 
   rule TableMatch_eval/no-match:
-    EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR
-                : EC_1 STO_1 (`` eps)
+    EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR
+                 : EC_1 ARCH_1 (`` eps)
     ---- ;; unpack table entry
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
     ---- ;; evaluate table entry priority
     -- TableEntryPriority_eval:
-        EC_0 STO_0 |- tableEntryPriorityIR? : n_priority?
+        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 (`` setValue*)
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 (`` setValue*)
     ---- ;; perform match
     -- if (value_key `: _ = tableKeyValue)*
     -- if ~$match_keysets(setValue*, value_key*)
 
   rule TableMatch_eval/match:
-    EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR
-                : EC_1 STO_1 (`` tableMatch)
+    EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR
+                 : EC_1 ARCH_1 (`` tableMatch)
     ---- ;; unpack table entry
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
     ---- ;; evaluate table entry priority
     -- TableEntryPriority_eval:
-        EC_0 STO_0 |- tableEntryPriorityIR? : n_priority?
+        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 (`` setValue*)
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 (`` setValue*)
     ---- ;; perform match
     -- if (value_key `: _ = tableKeyValue)*
     -- if $match_keysets(setValue*, value_key*)
@@ -160,42 +164,42 @@ syntax tableMatchesResult =
   | exitResult
 
 relation TableMatches_eval:
-  evalContext store |- tableKeyValue* `@ tableEntryListIR
-                     : evalContext store tableMatchesResult
+  evalContext arch |- tableKeyValue* `@ tableEntryListIR
+                    : evalContext arch tableMatchesResult
   hint(input %0 %1 %2 %3)
 
 rulegroup TableMatches_eval {
 
   rule TableMatches_eval/nil:
-    EC STO |- tableKeyValue* `@ eps
-            : EC STO (`` eps)
+    EC ARCH |- tableKeyValue* `@ eps
+             : EC ARCH (`` eps)
 
   rule TableMatches_eval/cons-head-exit:
-    EC_0 STO_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
-                : EC_1 STO_1 EXIT
+    EC_0 ARCH_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
+                 : EC_1 ARCH_1 EXIT
     -- TableMatch_eval:
-        EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR_h
-                    : EC_1 STO_1 EXIT
+        EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR_h
+                     : EC_1 ARCH_1 EXIT
 
   rule TableMatches_eval/cons-head-cont-tail-exit:
-    EC_0 STO_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
-                : EC_2 STO_2 EXIT
+    EC_0 ARCH_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
+                 : EC_2 ARCH_2 EXIT
     -- TableMatch_eval:
-        EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR_h
-                    : EC_1 STO_1 (`` tableMatch_h?)
+        EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR_h
+                     : EC_1 ARCH_1 (`` tableMatch_h?)
     -- TableMatches_eval:
-        EC_1 STO_1 |- tableKeyValue* `@ tableEntryIR_t*
-                    : EC_2 STO_2 EXIT
+        EC_1 ARCH_1 |- tableKeyValue* `@ tableEntryIR_t*
+                     : EC_2 ARCH_2 EXIT
 
   rule TableMatches_eval/cons-head-cont-tail-cont:
-    EC_0 STO_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
-                : EC_2 STO_2 (`` tableMatch*)
+    EC_0 ARCH_0 |- tableKeyValue* `@ (tableEntryIR_h :: tableEntryIR_t*)
+                 : EC_2 ARCH_2 (`` tableMatch*)
     -- TableMatch_eval:
-        EC_0 STO_0 |- tableKeyValue* `@ tableEntryIR_h
-                    : EC_1 STO_1 (`` tableMatch_h?)
+        EC_0 ARCH_0 |- tableKeyValue* `@ tableEntryIR_h
+                     : EC_1 ARCH_1 (`` tableMatch_h?)
     -- TableMatches_eval:
-        EC_1 STO_1 |- tableKeyValue* `@ tableEntryIR_t*
-                    : EC_2 STO_2 (`` tableMatch_t*)
+        EC_1 ARCH_1 |- tableKeyValue* `@ tableEntryIR_t*
+                     : EC_2 ARCH_2 (`` tableMatch_t*)
     -- if tableMatch*
         = $opt_as_seq_<tableMatch>(tableMatch_h?) ++ tableMatch_t*
 
@@ -209,8 +213,7 @@ dec $is_largest_priority_wins(tableCustomPropertyIR) : bool
 dec $largest_priority_wins(tableObjectProperty) : bool
 
 def $is_largest_priority_wins(
-    _ _ CUSTOM_CONST "largest_priority_wins" _ `;
-  )
+    _ _ CUSTOM_CONST "largest_priority_wins" _ `;)
   = true
 def $is_largest_priority_wins(_) = false
   -- otherwise
@@ -261,72 +264,75 @@ def $select_action(TBL, tableMatch*) = tableActionReferenceIR_h
 rulegroup Table_eval {
 
   rule Table_eval/keys-exit:
-    EC_0 STO_0 |- typeId TBL : EC_1 STO_1 EXIT
+    EC_0 ARCH_0 |- typeId TBL
+                 : EC_1 ARCH_1 EXIT
     ---- ;; evaluate table keys
     -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
     -- TableKeys_eval:
-        EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 EXIT
+        EC_0 ARCH_0 |- tableKeyListIR : EC_1 ARCH_1 EXIT
 
   rule Table_eval/keys-cont-matches-exit:
-    EC_0 STO_0 |- typeId TBL : EC_2 STO_2 EXIT
+    EC_0 ARCH_0 |- typeId TBL
+                 : EC_2 ARCH_2 EXIT
     ---- ;; evaluate table keys
     -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
     -- TableKeys_eval:
-        EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 (`` tableKeyValue*)
+        EC_0 ARCH_0 |- tableKeyListIR : EC_1 ARCH_1 (`` tableKeyValue*)
     ---- ;; perform match
     -- if _ _ ENTRIES `= `{ tableEntryListIR } = TBL.ENTRIES
     -- TableMatches_eval:
-        EC_1 STO_1 |- tableKeyValue* `@ tableEntryListIR
-                    : EC_2 STO_2 EXIT
+        EC_1 ARCH_1 |- tableKeyValue* `@ tableEntryListIR
+                     : EC_2 ARCH_2 EXIT
 
   rule Table_eval/keys-cont-matches-cont-action-exit:
-    EC_0 STO_0 |- typeId TBL : EC_3 STO_3 EXIT
+    EC_0 ARCH_0 |- typeId TBL
+                 : EC_3 ARCH_3 EXIT
     ---- ;; evaluate table keys
     -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
     -- TableKeys_eval:
-        EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 (`` tableKeyValue*)
+        EC_0 ARCH_0 |- tableKeyListIR : EC_1 ARCH_1 (`` tableKeyValue*)
     ---- ;; perform match
     -- if _ _ ENTRIES `= `{ tableEntryListIR } = TBL.ENTRIES
     -- TableMatches_eval:
-        EC_1 STO_1 |- tableKeyValue* `@ tableEntryListIR
-                    : EC_2 STO_2 (`` tableMatch*)
+        EC_1 ARCH_1 |- tableKeyValue* `@ tableEntryListIR
+                     : EC_2 ARCH_2 (`` tableMatch*)
     ---- ;; select an action
     -- if prefixedNameIR `( argumentListIR )
         = $select_action(TBL, tableMatch*)
     ---- ;; evaluate the action
     -- Stmt_eval:
-        LOCAL EC_2 STO_2 |- prefixedNameIR `< eps > `( argumentListIR ) `;
-                          : EC_3 STO_3 EXIT
+        LOCAL EC_2 ARCH_2 |- prefixedNameIR `< eps > `( argumentListIR ) `;
+                           : EC_3 ARCH_3 EXIT
 
   rule Table_eval/keys-cont-matches-cont-action-cont:
-    EC_0 STO_0 |- typeId TBL : EC_3 STO_3 (RETURN tableMetadataStructValue)
+    EC_0 ARCH_0 |- typeId TBL
+                 : EC_3 ARCH_3 (RETURN tableMetadataStructValue)
     ---- ;; evaluate table keys
     -- if KEY `= `{ tableKeyListIR } = TBL.KEYS
     -- TableKeys_eval:
-        EC_0 STO_0 |- tableKeyListIR : EC_1 STO_1 (`` tableKeyValue*)
+        EC_0 ARCH_0 |- tableKeyListIR : EC_1 ARCH_1 (`` tableKeyValue*)
     ---- ;; perform match
     -- if _ _ ENTRIES `= `{ tableEntryListIR } = TBL.ENTRIES
     -- TableMatches_eval:
-        EC_1 STO_1 |- tableKeyValue* `@ tableEntryListIR
-                    : EC_2 STO_2 (`` tableMatch*)
+        EC_1 ARCH_1 |- tableKeyValue* `@ tableEntryListIR
+                     : EC_2 ARCH_2 (`` tableMatch*)
     ---- ;; select an action
     -- if prefixedNameIR `( argumentListIR )
         = $select_action(TBL, tableMatch*)
     ---- ;; evaluate the action
     -- Stmt_eval:
-        LOCAL EC_2 STO_2 |- prefixedNameIR `< eps > `( argumentListIR ) `;
-                          : EC_3 STO_3 `EMPTY
+        LOCAL EC_2 ARCH_2 |- prefixedNameIR `< eps > `( argumentListIR ) `;
+                           : EC_3 ARCH_3 `EMPTY
     ---- ;; create return result
     -- if b_hit = ~(tableMatch* = eps)
     -- if b_miss = ~b_hit
-    -- if tableMetadataEnumValue =
-            TABLE_ENUM ("action_list(" ++ typeId ++ ")")
+    -- if tableMetadataEnumValue
+        = TABLE_ENUM ("action_list(" ++ typeId ++ ")")
               `. $flatten_prefixedNameIR(prefixedNameIR)
-    -- if tableMetadataStructValue =
-            TABLE_STRUCT ("apply_result(" ++ typeId ++ ")")
+    -- if tableMetadataStructValue
+        = TABLE_STRUCT ("apply_result(" ++ typeId ++ ")")
               `{ HIT (`B b_hit) `;
                  MISS (`B b_miss) `;
                  ACTION_RUN tableMetadataEnumValue `; }
 
 }
-

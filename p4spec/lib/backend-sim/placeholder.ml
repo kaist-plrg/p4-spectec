@@ -97,14 +97,14 @@ struct
 
   (* Match-action table interface *)
 
-  let table_add_entry (_value_sto : Value.t) (_value_tableName : Value.t)
+  let table_add_entry (_value_arch : Value.t) (_value_tableName : Value.t)
       (_value_tableEntryPriorityInterface : Value.t)
       (_value_tableKeysetInterface : Value.t)
       (_value_tableActionInterface : Value.t) : Value.t =
     error_no_region
       "table_add_entry not implemented for the placeholder simulator"
 
-  let table_add_default_action (_value_sto : Value.t)
+  let table_add_default_action (_value_arch : Value.t)
       (_value_tableName : Value.t) (_value_tableActionInterface : Value.t) :
       Value.t =
     error_no_region
@@ -122,7 +122,7 @@ struct
 
   (* Pipeline driver *)
 
-  let drive_pipe (_value_ctx : Value.t) (_value_sto : Value.t) (_rx : IO.rx) :
+  let drive_pipe (_value_ctx : Value.t) (_value_arch : Value.t) (_rx : IO.rx) :
       Value.t * Value.t * IO.tx list =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
 

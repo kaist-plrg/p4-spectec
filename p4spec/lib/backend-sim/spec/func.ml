@@ -70,45 +70,46 @@ let tableObject_add_default_action (value_tableObject : Value.t)
   !call "tableObject_add_default_action" []
     [ value_tableObject; value_tableActionInterface ]
 
-(* find/update_store_qualified/unqualified *)
+(* find/update_object_qualified_e/unqualified_e *)
 
-let find_store_qualified (value_sto : Value.t) (value_objectId : Value.t) :
+let find_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t) :
     Value.t =
-  !call "find_store_qualified" [] [ value_sto; value_objectId ]
+  !call "find_object_qualified_e" [] [ value_arch; value_objectId ]
   |> unwrap_opt_v |> Option.get
 
-let find_store_unqualified (value_sto : Value.t) (value_id : Value.t) : Value.t
-    =
-  !call "find_store_unqualified" [] [ value_sto; value_id ]
-  |> unwrap_opt_v |> Option.get
-
-let update_store_qualified (value_sto : Value.t) (value_objectId : Value.t)
-    (value_object : Value.t) : Value.t =
-  !call "update_store_qualified" [] [ value_sto; value_objectId; value_object ]
-
-let update_store_unqualified (value_sto : Value.t) (value_id : Value.t)
-    (value_object : Value.t) : Value.t =
-  !call "update_store_unqualified" [] [ value_sto; value_id; value_object ]
-
-(* find/update_store_objectState *)
-
-let find_store_objectState (value_sto : Value.t) (value_objectId : Value.t) :
+let find_object_unqualified_e (value_arch : Value.t) (value_id : Value.t) :
     Value.t =
-  !call "find_store_objectState" [] [ value_sto; value_objectId ]
+  !call "find_object_unqualified_e" [] [ value_arch; value_id ]
   |> unwrap_opt_v |> Option.get
 
-let update_store_objectState (value_sto : Value.t) (value_objectId : Value.t)
+let update_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t)
+    (value_object : Value.t) : Value.t =
+  !call "update_object_qualified_e" []
+    [ value_arch; value_objectId; value_object ]
+
+let update_object_unqualified_e (value_arch : Value.t) (value_id : Value.t)
+    (value_object : Value.t) : Value.t =
+  !call "update_object_unqualified_e" [] [ value_arch; value_id; value_object ]
+
+(* find/update_objectState_e *)
+
+let find_objectState_e (value_arch : Value.t) (value_objectId : Value.t) :
+    Value.t =
+  !call "find_objectState_e" [] [ value_arch; value_objectId ]
+  |> unwrap_opt_v |> Option.get
+
+let update_objectState_e (value_arch : Value.t) (value_objectId : Value.t)
     (value_objectState : Value.t) : Value.t =
-  !call "update_store_objectState" []
-    [ value_sto; value_objectId; value_objectState ]
+  !call "update_objectState_e" []
+    [ value_arch; value_objectId; value_objectState ]
   |> unwrap_opt_v |> Option.get
 
-let find_store_archState (value_sto : Value.t) : Value.t =
-  !call "find_store_archState" [] [ value_sto ]
+let find_archState_e (value_arch : Value.t) : Value.t =
+  !call "find_archState_e" [] [ value_arch ]
 
-let update_store_archState (value_sto : Value.t) (value_archState : Value.t) :
+let update_archState_e (value_arch : Value.t) (value_archState : Value.t) :
     Value.t =
-  !call "update_store_archState" [] [ value_sto; value_archState ]
+  !call "update_archState_e" [] [ value_arch; value_archState ]
 
 (* find_type_e *)
 
