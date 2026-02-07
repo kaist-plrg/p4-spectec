@@ -3,7 +3,6 @@ open Interface.Wrap
 open Interface.Pack
 open Interface.Unpack
 open Error
-open State
 
 (* Generate a random number in the range lo..hi, inclusive, and write
    it to the result parameter.  The value written to result is not
@@ -378,13 +377,12 @@ let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    extern void resubmit_preserving_field_list(bit<8> index); *)
 let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
-  let open ArchState in
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
   (* write resubmit index in arch state *)
   let value_arch_state =
-    value_sto |> Spec.Func.find_archState_e |> of_value
-    |> with_resubmit (Packet.ResubmitInfo.of_v value_index)
-    |> to_value
+    value_sto |> Spec.Func.find_archState_e |> Arch.of_value
+    |> Arch.with_resubmit (Packet.ResubmitInfo.of_value value_index)
+    |> Arch.to_value
   in
   let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
   let value_callResult =
@@ -457,16 +455,17 @@ let _recirculate_preserving_field_list (_value_ctx : Value.t)
                                            in bit<32> session, bit<8> index); *)
 let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
-  let open ArchState in
-  let arch_state = Spec.Func.find_archState_e value_sto |> ArchState.of_value in
+  let arch_state = Spec.Func.find_archState_e value_sto |> Arch.of_value in
   let value_type = Spec.Func.find_var_e_local value_ctx "type" in
   let value_session = Spec.Func.find_var_e_local value_ctx "session" in
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
   let packet_clone =
-    Packet.CloneInfo.of_v (value_type, value_session, value_index)
+    Packet.CloneInfo.of_value (value_type, value_session, value_index)
   in
   (* mark arch state with clone information *)
-  let value_arch_state = arch_state |> with_clone packet_clone |> to_value in
+  let value_arch_state =
+    arch_state |> Arch.with_clone packet_clone |> Arch.to_value
+  in
   let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
   (* Return void *)
   let value_callResult =

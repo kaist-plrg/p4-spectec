@@ -6,7 +6,7 @@ module CloneInfo = struct
   type clone_type = I2E | E2E [@@deriving yojson]
   type t = clone_type * int * int [@@deriving yojson]
 
-  let of_v (value_clone_type, value_session, value_index) =
+  let of_value (value_clone_type, value_session, value_index) =
     let clone_type =
       match unpack_p4_enum value_clone_type |> snd with
       | "I2E" -> I2E
@@ -20,7 +20,7 @@ module CloneInfo = struct
     let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
     (clone_type, session, index)
 
-  let to_v (clone_type, session, index) =
+  let to_value (clone_type, session, index) =
     let value_clone_type =
       match clone_type with
       | I2E -> pack_p4_enum "CloneType" "I2E"
@@ -38,11 +38,11 @@ end
 module ResubmitInfo = struct
   type t = int [@@deriving yojson]
 
-  let of_v value_index : t =
+  let of_value value_index : t =
     let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
     index
 
-  let to_v index =
+  let to_value index =
     let value_index =
       pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
     in
@@ -54,14 +54,13 @@ type entrypoint = Ingress | Egress [@@deriving yojson]
 type info = Clone of CloneInfo.t | Resubmit of ResubmitInfo.t
 [@@deriving yojson]
 
-(*
- * 0: Evaluation Context
- * 1: Packet input
- * 2: Which block the packet should begin processing **after** running Parser + Verify block.
- *)
 type t = {
+  (* Evaluation context *)
   value_ctx : Value.t;
+  (* Packet input *)
   packet_in : Core.Object.PacketIn.t;
+  (* Which block the packet should begin processing
+     AFTER running Parser + Verify block *)
   entrypoint : entrypoint;
 }
 [@@deriving yojson]
