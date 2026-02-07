@@ -6264,33 +6264,21 @@ xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when]:
 
 . Let ``typeIR~a_unroll~`` be xref:unroll_typeIR[``typeIR~a~`` with typedefs unrolled].
 . Let ``typeIR~b_unroll~`` be xref:unroll_typeIR[``typeIR~b~`` with typedefs unrolled].
-. Check that xref:Cast_expl_unroll[``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` after unrolling].
-. The relation holds.
+. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]:
+ .. The relation holds.
+. Else:
+ .. Check that xref:Cast_expl_neq[``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` (when unequal)].
+ .. The relation holds.
 
-xref:Cast_expl_unroll[Cast_expl_unroll]:
+xref:Cast_expl_neq[Cast_expl_neq]:
 
-* ``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling
+* ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)
 
-xref:Cast_expl_unroll[``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when]:
-
-. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
-. The relation holds.
-
-xref:Cast_expl_unroll[``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` after unrolling when]:
-
-. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are not the same type].
-. Check that xref:Cast_expl_unroll_neq[``typeIR~a~`` can be explicitly cast to ``typeIR~b~`` when they are not the same type after unrolling].
-. The relation holds.
-
-xref:Cast_expl_unroll_neq[Cast_expl_unroll_neq]:
-
-* ``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling
-
-xref:Cast_expl_unroll_neq[``+BOOL+`` can be explicitly cast to ``+BIT+`` ``+<+`` ``1`` ``+>+`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+BOOL+`` can be explicitly cast to ``+BIT+`` ``+<+`` ``1`` ``+>+`` (when unequal) when]:
 
 . The relation holds.
 
-xref:Cast_expl_unroll_neq[``+INT+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+INT+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``typeIR'`` is equal to ``+BOOL+``:
  .. The relation holds.
@@ -6299,7 +6287,7 @@ xref:Cast_expl_unroll_neq[``+INT+`` can be explicitly cast to ``typeIR'`` when t
 . Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+INT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+INT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``typeIR'`` is equal to ``+INT+``:
  .. The relation holds.
@@ -6308,7 +6296,7 @@ xref:Cast_expl_unroll_neq[``+INT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly ca
 . If ``typeIR'`` is equal to ``+BIT+`` ``+<+`` ``nat`` ``+>+``:
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+BIT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+BIT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``nat`` is equal to ``1``:
  .. Check that ``typeIR'`` is equal to ``+BOOL+``.
@@ -6320,7 +6308,7 @@ xref:Cast_expl_unroll_neq[``+BIT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly ca
 . If ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+TYPE+`` ``++_++`` ``typeIR~a~`` be ``typeIR``:
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``].
@@ -6329,7 +6317,7 @@ xref:Cast_expl_unroll_neq[``typeIR`` can be explicitly cast to ``typeIR'`` when 
  .. Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~b~``].
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``typeIR`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``enumTypeIR`` be ``typeIR``:
  .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
@@ -6342,19 +6330,19 @@ xref:Cast_expl_unroll_neq[``typeIR`` can be explicitly cast to ``typeIR'`` when 
  .. Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~b~``].
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+DEFAULT+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+DEFAULT+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . Check that xref:is_defaultable_typeIR[``typeIR'`` can be default-initialized].
 . The relation holds.
 
-xref:Cast_expl_unroll_neq[``+HEADER_INVALID+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+HEADER_INVALID+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+LIST+`` ``+<+`` ``typeIR~b~`` ``+>+`` be ``typeIR'``:
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
@@ -6373,7 +6361,7 @@ xref:Cast_expl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` ca
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
@@ -6399,7 +6387,7 @@ xref:Cast_expl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
@@ -6470,7 +6458,7 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that xref:Cast_expl[``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_expl_unroll_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` can be explicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_expl_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
@@ -6573,15 +6561,6 @@ for each ``id~default~`` in ``id~default~^{asterisk}^``
 +
 for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
- .. The relation holds.
-
-xref:Cast_expl_unroll_neq[``typeIR`` can be explicitly cast to ``+SET+`` ``+<+`` ``typeIR~b~`` ``+>+`` when they are not the same type after unrolling when]:
-
-. If let ``+SET+`` ``+<+`` ``typeIR~a~`` ``+>+`` be ``typeIR``:
- .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
- .. The relation holds.
-. Else:
- .. Check that xref:Cast_expl[``typeIR`` can be explicitly cast to ``typeIR~b~``].
  .. The relation holds.
 
 xref:Cast_impl[Cast_impl]:
@@ -6592,53 +6571,41 @@ xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when]:
 
 . Let ``typeIR~a_unroll~`` be xref:unroll_typeIR[``typeIR~a~`` with typedefs unrolled].
 . Let ``typeIR~b_unroll~`` be xref:unroll_typeIR[``typeIR~b~`` with typedefs unrolled].
-. Check that xref:Cast_impl_unroll[``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` after unrolling].
-. The relation holds.
+. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]:
+ .. The relation holds.
+. Else:
+ .. Check that xref:Cast_impl_neq[``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` (when unequal)].
+ .. The relation holds.
 
-xref:Cast_impl_unroll[Cast_impl_unroll]:
+xref:Cast_impl_neq[Cast_impl_neq]:
 
-* ``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling
+* ``typeIR`` can be implicitly cast to ``typeIR'`` (when unequal)
 
-xref:Cast_impl_unroll[``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when]:
-
-. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
-. The relation holds.
-
-xref:Cast_impl_unroll[``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` after unrolling when]:
-
-. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are not the same type].
-. Check that xref:Cast_impl_unroll_neq[``typeIR~a~`` can be implicitly cast to ``typeIR~b~`` when they are not the same type after unrolling].
-. The relation holds.
-
-xref:Cast_impl_unroll_neq[Cast_impl_unroll_neq]:
-
-* ``typeIR`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling
-
-xref:Cast_impl_unroll_neq[``+INT+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+INT+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``fixedBitTypeIR``:
  .. The relation holds.
 
-xref:Cast_impl_unroll_neq[``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``].
 . The relation holds.
 
-xref:Cast_impl_unroll_neq[``+DEFAULT+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+DEFAULT+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . Check that xref:is_defaultable_typeIR[``typeIR'`` can be default-initialized].
 . The relation holds.
 
-xref:Cast_impl_unroll_neq[``+HEADER_INVALID+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+HEADER_INVALID+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If ``typeIR'`` has type ``headerTypeIR``:
  .. The relation holds.
 . Else if ``typeIR'`` has type ``headerUnionTypeIR``:
  .. The relation holds.
 
-xref:Cast_impl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+LIST+`` ``+<+`` ``typeIR~b~`` ``+>+`` be ``typeIR'``:
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
@@ -6662,7 +6629,7 @@ xref:Cast_impl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` ca
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_impl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
@@ -6688,7 +6655,7 @@ xref:Cast_impl_unroll_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_impl_unroll_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
@@ -6759,7 +6726,7 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Check that xref:Cast_impl[``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``.
  .. The relation holds.
 
-xref:Cast_impl_unroll_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` can be implicitly cast to ``typeIR'`` when they are not the same type after unrolling when]:
+xref:Cast_impl_neq[``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``id~field_a~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` can be implicitly cast to ``typeIR'`` (when unequal) when]:
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
@@ -8217,7 +8184,7 @@ for each ``expression~key~`` in ``expression~key~^{asterisk}^``
 . Let ``typedExpressionIR~key_reduced~^{asterisk}^`` be the list of ``typedExpressionIR~key_reduced~``, obtained by repeating:
 +
 --
- ** Let ``typedExpressionIR~key_reduced~`` be ``xref:reduce_serenum[$reduce_serenum(typedExpressionIR~key~)]``.
+ ** Let ``typedExpressionIR~key_reduced~`` be xref:reduce_serenum[``typedExpressionIR~key~`` with surrounding serializable enums reduced].
 --
 +
 for each ``typedExpressionIR~key~`` in ``typedExpressionIR~key~^{asterisk}^``
@@ -8452,7 +8419,7 @@ xref:TableKey_ok[Typing ``expression`` ``+:+`` ``name~matchkind~`` ``annotationL
 
 . Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under cursor ``+LOCAL+`` and typing context ``TC``].
-. Let ``typedExpressionIR~reduced~`` be ``xref:reduce_serenum[$reduce_serenum(typedExpressionIR)]``.
+. Let ``typedExpressionIR~reduced~`` be xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums reduced].
 . Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~reduced~``].
 . Let ``bound`` be xref:bound[bound type variables from the ``+LOCAL+`` layer of ``TC``].
 . Check that xref:Type_wf[``+SET+`` ``+<+`` ``typeIR~reduced~`` ``+>+`` is a well-formed type, with bound type variables ``bound``].
@@ -10301,7 +10268,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let xref:Call_convention_ok[cursor TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
 . Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^``.
 
-xref:reduce_serenum[$reduce_serenum(typedExpressionIR)]
+xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums reduced]
 
 
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
@@ -10382,11 +10349,11 @@ xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitl
    .... Let ``typedExpressionIR~r_cast~`` be xref:typedExpressionIR[``+(+`` ``typeIR~l~`` ``+)+`` ``typedExpressionIR~r~`` annotated with type ``typeIR~l~`` and compile-time known-ness ``ctk``].
    .... Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r_cast~`` ).
   ... Else:
-   .... Let ``typedExpressionIR~l_cast~`` be ``xref:reduce_serenum[$reduce_serenum(typedExpressionIR~l~)]``.
+   .... Let ``typedExpressionIR~l_cast~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
    .... If ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``:
     ..... Return xref:cast_binary[``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
-   .... If ``typedExpressionIR~l~`` is equal to ``xref:reduce_serenum[$reduce_serenum(typedExpressionIR~l~)]``:
-    ..... Let ``typedExpressionIR~r_cast~`` be ``xref:reduce_serenum[$reduce_serenum(typedExpressionIR~r~)]``.
+   .... If ``typedExpressionIR~l~`` is equal to ``typedExpressionIR~l_cast~``:
+    ..... Let ``typedExpressionIR~r_cast~`` be xref:reduce_serenum[``typedExpressionIR~r~`` with surrounding serializable enums reduced].
     ..... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.
     ..... Return xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~`` implicitly cast to equal types].
 . Otherwise:
