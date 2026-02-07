@@ -8,7 +8,7 @@ open Error
 
    extern void verify(in bool check, in error toSignal); *)
 
-let verify (value_ctx : Value.t) (value_sto : Value.t) :
+let verify (value_ctx : Value.t) (value_arch : Value.t) :
     Value.t * Value.t * Value.t =
   (* Get "check" in context *)
   let value_check = Spec.Func.find_var_e_local value_ctx "check" in
@@ -22,7 +22,7 @@ let verify (value_ctx : Value.t) (value_sto : Value.t) :
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     else [ Term "REJECT"; NT value_toSignal ] #@ "rejectTransitionResult"
   in
-  (value_ctx, value_sto, value_callResult)
+  (value_ctx, value_arch, value_callResult)
 
 (* Static assert evaluates a boolean expression
    at compilation time.  If the expression evaluates to

@@ -11,17 +11,17 @@
 rulegroup ParserTransition_eval/nameIR {
 
   rule ParserTransition_eval/accept:
-    EC STO |- TRANSITION ("accept" `;)
-            : EC STO ACCEPT
+    EC ARCH |- TRANSITION ("accept" `;)
+             : EC ARCH ACCEPT
 
   rule ParserTransition_eval/reject:
-    EC STO |- TRANSITION ("reject" `;)
-            : EC STO (REJECT errorValue)
+    EC ARCH |- TRANSITION ("reject" `;)
+             : EC ARCH (REJECT errorValue)
     -- if errorValue = ERROR `. "NoError"
 
   rule ParserTransition_eval/state:
-    EC STO |- TRANSITION (nameIR `;)
-            : EC STO (STATE nameIR)
+    EC ARCH |- TRANSITION (nameIR `;)
+             : EC ARCH (STATE nameIR)
     -- if nameIR =/= "accept" /\ nameIR =/= "reject"
 
 }
@@ -33,140 +33,140 @@ syntax selectCaseMatchResult =
   | rejectTransitionResult
 
 relation SelectCase_match:
-  evalContext store value* |- selectCaseIR
-                            : evalContext store selectCaseMatchResult
+  evalContext arch value* |- selectCaseIR
+                           : evalContext arch selectCaseMatchResult
   hint(input %0 %1 %2 %3)
 
 rulegroup SelectCase_match {
 
   rule SelectCase_match/reject:
-    EC_0 STO_0 value_key* |- keysetExpressionIR `: nameIR `;
-                           : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 value_key* |- keysetExpressionIR `: nameIR `;
+                            : EC_1 ARCH_1 rejectTransitionResult
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 rejectTransitionResult
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 rejectTransitionResult
 
   rule SelectCase_match/no-match:
-    EC_0 STO_0 value_key* |- keysetExpressionIR `: nameIR `;
-                           : EC_1 STO_1 (`` eps)
+    EC_0 ARCH_0 value_key* |- keysetExpressionIR `: nameIR `;
+                            : EC_1 ARCH_1 (`` eps)
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 (`` setValue*)
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 (`` setValue*)
     ---- ;; perform match
     -- if ~$match_keysets(setValue*, value_key*)
 
   rule SelectCase_match/match:
-    EC_0 STO_0 value_key* |- keysetExpressionIR `: nameIR `;
-                           : EC_1 STO_1 (`` nameIR)
+    EC_0 ARCH_0 value_key* |- keysetExpressionIR `: nameIR `;
+                            : EC_1 ARCH_1 (`` nameIR)
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
-        EC_0 STO_0 |- keysetExpressionIR
-                    : EC_1 STO_1 (`` setValue*)
+        EC_0 ARCH_0 |- keysetExpressionIR
+                     : EC_1 ARCH_1 (`` setValue*)
     ---- ;; perform match
     -- if $match_keysets(setValue*, value_key*)
 
 }
 
 relation SelectCases_match:
-  evalContext store value* |- selectCaseListIR
-                            : evalContext store selectCaseMatchResult
+  evalContext arch value* |- selectCaseListIR
+                           : evalContext arch selectCaseMatchResult
   hint(input %0 %1 %2 %3)
 
 rulegroup SelectCases_match {
 
   rule SelectCases_match/nil:
-    EC STO value_key* |- eps : EC STO (`` eps)
+    EC ARCH value_key* |- eps : EC ARCH (`` eps)
 
   rule SelectCases_match/cons-head-match:
-    EC_0 STO_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
-                           : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
+                            : EC_1 ARCH_1 rejectTransitionResult
     -- SelectCase_match:
-        EC_0 STO_0 value_key* |- selectCaseIR_h
-                               : EC_1 STO_1 rejectTransitionResult
+        EC_0 ARCH_0 value_key* |- selectCaseIR_h
+                                : EC_1 ARCH_1 rejectTransitionResult
 
   rule SelectCases_match/cons-head-match:
-    EC_0 STO_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
-                           : EC_1 STO_1 (`` nameIR_state)
+    EC_0 ARCH_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
+                            : EC_1 ARCH_1 (`` nameIR_state)
     -- SelectCase_match:
-        EC_0 STO_0 value_key* |- selectCaseIR_h
-                               : EC_1 STO_1 (`` nameIR_state)
+        EC_0 ARCH_0 value_key* |- selectCaseIR_h
+                                : EC_1 ARCH_1 (`` nameIR_state)
 
   rule SelectCases_match/cons-head-no-match:
-    EC_0 STO_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
-                           : EC_2 STO_2 selectCaseMatchResult
+    EC_0 ARCH_0 value_key* |- selectCaseIR_h :: selectCaseIR_t*
+                            : EC_2 ARCH_2 selectCaseMatchResult
     -- SelectCase_match:
-        EC_0 STO_0 value_key* |- selectCaseIR_h
-                               : EC_1 STO_1 (`` eps)
+        EC_0 ARCH_0 value_key* |- selectCaseIR_h
+                                : EC_1 ARCH_1 (`` eps)
     -- SelectCases_match:
-        EC_1 STO_1 value_key* |- selectCaseIR_t*
-                               : EC_2 STO_2 selectCaseMatchResult
+        EC_1 ARCH_1 value_key* |- selectCaseIR_t*
+                                : EC_2 ARCH_2 selectCaseMatchResult
 
 }
 
 rulegroup ParserTransition_eval/selectExpressionIR {
 
   rule ParserTransition_eval/reject:
-    EC_0 STO_0 |- TRANSITION selectExpressionIR
-                : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+                 : EC_1 ARCH_1 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
         = selectExpressionIR
     ---- ;; evaluate the key expressions
     -- Exprs_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_key*
-                          : EC_1 STO_1 rejectTransitionResult
+        LOCAL EC_0 ARCH_0 |- typedExpressionIR_key*
+                           : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserTransition_eval/cont-selectCaseListIR-reject:
-    EC_0 STO_0 |- TRANSITION selectExpressionIR
-                : EC_2 STO_2 rejectTransitionResult
+    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+                 : EC_2 ARCH_2 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
         = selectExpressionIR
     ---- ;; evaluate the key expressions
     -- Exprs_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_key*
-                          : EC_1 STO_1 (`` value_key*)
+        LOCAL EC_0 ARCH_0 |- typedExpressionIR_key*
+                           : EC_1 ARCH_1 (`` value_key*)
     ---- ;; find a matching select case
     -- SelectCases_match:
-        EC_1 STO_1 value_key* |- selectCaseListIR
-                               : EC_2 STO_2 rejectTransitionResult
+        EC_1 ARCH_1 value_key* |- selectCaseListIR
+                                : EC_2 ARCH_2 rejectTransitionResult
 
   rule ParserTransition_eval/no-match:
-    EC_0 STO_0 |- TRANSITION selectExpressionIR
-                : EC_2 STO_2 rejectTransitionResult
+    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+                 : EC_2 ARCH_2 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
         = selectExpressionIR
     ---- ;; evaluate the key expressions
     -- Exprs_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_key*
-                          : EC_1 STO_1 (`` value_key*)
+        LOCAL EC_0 ARCH_0 |- typedExpressionIR_key*
+                           : EC_1 ARCH_1 (`` value_key*)
     ---- ;; find a matching select case
     -- SelectCases_match:
-        EC_1 STO_1 value_key* |- selectCaseListIR
-                               : EC_2 STO_2 (`` eps)
+        EC_1 ARCH_1 value_key* |- selectCaseListIR
+                                : EC_2 ARCH_2 (`` eps)
     -- if rejectTransitionResult = REJECT (ERROR `. "NoMatch")
 
   rule ParserTransition_eval/match:
-    EC_0 STO_0 |- TRANSITION selectExpressionIR
-                : EC_3 STO_3 transitionResult
+    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+                 : EC_3 ARCH_3 transitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
         = selectExpressionIR
     ---- ;; evaluate the key expressions
     -- Exprs_eval:
-        LOCAL EC_0 STO_0 |- typedExpressionIR_key*
-                          : EC_1 STO_1 (`` value_key*)
+        LOCAL EC_0 ARCH_0 |- typedExpressionIR_key*
+                           : EC_1 ARCH_1 (`` value_key*)
     ---- ;; find a matching select case
     -- SelectCases_match:
-        EC_1 STO_1 value_key* |- selectCaseListIR
-                               : EC_2 STO_2 (`` nameIR_state)
+        EC_1 ARCH_1 value_key* |- selectCaseListIR
+                                : EC_2 ARCH_2 (`` nameIR_state)
     ---- ;; do the transition
     -- ParserTransition_eval:
-        EC_2 STO_2 |- TRANSITION (nameIR_state `;)
-                    : EC_3 STO_3 transitionResult
+        EC_2 ARCH_2 |- TRANSITION (nameIR_state `;)
+                     : EC_3 ARCH_3 transitionResult
 
 }
 
@@ -179,53 +179,53 @@ rulegroup ParserTransition_eval/selectExpressionIR {
 ;;; constantDeclarationIR
 
 rule ParserStmt_eval/constantDeclarationIR:
-  EC_0 STO |- constantDeclarationIR
-            : EC_1 STO `EMPTY
+  EC_0 ARCH |- constantDeclarationIR
+             : EC_1 ARCH `EMPTY
   -- ConstDecl_eval:
       LOCAL EC_0 |- constantDeclarationIR : EC_1
 
 ;;; variableDeclarationIR
 
 rule ParserStmt_eval/reject:
-  EC_0 STO_0 |- variableDeclarationIR
-              : EC_1 STO_1 rejectTransitionResult
+  EC_0 ARCH_0 |- variableDeclarationIR
+               : EC_1 ARCH_1 rejectTransitionResult
   -- VarDecl_eval:
-      LOCAL EC_0 STO_0 |- variableDeclarationIR
-                        : EC_1 STO_1 rejectTransitionResult
+      LOCAL EC_0 ARCH_0 |- variableDeclarationIR
+                         : EC_1 ARCH_1 rejectTransitionResult
 
 rule ParserStmt_eval/cont:
-  EC_0 STO_0 |- variableDeclarationIR
-              : EC_1 STO_1 `EMPTY
+  EC_0 ARCH_0 |- variableDeclarationIR
+               : EC_1 ARCH_1 `EMPTY
   -- VarDecl_eval:
-      LOCAL EC_0 STO_0 |- variableDeclarationIR
-                        : EC_1 STO_1 `EMPTY
+      LOCAL EC_0 ARCH_0 |- variableDeclarationIR
+                         : EC_1 ARCH_1 `EMPTY
 
 ;;; emptyStatementIR
 
 rule ParserStmt_eval/emptyStatementIR:
-  EC_0 STO_0 |- emptyStatementIR
-              : EC_1 STO_1 `EMPTY
+  EC_0 ARCH_0 |- emptyStatementIR
+               : EC_1 ARCH_1 `EMPTY
   -- Stmt_eval:
-      LOCAL EC_0 STO_0 |- emptyStatementIR
-                        : EC_1 STO_1 `EMPTY
+      LOCAL EC_0 ARCH_0 |- emptyStatementIR
+                         : EC_1 ARCH_1 `EMPTY
 
 ;;; assignmentStatementIR
 
 rulegroup ParserStmt_eval/assignmentStatementIR {
 
   rule ParserStmt_eval/reject:
-    EC_0 STO_0 |- assignmentStatementIR
-                : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 |- assignmentStatementIR
+                 : EC_1 ARCH_1 rejectTransitionResult
     -- Stmt_eval:
-        LOCAL EC_0 STO_0 |- assignmentStatementIR
-                          : EC_1 STO_1 rejectTransitionResult
+        LOCAL EC_0 ARCH_0 |- assignmentStatementIR
+                           : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserStmt_eval/cont:
-    EC_0 STO_0 |- assignmentStatementIR
-                : EC_1 STO_1 `EMPTY
+    EC_0 ARCH_0 |- assignmentStatementIR
+                 : EC_1 ARCH_1 `EMPTY
     -- Stmt_eval:
-        LOCAL EC_0 STO_0 |- assignmentStatementIR
-                          : EC_1 STO_1 `EMPTY
+        LOCAL EC_0 ARCH_0 |- assignmentStatementIR
+                           : EC_1 ARCH_1 `EMPTY
 
 }
 
@@ -234,18 +234,18 @@ rulegroup ParserStmt_eval/assignmentStatementIR {
 rulegroup ParserStmt_eval/callStatementIR {
 
   rule ParserStmt_eval/reject:
-    EC_0 STO_0 |- callStatementIR
-                : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 |- callStatementIR
+                 : EC_1 ARCH_1 rejectTransitionResult
     -- Stmt_eval:
-        LOCAL EC_0 STO_0 |- callStatementIR
-                          : EC_1 STO_1 rejectTransitionResult
+        LOCAL EC_0 ARCH_0 |- callStatementIR
+                           : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserStmt_eval/cont:
-    EC_0 STO_0 |- callStatementIR
-                : EC_1 STO_1 `EMPTY
+    EC_0 ARCH_0 |- callStatementIR
+                 : EC_1 ARCH_1 `EMPTY
     -- Stmt_eval:
-        LOCAL EC_0 STO_0 |- callStatementIR
-                          : EC_1 STO_1 `EMPTY
+        LOCAL EC_0 ARCH_0 |- callStatementIR
+                           : EC_1 ARCH_1 `EMPTY
 
 }
 
@@ -256,12 +256,12 @@ rulegroup ParserStmt_eval/callStatementIR {
 ;;; parserBlockStatementIR
 
 rule ParserStmt_eval/parserBlockStatementIR:
-  EC_0 STO_0 |- annotationList `{ parserStatementListIR }
-              : EC_3 STO_1 parserStatementResult
+  EC_0 ARCH_0 |- annotationList `{ parserStatementListIR }
+               : EC_3 ARCH_1 parserStatementResult
   -- if EC_1 = $enter_e(EC_0)
   -- ParserStmts_eval:
-      EC_1 STO_0 |- parserStatementListIR
-                  : EC_2 STO_1 parserStatementResult
+      EC_1 ARCH_0 |- parserStatementListIR
+                   : EC_2 ARCH_1 parserStatementResult
   -- if EC_3 = $exit_e(EC_2)
 
 ;;; parserConditionalStatementIR
@@ -273,50 +273,50 @@ rule ParserStmt_eval/parserBlockStatementIR:
 rulegroup ParserStmt_eval/parserConditionalStatementIR {
 
   rule ParserStmt_eval/non-else-reject:
-    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
-            : EC_cond STO_cond rejectTransitionResult
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+             : EC_cond ARCH_cond rejectTransitionResult
     -- Expr_eval:
-        LOCAL EC STO |- typedExpressionIR_cond
-                      : EC_cond STO_cond rejectTransitionResult
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond rejectTransitionResult
 
   rule ParserStmt_eval/non-else-cont-true:
-    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
-            : EC_then STO_then parserStatementResult
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+             : EC_then ARCH_then parserStatementResult
     -- Expr_eval:
-        LOCAL EC STO |- typedExpressionIR_cond
-                      : EC_cond STO_cond (`` (`B true))
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond (`` (`B true))
     -- ParserStmt_eval:
-        EC_cond STO_cond |- parserStatementIR_then
-                          : EC_then STO_then parserStatementResult
+        EC_cond ARCH_cond |- parserStatementIR_then
+                           : EC_then ARCH_then parserStatementResult
 
   rule ParserStmt_eval/non-else-cont-false:
-    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
-            : EC_cond STO_cond `EMPTY
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+             : EC_cond ARCH_cond `EMPTY
     -- Expr_eval:
-        LOCAL EC STO |- typedExpressionIR_cond
-                      : EC_cond STO_cond (`` (`B false))
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond (`` (`B false))
 
   rule ParserStmt_eval/else-cont-true:
-    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
                 ELSE parserStatementIR_else
-            : EC_then STO_then parserStatementResult
+             : EC_then ARCH_then parserStatementResult
     -- Expr_eval:
-        LOCAL EC STO |- typedExpressionIR_cond
-                      : EC_cond STO_cond (`` (`B true))
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond (`` (`B true))
     -- ParserStmt_eval:
-        EC_cond STO_cond |- parserStatementIR_then
-                          : EC_then STO_then parserStatementResult
+        EC_cond ARCH_cond |- parserStatementIR_then
+                           : EC_then ARCH_then parserStatementResult
 
   rule ParserStmt_eval/else-cont-false:
-    EC STO |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
               ELSE parserStatementIR_else
-            : EC_else STO_else parserStatementResult
+             : EC_else ARCH_else parserStatementResult
     -- Expr_eval:
-        LOCAL EC STO |- typedExpressionIR_cond
-                      : EC_cond STO_cond (`` (`B false))
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond (`` (`B false))
     -- ParserStmt_eval:
-        EC_cond STO_cond |- parserStatementIR_else
-                          : EC_else STO_else parserStatementResult
+        EC_cond ARCH_cond |- parserStatementIR_else
+                           : EC_else ARCH_else parserStatementResult
 
 }
 
@@ -330,20 +330,23 @@ rulegroup ParserStmt_eval/parserConditionalStatementIR {
 rulegroup ParserStmts_eval {
 
   rule ParserStmts_eval/nil:
-    EC STO |- eps : EC STO `EMPTY
+    EC ARCH |- eps : EC ARCH `EMPTY
 
   rule ParserStmts_eval/cons-head-reject:
-    EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
-                : EC_1 STO_1 rejectTransitionResult
+    EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*
+                 : EC_1 ARCH_1 rejectTransitionResult
     -- ParserStmt_eval:
-        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 rejectTransitionResult
+        EC_0 ARCH_0 |- parserStatementIR_h
+                     : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserStmts_eval/cons-head-cont:
-    EC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*
-                : EC_2 STO_2 parserStatementResult
+    EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*
+                 : EC_2 ARCH_2 parserStatementResult
     -- ParserStmt_eval:
-        EC_0 STO_0 |- parserStatementIR_h : EC_1 STO_1 `EMPTY
+        EC_0 ARCH_0 |- parserStatementIR_h
+                     : EC_1 ARCH_1 `EMPTY
     -- ParserStmts_eval:
-        EC_1 STO_1 |- parserStatementIR_t* : EC_2 STO_2 parserStatementResult
+        EC_1 ARCH_1 |- parserStatementIR_t*
+                     : EC_2 ARCH_2 parserStatementResult
 
 }

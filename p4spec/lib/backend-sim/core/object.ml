@@ -127,7 +127,7 @@ module PacketIn = struct
 
      void extract<T>(out T hdr); *)
 
-  let extract (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let extract (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
     let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
@@ -145,7 +145,7 @@ module PacketIn = struct
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
     else
       (* Parse from packet *)
       let pkt, bits = parse pkt size in
@@ -155,14 +155,14 @@ module PacketIn = struct
       let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
       (* Update "hdr" in context *)
       let value_ctx =
-        Spec.Rel.lvalue_write_var_local value_ctx value_sto "hdr" value_hdr
+        Spec.Rel.lvalue_write_var_local value_ctx value_arch "hdr" value_hdr
       in
       (* Create call result *)
       let value_callResult =
         let value_eps = wrap_opt_v "value" None in
         [ Term "RETURN"; NT value_eps ] #@ "returnResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
 
   (* Read bits from the packet into a variable-sized header @variableSizeHeader
      and advance the cursor.
@@ -172,7 +172,7 @@ module PacketIn = struct
      void extract<T>(out T variableSizeHeader,
                       in bit<32> variableFieldSizeInBits); *)
 
-  let extract_varsize (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let extract_varsize (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
     let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
@@ -208,7 +208,7 @@ module PacketIn = struct
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
     else if pkt.idx + size > pkt.len then
       let value_callResult =
         let value_err =
@@ -218,7 +218,7 @@ module PacketIn = struct
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
     else if size > size_max then
       let value_callResult =
         let value_err =
@@ -228,7 +228,7 @@ module PacketIn = struct
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
     else
       (* Parse from packet *)
       let pkt, bits = parse pkt size in
@@ -243,15 +243,15 @@ module PacketIn = struct
       in
       (* Update "variableSizeHeader" in context *)
       let value_ctx =
-        Spec.Rel.lvalue_write_var_local value_ctx value_sto "variableSizeHeader"
-          value_variableSizeHeader
+        Spec.Rel.lvalue_write_var_local value_ctx value_arch
+          "variableSizeHeader" value_variableSizeHeader
       in
       (* Create call result *)
       let value_callResult =
         let value_eps = wrap_opt_v "value" None in
         [ Term "RETURN"; NT value_eps ] #@ "returnResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
 
   (* Read bits from the packet without advancing the cursor.
      @returns: the bits read from the packet.
@@ -259,7 +259,7 @@ module PacketIn = struct
 
      T lookahead<T>(); *)
 
-  let lookahead (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let lookahead (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "T" *)
     let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
@@ -279,7 +279,7 @@ module PacketIn = struct
         in
         [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
     else
       (* Parse from packet *)
       let _pkt, bits = parse pkt size in
@@ -290,13 +290,13 @@ module PacketIn = struct
         let value_hdr = wrap_opt_v "value" (Some value_hdr) in
         [ Term "RETURN"; NT value_hdr ] #@ "returnResult"
       in
-      (pkt, value_ctx, value_sto, value_callResult)
+      (pkt, value_ctx, value_arch, value_callResult)
 
   (* Advance the packet cursor by the specified number of bits.
 
      void advance(in bit<32> sizeInBits); *)
 
-  let advance (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let advance (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "sizeInBits" in context *)
     let value_sizeInBits = Spec.Func.find_var_e_local value_ctx "sizeInBits" in
@@ -309,13 +309,13 @@ module PacketIn = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (pkt, value_ctx, value_sto, value_callResult)
+    (pkt, value_ctx, value_arch, value_callResult)
 
   (* @return packet length in bytes.  This method may be unavailable on
      some target architectures.
 
      bit<32> length(); *)
-  let length (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let length (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get packet length in bytes *)
     let length = if pkt.len mod 8 = 0 then pkt.len / 8 else (pkt.len / 8) + 1 in
@@ -326,7 +326,7 @@ module PacketIn = struct
       let value_length_opt = wrap_opt_v "value" (Some value_length) in
       [ Term "RETURN"; NT value_length_opt ] #@ "returnResult"
     in
-    (pkt, value_ctx, value_sto, value_callResult)
+    (pkt, value_ctx, value_arch, value_callResult)
 end
 
 (* Output packet *)
@@ -348,7 +348,7 @@ module PacketOut = struct
 
      void emit<T>(in T hdr); *)
 
-  let emit (value_ctx : Value.t) (value_sto : Value.t) (pkt : t) :
+  let emit (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "hdr" in context *)
     let value_hdr = Spec.Func.find_var_e_local value_ctx "hdr" in
@@ -363,7 +363,7 @@ module PacketOut = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (pkt, value_ctx, value_sto, value_callResult)
+    (pkt, value_ctx, value_arch, value_callResult)
 end
 
 module Packet = struct

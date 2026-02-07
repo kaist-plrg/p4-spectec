@@ -26,14 +26,14 @@ rule Var_init:
 ;;
 
 relation Extern_init:
-  evalContext store |- nameIR : store
+  evalContext arch |- nameIR :arch 
   hint(input %0 %1 %2)
   hint(prose_in "instantiating extern" %0 "in the evaluation context"
-                %1 "and store" %2)
-  hint(prose_out "the resulting store" %3)
+                %1 "and state" %2)
+  hint(prose_out "the resulting state" %3)
 
 rule Extern_init:
-  EC STO_0 |- nameIR : STO_2
+  EC ARCH_0 |- nameIR : ARCH_2
   -- if IC = { PATH ([]),
                GLOBAL EC.GLOBAL,
                BLOCK EC.BLOCK,
@@ -41,11 +41,13 @@ rule Extern_init:
   -- Constructor_inst:
       GLOBAL IC |- (`` nameIR) `< eps > `( eps )
                  : constructorDef `< eps > `( `# eps `# eps )
+  -- if STO = ARCH_0.STORE
   -- Constructor_call:
-      GLOBAL IC STO_0 |- constructorDef `< eps > `( eps `# eps `# eps )
-                       : STO_1 object
+      GLOBAL IC STO |- constructorDef `< eps > `( eps `# eps `# eps )
+                     : STO_1 object
+  -- if ARCH_1 = ARCH_0[ .STORE = STO_1 ]
   -- if objectId_object = [ nameIR ]
-  -- if STO_2 = $add_store(STO_1, objectId_object, object)
+  -- if ARCH_2 = $add_object_e(ARCH_1, objectId_object, object)
 
 ;;
 ;;;; Program initialization

@@ -99,6 +99,8 @@ and keyword = parse
     { CHECK_COUNTER }
   | "expect"
     { lexer := Packet_data; EXPECT }
+  | "mirroring_add"
+    { lexer := Packet_data; MIRRORING_ADD }
   | "no_packet"
     { NO_PACKET }
   | "packet"

@@ -1794,7 +1794,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value =
     let value_output =
       match id.it with
-      | "init_externState" -> Arch.eval_extern_init values_input
+      | "init_objectState" -> Arch.eval_extern_init values_input
+      | "init_archState" -> Arch.init_arch_state
       | _ -> back id.at (F.asprintf "unimplemented extern function %s" id.it)
     in
     List.iteri

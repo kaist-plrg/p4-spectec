@@ -5,17 +5,17 @@
 ;;
 ;;;; Extern object
 ;;;; Name of the extern object (typeId), bound type variables (theta),
-;;;; internal state (externState) which is invisible to the P4 program,
+;;;; internal state (objectState) which is invisible to the P4 program,
 ;;;; value environment (frame), and environment for methods (externMethodDefEnv)
 ;;
 
-extern syntax externState
+extern syntax objectState
 syntax externMethodDefEnv = map<callableId, externMethodDef>
 
-extern dec $init_externState(nameIR, typeIR*, value*) : externState
+extern dec $init_objectState(nameIR, typeIR*, value*) : objectState
 
 syntax externObject =
-  EXTERN typeId `< theta > `{ externState frame externMethodDefEnv }
+  EXTERN typeId `< theta > `{ objectState frame externMethodDefEnv }
 
 ;;
 ;;;; Parser object

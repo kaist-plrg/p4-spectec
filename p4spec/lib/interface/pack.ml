@@ -20,6 +20,11 @@ let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
   let value_i = i |> wrap_num_v_int in
   [ NT value_width; Term "W"; NT value_i ] #@ "value"
 
+let pack_p4_enum (type_id : string) (name : string) : Value.t =
+  let value_typeId = wrap_text_v type_id in
+  let value_nameIR = wrap_text_v name in
+  [ NT value_typeId; Term "."; NT value_nameIR ] #@ "enumValue"
+
 (* nat S int *)
 (* nat `. nat V int *)
 (* listValue = LIST `[ value* ] *)
