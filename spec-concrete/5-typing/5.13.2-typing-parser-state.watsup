@@ -6,9 +6,11 @@
 ;;
 
 rule ParserState_ok:
-  TC_0 nameIR_state* |- annotationList STATE name
-                        `{ parserStatementList transitionStatement }
-                      : parserStateIR
+  TC_0 nameIR_state* |- parserState : parserStateIR
+  -- if annotationList STATE name
+          `{ parserStatementList transitionStatement }
+      = parserState
+  ----
   -- if nameIR = $name(name)
   ---- ;; enter block scope
   -- if TC_1 = $enter_t(TC_0)

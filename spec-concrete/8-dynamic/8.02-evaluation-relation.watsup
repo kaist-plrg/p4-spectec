@@ -172,11 +172,19 @@ relation ParserStmt_eval:
   evalContext arch |- parserStatementIR
                     : evalContext arch parserStatementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", state" %4#", and" %5)
 
 relation ParserStmts_eval:
   evalContext arch |- parserStatementListIR
                     : evalContext arch parserStatementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", state" %4#", and" %5)
 
 syntax transitionResult =
   | acceptTransitionResult
@@ -187,26 +195,44 @@ relation ParserTransition_eval:
   evalContext arch |- transitionStatementIR 
                     : evalContext arch transitionResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "\nthe updated evaluation context" %3#
+                 ", state" %4#", and" %5)
 
 relation ParserState_eval:
-  evalContext arch |- state
+  evalContext arch |- parserStateIR
                     : evalContext arch transitionResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser state" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "the updated evaluation context" %3#
+                 ", state" %4#", and result" %5)
 
 relation ParserState_trans:
   evalContext arch |- TRANSITION nameIR
                     : evalContext arch transitionResult
   hint(input %0 %1 %2)
 
+syntax parserDeclarationResult = parserStatementResult
+
 relation ParserLocalDecl_eval:
   evalContext arch |- parserLocalDeclarationIR
-                    : evalContext arch parserStatementResult
+                    : evalContext arch parserDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser local declaration" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "the updated evaluation context" %3#
+                 ", state" %4#", and result" %5)
 
 relation ParserLocalDecls_eval:
   evalContext arch |- parserLocalDeclarationIR*
-                    : evalContext arch parserStatementResult
+                    : evalContext arch parserDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser local declarations" %2#
+                ", under evaluation context" %0#", and state" %1)
+  hint(prose_out "the updated evaluation context" %3#
+                 ", state" %4#", and result" %5)
 
 ;;
 ;;;; Control evaluation
