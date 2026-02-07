@@ -1370,8 +1370,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | "init_objectState" ->
         let value_output = Arch.eval_extern_init values_input in
         Ok (ctx, value_output)
-    | "empty_archState" ->
-        let value_output = Arch.empty_arch_state in
+    | "init_archState" ->
+        let value_output = Arch.init_arch_state in
         Ok (ctx, value_output)
     | _ ->
         fail_without_reason id.at

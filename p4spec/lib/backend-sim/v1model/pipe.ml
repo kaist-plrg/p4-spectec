@@ -56,6 +56,21 @@ struct
 
   let init_call_func () = Spec.Func.register call_func
 
+  (* Architectural state *)
+
+  let init_arch_state = Arch.empty |> Arch.to_value
+
+  let get_arch_state : Arch.t state =
+    let+ _, value_arch, _ = get in
+    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+
+  let put_arch_state (arch_state : Arch.t) : unit state =
+    modify (fun (value_ctx, value_arch, txs) ->
+        let value_arch =
+          arch_state |> Arch.to_value |> Spec.Func.update_archState_e value_arch
+        in
+        (value_ctx, value_arch, txs))
+
   (* Extern objects *)
 
   type object_state =
@@ -355,20 +370,18 @@ struct
     (* Update arch with modified table object *)
     update_table value_arch value_tableName value_tableObject
 
-  (* Architectural state *)
+  (* Mirror table interface *)
 
-  let empty_arch_state = Arch.empty |> Arch.to_value
-
-  let get_arch_state : Arch.t state =
-    let+ _, value_arch, _ = get in
-    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
-
-  let put_arch_state (arch_state : Arch.t) : unit state =
-    modify (fun (value_ctx, value_arch, txs) ->
-        let value_arch =
-          arch_state |> Arch.to_value |> Spec.Func.update_archState_e value_arch
-        in
-        (value_ctx, value_arch, txs))
+  let add_mirror_session (value_arch : Value.t) (session : int) (port : int) :
+      Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let mirrortable = Mirror.Table.add session port arch_state.mirrortable in
+    arch_state
+    |> Arch.with_mirrortable mirrortable
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   (* Packet state *)
 
@@ -424,19 +437,6 @@ struct
       unpack_p4_fixedBit value_egress_spec
     in
     Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-
-  (* Mirror table state *)
-
-  let add_mirror_session (value_arch : Value.t) (session : int) (port : int) :
-      Value.t =
-    let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
-    in
-    let mirrortable = Mirror.Table.add session port arch_state.mirrortable in
-    arch_state
-    |> Arch.with_mirrortable mirrortable
-    |> Arch.to_value
-    |> Spec.Func.update_archState_e value_arch
 
   (* Pipeline initializer *)
 

@@ -58,7 +58,7 @@ struct
 
   type arch_state = unit [@@deriving yojson]
 
-  let empty_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let init_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
@@ -279,6 +279,8 @@ struct
     in
     (* Update arch with modified table object *)
     update_table value_arch value_tableName value_tableObject
+
+  (* Mirror session interface *)
 
   let add_mirror_session _session _port =
     error_no_region

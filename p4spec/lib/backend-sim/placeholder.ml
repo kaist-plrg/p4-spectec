@@ -56,7 +56,7 @@ struct
 
   type arch_state = unit [@@deriving yojson]
 
-  let empty_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let init_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
 
   let eval_extern_init (_values_input : Value.t list) : Value.t =
     wrap_extern_v "objectState" `Null
@@ -109,6 +109,8 @@ struct
       Value.t =
     error_no_region
       "table_add_default_action not implemented for the placeholder simulator"
+
+  (* Mirror session interface *)
 
   let add_mirror_session _session _port =
     error_no_region

@@ -33,7 +33,7 @@ module type ARCH = sig
 
   (* Architecture-specific external state *)
 
-  val empty_arch_state : Value.t
+  val init_arch_state : Value.t
 
   (* Match-action table interface *)
 
@@ -58,6 +58,8 @@ module type ARCH = sig
     Value.t ->
     (* table entry action *)
     Value.t (* store *)
+
+  (* Mirror session interface *)
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
 
