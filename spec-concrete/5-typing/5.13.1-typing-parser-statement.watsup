@@ -4,75 +4,57 @@
 ;; syntax transitionStatement = TRANSITION stateExpression
 ;;
 
-;;; syntax stateExpression
-
-;;;; `EMPTY
-
-rule ParserTransition_ok/empty:
-  TC_0 nameIR_state* |- `EMPTY
-                      : TRANSITION ("reject" `;)
-  ---- ;; if transition is omitted, it is implicitly a
-  ---- ;; transition to the reject state
-
-;;;; name `;
-
-rule ParserTransition_ok/name:
-  TC_0 nameIR_state* |- TRANSITION (name `;)
-                      : transitionStatementIR
-  ---- ;; check that name is a valid state name
-  -- if nameIR = $name(name)
-  -- if nameIR <- nameIR_state*
-  ---- ;; create IR
-  -- if transitionStatementIR = TRANSITION (nameIR `;)
-
-;;;; selectExpression
-;;;; syntax selectExpression = SELECT `( expressionList ) `{ selectCaseList }
-
 ;;;;; syntax simpleKeysetExpression
 
 relation SelectCase_keyset_simple_ok:
   typingContext typeIR |- simpleKeysetExpression : simpleKeysetExpressionIR
   hint(input %0 %1 %2)
+  hint(prose_in "typing" %2 "under context" %0 "with key type" %1)
+  hint(prose_out %3)
 
 ;;;;;; expression
 
-rule SelectCase_keyset_simple_ok/expression-set-alpha:
-  TC typeIR_key |- expression : typedExpressionIR
-  ---- ;; check keyset expression
-  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
-  ---- ;; if the keyset type equals the key type
-  -- Type_alpha: typeIR_base ~~ typeIR_key
+rulegroup SelectCase_keyset_simple_ok/expression {
 
-rule SelectCase_keyset_simple_ok/expression-set-subtype:
-  TC typeIR_key |- expression : typedExpressionIR_cast
-  ---- ;; check keyset expression
-  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
-  ---- ;; if the keyset type is a subtype of the key type
-  -- Type_alpha:/ typeIR_base ~~ typeIR_key
-  -- Cast_impl: typeIR_base -> typeIR_key
-  ---- ;; cast the expression to the key type
-  -- if typeIR_cast = SET `< typeIR_key >
-  -- if typedExpressionIR_cast
-      = (`( typeIR_cast ) typedExpressionIR) `# `( typeIR_cast DYN )
+  rule SelectCase_keyset_simple_ok/set-alpha:
+    TC typeIR_key |- expression : typedExpressionIR
+    ---- ;; check keyset expression
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
+    ---- ;; if the keyset type equals the key type
+    -- Type_alpha: typeIR_base ~~ typeIR_key
 
-rule SelectCase_keyset_simple_ok/expression-non-set:
-  TC typeIR_key |- expression : typedExpressionIR_cast
-  ---- ;; check keyset expression
-  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  ---- ;; if the keyset type is not a set type
-  -- if typeIR_unroll = $unroll_typeIR(typeIR)
-  -- if ~(typeIR_unroll <: setTypeIR)
-  ---- ;; if the keyset type is a subtype of the key type
-  -- Cast_impl: typeIR -> typeIR_key
-  ---- ;; cast the expression to the key type
-  -- if typeIR_cast = SET `< typeIR_key >
-  -- if typedExpressionIR_cast
-      = (`( typeIR_cast ) typedExpressionIR) `# `( typeIR_cast DYN )
+  rule SelectCase_keyset_simple_ok/set-subtype:
+    TC typeIR_key |- expression : typedExpressionIR_cast
+    ---- ;; check keyset expression
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if SET `< typeIR_base > = $unroll_typeIR(typeIR)
+    ---- ;; if the keyset type is a subtype of the key type
+    -- Type_alpha:/ typeIR_base ~~ typeIR_key
+    -- Cast_impl: typeIR_base -> typeIR_key
+    ---- ;; cast the expression to the key type
+    -- if typeIR_cast = SET `< typeIR_key >
+    -- if typedExpressionIR_cast
+        = (`( typeIR_cast ) typedExpressionIR) `# `( typeIR_cast DYN )
+
+  rule SelectCase_keyset_simple_ok/non-set:
+    TC typeIR_key |- expression : typedExpressionIR_cast
+    ---- ;; check keyset expression
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    ---- ;; if the keyset type is not a set type
+    -- if typeIR_unroll = $unroll_typeIR(typeIR)
+    -- if ~(typeIR_unroll <: setTypeIR)
+    ---- ;; if the keyset type is a subtype of the key type
+    -- Cast_impl: typeIR -> typeIR_key
+    ---- ;; cast the expression to the key type
+    -- if typeIR_cast = SET `< typeIR_key >
+    -- if typedExpressionIR_cast
+        = (`( typeIR_cast ) typedExpressionIR) `# `( typeIR_cast DYN )
+
+}
 
 ;;;;;; expression `&&& expression
 
@@ -87,7 +69,7 @@ tbl def $compat_mask =
 
 rule SelectCase_keyset_simple_ok/mask:
   TC typeIR_key |- expression_l `&&& expression_r
-                : typedExpressionIR_l_castd `&&& typedExpressionIR_r_castd
+                : typedExpressionIR_l_casted `&&& typedExpressionIR_r_casted
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
@@ -104,16 +86,16 @@ rule SelectCase_keyset_simple_ok/mask:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_castd
+  -- if typedExpressionIR_l_casted
       = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_castd
+  -- if typedExpressionIR_r_casted
       = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
 
 ;;;;;; expression `.. expression
 
 rule SelectCase_keyset_simple_ok/range:
   TC typeIR_key |- expression_l `.. expression_r
-                : typedExpressionIR_l_castd `.. typedExpressionIR_r_castd
+                : typedExpressionIR_l_casted `.. typedExpressionIR_r_casted
   ---- ;; check both sides
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
@@ -132,9 +114,9 @@ rule SelectCase_keyset_simple_ok/range:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_castd
+  -- if typedExpressionIR_l_casted
       = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_castd
+  -- if typedExpressionIR_r_casted
       = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
 
 ;;;;;; DEFAULT
@@ -152,61 +134,55 @@ rule SelectCase_keyset_simple_ok/dontcare:
 relation SelectCase_keyset_ok:
   typingContext typeIR* |- keysetExpression : keysetExpressionIR
   hint(input %0 %1 %2)
+  hint(prose_in "typing" %2 "under context" %0 "with key types" %1)
+  hint(prose_out %3)
 
 ;;;;;; simpleKeysetExpression
 ;;;;;; syntax simpleKeysetExpression
 
 ;;;;;;; expression
-
-rule SelectCase_keyset_ok/simpleKeysetExpression-expression:
-  TC typeIR_key |- expression : simpleKeysetExpressionIR
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- expression : simpleKeysetExpressionIR
-
 ;;;;;;; expression `&&& expression
-
-rule SelectCase_keyset_ok/simpleKeysetExpression-mask:
-  TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
-
 ;;;;;;; expression `.. expression
-
-rule SelectCase_keyset_ok/simpleKeysetExpression-range:
-  TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
-
 ;;;;;;; DEFAULT
+;;;;;;; `_
 
-rulegroup SelectCase_keyset_ok/simpleKeysetExpression-default {
+rulegroup SelectCase_keyset_ok/simpleKeysetExpression {
 
-  rule SelectCase_keyset_ok/zero-to-one:
+  rule SelectCase_keyset_ok/expression:
+    TC typeIR_key |- expression : simpleKeysetExpressionIR
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- expression : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/mask:
+    TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/range:
+    TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/default-zero-to-one:
     TC eps |- DEFAULT : DEFAULT
 
-  rule SelectCase_keyset_ok/one-to-one:
+  rule SelectCase_keyset_ok/default-one-to-one:
     TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
     -- SelectCase_keyset_simple_ok:
         TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
 
-  rule SelectCase_keyset_ok/many-to-one:
+  rule SelectCase_keyset_ok/default-many-to-one:
     TC typeIR_key* |- DEFAULT : simpleKeysetExpressionIR
     -- if $(|typeIR_key*| > 1)
     -- SelectCase_keyset_simple_ok:
         TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
 
-}
-
-;;;;;;; `_
-
-rulegroup SelectCase_keyset_ok/simpleKeysetExpression-dontcare {
-
-  rule SelectCase_keyset_ok/one-to-one:
+  rule SelectCase_keyset_ok/dontcare-one-to-one:
     TC typeIR_key |- `_ : simpleKeysetExpressionIR
     -- SelectCase_keyset_simple_ok:
         TC typeIR_key |- `_ : simpleKeysetExpressionIR
 
-  rule SelectCase_keyset_ok/many-to-one:
+  rule SelectCase_keyset_ok/dontcare-many-to-one:
     TC typeIR_key* |- `_ : simpleKeysetExpressionIR
     -- if $(|typeIR_key*| > 1)
     -- SelectCase_keyset_simple_ok:
@@ -218,73 +194,67 @@ rulegroup SelectCase_keyset_ok/simpleKeysetExpression-dontcare {
 ;;;;;; syntax tupleKeysetExpression
 
 ;;;;;;; `( expression `&&& expression )
-
-rule SelectCase_keyset_ok/tupleKeysetExpression-mask:
-  TC typeIR_key |- `( expression_l `&&& expression_r ) : `( simpleKeysetExpressionIR )
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
-
 ;;;;;;; `( expression `.. expression )
-
-rule SelectCase_keyset_ok/tupleKeysetExpression-range:
-  TC typeIR_key |- `( expression_l `.. expression_r ) : `( simpleKeysetExpressionIR )
-  -- SelectCase_keyset_simple_ok:
-      TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
-
 ;;;;;;; `( DEFAULT )
+;;;;;;; `( `_ )
+;;;;;;; `( simpleKeysetExpression `, simpleKeysetExpressionList )
 
-rulegroup SelectCase_keyset_ok/tupleKeysetExpression-default {
+rulegroup SelectCase_keyset_ok/tupleKeysetExpression {
 
-  rule SelectCase_keyset_ok/one-to-one:
+  rule SelectCase_keyset_ok/mask:
+    TC typeIR_key |- `( expression_l `&&& expression_r ) : `( simpleKeysetExpressionIR )
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/range:
+    TC typeIR_key |- `( expression_l `.. expression_r ) : `( simpleKeysetExpressionIR )
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key |- expression_l `.. expression_r : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/default-one-to-one:
     TC typeIR_key |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
     -- SelectCase_keyset_simple_ok:
         TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
 
-  rule SelectCase_keyset_ok/many-to-one:
+  rule SelectCase_keyset_ok/default-many-to-one:
     TC typeIR_key* |- `( DEFAULT ) : `( simpleKeysetExpressionIR )
     -- if $(|typeIR_key*| > 1)
     -- SelectCase_keyset_simple_ok:
         TC (SEQ `< typeIR_key* >) |- DEFAULT : simpleKeysetExpressionIR
 
-}
-
-;;;;;;; `( `_ )
-
-rulegroup SelectCase_keyset_ok/tupleKeysetExpression-dontcare {
-
-  rule SelectCase_keyset_ok/one-to-one:
+  rule SelectCase_keyset_ok/dontcare-one-to-one:
     TC typeIR_key |- `( `_ ) : `( simpleKeysetExpressionIR )
     -- SelectCase_keyset_simple_ok:
         TC typeIR_key |- `_ : simpleKeysetExpressionIR
 
-  rule SelectCase_keyset_ok/many-to-one:
+  rule SelectCase_keyset_ok/dontcare-many-to-one:
     TC typeIR_key* |- `( `_ ) : `( simpleKeysetExpressionIR )
     -- if $(|typeIR_key*| > 1)
     -- SelectCase_keyset_simple_ok:
         TC (SEQ `< typeIR_key* >) |- `_ : simpleKeysetExpressionIR
 
+  rule SelectCase_keyset_ok/list:
+    TC typeIR_key* |- `( simpleKeysetExpression_h `, simpleKeysetExpressionList_t )
+                    : `( simpleKeysetExpressionIR* )
+    ---- ;; check arity
+    -- if simpleKeysetExpression_t*
+        = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
+    -- if simpleKeysetExpression*
+        = simpleKeysetExpression_h :: simpleKeysetExpression_t*
+    -- if |typeIR_key*| = |simpleKeysetExpression*|
+    ---- ;; check keysets pairwise
+    -- (SelectCase_keyset_simple_ok:
+        TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*
+
 }
-
-;;;;;;; `( simpleKeysetExpression `, simpleKeysetExpressionList )
-
-rule SelectCase_keyset_ok/tupleKeysetExpression-list:
-  TC typeIR_key* |- `( simpleKeysetExpression_h `, simpleKeysetExpressionList_t )
-                 : `( simpleKeysetExpressionIR* )
-  ---- ;; check arity
-  -- if simpleKeysetExpression_t*
-      = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
-  -- if simpleKeysetExpression*
-      = simpleKeysetExpression_h :: simpleKeysetExpression_t*
-  -- if |typeIR_key*| = |simpleKeysetExpression*|
-  ---- ;; check keysets pairwise
-  -- (SelectCase_keyset_simple_ok:
-      TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*
 
 ;;;;; syntax selectCase = keysetExpression `: name `;
 
 relation SelectCase_ok:
   typingContext nameIR* typeIR* |- selectCase : selectCaseIR
   hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %3 "under context" %0 "with states" %1 "and key types" %2)
+  hint(prose_out %4)
 
 rule SelectCase_ok:
   TC nameIR_state* typeIR_key* |- keysetExpression `: name `;
@@ -296,9 +266,11 @@ rule SelectCase_ok:
   -- if nameIR = $name(name)
   -- if nameIR <- nameIR_state*
 
-rule ParserTransition_ok/select:
-  TC_0 nameIR_state* |- TRANSITION (SELECT `( expressionList_key ) `{ selectCaseList })
-                      : transitionStatementIR
+;;; syntax selectExpression = SELECT `( expressionList ) `{ selectCaseList }
+
+rule ParserSelect_ok:
+  TC_0 nameIR_state* |- SELECT `( expressionList_key ) `{ selectCaseList }
+                      : selectExpressionIR
   ---- ;; check select key expressions
   -- if expression_key* = $flatten_expressionList(expressionList_key)
   -- (Expr_ok: LOCAL TC_0 |- expression_key : typedExpressionIR_key)*
@@ -311,8 +283,41 @@ rule ParserTransition_ok/select:
   -- if selectCase* = $flatten_selectCaseList(selectCaseList)
   -- (SelectCase_ok: TC_0 nameIR_state* typeIR_key_reduced* |- selectCase : selectCaseIR)*
   ---- ;; create IR
-  -- if transitionStatementIR
-      = TRANSITION (SELECT `( typedExpressionIR_key_reduced* ) `{ selectCaseIR* })
+  -- if selectExpressionIR
+      = SELECT `( typedExpressionIR_key_reduced* ) `{ selectCaseIR* }
+
+;;; syntax stateExpression
+
+;;;; `EMPTY
+;;;; name `;
+;;;; selectExpression
+
+rulegroup ParserTransition_ok {
+
+  rule ParserTransition_ok/empty:
+    TC_0 nameIR_state* |- `EMPTY
+                        : TRANSITION ("reject" `;)
+    ---- ;; if transition is omitted, it is implicitly a
+    ---- ;; transition to the reject state
+
+  rule ParserTransition_ok/name:
+    TC_0 nameIR_state* |- TRANSITION (name `;)
+                        : transitionStatementIR
+    ---- ;; check that name is a valid state name
+    -- if nameIR = $name(name)
+    -- if nameIR <- nameIR_state*
+    ---- ;; create IR
+    -- if transitionStatementIR = TRANSITION (nameIR `;)
+
+  rule ParserTransition_ok/select:
+    TC_0 nameIR_state* |- TRANSITION selectExpression
+                        : TRANSITION selectExpressionIR
+    ---- ;; check select expression
+    -- ParserSelect_ok:
+        TC_0 nameIR_state* |- selectExpression
+                            : selectExpressionIR
+
+}
 
 ;;
 ;; Parser statement typing
@@ -432,8 +437,8 @@ rulegroup ParserStmt_ok/parserConditionalStatement {
 relation ParserStmts_ok:
   typingContext |- parserStatement* : typingContext parserStatementIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed parser statements" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed parser statements" %3)
 
 rulegroup ParserStmts_ok {
 

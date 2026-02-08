@@ -45,6 +45,7 @@ def $exit_e(EC) = EC[ .LOCAL.FRAMES = frame_t* ]
 ;;
 
 dec $inherit_e(cursor, evalContext) : evalContext
+  hint(prose_in "copy of" %1 "from the" %0 "layer")
 
 def $inherit_e(GLOBAL, EC)
   = EC[ .BLOCK = blockEvalLayer ][ .LOCAL = localEvalLayer ]
@@ -263,7 +264,7 @@ def $find_constructorDef_e(EC, `. nameIR, argumentIR*)
 ;;; Finder for parser states
 
 dec $find_parserState_e(evalContext, nameIR) : parserStateIR?
-  hint(prose_in "the parser state of" %1 "from the" %0 "layer")
+  hint(prose_in "the parser state of" %1 "in" %0)
 
 def $find_parserState_e(EC, nameIR)
   = $find_map<nameIR, parserStateIR>(EC.BLOCK.STATE, nameIR)

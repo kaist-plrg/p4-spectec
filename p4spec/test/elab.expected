@@ -12667,19 +12667,27 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let ?(n) = nat?{nat <- nat?}
     -- output: % % |- % : varbit< n > as typeIR # []
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:99.1-115.2
-  rulegroup prefixedTypeName
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:101.1-121.2
+  rulegroup prefixedTypeName-identifier
 
    match
 
-    (signature) p TC |- prefixedTypeName as typeOrVoid : % # %
+    (signature) p TC |- typeOrVoid : % # %
     p TC |- typeOrVoid : % # %
-    -- if typeOrVoid <: prefixedTypeName
-    -- let prefixedTypeName = typeOrVoid as prefixedTypeName
 
    paths
 
+    rulepath identifier
+    -- let typeOrVoid' = typeOrVoid
+    -- if typeOrVoid' <: identifier
+    -- let `id typeId = typeOrVoid' as identifier
+    -- Type_ok: p TC |- `tid typeId as typeOrVoid : typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- output: % % |- % : typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+
     rulepath monomorphic
+    -- let typeOrVoid' = typeOrVoid
+    -- if typeOrVoid' <: prefixedTypeName
+    -- let prefixedTypeName = typeOrVoid' as prefixedTypeName
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
@@ -12689,6 +12697,9 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- output: % % |- % : typeIR # []
 
     rulepath polymorphic
+    -- let typeOrVoid' = typeOrVoid
+    -- if typeOrVoid' <: prefixedTypeName
+    -- let prefixedTypeName = typeOrVoid' as prefixedTypeName
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
@@ -12697,7 +12708,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let typeIR = $specialize_typeDefIR(typeDefIR, [])
     -- output: % % |- % : typeIR # []
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:120.1-128.63
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:126.1-134.63
   rulegroup specializedType
 
    match
@@ -12719,7 +12730,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
     -- output: % % |- % : typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:133.1-144.22
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:139.1-150.22
   rulegroup headerStackType
 
    match
@@ -12744,7 +12755,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- if (n_size > 0)
     -- output: % % |- % : typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:149.1-153.73
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:155.1-159.73
   rulegroup listType
 
    match
@@ -12760,7 +12771,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- TypeArgument_ok: p TC |- typeArgument : typeIR_arg # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : list< typeIR_arg > as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:158.1-163.62
+  ;; ../../../../spec-concrete/5-typing/5.05.1-typing-type.watsup:164.1-169.62
   rulegroup tupleType
 
    match
@@ -12776,7 +12787,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- TypeArgumentList_ok: p TC |- typeArgumentList : typeIR_arg*{typeIR_arg <- typeIR_arg*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} > as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:38.1-42.75
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:38.1-42.68
 relation TypeParameterListOpt_ok: cursor typingContext |- typeParameterListOpt : typingContext typeId*
 
   ;; ../../../../spec-concrete/5-typing/5.05.4-typing-type-parameter.watsup:7.1-12.55
@@ -15516,7 +15527,7 @@ relation BlockElementStmt_ok: typingContext flow loopctxt |- blockElementStateme
     -- Stmt_ok: local TC_0 f l |- statement : TC_1 f_post statementIR
     -- output: % % % |- % : TC_1 f_post statementIR as blockElementStatementIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:150.1-158.83
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:150.1-158.76
 relation BlockElementStmtList_ok: typingContext flow loopctxt |- blockElementStatementList : typingContext flow blockElementStatementIR*
 
   ;; ../../../../spec-concrete/5-typing/5.10-typing-statement.watsup:879.1-885.80
@@ -15762,57 +15773,19 @@ relation ExternConstructor_ok: typingContext typeId |- externConstructorPrototyp
     -- output: % % |- % : externConstructorPrototypeIR
 
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:266.1-270.54
-relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : transitionStatementIR
+relation ParserSelect_ok: typingContext nameIR* |- selectExpression : selectExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:11.1-15.7
-  rulegroup empty
-
-   match
-
-    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- `empty : %
-    TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
-    -- if transitionStatement matches ``EMPTY`
-
-   paths
-
-    rulepath empty
-    -- output: % % |- % : transition "reject" ;
-
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:19.1-26.55
-  rulegroup name
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:271.1-287.70
+  rulegroup 
 
    match
 
-    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transition name ; : %
-    TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
-    -- if transitionStatement matches `TRANSITION%`
-    -- let transition stateExpression = transitionStatement
-    -- if stateExpression matches `%;`
-    -- let name ; = stateExpression
+    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- select( expressionList_key ){ selectCaseList } : %
+    TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- select( expressionList_key ){ selectCaseList } : %
 
    paths
 
-    rulepath name
-    -- let nameIR = $name(name)
-    -- if nameIR <- nameIR_state*{nameIR_state <- nameIR_state*}
-    -- let transitionStatementIR = transition nameIR ;
-    -- output: % % |- % : transitionStatementIR
-
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:299.1-315.83
-  rulegroup select
-
-   match
-
-    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transition select( expressionList_key ){ selectCaseList } as stateExpression : %
-    TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
-    -- if transitionStatement matches `TRANSITION%`
-    -- let transition stateExpression = transitionStatement
-    -- if stateExpression <: selectExpression
-    -- let select( expressionList_key ){ selectCaseList } = stateExpression as selectExpression
-
-   paths
-
-    rulepath select
+    rulepath 
     -- let expression_key*{expression_key <- expression_key*} = $flatten_expressionList(expressionList_key)
     -- (Expr_ok: local TC_0 |- expression_key : typedExpressionIR_key)*{expression_key <- expression_key*, typedExpressionIR_key -> typedExpressionIR_key*}
     -- (let typedExpressionIR_key_reduced = $reduce_serenum(typedExpressionIR_key))*{typedExpressionIR_key <- typedExpressionIR_key*, typedExpressionIR_key_reduced -> typedExpressionIR_key_reduced*}
@@ -15820,13 +15793,50 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
     -- (if Type_wf: $bound(local, TC_0) |- set< typeIR_key_reduced > as typeIR holds)*{typeIR_key_reduced <- typeIR_key_reduced*}
     -- let selectCase*{selectCase <- selectCase*} = $flatten_selectCaseList(selectCaseList)
     -- (SelectCase_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} typeIR_key_reduced*{typeIR_key_reduced <- typeIR_key_reduced*} |- selectCase : selectCaseIR)*{selectCase <- selectCase*, selectCaseIR -> selectCaseIR*}
-    -- let transitionStatementIR = transition select( typedExpressionIR_key_reduced*{typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*} ){ selectCaseIR*{selectCaseIR <- selectCaseIR*} } as stateExpressionIR
+    -- let selectExpressionIR = select( typedExpressionIR_key_reduced*{typedExpressionIR_key_reduced <- typedExpressionIR_key_reduced*} ){ selectCaseIR*{selectCaseIR <- selectCaseIR*} }
+    -- output: % % |- % : selectExpressionIR
+
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:272.1-276.54
+relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : transitionStatementIR
+
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:295.1-320.2
+  rulegroup 
+
+   match
+
+    (signature) TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
+    TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
+
+   paths
+
+    rulepath empty
+    -- if (transitionStatement = `empty)
+    -- output: % % |- % : transition "reject" ;
+
+    rulepath name
+    -- let transitionStatement' = transitionStatement
+    -- if transitionStatement' matches `TRANSITION%`
+    -- let transition stateExpression = transitionStatement'
+    -- if stateExpression matches `%;`
+    -- let name ; = stateExpression
+    -- let nameIR = $name(name)
+    -- if nameIR <- nameIR_state*{nameIR_state <- nameIR_state*}
+    -- let transitionStatementIR = transition nameIR ;
     -- output: % % |- % : transitionStatementIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:272.1-276.86
+    rulepath select
+    -- let transitionStatement' = transitionStatement
+    -- if transitionStatement' matches `TRANSITION%`
+    -- let transition stateExpression = transitionStatement'
+    -- if stateExpression <: selectExpression
+    -- let selectExpression = stateExpression as selectExpression
+    -- ParserSelect_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- selectExpression : selectExpressionIR
+    -- output: % % |- % : transition selectExpressionIR as stateExpressionIR
+
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:278.1-282.79
 relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:325.1-329.60
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:330.1-334.60
   rulegroup constantDeclaration
 
    match
@@ -15842,7 +15852,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- ConstDecl_ok: local TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
     -- output: % |- % : TC_1 constantDeclarationIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:333.1-338.47
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:338.1-343.47
   rulegroup variableDeclaration
 
    match
@@ -15858,7 +15868,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- VarDecl_ok: local TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
     -- output: % |- % : TC_1 variableDeclarationIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:342.1-346.63
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:347.1-351.63
   rulegroup emptyStatement
 
    match
@@ -15878,7 +15888,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let emptyStatementIR = statementIR as emptyStatementIR
     -- output: % |- % : TC emptyStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:350.1-354.72
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:355.1-359.72
   rulegroup assignmentStatement
 
    match
@@ -15897,7 +15907,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let assignmentStatementIR = statementIR as assignmentStatementIR
     -- output: % |- % : TC_1 assignmentStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:358.1-362.66
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:363.1-367.66
   rulegroup callStatement
 
    match
@@ -15916,7 +15926,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let callStatementIR = statementIR as callStatementIR
     -- output: % |- % : TC_1 callStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:366.1-370.79
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:371.1-375.79
   rulegroup directApplicationStatement
 
    match
@@ -15935,7 +15945,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let directApplicationStatementIR = statementIR as directApplicationStatementIR
     -- output: % |- % : TC_1 directApplicationStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:375.1-384.72
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:380.1-389.72
   rulegroup parserBlockStatement
 
    match
@@ -15954,7 +15964,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let parserBlockStatementIR = annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }
     -- output: % |- % : TC_1 parserBlockStatementIR as parserStatementIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:392.1-424.2
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:397.1-429.2
   rulegroup parserConditionalStatement
 
    match
@@ -15987,10 +15997,10 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- ParserStmt_ok: TC |- parserStatement_else : TC_else parserStatementIR_else
     -- output: % |- % : TC if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else as parserStatementIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:278.1-282.87
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:284.1-288.80
 relation ParserStmtList_ok: typingContext |- parserStatementList : typingContext parserStatementIR*
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:453.1-458.72
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:458.1-463.72
   rulegroup 
 
    match
@@ -16005,7 +16015,7 @@ relation ParserStmtList_ok: typingContext |- parserStatementList : typingContext
     -- ParserStmts_ok: TC_0 |- parserStatement*{parserStatement <- parserStatement*} : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
     -- output: % |- % : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:284.1-288.21
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:290.1-294.21
 relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
 
   ;; ../../../../spec-concrete/5-typing/5.13.2-typing-parser-state.watsup:8.1-28.82
@@ -16029,7 +16039,7 @@ relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
     -- let parserStateIR = annotationList state nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }
     -- output: % % |- % : parserStateIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:290.1-294.21
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:296.1-300.21
 relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
 
   ;; ../../../../spec-concrete/5-typing/5.13.2-typing-parser-state.watsup:36.1-50.77
@@ -16053,7 +16063,7 @@ relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
     -- (ParserState_ok: TC nameIR_state_impl*{nameIR_state_impl <- nameIR_state_impl*} |- parserState : parserStateIR)*{parserState <- parserState*, parserStateIR -> parserStateIR*}
     -- output: % |- % : parserStateIR*{parserStateIR <- parserStateIR*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:296.1-301.94
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:302.1-307.87
 relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingContext parserLocalDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.13.3-typing-parser-declaration.watsup:9.1-13.60
@@ -16128,7 +16138,7 @@ relation ParserLocalDecl_ok: typingContext |- parserLocalDeclaration : typingCon
     -- let valueSetDeclarationIR = annotationList value_set< typeIR >( typedExpressionIR ) nameIR ;
     -- output: % |- % : TC_1 valueSetDeclarationIR as parserLocalDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:303.1-308.95
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:309.1-314.88
 relation ParserLocalDeclList_ok: typingContext |- parserLocalDeclarationList : typingContext parserLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.13.3-typing-parser-declaration.watsup:82.1-88.65
@@ -16146,7 +16156,7 @@ relation ParserLocalDeclList_ok: typingContext |- parserLocalDeclarationList : t
     -- ParserLocalDecls_ok: TC_0 |- parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} : TC_1 parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
     -- output: % |- % : TC_1 parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:314.1-318.78
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:320.1-324.78
 relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tableKeyIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:39.1-60.85
@@ -16172,7 +16182,7 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
     -- let tableKeyIR = typedExpressionIR_reduced : nameIR_matchkind annotationList ;
     -- output: % % |- % : TBLC_2 tableKeyIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:320.1-324.79
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:326.1-330.79
 relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:68.1-69.28
@@ -16206,7 +16216,7 @@ relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext ta
     -- TableKeys_ok: TC TBLC_1 |- tableKey_t*{tableKey_t <- tableKey_t*} : TBLC_2 tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*}
     -- output: % % |- % : TBLC_2 tableKeyIR_h :: tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:326.1-331.47
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:332.1-337.47
 relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:202.1-216.42
@@ -16226,7 +16236,7 @@ relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR 
     -- Call_convention_ok: local TC action |- parameterIR_data*{parameterIR_data <- parameterIR_data*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % |- % @ % : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:333.1-337.81
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:339.1-343.81
 relation TableAction_ok: typingContext tableContext |- tableAction : tableContext tableActionIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:223.1-239.63
@@ -16280,7 +16290,7 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- let tableActionIR = annotationList prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:339.1-343.82
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:345.1-349.82
 relation TableActions_ok: typingContext tableContext |- tableAction* : tableContext tableActionListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:270.1-271.28
@@ -16314,7 +16324,7 @@ relation TableActions_ok: typingContext tableContext |- tableAction* : tableCont
     -- TableActions_ok: TC TBLC_1 |- tableAction_t*{tableAction_t <- tableAction_t*} : TBLC_2 tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}
     -- output: % % |- % : TBLC_2 tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:345.1-350.47
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:351.1-356.47
 relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:285.1-297.42
@@ -16333,7 +16343,7 @@ relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR 
     -- Call_convention_ok: local TC action |- parameterIR*{parameterIR <- parameterIR*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % |- % @ % : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:352.1-356.48
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:358.1-362.48
 relation TableDefaultAction_ok: typingContext tableContext |- initializer : tableActionReferenceIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:301.1-306.56
@@ -16382,7 +16392,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
     -- output: % % |- % : prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:358.1-362.86
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:364.1-368.86
 relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:533.1-540.53
@@ -16609,7 +16619,7 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : TBLS simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
     -- output: % % |- % : TBLS ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:364.1-368.56
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:370.1-374.56
 relation TableEntry_action_ok: typingContext tableContext |- tableActionReference : tableActionReferenceIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:679.1-683.56
@@ -16654,7 +16664,7 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
     -- output: % % |- % : prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:370.1-376.89
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:376.1-382.89
 relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:718.1-782.2
@@ -16810,7 +16820,7 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority=( typedExpressionIR ):)
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:378.1-382.80
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:384.1-388.80
 relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext tableEntryIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:857.1-872.73
@@ -16853,7 +16863,7 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
     -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
     -- output: % % |- % : TBLC_1 tableEntryIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:384.1-388.82
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:390.1-394.82
 relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:898.1-899.28
@@ -16887,7 +16897,7 @@ relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableConte
     -- TableEntries_ok: TC TBLC_1 |- tableEntry_t*{tableEntry_t <- tableEntry_t*} : TBLC_2 tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
     -- output: % % |- % : TBLC_2 tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:390.1-394.83
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:396.1-400.83
 relation TableProperty_ok: typingContext tableContext |- tableProperty : tableContext tablePropertyIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:915.1-919.63
@@ -17031,7 +17041,7 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let tablePropertyIR = annotationList constOptIR custom nameIR = typedExpressionIR ; as tablePropertyIR
     -- output: % % |- % : TBLC tablePropertyIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:396.1-400.85
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:402.1-406.85
 relation TableProperties_ok: typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1044.1-1045.28
@@ -17065,7 +17075,7 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
     -- TableProperties_ok: TC TBLC_1 |- tableProperty_t*{tableProperty_t <- tableProperty_t*} : TBLC_2 tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*}
     -- output: % % |- % : TBLC_2 tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:402.1-406.75
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:408.1-412.68
 relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyListIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1114.1-1152.2
@@ -17096,7 +17106,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- output: % |- % : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:408.1-412.74
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:414.1-418.67
 relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1154.1-1178.67
@@ -17123,7 +17133,7 @@ relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
     -- let typeIR_table = table nameIR { tableMetadataStructTypeIR } as typeIR
     -- output: % % |- % : TC_1 typeIR_table
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:414.1-419.95
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:420.1-425.88
 relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingContext controlLocalDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:9.1-13.47
@@ -17213,7 +17223,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
     -- let tableDeclarationIR = annotationList table typeIR_table nameIR { tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} }
     -- output: % |- % : TC_3 tableDeclarationIR as controlLocalDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:421.1-426.96
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:427.1-432.89
 relation ControlLocalDeclList_ok: typingContext |- controlLocalDeclarationList : typingContext controlLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:88.1-95.46
@@ -17231,7 +17241,7 @@ relation ControlLocalDeclList_ok: typingContext |- controlLocalDeclarationList :
     -- ControlLocalDecls_ok: TC_0 |- controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} : TC_1 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
     -- output: % |- % : TC_1 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:432.1-437.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:438.1-443.52
 relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext variableDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:6.1-46.2
@@ -17272,7 +17282,7 @@ relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext
     -- let variableDeclarationIR = annotationList typeIR nameIR ?(= typedExpressionIR_init_cast) ;
     -- output: % % |- % : TC_1 variableDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:439.1-444.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:445.1-450.52
 relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingContext constantDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:56.1-76.64
@@ -17300,7 +17310,7 @@ relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingConte
     -- let constantDeclarationIR = annotationList const typeIR nameIR =`value value ;
     -- output: % % |- % : TC_1 constantDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:446.1-451.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:452.1-457.52
 relation InstDecl_ok: cursor typingContext |- instantiation : typingContext instantiationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:351.1-391.2
@@ -17349,7 +17359,7 @@ relation InstDecl_ok: cursor typingContext |- instantiation : typingContext inst
     -- InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName < typeArgumentList >( argumentList ) name ={ objectDeclarationList };: TC_1 instantiationIR
     -- output: % % |- % : TC_1 instantiationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:453.1-458.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:459.1-464.52
 relation FuncDecl_ok: cursor typingContext |- functionDeclaration : typingContext functionDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:406.1-439.27
@@ -17378,7 +17388,7 @@ relation FuncDecl_ok: cursor typingContext |- functionDeclaration : typingContex
     -- let functionDeclarationIR = annotationList typeIR_ret nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR
     -- output: % % |- % : TC_4 functionDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:460.1-465.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:466.1-471.52
 relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContext actionDeclarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:452.1-470.72
@@ -17404,7 +17414,7 @@ relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContex
     -- let actionDeclarationIR = annotationList action nameIR ( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR
     -- output: % % |- % : TC_3 actionDeclarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:467.1-471.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:473.1-477.52
 relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:78.1-83.48
@@ -17950,7 +17960,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let packageTypeDeclarationIR = annotationList package nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} );
     -- output: % |- % : TC_5 packageTypeDeclarationIR as declarationIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:473.1-477.59
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:479.1-483.52
 relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1145.1-1158.2
@@ -17977,7 +17987,7 @@ relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*
     -- Decls_ok: TC_1 |- declaration_t*{declaration_t <- declaration_t*} : TC_2 declarationIR_t*{declarationIR_t <- declarationIR_t*}
     -- output: % |- % : TC_2 declarationIR_h :: declarationIR_t*{declarationIR_t <- declarationIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:479.1-483.44
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:485.1-489.44
 relation Program_ok: |- p4program : p4programIR
 
   ;; ../../../../spec-concrete/5-typing/5.11-typing-declaration.watsup:1164.1-1168.58
@@ -17996,12 +18006,12 @@ relation Program_ok: |- p4program : p4programIR
     -- Decls_ok: TC_0 |- declaration*{declaration <- declaration*} : TC_1 declarationIR*{declarationIR <- declarationIR*}
     -- output: |- % : declarationIR*{declarationIR <- declarationIR*} ;
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:493.18-493.35
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:499.18-499.35
 syntax actctxt = 
    | action
    | noaction
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:495.1-500.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:501.1-506.77
 relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR
 
   ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:9.1-14.57
@@ -18064,7 +18074,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
     -- if (dyn =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
     -- output: % % % |- % @ % : typedExpressionIR_arg_cast
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:502.1-507.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:508.1-513.77
 relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterIR @ argumentIR : argumentIR
 
   ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:97.1-102.45
@@ -18132,7 +18142,7 @@ relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterI
     -- if direction matches `OUT`
     -- output: % % % |- % @ % : _
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:509.1-514.84
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:515.1-520.77
 relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argumentListIR : argumentListIR
 
   ;; ../../../../spec-concrete/5-typing/5.15.1-typing-call-convention.watsup:130.1-146.2
@@ -18161,39 +18171,39 @@ relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argu
     -- Call_convention_ok: p TC actctxt |- parameterIR_t*{parameterIR_t <- parameterIR_t*} @ argumentIR_t*{argumentIR_t <- argumentIR_t*} : argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
     -- output: % % % |- % @ % : argumentIR_h_cast :: argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:524.1-525.53
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:530.1-531.53
 def $is_static_callableTypeIR(callableTypeIR) : ctk =
 
-  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:526.1-527.9
+  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:532.1-533.9
   clause 0 : (callableTypeIR) = lctk
   -- if callableTypeIR <: externFunctionTypeIR
   -- let extern_function text ( _parameterIR*{_parameterIR <- _parameterIR*} ): _typeIR = callableTypeIR as externFunctionTypeIR
   -- if (text = "static_assert")
 
-  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:528.1-530.56
+  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:534.1-536.56
   clause 1 : (callableTypeIR) = lctk
   -- if callableTypeIR <: builtinMethodTypeIR
   -- let builtin_method nameIR ( _parameterIR*{_parameterIR <- _parameterIR*} ): _typeIR = callableTypeIR as builtinMethodTypeIR
   -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
 
-  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:531.1-532.15
+  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:537.1-538.15
   clause 2 : (_callableTypeIR) = dyn
   -- otherwise
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:534.1-536.53
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:540.1-542.53
 def $is_static_assert_callableTypeIR(callableTypeIR) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:537.1-538.9
+  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:543.1-544.9
   clause 0 : (callableTypeIR) = true
   -- if callableTypeIR <: externFunctionTypeIR
   -- let extern_function text ( _parameterIR*{_parameterIR <- _parameterIR*} ): _typeIR = callableTypeIR as externFunctionTypeIR
   -- if (text = "static_assert")
 
-  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:539.1-540.15
+  ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:545.1-546.15
   clause 1 : (_callableTypeIR) = false
   -- otherwise
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:542.1-546.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:548.1-552.49
 relation CallableTarget_ok: cursor typingContext |- callableTarget : callableTargetIR
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:21.1-44.2
@@ -18244,7 +18254,7 @@ relation CallableTarget_ok: cursor typingContext |- callableTarget : callableTar
     -- CallableTarget_ok: p TC |- expression : callableTargetIR
     -- output: % % |- % : ( callableTargetIR )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:548.1-552.49
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:554.1-558.49
 relation CallableTarget_lvalue_ok: cursor typingContext |- lvalue : callableTargetIR
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:52.1-55.62
@@ -18262,7 +18272,7 @@ relation CallableTarget_lvalue_ok: cursor typingContext |- lvalue : callableTarg
     -- CallableTarget_ok: p TC |- expression : callableTargetIR
     -- output: % % |- % : callableTargetIR
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:554.1-561.53
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:560.1-567.53
 relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumentListIR >( argumentIR* ): callableTypeIR <# typeId* >(# id* # id* )
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:66.1-74.52
@@ -18497,7 +18507,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- CallableType_ok: p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# typeId_inserted*{typeId_inserted <- typeId_inserted*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
     -- output: % % |- % < % >( % ): callableTypeIR <# typeId_inserted*{typeId_inserted <- typeId_inserted*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:568.1-577.54
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:574.1-583.54
 relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # typeId* >( argumentListIR # id* # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
   ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:249.1-263.38
@@ -18721,7 +18731,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- if $callable_tableApplyMethod(p, TC)
     -- output: % % |- % < % # % >( % # % # % ): tableMetadataStructTypeIR as typeIR < [] >( [] )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:587.1-594.53
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:593.1-600.53
 relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argumentIR* ): constructorTypeIR <# typeId* >(# id* # id* )
 
   ;; ../../../../spec-concrete/5-typing/5.15.3-typing-constructor-call.watsup:14.1-61.2
@@ -18775,12 +18785,12 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if ConstructorType_wf: B |- constructorTypeIR holds
     -- output: % % |- % ( % ): constructorTypeIR <# typeId_impl*{typeId_impl <- typeId_impl*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:601.19-601.31
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:607.19-607.31
 syntax instctxt = 
    | named
    | anon
 
-;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:603.1-614.42
+;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:609.1-620.42
 relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgumentListIR # typeId* >( argumentListIR # id* # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
   ;; ../../../../spec-concrete/5-typing/5.15.3-typing-constructor-call.watsup:136.1-167.44
@@ -20451,11 +20461,11 @@ relation Enum_serializable_fieldList_ok: typingContext nameIR typeIR |- namedExp
     -- Enum_serializable_fields_ok: TC_0 nameIR_enum typeIR |- namedExpression*{namedExpression <- namedExpression*} : TC_1 namedValueIR*{namedValueIR <- namedValueIR*}
     -- output: % % % |- % : TC_1 namedValueIR*{namedValueIR <- namedValueIR*}
 
-;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:33.1-35.23
+;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:9.1-13.21
 relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpression : simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:39.1-46.43
-  rulegroup expression-set-alpha
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:17.1-57.2
+  rulegroup expression
 
    match
 
@@ -20466,7 +20476,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
 
    paths
 
-    rulepath expression-set-alpha
+    rulepath set-alpha
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR' = $unroll_typeIR(typeIR)
@@ -20475,19 +20485,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- if Type_alpha: typeIR_base ~~ typeIR_key holds
     -- output: % % |- % : typedExpressionIR as simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:48.1-60.69
-  rulegroup expression-set-subtype
-
-   match
-
-    (signature) TC typeIR_key |- expression as simpleKeysetExpression : %
-    TC typeIR_key |- simpleKeysetExpression : %
-    -- if simpleKeysetExpression <: expression
-    -- let expression = simpleKeysetExpression as expression
-
-   paths
-
-    rulepath expression-set-subtype
+    rulepath set-subtype
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR' = $unroll_typeIR(typeIR)
@@ -20499,19 +20497,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:62.1-75.69
-  rulegroup expression-non-set
-
-   match
-
-    (signature) TC typeIR_key |- expression as simpleKeysetExpression : %
-    TC typeIR_key |- simpleKeysetExpression : %
-    -- if simpleKeysetExpression <: expression
-    -- let expression = simpleKeysetExpression as expression
-
-   paths
-
-    rulepath expression-non-set
+    rulepath non-set
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR_unroll = $unroll_typeIR(typeIR)
@@ -20521,7 +20507,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let typedExpressionIR_cast = ( typeIR_cast ) typedExpressionIR as expressionIR # ( typeIR_cast dyn )
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:88.1-110.61
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:70.1-92.61
   rulegroup mask
 
    match
@@ -20545,13 +20531,13 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % |- % : typedExpressionIR_l_castd &&& typedExpressionIR_r_castd
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- output: % % |- % : typedExpressionIR_l_casted &&& typedExpressionIR_r_casted
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:114.1-138.61
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:96.1-120.61
   rulegroup range
 
    match
@@ -20576,13 +20562,13 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % |- % : typedExpressionIR_l_castd .. typedExpressionIR_r_castd
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- output: % % |- % : typedExpressionIR_l_casted .. typedExpressionIR_r_casted
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:142.1-143.37
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:124.1-125.37
   rulegroup default
 
    match
@@ -20596,7 +20582,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath default
     -- output: % % |- % : default
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:147.1-148.27
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:129.1-130.27
   rulegroup dontcare
 
    match
@@ -20610,7 +20596,7 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath dontcare
     -- output: % % |- % : _
 
-;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:79.1-79.44
+;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:61.1-61.44
 tbl def $compat_mask(typeIR, typeIR) : bool =
   row 0 :
     (signature) int as typeIR, int as typeIR
@@ -20649,240 +20635,165 @@ tbl def $compat_mask(typeIR, typeIR) : bool =
     (signature) _typeIR, _typeIR'
     (_typeIR, _typeIR') -> false
 
-;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:152.1-154.23
+;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:134.1-138.21
 relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:161.1-164.61
-  rulegroup simpleKeysetExpression-expression
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:149.1-191.2
+  rulegroup simpleKeysetExpression
 
    match
 
-    (signature) TC [typeIR_key] |- expression as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR*{typeIR <- typeIR*}
-    -- if keysetExpression <: expression
-    -- let expression = keysetExpression as expression
+    (signature) TC typeIR''''*{typeIR'''' <- typeIR''''*} |- keysetExpression : %
+    TC typeIR''''*{typeIR'''' <- typeIR''''*} |- keysetExpression : %
 
    paths
 
-    rulepath simpleKeysetExpression-expression
+    rulepath expression
+    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: expression
+    -- let expression = keysetExpression' as expression
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression as simpleKeysetExpression : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:168.1-171.81
-  rulegroup simpleKeysetExpression-mask
-
-   match
-
-    (signature) TC [typeIR_key] |- expression_l &&& expression_r as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR*{typeIR <- typeIR*}
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    rulepath mask
+    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
     -- if simpleKeysetExpression matches `%&&&%`
     -- let expression_l &&& expression_r = simpleKeysetExpression
-
-   paths
-
-    rulepath simpleKeysetExpression-mask
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l &&& expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:175.1-178.80
-  rulegroup simpleKeysetExpression-range
-
-   match
-
-    (signature) TC [typeIR_key] |- expression_l .. expression_r as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR*{typeIR <- typeIR*}
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+    rulepath range
+    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
     -- if simpleKeysetExpression matches `%..%`
     -- let expression_l .. expression_r = simpleKeysetExpression
-
-   paths
-
-    rulepath simpleKeysetExpression-range
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l .. expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:182.1-198.2
-  rulegroup simpleKeysetExpression-default
-
-   match
-
-    (signature) TC typeIR'*{typeIR' <- typeIR'*} |- default as keysetExpression : %
-    TC typeIR'*{typeIR' <- typeIR'*} |- keysetExpression : %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
-    -- if simpleKeysetExpression matches `DEFAULT`
-
-   paths
-
-    rulepath zero-to-one
-    -- if (typeIR'*{typeIR' <- typeIR'*} = [])
+    rulepath default-zero-to-one
+    -- if (typeIR''''*{typeIR'''' <- typeIR''''*} = [])
+    -- if (keysetExpression = default as keysetExpression)
     -- output: % % |- % : default as keysetExpressionIR
 
-    rulepath one-to-one
-    -- let typeIR''*{typeIR'' <- typeIR''*} = typeIR'*{typeIR' <- typeIR'*}
-    -- if typeIR''*{typeIR'' <- typeIR''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''*{typeIR'' <- typeIR''*}
+    rulepath default-one-to-one
+    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- if (keysetExpression = default as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- default : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-    rulepath many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'*{typeIR' <- typeIR'*}
+    rulepath default-many-to-one
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if (keysetExpression = default as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- default : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:202.1-215.2
-  rulegroup simpleKeysetExpression-dontcare
-
-   match
-
-    (signature) TC typeIR*{typeIR <- typeIR*} |- _ as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
-    -- if simpleKeysetExpression matches `_`
-
-   paths
-
-    rulepath one-to-one
-    -- let typeIR'*{typeIR' <- typeIR'*} = typeIR*{typeIR <- typeIR*}
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'*{typeIR' <- typeIR'*}
+    rulepath dontcare-one-to-one
+    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- if (keysetExpression = _ as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-    rulepath many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR*{typeIR <- typeIR*}
+    rulepath dontcare-many-to-one
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if (keysetExpression = _ as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:222.1-225.81
-  rulegroup tupleKeysetExpression-mask
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:202.1-249.2
+  rulegroup tupleKeysetExpression
 
    match
 
-    (signature) TC [typeIR_key] |- ( expression_l &&& expression_r ) as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR*{typeIR <- typeIR*}
+    (signature) TC typeIR'''*{typeIR''' <- typeIR'''*} |- tupleKeysetExpression as keysetExpression : %
+    TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetExpression : %
     -- if keysetExpression <: tupleKeysetExpression
     -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(%&&&%)`
-    -- let ( expression_l &&& expression_r ) = tupleKeysetExpression
 
    paths
 
-    rulepath tupleKeysetExpression-mask
+    rulepath mask
+    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let tupleKeysetExpression' = tupleKeysetExpression
+    -- if tupleKeysetExpression' matches `(%&&&%)`
+    -- let ( expression_l &&& expression_r ) = tupleKeysetExpression'
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l &&& expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:229.1-232.80
-  rulegroup tupleKeysetExpression-range
-
-   match
-
-    (signature) TC [typeIR_key] |- ( expression_l .. expression_r ) as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if typeIR*{typeIR <- typeIR*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR*{typeIR <- typeIR*}
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(%..%)`
-    -- let ( expression_l .. expression_r ) = tupleKeysetExpression
-
-   paths
-
-    rulepath tupleKeysetExpression-range
+    rulepath range
+    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let tupleKeysetExpression' = tupleKeysetExpression
+    -- if tupleKeysetExpression' matches `(%..%)`
+    -- let ( expression_l .. expression_r ) = tupleKeysetExpression'
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l .. expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:236.1-249.2
-  rulegroup tupleKeysetExpression-default
-
-   match
-
-    (signature) TC typeIR*{typeIR <- typeIR*} |- (default) as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(DEFAULT)`
-
-   paths
-
-    rulepath one-to-one
-    -- let typeIR'*{typeIR' <- typeIR'*} = typeIR*{typeIR <- typeIR*}
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'*{typeIR' <- typeIR'*}
+    rulepath default-one-to-one
+    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if (tupleKeysetExpression = (default))
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- default : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-    rulepath many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR*{typeIR <- typeIR*}
+    rulepath default-many-to-one
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if (tupleKeysetExpression = (default))
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- default : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:253.1-266.2
-  rulegroup tupleKeysetExpression-dontcare
-
-   match
-
-    (signature) TC typeIR*{typeIR <- typeIR*} |- (_) as keysetExpression : %
-    TC typeIR*{typeIR <- typeIR*} |- keysetExpression : %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(_)`
-
-   paths
-
-    rulepath one-to-one
-    -- let typeIR'*{typeIR' <- typeIR'*} = typeIR*{typeIR <- typeIR*}
-    -- if typeIR'*{typeIR' <- typeIR'*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'*{typeIR' <- typeIR'*}
+    rulepath dontcare-one-to-one
+    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- if (tupleKeysetExpression = (_))
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-    rulepath many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR*{typeIR <- typeIR*}
+    rulepath dontcare-many-to-one
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- if (tupleKeysetExpression = (_))
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:270.1-281.75
-  rulegroup tupleKeysetExpression-list
-
-   match
-
-    (signature) TC typeIR_key*{typeIR_key <- typeIR_key*} |- ( simpleKeysetExpression_h , simpleKeysetExpressionList_t ) as keysetExpression : %
-    TC typeIR_key*{typeIR_key <- typeIR_key*} |- keysetExpression : %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(%,%)`
-    -- let ( simpleKeysetExpression_h , simpleKeysetExpressionList_t ) = tupleKeysetExpression
-
-   paths
-
-    rulepath tupleKeysetExpression-list
+    rulepath list
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- let tupleKeysetExpression' = tupleKeysetExpression
+    -- if tupleKeysetExpression' matches `(%,%)`
+    -- let ( simpleKeysetExpression_h , simpleKeysetExpressionList_t ) = tupleKeysetExpression'
     -- let simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- let simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*}
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| = |simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}|)
     -- (SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, typeIR_key <- typeIR_key*, simpleKeysetExpressionIR -> simpleKeysetExpressionIR*}
     -- output: % % |- % : ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 
-;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:285.1-287.26
+;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:253.1-257.21
 relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCaseIR
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:289.1-297.32
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:259.1-267.32
   rulegroup 
 
    match
@@ -20898,10 +20809,10 @@ relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCase
     -- if nameIR <- nameIR_state*{nameIR_state <- nameIR_state*}
     -- output: % % % |- % : keysetExpressionIR : nameIR ;
 
-;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:432.1-436.87
+;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:437.1-441.80
 relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parserStatementIR*
 
-  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:438.1-451.2
+  ;; ../../../../spec-concrete/5-typing/5.13.1-typing-parser-statement.watsup:443.1-456.2
   rulegroup 
 
    match
@@ -20925,7 +20836,7 @@ relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parse
     -- ParserStmts_ok: TC_1 |- parserStatement_t*{parserStatement_t <- parserStatement_t*} : TC_2 parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
     -- output: % |- % : TC_2 parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
 
-;; ../../../../spec-concrete/5-typing/5.13.3-typing-parser-declaration.watsup:60.1-65.95
+;; ../../../../spec-concrete/5-typing/5.13.3-typing-parser-declaration.watsup:60.1-65.88
 relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingContext parserLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.13.3-typing-parser-declaration.watsup:67.1-80.2
@@ -21542,7 +21453,7 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
   -- let (TBLC_1, tablePropertyIR_t_updated*{tablePropertyIR_t_updated <- tablePropertyIR_t_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_0, tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*})
 
-;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:66.1-71.96
+;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:66.1-71.89
 relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typingContext controlLocalDeclarationIR*
 
   ;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:73.1-86.2
@@ -24254,7 +24165,7 @@ relation ExternMethod_inst: instContext |- externMethodPrototypeIR : instContext
     -- let IC_1 = $add_callableDef_overload_i(block, IC_0, callableId, externMethodDef as callableDef)
     -- output: % |- % : IC_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:84.1-88.57
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:84.1-88.43
 relation ExternMethods_inst: instContext |- externMethodPrototypeIR* : instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.08-inst-extern-method.watsup:43.1-53.2
@@ -24884,7 +24795,7 @@ relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR*
     -- ControlLocalDecls_inst: IC_1 STO_1 |- controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*} : IC_2 STO_2 controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
     -- output: % % |- % : IC_2 STO_2 controlLocalDeclarationIR_h_inst :: controlLocalDeclarationIR_t_inst*{controlLocalDeclarationIR_t_inst <- controlLocalDeclarationIR_t_inst*}
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:180.1-186.57
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:180.1-186.43
 relation ConstDecl_inst: cursor instContext |- constantDeclarationIR : instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:11.1-14.50
@@ -24946,7 +24857,7 @@ relation InstDecl_inst: cursor instContext store |- instantiationIR : instContex
     -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
     -- output: % % % |- % : IC_1 STO_2 constantDeclarationIR
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:198.1-204.57
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:198.1-204.43
 relation FuncDecl_inst: cursor instContext |- functionDeclarationIR : instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:185.1-198.84
@@ -24966,7 +24877,7 @@ relation FuncDecl_inst: cursor instContext |- functionDeclarationIR : instContex
     -- let IC_1 = $add_callableDef_overload_i(p, IC_0, callableId, definedFunctionDef as callableDef)
     -- output: % % |- % : IC_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:206.1-212.57
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:206.1-212.43
 relation ActionDecl_inst: cursor instContext |- actionDeclarationIR : instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.07-inst-declaration.watsup:209.1-215.79
@@ -25478,7 +25389,7 @@ relation Copy_in_argument_inst: store cursor instContext argumentIR @ cursor ins
     -- let IC_callee_1 = $add_var_i(p_callee, IC_callee_0, id, value)
     -- output: % % % % @ % % % ~> STO_1 IC_callee_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:250.1-258.49
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:250.1-258.35
 relation Copy_in_inst: store cursor instContext argumentIR* @ cursor instContext id* ~> store instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.11.2-inst-constructor-call.watsup:19.1-39.2
@@ -25546,7 +25457,7 @@ relation Copy_in_argument_inst_default: store cursor instContext @ cursor instCo
     -- let IC_callee_1 = $add_var_i(p_callee, IC_callee_0, id, value)
     -- output: % % % @ % % % ~> STO IC_callee_1
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:266.1-274.49
+;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:266.1-274.35
 relation Copy_in_inst_default: store cursor instContext @ cursor instContext parameterIR* ~> store instContext
 
   ;; ../../../../spec-concrete/7-instantiation/7.11.2-inst-constructor-call.watsup:63.1-83.2
@@ -26041,64 +25952,64 @@ def $exit_e(evalContext) : evalContext =
   -- if frame*{frame <- frame*} matches _ :: _
   -- let frame_h :: frame_t*{frame_t <- frame_t*} = frame*{frame <- frame*}
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:47.1-47.50
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:47.1-48.52
 def $inherit_e(cursor, evalContext) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:49.1-56.55
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:50.1-57.55
   clause 0 : (cursor, EC) = EC[block = blockEvalLayer][local = localEvalLayer]
   -- if cursor matches `GLOBAL`
   -- let blockEvalLayer = {type $empty_theta, callable $empty_callableDefEnv, state $empty_stateEnv, frame $empty_frame}
   -- let localEvalLayer = {type $empty_theta, frames [$empty_frame]}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:57.1-59.55
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:58.1-60.55
   clause 1 : (cursor, EC) = EC[local = localEvalLayer]
   -- if cursor matches `BLOCK`
   -- let localEvalLayer = {type $empty_theta, frames [$empty_frame]}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:60.1-60.31
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:61.1-61.31
   clause 2 : (cursor, EC) = EC
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:66.1-66.60
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:67.1-67.60
 def $copy_e(cursor, evalContext, evalContext) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:68.1-69.38
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:69.1-70.38
   clause 0 : (cursor, EC_from, EC_to) = EC_to[global = EC_from.global]
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:70.1-72.36
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:71.1-73.36
   clause 1 : (cursor, EC_from, EC_to) = EC_to[global = EC_from.global][block = EC_from.block]
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:73.1-76.36
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:74.1-77.36
   clause 2 : (cursor, EC_from, EC_to) = EC_to[global = EC_from.global][block = EC_from.block][local = EC_from.local]
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:84.1-85.68
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:85.1-86.68
 def $add_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:88.1-89.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:89.1-90.64
   clause 0 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:90.1-91.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:91.1-92.64
   clause 1 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:92.1-93.63
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:93.1-94.63
   clause 2 : (cursor, EC, prefixedNameIR, value) = EC[block.frame = frame]
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- let frame = $add_map<id, value>(EC.block.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:94.1-96.59
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:95.1-97.59
   clause 3 : (cursor, EC, prefixedNameIR, value) = EC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26108,15 +26019,15 @@ def $add_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let frame_h :: frame_t*{frame_t <- frame_t*} = frame*{frame <- frame*}
   -- let frame_h' = $add_map<id, value>(frame_h, id, value)
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:86.1-86.75
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:87.1-87.75
 def $add_vars_e(cursor, evalContext, prefixedNameIR*, value*) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:98.1-98.38
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:99.1-99.38
   clause 0 : (p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value*{value <- value*}) = EC
   -- if prefixedNameIR*{prefixedNameIR <- prefixedNameIR*} matches []
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:99.1-105.64
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:100.1-106.64
   clause 1 : (p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value*{value <- value*}) = EC''
   -- if prefixedNameIR*{prefixedNameIR <- prefixedNameIR*} matches _ :: _
   -- let prefixedNameIR_h :: prefixedNameIR_t*{prefixedNameIR_t <- prefixedNameIR_t*} = prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}
@@ -26125,16 +26036,16 @@ def $add_vars_e(cursor, evalContext, prefixedNameIR*, value*) : evalContext =
   -- let EC' = $add_var_e(p, EC, prefixedNameIR_h, value_h)
   -- let EC'' = $add_vars_e(p, EC', prefixedNameIR_t*{prefixedNameIR_t <- prefixedNameIR_t*}, value_t*{value_t <- value_t*})
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:111.1-112.72
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:112.1-113.72
 def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:114.1-115.67
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:115.1-116.67
   clause 0 : (p, EC, prefixedNameIR, value) = EC[global.frame = frame]
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
   -- let frame = $update_map<id, value>(EC.global.frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:116.1-119.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:117.1-120.58
   clause 1 : (cursor, EC, prefixedNameIR, value) = EC[global.frame = frame']
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26143,7 +26054,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame))
   -- let frame' = $update_map<id, value>(frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:120.1-123.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:121.1-124.58
   clause 2 : (cursor, EC, prefixedNameIR, value) = EC[block.frame = frame']
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26152,7 +26063,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame))
   -- let frame' = $update_map<id, value>(frame, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:124.1-127.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:125.1-128.53
   clause 3 : (cursor, EC, prefixedNameIR, value) = $update_var_e(global, EC, ` id, value)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26160,14 +26071,14 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let frame = EC.block.frame
   -- if ~$in_set<id>(id, $dom_map<id, value>(frame))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:128.1-130.30
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:129.1-131.30
   clause 4 : (cursor, EC, prefixedNameIR, value) = $update_var_e(block, EC, ` id, value)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if ([] = EC.local.frames)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:131.1-135.62
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:132.1-136.62
   clause 5 : (cursor, EC, prefixedNameIR, value) = EC[local.frames = frame_h' :: frame_t*{frame_t <- frame_t*}]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26178,7 +26089,7 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- if $in_set<id>(id, $dom_map<id, value>(frame_h))
   -- let frame_h' = $update_map<id, value>(frame_h, id, value)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:136.1-141.61
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:137.1-142.61
   clause 6 : (cursor, EC, prefixedNameIR, value) = EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
@@ -26190,10 +26101,10 @@ def $update_var_e(cursor, evalContext, prefixedNameIR, value) : evalContext =
   -- let EC_pop = EC[local.frames = frame_t*{frame_t <- frame_t*}]
   -- let EC_pop' = $update_var_e(local, EC_pop, ` id, value)
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:149.1-150.63
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:150.1-151.63
 def $find_var_e(prefixedNameIR, cursor, evalContext) : value =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:152.1-153.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:153.1-154.58
   clause 0 : (prefixedNameIR, p, EC) = value
   -- if prefixedNameIR matches `.%`
   -- let . id = prefixedNameIR
@@ -26201,7 +26112,7 @@ def $find_var_e(prefixedNameIR, cursor, evalContext) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:154.1-155.58
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:155.1-156.58
   clause 1 : (prefixedNameIR, cursor, EC) = value
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
@@ -26210,7 +26121,7 @@ def $find_var_e(prefixedNameIR, cursor, evalContext) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:156.1-157.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:157.1-158.57
   clause 2 : (prefixedNameIR, cursor, EC) = value
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
@@ -26219,14 +26130,14 @@ def $find_var_e(prefixedNameIR, cursor, evalContext) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:158.1-160.55
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:159.1-161.55
   clause 3 : (prefixedNameIR, cursor, EC) = $find_var_e(` id, global, EC)
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if cursor matches `BLOCK`
   -- if (?() = $find_map<id, value>(EC.block.frame, id))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:161.1-162.59
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:162.1-163.59
   clause 4 : (prefixedNameIR, cursor, EC) = value
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
@@ -26235,49 +26146,49 @@ def $find_var_e(prefixedNameIR, cursor, evalContext) : value =
   -- if value'?{value' <- value'?} matches (_)
   -- let ?(value) = value'?{value' <- value'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:163.1-165.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:164.1-166.57
   clause 5 : (prefixedNameIR, cursor, EC) = $find_var_e(` id, block, EC)
   -- if prefixedNameIR matches ``%`
   -- let ` id = prefixedNameIR
   -- if cursor matches `LOCAL`
   -- if (?() = $find_maps<id, value>(EC.local.frames, id))
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:169.1-169.70
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:170.1-170.70
 def $find_typeDef_e(cursor, evalContext, prefixedNameIR) : typeDefIR? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:171.1-172.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:172.1-173.57
   clause 0 : (_cursor, EC, prefixedNameIR) = $find_map<typeId, typeDefIR>(EC.global.type, nameIR)
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:173.1-174.57
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:174.1-175.57
   clause 1 : (_cursor, EC, prefixedNameIR) = $find_map<typeId, typeDefIR>(EC.global.type, nameIR)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:178.1-178.56
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:179.1-179.56
 def $find_type_e(cursor, evalContext, nameIR) : typeIR? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:180.1-181.53
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:181.1-182.53
   clause 0 : (cursor, EC, nameIR) = $find_map<typeId, typeIR>(EC.block.type, nameIR)
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:182.1-183.66
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:183.1-184.66
   clause 1 : (cursor, EC, nameIR) = ?(typeIR)
   -- if cursor matches `LOCAL`
   -- let typeIR'?{typeIR' <- typeIR'?} = $find_map<typeId, typeIR>(EC.local.type, nameIR)
   -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
   -- let ?(typeIR) = typeIR'?{typeIR' <- typeIR'?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:184.1-186.63
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:185.1-187.63
   clause 2 : (cursor, EC, nameIR) = $find_type_e(block, EC, nameIR)
   -- if cursor matches `LOCAL`
   -- if (?() = $find_map<typeId, typeIR>(EC.local.type, nameIR))
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:190.1-192.95
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:191.1-193.95
 def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : callResolution<(cursor, callableDef)>? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:194.1-201.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:195.1-202.47
   clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26287,7 +26198,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
   -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:202.1-209.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:203.1-210.47
   clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
@@ -26295,7 +26206,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:210.1-217.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:211.1-218.47
   clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
@@ -26305,7 +26216,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
   -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:218.1-225.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:219.1-226.47
   clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches `.%`
@@ -26313,7 +26224,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:226.1-233.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:227.1-234.47
   clause 4 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (block, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26323,7 +26234,7 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
   -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:234.1-241.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:235.1-242.47
   clause 5 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(global, EC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
@@ -26331,47 +26242,47 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.block.callable, callTargetKey, $parameterListIR_of_callableDef))
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:242.1-243.70
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:243.1-244.70
   clause 6 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(block, EC, ` nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:247.1-248.36
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:248.1-249.36
 def $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*) : callResolution<constructorDef>? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:250.1-255.60
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:251.1-256.60
   clause 0 : (EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorDef>(EC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:256.1-261.60
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:257.1-262.60
   clause 1 : (EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_overloaded<constructorDef>(EC.global.constructor, callTargetKey, $parameterListIR_of_constructorDef)
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:265.1-266.64
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:266.1-267.50
 def $find_parserState_e(evalContext, nameIR) : parserStateIR? =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:268.1-269.61
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:269.1-270.61
   clause 0 : (EC, nameIR) = $find_map<nameIR, parserStateIR>(EC.block.state, nameIR)
 
-;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:275.1-276.86
+;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:276.1-277.86
 def $subst_type_e(cursor, evalContext, typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:278.1-278.47
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:279.1-279.47
   clause 0 : (cursor, EC, typeIR) = typeIR
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:279.1-281.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:280.1-282.52
   clause 1 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `BLOCK`
   -- let theta = EC.block.type
   -- let typeIR_subst = $subst_typeIR(theta, typeIR)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:282.1-286.52
+  ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:283.1-287.52
   clause 2 : (cursor, EC, typeIR) = typeIR_subst
   -- if cursor matches `LOCAL`
   -- let theta_block = EC.block.type
@@ -26531,7 +26442,7 @@ syntax expressionResult =
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:36.1-41.77
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:36.1-41.66
 relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext arch expressionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:16.1-35.2
@@ -27248,7 +27159,7 @@ syntax expressionListResult =
    | reject errorValue
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:48.1-53.77
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:48.1-53.66
 relation Exprs_eval: cursor evalContext arch |- typedExpressionIR* : evalContext arch expressionListResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:583.1-622.2
@@ -27323,10 +27234,10 @@ syntax keysetExpressionResult =
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:59.1-62.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:59.1-64.74
 relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext arch keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:201.1-210.56
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:203.1-212.56
   rulegroup 
 
    match
@@ -27341,7 +27252,7 @@ relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext 
     -- Exprs_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult
     -- output: % % |- % : EC_1 ARCH_1 keysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:68.1-71.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:70.1-73.26
 relation Argument_eval: cursor evalContext arch |- argumentIR : evalContext arch expressionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.04-eval-argument.watsup:9.1-13.61
@@ -27376,13 +27287,13 @@ relation Argument_eval: cursor evalContext arch |- argumentIR : evalContext arch
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:74.1-75.16
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:76.1-77.16
 syntax storageReferenceResult = 
    | ` storageReference?
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:77.1-80.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:79.1-82.26
 relation Argument_eval_lvalue: cursor evalContext arch |- argumentIR : evalContext arch storageReferenceResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.04-eval-argument.watsup:35.1-42.57
@@ -27452,7 +27363,7 @@ relation Argument_eval_lvalue: cursor evalContext arch |- argumentIR : evalConte
     rulepath dontcare
     -- output: % % % |- % : EC ARCH ` ?() as storageReferenceResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:86.1-92.34
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:88.1-94.34
 relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arch storageReferenceResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:11.1-13.50
@@ -27631,7 +27542,7 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:94.1-98.33
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:96.1-100.33
 relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
   ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:161.1-163.51
@@ -27775,7 +27686,7 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- let value = $bitacc_op(value_base, value_hi, value_lo)
     -- output: % % % |- % : value
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:100.1-105.54
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:102.1-107.43
 relation Lvalue_write: cursor evalContext arch |- storageReference -> value : evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.05-eval-lvalue.watsup:276.1-278.61
@@ -27939,26 +27850,26 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:112.1-113.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:114.1-115.17
 syntax callResult = 
    | exit
    | reject errorValue
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:115.25-115.30
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:117.25-117.30
 syntax forBreakResult = 
    | break
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:116.28-116.36
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:118.28-118.36
 syntax forContinueResult = 
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:119.1-120.22
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:121.1-122.22
 syntax forResult = 
    | break
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:123.1-125.14
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:125.1-127.14
 syntax statementResult = 
    | `empty
    | exit
@@ -27967,7 +27878,7 @@ syntax statementResult =
    | break
    | continue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:127.1-134.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:129.1-136.42
 relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:9.1-10.35
@@ -28432,7 +28343,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
     -- output: % % % |- % : EC_2 ARCH_2 `empty as statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:136.1-143.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:138.1-145.42
 relation BlockElementStmt_eval: evalContext arch |- blockElementStatementIR : evalContext arch statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:1009.1-1031.2
@@ -28469,7 +28380,7 @@ relation BlockElementStmt_eval: evalContext arch |- blockElementStatementIR : ev
     -- Stmt_eval: local EC_0 ARCH_0 |- statementIR : EC_1 ARCH_1 statementResult
     -- output: % % |- % : EC_1 ARCH_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:145.1-152.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:147.1-154.42
 relation BlockElementStmtList_eval: evalContext arch |- blockElementStatementListIR : evalContext arch statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:1037.1-1060.2
@@ -28511,7 +28422,7 @@ relation BlockElementStmtList_eval: evalContext arch |- blockElementStatementLis
     -- BlockElementStmtList_eval: EC_1 ARCH_1 |- blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 ARCH_2 statementResult
     -- output: % % |- % : EC_2 ARCH_2 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:154.1-161.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:156.1-163.42
 relation Block_eval: evalContext arch |- blockStatementIR : evalContext arch statementResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:1066.1-1071.49
@@ -28528,15 +28439,15 @@ relation Block_eval: evalContext arch |- blockStatementIR : evalContext arch sta
     -- BlockElementStmtList_eval: EC_0 ARCH_0 |- blockElementStatementListIR : EC_1 ARCH_1 statementResult
     -- output: % % |- % : EC_1 ARCH_1 statementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:168.1-169.27
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:170.1-171.27
 syntax parserStatementResult = 
    | `empty
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:171.1-178.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:173.1-180.42
 relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext arch parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:181.1-185.49
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:195.1-199.49
   rulegroup constantDeclarationIR
 
    match
@@ -28552,7 +28463,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- ConstDecl_eval: local EC_0 |- constantDeclarationIR : EC_1
     -- output: % % |- % : EC_1 ARCH `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:189.1-194.62
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:203.1-208.62
   rulegroup reject
 
    match
@@ -28570,7 +28481,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- let rejectTransitionResult = declarationResult as rejectTransitionResult
     -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:196.1-201.46
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:210.1-215.46
   rulegroup cont
 
    match
@@ -28589,7 +28500,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:205.1-210.46
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:219.1-224.46
   rulegroup emptyStatementIR
 
    match
@@ -28608,7 +28519,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:214.1-230.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:228.1-244.2
   rulegroup assignmentStatementIR
 
    match
@@ -28633,7 +28544,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:234.1-250.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:248.1-264.2
   rulegroup callStatementIR
 
    match
@@ -28658,7 +28569,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:258.1-265.29
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:272.1-279.29
   rulegroup parserBlockStatementIR
 
    match
@@ -28676,7 +28587,7 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- let EC_3 = $exit_e(EC_2)
     -- output: % % |- % : EC_3 ARCH_1 parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:273.1-321.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:287.1-335.2
   rulegroup parserConditionalStatementIR
 
    match
@@ -28732,10 +28643,10 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- ParserStmt_eval: EC_cond ARCH_cond |- parserStatementIR_else : EC_else ARCH_else parserStatementResult
     -- output: % % |- % : EC_else ARCH_else parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:180.1-187.42
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:182.1-189.42
 relation ParserStmts_eval: evalContext arch |- parserStatementListIR : evalContext arch parserStatementResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:330.1-352.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:344.1-366.2
   rulegroup 
 
    match
@@ -28775,50 +28686,22 @@ relation ParserStmts_eval: evalContext arch |- parserStatementListIR : evalConte
     -- ParserStmts_eval: EC_1 ARCH_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
     -- output: % % |- % : EC_2 ARCH_2 parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:190.1-192.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:192.1-194.26
 syntax transitionResult = 
    | accept
    | reject errorValue
    | state id
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:194.1-201.42
-relation ParserTransition_eval: evalContext arch |- transitionStatementIR : evalContext arch transitionResult
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:196.1-203.42
+relation ParserSelect_eval: evalContext arch |- selectExpressionIR : evalContext arch transitionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:11.1-27.2
-  rulegroup nameIR
-
-   match
-
-    (signature) EC ARCH |- transition text ; : % % %
-    EC ARCH |- transition stateExpressionIR : % % %
-    -- if stateExpressionIR matches `%;`
-    -- let text ; = stateExpressionIR
-
-   paths
-
-    rulepath accept
-    -- if (text = "accept")
-    -- output: % % |- % : EC ARCH accept as transitionResult
-
-    rulepath reject
-    -- if (text = "reject")
-    -- let errorValue = error. "NoError"
-    -- output: % % |- % : EC ARCH reject errorValue as transitionResult
-
-    rulepath state
-    -- let nameIR = text
-    -- if ((nameIR =/= "accept") /\ (nameIR =/= "reject"))
-    -- output: % % |- % : EC ARCH state nameIR as transitionResult
-
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:108.1-171.2
-  rulegroup selectExpressionIR
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:90.1-154.2
+  rulegroup 
 
    match
 
-    (signature) EC_0 ARCH_0 |- transition selectExpressionIR as stateExpressionIR : % % %
-    EC_0 ARCH_0 |- transition stateExpressionIR : % % %
-    -- if stateExpressionIR <: selectExpressionIR
-    -- let selectExpressionIR = stateExpressionIR as selectExpressionIR
+    (signature) EC_0 ARCH_0 |- selectExpressionIR : % % %
+    EC_0 ARCH_0 |- selectExpressionIR : % % %
 
    paths
 
@@ -28845,7 +28728,9 @@ relation ParserTransition_eval: evalContext arch |- transitionStatementIR : eval
     -- if expressionListResult <: continueResult<value*>
     -- let ` value_key*{value_key <- value_key*} = expressionListResult as continueResult<value*>
     -- SelectCases_match: EC_1 ARCH_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 ARCH_2 selectCaseMatchResult
-    -- if (selectCaseMatchResult = ` ?() as selectCaseMatchResult)
+    -- if selectCaseMatchResult <: continueResult<nameIR?>
+    -- let ` nameIR_state?{nameIR_state <- nameIR_state?} = selectCaseMatchResult as continueResult<nameIR?>
+    -- if (?() = nameIR_state?{nameIR_state <- nameIR_state?})
     -- let rejectTransitionResult = reject error. "NoMatch"
     -- output: % % |- % : EC_2 ARCH_2 rejectTransitionResult as transitionResult
 
@@ -28862,7 +28747,57 @@ relation ParserTransition_eval: evalContext arch |- transitionStatementIR : eval
     -- ParserTransition_eval: EC_2 ARCH_2 |- transition nameIR_state ; : EC_3 ARCH_3 transitionResult
     -- output: % % |- % : EC_3 ARCH_3 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:203.1-210.49
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:205.1-212.42
+relation ParserTransition_eval: evalContext arch |- transitionStatementIR : evalContext arch transitionResult
+
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:161.1-185.2
+  rulegroup 
+
+   match
+
+    (signature) evalContext arch |- transition stateExpressionIR : % % %
+    evalContext arch |- transition stateExpressionIR : % % %
+
+   paths
+
+    rulepath nameIR-accept
+    -- let EC = evalContext
+    -- let ARCH = arch
+    -- let stateExpressionIR' = stateExpressionIR
+    -- if stateExpressionIR' matches `%;`
+    -- let nameIR ; = stateExpressionIR'
+    -- if (nameIR = "accept")
+    -- output: % % |- % : EC ARCH accept as transitionResult
+
+    rulepath nameIR-reject
+    -- let EC = evalContext
+    -- let ARCH = arch
+    -- let stateExpressionIR' = stateExpressionIR
+    -- if stateExpressionIR' matches `%;`
+    -- let nameIR ; = stateExpressionIR'
+    -- if (nameIR = "reject")
+    -- let errorValue = error. "NoError"
+    -- output: % % |- % : EC ARCH reject errorValue as transitionResult
+
+    rulepath nameIR-state
+    -- let EC = evalContext
+    -- let ARCH = arch
+    -- let stateExpressionIR' = stateExpressionIR
+    -- if stateExpressionIR' matches `%;`
+    -- let nameIR ; = stateExpressionIR'
+    -- if ((nameIR =/= "accept") /\ (nameIR =/= "reject"))
+    -- output: % % |- % : EC ARCH state nameIR as transitionResult
+
+    rulepath selectExpressionIR
+    -- let EC_0 = evalContext
+    -- let ARCH_0 = arch
+    -- let stateExpressionIR' = stateExpressionIR
+    -- if stateExpressionIR' <: selectExpressionIR
+    -- let selectExpressionIR = stateExpressionIR' as selectExpressionIR
+    -- ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : EC_1 ARCH_1 transitionResult
+    -- output: % % |- % : EC_1 ARCH_1 transitionResult
+
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:214.1-221.42
 relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch transitionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.3-eval-parser-state.watsup:5.1-30.2
@@ -28891,7 +28826,7 @@ relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch 
     -- ParserTransition_eval: EC_1 ARCH_1 |- transitionStatementIR : EC_2 ARCH_2 transitionResult
     -- output: % % |- % : EC_2 ARCH_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:212.1-215.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:223.1-230.42
 relation ParserState_trans: evalContext arch |-transition nameIR : evalContext arch transitionResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.3-eval-parser-state.watsup:36.1-65.2
@@ -28933,10 +28868,10 @@ relation ParserState_trans: evalContext arch |-transition nameIR : evalContext a
     -- ParserState_trans: EC_1 ARCH_1 |-transition nameIR_next : EC_2 ARCH_2 transitionResult
     -- output: % % |-transition % : EC_2 ARCH_2 transitionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:217.34-217.55
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:232.34-232.55
 syntax parserDeclarationResult = parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:219.1-226.49
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:234.1-241.49
 relation ParserLocalDecl_eval: evalContext arch |- parserLocalDeclarationIR : evalContext arch parserDeclarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:9.1-13.49
@@ -28980,7 +28915,7 @@ relation ParserLocalDecl_eval: evalContext arch |- parserLocalDeclarationIR : ev
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as parserDeclarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:228.1-235.49
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:243.1-250.49
 relation ParserLocalDecls_eval: evalContext arch |- parserLocalDeclarationIR* : evalContext arch parserDeclarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.08.2-eval-parser-declaration.watsup:44.1-63.2
@@ -29022,12 +28957,12 @@ relation ParserLocalDecls_eval: evalContext arch |- parserLocalDeclarationIR* : 
     -- ParserLocalDecls_eval: EC_1 ARCH_1 |- parserLocalDeclarationListIR_t : EC_2 ARCH_2 parserStatementResult
     -- output: % % |- % : EC_2 ARCH_2 parserStatementResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:242.1-243.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:257.1-258.17
 syntax tableResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:245.1-248.26
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:260.1-263.26
 relation Table_eval: evalContext arch |- typeId tableObjectProperty : evalContext arch tableResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:264.1-338.2
@@ -29096,12 +29031,12 @@ relation Table_eval: evalContext arch |- typeId tableObjectProperty : evalContex
     -- let tableMetadataStructValue = table_struct "apply_result(" ++ typeId ++ ")" {hit `b b_hit ;miss `b b_miss ;action_run tableMetadataEnumValue ;}
     -- output: % % |- % % : EC_3 ARCH_3 return ?(tableMetadataStructValue as value) as tableResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:251.1-252.17
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:266.1-267.17
 syntax controlBodyResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:254.1-257.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:269.1-272.23
 relation ControlBody_eval: evalContext arch |- controlBodyIR : evalContext arch controlBodyResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.2-eval-control-statement.watsup:7.1-12.40
@@ -29153,12 +29088,12 @@ relation ControlBody_eval: evalContext arch |- controlBodyIR : evalContext arch 
     -- if (statementResult = return ?() as statementResult)
     -- output: % % |- % : EC_1 ARCH_1 return ?() as controlBodyResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:260.1-261.15
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:275.1-276.15
 syntax controlLocalDeclarationResult = 
    | `empty
    | exit
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:263.1-266.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:278.1-281.23
 relation ControlLocalDecl_eval: evalContext arch |- controlLocalDeclarationIR : evalContext arch controlLocalDeclarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.3-eval-control-declaration.watsup:9.1-13.49
@@ -29203,7 +29138,7 @@ relation ControlLocalDecl_eval: evalContext arch |- controlLocalDeclarationIR : 
     -- if (continueEmptyResult = `empty)
     -- output: % % |- % : EC_1 ARCH_1 `empty as controlLocalDeclarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:268.1-271.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:283.1-286.23
 relation ControlLocalDecls_eval: evalContext arch |- controlLocalDeclarationIR* : evalContext arch controlLocalDeclarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.09.3-eval-control-declaration.watsup:50.1-72.2
@@ -29247,13 +29182,13 @@ relation ControlLocalDecls_eval: evalContext arch |- controlLocalDeclarationIR* 
     -- ControlLocalDecls_eval: EC_1 ARCH_1 |- controlLocalDeclarationListIR_t : EC_2 ARCH_2 controlLocalDeclarationResult
     -- output: % % |- % : EC_2 ARCH_2 controlLocalDeclarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:278.1-279.16
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:293.1-294.16
 syntax declarationResult = 
    | `empty
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:281.1-289.41
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:296.1-304.41
 relation VarDecl_eval: cursor evalContext arch |- variableDeclarationIR : evalContext arch declarationResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.07-eval-declaration.watsup:8.1-37.2
@@ -29295,7 +29230,7 @@ relation VarDecl_eval: cursor evalContext arch |- variableDeclarationIR : evalCo
     -- let EC_2 = $add_var_e(p, EC_1, ` nameIR, value_init)
     -- output: % % % |- % : EC_2 ARCH_1 `empty as declarationResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:291.1-297.54
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:306.1-312.43
 relation ConstDecl_eval: cursor evalContext |- constantDeclarationIR : evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.07-eval-declaration.watsup:46.1-49.53
@@ -29312,13 +29247,13 @@ relation ConstDecl_eval: cursor evalContext |- constantDeclarationIR : evalConte
     -- let EC_1 = $add_var_e(p, EC_0, ` nameIR, value)
     -- output: % % |- % : EC_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:304.1-305.16
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:319.1-320.16
 syntax calleeResult = 
    | ` callee
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:307.1-313.85
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:322.1-328.74
 relation Callee_eval: cursor evalContext arch |- callableTargetIR <_>( argumentListIR ): evalContext arch calleeResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.1-eval-call-callee.watsup:11.1-22.84
@@ -29674,13 +29609,13 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR <_>( argumentL
     -- let tableApplyMethodCallee = table objectId .apply{ frame ; TBL }
     -- output: % % % |- % <_>( % ): EC_1 ARCH_1 ` tableApplyMethodCallee as callee as calleeResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:316.1-317.16
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:331.1-332.16
 syntax copyInArgumentResult = 
    | ` storageReference?
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:319.1-324.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:334.1-339.35
 relation Copy_in_argument: arch |- cursor evalContext parameterIR @ cursor evalContext argumentIR ~> arch evalContext evalContext # copyInArgumentResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:7.1-36.2
@@ -29761,13 +29696,13 @@ relation Copy_in_argument: arch |- cursor evalContext parameterIR @ cursor evalC
     -- let EC_callee_1 = $add_var_e(p_callee, EC_callee_0, ` nameIR, value_init)
     -- output: % |- % % % @ % % % ~> ARCH_1 EC_caller_1 EC_callee_1 # ` storageReference?{storageReference <- storageReference?} as copyInArgumentResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:327.1-328.16
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:342.1-343.16
 syntax copyInResult = 
    | ` storageReference?*
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:330.1-335.38
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:345.1-357.51
 relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor evalContext argumentListIR ~> arch evalContext evalContext # copyInResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:106.1-167.2
@@ -29839,7 +29774,7 @@ relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor eva
     -- let storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = storageReference_h?{storageReference_h <- storageReference_h?} :: storageReference_t*{storageReference_t <- storageReference_t*} as storageReference?*
     -- output: % % |- % % % @ % % % ~> ARCH_2 EC_caller_2 EC_callee_2 # ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:337.1-340.23
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:359.1-365.21
 relation Copy_in_default: parameterListIR @ cursor evalContext ~> evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.2-eval-call-copyin.watsup:173.1-178.65
@@ -29861,7 +29796,7 @@ relation Copy_in_default: parameterListIR @ cursor evalContext ~> evalContext
     -- let EC_callee_1 = $add_vars_e(p_callee, EC_callee_0, ` nameIR*{nameIR <- nameIR*}, value*{value <- value*})
     -- output: % @ % % ~> EC_callee_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:342.1-347.35
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:367.1-372.35
 relation Copy_out_argument: arch |- cursor evalContext parameterIR @ cursor evalContext storageReference? ~> evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:7.1-13.45
@@ -29905,7 +29840,7 @@ relation Copy_out_argument: arch |- cursor evalContext parameterIR @ cursor eval
     -- Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference -> value : EC_caller_1
     -- output: % |- % % % @ % % % ~> EC_caller_1
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:349.1-354.38
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:374.1-383.21
 relation Copy_out: cursor arch |- cursor evalContext parameterListIR @ cursor evalContext storageReference?* ~> evalContext
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:82.1-94.21
@@ -29923,7 +29858,7 @@ relation Copy_out: cursor arch |- cursor evalContext parameterListIR @ cursor ev
     -- Copy_out_inner: ARCH |- p_caller EC_caller_1 parameterListIR @ p_callee EC_callee storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_caller_2
     -- output: % % |- % % % @ % % % ~> EC_caller_2
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:356.1-362.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:385.1-391.79
 relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( argumentListIR ): evalContext arch callResult
 
   ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:45.1-141.2
@@ -30550,25 +30485,25 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let EC_1 = $copy_e(block, EC_callee_2, EC_0)
     -- output: % % % |- % @< % >( % ): EC_1 ARCH_1 returnResult as callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:364.1-369.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:393.1-398.79
 extern relation ExternFunctionCall_eval: evalContext arch |- nameIR ( nameIR* ): evalContext arch callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:371.1-377.90
+;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:400.1-406.79
 extern relation ExternMethodCall_eval: evalContext arch |- objectId . nameIR ( nameIR* ): evalContext arch callResult
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-5.45
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:5.1-7.43
 def $match_keysets(setValue*, value*) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:8.1-8.36
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:10.1-10.36
   clause 0 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = true
   -- if setValue*{setValue <- setValue*} matches []
   -- if value*{value <- value*} matches []
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:9.1-9.53
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:11.1-11.53
   clause 1 : (setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*}) = true
   -- if (setValue*{setValue <- setValue*} = [set{...}])
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:10.1-11.35
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:12.1-13.35
   clause 2 : (setValue'*{setValue' <- setValue'*}, value*{value <- value*}) = $match_keyset(setValue, value_key)
   -- if setValue'*{setValue' <- setValue'*} matches [ _/1 ]
   -- let [setValue] = setValue'*{setValue' <- setValue'*}
@@ -30576,7 +30511,7 @@ def $match_keysets(setValue*, value*) : bool =
   -- let [value_key] = value*{value <- value*}
   -- if (setValue =/= set{...})
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:12.1-14.47
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:14.1-16.47
   clause 3 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = $match_keysets(setValue_t*{setValue_t <- setValue_t*}, value_key_t*{value_key_t <- value_key_t*})
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
@@ -30584,7 +30519,7 @@ def $match_keysets(setValue*, value*) : bool =
   -- let value_key_h :: value_key_t*{value_key_t <- value_key_t*} = value*{value <- value*}
   -- if $match_keyset(setValue_h, value_key_h)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:15.1-17.48
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:17.1-19.48
   clause 4 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = false
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
@@ -30592,43 +30527,43 @@ def $match_keysets(setValue*, value*) : bool =
   -- let value_key_h :: value_key_t*{value_key_t <- value_key_t*} = value*{value <- value*}
   -- if ~$match_keyset(setValue_h, value_key_h)
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:6.1-6.42
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:8.1-8.42
 def $match_keyset(setValue, value) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:19.1-19.51
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:21.1-21.51
   clause 0 : (setValue, value_key) = true
   -- if setValue matches `SET{...}`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:20.1-20.73
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:22.1-22.73
   clause 1 : (setValue, value_key) = $bin_eq(value, value_key)
   -- if setValue matches `SET{%}`
   -- let set{ value } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:21.1-22.41
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:23.1-24.41
   clause 2 : (setValue, value_key) = $exists_($bin_eq(value, value_key)*{value <- value*})
   -- if setValue matches `SET{%(%)}`
   -- let set{ value*{value <- value*} ( _nat )} = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:23.1-26.40
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:25.1-28.40
   clause 3 : (setValue, value_key) = $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
   -- if setValue matches `SET{%&&&%}`
   -- let set{ value_base &&& value_mask } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:27.1-29.39
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:29.1-31.39
   clause 4 : (setValue, value_key) = ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
   -- if setValue matches `SET{%..%}`
   -- let set{ value_base .. value_limit } = setValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:38.1-39.16
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:40.1-41.16
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:41.1-44.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:43.1-46.23
 relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR : evalContext arch simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:48.1-71.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:50.1-73.2
   rulegroup typedExpressionIR
 
    match
@@ -30668,7 +30603,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value*{value <- value*} ( n_size )}
     -- output: % % |- % : EC_1 ARCH_1 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:75.1-105.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:77.1-107.2
   rulegroup mask
 
    match
@@ -30705,7 +30640,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value_l &&& value_r }
     -- output: % % |- % : EC_2 ARCH_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:109.1-139.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:111.1-141.2
   rulegroup range
 
    match
@@ -30742,7 +30677,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value_l .. value_r }
     -- output: % % |- % : EC_2 ARCH_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:143.1-147.33
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:145.1-149.33
   rulegroup default-any
 
    match
@@ -30757,10 +30692,10 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{...}
     -- output: % % |- % : EC ARCH ` setValue as simpleKeysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:155.1-158.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:157.1-160.23
 relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionListIR : evalContext arch keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:160.1-193.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:162.1-195.2
   rulegroup 
 
    match
@@ -31440,15 +31375,15 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
     -- SwitchCases_general_eval: local EC_1 ARCH_1 value |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 ARCH_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- output: % % % % |- % : EC_2 ARCH_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
-;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:32.1-33.27
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:8.1-9.27
 syntax selectCaseMatchResult = 
    | ` nameIR?
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:35.1-38.26
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:11.1-16.67
 relation SelectCase_match: evalContext arch value* |- selectCaseIR : evalContext arch selectCaseMatchResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:40.1-70.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:18.1-48.2
   rulegroup 
 
    match
@@ -31478,10 +31413,10 @@ relation SelectCase_match: evalContext arch value* |- selectCaseIR : evalContext
     -- if $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
     -- output: % % % |- % : EC_1 ARCH_1 ` ?(nameIR) as selectCaseMatchResult
 
-;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:72.1-75.26
+;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:50.1-55.67
 relation SelectCases_match: evalContext arch value* |- selectCaseListIR : evalContext arch selectCaseMatchResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:77.1-106.2
+  ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:57.1-86.2
   rulegroup 
 
    match
