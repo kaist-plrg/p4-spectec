@@ -96,6 +96,12 @@ let print_stmt fmt = function
         id_or_index
         (pp_print_option print_ctr)
         ctr print_cond cond print_number number
+  | McGroupCreate id ->
+      F.fprintf fmt "mc_mgrp_create %a" print_number id
+  | McNodeCreate (id, port) ->
+      F.fprintf fmt "mc_node_create %a %a" print_number id print_number port
+  | McNodeAssociate (id, handle) ->
+      F.fprintf fmt "mc_mgrp_associate %a %a" print_number id print_number handle
 
 let print_stmts fmt stmts =
   F.pp_print_list
