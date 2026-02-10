@@ -23,9 +23,15 @@
    (ignore-outputs
     (diff p4_static_neg_sl.expected p4_static_neg_sl.actual))
    (ignore-outputs
-    (diff p4_dynamic_v1model_sl.expected p4_dynamic_v1model_sl.actual))
+    (diff p4_dynamic_v1model_p4c_sl.expected p4_dynamic_v1model_p4c_sl.actual))
    (ignore-outputs
-    (diff p4_dynamic_ebpf_sl.expected p4_dynamic_ebpf_sl.actual))
+    (diff p4_dynamic_v1model_p4testgen_sl.expected p4_dynamic_v1model_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_v1model_custom_sl.expected p4_dynamic_v1model_custom_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4c_sl.expected p4_dynamic_ebpf_p4c_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4testgen_sl.expected p4_dynamic_ebpf_p4testgen_sl.actual))
    (ignore-outputs
     (diff parser_pos.expected parser_pos.actual))
    (ignore-outputs
@@ -84,23 +90,50 @@
  (action
   (progn
    (ignore-outputs
-    (diff p4_dynamic_v1model_sl.expected p4_dynamic_v1model_sl.actual))
+    (diff p4_dynamic_v1model_p4c_sl.expected p4_dynamic_v1model_p4c_sl.actual))
    (ignore-outputs
-    (diff p4_dynamic_ebpf_sl.expected p4_dynamic_ebpf_sl.actual)))))
+    (diff p4_dynamic_v1model_p4testgen_sl.expected p4_dynamic_v1model_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_v1model_custom_sl.expected p4_dynamic_v1model_custom_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4c_sl.expected p4_dynamic_ebpf_p4c_sl.actual))
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4testgen_sl.expected p4_dynamic_ebpf_p4testgen_sl.actual)))))
 
 (rule
- (alias p4dynamic-v1model)
+ (alias p4dynamic-v1model-p4c)
  (action
   (progn
    (ignore-outputs
-    (diff p4_dynamic_v1model_sl.expected p4_dynamic_v1model_sl.actual)))))
+    (diff p4_dynamic_v1model_p4c_sl.expected p4_dynamic_v1model_p4c_sl.actual)))))
 
 (rule
- (alias p4dynamic-ebpf)
+ (alias p4dynamic-v1model-p4testgen)
  (action
   (progn
    (ignore-outputs
-    (diff p4_dynamic_ebpf_sl.expected p4_dynamic_ebpf_sl.actual)))))
+    (diff p4_dynamic_v1model_p4testgen_sl.expected p4_dynamic_v1model_p4testgen_sl.actual)))))
+
+(rule
+ (alias p4dynamic-v1model-custom)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_dynamic_v1model_custom_sl.expected p4_dynamic_v1model_custom_sl.actual)))))
+
+(rule
+ (alias p4dynamic-ebpf-p4c)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4c_sl.expected p4_dynamic_ebpf_p4c_sl.actual)))))
+
+(rule
+ (alias p4dynamic-ebpf-p4testgen)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_dynamic_ebpf_p4testgen_sl.expected p4_dynamic_ebpf_p4testgen_sl.actual)))))
 
 ;; P4 parsing tests
 
@@ -237,12 +270,12 @@
      -neg)))))
 
 (rule
- (target p4_dynamic_v1model_sl.actual)
+ (target p4_dynamic_v1model_p4c_sl.actual)
  (action
   (with-stdout-to
-   p4_dynamic_v1model_sl.actual
+   p4_dynamic_v1model_p4c_sl.actual
    (with-stderr-to
-    p4_dynamic_v1model_sl.err
+    p4_dynamic_v1model_p4c_sl.err
     (run
      ./test.exe
      sim
@@ -259,24 +292,74 @@
      ../../../../excludes/dynamic
      -p4-dir
      ../../../../p4c/testdata/p4_16_samples
-     -p4-dir
-     ../../../../testdata/custom
      -stf-dir
+     ../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../patches/v1model)))))
+
+(rule
+ (target p4_dynamic_v1model_p4testgen_sl.actual)
+ (action
+  (with-stdout-to
+   p4_dynamic_v1model_p4testgen_sl.actual
+   (with-stderr-to
+    p4_dynamic_v1model_p4testgen_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes/static
+     -e
+     ../../../../excludes/dynamic
+     -p4-dir
      ../../../../p4c/testdata/p4_16_samples
      -stf-dir
      ../../../../testdata/p4testgen
+     -p
+     ../../../../patches/v1model)))))
+
+(rule
+ (target p4_dynamic_v1model_custom_sl.actual)
+ (action
+  (with-stdout-to
+   p4_dynamic_v1model_custom_sl.actual
+   (with-stderr-to
+    p4_dynamic_v1model_custom_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes/static
+     -e
+     ../../../../excludes/dynamic
+     -p4-dir
+     ../../../../testdata/custom
      -stf-dir
      ../../../../testdata/custom
      -p
      ../../../../patches/v1model)))))
 
 (rule
- (target p4_dynamic_ebpf_sl.actual)
+ (target p4_dynamic_ebpf_p4c_sl.actual)
  (action
   (with-stdout-to
-   p4_dynamic_ebpf_sl.actual
+   p4_dynamic_ebpf_p4c_sl.actual
    (with-stderr-to
-    p4_dynamic_ebpf_sl.err
+    p4_dynamic_ebpf_p4c_sl.err
     (run
      ./test.exe
      sim
@@ -293,14 +376,36 @@
      ../../../../excludes/dynamic
      -p4-dir
      ../../../../p4c/testdata/p4_16_samples
-     -p4-dir
-     ../../../../testdata/custom
      -stf-dir
+     ../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../patches/ebpf)))))
+
+(rule
+ (target p4_dynamic_ebpf_p4testgen_sl.actual)
+ (action
+  (with-stdout-to
+   p4_dynamic_ebpf_p4testgen_sl.actual
+   (with-stderr-to
+    p4_dynamic_ebpf_p4testgen_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     ebpf
+     -s
+     ../../../../spec-concrete
+     -i
+     ../../../../p4c/p4include
+     -e
+     ../../../../excludes/static
+     -e
+     ../../../../excludes/dynamic
+     -p4-dir
      ../../../../p4c/testdata/p4_16_samples
      -stf-dir
      ../../../../testdata/p4testgen
-     -stf-dir
-     ../../../../testdata/custom
      -p
      ../../../../patches/ebpf)))))
 
