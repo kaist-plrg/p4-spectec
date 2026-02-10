@@ -57,42 +57,64 @@ module Make
   let on_tx_output (txs : IO.tx list) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
     match txs with
-    (* Packet was transmitted *)
-    | tx_h :: tx_t -> (
-        match expect_queue with
-        (* No expected packet (yet) *)
-        | [] ->
-            let tx_output_queue = tx_output_queue @ txs in
-            (tx_output_queue, expect_queue)
-            (* There is an expected packet *)
-        | (tx_expect, exact) :: expect_queue
-          when compare_tx ~exact tx_h tx_expect ->
-            Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
-            |> log;
-            (tx_output_queue @ tx_t, expect_queue)
-        | (tx_expect, _) :: _ ->
-            error_stf
-              (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
-                 (string_of_tx tx_h)))
     (* Packet was dropped *)
     | [] -> (tx_output_queue, expect_queue)
+    (* Packet was transmitted *)
+    | tx_h :: tx_t -> (
+        (* find the first expect element that has the same output port,
+           then compare packet output. return matched element and the
+           rest of the list, preserving order. *)
+        let rec extract_first acc = function
+          | [] -> None
+          | expect_h :: expect_t ->
+              let (expect_port, expect_packet), exact = expect_h in
+              let tx_h_port, tx_h_packet = tx_h in
+              if expect_port = tx_h_port then
+                if compare_tx ~exact tx_h (expect_port, expect_packet) then
+                  Some (expect_h, List.rev_append acc expect_t)
+                else
+                  error_stf
+                    (Format.asprintf "expected %s but got %s"
+                       (string_of_tx (expect_port, expect_packet))
+                       (string_of_tx tx_h))
+              else extract_first (expect_h :: acc) expect_t
+        in
+        match extract_first [] expect_queue with
+        | None ->
+            (* No expected packet (yet) *)
+            let tx_output_queue = tx_output_queue @ txs in
+            (tx_output_queue, expect_queue)
+        | Some (expect, expect_queue) ->
+            Format.asprintf "[PASS] Transmitted %s" (string_of_tx (fst expect))
+            |> log;
+            (tx_output_queue @ tx_t, expect_queue))
 
   let on_tx_expect ((tx_expect, exact) : IO.expect)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list) :
       IO.tx list * expect list =
-    match tx_output_queue with
-    (* No output packet (yet) *)
-    | [] ->
+    let rec extract_first acc = function
+      | [] -> None
+      | tx_h :: tx_t ->
+          let expect_port, expect_packet = tx_expect in
+          let tx_h_port, tx_h_packet = tx_h in
+          if expect_port = tx_h_port then
+            if compare_tx ~exact tx_h tx_expect then
+              Some (tx_h, List.rev_append acc tx_t)
+            else
+              error_stf
+                (Format.asprintf "expected %s but got %s"
+                   (string_of_tx (expect_port, expect_packet))
+                   (string_of_tx tx_h))
+          else extract_first (tx_h :: acc) tx_t
+    in
+    match extract_first [] tx_output_queue with
+    | None ->
+        (* No output packet (yet) *)
         let expect_queue = expect_queue @ [ (tx_expect, exact) ] in
         (tx_output_queue, expect_queue)
-    (* There is an output packet *)
-    | tx_output :: tx_output_queue when compare_tx ~exact tx_output tx_expect ->
+    | Some (tx_output, tx_output_queue) ->
         Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
         (tx_output_queue, expect_queue)
-    | tx_output :: _ ->
-        error_stf
-          (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
-             (string_of_tx tx_output))
 
   let run_stf_stmt (value_ctx : Il.value) (value_arch : Il.value)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list)
