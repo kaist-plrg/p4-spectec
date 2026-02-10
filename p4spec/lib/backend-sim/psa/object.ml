@@ -69,7 +69,7 @@ module Counter = struct
 
   (* void count(in S index); *)
 
-  let count (value_ctx : Value.t) (value_sto : Value.t) (counter : t) :
+  let count (value_ctx : Value.t) (value_arch : Value.t) (counter : t) :
       t * Value.t * Value.t * Value.t =
     (* Get "index" *)
     let value_index = Spec.Func.find_var_e_local value_ctx "index" in
@@ -95,5 +95,5 @@ module Counter = struct
       let value_eps = wrap_opt_v "value" None in
       [ Term "RETURN"; NT value_eps ] #@ "returnResult"
     in
-    (counter, value_ctx, value_sto, value_callResult)
+    (counter, value_ctx, value_arch, value_callResult)
 end
