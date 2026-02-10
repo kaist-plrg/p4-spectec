@@ -4238,28 +4238,26 @@ xref:match_overloaded_named[Matching ``callTargetId`` ``+:+`` ``V`` against name
 
 . Let ``nameIR`` ``+(+`` ``id~param~^{asterisk}^`` ``+)+`` be ``callTargetId``.
 . If ``nameIR`` is equal to ``nameIR~f~``:
+ .. Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
+ .. Check that ``id~param~`` is equal to xref:id_of_parameterIR[the identifier of ``parameterIR``], for all ``id~param~`` in ``id~param~^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. If the length of ``id~param~^{asterisk}^`` is equal to the length of ``id~arg~^{asterisk}^``:
-  ... Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
-  ... Check that ``id~param~`` is equal to xref:id_of_parameterIR[the identifier of ``parameterIR``], for all ``id~param~`` in ``id~param~^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``.
   ... Let ``bool`` be xref:eq_set[``+{+`` ``id~param~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].
   ... Return xref:ite[``+MATCH+`` with defaults ``·`` and optionals ``·`` if ``bool`` otherwise ``+NOMATCH+``].
+ .. Let ``b~default~^{asterisk}^`` be the list of ``b~default~``, obtained by repeating:
++
+--
+  *** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+ .. Let ``b~optional~^{asterisk}^`` be the list of ``b~optional~``, obtained by repeating:
++
+--
+  *** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. If the length of ``id~param~^{asterisk}^`` is greater than the length of ``id~arg~^{asterisk}^``:
-  ... Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
-  ... Check that ``id~param~`` is equal to xref:id_of_parameterIR[the identifier of ``parameterIR``], for all ``id~param~`` in ``id~param~^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``.
-  ... Let ``b~default~^{asterisk}^`` be the list of ``b~default~``, obtained by repeating:
-+
---
-   **** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-  ... Let ``b~optional~^{asterisk}^`` be the list of ``b~optional~``, obtained by repeating:
-+
---
-   **** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
   ... Let ``+{+`` ``id~param_omitted~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~param~^{asterisk}^`` ``+}+`` and ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].
   ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
 +
@@ -4287,24 +4285,24 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:match_overloaded_unnamed[Matching ``callTargetId`` ``+:+`` ``V`` against unnamed key ``nameIR~f~`` ``+(+`` ``n~arg~`` ``+)+`` using parameter getter ``$get_parameterListIR``]
 
 
-. Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
-. Let ``b~default~^{asterisk}^`` be the list of ``b~default~``, obtained by repeating:
+. Let ``nameIR`` ``+(+`` ``id~param~^{asterisk}^`` ``+)+`` be ``callTargetId``.
+. If ``nameIR`` is equal to ``nameIR~f~``:
+ .. Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
+ .. Let ``b~default~^{asterisk}^`` be the list of ``b~default~``, obtained by repeating:
 +
 --
- ** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Let ``b~optional~^{asterisk}^`` be the list of ``b~optional~``, obtained by repeating:
-+
---
- ** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
+  *** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. If ``~xref:exists_[$exists_(b~default~^{asterisk}^)]`` ``/\`` ``xref:exists_[$exists_(b~optional~^{asterisk}^)]``:
- .. Let ``nameIR`` ``+(+`` ``id~param~^{asterisk}^`` ``+)+`` be ``callTargetId``.
- .. Check that ``nameIR`` is equal to ``nameIR~f~``.
+ .. Let ``b~optional~^{asterisk}^`` be the list of ``b~optional~``, obtained by repeating:
++
+--
+  *** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+ .. Check that ``~xref:exists_[$exists_(b~default~^{asterisk}^)]`` ``/\`` ``xref:exists_[$exists_(b~optional~^{asterisk}^)]``.
  .. If the length of ``id~param~^{asterisk}^`` is equal to ``n~arg~``:
   ... Return xref:callTargetMatch[``+MATCH+`` with defaults ``·`` and optionals ``·``].
  .. If the length of ``id~param~^{asterisk}^`` is greater than ``n~arg~``:

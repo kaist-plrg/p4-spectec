@@ -11214,23 +11214,30 @@ syntax namedCallTargetKey =
 syntax unnamedCallTargetKey = 
    | nameIR ( nat )
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:10.1-11.12
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:9.30-9.52
+syntax callTargetParameter = 
+   | nameIR # bool # bool
+
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:10.26-10.46
+syntax callTargetValue = callTargetParameter*
+
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:13.1-14.12
 syntax callTargetMatch = 
    | match id* id* hint(prose MATCH "with defaults" %0 and "optionals" %1)
    | nomatch
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:14.3-15.75
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:17.3-18.75
 syntax callResolution<V> = 
    | callableId : V # nameIR* # nameIR* hint(prose_fields "call target id" "call target" "defaults" "optionals")
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:17.1-18.54
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:20.1-21.54
 def $callTargetKey(nameIR_f, (argumentIR)*)
 
 1. (Let (id_arg)? be $callTargetKey'(argumentIR))*
 
 2. Return (nameIR_f ( ((id_arg)?)* ))
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:19.1-19.38
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:22.1-22.38
 def $callTargetKey'(argumentIR)
 
 1. Case analysis on argumentIR
@@ -11255,42 +11262,38 @@ def $callTargetKey'(argumentIR)
 
     1. Return ?()
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:34.1-39.82
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:37.1-42.82
 def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
 1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
 2. If ((nameIR = nameIR_f)), then
 
-  1. If ((|(id_param)*| = |(id_arg)*|)), then
+  1. (Let (parameterIR)* be $get_parameterListIR(V))
 
-    1. (Let (parameterIR)* be $get_parameterListIR(V))
+  2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
 
-    2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
+    1. If ((|(id_param)*| = |(id_arg)*|)), then
 
       1. Return $ite<callTargetMatch>($eq_set<id>(({ (id_param)* }), ({ (id_arg)* })), (match [] []), (nomatch))
 
-  2. If ((|(id_param)*| > |(id_arg)*|)), then
+    2. (Let b_default be $is_default_parameterIR(parameterIR))*
 
-    1. (Let (parameterIR)* be $get_parameterListIR(V))
+    3. (Let b_optional be $is_optional_parameterIR(parameterIR))*
 
-    2. If ((id_param = $id_of_parameterIR(parameterIR)))*, then
+    4. If ((|(id_param)*| > |(id_arg)*|)), then
 
-      1. (Let b_default be $is_default_parameterIR(parameterIR))*
+      1. (Let ({ (id_param_omitted)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
 
-      2. (Let b_optional be $is_optional_parameterIR(parameterIR))*
+      2. (Let (id_default_param)* be $filter_<id>((id_param)*, ($is_default_parameterIR(parameterIR))*))
 
-      3. (Let ({ (id_param_omitted)* }) be $diff_set<id>(({ (id_param)* }), ({ (id_arg)* })))
+      3. (Let (id_default)* be $filter_<id>((id_param_omitted)*, (id_param_omitted is in (id_default_param)*)*))
 
-      4. (Let (id_default_param)* be $filter_<id>((id_param)*, ($is_default_parameterIR(parameterIR))*))
+      4. (Let (id_optional_param)* be $filter_<id>((id_param)*, ($is_optional_parameterIR(parameterIR))*))
 
-      5. (Let (id_default)* be $filter_<id>((id_param_omitted)*, (id_param_omitted is in (id_default_param)*)*))
+      5. (Let (id_optional)* be $filter_<id>((id_param_omitted)*, (id_param_omitted is in (id_optional_param)*)*))
 
-      6. (Let (id_optional_param)* be $filter_<id>((id_param)*, ($is_optional_parameterIR(parameterIR))*))
-
-      7. (Let (id_optional)* be $filter_<id>((id_param_omitted)*, (id_param_omitted is in (id_optional_param)*)*))
-
-      8. If ($eq_set<id>(({ (id_default)* ++ (id_optional)* }), ({ (id_param_omitted)* }))), then
+      6. If ($eq_set<id>(({ (id_default)* ++ (id_optional)* }), ({ (id_param_omitted)* }))), then
 
         1. Return (match (id_default)* (id_optional)*)
 
@@ -11298,20 +11301,20 @@ def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $ge
 
   1. Return (nomatch)
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:97.1-102.84
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:106.1-111.84
 def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR)
 
-1. (Let (parameterIR)* be $get_parameterListIR(V))
+1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
-2. (Let b_default be $is_default_parameterIR(parameterIR))*
+2. If ((nameIR = nameIR_f)), then
 
-3. (Let b_optional be $is_optional_parameterIR(parameterIR))*
+  1. (Let (parameterIR)* be $get_parameterListIR(V))
 
-4. If (~($exists_((b_default)*) /\ $exists_((b_optional)*))), then
+  2. (Let b_default be $is_default_parameterIR(parameterIR))*
 
-  1. (Let (nameIR ( (id_param)* )) be callTargetId)
+  3. (Let b_optional be $is_optional_parameterIR(parameterIR))*
 
-  2. If ((nameIR = nameIR_f)), then
+  4. If (~($exists_((b_default)*) /\ $exists_((b_optional)*))), then
 
     1. If ((|(id_param)*| = n_arg)), then
 
@@ -11337,11 +11340,11 @@ def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_
 
           2. Return (match [] (id_optional)*)
 
-5. Otherwise
+3. Otherwise
 
   1. Return (nomatch)
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:182.1-187.95
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:194.1-199.95
 def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
@@ -11374,7 +11377,7 @@ def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )
 
 3. Else Phantom#461
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:228.1-233.97
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:240.1-245.97
 def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
@@ -11407,7 +11410,7 @@ def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $
 
 3. Else Phantom#465
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:274.1-279.84
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:286.1-291.84
 def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), $get_parameterListIR)
 
 1. If ((|((id_arg)?)*| > 0)), then
@@ -11456,7 +11459,7 @@ def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), 
 
 2. Else Phantom#472
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:339.1-340.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:351.1-352.21
 def $find_non_overloaded<V>(({ ((callableId : V))* }), nameIR_f)
 
 1. (Let ((callableId, V))* be $find_non_overloadeds<V>(({ ((callableId : V))* }), nameIR_f))
@@ -11471,7 +11474,7 @@ def $find_non_overloaded<V>(({ ((callableId : V))* }), nameIR_f)
 
   1. Return ?()
 
-;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:341.1-342.21
+;; ../../../../spec-concrete/4-p4-ir/4.2-ir-call-overload.watsup:353.1-354.21
 def $find_non_overloadeds<V>(set<pair<callableId, V>>, nameIR_f)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
