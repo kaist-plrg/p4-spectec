@@ -20,6 +20,7 @@ type port = string
 type packet = string
 type expect = string
 type exact = bool
+type session = number
 type arg = id * number
 type action = name * arg list
 type mtchkind = Num of number | Slash of number * number
@@ -32,8 +33,9 @@ type stmt =
   | Wait
   | RemoveAll
   | Expect of port * expect option * exact
-  | Packet of port * packet * exact
+  | Packet of port * packet
   | NoPacket
   | Add of name * int option * mtch list * action * id option
+  | MirroringAdd of session * port
   | SetDefault of name * action
   | CheckCounter of id * id_or_index * (ctr option * cond * number)

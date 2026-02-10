@@ -18,7 +18,7 @@ open Ast
 %}
 
 %token END
-%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT PACKET_WILDCARD
+%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT MIRRORING_ADD PACKET_WILDCARD
 %token<string> ID
 %token COLON COMMA DATA_TERN DOT
 %token<string> INT_CONST_DEC TERN_CONST_HEX INT_CONST_HEX INT_CONST_BIN DATA_DEC DATA_HEX
@@ -53,12 +53,12 @@ stmt:
     { Expect($2, None, true) }
   | EXPECT port
     { Expect($2, None, false) }
+  | MIRRORING_ADD session port
+    { MirroringAdd ($2, $3) }
   | NO_PACKET
     { NoPacket }
-  | PACKET port packet_data EXACT
-    { Packet($2, $3, true) }
   | PACKET port packet_data
-    { Packet($2, $3, false) }
+    { Packet($2, $3) }
   | SETDEFAULT qualified_name action
     { SetDefault($2, $3) }
   | REMOVE ALL
@@ -143,6 +143,10 @@ arg:
     { "add", $3 }
   | ID COLON number
     { $1, $3 }
+
+session:
+  | DATA_DEC
+    { $1 }
 
 port:
   | DATA_DEC

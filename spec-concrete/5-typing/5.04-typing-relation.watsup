@@ -7,21 +7,21 @@ extern relation ExternFunctionCall_eval_lctk:
   typingContext |- nameIR `( nameIR* ) ~> value
   hint(input %0 %1 %2)
   hint(testgen_ignore)
-  hint(prose_in "calling an extern function" %1#"("#%2#")" "under typing context" %0)
+  hint(prose_in "calling an extern function" %1#"("#%2#")" "under context" %0)
   hint(prose_out %3)
 
 relation Expr_eval_lctk:
   cursor typingContext |- typedExpressionIR ~> value
   hint(input %0 %1 %2)
   hint(testgen_ignore)
-  hint(prose_in "local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "local compile-time evaluation of" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 relation Argument_eval_lctk:
   cursor typingContext |- argumentIR ~> value
   hint(input %0 %1 %2)
   hint(testgen_ignore)
-  hint(prose_in "local compile-time evaluation of" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "local compile-time evaluation of" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 ;;
@@ -32,31 +32,31 @@ relation Argument_eval_lctk:
 relation Type_ok:
   cursor typingContext |- typeOrVoid : typeIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3 "and a set of fresh type variables" %4)
 
 relation TypeParameterListOpt_ok:
   cursor typingContext |- typeParameterListOpt : typingContext typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and type parameters" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and type parameters" %4)
 
 relation TypeArgument_ok:
   cursor typingContext |- typeArgument : typeArgumentIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3 "and a set of fresh type variables" %4)
 
 relation TypeArguments_ok:
   cursor typingContext |- typeArgument* : typeArgumentListIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3 "and a set of fresh type variables" %4)
 
 relation TypeArgumentList_ok:
   cursor typingContext |- typeArgumentList : typeArgumentListIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3 "and a set of fresh type variables" %4)
 
 ;;
@@ -67,27 +67,19 @@ relation Cast_expl: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be explicitly cast to" %1)
   hint(prose_false %0 "cannot be explicitly cast to" %1)
-relation Cast_expl_unroll: typeIR -> typeIR
+relation Cast_expl_neq: typeIR -> typeIR
   hint(input %0 %1)
-  hint(prose_true %0 "can be explicitly cast to" %1 "after unrolling")
-  hint(prose_false %0 "cannot be explicitly cast to" %1 "after unrolling")
-relation Cast_expl_unroll_neq: typeIR -> typeIR
-  hint(input %0 %1)
-  hint(prose_true %0 "can be explicitly cast to" %1 "when they are not the same type after unrolling")
-  hint(prose_false %0 "cannot be explicitly cast to" %1 "when they are not the same type after unrolling")
+  hint(prose_true %0 "can be explicitly cast to" %1 "(when unequal)")
+  hint(prose_false %0 "cannot be explicitly cast to" %1 "(when unequal)")
 
 relation Cast_impl: typeIR -> typeIR
   hint(input %0 %1)
   hint(prose_true %0 "can be implicitly cast to" %1)
   hint(prose_false %0 "cannot be implicitly cast to" %1)
-relation Cast_impl_unroll: typeIR -> typeIR
+relation Cast_impl_neq: typeIR -> typeIR
   hint(input %0 %1)
-  hint(prose_true %0 "can be implicitly cast to" %1 "after unrolling")
-  hint(prose_false %0 "cannot be implicitly cast to" %1 "after unrolling")
-relation Cast_impl_unroll_neq: typeIR -> typeIR
-  hint(input %0 %1)
-  hint(prose_true %0 "can be implicitly cast to" %1 "when they are not the same type after unrolling")
-  hint(prose_false %0 "cannot be implicitly cast to" %1 "when they are not the same type after unrolling")
+  hint(prose_true %0 "can be implicitly cast to" %1 "(when unequal)")
+  hint(prose_false %0 "cannot be implicitly cast to" %1 "(when unequal)")
 
 ;;
 ;;;; Expression typing
@@ -96,7 +88,7 @@ relation Cast_impl_unroll_neq: typeIR -> typeIR
 relation Expr_ok:
   cursor typingContext |- expression : typedExpressionIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 ;;
@@ -106,13 +98,13 @@ relation Expr_ok:
 relation Argument_ok:
   cursor typingContext |- argument : argumentIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 relation ArgumentList_ok:
   cursor typingContext |- argumentList : argumentListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 ;;
@@ -122,7 +114,7 @@ relation ArgumentList_ok:
 relation Lvalue_ok:
   cursor typingContext |- lvalue : typedLvalueIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
   hint(prose_out %3)
 
 ;;
@@ -138,10 +130,10 @@ relation Stmt_ok:
                                       : typingContext flow statementIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in
-        "typing" %4#", under cursor" %0#", typing context"
+        "typing" %4#", under cursor" %0#", context"
         %1#", abstract control flow" %2#", and loop context" %3)
   hint(prose_out
-        "\nthe updated typing context" %5#", abstract control flow" %6#
+        "\nthe updated context" %5#", abstract control flow" %6#
         ", and" %7)
 
 relation BlockElementStmt_ok:
@@ -149,10 +141,10 @@ relation BlockElementStmt_ok:
                                : typingContext flow blockElementStatementIR
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %3#", under typing context"
+        "typing" %3#", under context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe updated typing context" %4#", abstract control flow" %5#
+        "\nthe updated context" %4#", abstract control flow" %5#
         ", and" %6)
 
 relation BlockElementStmtList_ok:
@@ -160,20 +152,20 @@ relation BlockElementStmtList_ok:
                                : typingContext flow blockElementStatementIR*
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %3#", under typing context"
+        "typing" %3#", under context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe updated typing context" %4#", abstract control flow" %5#", and" %6)
+        "\nthe updated context" %4#", abstract control flow" %5#", and" %6)
 
 relation Block_ok:
   typingContext flow loopctxt |- blockStatement
                                : typingContext flow blockStatementIR
   hint(input %0 %1 %2 %3)
   hint(prose_in
-        "typing" %3#", under typing context"
+        "typing" %3#", under context"
         %0#", abstract control flow" %1#", and loop context" %2)
   hint(prose_out
-        "\nthe updated typing context" %4#", abstract control flow"
+        "\nthe updated context" %4#", abstract control flow"
         %5#", and" %6)
 
 ;;
@@ -185,24 +177,24 @@ relation Parameter_ok:
   cursor typingContext |- parameter
                         : typingContext parameterIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3#
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3#
                  ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ParameterList_ok:
   cursor typingContext |- parameterList
                         : typingContext parameterListIR `# typeId*
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3#
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3#
                  ",\n" %4#", and a set of fresh type variables" %5)
 
 relation ConstructorParameterListOpt_ok:
   typingContext |- constructorParameterListOpt
                  : typingContext constructorParameterListIR `# typeId*
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the updated typing context" %2#
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "the updated context" %2#
                  ",\n" %3#", and a set of fresh type variables" %4)
 
 ;;
@@ -257,63 +249,69 @@ relation ExternMethod_ok:
   typingContext typeId |- externMethodPrototype
                         : externMethodPrototypeIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
+  hint(prose_in "typing" %2#", under context" %0 "for an extern object" %1)
   hint(prose_out %3)
 
 relation ExternConstructor_ok:
   typingContext typeId |- externConstructorPrototype
                         : externConstructorPrototypeIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "for an extern object" %1)
+  hint(prose_in "typing" %2#", under context" %0 "for an extern object" %1)
   hint(prose_out %3)
 
 ;;
 ;;;; Parser typing
 ;;
 
+relation ParserSelect_ok:
+  typingContext nameIR* |- selectExpression : selectExpressionIR
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under context" %0 "and parser state names" %1)
+  hint(prose_out "the typed transition statement" %3)
+
 relation ParserTransition_ok:
   typingContext nameIR* |- transitionStatement : transitionStatementIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and parser state names" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and parser state names" %1)
   hint(prose_out "the typed transition statement" %3)
 
 relation ParserStmt_ok:
   typingContext |- parserStatement : typingContext parserStatementIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed parser statement" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed parser statement" %3)
 
 relation ParserStmtList_ok:
   typingContext |- parserStatementList : typingContext parserStatementIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed parser statements" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed parser statements" %3)
 
 relation ParserState_ok:
   typingContext nameIR* |- parserState : parserStateIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and parser state names" %1)
-  hint(prose_out "the typed parser state" %3)
+  hint(prose_in "typing" %2#", under context" %0 "and parser state names" %1)
+  hint(prose_out %3)
 
 relation ParserStateList_ok:
   typingContext |- parserStateList : parserStateIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the typed parser states" %2)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out %2)
 
 relation ParserLocalDecl_ok:
   typingContext |- parserLocalDeclaration
                  : typingContext parserLocalDeclarationIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed parser local declaration" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed parser local declaration" %3)
 
 relation ParserLocalDeclList_ok:
   typingContext |- parserLocalDeclarationList
                  : typingContext parserLocalDeclarationIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed parser local declarations" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed parser local declarations" %3)
 
 ;;
 ;;;; Control typing
@@ -322,116 +320,116 @@ relation ParserLocalDeclList_ok:
 relation TableKey_ok:
   typingContext tableContext |- tableKey : tableContext tableKeyIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table key" %4)
 
 relation TableKeys_ok:
   typingContext tableContext |- tableKey* : tableContext tableKeyListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table keys" %4)
 
 relation Call_action_partial_ok:
   typingContext |- parameterIR* `@ argumentListIR
                  : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0)
+  hint(prose_in "typing" %2#", under context" %0)
   hint(prose_out "the typed argument list" %3)
 
 relation TableAction_ok:
   typingContext tableContext |- tableAction : tableContext tableActionIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table action" %4)
 
 relation TableActions_ok:
   typingContext tableContext |- tableAction* : tableContext tableActionListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table actions" %4)
 
 relation Call_action_default_ok:
   typingContext |- parameterIR* `@ argumentListIR
                  : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0)
+  hint(prose_in "typing" %2#", under context" %0)
   hint(prose_out "the typed argument list" %3)
 
 relation TableDefaultAction_ok:
   typingContext tableContext |- initializer : tableActionReferenceIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the typed default action" %3)
 
 relation TableEntry_keyset_ok:
   typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed keyset expression" %4)
 
 relation TableEntry_action_ok:
   typingContext tableContext |- tableActionReference : tableActionReferenceIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the typed table action reference" %3)
 
 relation TableEntry_priority_ok:
   typingContext tableContext tableEntryState |- tableEntryPriority?
                                               : tableContext tableEntryPriorityOptIR
   hint(input %0 %1 %2 %3)
-  hint(prose_in "typing" %3#", under typing context" %0 "and table context" %1
+  hint(prose_in "typing" %3#", under context" %0 "and table context" %1
              #", and table entry state" %2)
   hint(prose_out "the updated table context" %4 "and the typed table entry priority" %5)
 
 relation TableEntry_ok:
   typingContext tableContext |- tableEntry : tableContext tableEntryIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table entry" %4)
 
 relation TableEntries_ok:
   typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table entries" %4)
 
 relation TableProperty_ok:
   typingContext tableContext |- tableProperty : tableContext tablePropertyIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table property" %4)
 
 relation TableProperties_ok:
   typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
   hint(prose_out "the updated table context" %3 "and the typed table properties" %4)
 
 relation Table_ok:
   typingContext |- tableProperty* : tableContext tablePropertyListIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed table" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed table" %3)
 
 relation TableType_ok:
   typingContext tableContext |- name : typingContext typeIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under typing context" %0 "and table context" %1)
-  hint(prose_out "the updated typing context" %3 "and the table type" %4)
+  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
+  hint(prose_out "the updated context" %3 "and the table type" %4)
 
 relation ControlLocalDecl_ok:
   typingContext |- controlLocalDeclaration
                  : typingContext controlLocalDeclarationIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed control local declaration" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed control local declaration" %3)
 
 relation ControlLocalDeclList_ok:
   typingContext |- controlLocalDeclarationList
                  : typingContext controlLocalDeclarationIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and the typed control local declarations" %3)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out "the updated context" %2 "and the typed control local declarations" %3)
 
 ;;
 ;;;; Declaration typing
@@ -441,48 +439,48 @@ relation VarDecl_ok:
   cursor typingContext |- variableDeclaration
                         : typingContext variableDeclarationIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and" %4)
 
 relation ConstDecl_ok:
   cursor typingContext |- constantDeclaration
                         : typingContext constantDeclarationIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and" %4)
 
 relation InstDecl_ok:
   cursor typingContext |- instantiation
                         : typingContext instantiationIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and" %4)
 
 relation FuncDecl_ok:
   cursor typingContext |- functionDeclaration
                         : typingContext functionDeclarationIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and" %4)
 
 relation ActionDecl_ok:
   cursor typingContext |- actionDeclaration
                         : typingContext actionDeclarationIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the updated typing context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under cursor" %0 "and context" %1)
+  hint(prose_out "the updated context" %3 "and" %4)
 
 relation Decl_ok:
   typingContext |- declaration : typingContext declarationIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and" %3)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 relation Decls_ok:
   typingContext |- declaration* : typingContext declarationIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and" %3)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 relation Program_ok:
   |- p4program : p4programIR
@@ -505,21 +503,21 @@ relation Call_convention_expr_ok:
                                 : typedExpressionIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter type" %3
-             #", under cursor" %0#", typing context" %1 #", and action context" %2)
+             #", under cursor" %0#", context" %1 #", and action context" %2)
 
 relation Call_convention_argument_ok:
   cursor typingContext actctxt |- parameterIR `@ argumentIR
                                 : argumentIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter type" %3
-             #", under cursor" %0#", typing context" %1 #", and action context" %2)
+             #", under cursor" %0#", context" %1 #", and action context" %2)
 
 relation Call_convention_ok:
   cursor typingContext actctxt |- parameterIR* `@ argumentListIR
                                 : argumentListIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking the calling convention of" %4 "applied to parameter types" %3
-             #", under cursor" %0#", typing context" %1 #", and action context" %2)
+             #", under cursor" %0#", context" %1 #", and action context" %2)
 
 ;;
 ;;;; Callable typing
@@ -527,7 +525,7 @@ relation Call_convention_ok:
 
 ;; Finds the type of a callable target,
 ;; inserts fresh type variables for parameters with don't care types, (typeId*)
-;; and also identifies the ids of default arguments (id*)
+;; and also identifies the ids of default/optional arguments (id*)
 
 dec $is_static_callableTypeIR(callableTypeIR) : ctk
   hint(prose_in "the compile-time known-ness of" %0)
@@ -550,22 +548,23 @@ def $is_static_assert_callableTypeIR(_) = false
 relation CallableTarget_ok:
   cursor typingContext |- callableTarget : callableTargetIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and context" %1)
   hint(prose_out "the typed callable target" %3)
 
 relation CallableTarget_lvalue_ok:
   cursor typingContext |- lvalue : callableTargetIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2 "as a callable target, under cursor" %0 "and context" %1)
   hint(prose_out "the typed callable target" %3)
 
 relation CallableType_ok:
   cursor typingContext |- callableTargetIR `< typeArgumentListIR > `( argumentIR* )
-                        : callableTypeIR `< `# typeId* > `( `# id* )
+                        : callableTypeIR `< `# typeId* > `( `# id* `# id* )
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "finding the type of callable call" %2 `< %3 > `( %4 ) #", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the callable type" %5 "with fresh type variables" %6
-            "and default parameters" %7)
+  hint(prose_in "finding the type of callable call" %2 `< %3 > `( %4 )#
+                ", under cursor" %0 "and context" %1)
+  hint(prose_out "the callable type" %5 "with fresh type variables" %6#
+                 ", defaults" %7 "and optionals" %8)
 
 ;; Checks that an action/function/method invocation is valid,
 ;; gets the return type,
@@ -574,14 +573,14 @@ relation CallableType_ok:
 
 relation Call_ok:
   cursor typingContext |- callableTypeIR `< typeArgumentListIR `# typeId* >
-                            `( argumentListIR `# id* )
+                            `( argumentListIR `# id* `# id* )
                         : typeIR `< typeArgumentListIR > `( argumentListIR )
-  hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "typing the invocation" %2 `< %3 > `( %5 ) "with omitted type arguments"
-             %4 "and omitted arguments" %6
-             ", under cursor" %0 "and typing context" %1)
-  hint(prose_out "the return type" %7 "with inferred type arguments" %8
-             "and the casted argument list" %9)
+                %4#", defaults" %6 "and optionals" %7#
+                ", under cursor" %0 "and context" %1)
+  hint(prose_out "the return type" %8 "with inferred type arguments" %9
+                  "and the casted argument list" %10)
 
 ;;
 ;;;; Constructor typing
@@ -589,16 +588,16 @@ relation Call_ok:
 
 ;; Finds the type of a constructor,
 ;; inserts fresh type variables for parameters with don't care types, (typeId*)
-;; and also identifies the ids of default arguments (id*)
+;; and also identifies the ids of default/optional arguments (id*)
 
 relation ConstructorType_ok:
   cursor typingContext |- constructorTargetIR `( argumentIR* )
-                        : constructorTypeIR `< `# typeId* > `( `# id* )
+                        : constructorTypeIR `< `# typeId* > `( `# id* `# id* )
   hint(input %0 %1 %2 %3)
   hint(prose_in "finding the type of constructor call"
-                %2 `( %3 ) #", under cursor" %0 "and typing context" %1)
-  hint(prose_out %4 "with fresh type variables" %5
-                 "and default parameters" %6)
+                %2 `( %3 ) #", under cursor" %0 "and context" %1)
+  hint(prose_out %4 "with fresh type variables" %5#
+                 ", defaults" %6 "and optionals" %7)
 
 ;; Checks that a constructor invocation is valid,
 ;; gets the return type,
@@ -608,14 +607,14 @@ relation ConstructorType_ok:
 syntax instctxt = NAMED | ANON
 
 relation Inst_ok:
-  cursor typingContext instctxt |- constructorTypeIR
-                                    `< typeArgumentListIR `# typeId* > `( argumentListIR `# id* )
-                                 : typeIR
-                                    `< typeArgumentListIR > `( argumentListIR )
-  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  cursor typingContext instctxt
+  |- constructorTypeIR `< typeArgumentListIR `# typeId* >
+      `( argumentListIR `# id* `# id* )
+  : typeIR `< typeArgumentListIR > `( argumentListIR )
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
   hint(prose_in "typing the instantiation" %3 `< %4 > `( %6 ) "with omitted type arguments"
-             %5 "and omitted arguments" %7
-             ", under cursor" %0#", typing context" %1
+             %5#", defaults" %7 "and optionals" %8
+             ", under cursor" %0#", context" %1
              #", and" %2 "instantiation site context")
-  hint(prose_out "constructed type" %8 "with inferred" %9
-                 "and cast-inserted" %10)
+  hint(prose_out "constructed type" %9 "with inferred" %10
+                 "and cast-inserted" %11)

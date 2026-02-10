@@ -375,12 +375,21 @@ let _clone (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t =
    resubmit_preserving_field_list(2) will only preserve field y.
 
    extern void resubmit_preserving_field_list(bit<8> index); *)
-let resubmit_preserving_field_list (value_ctx_caller : Value.t)
-    (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t * Value.t =
+let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
   let value_index = Spec.Func.find_var_e_local value_ctx "index" in
-  (* handle post-resubmit logic in pipe *)
-  raise
-    (Exception.Resubmit (value_ctx_caller, value_ctx, value_sto, value_index))
+  (* write resubmit index in arch state *)
+  let value_arch_state =
+    value_sto |> Spec.Func.find_archState_e |> Arch.of_value
+    |> Arch.with_resubmit (Packet.ResubmitInfo.of_value value_index)
+    |> Arch.to_value
+  in
+  let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
 
 (* Calling recirculate_preserving_field_list during execution of the
    egress control will cause the packet to be recirculated, i.e. it
@@ -444,10 +453,26 @@ let _recirculate_preserving_field_list (_value_ctx : Value.t)
 
    extern void clone_preserving_field_list(in CloneType type,
                                            in bit<32> session, bit<8> index); *)
-let _clone_preserving_field_list (_value_ctx : Value.t) (_value_sto : Value.t) :
-    Value.t * Value.t =
-  error_no_region
-    "extern function clone_preserving_field_list is not implemented"
+let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
+    Value.t * Value.t * Value.t =
+  let arch_state = Spec.Func.find_archState_e value_sto |> Arch.of_value in
+  let value_type = Spec.Func.find_var_e_local value_ctx "type" in
+  let value_session = Spec.Func.find_var_e_local value_ctx "session" in
+  let value_index = Spec.Func.find_var_e_local value_ctx "index" in
+  let packet_clone =
+    Packet.CloneInfo.of_value (value_type, value_session, value_index)
+  in
+  (* mark arch state with clone information *)
+  let value_arch_state =
+    arch_state |> Arch.with_clone packet_clone |> Arch.to_value
+  in
+  let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
+  (* Return void *)
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+  in
+  (value_ctx, value_sto, value_callResult)
 
 let _truncate (_value_ctx : Value.t) (_value_sto : Value.t) : Value.t * Value.t
     =

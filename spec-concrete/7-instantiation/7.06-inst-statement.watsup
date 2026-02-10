@@ -31,12 +31,12 @@ rule DirectApplicationStmt_inst:
       = constructorTargetIR
   -- Constructor_inst:
       p IC |- prefixedNameIR `< typeArgumentListIR > `( eps )
-            : constructorDef `< typeArgumentListIR_inst > `( `# eps )
+            : constructorDef `< typeArgumentListIR_inst > `( `# id_default* `# id_optional* )
   -- if typeId = $flatten_prefixedNameIR(prefixedNameIR)
   -- if IC_callee = $enter_path_i(IC, typeId)
   -- Constructor_call:
       p IC_callee STO_0 |- constructorDef `< typeArgumentListIR_inst >
-                            `( eps `# eps )
+                            `( eps `# id_default* `# id_optional* )
                          : STO_1 object
   ---- ;; assign new typeId with random string appended
   -- if typeId_fresh = $fresh_typeId()

@@ -399,12 +399,7 @@ typeRef:
 typeOrVoid:
 	| t = typeRef { t }
 	| VOID { [ Term "VOID" ] #@ "typeOrVoid" }
-  (* From Petr4: HACK for generic return type *)
-	| id = identifier
-    { match flatten_case_v_opt id with
-      | Some ("identifier", [ [ "`ID" ]; [] ], [ value_text ]) ->
-          [ Term "`TID"; NT value_text ] #@ "typeIdentifier"
-      | _ -> failwith "@typeOrVoid: expected identifier" }
+  | id = identifier { id }
 ;
 
 (* Type parameters *)

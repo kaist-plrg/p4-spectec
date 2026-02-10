@@ -146,14 +146,16 @@ def $add_typeDef_i(GLOBAL, IC, typeId, typeDefIR)
 
 ;;; Adder for parser states
 
-dec $add_state_i(instContext, nameIR, state) : instContext
+dec $add_parserState_i(instContext, nameIR, parserStateIR) : instContext
   hint(prose_in %0 "where" %1 "to" %2 "is added")
 
-def $add_state_i(IC, nameIR, state)
+def $add_parserState_i(IC, nameIR, parserStateIR)
   = IC[ .BLOCK.STATE = stateEnv ]
-  -- if ~$in_set<nameIR>(nameIR, $dom_map<nameIR, state>(IC.BLOCK.STATE))
+  -- if ~$in_set<nameIR>(
+          nameIR,
+          $dom_map<nameIR, parserStateIR>(IC.BLOCK.STATE))
   -- if stateEnv
-      = $add_map<nameIR, state>(IC.BLOCK.STATE, nameIR, state)
+      = $add_map<nameIR, parserStateIR>(IC.BLOCK.STATE, nameIR, parserStateIR)
 
 ;;; Adder for type variables
 
@@ -264,7 +266,7 @@ def $find_typeDef_i(_, IC, `. nameIR)
 ;;; Finder for constructor definitions
 
 dec $find_constructorDef_i(instContext, prefixedNameIR, argumentIR*)
-  : (callableId, constructorDef, id*)?
+  : callResolution<constructorDef>?
   hint(prose_in "the overloaded constructor definition of" %1 `( %2 ) "in" %0)
 
 def $find_constructorDef_i(IC, `` nameIR, argumentIR*)

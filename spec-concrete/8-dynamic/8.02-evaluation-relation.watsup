@@ -34,11 +34,11 @@ syntax expressionResult =
   | abortResult
 
 relation Expr_eval:
-  cursor evalContext store |- typedExpressionIR
-                            : evalContext store expressionResult
+  cursor evalContext arch |- typedExpressionIR
+                           : evalContext arch expressionResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %4#", store" %5#" and" %6)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %4#", state" %5#" and" %6)
 
 syntax expressionListResult =
   | continueResult<value*>
@@ -46,28 +46,30 @@ syntax expressionListResult =
   | exitResult
 
 relation Exprs_eval:
-  cursor evalContext store |- typedExpressionIR*
-                            : evalContext store expressionListResult
+  cursor evalContext arch |- typedExpressionIR*
+                           : evalContext arch expressionListResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %4#", store" %5#" and" %6)
+  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %4#", state" %5#" and" %6)
 
 syntax keysetExpressionResult =
   | continueResult<setValue*>
   | abortResult
 
 relation Expr_eval_keyset:
-  evalContext store |- keysetExpressionIR
-                     : evalContext store keysetExpressionResult
+  evalContext arch |- keysetExpressionIR
+                    : evalContext arch keysetExpressionResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %3#", state" %4#", and result" %5)
 
 ;;
 ;;;; Argument evaluation
 ;;
 
 relation Argument_eval:
-  cursor evalContext store |- argumentIR
-                            : evalContext store expressionResult
+  cursor evalContext arch |- argumentIR
+                           : evalContext arch expressionResult
   hint(input %0 %1 %2 %3)
 
 syntax storageReferenceResult =
@@ -75,8 +77,8 @@ syntax storageReferenceResult =
   | abortResult
 
 relation Argument_eval_lvalue:
-  cursor evalContext store |- argumentIR
-                            : evalContext store storageReferenceResult
+  cursor evalContext arch |- argumentIR
+                           : evalContext arch storageReferenceResult
   hint(input %0 %1 %2 %3)
 
 ;;
@@ -84,25 +86,25 @@ relation Argument_eval_lvalue:
 ;;
 
 relation Lvalue_eval:
-  cursor evalContext store |- typedLvalueIR
-                            : evalContext store storageReferenceResult
+  cursor evalContext arch |- typedLvalueIR
+                           : evalContext arch storageReferenceResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %4#", store" %5#
+  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %4#", state" %5#
                ", and result" %6)
 
 relation Lvalue_read:
-  cursor evalContext store |- storageReference : value
+  cursor evalContext arch |- storageReference : value
   hint(input %0 %1 %2 %3)
-  hint(prose_in "reading from" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
+  hint(prose_in "reading from" %3#", under cursor" %0#", context" %1#", and state" %2)
   hint(prose_out "the value" %4)
 
 relation Lvalue_write:
-  cursor evalContext store |- storageReference -> value
+  cursor evalContext arch |- storageReference -> value
                             : evalContext
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "writing" %4#" to" %3#", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %5)
+  hint(prose_in "writing" %4#" to" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %5)
 
 ;;
 ;;;; Statement evaluation
@@ -125,40 +127,40 @@ syntax statementResult =
   | forResult
 
 relation Stmt_eval:
-  cursor evalContext store |- statementIR
-                            : evalContext store statementResult
+  cursor evalContext arch |- statementIR
+                           : evalContext arch statementResult
   hint(input %0 %1 %2 %3)
   hint(prose_in "runtime evaluation of" %3#
-                ", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "\nthe updated evaluation context" %4#
-                 ", store" %5#", and" %6)
+                ", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "\nthe updated context" %4#
+                 ", state" %5#", and" %6)
 
 relation BlockElementStmt_eval:
-  evalContext store |- blockElementStatementIR
-                     : evalContext store statementResult
+  evalContext arch |- blockElementStatementIR
+                    : evalContext arch statementResult
   hint(input %0 %1 %2)
   hint(prose_in "runtime evaluation of" %2#
-                ", under evaluation context" %0#", and store" %1)
-  hint(prose_out "\nthe updated evaluation context" %3#
-                 ", store" %4#", and" %5)
+                ", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and" %5)
 
 relation BlockElementStmtList_eval:
-  evalContext store |- blockElementStatementListIR
-                     : evalContext store statementResult
+  evalContext arch |- blockElementStatementListIR
+                     : evalContext arch statementResult
   hint(input %0 %1 %2)
   hint(prose_in "runtime evaluation of" %2#
-                ", under evaluation context" %0#", and store" %1)
-  hint(prose_out "\nthe updated evaluation context" %3#
-                 ", store" %4#", and" %5)
+                ", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and" %5)
 
 relation Block_eval:
-  evalContext store |- blockStatementIR
-                     : evalContext store statementResult
+  evalContext arch |- blockStatementIR
+                    : evalContext arch statementResult
   hint(input %0 %1 %2)
   hint(prose_in "runtime evaluation of" %2#
-                ", under evaluation context" %0#", and store" %1)
-  hint(prose_out "\nthe updated evaluation context" %3#
-                 ", store" %4#", and" %5)
+                ", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and" %5)
 
 ;;
 ;;;; Parser evaluation
@@ -169,44 +171,83 @@ syntax parserStatementResult =
   | rejectTransitionResult
 
 relation ParserStmt_eval:
-  evalContext store |- parserStatementIR
-                     : evalContext store parserStatementResult
+  evalContext arch |- parserStatementIR
+                    : evalContext arch parserStatementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0 "and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and" %5)
 
 relation ParserStmts_eval:
-  evalContext store |- parserStatementListIR
-                     : evalContext store parserStatementResult
+  evalContext arch |- parserStatementListIR
+                    : evalContext arch parserStatementResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0 "and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and" %5)
 
 syntax transitionResult =
   | acceptTransitionResult
   | rejectTransitionResult
   | stateTransitionResult
 
-relation ParserTransition_eval:
-  evalContext store |- transitionStatementIR 
-                     : evalContext store transitionResult
+relation ParserSelect_eval:
+  evalContext arch |- selectExpressionIR
+                    : evalContext arch transitionResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and" %5)
+
+relation ParserTransition_eval:
+  evalContext arch |- transitionStatementIR 
+                    : evalContext arch transitionResult
+  hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and" %5)
 
 relation ParserState_eval:
-  evalContext store |- state
-                     : evalContext store transitionResult
+  evalContext arch |- parserStateIR
+                    : evalContext arch transitionResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser state" %2#
+                ", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and" %5)
 
 relation ParserState_trans:
-  evalContext store |- TRANSITION nameIR
-                     : evalContext store transitionResult
+  evalContext arch |- TRANSITION nameIR
+                    : evalContext arch transitionResult
   hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of parser transition" %2#
+                ", under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and" %5)
+
+syntax parserDeclarationResult = parserStatementResult
 
 relation ParserLocalDecl_eval:
-  evalContext store |- parserLocalDeclarationIR
-                     : evalContext store parserStatementResult
+  evalContext arch |- parserLocalDeclarationIR
+                    : evalContext arch parserDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser local declaration" %2#
+                ", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and result" %5)
 
 relation ParserLocalDecls_eval:
-  evalContext store |- parserLocalDeclarationIR*
-                     : evalContext store parserStatementResult
+  evalContext arch |- parserLocalDeclarationIR*
+                    : evalContext arch parserDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating parser local declarations" %2#
+                ", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %3#
+                 ", state" %4#", and result" %5)
 
 ;;
 ;;;; Control evaluation
@@ -217,8 +258,8 @@ syntax tableResult =
   | returnResult
 
 relation Table_eval:
-  evalContext store |- typeId tableObjectProperty
-                     : evalContext store tableResult
+  evalContext arch |- typeId tableObjectProperty
+                    : evalContext arch tableResult
   hint(input %0 %1 %2 %3)
 
 syntax controlBodyResult =
@@ -226,8 +267,8 @@ syntax controlBodyResult =
   | returnResult
 
 relation ControlBody_eval:
-  evalContext store |- controlBodyIR
-                     : evalContext store controlBodyResult
+  evalContext arch |- controlBodyIR
+                    : evalContext arch controlBodyResult
   hint(input %0 %1 %2)
 
 syntax controlLocalDeclarationResult =
@@ -235,13 +276,13 @@ syntax controlLocalDeclarationResult =
   | exitResult
 
 relation ControlLocalDecl_eval:
-  evalContext store |- controlLocalDeclarationIR
-                     : evalContext store controlLocalDeclarationResult
+  evalContext arch |- controlLocalDeclarationIR
+                    : evalContext arch controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 relation ControlLocalDecls_eval:
-  evalContext store |- controlLocalDeclarationIR*
-                     : evalContext store controlLocalDeclarationResult
+  evalContext arch |- controlLocalDeclarationIR*
+                    : evalContext arch controlLocalDeclarationResult
   hint(input %0 %1 %2)
 
 ;;
@@ -253,13 +294,13 @@ syntax declarationResult =
   | abortResult
 
 relation VarDecl_eval:
-  cursor evalContext store |- variableDeclarationIR
-                            : evalContext store declarationResult
+  cursor evalContext arch |- variableDeclarationIR
+                           : evalContext arch declarationResult
   hint(input %0 %1 %2 %3)
   hint(prose_in "evaluating" %3#", under cursor" %0#
-                ", evaluation context" %1#", and store" %2)
-  hint(prose_out "\nthe updated evaluation context" %4#
-                 ", store" %5#
+                ", context" %1#", and state" %2)
+  hint(prose_out "\nthe updated context" %4#
+                 ", state" %5#
                  ",\nand the result" %6)
 
 relation ConstDecl_eval:
@@ -267,8 +308,8 @@ relation ConstDecl_eval:
                       : evalContext
   hint(input %0 %1 %2)
   hint(prose_in "evaluating" %2#", under cursor" %0#
-                ", and evaluation context" %1)
-  hint(prose_out "the updated evaluation context" %3)
+                ", and context" %1)
+  hint(prose_out "the updated context" %3)
 
 ;;
 ;;;; Call evaluation
@@ -279,22 +320,22 @@ syntax calleeResult =
   | abortResult
 
 relation Callee_eval:
-  cursor evalContext store |- callableTargetIR `< `_ > `( argumentListIR )
-                            : evalContext store calleeResult
+  cursor evalContext arch |- callableTargetIR `< `_ > `( argumentListIR )
+                           : evalContext arch calleeResult
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "finding the callee" %3 `( %4 )#
-                ", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %5#", store" %6#", and callee" %7)
+                ", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %5#", state" %6#", and callee" %7)
 
 syntax copyInArgumentResult =
   | continueResult<storageReference?>
   | abortResult
 
 relation Copy_in_argument:
-  store |-
+  arch |-
     cursor evalContext parameterIR
     `@ cursor evalContext argumentIR
-  ~> store evalContext evalContext `# copyInArgumentResult
+  ~> arch evalContext evalContext `# copyInArgumentResult
   hint(input %0 %1 %2 %3 %4 %5 %6)
   
 syntax copyInResult =
@@ -302,53 +343,64 @@ syntax copyInResult =
   | abortResult
 
 relation Copy_in:
-  cursor store |-
+  cursor arch |-
     cursor evalContext parameterListIR
     `@ cursor evalContext argumentListIR
-  ~> store evalContext evalContext `# copyInResult
+  ~> arch evalContext evalContext `# copyInResult
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "copy-in from" %7 "in" %5 "layer of" %6
+                "to" %4 "in" %2 "layer of" %3#
+                ", under cursor" %0 "and state" %1)
+  hint(prose_out "\nthe updated state" %8#
+                 "\n, caller's context" %9#
+                 "\n, callee's context" %10#
+                 "\n, and the copy-in result" %11)
 
 relation Copy_in_default:
-  parameterListIR `@ cursor evalContext parameterInitializerIR*
+  parameterListIR `@ cursor evalContext
   ~> evalContext
-  hint(input %0 %1 %2 %3)
+  hint(input %0 %1 %2)
+  hint(prose_in "copying defaults for" %0#
+                ", under context" %1 "and context" %2)
+  hint(prose_out %3)
 
 relation Copy_out_argument:
-  store |-
+  arch |-
      cursor evalContext parameterIR
      `@ cursor evalContext storageReference?
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
 
 relation Copy_out:
-  cursor store |-
+  cursor arch |-
     cursor evalContext parameterListIR
     `@ cursor evalContext storageReference?*
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "copy-out from" %4 "in" %2 "layer of" %3
+                "to" %7 "in" %5 "layer of" %6#
+                ", under cursor" %0 "and state" %1)
+  hint(prose_out %8)
 
 relation Call_eval:
-  cursor evalContext store |- callee `@ `< typeArgumentListIR >
-                                        `( argumentListIR )
-                            : evalContext store callResult
+  cursor evalContext arch |- callee `@ `< typeArgumentListIR >
+                                       `( argumentListIR )
+                           : evalContext arch callResult
   hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under cursor" %0#", evaluation context" %1#", and store" %2)
-  hint(prose_out "the updated evaluation context" %6#", store" %7#", and call result" %8)
+  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_out "the updated context" %6#", state" %7#", and call result" %8)
 
 extern relation ExternFunctionCall_eval:
-  evalContext evalContext store |- nameIR `( nameIR* )
-                                 : evalContext store callResult
-  hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "calling an extern function" %3 `( %4 )#
-                ", under caller's evaluation context" %0#
-                ", evaluation context" %1#
-                ", and store" %2)
-  hint(prose_out "the updated evaluation context" %5#", store" %6#", and call result" %7)
+  evalContext arch |- nameIR `( nameIR* )
+                    : evalContext arch callResult
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "calling an extern function" %2 `( %3 ) #", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %4#", state" %5#", and call result" %6)
 
 extern relation ExternMethodCall_eval:
-  evalContext store |- objectId `. nameIR `( nameIR* )
-                     : evalContext store callResult
+  evalContext arch |- objectId `. nameIR `( nameIR* )
+                    : evalContext arch callResult
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "calling an extern method" %3 `( %4 ) "on object"
-                %2#", under evaluation context" %0#", and store" %1)
-  hint(prose_out "the updated evaluation context" %5#", store" %6#", and call result" %7)
+                %2#", under context" %0#", and state" %1)
+  hint(prose_out "the updated context" %5#", state" %6#", and call result" %7)

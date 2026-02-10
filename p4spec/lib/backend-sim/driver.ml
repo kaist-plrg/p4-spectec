@@ -54,28 +54,28 @@ module Make
 
   (* STF test runner *)
 
-  let on_tx_output (tx_opt : IO.tx option) (tx_output_queue : IO.tx list)
+  let on_tx_output (txs : IO.tx list) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
-    match tx_opt with
+    match txs with
     (* Packet was transmitted *)
-    | Some tx -> (
+    | tx_h :: tx_t -> (
         match expect_queue with
         (* No expected packet (yet) *)
         | [] ->
-            let tx_output_queue = tx_output_queue @ [ tx ] in
+            let tx_output_queue = tx_output_queue @ txs in
             (tx_output_queue, expect_queue)
             (* There is an expected packet *)
-        | (tx_expect, exact) :: expect_queue when compare_tx ~exact tx tx_expect
-          ->
+        | (tx_expect, exact) :: expect_queue
+          when compare_tx ~exact tx_h tx_expect ->
             Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_expect)
             |> log;
-            (tx_output_queue, expect_queue)
+            (tx_output_queue @ tx_t, expect_queue)
         | (tx_expect, _) :: _ ->
             error_stf
               (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
-                 (string_of_tx tx)))
+                 (string_of_tx tx_h)))
     (* Packet was dropped *)
-    | None -> (tx_output_queue, expect_queue)
+    | [] -> (tx_output_queue, expect_queue)
 
   let on_tx_expect ((tx_expect, exact) : IO.expect)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list) :
@@ -94,23 +94,23 @@ module Make
           (Format.asprintf "expected %s but got %s" (string_of_tx tx_expect)
              (string_of_tx tx_output))
 
-  let run_stf_stmt (value_ctx : Il.value) (value_sto : Il.value)
+  let run_stf_stmt (value_ctx : Il.value) (value_arch : Il.value)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list)
       (stmt_stf : Stf.Ast.stmt) :
       Il.value * Il.value * IO.tx list * IO.expect list =
     match stmt_stf with
     (* Packet I/O *)
-    | Stf.Ast.Packet (port_in, packet_in, _exact) ->
+    | Stf.Ast.Packet (port_in, packet_in) ->
         let port_in = int_of_string port_in in
         let packet_in = String.uppercase_ascii packet_in in
         let rx = (port_in, packet_in) in
-        let value_ctx, value_sto, tx_output_opt =
-          Arch.drive_pipe value_ctx value_sto rx
+        let value_ctx, value_arch, tx_outputs =
+          Arch.drive_pipe value_ctx value_arch rx
         in
         let tx_output_queue, expect_queue =
-          on_tx_output tx_output_opt tx_output_queue expect_queue
+          on_tx_output tx_outputs tx_output_queue expect_queue
         in
-        (value_ctx, value_sto, tx_output_queue, expect_queue)
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.Expect (port_expect, packet_expect_opt, exact) ->
         let port_expect = int_of_string port_expect in
         let packet_expect = Option.value packet_expect_opt ~default:"" in
@@ -119,7 +119,7 @@ module Make
         let tx_output_queue, expect_queue =
           on_tx_expect expect tx_output_queue expect_queue
         in
-        (value_ctx, value_sto, tx_output_queue, expect_queue)
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     (* Match-action table updates *)
     | Stf.Ast.Add
         ( table_name,
@@ -198,12 +198,17 @@ module Make
           wrap_tuple_v "tableActionInterface"
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
-        let value_sto =
-          Arch.table_add_entry value_sto value_tableName
+        let value_arch =
+          Arch.table_add_entry value_arch value_tableName
             value_tableEntryPriorityInterface value_tableKeysetInterface
             value_tableActionInterface
         in
-        (value_ctx, value_sto, tx_output_queue, expect_queue)
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringAdd (session, port) ->
+        let session = int_of_string session in
+        let port = int_of_string port in
+        let value_arch = Arch.add_mirror_session value_arch session port in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.SetDefault (table_name, table_entry_action) ->
         (* Encode name *)
         let value_tableName = wrap_text_v table_name in
@@ -225,24 +230,25 @@ module Make
           wrap_tuple_v "tableActionInterface"
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
-        let value_sto =
-          Arch.table_add_default_action value_sto value_tableName
+        let value_arch =
+          Arch.table_add_default_action value_arch value_tableName
             value_tableActionInterface
         in
-        (value_ctx, value_sto, tx_output_queue, expect_queue)
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     (* Async *)
-    | Stf.Ast.Wait -> (value_ctx, value_sto, tx_output_queue, expect_queue)
+    | Stf.Ast.Wait -> (value_ctx, value_arch, tx_output_queue, expect_queue)
     | _ ->
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
-  let run_stf_stmts (value_ctx : Il.value) (value_sto : Il.value)
+  let run_stf_stmts (value_ctx : Il.value) (value_arch : Il.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, expect_queue =
       List.fold_left
-        (fun (value_ctx, value_sto, tx_output_queue, expect_queue) stmt_stf ->
-          run_stf_stmt value_ctx value_sto tx_output_queue expect_queue stmt_stf)
-        (value_ctx, value_sto, [], [])
+        (fun (value_ctx, value_arch, tx_output_queue, expect_queue) stmt_stf ->
+          run_stf_stmt value_ctx value_arch tx_output_queue expect_queue
+            stmt_stf)
+        (value_ctx, value_arch, [], [])
         stmts_stf
     in
     match (tx_output_queue, expect_queue) with
@@ -267,9 +273,9 @@ module Make
   let run_stf_test (includes_p4 : string list) (filename_p4 : string)
       (filename_stf : string) : stf_result =
     try
-      let value_ctx, value_sto = Arch.init_pipe includes_p4 filename_p4 in
+      let value_ctx, value_arch = Arch.init_pipe includes_p4 filename_p4 in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
-      run_stf_stmts value_ctx value_sto stf_stmts;
+      run_stf_stmts value_ctx value_arch stf_stmts;
       Pass
     with
     | Util.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))

@@ -251,3 +251,65 @@ void g() {
   // f(1, 3); // illegal, since the parameter b is not the last in the list
 }
 ----
+
+==== Optional parameters
+
+// 174
+A parameter that is annotated with the `@optional` annotation is optional: the
+user may omit the value for that parameter in an invocation. Optional
+parameters can only appear for arguments of: packages, parser types, control
+types, extern functions, extern methods, and extern object constructors.
+Optional parameters cannot have default values. If a procedure-like construct
+has both optional parameters and default values then it can only be called
+using named arguments. It is recommended, but not mandatory, for all optional
+parameters to be at the end of a parameter list.
+
+// 175
+The implementation of such objects is not expressed in P4, so the meaning and
+implementation of optional parameters should be specified by the target
+architecture. For example, we can imagine a two-stage switch architecture where
+the second stage is optional. This could be declared as a package with an
+optional parameter:
+
+// 176
+[source,p4]
+----
+package pipeline(/* parameters omitted */);
+package switch(pipeline first, @optional pipeline second);
+
+pipeline(/* arguments omitted */) ingress;
+switch(ingress) main;   // a switch with a single-stage pipeline
+----
+
+// 177
+Here the target architecture could implement the elided optional argument using
+an empty pipeline.
+
+// 178
+The following example shows optional parameters and parameters with default
+values.
+
+// 179
+[source,p4]
+----
+extern void h(in bit<32> a, in bool b = true);  // default value
+
+// function calls
+h(10);  // same as h(10, true);
+h(a = 10);  // same as h(10, true);
+h(a = 10, b = true);
+
+struct Empty {}
+control nothing(inout Empty h, inout Empty m) {
+   apply {}
+}
+
+parser parserProto<H, M>(packet_in p, out H h, inout M m);
+control controlProto<H, M>(inout H h, inout M m);
+
+package pack<HP, MP, HC, MC>(
+    @optional parserProto<HP, MP> _parser,  // optional parameter
+                             controlProto<HC, MC> _control = nothing()); // default parameter value
+
+pack() main;   // No value for _parser, _control is an instance of nothing()
+----

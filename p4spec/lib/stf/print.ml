@@ -29,6 +29,7 @@ let print_quoted_string fmt s = F.fprintf fmt "\"%s\"" s
 let print_name fmt name = print_quoted_string fmt name
 let print_id fmt id = print_quoted_string fmt id
 let print_number fmt number = print_string fmt number
+let print_session fmt session = print_string fmt session
 let print_port fmt port = print_string fmt port
 let print_exact fmt exact = if exact then F.fprintf fmt "$" else ()
 let print_packet fmt packet = print_string fmt packet
@@ -71,15 +72,16 @@ let print_ctr fmt = function
 
 let print_stmt fmt = function
   | Wait -> print_string fmt "wait"
+  | MirroringAdd (session, port) ->
+      F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
   | RemoveAll -> print_string fmt "remove_all"
   | Expect (port, Some expect, exact) ->
       F.fprintf fmt "expect %a %a%a" print_port port print_expect expect
         print_exact exact
   | Expect (port, None, exact) ->
       F.fprintf fmt "expect %a %a" print_port port print_exact exact
-  | Packet (port, packet, exact) ->
-      F.fprintf fmt "packet %a %a%a" print_port port print_packet packet
-        print_exact exact
+  | Packet (port, packet) ->
+      F.fprintf fmt "packet %a %a" print_port port print_packet packet
   | NoPacket -> print_string fmt "no_packet"
   | Add (name, int_opt, mtchs, action, id_opt) ->
       F.fprintf fmt "add %a%a %a %a%a" print_name name

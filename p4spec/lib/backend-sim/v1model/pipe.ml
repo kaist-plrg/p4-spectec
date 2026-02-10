@@ -1,11 +1,13 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+open Interface.Pack
 open Interface.Unpack
 open Interface.Flatten
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
+open State
 open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
@@ -54,30 +56,47 @@ struct
 
   let init_call_func () = Spec.Func.register call_func
 
+  (* Architectural state *)
+
+  let init_arch_state = Arch.empty |> Arch.to_value
+
+  let get_arch_state : Arch.t state =
+    let+ _, value_arch, _ = get in
+    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+
+  let put_arch_state (arch_state : Arch.t) : unit state =
+    modify (fun (value_ctx, value_arch, txs) ->
+        let value_arch =
+          arch_state |> Arch.to_value |> Spec.Func.update_archState_e value_arch
+        in
+        (value_ctx, value_arch, txs))
+
   (* Extern objects *)
 
-  type extern =
+  type object_state =
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
     | Register of Object.Register.t
+    | DirectCounter of Object.DirectCounter.t
   [@@deriving yojson]
 
-  let get_extern (value_sto : Value.t) (value_objectId : Value.t) : extern =
-    Spec.Func.find_store_externState value_sto value_objectId
-    |> unwrap_extern_v |> extern_of_yojson |> Result.get_ok
+  let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
+      object_state =
+    Spec.Func.find_objectState_e value_arch value_objectId
+    |> unwrap_extern_v |> object_state_of_yojson |> Result.get_ok
 
-  let get_packet_in (value_sto : Value.t) : Core.Object.PacketIn.t =
+  let get_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-    match get_extern value_sto value_objectId with
+    match get_object_state value_arch value_objectId with
     | PacketIn packet_in -> packet_in
-    | _ -> error_no_region "packet_in extern not found"
+    | _ -> error_no_region "packet_in object not found"
 
-  let get_packet_out (value_sto : Value.t) : Core.Object.PacketOut.t =
+  let get_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
     let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
-    match get_extern value_sto value_objectId with
+    match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
-    | _ -> error_no_region "packet_out extern not found"
+    | _ -> error_no_region "packet_out object not found"
 
   (* Extern calls *)
 
@@ -93,12 +112,18 @@ struct
     | "counter" ->
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
-        counter |> extern_to_yojson |> wrap_extern_v "externState"
+        counter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | "register" ->
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
-        register |> extern_to_yojson |> wrap_extern_v "externState"
-    | _ -> wrap_extern_v "externState" `Null
+        register |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "direct_counter" ->
+        let direct_counter =
+          Object.DirectCounter.init value_type_args value_args
+        in
+        let direct_counter = DirectCounter direct_counter in
+        direct_counter |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -127,24 +152,10 @@ struct
           ^ ")")
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
-    let ( value_ctx_caller,
-          value_ctx,
-          value_sto,
-          value_name_func,
-          value_names_param ) =
+    let value_ctx, value_arch, value_name_func, value_names_param =
       match values_input with
-      | [
-       value_ctx_caller;
-       value_ctx;
-       value_sto;
-       value_name_func;
-       value_names_param;
-      ] ->
-          ( value_ctx_caller,
-            value_ctx,
-            value_sto,
-            value_name_func,
-            value_names_param )
+      | [ value_ctx; value_arch; value_name_func; value_names_param ] ->
+          (value_ctx, value_arch, value_name_func, value_names_param)
       | _ ->
           error_no_region
             "unexpected number of arguments to extern function call"
@@ -153,126 +164,136 @@ struct
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
     in
-    let value_ctx, value_sto, value_callResult =
+    let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
-          Core.Func.verify value_ctx value_sto
-      | "digest", [ "receiver"; "data" ] -> Func.digest value_ctx value_sto
+          Core.Func.verify value_ctx value_arch
+      | "digest", [ "receiver"; "data" ] -> Func.digest value_ctx value_arch
       | "mark_to_drop", [ "standard_metadata" ] ->
-          Func.mark_to_drop value_ctx value_sto
+          Func.mark_to_drop value_ctx value_arch
       | "verify_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
-          Func.verify_checksum value_ctx value_sto
+          Func.verify_checksum value_ctx value_arch
       | ( "verify_checksum_with_payload",
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
-          let packet_in = get_packet_in value_sto in
-          Func.verify_checksum_with_payload value_ctx value_sto packet_in
+          let packet_in = get_packet_in value_arch in
+          Func.verify_checksum_with_payload value_ctx value_arch packet_in
       | "update_checksum", [ "condition"; "data"; "checksum"; "algo" ] ->
-          Func.update_checksum value_ctx value_sto
+          Func.update_checksum value_ctx value_arch
       | ( "update_checksum_with_payload",
           [ "condition"; "data"; "checksum"; "algo" ] ) ->
-          let packet_in = get_packet_in value_sto in
-          Func.update_checksum_with_payload value_ctx value_sto packet_in
+          let packet_in = get_packet_in value_arch in
+          Func.update_checksum_with_payload value_ctx value_arch packet_in
+      | "clone_preserving_field_list", [ "type"; "session"; "index" ] ->
+          Func.clone_preserving_field_list value_ctx value_arch
+          (* TODO: when to resolve port id? *)
       | "resubmit_preserving_field_list", [ "index" ] ->
-          Func.resubmit_preserving_field_list value_ctx_caller value_ctx
-            value_sto
+          Func.resubmit_preserving_field_list value_ctx value_arch
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
-          Func.hash value_ctx value_sto
-      | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_sto
-      | "log_msg", [ "msg"; "data" ] -> Func.log_msg_format value_ctx value_sto
+          Func.hash value_ctx value_arch
+      | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_arch
+      | "log_msg", [ "msg"; "data" ] -> Func.log_msg_format value_ctx value_arch
       | _ ->
           error_no_region
             ("unsupported extern function call: " ^ name_func ^ "("
             ^ String.concat ", " names_param
             ^ ")")
     in
-    [ value_ctx; value_sto; value_callResult ]
+    [ value_ctx; value_arch; value_callResult ]
 
   let eval_extern_method_call (values_input : Value.t list) : Value.t list =
     let ( value_ctx,
-          value_sto,
+          value_arch,
           value_objectId,
           value_name_method,
           value_names_param ) =
       match values_input with
       | [
        value_ctx;
-       value_sto;
+       value_arch;
        value_objectId;
        value_name_method;
        value_names_param;
       ] ->
           ( value_ctx,
-            value_sto,
+            value_arch,
             value_objectId,
             value_name_method,
             value_names_param )
       | _ ->
           error_no_region "unexpected number of arguments to extern method call"
     in
-    let extern = get_extern value_sto value_objectId in
+    let obj = get_object_state value_arch value_objectId in
     let name_method = unwrap_text_v value_name_method in
     let names_param =
       value_names_param |> unwrap_list_v |> List.map unwrap_text_v
     in
-    let extern, value_ctx, value_sto, value_callResult =
-      match (extern, name_method, names_param) with
+    let obj, value_ctx, value_arch, value_callResult =
+      match (obj, name_method, names_param) with
       | PacketIn packet_in, "extract", [ "hdr" ] ->
-          let packet_in, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketIn.extract value_ctx value_sto packet_in
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.extract value_ctx value_arch packet_in
           in
           let packet_in = PacketIn packet_in in
-          (packet_in, value_ctx, value_sto, value_callResult)
+          (packet_in, value_ctx, value_arch, value_callResult)
       | ( PacketIn packet_in,
           "extract",
           [ "variableSizeHeader"; "variableFieldSizeInBits" ] ) ->
-          let packet_in, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketIn.extract_varsize value_ctx value_sto packet_in
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.extract_varsize value_ctx value_arch packet_in
           in
           let packet_in = PacketIn packet_in in
-          (packet_in, value_ctx, value_sto, value_callResult)
+          (packet_in, value_ctx, value_arch, value_callResult)
       | PacketIn packet_in, "lookahead", [] ->
-          let packet_in, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketIn.lookahead value_ctx value_sto packet_in
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.lookahead value_ctx value_arch packet_in
           in
           let packet_in = PacketIn packet_in in
-          (packet_in, value_ctx, value_sto, value_callResult)
+          (packet_in, value_ctx, value_arch, value_callResult)
       | PacketIn packet_in, "advance", [ "sizeInBits" ] ->
-          let packet_in, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketIn.advance value_ctx value_sto packet_in
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.advance value_ctx value_arch packet_in
           in
           let packet_in = PacketIn packet_in in
-          (packet_in, value_ctx, value_sto, value_callResult)
+          (packet_in, value_ctx, value_arch, value_callResult)
       | PacketIn packet_in, "length", [] ->
-          let packet_in, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketIn.length value_ctx value_sto packet_in
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.length value_ctx value_arch packet_in
           in
           let packet_in = PacketIn packet_in in
-          (packet_in, value_ctx, value_sto, value_callResult)
+          (packet_in, value_ctx, value_arch, value_callResult)
       | PacketOut packet_out, "emit", [ "hdr" ] ->
-          let packet_out, value_ctx, value_sto, value_callResult =
-            Core.Object.PacketOut.emit value_ctx value_sto packet_out
+          let packet_out, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketOut.emit value_ctx value_arch packet_out
           in
           let packet_out = PacketOut packet_out in
-          (packet_out, value_ctx, value_sto, value_callResult)
+          (packet_out, value_ctx, value_arch, value_callResult)
       | Counter counter, "count", [ "index" ] ->
-          let packet_in = get_packet_in value_sto in
-          let counter, value_ctx, value_sto, value_callResult =
-            Object.Counter.count value_ctx value_sto packet_in counter
+          let packet_in = get_packet_in value_arch in
+          let counter, value_ctx, value_arch, value_callResult =
+            Object.Counter.count value_ctx value_arch packet_in counter
           in
           let counter = Counter counter in
-          (counter, value_ctx, value_sto, value_callResult)
+          (counter, value_ctx, value_arch, value_callResult)
       | Register register, "read", [ "result"; "index" ] ->
-          let register, value_ctx, value_sto, value_callResult =
-            Object.Register.read value_ctx value_sto register
+          let register, value_ctx, value_arch, value_callResult =
+            Object.Register.read value_ctx value_arch register
           in
           let register = Register register in
-          (register, value_ctx, value_sto, value_callResult)
+          (register, value_ctx, value_arch, value_callResult)
       | Register register, "write", [ "index"; "value" ] ->
-          let register, value_ctx, value_sto, value_callResult =
-            Object.Register.write value_ctx value_sto register
+          let register, value_ctx, value_arch, value_callResult =
+            Object.Register.write value_ctx value_arch register
           in
           let register = Register register in
-          (register, value_ctx, value_sto, value_callResult)
+          (register, value_ctx, value_arch, value_callResult)
+      | DirectCounter direct_counter, "count", [] ->
+          let packet_in = get_packet_in value_arch in
+          let direct_counter, value_ctx, value_arch, value_callResult =
+            Object.DirectCounter.count value_ctx value_arch packet_in
+              direct_counter
+          in
+          let direct_counter = DirectCounter direct_counter in
+          (direct_counter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
@@ -283,69 +304,139 @@ struct
             ^ String.concat ", " names_param
             ^ ")")
     in
-    let value_extern =
-      extern |> extern_to_yojson |> wrap_extern_v "externState"
+    let value_obj =
+      obj |> object_state_to_yojson |> wrap_extern_v "objectState"
     in
-    let value_sto =
-      Spec.Func.update_store_externState value_sto value_objectId value_extern
+    let value_arch =
+      Spec.Func.update_objectState_e value_arch value_objectId value_obj
     in
-    [ value_ctx; value_sto; value_callResult ]
+    [ value_ctx; value_arch; value_callResult ]
 
   (* Match-action table interface *)
 
-  let find_table (value_sto : Value.t) (value_tableName : Value.t) : Value.t =
+  let find_table (value_arch : Value.t) (value_tableName : Value.t) : Value.t =
     let table_name = unwrap_text_v value_tableName in
     match String.split_on_char '.' table_name with
     | [] -> assert false
     | [ table_name_unqualified ] ->
         let value_tableName_unqualified = wrap_text_v table_name_unqualified in
-        Spec.Func.find_store_unqualified value_sto value_tableName_unqualified
+        Spec.Func.find_object_unqualified_e value_arch
+          value_tableName_unqualified
     | names ->
         let values_name = List.map wrap_text_v names in
         let value_objectId = wrap_list_v "nameIR" values_name in
-        Spec.Func.find_store_qualified value_sto value_objectId
+        Spec.Func.find_object_qualified_e value_arch value_objectId
 
-  let update_table (value_sto : Value.t) (value_tableName : Value.t)
+  let update_table (value_arch : Value.t) (value_tableName : Value.t)
       (value_tableObject : Value.t) : Value.t =
     let table_name = unwrap_text_v value_tableName in
     match String.split_on_char '.' table_name with
     | [] -> assert false
     | [ table_name_unqualified ] ->
         let value_tableName_unqualified = wrap_text_v table_name_unqualified in
-        Spec.Func.update_store_unqualified value_sto value_tableName_unqualified
-          value_tableObject
+        Spec.Func.update_object_unqualified_e value_arch
+          value_tableName_unqualified value_tableObject
     | names ->
         let values_name = List.map wrap_text_v names in
         let value_objectId = wrap_list_v "nameIR" values_name in
-        Spec.Func.update_store_qualified value_sto value_objectId
+        Spec.Func.update_object_qualified_e value_arch value_objectId
           value_tableObject
 
-  let table_add_entry (value_sto : Value.t) (value_tableName : Value.t)
+  let table_add_entry (value_arch : Value.t) (value_tableName : Value.t)
       (value_tableEntryPriorityInterface : Value.t)
       (value_tableKeysetInterface : Value.t)
       (value_tableActionInterface : Value.t) : Value.t =
     (* Lookup table object *)
-    let value_tableObject = find_table value_sto value_tableName in
+    let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
       Spec.Func.tableObject_add_entry value_tableObject
         value_tableEntryPriorityInterface value_tableKeysetInterface
         value_tableActionInterface
     in
-    (* Update store with modified table object *)
-    update_table value_sto value_tableName value_tableObject
+    (* Update arch with modified table object *)
+    update_table value_arch value_tableName value_tableObject
 
-  let table_add_default_action (value_sto : Value.t) (value_tableName : Value.t)
-      (value_tableActionInterface : Value.t) : Value.t =
+  let table_add_default_action (value_arch : Value.t)
+      (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
+      Value.t =
     (* Lookup table object *)
-    let value_tableObject = find_table value_sto value_tableName in
+    let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
       Spec.Func.tableObject_add_default_action value_tableObject
         value_tableActionInterface
     in
-    (* Update store with modified table object *)
-    update_table value_sto value_tableName value_tableObject
+    (* Update arch with modified table object *)
+    update_table value_arch value_tableName value_tableObject
+
+  (* Mirror table interface *)
+
+  let add_mirror_session (value_arch : Value.t) (session : int) (port : int) :
+      Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let mirrortable = Mirror.Table.add session port arch_state.mirrortable in
+    arch_state
+    |> Arch.with_mirrortable mirrortable
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
+
+  (* Packet state *)
+
+  let insert_packet (packet : Packet.t) : unit state =
+    let { packet_in; value_ctx; _ } : Packet.t = packet in
+    let packet_in = PacketIn packet_in in
+    let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+    let value_packet_in =
+      packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+    in
+    modify (fun (_, value_arch, txs) ->
+        let value_arch =
+          Spec.Func.update_objectState_e value_arch value_objectId
+            value_packet_in
+        in
+        (value_ctx, value_arch, txs))
+
+  let remove_packet_in : unit state =
+    let* _, value_arch, _ = get in
+    let value_arch =
+      let packet_in =
+        value_arch |> get_packet_in |> Core.Object.PacketIn.reset
+      in
+      let packet_in = PacketIn packet_in in
+      let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+      let value_packet_in =
+        packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+      in
+      Spec.Func.update_objectState_e value_arch value_objectId value_packet_in
+    in
+    modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs))
+
+  let remove_packet_out : unit state =
+    let* _, value_arch, _ = get in
+    let value_arch =
+      let packet_out = Core.Object.PacketOut.init () in
+      let packet_out = PacketOut packet_out in
+      let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_out" ] in
+      let value_packet_out =
+        packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
+      in
+      Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
+    in
+    modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs))
+
+  let is_dropped : bool state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_egress_spec =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec"
+    in
+    let width_egress_spec, int_egress_spec =
+      unpack_p4_fixedBit value_egress_spec
+    in
+    Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
 
   (* Pipeline initializer *)
 
@@ -358,178 +449,239 @@ struct
       | Empty_mode -> assert false
     in
     match program_result with
-    | Pass [ value_ctx; value_sto ] -> (value_ctx, value_sto)
+    | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
     | Pass _ -> error_no_region "unexpected return from V1Model_init"
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
 
   (* Pipeline driver *)
 
-  let setup_rx (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t =
+  let setup_rx (rx : IO.rx) : unit state =
+    (* Setup packet_in object *)
     let port_in, packet_in = rx in
-    (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
-    let packet_in_state = extern_to_yojson packet_in in
-    let value_packet_in_state = wrap_extern_v "externState" packet_in_state in
-    let value_ctx, value_sto =
-      Spec.Rel.v1model_init_packet_in value_ctx value_sto value_packet_in_state
+    let packet_in_state = object_state_to_yojson packet_in in
+    let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
+    let* value_ctx, value_arch, _ = get in
+    let value_ctx, value_arch =
+      Spec.Rel.v1model_init_packet_in value_ctx value_arch value_packet_in_state
     in
-    (* Setup packet_out extern *)
+    (* Setup packet_out object *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
-    let packet_out_state = extern_to_yojson packet_out in
-    let value_packet_out_state = wrap_extern_v "externState" packet_out_state in
-    let value_ctx, value_sto =
-      Spec.Rel.v1model_init_packet_out value_ctx value_sto
+    let packet_out_state = object_state_to_yojson packet_out in
+    let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
+    let value_ctx, value_arch =
+      Spec.Rel.v1model_init_packet_out value_ctx value_arch
         value_packet_out_state
     in
     (* Setup global variables *)
-    let value_ctx = Spec.Rel.v1model_init_globals value_ctx value_sto port_in in
-    (value_ctx, value_sto)
-
-  let drive_p (value_ctx : Value.t) (value_sto : Value.t) : Value.t * Value.t =
-    let value_ctx, value_sto, value_parser_result =
-      Spec.Rel.v1model_parser value_ctx value_sto
+    let value_ctx =
+      Spec.Rel.v1model_init_globals value_ctx value_arch port_in
     in
+    modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
+
+  (* Parser + Verify *)
+
+  let drive_p : unit state =
+    let* value_parser_result = apply Spec.Rel.v1model_parser in
+    let* value_ctx, value_arch, _ = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
       | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_sto
+          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
             "standard_metadata" "parser_error" value_error
       | Some _ -> value_ctx
       | None -> assert false
     in
-    (value_ctx, value_sto)
+    modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
 
-  let drive_vr (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_verify value_ctx value_sto
+  let drive_vr : Value.t state = apply Spec.Rel.v1model_verify
 
-  let drive_ig (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_ingress value_ctx value_sto
+  let drive_pipe_pre : Value.t state =
+    let* arch_state = get_arch_state in
+    put_arch_state (Arch.reset arch_state)
+    >> remove_packet_in >> drive_p >> drive_vr
 
-  let drive_eg (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_egress value_ctx value_sto
+  (* Prepare context for resubmit/clone *)
 
-  let drive_ck (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_check value_ctx value_sto
-
-  let drive_dep (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.v1model_deparse value_ctx value_sto
-
-  let resulting_port_packet (value_ctx : Value.t) (value_sto : Value.t) :
-      IO.tx option =
-    let value_egress_spec =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-        "egress_spec"
+  let prepare_resubmit_ctx (index : int) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
+        (Packet.ResubmitInfo.to_value index)
     in
-    let width_egress_spec, int_egress_spec =
-      unpack_p4_fixedBit value_egress_spec
-    in
-    let drop =
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-    in
-    if drop then None
-    else
-      (* Get egress port *)
-      let port = Bigint.to_int_exn int_egress_spec in
-      (* Get input packet *)
-      let packet_in = get_packet_in value_sto in
-      (* Get output packet *)
-      let packet_out = get_packet_out value_sto in
-      let packet =
-        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
-      in
-      (* Return port and packet *)
-      let tx = (port, packet) in
-      Some tx
-
-  let drive_pipe_pre_inner (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * bool =
-    (* Parser block *)
-    let value_ctx, value_sto = drive_p value_ctx value_sto in
-    (* Verify block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_vr value_ctx value_sto
-    in
-    (* Ingress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_ig value_ctx value_sto
-    in
-    (* Check if packet should be dropped *)
-    let drop =
-      let value_egress_spec =
-        Spec.Rel.lvalue_read_dot_global value_ctx value_sto "standard_metadata"
-          "egress_spec"
-      in
-      let width_egress_spec, int_egress_spec =
-        unpack_p4_fixedBit value_egress_spec
-      in
-      Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
-    in
-    (value_ctx, value_sto, drop)
-
-  let rec drive_pipe_pre (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * bool =
-    try drive_pipe_pre_inner value_ctx value_sto
-    with
-    | Exception.Resubmit (value_ctx_caller, value_ctx, value_sto, value_index)
-    ->
-      (* When resubmitted *)
-      let value_ctx =
-        Spec.Rel.v1model_setup_preserved_meta_fields value_ctx_caller value_ctx
-          value_sto value_index
-      in
-      (* Reset packet_in extern in store *)
-      let value_sto =
-        let packet_in = get_packet_in value_sto in
-        let packet_in = Core.Object.PacketIn.reset packet_in in
-        let packet_in = PacketIn packet_in in
-        let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
-        let value_packet_in =
-          packet_in |> extern_to_yojson |> wrap_extern_v "externState"
-        in
-        Spec.Func.update_store_externState value_sto value_objectId
-          value_packet_in
-      in
-      (* Set standard_metadata.instance_type as 6 *)
+    (* Set standard_metadata.instance_type as 6 *)
+    let value_ctx =
       let value_instance_type =
         Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
       in
-      let value_ctx =
-        Spec.Rel.lvalue_write_dot_global value_ctx value_sto "standard_metadata"
-          "instance_type" value_instance_type
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
+
+  let prepare_clone_ctx (clone_type : Packet.CloneInfo.clone_type) (port : int)
+      (index : int) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+    in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
+        value_index
+    in
+    let value_ctx =
+      let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
+          (Bigint.of_int instance_type)
       in
-      drive_pipe_pre value_ctx value_sto
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    let value_ctx =
+      let value_egress_spec =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
 
-  let drive_pipe_post (value_ctx : Value.t) (value_sto : Value.t) :
-      Value.t * Value.t * IO.tx option =
-    (* Egress block *)
-    let value_ctx, value_sto, _value_verify_result =
-      drive_eg value_ctx value_sto
-    in
-    (* Check block *)
-    let value_ctx, value_sto, _value_check_result =
-      drive_ck value_ctx value_sto
-    in
-    (* Deparser block *)
-    let value_ctx, value_sto, _value_deparse_result =
-      drive_dep value_ctx value_sto
-    in
-    (* Get resulting port and packet *)
-    let result_opt = resulting_port_packet value_ctx value_sto in
-    (value_ctx, value_sto, result_opt)
+  (* Schedule resubmit/clone if needed *)
 
-  let drive_pipe (value_ctx : Value.t) (value_sto : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx option =
-    (* Setup port and packet *)
-    let value_ctx, value_sto = setup_rx value_ctx value_sto rx in
-    let value_ctx, value_sto, drop = drive_pipe_pre value_ctx value_sto in
-    if drop then (value_ctx, value_sto, None)
-    else drive_pipe_post value_ctx value_sto
+  let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let packet_in = get_packet_in value_arch in
+    let packet : Packet.t = { value_ctx; packet_in; entrypoint } in
+    let* arch_state = get_arch_state in
+    let queue =
+      match entrypoint with
+      | Ingress -> Scheduler.push_front packet arch_state.queue
+      | Egress -> Scheduler.push_back packet arch_state.queue
+    in
+    arch_state |> Arch.with_queue queue |> put_arch_state
+
+  let schedule_resubmit (arch_state : Arch.t) : bool state =
+    let open Arch in
+    match arch_state.resubmit_opt with
+    | None -> return false
+    | Some field_index ->
+        let* value_ctx_original, _, _ = get in
+        prepare_resubmit_ctx field_index
+        >> drive_pipe_pre >> schedule_packet Ingress
+        >> modify (fun (_, value_arch, txs) ->
+               (value_ctx_original, value_arch, txs))
+        >> return true
+
+  let schedule_clone (arch_state : Arch.t) : bool state =
+    let open Arch in
+    match arch_state.clone_opt with
+    | None -> return false
+    | Some (clone_type, session, field_index) -> (
+        match Mirror.Table.find_opt session arch_state.mirrortable with
+        | Some port ->
+            let* value_ctx_original, _, _ = get in
+            prepare_clone_ctx clone_type port field_index
+            >> drive_pipe_pre >> schedule_packet Egress
+            >> modify (fun (_, value_arch, txs) ->
+                   (value_ctx_original, value_arch, txs))
+            >> return true
+        | None -> return false)
+
+  (* Ingress + Handle clone, resubmit, drop *)
+
+  let drive_ig : Value.t state =
+    let* result = apply Spec.Rel.v1model_ingress in
+    let* arch_state = get_arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* resubmitted = schedule_resubmit arch_state in
+    if resubmitted then return result
+    else
+      let* drop = is_dropped in
+      if drop then return result else schedule_packet Egress >> return result
+
+  (* Egress + Handle clone
+
+     This field is assigned a predictable value just before the packet begins
+     egress processing, equal to the output port that this packet is destined
+     to
+
+     - 'Standard metadata' at
+     https://github.com/p4lang/behavioral-model/blob/168eca/docs/simple_switch.md *)
+
+  let prepare_egress_ctx : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_egress_spec =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec"
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_port" value_egress_spec
+    in
+    modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
+
+  let drive_eg : Value.t state =
+    let* () = prepare_egress_ctx in
+    let* result = apply Spec.Rel.v1model_egress in
+    let* arch_state = get_arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* drop = is_dropped in
+    guard (not drop) >> return result
+
+  (* Checksum + Deparser *)
+
+  let drive_ck : Value.t state = apply Spec.Rel.v1model_check
+  let drive_dep : Value.t state = apply Spec.Rel.v1model_deparse
+
+  let drive_pipe_post : Value.t state =
+    let* result = drive_ck >> remove_packet_out >> drive_dep in
+    let* value_ctx, value_arch, _ = get in
+    let value_egress_spec =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec"
+    in
+    let _, int_egress_spec = unpack_p4_fixedBit value_egress_spec in
+    (* Get egress port *)
+    let port = Bigint.to_int_exn int_egress_spec in
+    (* Get input packet *)
+    let packet_in = get_packet_in value_arch in
+    (* Get output packet *)
+    let packet_out = get_packet_out value_arch in
+    let packet =
+      Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+    in
+    (* Return port and packet *)
+    let tx = (port, packet) in
+    modify (fun (value_ctx, value_arch, txs) ->
+        (value_ctx, value_arch, tx :: txs))
+    >> return result
+
+  (* Scheduling packets *)
+
+  let drive_packet (packet : Packet.t) : unit state =
+    match packet.entrypoint with
+    | Ingress -> insert_packet packet >> drive_ig >> return ()
+    | Egress -> insert_packet packet >> drive_eg >> drive_pipe_post >> return ()
+
+  let rec run_scheduler () : unit state =
+    let* arch_state = get_arch_state in
+    match Scheduler.pop_front_opt arch_state.queue with
+    | None -> empty
+    | Some (packet, queue) ->
+        Arch.(arch_state |> reset |> with_queue queue)
+        |> put_arch_state >> drive_packet packet >> run_scheduler ()
+
+  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx list =
+    let pipe : unit state =
+      (* Setup port and packet *)
+      setup_rx rx >> drive_pipe_pre >> schedule_packet Ingress
+      >> run_scheduler ()
+    in
+    let state_init = (value_ctx, value_arch, []) in
+    let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
+    (value_ctx, value_arch, List.rev txs)
 
   (* Initializer *)
 

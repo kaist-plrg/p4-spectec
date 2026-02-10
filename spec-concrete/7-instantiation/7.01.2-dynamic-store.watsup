@@ -3,13 +3,15 @@
 ;;
 
 ;; Map from object identifiers to objects
+
 syntax store = map<objectId, object>
 
 var STO : store
 
 dec $empty_store : store
   hint(prose_in "an empty store")
-def $empty_store = $empty_map<objectId, object>
+def $empty_store = store
+  -- if store = $empty_map<objectId, object>
 
 ;;
 ;; Adder
@@ -17,8 +19,9 @@ def $empty_store = $empty_map<objectId, object>
 
 dec $add_store(store, objectId, object) : store
   hint(prose_in %0 "where" %1 "to" %2 "is added")
-def $add_store(STO, objectId, object)
-  = $add_map<objectId, object>(STO, objectId, object)
+def $add_store(store, objectId, object)
+  = store'
+  -- if store' = $add_map<objectId, object>(store, objectId, object)
 
 ;;
 ;; Finder
@@ -26,65 +29,5 @@ def $add_store(STO, objectId, object)
 
 dec $find_store(store, objectId) : object
   hint(prose_in "the object" %1 "in" %0)
-def $find_store(STO, objectId) = object
-  -- if object = $find_map<objectId, object>(STO, objectId)
-
-dec $find_store_qualified(store, objectId) : object?
-dec $find_store_unqualified(store, id) : object?
-dec $is_some_object(object?) : bool
-
-def $find_store_qualified(store, objectId)
-  = $find_store(store, objectId)
-
-def $is_some_object(object?) = $is_some_<object>(object?)
-def $find_store_unqualified(`{ (objectId `: object)* }, id) = object_id_found
-  -- if (object_id?
-      = $ite<object?>($objectId_ends_with(objectId, id), object, eps))*
-  -- if object_id_found
-      = $filter_<object?>(object_id?*, def $is_some_object)
-def $find_store_unqualified(`{ (objectId `: object)* }, id) = eps 
-  -- otherwise
-
-;;; Finder for extern state
-
-dec $find_store_externState(store, objectId) : externState?
-
-def $find_store_externState(STO, objectId) = externState
-  -- if externObject = $find_store(STO, objectId)
-  -- if EXTERN _ `< _ > `{ externState _ _ } = externObject
-def $find_store_externState(STO, objectId) = eps
-  -- otherwise
-
-;;
-;; Updater
-;;
-
-dec $update_store_qualified(store, objectId, object) : store
-dec $update_store_unqualified(store, id, object) : store
-dec $is_some_objectId(objectId?) : bool
-
-def $update_store_qualified(STO_0, objectId, object) = STO_1
-  -- if eps =/= $find_store_qualified(STO_0, objectId)
-  -- if STO_1 = $add_store(STO_0, objectId, object)
-
-def $is_some_objectId(objectId?) = $is_some_<objectId>(objectId?)
-def $update_store_unqualified(STO_0, id, object) = STO_1
-  -- if `{ (objectId `: _)* } = STO_0
-  -- if (objectId_id?
-      = $ite<objectId?>($objectId_ends_with(objectId, id), objectId, eps))*
-  -- if objectId_found = $filter_<objectId?>(objectId_id?*, def $is_some_objectId)
-  -- if STO_1 = $add_store(STO_0, objectId_found, object)
-
-;;; Updater for extern state
-
-dec $update_store_externState(store, objectId, externState) : store?
-
-def $update_store_externState(STO_0, objectId, externState) = STO_1
-  -- if externObject = $find_store(STO_0, objectId)
-  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
-      = externObject
-  -- if externObject_update
-      = EXTERN typeId `< theta > `{ externState frame externMethodDefEnv }
-  -- if STO_1 = $add_store(STO_0, objectId, externObject_update)
-def $update_store_externState(STO_0, objectId, externState) = eps
-  -- otherwise
+def $find_store(store, objectId) = object
+  -- if object = $find_map<objectId, object>(store, objectId)
