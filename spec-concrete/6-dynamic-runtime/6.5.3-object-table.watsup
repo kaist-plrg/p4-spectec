@@ -251,6 +251,16 @@ def $tableObject_create_entry_keyset(
       = $tableObject_create_entry_keys(
           (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
 
+dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
+def $alias_to_original_lookup_map(parameterIR*)
+  = $extend_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, `{ (id `: id)* })
+  -- if (annotationList _ _ id _ = parameterIR)*
+  -- if (annotation* = $flatten_annotationList(annotationList))*
+  -- if (nameIR_names = $name_annotation_nameIR_opt(annotation))**
+  -- if (nameIR_original, nameIR_aliases*)*
+      = $filter_<(nameIR, nameIR*)>((id, nameIR_names*)*, ($(|nameIR_names*| > 0))*)
+  -- if nameIR_alias* = (nameIR_aliases*[0])*
+
 ;;; Table entry action creation
 
 dec $align_tableActionArgumentInterfaces(
@@ -263,9 +273,11 @@ dec $align_tableActionArgumentInterfaces'(
 def $align_tableActionArgumentInterfaces(
     parameterIR*, (nameIR_arg, i_arg)*)
   = i_aligned*
+  -- if `{ (nameIR_alias `: nameIR_original)* } = $alias_to_original_lookup_map(parameterIR*)
+  -- if (nameIR_arg_resolved = $find_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, nameIR_arg))*
   -- (if i_aligned
        = $align_tableActionArgumentInterfaces'(
-          `{ (nameIR_arg `: i_arg)* }, parameterIR))*
+          `{ (nameIR_arg_resolved `: i_arg)* }, parameterIR))*
 
 def $align_tableActionArgumentInterfaces'(
     `{ (id_arg `: i_arg)* }, _ _ _ nameIR_param _)

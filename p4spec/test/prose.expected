@@ -12602,13 +12602,65 @@ for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
 . Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
 . Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
+xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
+
+
+. Let ``annotationList^{asterisk}^`` be the list of ``annotationList`` and ``id^{asterisk}^`` be the list of ``id``, obtained by repeating:
++
+--
+ ** Let ``annotationList`` and ``id`` be the annotations and the name of ``parameterIR``.
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+. Let ``annotation^{asterisk}^^{asterisk}^`` be the list of ``annotation^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``annotation^{asterisk}^`` be xref:flatten_annotationList[the list of annotations in ``annotationList``].
+--
++
+for each ``annotationList`` in ``annotationList^{asterisk}^``
+. Let ``nameIR^?^^{asterisk}^`` be the list of ``nameIR^?^`` and ``nameIR^?^^{asterisk}^^{asterisk}^`` be the list of ``nameIR^?^^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``nameIR^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotation)]``.
+--
++
+for each ``annotation`` in ``annotation^{asterisk}^`` and ``annotation^{asterisk}^`` in ``annotation^{asterisk}^^{asterisk}^``
+. Check that ``nameIR^?^`` is defined, for all ``nameIR^?^`` in ``nameIR^?^^{asterisk}^`` and ``nameIR^?^^{asterisk}^`` in ``nameIR^?^^{asterisk}^^{asterisk}^``.
+. Let ``nameIR~names~^{asterisk}^`` be the list of ``nameIR~names~`` and ``nameIR~names~^{asterisk}^^{asterisk}^`` be the list of ``nameIR~names~^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``nameIR~names~`` be ``nameIR^?^``.
+--
++
+for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^`` and ``nameIR^?^^{asterisk}^`` in ``nameIR^?^^{asterisk}^^{asterisk}^``
+. Let ``(`` ``nameIR~original~,`` ``nameIR~aliases~^{asterisk}^`` ``)^{asterisk}^`` be xref:filter_[``(`` ``id,`` ``nameIR~names~^{asterisk}^`` ``)^{asterisk}^`` filtered by ``(`` ``the`` ``length`` ``of`` ``nameIR~names~^{asterisk}^`` ``>`` ``0`` ``)^{asterisk}^``].
+. Let ``nameIR~alias~^{asterisk}^`` be ``nameIR~aliases~^{asterisk}^[0]^{asterisk}^``.
+. Return ``xref:extend_map[$extend_map<nameIR,`` ``nameIR>(+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+,`` ``+{+`` ``(`` ``id`` ``+:+`` ``id`` ``)^{asterisk}^`` ``+}+)]``.
+
 xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR^{asterisk}^, ( nameIR~arg~, i~arg~ )^{asterisk}^)]
 
 
+. Let ``+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+`` be ``xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]``.
+. Let ``nameIR^?^^{asterisk}^`` be the list of ``nameIR^?^``, obtained by repeating:
++
+--
+ ** Let ``nameIR^?^`` be xref:find_map[``nameIR~arg~`` in map ``+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``
+. Check that ``nameIR^?^`` is defined, for all ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``.
+. Let ``nameIR~arg_resolved~^{asterisk}^`` be the list of ``nameIR~arg_resolved~``, obtained by repeating:
++
+--
+ ** Let ``nameIR~arg_resolved~`` be ``nameIR^?^``.
+--
++
+for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``
 . Let ``int^?^^{asterisk}^`` be the list of ``int^?^``, obtained by repeating:
 +
 --
- ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
+ ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``

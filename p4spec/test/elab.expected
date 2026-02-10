@@ -23052,29 +23052,46 @@ def $tableObject_create_entry_keyset(tableKeysPropertyIR, tableKeysetInterface) 
   -- if $eq_set<nameIR>({ nameIR_key*{nameIR_key <- nameIR_key*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
   -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys((nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:256.1-258.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:254.1-254.70
+def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =
+
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:255.1-262.46
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = $extend_map<nameIR, nameIR>({ nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} }, { id : id*{id <- id*} })
+  -- (let annotationList _direction _typeIR id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, annotationList -> annotationList*, id -> id*}
+  -- (let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList))*{annotationList <- annotationList*, annotation* -> annotation**}
+  -- (let nameIR?{nameIR <- nameIR?} = $name_annotation_nameIR_opt(annotation))*{annotation <- annotation*, nameIR? -> nameIR?*}*{annotation* <- annotation**, nameIR?* -> nameIR?**}
+  -- (if nameIR?{nameIR <- nameIR?} matches (_))*{nameIR? <- nameIR?*}*{nameIR?* <- nameIR?**}
+  -- (let ?(nameIR_names) = nameIR?{nameIR <- nameIR?})*{nameIR? <- nameIR?*, nameIR_names -> nameIR_names*}*{nameIR?* <- nameIR?**, nameIR_names* -> nameIR_names**}
+  -- let (nameIR_original, nameIR_aliases*{nameIR_aliases <- nameIR_aliases*})*{nameIR_aliases* <- nameIR_aliases**, nameIR_original <- nameIR_original*} = $filter_<(nameIR, nameIR*)>((id, nameIR_names*{nameIR_names <- nameIR_names*})*{id <- id*, nameIR_names* <- nameIR_names**}, (|nameIR_names*{nameIR_names <- nameIR_names*}| > 0)*{nameIR_names* <- nameIR_names**})
+  -- let nameIR_alias*{nameIR_alias <- nameIR_alias*} = nameIR_aliases*{nameIR_aliases <- nameIR_aliases*}[0]*{nameIR_aliases* <- nameIR_aliases**}
+
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:266.1-268.9
 def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterface*) : int* =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:263.1-268.54
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:273.1-280.63
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}, (nameIR_arg, i_arg)*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*}) = i_aligned*{i_aligned <- i_aligned*}
-  -- (let int?{int <- int?} = $align_tableActionArgumentInterfaces'({ nameIR_arg : i_arg*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*} }, parameterIR))*{parameterIR <- parameterIR*, int? -> int?*}
+  -- let { nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} } = $alias_to_original_lookup_map(parameterIR*{parameterIR <- parameterIR*})
+  -- (let nameIR?{nameIR <- nameIR?} = $find_map<nameIR, nameIR>({ nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} }, nameIR_arg))*{nameIR_arg <- nameIR_arg*, nameIR? -> nameIR?*}
+  -- (if nameIR?{nameIR <- nameIR?} matches (_))*{nameIR? <- nameIR?*}
+  -- (let ?(nameIR_arg_resolved) = nameIR?{nameIR <- nameIR?})*{nameIR? <- nameIR?*, nameIR_arg_resolved -> nameIR_arg_resolved*}
+  -- (let int?{int <- int?} = $align_tableActionArgumentInterfaces'({ nameIR_arg_resolved : i_arg*{i_arg <- i_arg*, nameIR_arg_resolved <- nameIR_arg_resolved*} }, parameterIR))*{parameterIR <- parameterIR*, int? -> int?*}
   -- (if int?{int <- int?} matches (_))*{int? <- int?*}
   -- (let ?(i_aligned) = int?{int <- int?})*{int? <- int?*, i_aligned -> i_aligned*}
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:259.1-261.9
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:269.1-271.9
 def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:270.1-272.62
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:282.1-284.62
   clause 0 : ({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR) = $find_map<id, int>({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, nameIR_param)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:276.1-276.83
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:288.1-288.83
 def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:279.1-279.46
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:291.1-291.46
   clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:280.1-288.38
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:292.1-300.38
   clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23083,7 +23100,7 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- if ([] = $name_annotation_nameIR(annotationList))
   -- if (nameIR_action = nameIR_target)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:290.1-298.40
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:302.1-310.40
   clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23092,7 +23109,7 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- if ([] = $name_annotation_nameIR(annotationList))
   -- if (nameIR_action =/= nameIR_target)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:300.1-309.14
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:312.1-321.14
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23102,7 +23119,7 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if b_hit
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:311.1-320.15
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:323.1-332.15
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23112,21 +23129,21 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if ~b_hit
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:277.1-277.88
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:289.1-289.88
 def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:322.1-322.51
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:334.1-334.51
   clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:323.1-329.54
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:335.1-341.54
   clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList _prefixedNameIR ( _argumentListIR ) #( _parameterListIR , _parameterListIR' ); = tableActionIR_h
   -- if ([] = $name_annotation_nameIR(annotationList))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:331.1-338.90
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:343.1-350.90
   clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23134,7 +23151,7 @@ def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableAct
   -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
   -- if ([] = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*}))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:340.1-350.46
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:352.1-362.46
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23144,7 +23161,7 @@ def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableAct
   -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
   -- if ~nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:352.1-363.64
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:364.1-375.64
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
@@ -23155,10 +23172,10 @@ def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableAct
   -- if nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:367.1-370.27
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:379.1-382.27
 def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:372.1-392.70
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:384.1-404.70
   clause 0 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
   -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
@@ -23173,7 +23190,7 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:394.1-416.70
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:406.1-428.70
   clause 1 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- if (?() = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_name(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
@@ -23189,10 +23206,10 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:420.1-425.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:432.1-437.16
 def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:427.1-452.57
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:439.1-464.57
   clause 0 : (table typeId { frame TBL }, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = table typeId { frame TBL_updated }
   -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- if ($needs_priority_tableKeysPropertyIR(TBL.keys) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))
@@ -23203,10 +23220,10 @@ def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeyset
   -- let tableEntriesPropertyIR_updated = annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] }
   -- let TBL_updated = TBL[entries = tableEntriesPropertyIR_updated]
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:456.1-459.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:468.1-471.16
 def $tableObject_add_default_action(tableObject, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:461.1-473.76
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:473.1-485.76
   clause 0 : (table typeId { frame TBL }, tableActionInterface) = table typeId { frame TBL_updated }
   -- let _annotationList constIR?{constIR <- constIR?} default_action= _tableActionReferenceIR ; = TBL.default_action
   -- if constIR?{constIR <- constIR?} matches ()
