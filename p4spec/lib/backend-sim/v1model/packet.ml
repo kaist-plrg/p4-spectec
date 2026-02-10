@@ -49,9 +49,27 @@ module ResubmitInfo = struct
     value_index
 end
 
+module RecirculateInfo = struct
+  type t = int [@@deriving yojson]
+
+  let of_value value_index : t =
+    let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
+    index
+
+  let to_value index =
+    let value_index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+    in
+    value_index
+end
+
 type entrypoint = Ingress | Egress [@@deriving yojson]
 
-type info = Clone of CloneInfo.t | Resubmit of ResubmitInfo.t
+type action = {
+  clone_opt : CloneInfo.t option;
+  resubmit_opt : ResubmitInfo.t option;
+  recirculate_opt : RecirculateInfo.t option;
+}
 [@@deriving yojson]
 
 type t = {

@@ -257,6 +257,20 @@ module Make
             value_tableActionInterface
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.McGroupCreate mgid ->
+        let mgid = int_of_string mgid in
+        let value_arch = Arch.mc_mgrp_create value_arch mgid in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.McNodeCreate (rid, port) ->
+        let rid = int_of_string rid in
+        let port = int_of_string port in
+        let value_arch = Arch.mc_node_create value_arch rid port in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.McNodeAssociate (mgid, handle) ->
+        let mgid = int_of_string mgid in
+        let handle = int_of_string handle in
+        let value_arch = Arch.mc_node_associate value_arch mgid handle in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     (* Async *)
     | Stf.Ast.Wait -> (value_ctx, value_arch, tx_output_queue, expect_queue)
     | _ ->

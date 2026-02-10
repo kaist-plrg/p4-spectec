@@ -63,6 +63,12 @@ module type ARCH = sig
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
 
+  (* Multicast interface *)
+
+  val mc_mgrp_create : Value.t -> int -> Value.t
+  val mc_node_create : Value.t -> int -> int -> Value.t
+  val mc_node_associate : Value.t -> int -> int -> Value.t
+
   (* Pipeline evaluation *)
 
   val init_pipe : string list -> string -> Value.t * Value.t

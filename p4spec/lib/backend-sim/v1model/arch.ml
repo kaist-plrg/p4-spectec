@@ -5,8 +5,8 @@ module Value = Runtime.Sim.Value
 type t = {
   queue : Scheduler.t;
   mirrortable : Mirror.Table.t;
-  clone_opt : Packet.CloneInfo.t option;
-  resubmit_opt : Packet.ResubmitInfo.t option;
+  multicast : Multicast.State.t;
+  action : Packet.action;
 }
 [@@deriving yojson]
 
@@ -16,11 +16,15 @@ let empty =
   {
     queue = Scheduler.empty;
     mirrortable = Mirror.Table.empty;
-    resubmit_opt = None;
-    clone_opt = None;
+    multicast = Multicast.State.empty;
+    action = { resubmit_opt = None; clone_opt = None; recirculate_opt = None };
   }
 
-let reset (t : t) = { t with resubmit_opt = None; clone_opt = None }
+let reset (t : t) =
+  {
+    t with
+    action = { resubmit_opt = None; clone_opt = None; recirculate_opt = None };
+  }
 
 (* Value conversion *)
 
@@ -34,11 +38,14 @@ let with_queue (queue : Scheduler.t) (t : t) = { t with queue }
 let with_mirrortable (mirrortable : Mirror.Table.t) (t : t) =
   { t with mirrortable }
 
+let with_multicast (multicast : Multicast.State.t) (t : t) =
+  { t with multicast }
+
 (* Resubmit setters *)
 
 let with_resubmit_opt (resubmit_opt : Packet.ResubmitInfo.t option) (t : t) : t
     =
-  { t with resubmit_opt }
+  { t with action = { t.action with resubmit_opt } }
 
 let with_resubmit (resubmit : Packet.ResubmitInfo.t) =
   with_resubmit_opt (Some resubmit)
@@ -46,6 +53,13 @@ let with_resubmit (resubmit : Packet.ResubmitInfo.t) =
 (* Clone setters *)
 
 let with_clone_opt (clone_opt : Packet.CloneInfo.t option) (t : t) : t =
-  { t with clone_opt }
+  { t with action = { t.action with clone_opt } }
 
 let with_clone (clone : Packet.CloneInfo.t) = with_clone_opt (Some clone)
+
+let with_recirculate_opt (recirculate_opt : Packet.RecirculateInfo.t option)
+    (t : t) : t =
+  { t with action = { t.action with recirculate_opt } }
+
+let with_recirculate (recirculate : Packet.RecirculateInfo.t) =
+  with_recirculate_opt (Some recirculate)

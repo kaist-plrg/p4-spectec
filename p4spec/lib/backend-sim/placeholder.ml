@@ -116,6 +116,20 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the placeholder simulator"
 
+  (* Multicast interface *)
+
+  let mc_mgrp_create =
+    error_no_region
+      "mc_mgrp_create is not implemented for the ebpf simulator"
+
+  let mc_node_create =
+    error_no_region
+      "mc_node_create is not implemented for the ebpf simulator"
+
+  let mc_node_associate =
+    error_no_region
+      "mc_node_associate is not implemented for the ebpf simulator"
+
   (* Pipeline initializer *)
 
   let init_pipe (_includes_p4 : string list) (_filename_p4 : string) :
