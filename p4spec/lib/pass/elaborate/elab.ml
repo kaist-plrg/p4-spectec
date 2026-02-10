@@ -238,7 +238,7 @@ and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
   | ConsE (exp_h, exp_t) -> infer_cons_exp ctx exp_h exp_t
   | CatE (exp_l, exp_r) -> infer_cat_exp ctx exp_l exp_r
   | IdxE (exp_b, exp_i) -> infer_idx_exp ctx exp_b exp_i
-  | SliceE (exp_b, exp_l, exp_h) -> infer_slice_exp ctx exp_b exp_l exp_h
+  | SliceE (exp_b, exp_i, exp_n) -> infer_slice_exp ctx exp_b exp_i exp_n
   | LenE exp -> infer_len_exp ctx exp
   | MemE (exp_e, exp_s) -> infer_mem_exp ctx exp_e exp_s
   | StrE _ -> fail_infer at "struct expression"
@@ -539,22 +539,22 @@ and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
 
 (* Inference of slice expressions *)
 
-and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_l : exp) (exp_h : exp) :
+and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
   choice
     [
       (fun () ->
         let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
         let* _ = as_list_plaintyp ctx plaintyp_b in
-        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-        let exp_il = Il.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let* ctx, exp_il_n = elab_exp ctx (NumT `NatT $ exp_n.at) exp_n in
+        let exp_il = Il.SliceE (exp_il_b, exp_il_i, exp_il_n) in
         Ok (ctx, exp_il, plaintyp_b.it));
       (fun () ->
         let* ctx, exp_il_b = elab_exp ctx (TextT $ exp_b.at) exp_b in
-        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-        let exp_il = Il.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let* ctx, exp_il_n = elab_exp ctx (NumT `NatT $ exp_n.at) exp_n in
+        let exp_il = Il.SliceE (exp_il_b, exp_il_i, exp_il_n) in
         Ok (ctx, exp_il, TextT));
     ]
 
@@ -686,13 +686,43 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
          (El.Print.string_of_plaintyp plaintyp_exp)
          (El.Print.string_of_plaintyp plaintyp))
 
-(* Elaboration of expression type:
+(* Elaboration of expression:
 
    - If an iterated type is expected,
       - first try elaborating the expression as a singleton iteration,
         but except wildcard, epsilon, and empty list expressions
       - then try usual elaboration
    - Otherwise, directly try usual elaboration *)
+
+and is_pure_exp (exp_il : Il.exp) : bool =
+  match exp_il.it with
+  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
+  | UnE (_, _, exp_il) -> is_pure_exp exp_il
+  | BinE (_, _, exp_l_il, exp_r_il) | CmpE (_, _, exp_l_il, exp_r_il) ->
+      is_pure_exp exp_l_il && is_pure_exp exp_r_il
+  | UpCastE (_, exp_il)
+  | DownCastE (_, exp_il)
+  | SubE (exp_il, _)
+  | MatchE (exp_il, _) ->
+      is_pure_exp exp_il
+  | TupleE exps_il | CaseE (_, exps_il) -> List.for_all is_pure_exp exps_il
+  | StrE expfields_il ->
+      let exps_il = List.map snd expfields_il in
+      List.for_all is_pure_exp exps_il
+  | OptE (Some exp_il) -> is_pure_exp exp_il
+  | OptE None -> true
+  | ListE exps_il -> List.for_all is_pure_exp exps_il
+  | ConsE (exp_h_il, exp_t_il) -> is_pure_exp exp_h_il && is_pure_exp exp_t_il
+  | CatE (exp_l_il, exp_r_il) -> is_pure_exp exp_l_il && is_pure_exp exp_r_il
+  | MemE (exp_e_il, exp_s_il) -> is_pure_exp exp_e_il && is_pure_exp exp_s_il
+  | LenE exp_il | DotE (exp_il, _) -> is_pure_exp exp_il
+  | IdxE (exp_b_il, exp_i_il) -> is_pure_exp exp_b_il && is_pure_exp exp_i_il
+  | SliceE (exp_b_il, exp_i_il, exp_n_il) ->
+      is_pure_exp exp_b_il && is_pure_exp exp_i_il && is_pure_exp exp_n_il
+  | UpdE (exp_b_il, path_il, exp_f_il) ->
+      is_pure_exp exp_b_il && is_pure_path path_il && is_pure_exp exp_f_il
+  | CallE _ -> false
+  | IterE (exp_il, _) -> is_pure_exp exp_il
 
 and elab_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
     (Ctx.t * Il.exp) attempt_unit =
@@ -1076,6 +1106,14 @@ and elab_exp_variant (ctx : Ctx.t) (plaintyp_expect : plaintyp)
 
 (* Elaboration of paths *)
 
+and is_pure_path (path_il : Il.path) : bool =
+  match path_il.it with
+  | RootP -> true
+  | IdxP (path_il, exp_il) -> is_pure_path path_il && is_pure_exp exp_il
+  | SliceP (path_il, exp_il_i, exp_il_n) ->
+      is_pure_path path_il && is_pure_exp exp_il_i && is_pure_exp exp_il_n
+  | DotP (path_il, _) -> is_pure_path path_il
+
 and elab_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path) :
     (Ctx.t * Il.path * plaintyp) attempt_unit =
   let* ctx, path_il, plaintyp = elab_path' ctx plaintyp_expect path.it in
@@ -1227,6 +1265,27 @@ and elab_args ?(as_def = false) (at : region) (ctx : Ctx.t)
     (ctx, []) params args
 
 (* Elaboration of premises *)
+
+and is_else_prem (prem_il : Il.prem) : bool =
+  match prem_il.it with ElsePr -> true | _ -> false
+
+and is_pure_prem (prem_il : Il.prem) : bool =
+  match prem_il.it with
+  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ | ElsePr -> false
+  | LetPr (_, exp_r_il) -> is_pure_exp exp_r_il
+  | IterPr (prem_il, _) -> is_pure_prem prem_il
+  | DebugPr exp_il -> is_pure_exp exp_il
+
+and check_prems (at : region) (prems_il : Il.prem list) : unit =
+  let prems_non_else_il =
+    prems_il |> List.filter (fun prem_il -> not (is_else_prem prem_il))
+  in
+  if List.length prems_il = List.length prems_non_else_il then ()
+  else if List.length prems_il = List.length prems_non_else_il + 1 then
+    check
+      (List.for_all is_pure_prem prems_non_else_il)
+      at "only pure premises are alongside an else premise"
+  else error at "cannot use multiple else premises"
 
 and elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * Il.prem option =
   let ctx, prem_il_opt = elab_prem' ctx prem.it in
@@ -1417,7 +1476,10 @@ and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
   in
   let prems_il_group =
     List.map2
-      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
+      (fun prems_il_unified prems_il ->
+        let prems_il_group = prems_il_unified @ prems_il in
+        check_prems (prems_il |> List.map at |> over_region) prems_il_group;
+        prems_il_group)
       prems_il_unified_group prems_il_group
   in
   let exps_il_output_group =
@@ -1895,6 +1957,9 @@ and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   in
   let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
   let prems_il = sideconditions_il @ prems_il in
+  check_prems
+    (prems_il |> List.map (fun prem_il -> prem_il.at) |> over_region)
+    prems_il;
   let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
   Ctx.add_defined_func_clause ctx id clause_il
