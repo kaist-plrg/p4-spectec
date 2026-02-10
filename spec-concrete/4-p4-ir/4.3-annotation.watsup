@@ -4,34 +4,33 @@
 
 ;;; Name annotation helpers
 
-dec $name_annotation_nameIR_opt(annotationList) : nameIR?
-dec $name_annotation_nameIR_opt'(annotation) : nameIR?
 dec $is_some_nameIR(nameIR?) : bool
+dec $name_annotation_nameIR(annotationList) : nameIR*
+dec $name_annotation_nameIR_opt(annotation) : nameIR?
 
 def $is_some_nameIR(nameIR?) = $is_some_<nameIR>(nameIR?)
 
-def $name_annotation_nameIR_opt(annotationList) = nameIR_name_found
+def $name_annotation_nameIR(annotationList) = nameIR_names_found*
   -- if annotation* = $flatten_annotationList(annotationList)
-  -- if (nameIR_name? = $name_annotation_nameIR_opt'(annotation))*
-  -- if nameIR_name_found
-      = $filter_<nameIR?>(nameIR_name?*, $is_some_nameIR(nameIR_name?)*)
-def $name_annotation_nameIR_opt(annotationList) = eps
-  -- otherwise
+  -- if (nameIR_names_opt? = $name_annotation_nameIR_opt(annotation))*
+  -- if nameIR_names_found_opt?*
+      = $filter_<nameIR?>(nameIR_names_opt?*, $is_some_nameIR(nameIR_names_opt?)*)
+  -- if nameIR_names_found* = $filter_some_<nameIR>(nameIR_names_found_opt?*)
 
-def $name_annotation_nameIR_opt'(`@ name `( annotationBody ))
+def $name_annotation_nameIR_opt(`@ name `( annotationBody ))
   = $strip_prefix($strip_suffix(nameIR_name, "\""), "\"")
   -- if "name" = $name(name)
   -- if `EMPTY annotationToken = annotationBody
   -- if nameIR_name = $print_<annotationToken>(annotationToken)
-def $name_annotation_nameIR_opt'(annotation) = eps
+def $name_annotation_nameIR_opt(annotation) = eps
   -- otherwise
 
 dec $name_annotation_nameIR_default(annotationList, nameIR) : nameIR
 
 def $name_annotation_nameIR_default(annotationList, nameIR) = nameIR_found
-  -- if nameIR_found = $name_annotation_nameIR_opt(annotationList)
+  -- if nameIR_found = $name_annotation_nameIR(annotationList)
 def $name_annotation_nameIR_default(annotationList, nameIR) = nameIR
-  -- if eps = $name_annotation_nameIR_opt(annotationList)
+  -- if eps = $name_annotation_nameIR(annotationList)
 
 dec $find_name_annotation_opt(annotationList) : annotation?
 def $find_name_annotation_opt(`EMPTY) = eps

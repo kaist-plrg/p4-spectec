@@ -201,6 +201,14 @@ def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
   = $filter_<X>(X_t*, b_t*)
   -- if ~b_h
 
+dec $filter_some_<X>(X?*) : X*
+  hint(prose_in "the some values of" %0)
+def $filter_some_<X>(eps) = eps
+def $filter_some_<X>(X_h :: X_t?*)
+  = X_h :: $filter_some_<X>(X_t?*)
+def $filter_some_<X>(eps :: X_t?*)
+  = $filter_some_<X>(X_t?*)
+
 builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
   hint(prose_in "the value associated to" %0 "in" %1)
 

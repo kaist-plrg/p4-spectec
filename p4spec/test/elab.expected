@@ -276,87 +276,107 @@ def $filter_<X>(X*, bool*) : X* =
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
   -- if ~b_h
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:204.1-205.54
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:204.1-205.41
+def $filter_some_<X>(X?*) : X* =
+
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:206.1-206.32
+  clause 0 : (X?{X <- X?}*{X? <- X?*}) = []
+  -- if X?{X <- X?}*{X? <- X?*} matches []
+
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:207.1-208.35
+  clause 1 : (X'?{X' <- X'?}*{X'? <- X'?*}) = X_h :: $filter_some_<X>(X_t?{X_t <- X_t?}*{X_t? <- X_t?*})
+  -- if X'?{X' <- X'?}*{X'? <- X'?*} matches _ :: _
+  -- let X?{X <- X?} :: X_t?{X_t <- X_t?}*{X_t? <- X_t?*} = X'?{X' <- X'?}*{X'? <- X'?*}
+  -- if X?{X <- X?} matches (_)
+  -- let ?(X_h) = X?{X <- X?}
+
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:209.1-210.28
+  clause 2 : (X'?{X' <- X'?}*{X'? <- X'?*}) = $filter_some_<X>(X_t?{X_t <- X_t?}*{X_t? <- X_t?*})
+  -- if X'?{X' <- X'?}*{X'? <- X'?*} matches _ :: _
+  -- let X?{X <- X?} :: X_t?{X_t <- X_t?}*{X_t? <- X_t?*} = X'?{X' <- X'?}*{X'? <- X'?*}
+  -- if X?{X <- X?} matches ()
+
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:212.1-213.54
 builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:207.1-207.45
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:215.1-215.45
 builtin def $sort_<X>((nat, X)*) : (nat, X)*
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:209.1-211.60
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:217.1-219.60
 builtin def $distinct_<K>(K*) : bool
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:217.17-217.24
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:225.17-225.24
 syntax set<K> = 
    | { K* }
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:219.1-219.27
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:227.1-227.27
 def $empty_set<K> : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:220.1-220.29
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:228.1-228.29
   clause 0 :  = { [] }
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:222.1-223.52
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:230.1-231.52
 def $in_set<K>(K, set<K>) : bool =
 
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:224.1-224.41
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:232.1-232.41
   clause 0 : (K, { K_e*{K_e <- K_e*} }) = K <- K_e*{K_e <- K_e*}
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:226.1-227.60
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:234.1-235.60
 builtin def $intersect_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:229.1-230.53
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:237.1-238.53
 builtin def $union_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:232.1-233.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:240.1-241.44
 builtin def $unions_set<K>(set<K>*) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:235.1-236.58
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:243.1-244.58
 builtin def $diff_set<K>(set<K>, set<K>) : set<K>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:238.1-240.47
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:246.1-248.47
 builtin def $sub_set<K>(set<K>, set<K>) : bool
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:242.1-244.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:250.1-252.44
 builtin def $eq_set<K>(set<K>, set<K>) : bool
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:250.21-250.27
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:258.21-258.27
 syntax pair<K, V> = 
    | K : V
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:252.20-252.35
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:260.20-260.35
 syntax map<K, V> = set<pair<K, V>>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:254.1-255.32
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:262.1-263.32
 def $empty_map<K, V> : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:256.1-256.32
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:264.1-264.32
   clause 0 :  = { [] }
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:258.1-259.44
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:266.1-267.44
 def $dom_map<K, V>(map<K, V>) : set<K> =
 
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:260.1-260.45
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:268.1-268.45
   clause 0 : ({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:262.1-263.32
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:270.1-271.32
 builtin def $find_map<K, V>(map<K, V>, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:265.1-266.33
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:273.1-274.33
 builtin def $find_maps<K, V>(map<K, V>*, K) : V?
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:268.1-269.50
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:276.1-277.50
 builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:271.1-272.59
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:279.1-280.59
 builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:274.1-275.73
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:282.1-283.73
 builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:277.1-277.56
+;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:285.1-285.56
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
 
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:278.1-281.56
+  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:286.1-289.56
   clause 0 : ({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, { K_b : V_b*{K_b <- K_b*, V_b <- V_b*} }) = { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} }
   -- let { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} } = $adds_map<K, V>({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*})
 
@@ -9290,27 +9310,26 @@ def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
   -- if (nameIR_f =/= nameIR_f_h)
   -- let (callableId_t_found, V_t_found)*{V_t_found <- V_t_found*, callableId_t_found <- callableId_t_found*} = $find_non_overloadeds<V>({ callableId_t : V_t*{V_t <- V_t*, callableId_t <- callableId_t*} }, nameIR_f)
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:7.1-7.58
-def $name_annotation_nameIR_opt(annotationList) : nameIR? =
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:7.1-7.36
+def $is_some_nameIR(nameIR?) : bool =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:13.1-17.73
-  clause 0 : (annotationList) = ?(nameIR_name_found)
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:11.1-11.58
+  clause 0 : (nameIR?{nameIR <- nameIR?}) = $is_some_<nameIR>(nameIR?{nameIR <- nameIR?})
+
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:8.1-8.54
+def $name_annotation_nameIR(annotationList) : nameIR* =
+
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:13.1-18.78
+  clause 0 : (annotationList) = nameIR_names_found*{nameIR_names_found <- nameIR_names_found*}
   -- let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList)
-  -- (let nameIR_name?{nameIR_name <- nameIR_name?} = $name_annotation_nameIR_opt'(annotation))*{annotation <- annotation*, nameIR_name? -> nameIR_name?*}
-  -- let nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} = $filter_<nameIR?>(nameIR_name?{nameIR_name <- nameIR_name?}*{nameIR_name? <- nameIR_name?*}, $is_some_nameIR(nameIR_name?{nameIR_name <- nameIR_name?})*{nameIR_name? <- nameIR_name?*})
-  -- if nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} matches [ _/1 ]
-  -- let [nameIR?{nameIR <- nameIR?}] = nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*}
-  -- if nameIR?{nameIR <- nameIR?} matches (_)
-  -- let ?(nameIR_name_found) = nameIR?{nameIR <- nameIR?}
+  -- (let nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?} = $name_annotation_nameIR_opt(annotation))*{annotation <- annotation*, nameIR_names_opt? -> nameIR_names_opt?*}
+  -- let nameIR_names_found_opt?{nameIR_names_found_opt <- nameIR_names_found_opt?}*{nameIR_names_found_opt? <- nameIR_names_found_opt?*} = $filter_<nameIR?>(nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?}*{nameIR_names_opt? <- nameIR_names_opt?*}, $is_some_nameIR(nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?})*{nameIR_names_opt? <- nameIR_names_opt?*})
+  -- let nameIR_names_found*{nameIR_names_found <- nameIR_names_found*} = $filter_some_<nameIR>(nameIR_names_found_opt?{nameIR_names_found_opt <- nameIR_names_found_opt?}*{nameIR_names_found_opt? <- nameIR_names_found_opt?*})
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:18.1-19.15
-  clause 1 : (annotationList) = ?()
-  -- otherwise
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:9.1-9.54
+def $name_annotation_nameIR_opt(annotation) : nameIR? =
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:8.1-8.55
-def $name_annotation_nameIR_opt'(annotation) : nameIR? =
-
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:21.1-25.64
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:20.1-24.64
   clause 0 : (annotation) = ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
   -- if annotation matches `@%(%)`
   -- let @ name ( annotationBody ) = annotation
@@ -9321,37 +9340,31 @@ def $name_annotation_nameIR_opt'(annotation) : nameIR? =
   -- if annotationBody' matches ``EMPTY`
   -- let nameIR_name = $print_<annotationToken>(annotationToken)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:26.1-27.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:25.1-26.15
   clause 1 : (annotation) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:9.1-9.36
-def $is_some_nameIR(nameIR?) : bool =
-
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:11.1-11.58
-  clause 0 : (nameIR?{nameIR <- nameIR?}) = $is_some_<nameIR>(nameIR?{nameIR <- nameIR?})
-
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:29.1-29.69
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:28.1-28.69
 def $name_annotation_nameIR_default(annotationList, nameIR) : nameIR =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:31.1-32.67
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:30.1-31.63
   clause 0 : (annotationList, nameIR) = nameIR_found
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_found) = nameIR'?{nameIR' <- nameIR'?}
+  -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation_nameIR(annotationList)
+  -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
+  -- let [nameIR_found] = nameIR'*{nameIR' <- nameIR'*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:33.1-34.58
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:32.1-33.54
   clause 1 : (annotationList, nameIR) = nameIR
-  -- if (?() = $name_annotation_nameIR_opt(annotationList))
+  -- if ([] = $name_annotation_nameIR(annotationList))
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:36.1-36.60
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:35.1-35.60
 def $find_name_annotation_opt(annotationList) : annotation? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:37.1-37.44
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:36.1-36.44
   clause 0 : (annotationList) = ?()
   -- if annotationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:38.1-41.27
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:37.1-40.27
   clause 1 : (annotationList) = ?(annotation)
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
@@ -9361,7 +9374,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let text_name = $name(name)
   -- if ("name" = text_name)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:42.1-45.29
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:41.1-44.29
   clause 2 : (annotationList) = ?()
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
@@ -9371,7 +9384,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let text_name = $name(name)
   -- if ("name" =/= text_name)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:46.1-48.52
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:45.1-47.52
   clause 3 : (annotationList) = $find_name_annotation_opt(annotationListNonEmpty as annotationList)
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
@@ -9379,7 +9392,7 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let annotationListNonEmpty annotation = annotationListNonEmpty'
   -- if (?() = $find_name_annotation_opt(annotation as annotationList))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:49.1-50.60
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:48.1-49.60
   clause 4 : (annotationList) = ?(annotation')
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
@@ -9389,24 +9402,24 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- if annotation''?{annotation'' <- annotation''?} matches (_)
   -- let ?(annotation') = annotation''?{annotation'' <- annotation''?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:51.1-52.15
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:50.1-51.15
   clause 5 : (_annotationList) = ?()
   -- otherwise
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:54.1-54.70
+;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:53.1-53.70
 def $add_annotationList(annotationList, annotation?) : annotationList =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:56.1-56.62
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:55.1-55.62
   clause 0 : (annotationList, annotation?{annotation <- annotation?}) = annotationList
   -- if annotation?{annotation <- annotation?} matches ()
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:57.1-57.57
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:56.1-56.57
   clause 1 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotation as annotationList
   -- if annotationList matches ``EMPTY`
   -- if annotation'?{annotation' <- annotation'?} matches (_)
   -- let ?(annotation) = annotation'?{annotation' <- annotation'?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:58.1-58.96
+  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:57.1-57.96
   clause 2 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotationListNonEmpty annotation as annotationList
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty = annotationList as annotationListNonEmpty
@@ -23018,14 +23031,14 @@ def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
 
   ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:219.1-224.63
   clause 0 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- let nameIR?{nameIR <- nameIR?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR?{nameIR <- nameIR?} matches (_)
-  -- let ?(nameIR_key) = nameIR?{nameIR <- nameIR?}
+  -- let nameIR*{nameIR <- nameIR*} = $name_annotation_nameIR(annotationList)
+  -- if nameIR*{nameIR <- nameIR*} matches [ _/1 ]
+  -- let [nameIR_key] = nameIR*{nameIR <- nameIR*}
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
   ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:225.1-233.63
   clause 1 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if (?() = $name_annotation_nameIR_opt(annotationList))
+  -- if ([] = $name_annotation_nameIR(annotationList))
   -- let nameIR_key = $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR))
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
@@ -23067,7 +23080,7 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if (?() = $name_annotation_nameIR_opt(annotationList))
+  -- if ([] = $name_annotation_nameIR(annotationList))
   -- if (nameIR_action = nameIR_target)
 
   ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:290.1-298.40
@@ -23076,86 +23089,76 @@ def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if (?() = $name_annotation_nameIR_opt(annotationList))
+  -- if ([] = $name_annotation_nameIR(annotationList))
   -- if (nameIR_action =/= nameIR_target)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:300.1-310.14
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:300.1-309.14
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
-  -- let b_hit = ((nameIR = nameIR_action) \/ (nameIR = nameIR_annotation))
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if b_hit
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:312.1-321.15
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:311.1-320.15
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
-  -- let b_hit = ((nameIR = nameIR_action) \/ (nameIR = nameIR_annotation))
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if ~b_hit
 
 ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:277.1-277.88
 def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:323.1-323.51
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:322.1-322.51
   clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:324.1-330.58
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:323.1-329.54
   clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList _prefixedNameIR ( _argumentListIR ) #( _parameterListIR , _parameterListIR' ); = tableActionIR_h
-  -- if (?() = $name_annotation_nameIR_opt(annotationList))
+  -- if ([] = $name_annotation_nameIR(annotationList))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:332.1-339.46
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:331.1-338.90
   clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
-  -- if ~$starts_with(nameIR_annotation, ".")
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- if ([] = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*}))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:341.1-350.43
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:340.1-350.46
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
-  -- if $starts_with(nameIR_annotation, ".")
-  -- let nameIR_annotation_strip = $strip_prefix(nameIR_annotation, ".")
-  -- if (nameIR =/= nameIR_annotation_strip)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
+  -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
+  -- if ~nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:352.1-362.64
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:352.1-363.64
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
-  -- if $starts_with(nameIR_annotation, ".")
-  -- let nameIR_annotation_strip = $strip_prefix(nameIR_annotation, ".")
-  -- if (nameIR = nameIR_annotation_strip)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
+  -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
+  -- if nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:366.1-369.27
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:367.1-370.27
 def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:371.1-391.70
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:372.1-392.70
   clause 0 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
   -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
@@ -23170,7 +23173,7 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:393.1-415.70
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:394.1-416.70
   clause 1 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- if (?() = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_name(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
@@ -23186,10 +23189,10 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:419.1-424.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:420.1-425.16
 def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:426.1-451.57
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:427.1-452.57
   clause 0 : (table typeId { frame TBL }, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = table typeId { frame TBL_updated }
   -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- if ($needs_priority_tableKeysPropertyIR(TBL.keys) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))
@@ -23200,10 +23203,10 @@ def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeyset
   -- let tableEntriesPropertyIR_updated = annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] }
   -- let TBL_updated = TBL[entries = tableEntriesPropertyIR_updated]
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:455.1-458.16
+;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:456.1-459.16
 def $tableObject_add_default_action(tableObject, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:460.1-472.76
+  ;; ../../../../spec-concrete/6-dynamic-runtime/6.5.3-object-table.watsup:461.1-473.76
   clause 0 : (table typeId { frame TBL }, tableActionInterface) = table typeId { frame TBL_updated }
   -- let _annotationList constIR?{constIR <- constIR?} default_action= _tableActionReferenceIR ; = TBL.default_action
   -- if constIR?{constIR <- constIR?} matches ()
@@ -25129,7 +25132,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
     -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- if (?() = $name_annotation_nameIR_opt(annotationList))
+    -- if ([] = $name_annotation_nameIR(annotationList))
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)
     -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
     -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
@@ -25146,9 +25149,9 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
     -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_nameIR_opt(annotationList)
-    -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-    -- let ?(nameIR_annotation) = nameIR'?{nameIR' <- nameIR'?}
+    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation_nameIR(annotationList)
+    -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
+    -- let [nameIR_annotation] = nameIR'*{nameIR' <- nameIR'*}
     -- let objectId_annotation = IC_0.path ++ [nameIR_annotation]
     -- let STO_3 = $add_store(STO_2, objectId_annotation, object_table)
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)

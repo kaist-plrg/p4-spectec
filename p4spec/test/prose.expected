@@ -198,6 +198,19 @@ xref:filter_[``X^{asterisk}^`` filtered by ``bool^{asterisk}^``]
  .. Else:
   ... Return xref:filter_[``X~t~^{asterisk}^`` filtered by ``b~t~^{asterisk}^``].
 
+xref:filter_some_[The some values of ``X^?^^{asterisk}^``]
+
+
+. If ``X^?^^{asterisk}^`` is an empty list:
+ .. Return ``·``.
+. Else:
+ .. Let ``X'^?^`` ``{two-colons}`` ``X~t~^?^^{asterisk}^`` be ``X^?^^{asterisk}^``.
+ .. If let ``X~h~`` be ``X'^?^``:
+  ... Let ``X''^{asterisk}^`` be xref:filter_some_[the some values of ``X~t~^?^^{asterisk}^``].
+  ... Return ``X~h~`` ``{two-colons}`` ``X''^{asterisk}^``.
+ .. Else:
+  ... Return xref:filter_some_[the some values of ``X~t~^?^^{asterisk}^``].
+
 xref:assoc_[The value associated to ``X`` in ``(X,`` ``Y)^{asterisk}^``]
 
 xref:sort_[$sort_<X>((nat, X)^{asterisk}^)]
@@ -4422,33 +4435,34 @@ xref:find_non_overloadeds[$find_non_overloadeds<V>(set<pair<callableId, V>>, nam
   ... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
   ... Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
 
-xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]
+xref:is_some_nameIR[$is_some_nameIR(nameIR^?^)]
+
+
+. Return ``xref:is_some_[$is_some_<nameIR>(nameIR^?^)]``.
+
+xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]
 
 
 . Let ``annotation^{asterisk}^`` be xref:flatten_annotationList[the list of annotations in ``annotationList``].
-. Let ``nameIR~name~^?^^{asterisk}^`` be the list of ``nameIR~name~^?^``, obtained by repeating:
+. Let ``nameIR~names_opt~^?^^{asterisk}^`` be the list of ``nameIR~names_opt~^?^``, obtained by repeating:
 +
 --
- ** Let ``nameIR~name~^?^`` be ``xref:name_annotation_nameIR_opt'[$name_annotation_nameIR_opt'(annotation)]``.
+ ** Let ``nameIR~names_opt~^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotation)]``.
 --
 +
 for each ``annotation`` in ``annotation^{asterisk}^``
 . Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
 +
 --
- ** Let ``bool`` be ``xref:is_some_nameIR[$is_some_nameIR(nameIR~name~^?^)]``.
+ ** Let ``bool`` be ``xref:is_some_nameIR[$is_some_nameIR(nameIR~names_opt~^?^)]``.
 --
 +
-for each ``nameIR~name~^?^`` in ``nameIR~name~^?^^{asterisk}^``
-. Let ``nameIR^?^^{asterisk}^`` be xref:filter_[``nameIR~name~^?^^{asterisk}^`` filtered by ``bool^{asterisk}^``].
-. If let ``nameIR'^?^`` be ``nameIR^?^^{asterisk}^``:
- .. Check that ``nameIR'^?^`` is defined.
- .. Let ``nameIR~name_found~`` be ``nameIR'^?^``.
- .. Return ``nameIR~name_found~``.
-. Otherwise:
- .. Return ``·``.
+for each ``nameIR~names_opt~^?^`` in ``nameIR~names_opt~^?^^{asterisk}^``
+. Let ``nameIR~names_found_opt~^?^^{asterisk}^`` be xref:filter_[``nameIR~names_opt~^?^^{asterisk}^`` filtered by ``bool^{asterisk}^``].
+. Let ``nameIR~names_found~^{asterisk}^`` be xref:filter_some_[the some values of ``nameIR~names_found_opt~^?^^{asterisk}^``].
+. Return ``nameIR~names_found~^{asterisk}^``.
 
-xref:name_annotation_nameIR_opt'[$name_annotation_nameIR_opt'(annotation)]
+xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotation)]
 
 
 . If let ``+@+`` ``name`` ``+(+`` ``annotationBody`` ``+)+`` be ``annotation``:
@@ -4463,18 +4477,13 @@ xref:name_annotation_nameIR_opt'[$name_annotation_nameIR_opt'(annotation)]
 . Otherwise:
  .. Return ``·``.
 
-xref:is_some_nameIR[$is_some_nameIR(nameIR^?^)]
-
-
-. Return ``xref:is_some_[$is_some_<nameIR>(nameIR^?^)]``.
-
 xref:name_annotation_nameIR_default[$name_annotation_nameIR_default(annotationList, nameIR)]
 
 
-. Let ``nameIR'^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``.
-. If let ``nameIR~found~`` be ``nameIR'^?^``:
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``.
+. If let ``nameIR~found~`` be ``nameIR'^{asterisk}^``:
  .. Return ``nameIR~found~``.
-. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+. If ``·`` is equal to ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``:
  .. Return ``nameIR``.
 
 xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
@@ -12562,11 +12571,11 @@ xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((nameIR, nameI
 xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +:+ nameIR~matchKind~ annotationList +;+)]
 
 
-. Let ``nameIR^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``.
-. If let ``nameIR~key~`` be ``nameIR^?^``:
+. Let ``nameIR^{asterisk}^`` be ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``.
+. If let ``nameIR~key~`` be ``nameIR^{asterisk}^``:
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
-. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+. If ``·`` is equal to ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``:
  .. Let ``text`` be xref:print_[``typedExpressionIR`` as text].
  .. Let ``nameIR~key~`` be xref:strip_all_whitespace[the text ``text`` with all whitespace removed].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
@@ -12627,18 +12636,17 @@ xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{aster
  .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
  .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
  .. Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
- .. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+ .. If ``·`` is equal to ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``:
   ... If ``nameIR~action~`` is equal to ``nameIR``:
    .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
   ... Else:
    .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
- .. Let ``nameIR'^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``.
- .. If let ``nameIR~annotation~`` be ``nameIR'^?^``:
-  ... Let ``b~hit~`` be ``nameIR`` is equal to ``nameIR~action~`` or ``nameIR`` is equal to ``nameIR~annotation~``.
-  ... If ``b~hit~``:
-   .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
-  ... Else:
-   .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``.
+ .. Let ``b~hit~`` be ``nameIR`` is equal to ``nameIR~action~`` or ``nameIR`` is in ``nameIR~annotation~^{asterisk}^``.
+ .. If ``b~hit~``:
+  ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+ .. Else:
+  ... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
 
 xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^, nameIR)]
 
@@ -12648,20 +12656,26 @@ xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActio
 . Else:
  .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
  .. Let ``annotationList`` ``++_++`` ``+(+`` ``++_++`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``++_++`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
- .. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+ .. If ``·`` is equal to ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``:
   ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
  .. Let ``annotationList'`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
- .. Let ``nameIR'^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList')]``.
- .. If let ``nameIR~annotation~`` be ``nameIR'^?^``:
-  ... If ``~xref:starts_with[$starts_with(nameIR~annotation~,`` ``".")]``:
-   .... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
-  ... Else:
-   .... Let ``nameIR~annotation_strip~`` be xref:strip_prefix[the text ``nameIR~annotation~`` with the prefix ``"."`` removed].
-   .... If ``nameIR`` is not equal to ``nameIR~annotation_strip~``:
-    ..... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
-   .... If ``nameIR`` is equal to ``nameIR~annotation_strip~``:
-    ..... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
-    ..... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+ .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList')]``.
+ .. If ``·`` is equal to xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``(`` ``$starts_with(nameIR~annotation~,`` ``".")`` ``)^{asterisk}^``]:
+  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
++
+--
+  *** Let ``bool`` be ``xref:starts_with[$starts_with(nameIR~annotation~,`` ``".")]``.
+--
++
+for each ``nameIR~annotation~`` in ``nameIR~annotation~^{asterisk}^``
+ .. Let ``nameIR~annotation_dotPrefix~^{asterisk}^`` be xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``bool^{asterisk}^``].
+ .. Let ``nameIR~annotation_strip~^{asterisk}^`` be ``(`` ``xref:strip_prefix[$strip_prefix(nameIR~annotation_dotPrefix~,`` ``".")]`` ``)^{asterisk}^``.
+ .. If ``nameIR`` is not in ``nameIR~annotation_strip~^{asterisk}^``:
+  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Else:
+  ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
+  ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
 
 xref:tableObject_create_entry_action[$tableObject_create_entry_action(+ACTIONS+ +=+ +{+ tableActionIR^{asterisk}^ +}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
 
@@ -13731,12 +13745,12 @@ xref:ControlLocalDecl_inst[``IC~0~`` ``STO`` ``+|-+`` ``annotationList`` ``+TABL
 . Let ``nameIR~object~`` be ``xref:name_annotation_nameIR_default[$name_annotation_nameIR_default(annotationList,`` ``nameIR)]``.
 . Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].
-. If ``·`` is equal to ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``:
+. If ``·`` is equal to ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``:
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
  .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
  .. Result in ``IC~1~``, ``STO~2~``, and ``constantDeclarationIR``.
-. Let ``nameIR'^?^`` be ``xref:name_annotation_nameIR_opt[$name_annotation_nameIR_opt(annotationList)]``.
-. If let ``nameIR~annotation~`` be ``nameIR'^?^``:
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation_nameIR[$name_annotation_nameIR(annotationList)]``.
+. If let ``nameIR~annotation~`` be ``nameIR'^{asterisk}^``:
  .. Let ``objectId~annotation~`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~annotation~``.
  .. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
