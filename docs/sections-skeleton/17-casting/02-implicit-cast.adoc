@@ -1,0 +1,129 @@
+[#sec-implicit-cast]
+=== Implicit casts
+
+// 479 - Modified
+To keep the language simple and avoid introducing hidden costs, the main
+implicit casts in P4 are casts from `int` to fixed-width types and from enums
+with an underlying type to the underlying type. In particular, applying a
+binary operation (except shifts and concatenation) to an expression of type
+`int` and an expression with a fixed-width type will implicitly cast the `int`
+expression to the type of the other expression. For enums with an underlying
+type, it can be implicitly cast to its underlying type whenever appropriate,
+including but not limited to in shifts, concatenation, bit slicing indexes,
+header stack indexes as well as other unary and binary operations.
+
+// 480
+For example, given the following declarations,
+
+// 481
+[source,p4]
+----
+enum bit<8> E {
+   a = 5
+}
+
+bit<8>  x;
+bit<16> y;
+int<8>  z;
+----
+
+// 482
+the compiler will add implicit casts as follows:
+
+// 483
+* `x + 1` becomes `x + (bit<8>)1`
+* `z < 0` becomes `z < (int<8>)0`
+* `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
+* `x + E.a` becomes `x + (bit<8>)E.a`
+* `x &&& 8` becomes `x &&& (bit<8>)8`
+* `x << 256` remains unchanged; `256` not implicitly cast to `8w0` in a shift; overflow warning
+* `16w11 << E.a` becomes `16w11 << (bit<8>)E.a`
+* `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
+* `E.a pass:[++] 8w0` becomes `(bit<8>)E.a pass:[++] 8w0`
+
+// 484 - Modified
+The compiler also adds implicit casts when types of different expressions need
+to match; for example, as described in Section <<sec-select>>, since select
+labels are compared against the selected expression, the compiler will insert
+implicit casts for the select labels when they have `int` types. Similarly,
+when assigning a structure-valued expression to a structure or header, the
+compiler will add implicit casts for `int` fields.
+
+// Added
+The below relation checks whether a type can be implicitly cast to another
+type.
+
+// Added
+${relation-title-source: Cast_impl}
+${relation-title-prose: Cast_impl}
+
+// Added
+First, the two types are unrolled and checked to see if they are the same type.
+If so, no cast is needed.
+
+// Added
+${rulegroup-source: Cast_impl}
+${rulegroup-prose: Cast_impl}
+
+// Added
+If the two types are not equal, the below relation is applied.
+
+// Added
+${relation-title-source: Cast_impl_neq}
+${relation-title-prose: Cast_impl_neq}
+
+[discrete]
+====== Cast from `int` to `int<S>` or `bit<W>`
+
+// Added
+${rulegroup-source: Cast_impl_neq/arbitraryInt}
+${rulegroup-prose: Cast_impl_neq/arbitraryInt}
+
+[discrete]
+====== Cast from an enum with an underlying type to the underlying type
+
+// Added
+${rulegroup-source: Cast_impl_neq/enumTypeIR-serializable}
+${rulegroup-prose: Cast_impl_neq/enumTypeIR-serializable}
+
+[discrete]
+====== Cast from a default type to the target type
+
+// Added
+${rulegroup-source: Cast_impl_neq/defaultTypeIR}
+${rulegroup-prose: Cast_impl_neq/defaultTypeIR}
+
+[discrete]
+====== Cast from an invalid header type to a header or header union type
+
+// Added
+${rulegroup-source: Cast_impl_neq/invalidHeaderTypeIR}
+${rulegroup-prose: Cast_impl_neq/invalidHeaderTypeIR}
+
+[discrete]
+====== Cast from a sequence type to a list, tuple, header stack, struct, header, or another sequence type
+
+// Added
+${rulegroup-source: Cast_impl_neq/sequenceTypeIR-non-default}
+${rulegroup-prose: Cast_impl_neq/sequenceTypeIR-non-default}
+
+[discrete]
+====== Cast from a sequence type with default initializer to a tuple, header stack, struct, or header type
+
+// Added
+${rulegroup-source: Cast_impl_neq/sequenceTypeIR-default}
+${rulegroup-prose: Cast_impl_neq/sequenceTypeIR-default}
+
+[discrete]
+====== Cast from a record type to a struct or header type
+
+// Added
+${rulegroup-source: Cast_impl_neq/recordTypeIR-non-default}
+${rulegroup-prose: Cast_impl_neq/recordTypeIR-non-default}
+
+[discrete]
+====== Cast from a record type with default initializer to a struct or header type
+
+// Added
+${rulegroup-source: Cast_impl_neq/recordTypeIR-default}
+${rulegroup-prose: Cast_impl_neq/recordTypeIR-default}

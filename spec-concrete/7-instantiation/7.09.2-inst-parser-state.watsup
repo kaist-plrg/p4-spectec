@@ -7,17 +7,19 @@
 ;;
 
 rule ParserState_inst:
-  IC_0 STO_0 |- annotationList STATE nameIR
-                  `{ parserStatementListIR transitionStatementIR }
-              : IC_2 STO_1
+  IC_0 STO_0 |- parserStateIR : IC_2 STO_1
+  -- if annotationList STATE nameIR
+          `{ parserStatementListIR transitionStatementIR }
+      = parserStateIR
   ---- ;; instantiate parser statements
   -- ParserStmts_inst:
       IC_0 STO_0 |- parserStatementListIR
                   : IC_1 STO_1 parserStatementListIR_inst
   ---- ;; bind parser state to state environment
-  -- if state
-      = annotationList STATE `{ parserStatementListIR_inst transitionStatementIR }
-  -- if IC_2 = $add_state_i(IC_1, nameIR, state)
+  -- if parserStateIR_inst
+      = annotationList STATE nameIR
+          `{ parserStatementListIR_inst transitionStatementIR }
+  -- if IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst)
 
 ;;
 ;; Parser state list instantiation

@@ -4,30 +4,6 @@
 ;; syntax transitionStatementIR = TRANSITION stateExpressionIR
 ;;
 
-;;; syntax stateExpressionIR
-
-;;;; nameIR `;
-
-rulegroup ParserTransition_eval/nameIR {
-
-  rule ParserTransition_eval/accept:
-    EC ARCH |- TRANSITION ("accept" `;)
-             : EC ARCH ACCEPT
-
-  rule ParserTransition_eval/reject:
-    EC ARCH |- TRANSITION ("reject" `;)
-             : EC ARCH (REJECT errorValue)
-    -- if errorValue = ERROR `. "NoError"
-
-  rule ParserTransition_eval/state:
-    EC ARCH |- TRANSITION (nameIR `;)
-             : EC ARCH (STATE nameIR)
-    -- if nameIR =/= "accept" /\ nameIR =/= "reject"
-
-}
-
-;;;; selectExpressionIR
-
 syntax selectCaseMatchResult =
   | continueResult<nameIR?>
   | rejectTransitionResult
@@ -36,6 +12,8 @@ relation SelectCase_match:
   evalContext arch value* |- selectCaseIR
                            : evalContext arch selectCaseMatchResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "matching" %2 "against" %3 "under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %4#", state" %5#", and" %6)
 
 rulegroup SelectCase_match {
 
@@ -73,6 +51,8 @@ relation SelectCases_match:
   evalContext arch value* |- selectCaseListIR
                            : evalContext arch selectCaseMatchResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "matching" %2 "against" %3 "under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %4#", state" %5#", and" %6)
 
 rulegroup SelectCases_match {
 
@@ -105,10 +85,12 @@ rulegroup SelectCases_match {
 
 }
 
-rulegroup ParserTransition_eval/selectExpressionIR {
+;;; syntax selectExpressionIR
 
-  rule ParserTransition_eval/reject:
-    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+rulegroup ParserSelect_eval {
+
+  rule ParserSelect_eval/reject:
+    EC_0 ARCH_0 |- selectExpressionIR
                  : EC_1 ARCH_1 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
@@ -118,8 +100,8 @@ rulegroup ParserTransition_eval/selectExpressionIR {
         LOCAL EC_0 ARCH_0 |- typedExpressionIR_key*
                            : EC_1 ARCH_1 rejectTransitionResult
 
-  rule ParserTransition_eval/cont-selectCaseListIR-reject:
-    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+  rule ParserSelect_eval/cont-selectCaseListIR-reject:
+    EC_0 ARCH_0 |- selectExpressionIR
                  : EC_2 ARCH_2 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
@@ -133,8 +115,8 @@ rulegroup ParserTransition_eval/selectExpressionIR {
         EC_1 ARCH_1 value_key* |- selectCaseListIR
                                 : EC_2 ARCH_2 rejectTransitionResult
 
-  rule ParserTransition_eval/no-match:
-    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+  rule ParserSelect_eval/no-match:
+    EC_0 ARCH_0 |- selectExpressionIR
                  : EC_2 ARCH_2 rejectTransitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
@@ -146,11 +128,12 @@ rulegroup ParserTransition_eval/selectExpressionIR {
     ---- ;; find a matching select case
     -- SelectCases_match:
         EC_1 ARCH_1 value_key* |- selectCaseListIR
-                                : EC_2 ARCH_2 (`` eps)
+                                : EC_2 ARCH_2 (`` nameIR_state?)
+    -- if eps = nameIR_state?
     -- if rejectTransitionResult = REJECT (ERROR `. "NoMatch")
 
-  rule ParserTransition_eval/match:
-    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+  rule ParserSelect_eval/match:
+    EC_0 ARCH_0 |- selectExpressionIR
                  : EC_3 ARCH_3 transitionResult
     ---- ;; unpack the select expression
     -- if SELECT `( typedExpressionIR_key* ) `{ selectCaseListIR }
@@ -168,6 +151,37 @@ rulegroup ParserTransition_eval/selectExpressionIR {
         EC_2 ARCH_2 |- TRANSITION (nameIR_state `;)
                      : EC_3 ARCH_3 transitionResult
 
+}
+
+;;; syntax stateExpressionIR
+
+;;;; nameIR `;
+;;;; selectExpressionIR
+
+rulegroup ParserTransition_eval {
+
+  rule ParserTransition_eval/nameIR-accept:
+    EC ARCH |- TRANSITION (nameIR `;)
+             : EC ARCH ACCEPT
+    -- if nameIR = "accept"
+
+  rule ParserTransition_eval/nameIR-reject:
+    EC ARCH |- TRANSITION (nameIR `;)
+             : EC ARCH (REJECT errorValue)
+    -- if nameIR = "reject"
+    -- if errorValue = ERROR `. "NoError"
+
+  rule ParserTransition_eval/nameIR-state:
+    EC ARCH |- TRANSITION (nameIR `;)
+             : EC ARCH (STATE nameIR)
+    -- if nameIR =/= "accept" /\ nameIR =/= "reject"
+
+  rule ParserTransition_eval/selectExpressionIR:
+    EC_0 ARCH_0 |- TRANSITION selectExpressionIR
+                 : EC_1 ARCH_1 transitionResult
+    -- ParserSelect_eval:
+        EC_0 ARCH_0 |- selectExpressionIR
+                     : EC_1 ARCH_1 transitionResult
 }
 
 ;;
