@@ -3562,12 +3562,20 @@ syntax headerUnionTypeIR =
 syntax valueFieldIR = 
    | nameIR = value ;
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:82.1-83.64
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:82.3-82.42
+syntax simpleEnumTypeIR = 
+   | enum typeId { nameIR* } hint(print %0)
+
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:85.3-85.60
+syntax serializableEnumTypeIR = 
+   | enum typeId < typeIR >{ valueFieldIR* } hint(print %0)
+
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:88.1-89.27
 syntax enumTypeIR = 
    | enum typeId { nameIR* } hint(print %0)
    | enum typeId < typeIR >{ valueFieldIR* } hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:86.1-92.15
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:92.1-98.15
 syntax dataTypeIR = 
    | list< typeIR >
    | tuple< typeIR* >
@@ -3578,30 +3586,30 @@ syntax dataTypeIR =
    | enum typeId { nameIR* } hint(print %0)
    | enum typeId < typeIR >{ valueFieldIR* } hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:103.3-103.41
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:109.3-109.41
 syntax externMethodTypeDefEnv = map<callableId, externMethodTypeDefIR>
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:106.3-107.28
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:112.3-113.28
 syntax externObjectTypeIR = 
    | extern typeId < typeArgumentIR* > externMethodTypeDefEnv hint(print %0#"<"#%1#">")
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:110.3-111.28
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:116.3-117.28
 syntax parserObjectTypeIR = 
    | parser typeId < typeArgumentIR* >( parameterIR* ) hint(print %0#"<"#%1#">")
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:114.3-115.28
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:120.3-121.28
 syntax controlObjectTypeIR = 
    | control typeId < typeArgumentIR* >( parameterIR* ) hint(print %0#"<"#%1#">")
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:118.3-119.28
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:124.3-125.28
 syntax packageObjectTypeIR = 
    | package typeId < typeArgumentIR* >{ typeIR* } hint(print %0#"<"#%1#">")
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:122.3-123.17
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:128.3-129.17
 syntax tableObjectTypeIR = 
    | table typeId { tableMetadataStructTypeIR } hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:126.1-130.22
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:132.1-136.22
 syntax objectTypeIR = 
    | extern typeId < typeArgumentIR* > externMethodTypeDefEnv hint(print %0#"<"#%1#">")
    | parser typeId < typeArgumentIR* >( parameterIR* ) hint(print %0#"<"#%1#">")
@@ -3609,42 +3617,42 @@ syntax objectTypeIR =
    | package typeId < typeArgumentIR* >{ typeIR* } hint(print %0#"<"#%1#">")
    | table typeId { tableMetadataStructTypeIR } hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:136.24-136.31
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:142.24-142.31
 syntax defaultTypeIR = 
    | default
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:138.30-138.44
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:144.30-144.44
 syntax invalidHeaderTypeIR = 
    | header_invalid
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:141.1-142.29
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:147.1-148.29
 syntax sequenceTypeIR = 
    | seq< typeIR* >
    | seq< typeIR* ,...>
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:145.1-146.37
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:151.1-152.37
 syntax recordTypeIR = 
    | record{ fieldTypeIR* }
    | record{ fieldTypeIR* ,...}
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:148.20-148.35
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:154.20-154.35
 syntax setTypeIR = 
    | set< typeIR >
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:151.3-152.17
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:157.3-158.17
 syntax tableMetadataEnumTypeIR = 
    | table_enum typeId { nameIR* } hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:155.3-158.17
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:161.3-164.17
 syntax tableMetadataStructTypeIR = 
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:161.1-162.30
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:167.1-168.30
 syntax tableMetadataTypeIR = 
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:165.1-170.24
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:171.1-176.24
 syntax synthesizedTypeIR = 
    | default
    | header_invalid
@@ -3656,7 +3664,7 @@ syntax synthesizedTypeIR =
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:177.1-182.22
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:183.1-188.22
 syntax typeIR = 
    | void
    | bool
@@ -3693,7 +3701,7 @@ syntax typeIR =
    | table_enum typeId { nameIR* } hint(print %0)
    | table_struct typeId {hit boolTypeIR ;miss boolTypeIR ;action_run tableMetadataEnumTypeIR ;} hint(print %0)
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:184.25-184.31
+;; ../../../../spec-concrete/2-static-runtime/2.2.1-type.watsup:190.25-190.31
 syntax typeArgumentIR = typeIR
 
 ;; ../../../../spec-concrete/2-static-runtime/2.2.2-type-def.watsup:5.26-5.32
@@ -3845,17 +3853,13 @@ tbl def $is_defaultable_typeIR(typeIR) : bool =
   row 11 :
     (signature) enum _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR
     (typeIR) -> true
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+    -- if typeIR <: simpleEnumTypeIR
+    -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = typeIR as simpleEnumTypeIR
   row 12 :
     (signature) enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR') -> $is_defaultable_typeIR(typeIR)
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   row 13 :
     (signature) _typeIR
     (_typeIR) -> false
@@ -4017,17 +4021,13 @@ def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:22.1-22.54
   clause 6 : (typeDefIR) = typeId
-  -- if typeDefIR <: enumTypeIR
-  -- let enumTypeIR = typeDefIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%{%}`
-  -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+  -- if typeDefIR <: simpleEnumTypeIR
+  -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = typeDefIR as simpleEnumTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:23.1-23.61
   clause 7 : (typeDefIR) = typeId
-  -- if typeDefIR <: enumTypeIR
-  -- let enumTypeIR = typeDefIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeDefIR <: serializableEnumTypeIR
+  -- let enum typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeDefIR as serializableEnumTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.2.4-type-def-aux.watsup:27.1-27.68
   clause 8 : (typeDefIR) = typeId
@@ -4657,17 +4657,13 @@ def $free_typeIR(typeIR) : bound =
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:63.1-63.43
   clause 10 : (typeIR) = { [] }
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%{%}`
-  -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+  -- if typeIR <: simpleEnumTypeIR
+  -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = typeIR as simpleEnumTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:65.1-65.67
   clause 11 : (typeIR') = $free_typeIR(typeIR)
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.1-type-free.watsup:69.1-72.76
   clause 12 : (typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_callableTypeDefIR(externMethodTypeDefIR as callableTypeDefIR)*{externMethodTypeDefIR <- externMethodTypeDefIR*}))
@@ -4965,17 +4961,13 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:158.1-159.31
   clause 11 : (theta, typeIR) = enum typeId { id_field*{id_field <- id_field*} } as typeIR
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%{%}`
-  -- let enum typeId { id_field*{id_field <- id_field*} } = enumTypeIR
+  -- if typeIR <: simpleEnumTypeIR
+  -- let enum typeId { id_field*{id_field <- id_field*} } = typeIR as simpleEnumTypeIR
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:161.1-163.53
   clause 12 : (theta, typeIR') = enum typeId < typeIR_subst >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum typeId < typeIR >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum typeId < typeIR >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
   ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:167.1-177.60
@@ -5360,7 +5352,7 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath nameTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:45.1-55.2
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:45.1-56.2
   rulegroup typedefTypeIR
 
    match
@@ -5383,10 +5375,11 @@ relation Type_alpha: typeIR ~~ typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: typedefTypeIR
     -- let typedef _typeId typeIR_b = typeIR'' as typedefTypeIR
+    -- if ~typeIR_a <: typedefTypeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:57.1-59.38
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:58.1-60.38
   rulegroup newTypeIR
 
    match
@@ -5405,7 +5398,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:63.1-65.38
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:64.1-66.38
   rulegroup listTypeIR
 
    match
@@ -5423,7 +5416,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:67.1-69.41
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:68.1-70.41
   rulegroup tupleTypeIR
 
    match
@@ -5441,7 +5434,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeIR_a ~~ typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:71.1-73.38
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:72.1-74.38
   rulegroup headerStackTypeIR
 
    match
@@ -5460,7 +5453,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:75.1-78.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:76.1-79.57
   rulegroup structTypeIR
 
    match
@@ -5479,7 +5472,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b holds)*{typeArgumentIR_a <- typeArgumentIR_a*, typeArgumentIR_b <- typeArgumentIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:80.1-83.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:81.1-84.57
   rulegroup headerTypeIR
 
    match
@@ -5498,7 +5491,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b holds)*{typeArgumentIR_a <- typeArgumentIR_a*, typeArgumentIR_b <- typeArgumentIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:85.1-88.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:86.1-89.57
   rulegroup headerUnionTypeIR
 
    match
@@ -5517,40 +5510,36 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b holds)*{typeArgumentIR_a <- typeArgumentIR_a*, typeArgumentIR_b <- typeArgumentIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:90.1-100.2
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:91.1-101.2
   rulegroup enumTypeIR
 
    match
 
-    (signature) enumTypeIR as typeIR ~~ enumTypeIR' as typeIR
+    (signature) typeIR ~~ typeIR'
     typeIR ~~ typeIR'
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR' = typeIR' as enumTypeIR
 
    paths
 
     rulepath non-serializable
-    -- let enumTypeIR'' = enumTypeIR
-    -- if enumTypeIR'' matches `ENUM%{%}`
-    -- let enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = enumTypeIR''
-    -- if (enumTypeIR' = enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} })
+    -- let typeIR'' = typeIR
+    -- if typeIR'' <: simpleEnumTypeIR
+    -- let enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = typeIR'' as simpleEnumTypeIR
+    -- if (typeIR' = enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} } as typeIR)
     -- the relation holds
 
     rulepath serializable
-    -- let enumTypeIR'' = enumTypeIR
-    -- if enumTypeIR'' matches `ENUM%<%>{%}`
-    -- let enum typeId < typeIR_a >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = enumTypeIR''
-    -- let enumTypeIR''' = enumTypeIR'
-    -- if enumTypeIR''' matches `ENUM%<%>{%}`
-    -- let enum typeId' < typeIR_b >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR'''
+    -- let typeIR'' = typeIR
+    -- if typeIR'' <: serializableEnumTypeIR
+    -- let enum typeId < typeIR_a >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = typeIR'' as serializableEnumTypeIR
+    -- let typeIR''' = typeIR'
+    -- if typeIR''' <: serializableEnumTypeIR
+    -- let enum typeId' < typeIR_b >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = typeIR''' as serializableEnumTypeIR
     -- if (typeId' = typeId)
     -- if (valueFieldIR*{valueFieldIR <- valueFieldIR*} = nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*})
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:104.1-106.57
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:105.1-107.57
   rulegroup externObjectTypeIR
 
    match
@@ -5569,7 +5558,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b holds)*{typeArgumentIR_a <- typeArgumentIR_a*, typeArgumentIR_b <- typeArgumentIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:108.1-110.60
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:109.1-111.60
   rulegroup parserObjectTypeIR
 
    match
@@ -5587,7 +5576,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if ParameterType_alpha: parameterIR_a ~~ parameterIR_b holds)*{parameterIR_a <- parameterIR_a*, parameterIR_b <- parameterIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:112.1-114.60
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:113.1-115.60
   rulegroup controlObjectTypeIR
 
    match
@@ -5605,7 +5594,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if ParameterType_alpha: parameterIR_a ~~ parameterIR_b holds)*{parameterIR_a <- parameterIR_a*, parameterIR_b <- parameterIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:116.1-118.41
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:117.1-119.41
   rulegroup packetObjectTypeIR
 
    match
@@ -5623,7 +5612,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeIR_a ~~ typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:120.1-121.41
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:121.1-122.41
   rulegroup tableObjectTypeIR
 
    match
@@ -5641,7 +5630,7 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath tableObjectTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:125.1-126.21
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:126.1-127.21
   rulegroup defaultTypeIR
 
    match
@@ -5660,7 +5649,7 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath defaultTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:128.1-129.35
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:129.1-130.35
   rulegroup invalidHeaderTypeIR
 
    match
@@ -5679,7 +5668,7 @@ relation Type_alpha: typeIR ~~ typeIR
     rulepath invalidHeaderTypeIR
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:131.1-141.2
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:132.1-142.2
   rulegroup sequenceTypeIR
 
    match
@@ -5713,7 +5702,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeIR_a ~~ typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:143.1-155.2
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:144.1-156.2
   rulegroup recordTypeIR
 
    match
@@ -5751,7 +5740,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if Type_alpha: typeIR_field_a ~~ typeIR_field_b holds)*{typeIR_field_a <- typeIR_field_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:157.1-159.38
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:158.1-160.38
   rulegroup setTypeIR
 
    match
@@ -5769,7 +5758,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
     -- the relation holds
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:161.1-162.45
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:162.1-163.45
   rulegroup tableMetadataTypeIR
 
    match
@@ -5790,7 +5779,7 @@ relation Type_alpha: typeIR ~~ typeIR
 ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:11.1-15.56
 relation ParameterType_alpha: parameterIR ~~ parameterIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:168.1-170.38
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:169.1-171.38
   rulegroup 
 
    match
@@ -5808,7 +5797,7 @@ relation ParameterType_alpha: parameterIR ~~ parameterIR
 ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:17.1-21.56
 relation ExternMethodType_alpha: externMethodTypeIR ~~ externMethodTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:176.1-192.2
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:177.1-193.2
   rulegroup 
 
    match
@@ -5845,7 +5834,7 @@ relation ExternMethodType_alpha: externMethodTypeIR ~~ externMethodTypeIR
 ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:23.1-27.56
 relation ExternMethodTypeDef_alpha: externMethodTypeDefIR ~~ externMethodTypeDefIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:198.1-227.63
+  ;; ../../../../spec-concrete/2-static-runtime/2.6-type-alpha.watsup:199.1-228.63
   rulegroup 
 
    match
@@ -5931,12 +5920,13 @@ def $joins_ctk(ctk*) : ctk =
   -- if ctk*{ctk <- ctk*} matches [ _/1 ]
   -- let [ctk_b] = ctk*{ctk <- ctk*}
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.7-compile-time-known.watsup:23.1-24.40
+  ;; ../../../../spec-concrete/2-static-runtime/2.7-compile-time-known.watsup:23.1-25.40
   clause 3 : (ctk'*{ctk' <- ctk'*}) = $joins_ctk(ctk_d :: ctk_c*{ctk_c <- ctk_c*})
   -- if ctk'*{ctk' <- ctk'*} matches _ :: _
   -- let ctk_a :: ctk*{ctk <- ctk*} = ctk'*{ctk' <- ctk'*}
   -- if ctk*{ctk <- ctk*} matches _ :: _
   -- let ctk_b :: ctk_c*{ctk_c <- ctk_c*} = ctk*{ctk <- ctk*}
+  -- if (ctk_c*{ctk_c <- ctk_c*} =/= [])
   -- let ctk_d = $join_ctk(ctk_a, ctk_b)
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:5.1-6.40
@@ -7353,19 +7343,15 @@ def $default(typeIR) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:840.1-840.62
   clause 14 : (typeIR) = typeId . id_f_h as value
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%{%}`
-  -- let enum typeId { id*{id <- id*} } = enumTypeIR
+  -- if typeIR <: simpleEnumTypeIR
+  -- let enum typeId { id*{id <- id*} } = typeIR as simpleEnumTypeIR
   -- if id*{id <- id*} matches _ :: _
   -- let id_f_h :: _id*{_id <- _id*} = id*{id <- id*}
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:842.1-845.79
   clause 15 : (typeIR') = typeId . id_zero . value_zero as value
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = typeIR' as serializableEnumTypeIR
   -- let value_zero = $cast_int(typeIR, d 0 as int as integerValue)
   -- let id?{id <- id?} = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*})
   -- if id?{id <- id?} matches (_)
@@ -7373,10 +7359,8 @@ def $default(typeIR) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:847.1-851.34
   clause 16 : (typeIR') = typeId . id_zero . value_zero as value
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = typeIR' as serializableEnumTypeIR
   -- let value_zero = $cast_int(typeIR, d 0 as int as integerValue)
   -- if (?() = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}))
   -- let id_zero = "__UNSPECIFIED"
@@ -7386,8 +7370,8 @@ def $cast_to_enum(enumTypeIR, value) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:566.1-567.57
   clause 0 : (enumTypeIR, value) = $cast_to_enum'(typeId, typeIR, valueFieldIR*{valueFieldIR <- valueFieldIR*}, value)
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum typeId < typeIR >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR
+  -- if enumTypeIR <: serializableEnumTypeIR
+  -- let enum typeId < typeIR >{ valueFieldIR*{valueFieldIR <- valueFieldIR*} } = enumTypeIR as serializableEnumTypeIR
 
 ;; ../../../../spec-concrete/3-operations/3-operations.watsup:549.1-549.65
 def $cast_to_enum'(typeId, typeIR, valueFieldIR*, value) : value =
@@ -7692,10 +7676,8 @@ def $cast_enum(typeIR, enumValue) : value =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:703.1-703.72
   clause 0 : (typeIR, enumValue) = typeId . nameIR as value
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%{%}`
-  -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+  -- if typeIR <: simpleEnumTypeIR
+  -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = typeIR as simpleEnumTypeIR
   -- if enumValue matches `%.%`
   -- let typeId' . nameIR = enumValue
   -- if (typeId = typeId')
@@ -7926,10 +7908,8 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:918.1-919.35
   clause 6 : (typeIR') = $sizeof_minSizeInBits'(typeIR)
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:920.1-921.46
   clause 7 : (typeIR') = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
@@ -8005,10 +7985,8 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:952.1-953.35
   clause 6 : (typeIR') = $sizeof_maxSizeInBits'(typeIR)
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
 
   ;; ../../../../spec-concrete/3-operations/3-operations.watsup:954.1-955.46
   clause 7 : (typeIR') = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
@@ -9969,117 +9947,118 @@ def $update_mode(tableContext, id, typeIR) : tableContext =
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:120.1-122.24
-  clause 5 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:120.1-123.24
+  clause 5 : (TBLC, text, typeIR) = TBLC[mode = prilpm]
   -- if (text = "lpm")
+  -- if ~typeIR <: aliasTypeIR
   -- if (TBLC.mode = pri)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:124.1-126.26
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:125.1-127.26
   clause 6 : (TBLC, text, _typeIR) = TBLC[mode = pri]
   -- if (text = "range")
   -- if (TBLC.mode = nopri)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:127.1-129.26
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:128.1-130.26
   clause 7 : (TBLC, text, _typeIR) = TBLC[mode = pri]
   -- if (text = "ternary")
   -- if (TBLC.mode = nopri)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:130.1-132.26
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:131.1-133.26
   clause 8 : (TBLC, text, _typeIR) = TBLC[mode = pri]
   -- if (text = "optional")
   -- if (TBLC.mode = nopri)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:134.1-136.31
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:135.1-137.31
   clause 9 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
   -- if (text = "range")
   -- let matchMode = TBLC.mode
   -- if matchMode matches `NOPRILPM%`
   -- let noprilpm _nat = matchMode
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:137.1-139.31
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:138.1-140.31
   clause 10 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
   -- if (text = "ternary")
   -- let matchMode = TBLC.mode
   -- if matchMode matches `NOPRILPM%`
   -- let noprilpm _nat = matchMode
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:140.1-142.31
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:141.1-143.31
   clause 11 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
   -- if (text = "optional")
   -- let matchMode = TBLC.mode
   -- if matchMode matches `NOPRILPM%`
   -- let noprilpm _nat = matchMode
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:144.1-145.15
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:145.1-146.15
   clause -1 : (TBLC, _id, _typeIR) = TBLC
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:153.1-153.81
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:154.1-154.81
 def $find_action(tableContext, prefixedNameIR) : (parameterIR*, argumentListIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:156.1-156.85
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:157.1-157.85
   clause 0 : (TBLC, prefixedNameIR) = $find_action'(TBLC.actions, prefixedNameIR)
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:154.1-154.82
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:155.1-155.82
 def $find_action'(matchAction*, prefixedNameIR) : (parameterIR*, argumentListIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:158.1-158.45
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:159.1-159.45
   clause 0 : (matchAction*{matchAction <- matchAction*}, prefixedNameIR) = ?()
   -- if matchAction*{matchAction <- matchAction*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:160.1-162.71
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:161.1-163.71
   clause 1 : (matchAction*{matchAction <- matchAction*}, prefixedNameIR) = ?((parameterIR*{parameterIR <- parameterIR*}, argumentListIR))
   -- if matchAction*{matchAction <- matchAction*} matches _ :: _
   -- let matchAction_h :: matchAction_t*{matchAction_t <- matchAction_t*} = matchAction*{matchAction <- matchAction*}
   -- let (prefixedNameIR', parameterIR*{parameterIR <- parameterIR*}, argumentListIR) = matchAction_h
   -- if (prefixedNameIR' = prefixedNameIR)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:164.1-167.44
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:165.1-168.44
   clause 2 : (matchAction*{matchAction <- matchAction*}, prefixedNameIR) = $find_action'(matchAction_t*{matchAction_t <- matchAction_t*}, prefixedNameIR)
   -- if matchAction*{matchAction <- matchAction*} matches _ :: _
   -- let matchAction_h :: matchAction_t*{matchAction_t <- matchAction_t*} = matchAction*{matchAction <- matchAction*}
   -- let (prefixedNameIR_h, _parameterIR*{_parameterIR <- _parameterIR*}, _argumentListIR) = matchAction_h
   -- if (prefixedNameIR_h =/= prefixedNameIR)
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:171.1-171.50
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:172.1-172.50
 def $find_table_priority_last(tableContext) : nat =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:173.1-175.29
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:174.1-176.29
   clause 0 : (TBLC) = n*{n <- n*}[n_last]
   -- let n*{n <- n*} = TBLC.priorities.values
   -- let int = (|n*{n <- n*}| - 1)
   -- if int <: nat
   -- let n_last = int as nat
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:181.1-181.78
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:182.1-182.78
 def $join_tableEntryState(tableEntryState, tableEntryState) : tableEntryState =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:183.1-183.48
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:184.1-184.48
   clause 0 : (tableEntryState, tableEntryState') = lpm n
   -- if tableEntryState matches `NOLPM`
   -- if tableEntryState' matches `LPM%`
   -- let lpm n = tableEntryState'
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:184.1-184.48
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:185.1-185.48
   clause 1 : (tableEntryState, tableEntryState') = lpm n
   -- if tableEntryState matches `LPM%`
   -- let lpm n = tableEntryState
   -- if tableEntryState' matches `NOLPM`
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:185.1-185.48
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:186.1-186.48
   clause 2 : (tableEntryState, tableEntryState') = nolpm
   -- if tableEntryState matches `NOLPM`
   -- if tableEntryState' matches `NOLPM`
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:187.1-187.40
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:188.1-188.40
 def $tableEntry_lpm_prefix(value) : nat =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:190.1-190.70
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:191.1-191.70
   clause 0 : (value) = $tableEntry_lpm_prefix'(value, 0)
 
-;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:188.1-188.46
+;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:189.1-189.46
 def $tableEntry_lpm_prefix'(value, nat) : nat =
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:191.1-191.56
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:192.1-192.56
   clause 0 : (value, n_prefix) = n_prefix
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -10087,7 +10066,7 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let nat w _int = integerLiteral
   -- if (nat = 0)
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:192.1-198.25
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:193.1-199.25
   clause 1 : (value, n_prefix) = $tableEntry_lpm_prefix'(value', (n_prefix + 1))
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -10105,7 +10084,7 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let n' = int'' as nat
   -- let value' = w' w n' as int as value
 
-  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:199.1-204.31
+  ;; ../../../../spec-concrete/5-typing/5.02.2-typing-table-context.watsup:200.1-205.31
   clause 2 : (value, nat) = $tableEntry_lpm_prefix'(value', 0)
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
@@ -10299,24 +10278,22 @@ relation Type_wf: bound |- typeIR
 
    match
 
-    (signature) B |- enumTypeIR as typeIR
+    (signature) B |- typeIR'
     B |- typeIR'
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
 
    paths
 
     rulepath non-serializable
-    -- let enumTypeIR' = enumTypeIR
-    -- if enumTypeIR' matches `ENUM%{%}`
-    -- let enum _typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = enumTypeIR'
+    -- let typeIR'' = typeIR'
+    -- if typeIR'' <: simpleEnumTypeIR
+    -- let enum _typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = typeIR'' as simpleEnumTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
     -- the relation holds
 
     rulepath serializable
-    -- let enumTypeIR' = enumTypeIR
-    -- if enumTypeIR' matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR >{ nameIR_field = _value ;*{_value <- _value*, nameIR_field <- nameIR_field*} } = enumTypeIR'
+    -- let typeIR'' = typeIR'
+    -- if typeIR'' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR >{ nameIR_field = _value ;*{_value <- _value*, nameIR_field <- nameIR_field*} } = typeIR'' as serializableEnumTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
     -- if $nestable_enum_serializable(typeIR)
     -- if Type_wf: B |- typeIR holds
@@ -11248,10 +11225,8 @@ tbl def $nestable_header(typeIR) : bool =
   row 7 :
     (signature) enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR) -> true
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR <: serializableEnumTypeIR
+    -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   row 8 :
     (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
     (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
@@ -11297,10 +11272,8 @@ tbl def $nestable_struct_in_header(typeIR) : bool =
   row 6 :
     (signature) enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR) -> true
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR <: serializableEnumTypeIR
+    -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   row 7 :
     (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
     (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
@@ -12164,10 +12137,8 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = enumTypeIR
+    -- if typeIR' <: simpleEnumTypeIR
+    -- let enum typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = typeIR' as simpleEnumTypeIR
     -- if nameIR <- nameIR_field*{nameIR_field <- nameIR_field*}
     -- output: % % |- % ~> typeId . nameIR as value
 
@@ -12178,10 +12149,8 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = enumTypeIR
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let enum typeId < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = typeIR' as serializableEnumTypeIR
     -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (nameIR_field, value_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*})
     -- if value'?{value' <- value'?} matches (_)
     -- let ?(value) = value'?{value' <- value'?}
@@ -13084,10 +13053,8 @@ relation Cast_expl_neq: typeIR -> typeIR
 
     rulepath left
     -- let typeIR'' = typeIR
-    -- if typeIR'' <: enumTypeIR
-    -- let enumTypeIR = typeIR'' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR'' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR'' as serializableEnumTypeIR
     -- let typeIR_b = typeIR'
     -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
@@ -13095,10 +13062,8 @@ relation Cast_expl_neq: typeIR -> typeIR
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
-    -- if typeIR'' <: enumTypeIR
-    -- let enumTypeIR = typeIR'' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR_b >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR'' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR_b >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR'' as serializableEnumTypeIR
     -- if Cast_impl: typeIR_a -> typeIR_b holds
     -- the relation holds
 
@@ -13402,10 +13367,8 @@ relation Cast_impl_neq: typeIR -> typeIR
 
     (signature) enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR -> typeIR_b
     typeIR -> typeIR_b
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR_a >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
 
    paths
 
@@ -14360,10 +14323,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- let typeIR = $unroll_typeIR(typeIR_base)
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum _typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = enumTypeIR
+    -- if typeIR <: simpleEnumTypeIR
+    -- let enum _typeId { nameIR_field*{nameIR_field <- nameIR_field*} } = typeIR as simpleEnumTypeIR
     -- let nameIR = $name(member)
     -- if nameIR <- nameIR_field*{nameIR_field <- nameIR_field*}
     -- let expressionNoteIR = ( typeIR_base lctk )
@@ -14377,10 +14338,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if $is_monomorphic_typeDefIR(typeDefIR_base)
     -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- let typeIR = $unroll_typeIR(typeIR_base)
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < _typeIR >{ nameIR_field = _value ;*{_value <- _value*, nameIR_field <- nameIR_field*} } = enumTypeIR
+    -- if typeIR <: serializableEnumTypeIR
+    -- let enum _typeId < _typeIR >{ nameIR_field = _value ;*{_value <- _value*, nameIR_field <- nameIR_field*} } = typeIR as serializableEnumTypeIR
     -- let nameIR = $name(member)
     -- if nameIR <- nameIR_field*{nameIR_field <- nameIR_field*}
     -- let expressionNoteIR = ( typeIR_base lctk )
@@ -17059,7 +17018,7 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:408.1-412.68
 relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyListIR
 
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1114.1-1152.2
+  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1115.1-1153.2
   rulegroup 
 
    match
@@ -17090,7 +17049,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:414.1-418.67
 relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1154.1-1178.67
+  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1155.1-1179.67
   rulegroup 
 
    match
@@ -17649,7 +17608,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let nameIR = $name(name)
     -- let name_field*{name_field <- name_field*} = $flatten_nameList(nameList_field)
     -- (let nameIR_field = $name(name_field))*{name_field <- name_field*, nameIR_field -> nameIR_field*}
-    -- let enumTypeDefIR = enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }
+    -- let enumTypeDefIR = enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} } as enumTypeDefIR
     -- if TypeDef_wf: $bound(global, TC_0) |- enumTypeDefIR as typeDefIR holds
     -- let TC_1 = $add_typeDef_t(global, TC_0, nameIR, enumTypeDefIR as typeDefIR)
     -- (let id_field = nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, id_field -> id_field*}
@@ -17682,7 +17641,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- Enum_serializable_fieldList_ok: TC_0 nameIR typeIR |- namedExpressionList_field : TC_1 namedValueIR_field*{namedValueIR_field <- namedValueIR_field*}
     -- (let nameIR_field = value_field = namedValueIR_field)*{namedValueIR_field <- namedValueIR_field*, nameIR_field -> nameIR_field*, value_field -> value_field*}
     -- (let id_field = nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, id_field -> id_field*}
-    -- let enumTypeDefIR = enum nameIR < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }
+    -- let enumTypeDefIR = enum nameIR < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as enumTypeDefIR
     -- (let varTypeIR = `empty enumTypeDefIR as typeIR lctk ?(value_field))*{value_field <- value_field*, varTypeIR -> varTypeIR*}
     -- let TC_2 = $add_vars_t(global, TC_0, id_field*{id_field <- id_field*}, varTypeIR*{varTypeIR <- varTypeIR*})
     -- if TypeDef_wf: B |- enumTypeDefIR as typeDefIR holds
@@ -18301,7 +18260,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- if CallableType_wf: bound |- functionTypeIR as callableTypeIR holds
     -- output: % % |- % < % >( % ): functionTypeIR as callableTypeIR <# typeId_impl*{typeId_impl <- typeId_impl*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:92.1-149.2
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:92.1-155.2
   rulegroup builtinMethodTypeIR
 
    match
@@ -18317,6 +18276,10 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     rulepath minmax-SizeIn-BitsBytes
     -- if (argumentIR''''*{argumentIR'''' <- argumentIR''''*} = [])
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
+    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
+    -- if ~typeIR_base_unroll <: objectTypeIR
+    -- if ~typeIR_base_unroll <: synthesizedTypeIR
     -- let methodTypeIR = builtin_method nameIR ( [] ): int as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as callableTypeIR <# [] >(# [] # [] )
 
@@ -18363,7 +18326,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let methodTypeIR = builtin_method nameIR ( [] ): void as typeIR as methodTypeIR
     -- output: % % |- % < % >( % ): methodTypeIR as callableTypeIR <# [] >(# [] # [] )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:151.1-172.50
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:157.1-178.50
   rulegroup externMethodTypeIR
 
    match
@@ -18391,7 +18354,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- if CallableType_wf: bound |- externMethodTypeIR as callableTypeIR holds
     -- output: % % |- % < % >( % ): externMethodTypeIR as callableTypeIR <# typeId_impl*{typeId_impl <- typeId_impl*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:174.1-191.59
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:180.1-197.59
   rulegroup parserApplyMethodTypeIR
 
    match
@@ -18419,7 +18382,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let ?(_callableId : _parserApplyMethodTypeIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<parserApplyMethodTypeIR>?{callResolution<parserApplyMethodTypeIR> <- callResolution<parserApplyMethodTypeIR>?}
     -- output: % % |- % < % >( % ): parserApplyMethodTypeIR as callableTypeIR <# [] >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:193.1-210.60
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:199.1-216.60
   rulegroup controlApplyMethodTypeIR
 
    match
@@ -18447,7 +18410,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let ?(_callableId : _controlApplyMethodTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<controlApplyMethodTypeDefIR>?{callResolution<controlApplyMethodTypeDefIR> <- callResolution<controlApplyMethodTypeDefIR>?}
     -- output: % % |- % < % >( % ): controlApplyMethodTypeIR as callableTypeIR <# [] >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:212.1-219.74
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:218.1-225.74
   rulegroup tableApplyMethodTypeIR
 
    match
@@ -18470,7 +18433,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let tableApplyMethodTypeIR = table_apply: tableMetadataStructTypeIR
     -- output: % % |- % < % >( % ): tableApplyMethodTypeIR as callableTypeIR <# [] >(# [] # [] )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:225.1-230.90
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:231.1-236.90
   rulegroup parenthesized
 
    match
@@ -18489,7 +18452,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
 ;; ../../../../spec-concrete/5-typing/5.04-typing-relation.watsup:574.1-583.54
 relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # typeId* >( argumentListIR # id* # id* ): typeIR < typeArgumentListIR >( argumentListIR )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:249.1-263.38
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:255.1-269.38
   rulegroup action
 
    match
@@ -18510,7 +18473,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC action |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:282.1-309.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:288.1-315.40
   rulegroup definedFunctionTypeIR
 
    match
@@ -18538,7 +18501,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:336.1-363.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:342.1-369.40
   rulegroup externFunctionTypeIR
 
    match
@@ -18566,7 +18529,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:378.1-392.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:384.1-398.40
   rulegroup builtinMethodTypeIR
 
    match
@@ -18586,7 +18549,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): typeIR_ret < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:407.1-434.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:413.1-440.40
   rulegroup externMethodTypeIR-non-abstract
 
    match
@@ -18616,7 +18579,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:446.1-474.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:452.1-480.40
   rulegroup externMethodTypeIR-abstract
 
    match
@@ -18646,7 +18609,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:488.1-502.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:494.1-508.40
   rulegroup parserApplyMethodTypeIR
 
    match
@@ -18667,7 +18630,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:516.1-530.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:522.1-536.40
   rulegroup controlApplyMethodTypeIR
 
    match
@@ -18688,7 +18651,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC noaction |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % >( % # % # % ): void as typeIR < [] >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:544.1-550.42
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:550.1-556.42
   rulegroup tableApplyMethodTypeIR
 
    match
@@ -18838,10 +18801,8 @@ def $reduce_serenum(typedExpressionIR) : typedExpressionIR =
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   -- let typeIR' = $unroll_typeIR(typeIR)
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   -- let typedExpressionIR_reduced = ( typeIR_underlying ) typedExpressionIR as expressionIR # ( typeIR_underlying ctk )
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:422.1-423.15
@@ -18860,10 +18821,8 @@ def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool) : typedExpre
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
   -- if ~$check(typeIR)
   -- let typeIR' = $unroll_typeIR(typeIR)
-  -- if typeIR' <: enumTypeIR
-  -- let enumTypeIR = typeIR' as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR' <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   -- let typedExpressionIR_cast = ( typeIR_underlying ) typedExpressionIR as expressionIR # ( typeIR_underlying ctk )
 
   ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:446.1-447.15
@@ -18884,52 +18843,49 @@ def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, 
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
   -- if ~$check(typeIR_l, typeIR_r)
   -- let typeIR = $unroll_typeIR(typeIR_l)
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR_l_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR_l_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   -- let typedExpressionIR_l_cast = ( typeIR_l_underlying ) typedExpressionIR_l as expressionIR # ( typeIR_l_underlying ctk_l )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:474.1-482.87
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:474.1-483.87
   clause 2 : (typedExpressionIR_l, typedExpressionIR_r, $check) = $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r_cast, $check)
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
   -- if ~$check(typeIR_l, typeIR_r)
+  -- if ~$unroll_typeIR(typeIR_l) <: serializableEnumTypeIR
   -- let typeIR = $unroll_typeIR(typeIR_r)
-  -- if typeIR <: enumTypeIR
-  -- let enumTypeIR = typeIR as enumTypeIR
-  -- if enumTypeIR matches `ENUM%<%>{%}`
-  -- let enum _typeId < typeIR_r_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+  -- if typeIR <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR_r_underlying >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   -- let typedExpressionIR_r_cast = ( typeIR_r_underlying ) typedExpressionIR_r as expressionIR # ( typeIR_r_underlying ctk_r )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:484.1-485.15
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:485.1-486.15
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r, $check) = ?()
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:496.1-497.44
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:497.1-498.44
 def $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:499.1-501.37
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:500.1-502.37
   clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR)
   -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR
   -- if Type_alpha: typeIR ~~ typeIR_to holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:503.1-508.63
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:504.1-509.63
   clause 1 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- let _expressionIR # ( typeIR ctk ) = typedExpressionIR
   -- if Type_alpha: typeIR ~~ typeIR_to does not hold
   -- if Cast_impl: typeIR -> typeIR_to holds
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
-;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:512.1-514.62
+;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:513.1-515.62
 def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:516.1-520.38
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:517.1-521.38
   clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r
   -- if Type_alpha: typeIR_l ~~ typeIR_r holds
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:522.1-529.65
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:523.1-530.65
   clause 1 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
@@ -18937,7 +18893,7 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
   -- if Cast_impl: typeIR_l -> typeIR_r holds
   -- let typedExpressionIR_l_cast = ( typeIR_r ) typedExpressionIR_l as expressionIR # ( typeIR_r ctk_l )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:531.1-539.65
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:532.1-540.65
   clause 2 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
@@ -18946,7 +18902,7 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
   -- if Cast_impl: typeIR_r -> typeIR_l holds
   -- let typedExpressionIR_r_cast = ( typeIR_l ) typedExpressionIR_r as expressionIR # ( typeIR_l ctk_r )
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:541.1-549.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:542.1-550.57
   clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
   -- let _expressionIR # ( typeIR_l ctk_l ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r _ctk ) = typedExpressionIR_r
@@ -18956,7 +18912,7 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
   -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
   -- if (typedExpressionIR_l =/= typedExpressionIR_l_cast)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:551.1-561.57
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:552.1-562.57
   clause 4 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
   -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l
   -- let _expressionIR' # ( typeIR_r ctk_r ) = typedExpressionIR_r
@@ -18968,7 +18924,7 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
   -- let typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
   -- if (typedExpressionIR_r =/= typedExpressionIR_r_cast)
 
-  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:563.1-564.15
+  ;; ../../../../spec-concrete/5-typing/5.05.2-typing-casting.watsup:564.1-565.15
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
 
 ;; ../../../../spec-concrete/5-typing/5.06.1-typing-expression.watsup:69.1-69.36
@@ -20867,17 +20823,13 @@ tbl def $compat_table_exact_optional_key(typeIR) : bool =
   row 5 :
     (signature) enum _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR
     (typeIR) -> true
-    -- if typeIR <: enumTypeIR
-    -- let enumTypeIR = typeIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+    -- if typeIR <: simpleEnumTypeIR
+    -- let enum _typeId { _nameIR*{_nameIR <- _nameIR*} } = typeIR as simpleEnumTypeIR
   row 6 :
     (signature) enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR') -> $compat_table_exact_optional_key(typeIR)
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   row 7 :
     (signature) _typeIR
     (_typeIR) -> false
@@ -20913,10 +20865,8 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
   row 5 :
     (signature) enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
-    -- if typeIR' <: enumTypeIR
-    -- let enumTypeIR = typeIR' as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = enumTypeIR
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let enum _typeId < typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
   row 6 :
     (signature) _typeIR
     (_typeIR) -> false
@@ -21414,10 +21364,11 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- let tableActionReferenceIR_NoAction = . "NoAction" ( [] )
   -- if tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
 
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1106.1-1112.38
+  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1106.1-1113.38
   clause 3 : (TBLC_0, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC_1, tablePropertyIR_h :: tablePropertyIR_t_updated*{tablePropertyIR_t_updated <- tablePropertyIR_t_updated*})
   -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches _ :: _
   -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
+  -- if ~tablePropertyIR_h <: tableActionsPropertyIR
   -- let (TBLC_1, tablePropertyIR_t_updated*{tablePropertyIR_t_updated <- tablePropertyIR_t_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_0, tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*})
 
 ;; ../../../../spec-concrete/5-typing/5.14.2-typing-control-declaration.watsup:66.1-71.89
@@ -21628,12 +21579,14 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_param = typeIR as typedefTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:96.1-97.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:96.1-99.41
   clause 2 : (constraint, typeIR_param, typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_arg = typeIR as typedefTypeIR
+  -- if ~typeIR_param <: nameTypeIR
+  -- if ~typeIR_param <: typedefTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:99.1-100.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:101.1-102.58
   clause 3 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: newTypeIR
   -- let type typeId typeIR_param = typeIR as newTypeIR
@@ -21641,21 +21594,21 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let type typeId' typeIR_arg = typeIR' as newTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:104.1-108.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:106.1-110.58
   clause 4 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: listTypeIR
   -- let list< typeIR_param > = typeIR as listTypeIR
   -- if typeIR' <: listTypeIR
   -- let list< typeIR_arg > = typeIR' as listTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:110.1-114.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:112.1-116.61
   clause 5 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: tupleTypeIR
   -- let tuple< typeIR_param*{typeIR_param <- typeIR_param*} > = typeIR as tupleTypeIR
   -- if typeIR' <: tupleTypeIR
   -- let tuple< typeIR_arg*{typeIR_arg <- typeIR_arg*} > = typeIR' as tupleTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:116.1-120.58
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:118.1-122.58
   clause 6 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: headerStackTypeIR
   -- let typeIR_param [ n_size ] = typeIR as headerStackTypeIR
@@ -21663,7 +21616,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let typeIR_arg [ n_size' ] = typeIR' as headerStackTypeIR
   -- if (n_size = n_size')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:122.1-127.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:124.1-129.48
   clause 7 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: structTypeIR
   -- let struct typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as structTypeIR
@@ -21671,7 +21624,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let struct typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as structTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:129.1-134.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:131.1-136.48
   clause 8 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerTypeIR
   -- let header typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerTypeIR
@@ -21679,7 +21632,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let header typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as headerTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:136.1-141.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:138.1-143.48
   clause 9 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerUnionTypeIR
   -- let header_union typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} >{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerUnionTypeIR
@@ -21687,7 +21640,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let header_union typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} >{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } = typeIR' as headerUnionTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:145.1-150.48
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:147.1-152.48
   clause 10 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: externObjectTypeIR
   -- let extern typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} } = typeIR as externObjectTypeIR
@@ -21695,7 +21648,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- let extern typeId' < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} } = typeIR' as externObjectTypeIR
   -- if (typeId = typeId')
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:152.1-158.56
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:154.1-160.56
   clause 11 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: parserObjectTypeIR
   -- let parser _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) = typeIR as parserObjectTypeIR
@@ -21705,7 +21658,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:160.1-166.56
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:162.1-168.56
   clause 12 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: controlObjectTypeIR
   -- let control _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) = typeIR as controlObjectTypeIR
@@ -21715,27 +21668,27 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:168.1-172.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:170.1-174.61
   clause 13 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: packageObjectTypeIR
   -- let package _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ typeIR_param*{typeIR_param <- typeIR_param*} } = typeIR as packageObjectTypeIR
   -- if typeIR' <: packageObjectTypeIR
   -- let package _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} >{ typeIR_arg*{typeIR_arg <- typeIR_arg*} } = typeIR' as packageObjectTypeIR
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:174.1-176.15
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:176.1-178.15
   clause -1 : (constraint, typeIR_param, typeIR_arg) = constraint
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:27.1-27.64
 def $gen_constraints(constraint, typeIR*, typeIR*) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:180.1-183.64
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:182.1-185.64
   clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
   -- (let constraint_pair = $gen_constraint(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
 
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:29.1-29.59
 def $merge_constraint(constraint, constraint) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:189.1-193.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:191.1-195.61
   clause 0 : (constraint_pre, constraint_post) = $merge_constraint'(constraint_pre, constraint_post, typeId_pre*{typeId_pre <- typeId_pre*}, { [] })
   -- let { typeId_pre*{typeId_pre <- typeId_pre*} } = $dom_map<typeId, infer>(constraint_pre)
   -- let { typeId_post*{typeId_post <- typeId_post*} } = $dom_map<typeId, infer>(constraint_post)
@@ -21744,11 +21697,11 @@ def $merge_constraint(constraint, constraint) : constraint =
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:30.1-30.81
 def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:195.1-197.15
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:197.1-199.15
   clause 0 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = constraint
   -- if typeId*{typeId <- typeId*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:199.1-207.66
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:201.1-209.66
   clause 1 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -21756,7 +21709,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if (?(unknown) = $find_map<typeId, infer>(constraint_post, typeId_h))
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, unknown)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:209.1-217.79
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:211.1-219.79
   clause 2 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -21768,7 +21721,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let knownas typeIR_post = infer
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_post)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:219.1-227.78
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:221.1-229.78
   clause 3 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -21780,7 +21733,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if (?(unknown) = $find_map<typeId, infer>(constraint_post, typeId_h))
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_pre)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:229.1-238.79
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:231.1-240.79
   clause 4 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -21797,7 +21750,7 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- if Cast_impl: typeIR_pre -> typeIR_post holds
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, knownas typeIR_post)
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:240.1-250.78
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:242.1-252.78
   clause 5 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
   -- if typeId*{typeId <- typeId*} matches _ :: _
   -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
@@ -21818,11 +21771,11 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:31.1-31.61
 def $merge_constraints(constraint, constraint*) : constraint =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:252.1-252.61
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:254.1-254.61
   clause 0 : (constraint_pre, constraint*{constraint <- constraint*}) = constraint_pre
   -- if constraint*{constraint <- constraint*} matches []
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:254.1-261.65
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:256.1-263.65
   clause 1 : (constraint_pre_0, constraint*{constraint <- constraint*}) = constraint_pre_2
   -- if constraint*{constraint <- constraint*} matches _ :: _
   -- let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} = constraint*{constraint <- constraint*}
@@ -21832,7 +21785,7 @@ def $merge_constraints(constraint, constraint*) : constraint =
 ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:33.1-33.48
 def $resolve_constraint(constraint) : inference =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:267.1-269.35
+  ;; ../../../../spec-concrete/5-typing/5.15.2-typing-call-inference.watsup:269.1-271.35
   clause 0 : ({ typeId : infer*{infer <- infer*, typeId <- typeId*} }) = { typeId : typeIR*{typeIR <- typeIR*, typeId <- typeId*} }
   -- (let infer' = infer)*{infer <- infer*, infer' -> infer'*}
   -- (if infer' matches `KNOWNAS%`)*{infer' <- infer'*}
@@ -21965,166 +21918,166 @@ def $instantiable(cursor, typingContext, instctxt, typeIR) : bool =
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
   -- if typeIR_unroll <: tableObjectTypeIR
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:241.1-241.51
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:247.1-247.51
 def $callable_action(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:243.1-243.41
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:249.1-249.41
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:244.1-244.40
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:250.1-250.40
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:245.1-247.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:251.1-253.34
   clause 2 : (cursor, TC) = ((localKind = action as localKind) \/ (localKind = control_apply_method as localKind))
   -- if cursor matches `LOCAL`
   -- let localKind = TC.local.kind
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:272.1-272.60
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:278.1-278.60
 def $callable_definedFunction(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:274.1-274.50
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:280.1-280.50
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:275.1-277.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:281.1-283.34
   clause 1 : (cursor, TC) = ((blockKind = parser) \/ (blockKind = control))
   -- if cursor matches `BLOCK`
   -- let blockKind = TC.block.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:278.1-280.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:284.1-286.34
   clause 2 : (cursor, TC) = ~localKind <: externMethodLocalKind
   -- if cursor matches `LOCAL`
   -- let localKind = TC.local.kind
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:315.1-315.67
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:321.1-321.67
 def $callable_externFunction(cursor, typingContext, nameIR) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:317.1-318.26
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:323.1-324.26
   clause 0 : (cursor, TC, nameIR) = false
   -- if cursor matches `GLOBAL`
   -- if (nameIR = "verify")
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:319.1-320.28
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:325.1-326.28
   clause 1 : (cursor, TC, nameIR) = true
   -- if cursor matches `GLOBAL`
   -- if (nameIR =/= "verify")
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:321.1-324.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:327.1-330.34
   clause 2 : (cursor, TC, nameIR) = (blockKind = parser)
   -- if cursor matches `BLOCK`
   -- if (nameIR = "verify")
   -- let blockKind = TC.block.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:325.1-328.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:331.1-334.34
   clause 3 : (cursor, TC, nameIR) = ((blockKind = parser) \/ (blockKind = control))
   -- if cursor matches `BLOCK`
   -- if (nameIR =/= "verify")
   -- let blockKind = TC.block.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:329.1-332.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:335.1-338.34
   clause 4 : (cursor, TC, nameIR) = (localKind = parser_state as localKind)
   -- if cursor matches `LOCAL`
   -- if (nameIR = "verify")
   -- let localKind = TC.local.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:333.1-334.28
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:339.1-340.28
   clause 5 : (cursor, TC, nameIR) = true
   -- if cursor matches `LOCAL`
   -- if (nameIR =/= "verify")
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:372.1-372.58
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:378.1-378.58
 def $callable_builtinMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:374.1-374.47
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:380.1-380.47
   clause 0 : (cursor, TC) = true
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:375.1-375.46
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:381.1-381.46
   clause 1 : (cursor, TC) = true
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:376.1-376.46
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:382.1-382.46
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:399.1-399.57
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:405.1-405.57
 def $callable_externMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:401.1-401.47
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:407.1-407.47
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:402.1-404.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:408.1-410.34
   clause 1 : (cursor, TC) = ((blockKind = parser) \/ (blockKind = control))
   -- if cursor matches `BLOCK`
   -- let blockKind = TC.block.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:405.1-405.45
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:411.1-411.45
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:438.1-438.65
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:444.1-444.65
 def $callable_externAbstractMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:440.1-440.55
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:446.1-446.55
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:441.1-443.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:447.1-449.34
   clause 1 : (cursor, TC) = ((blockKind = parser) \/ (blockKind = control))
   -- if cursor matches `BLOCK`
   -- let blockKind = TC.block.kind
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:444.1-444.53
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:450.1-450.53
   clause 2 : (cursor, TC) = true
   -- if cursor matches `LOCAL`
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:480.1-480.62
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:486.1-486.62
 def $callable_parserApplyMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:482.1-482.52
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:488.1-488.52
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:483.1-483.51
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:489.1-489.51
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:484.1-486.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:490.1-492.34
   clause 2 : (cursor, TC) = (localKind = parser_state as localKind)
   -- if cursor matches `LOCAL`
   -- let localKind = TC.local.kind
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:508.1-508.63
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:514.1-514.63
 def $callable_controlApplyMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:510.1-510.53
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:516.1-516.53
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:511.1-511.52
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:517.1-517.52
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:512.1-514.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:518.1-520.34
   clause 2 : (cursor, TC) = (localKind = control_apply_method as localKind)
   -- if cursor matches `LOCAL`
   -- let localKind = TC.local.kind
 
-;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:535.1-535.61
+;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:541.1-541.61
 def $callable_tableApplyMethod(cursor, typingContext) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:537.1-537.51
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:543.1-543.51
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:538.1-538.50
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:544.1-544.50
   clause 1 : (cursor, TC) = false
   -- if cursor matches `BLOCK`
 
-  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:539.1-542.34
+  ;; ../../../../spec-concrete/5-typing/5.15.4-typing-callable-call.watsup:545.1-548.34
   clause 2 : (cursor, TC) = ((localKind = control_apply_method as localKind) \/ (localKind = table_apply_method as localKind))
   -- if cursor matches `LOCAL`
   -- let localKind = TC.local.kind
@@ -23430,20 +23383,16 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: enumTypeIR
-    -- let enumTypeIR = typeDefIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+    -- if typeDefIR <: simpleEnumTypeIR
+    -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = typeDefIR as simpleEnumTypeIR
     -- output: % % % |- % : STO typeId . nameIR as value
 
     rulepath serenum
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(p, IC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: enumTypeIR
-    -- let enumTypeIR = typeDefIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum typeId < _typeIR >{ id_member = value_member ;*{id_member <- id_member*, value_member <- value_member*} } = enumTypeIR
+    -- if typeDefIR <: serializableEnumTypeIR
+    -- let enum typeId < _typeIR >{ id_member = value_member ;*{id_member <- id_member*, value_member <- value_member*} } = typeDefIR as serializableEnumTypeIR
     -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*})
     -- if value'?{value' <- value'?} matches (_)
     -- let ?(value) = value'?{value' <- value'?}
@@ -25073,7 +25022,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- (let nameIR_enum_field = nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, nameIR_enum_field -> nameIR_enum_field*}
     -- (let value_enum_field = nameIR . nameIR_field as value)*{nameIR_field <- nameIR_field*, value_enum_field -> value_enum_field*}
     -- let IC_1 = $add_vars_i(global, IC_0, nameIR_enum_field*{nameIR_enum_field <- nameIR_enum_field*}, value_enum_field*{value_enum_field <- value_enum_field*})
-    -- let enumTypeDefIR = enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} }
+    -- let enumTypeDefIR = enum nameIR { nameIR_field*{nameIR_field <- nameIR_field*} } as enumTypeDefIR
     -- let IC_2 = $add_typeDef_i(global, IC_1, nameIR, enumTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_2 STO
 
@@ -25095,7 +25044,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- (let nameIR_serenum_field = nameIR ++ "." ++ nameIR_field)*{nameIR_field <- nameIR_field*, nameIR_serenum_field -> nameIR_serenum_field*}
     -- (let value_serenum_field = nameIR . nameIR_field . value_field as value)*{nameIR_field <- nameIR_field*, value_field <- value_field*, value_serenum_field -> value_serenum_field*}
     -- let IC_1 = $add_vars_i(global, IC_0, nameIR_serenum_field*{nameIR_serenum_field <- nameIR_serenum_field*}, value_serenum_field*{value_serenum_field <- value_serenum_field*})
-    -- let enumTypeDefIR = enum nameIR < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }
+    -- let enumTypeDefIR = enum nameIR < typeIR >{ nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as enumTypeDefIR
     -- let IC_2 = $add_typeDef_i(global, IC_1, nameIR, enumTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_2 STO
 
@@ -25835,7 +25784,7 @@ def $is_tableCustomPropertyIR(tablePropertyIR) : bool =
 ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:92.1-92.59
 def $init_table(tablePropertyListIR) : tableObjectProperty =
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:112.1-128.49
+  ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:115.1-131.49
   clause 0 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = TBL
   -- let tableKeysPropertyIR = $init_tableKeys(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
   -- let tablePropertyIR'*{tablePropertyIR' <- tablePropertyIR'*} = $filter_<tablePropertyIR>(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}, $is_tableActionsPropertyIR(tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
@@ -25880,8 +25829,9 @@ def $init_tableEntries(tablePropertyListIR) : tableEntriesPropertyIR =
   -- if tableEntriesPropertyIR'*{tableEntriesPropertyIR' <- tableEntriesPropertyIR'*} matches [ _/1 ]
   -- let [tableEntriesPropertyIR] = tableEntriesPropertyIR'*{tableEntriesPropertyIR' <- tableEntriesPropertyIR'*}
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:109.1-110.35
+  ;; ../../../../spec-concrete/7-instantiation/7.10.1-inst-control-table.watsup:109.1-113.74
   clause 1 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = `empty ?() entries={ [] }
+  -- if ([] = $filter_<tablePropertyIR>(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}, $is_tableEntriesPropertyIR(tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}))
 
 ;; ../../../../spec-concrete/8-dynamic/8.01.1-eval-context.watsup:7.26-7.41
 syntax globalEvalLayer = globalInstLayer
@@ -26790,10 +26740,8 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_e(p, EC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: enumTypeIR
-    -- let enumTypeIR = typeDefIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%{%}`
-    -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = enumTypeIR
+    -- if typeDefIR <: simpleEnumTypeIR
+    -- let enum typeId { _nameIR*{_nameIR <- _nameIR*} } = typeDefIR as simpleEnumTypeIR
     -- let expressionResult = ` typeId . nameIR as value as expressionResult
     -- output: % % % |- % : EC ARCH expressionResult
 
@@ -26801,10 +26749,8 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_e(p, EC, prefixedNameIR)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: enumTypeIR
-    -- let enumTypeIR = typeDefIR as enumTypeIR
-    -- if enumTypeIR matches `ENUM%<%>{%}`
-    -- let enum typeId < _typeIR >{ nameIR_member = value_member ;*{nameIR_member <- nameIR_member*, value_member <- value_member*} } = enumTypeIR
+    -- if typeDefIR <: serializableEnumTypeIR
+    -- let enum typeId < _typeIR >{ nameIR_member = value_member ;*{nameIR_member <- nameIR_member*, value_member <- value_member*} } = typeDefIR as serializableEnumTypeIR
     -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*{nameIR_member <- nameIR_member*, value_member <- value_member*})
     -- if value'?{value' <- value'?} matches (_)
     -- let ?(value) = value'?{value' <- value'?}

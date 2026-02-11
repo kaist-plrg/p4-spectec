@@ -1113,12 +1113,10 @@ xref:typeId_of_typeDefIR[The name of ``typeDefIR``]
  .. Return ``typeId``.
 . Else if let ``+HEADER_UNION+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
  .. Return ``typeId``.
-. Else if let ``enumTypeIR`` be ``typeDefIR``:
- .. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
-  ... Return ``typeId``.
- .. Else:
-  ... Let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
-  ... Return ``typeId``.
+. Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Return ``typeId``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Return ``typeId``.
 . Else if let ``+EXTERN+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
  .. Return ``typeId``.
 . Else if let ``+PARSER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``typeDefIR``:
@@ -1452,12 +1450,10 @@ for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
  .. Let ``set<typeId>'`` be xref:unions_set[the union of the sets ``bound'^{asterisk}^``].
  .. Return xref:union_set[the union of the sets ``set<typeId>`` and ``set<typeId>'``].
-. Else if let ``enumTypeIR`` be ``typeIR``:
- .. If ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``{`` ``%`` ``}``:
-  ... Return ``+{+`` ``·`` ``+}+``.
- .. Else:
-  ... Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
-  ... Return xref:free_typeIR[free type identifiers in ``typeIR'``].
+. Else if ``typeIR`` has type ``simpleEnumTypeIR``:
+ .. Return ``+{+`` ``·`` ``+}+``.
+. Else if let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Return xref:free_typeIR[free type identifiers in ``typeIR'``].
 . Else if let ``+EXTERN+`` ``++_++`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``+:+`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Let ``bound^{asterisk}^`` be the list of ``bound``, obtained by repeating:
 +
@@ -1862,13 +1858,11 @@ for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``
  .. Let ``headerUnionTypeIR~subst~`` be ``+HEADER_UNION+`` ``typeId`` ``+<+`` ``typeArgumentIR~subst~^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_subst~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
  .. Return ``headerUnionTypeIR~subst~``.
-. Else if let ``enumTypeIR`` be ``typeIR``:
- .. If let ``+ENUM+`` ``typeId`` ``+{+`` ``id~field~^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
-  ... Return ``+ENUM+`` ``typeId`` ``+{+`` ``id~field~^{asterisk}^`` ``+}+``.
- .. Else:
-  ... Let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
-  ... Let ``typeIR~subst~`` be xref:subst_typeIR'[``typeIR'`` substituted by a non-empty ``theta``].
-  ... Return ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~subst~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+``.
+. Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``id~field~^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Return ``+ENUM+`` ``typeId`` ``+{+`` ``id~field~^{asterisk}^`` ``+}+``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Let ``typeIR~subst~`` be xref:subst_typeIR'[``typeIR'`` substituted by a non-empty ``theta``].
+ .. Return ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~subst~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+``.
 . Else if let ``externObjectTypeIR`` be ``typeIR``:
  .. Let ``+EXTERN+`` ``typeId`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``callableId`` ``+:+`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``+}+`` be ``externObjectTypeIR``.
  .. Let ``typeArgumentIR~subst~^{asterisk}^`` be the list of ``typeArgumentIR~subst~``, obtained by repeating:
@@ -2298,6 +2292,7 @@ xref:Type_alpha[``typeIR`` and ``typeIR'`` are the same type when]:
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR'`` are the same type].
  .. The relation holds.
 . If let ``+TYPEDEF+`` ``++_++`` ``typeIR~b~`` be ``typeIR'``:
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
  .. Check that xref:Type_alpha[``typeIR`` and ``typeIR~b~`` are the same type].
  .. The relation holds.
 
@@ -2336,15 +2331,14 @@ xref:Type_alpha[``+HEADER_UNION+`` ``typeId`` ``+<+`` ``typeArgumentIR~a~^{aster
 . Check that xref:Type_alpha[``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type], for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . The relation holds.
 
-xref:Type_alpha[``enumTypeIR`` and ``enumTypeIR'`` are the same type when]:
+xref:Type_alpha[``typeIR`` and ``typeIR'`` are the same type when]:
 
-. If let ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
- .. Check that ``enumTypeIR'`` is equal to ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``.
+. If let ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Check that ``typeIR'`` is equal to ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``.
  .. The relation holds.
-. Else:
- .. Let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
- .. Check that ``enumTypeIR'`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``typeId'`` ``+<+`` ``typeIR~b~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``enumTypeIR'``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Check that ``typeIR'`` has type ``serializableEnumTypeIR``.
+ .. Let ``+ENUM+`` ``typeId'`` ``+<+`` ``typeIR~b~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``typeIR'``.
  .. Check that ``typeId'`` is equal to ``typeId``.
  .. Check that ``valueFieldIR^{asterisk}^`` is equal to ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
@@ -2511,6 +2505,7 @@ xref:joins_ctk[The join of ``ctk^{asterisk}^``]
  .. If let ``ctk~b~`` be ``ctk'^{asterisk}^``:
   ... Return xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
  .. Else if let ``ctk~b~`` ``{two-colons}`` ``ctk~c~^{asterisk}^`` be ``ctk'^{asterisk}^``:
+  ... Check that ``ctk~c~^{asterisk}^`` is not equal to ``·``.
   ... Let ``ctk~d~`` be xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
   ... Return xref:joins_ctk[the join of ``ctk~d~`` ``{two-colons}`` ``ctk~c~^{asterisk}^``].
 
@@ -3511,25 +3506,23 @@ for each ``typeIR~f~`` in ``typeIR~f~^{asterisk}^``
 +
 for each ``typeIR~f~`` in ``typeIR~f~^{asterisk}^``
  .. Return ``+HEADER_UNION+`` ``typeId`` ``+{+`` ``(`` ``value'`` ``id~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
-. Else if let ``enumTypeIR`` be ``typeIR``:
- .. If let ``+ENUM+`` ``typeId`` ``+{+`` ``id^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
-  ... Check that ``id^{asterisk}^`` is a non-empty list.
-  ... Let ``id~f_h~`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``id^{asterisk}^``.
-  ... Return ``typeId`` ``+.+`` ``id~f_h~``.
- .. Else:
-  ... Let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
-  ... Let ``value~zero~`` be xref:cast_int[``+D+`` ``0`` casted to type ``typeIR'``].
-  ... Let ``id^?^`` be xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].
-  ... If let ``id~zero~`` be ``id^?^``:
-   .... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
-  ... If ``·`` is equal to xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``]:
-   .... Let ``id~zero~`` be ``"__UNSPECIFIED"``.
-   .... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
+. Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``id^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Check that ``id^{asterisk}^`` is a non-empty list.
+ .. Let ``id~f_h~`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``id^{asterisk}^``.
+ .. Return ``typeId`` ``+.+`` ``id~f_h~``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
+ .. Let ``value~zero~`` be xref:cast_int[``+D+`` ``0`` casted to type ``typeIR'``].
+ .. Let ``id^?^`` be xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].
+ .. If let ``id~zero~`` be ``id^?^``:
+  ... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
+ .. If ``·`` is equal to xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``]:
+  ... Let ``id~zero~`` be ``"__UNSPECIFIED"``.
+  ... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
 
 xref:cast_to_enum[``value`` casted to enum type ``enumTypeIR``]
 
 
-. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
+. Check that ``enumTypeIR`` has type ``serializableEnumTypeIR``.
 . Let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
 . Return ``xref:cast_to_enum'[$cast_to_enum'(typeId,`` ``typeIR,`` ``valueFieldIR^{asterisk}^,`` ``value)]``.
 
@@ -3701,9 +3694,7 @@ xref:cast_header[``+HEADER+`` ``typeId`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~fie
 xref:cast_enum[``enumValue`` casted to type ``typeIR``]
 
 
-. If let ``enumTypeIR`` be ``typeIR``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that ``enumValue`` matches pattern ``%`` ``.`` ``%``.
  .. Let ``typeId'`` ``+.+`` ``nameIR`` be ``enumValue``.
  .. Check that ``typeId`` is equal to ``typeId'``.
@@ -3932,9 +3923,7 @@ xref:sizeof_minSizeInBits'[$sizeof_minSizeInBits'(typeIR)]
  .. Return ``xref:sizeof_minSizeInBits'[$sizeof_minSizeInBits'(typeIR')]``.
 . Else if let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``xref:sizeof_minSizeInBits'[$sizeof_minSizeInBits'(typeIR')]``.
-. Else if let ``enumTypeIR`` be ``typeIR``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Return ``xref:sizeof_minSizeInBits'[$sizeof_minSizeInBits'(typeIR')]``.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR'^{asterisk}^`` ``+>+`` be ``typeIR``:
  .. Let ``nat^{asterisk}^`` be the list of ``nat``, obtained by repeating:
@@ -4003,9 +3992,7 @@ xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR)]
  .. Return ``xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR')]``.
 . Else if let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return ``xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR')]``.
-. Else if let ``enumTypeIR`` be ``typeIR``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Return ``xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR')]``.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR'^{asterisk}^`` ``+>+`` be ``typeIR``:
  .. Let ``nat^{asterisk}^`` be the list of ``nat``, obtained by repeating:
@@ -4832,7 +4819,8 @@ xref:update_mode[$update_mode(TBLC, text, typeIR)]
  .. Else:
   ... Let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``.
   ... Return ``xref:update_mode[$update_mode(TBLC,`` ``"lpm",`` ``typeIR')]``.
- .. If ``TBLC.+MODE+`` is ``PRI``:
+ .. If ``typeIR`` does not have type ``aliasTypeIR``:
+  ... Check that ``TBLC.+MODE+`` is ``PRI``.
   ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
 . Else if ``text`` is equal to ``"range"``:
  .. If ``TBLC.+MODE+`` is ``NOPRI``:
@@ -4993,13 +4981,12 @@ xref:Type_wf[``+HEADER_UNION+`` ``typeId`` ``+<+`` ``typeArgumentIR^{asterisk}^`
 . Check that xref:Type_wf[``typeIR~field~`` is a well-formed type, with bound type variables ``B``], for all ``typeIR~field~`` in ``typeIR~field~^{asterisk}^``.
 . The relation holds.
 
-xref:Type_wf[``enumTypeIR`` is a well-formed type, with bound type variables ``B`` when]:
+xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B`` when]:
 
-. If let ``+ENUM+`` ``++_++`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
+. If let ``+ENUM+`` ``++_++`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that xref:distinct_[the elements of ``nameIR~field~^{asterisk}^`` are distinct].
  .. The relation holds.
-. Else:
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that xref:distinct_[the elements of ``nameIR~field~^{asterisk}^`` are distinct].
  .. Check that xref:nestable_enum_serializable[``typeIR'`` can be used in a serializable enum type].
  .. Check that xref:Type_wf[``typeIR'`` is a well-formed type, with bound type variables ``B``].
@@ -5893,13 +5880,10 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``+TYPE+`` ``prefixedNameIR
 . Check that xref:is_monomorphic_typeDefIR[``typeDefIR~base~`` is monomorphic].
 . Let ``typeIR~base~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~base~``].
 . Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Check that ``typeIR'`` has type ``enumTypeIR``.
-. Let ``enumTypeIR`` be ``typeIR'``.
-. If let ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
+. If let ``+ENUM+`` ``typeId`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that ``nameIR`` is in ``nameIR~field~^{asterisk}^``.
  .. Result in ``typeId`` ``+.+`` ``nameIR``.
-. Else:
- .. Let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR''`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR''`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
 
@@ -6319,14 +6303,10 @@ xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequa
 
 xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
 
-. If let ``enumTypeIR`` be ``typeIR``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. If let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~a~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``].
  .. The relation holds.
-. If let ``enumTypeIR`` be ``typeIR'``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~b~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. If let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~b~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~b~``].
  .. The relation holds.
 
@@ -7284,15 +7264,12 @@ xref:Expr_ok[Typing ``prefixedTypeName~base~`` ``+.+`` ``member``, under cursor 
 . Check that xref:is_monomorphic_typeDefIR[``typeDefIR~base~`` is monomorphic].
 . Let ``typeIR~base~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~base~``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Check that ``typeIR`` has type ``enumTypeIR``.
-. Let ``enumTypeIR`` be ``typeIR``.
-. If let ``+ENUM+`` ``++_++`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
+. If let ``+ENUM+`` ``++_++`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Let ``nameIR`` be xref:name[the name of ``member``].
  .. Check that ``nameIR`` is in ``nameIR~field~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[type ``typeIR~base~`` and compile-time known-ness ``+LCTK+``].
  .. Result in xref:typedExpressionIR[``+TYPE+`` ``prefixedNameIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Else:
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``++_++`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Let ``nameIR`` be xref:name[the name of ``member``].
  .. Check that ``nameIR`` is in ``nameIR~field~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[type ``typeIR~base~`` and compile-time known-ness ``+LCTK+``].
@@ -9880,6 +9857,10 @@ xref:CallableType_ok[Finding the type of callable call ``typedExpressionIR~base~
 
 . If ``argumentIR^{asterisk}^`` is equal to ``·``:
  .. If ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``:
+  ... Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+  ... Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+  ... Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
+  ... Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
   ... Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+INT+``.
   ... Result in the callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
  .. Else if ``nameIR`` is in ``"isValid"``:
@@ -10287,9 +10268,7 @@ xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums re
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
 . Let ``typeIR'`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
-. If let ``enumTypeIR`` be ``typeIR'``:
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. If let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Let ``typedExpressionIR~reduced~`` be xref:typedExpressionIR[``+(+`` ``typeIR~underlying~`` ``+)+`` ``typedExpressionIR`` annotated with type ``typeIR~underlying~`` and compile-time known-ness ``ctk``].
  .. Return ``typedExpressionIR~reduced~``.
 . Otherwise:
@@ -10303,10 +10282,8 @@ xref:reduce_serenum_unary[The result of reducing serializable enums in ``typedEx
  .. Return ``typedExpressionIR``.
 . Else:
  .. Let ``typeIR'`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
- .. Check that ``typeIR'`` has type ``enumTypeIR``.
- .. Let ``enumTypeIR`` be ``typeIR'``.
- .. Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
- .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+ .. Check that ``typeIR'`` has type ``serializableEnumTypeIR``.
+ .. Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR'``.
  .. Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+(+`` ``typeIR~underlying~`` ``+)+`` ``typedExpressionIR`` annotated with type ``typeIR~underlying~`` and compile-time known-ness ``ctk``].
  .. Return xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~cast~`` until ``$check`` is satisfied].
 . Otherwise:
@@ -10321,15 +10298,13 @@ xref:reduce_serenum_binary[The result of reducing serializable enums in ``typedE
  .. Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r~`` ).
 . Else:
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~l~`` with typedefs unrolled].
- .. If let ``enumTypeIR`` be ``typeIR``:
-  ... Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
-  ... Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~l_underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+ .. If let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~l_underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
   ... Let ``typedExpressionIR~l_cast~`` be xref:typedExpressionIR[``+(+`` ``typeIR~l_underlying~`` ``+)+`` ``typedExpressionIR~l~`` annotated with type ``typeIR~l_underlying~`` and compile-time known-ness ``ctk``].
   ... Return xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` until ``$check`` is satisfied].
- .. Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~r~`` with typedefs unrolled].
- .. If let ``enumTypeIR`` be ``typeIR'``:
-  ... Check that ``enumTypeIR`` matches pattern ``ENUM`` ``%`` ``<`` ``%`` ``>`` ``{`` ``%`` ``}``.
-  ... Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~r_underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+ .. If ``xref:unroll_typeIR[$unroll_typeIR(typeIR~l~)]`` does not have type ``serializableEnumTypeIR``:
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~r~`` with typedefs unrolled].
+  ... Check that ``typeIR'`` has type ``serializableEnumTypeIR``.
+  ... Let ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~r_underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR'``.
   ... Let ``typedExpressionIR~r_cast~`` be xref:typedExpressionIR[``+(+`` ``typeIR~r_underlying~`` ``+)+`` ``typedExpressionIR~r~`` annotated with type ``typeIR~r_underlying~`` and compile-time known-ness ``ctk``].
   ... Return xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~`` until ``$check`` is satisfied].
 . Otherwise:
@@ -11740,8 +11715,9 @@ for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
    .... Return ( ``TBLC~1~``, ``tablePropertyIR~h_updated~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` ).
   ... Else:
    .... Return ( ``TBLC``, ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` ).
- .. Let ``(`` ``TBLC~1~,`` ``tablePropertyIR~t_updated~^{asterisk}^`` ``)`` be ``xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC,`` ``tablePropertyIR~t~^{asterisk}^)]``.
- .. Return ( ``TBLC~1~``, ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t_updated~^{asterisk}^`` ).
+ .. Else:
+  ... Let ``(`` ``TBLC~1~,`` ``tablePropertyIR~t_updated~^{asterisk}^`` ``)`` be ``xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC,`` ``tablePropertyIR~t~^{asterisk}^)]``.
+  ... Return ( ``TBLC~1~``, ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t_updated~^{asterisk}^`` ).
 
 xref:ControlLocalDecls_ok[ControlLocalDecls_ok]:
 
@@ -11944,6 +11920,8 @@ for each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``
  .. Let ``+PACKAGE+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``typeIR~arg'~^{asterisk}^`` ``+}+`` be ``typeIR~arg~``.
  .. Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg'~^{asterisk}^)]``.
 . If let ``+TYPEDEF+`` ``++_++`` ``typeIR~arg'~`` be ``typeIR~arg~``:
+ .. Check that ``typeIR`` does not have type ``nameTypeIR``.
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
  .. Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR,`` ``typeIR~arg'~)]``.
 . Otherwise:
  .. Return ``constraint``.
@@ -12967,12 +12945,9 @@ xref:Expr_inst[Compile-time evaluation of ``+ERROR+`` ``+.+`` ``nameIR`` annotat
 xref:Expr_inst[Compile-time evaluation of ``+TYPE+`` ``prefixedNameIR`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``, under cursor ``p``, context ``IC``, and store ``STO``]:
 
 . Let ``typeDefIR'`` be xref:option_get[*!*] xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].
-. Check that ``typeDefIR'`` has type ``enumTypeIR``.
-. Let ``enumTypeIR`` be ``typeDefIR'``.
-. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
+. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
  .. Result in the updated store ``STO`` and ``typeId`` ``+.+`` ``nameIR``.
-. Else:
- .. Let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``id~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``id~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~member~,`` ``value~member~`` ``)^{asterisk}^``].
  .. Result in the updated store ``STO`` and ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
 
@@ -14428,7 +14403,8 @@ for each ``tablePropertyIR`` in ``tablePropertyIR^{asterisk}^``
  .. Check that ``tableEntriesPropertyIR^{asterisk}^`` is a list of length 1.
  .. Let ``tableEntriesPropertyIR'`` be ``tableEntriesPropertyIR^{asterisk}^``.
  .. Return ``tableEntriesPropertyIR'``.
-. Return ``+`EMPTY+`` ``·`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``·`` ``+}+``.
+. If ``·`` is equal to xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``$is_tableEntriesPropertyIR(tablePropertyIR)^{asterisk}^``]:
+ .. Return ``+`EMPTY+`` ``·`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``·`` ``+}+``.
 
 xref:enter_e[``EC`` with a new local frame]
 
@@ -14922,13 +14898,10 @@ xref:Expr_eval[Evaluating ``+ERROR+`` ``+.+`` ``nameIR`` annotated with ``expres
 xref:Expr_eval[Evaluating ``+TYPE+`` ``prefixedNameIR`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``, under cursor ``p``, context ``EC``, and state ``ARCH``]:
 
 . Let ``typeDefIR'`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(p,`` ``EC,`` ``prefixedNameIR)]``.
-. Check that ``typeDefIR'`` has type ``enumTypeIR``.
-. Let ``enumTypeIR`` be ``typeDefIR'``.
-. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``enumTypeIR``:
+. If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
  .. Let ``expressionResult`` be ``typeId`` ``+.+`` ``nameIR``.
  .. Result in the updated context ``EC``, state ``ARCH`` and ``expressionResult``.
-. Else:
- .. Let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``nameIR~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``enumTypeIR``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``nameIR~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~member~,`` ``value~member~`` ``)^{asterisk}^``].
  .. Let ``expressionResult`` be ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
  .. Result in the updated context ``EC``, state ``ARCH`` and ``expressionResult``.
