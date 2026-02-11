@@ -147,8 +147,8 @@ let load_def (def : def) : unit =
   | ExternRelD (id, _, _, _) ->
       let rel = Rel.Extern in
       add_rel_global id rel
-  | RelD (id, _, _, rulegroups, _) ->
-      let rel = Rel.Defined rulegroups in
+  | RelD (id, _, _, rulegroups, elsegroup_opt, _) ->
+      let rel = Rel.Defined (rulegroups, elsegroup_opt) in
       add_rel_global id rel
   | ExternDecD (id, _, _, _, _) ->
       let func = Func.Extern in
@@ -159,8 +159,8 @@ let load_def (def : def) : unit =
   | TableDecD (id, params, _, tablerows, _) ->
       let func = Func.Table (params, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, _, _, clauses, _) ->
-      let func = Func.Defined (tparams, clauses) in
+  | FuncDecD (id, tparams, _, _, clauses, elseclause_opt, _) ->
+      let func = Func.Defined (tparams, clauses, elseclause_opt) in
       add_func_global id func
 
 let init (spec : spec) : unit = List.iter load_def spec

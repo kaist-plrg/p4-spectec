@@ -152,7 +152,6 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
   | IfPr exp -> analyze_if_prem dctx prem.at exp
   | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx prem.at id notexp
   | IfNotHoldPr (id, notexp) -> analyze_if_not_hold_prem dctx prem.at id notexp
-  | ElsePr -> (dctx, VEnv.empty, prem, [])
   | LetPr _ ->
       error prem.at "let premise should appear only after bind analysis"
   | IterPr (_, ((_, vars_bound, vars_bind) as iterprem))

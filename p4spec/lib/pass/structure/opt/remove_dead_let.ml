@@ -76,7 +76,7 @@ let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
           Used.empty cases
       in
       Used.union used used_cases
-  | OtherwiseI instr -> downstream_instr defined instr
+  | OtherwiseI instrs -> downstream_instrs defined instrs
   | GroupI (_, _, exps, instrs_group) ->
       let used = Used.init_exps defined exps in
       let used_group = downstream_instrs defined instrs_group in

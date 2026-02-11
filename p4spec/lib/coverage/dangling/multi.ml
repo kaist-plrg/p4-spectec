@@ -91,7 +91,7 @@ module Cover = struct
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
-    | OtherwiseI instr -> init_instr cover id instr
+    | OtherwiseI instrs -> init_instrs cover id instrs
     | GroupI (_, _, _, instrs_group) -> init_instrs cover id instrs_group
     | _ -> cover
 

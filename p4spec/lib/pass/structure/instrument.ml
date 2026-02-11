@@ -109,9 +109,9 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
       in
       let phantom_opt = if total then None else Some (pid ()) in
       Sl.CaseI (exp, cases, phantom_opt)
-  | OtherwiseI instr ->
-      let instr = insert_phantom' instr in
-      Sl.OtherwiseI instr
+  | OtherwiseI instrs ->
+      let instrs = insert_phantom instrs in
+      Sl.OtherwiseI instrs
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = insert_phantom instrs_group in
       Sl.GroupI (id_group, rel_signature, exps_group, instrs_group)
@@ -164,9 +164,9 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
         List.combine guards blocks
       in
       Sl.CaseI (exp, cases, None)
-  | OtherwiseI instr ->
-      let instr = insert_nothing' instr in
-      Sl.OtherwiseI instr
+  | OtherwiseI instrs ->
+      let instrs = insert_nothing instrs in
+      Sl.OtherwiseI instrs
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let instrs_group = insert_nothing instrs_group in
       Sl.GroupI (id_group, rel_signature, exps_group, instrs_group)

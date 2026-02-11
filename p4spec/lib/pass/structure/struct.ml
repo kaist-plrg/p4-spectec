@@ -58,9 +58,6 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
     (instr_ret : Ol.Ast.instr) : Ol.Ast.instr list =
   match prems_internalized with
   | [] -> [ instr_ret ]
-  | [ ({ it = ElsePr; at; _ }, []) ] ->
-      let instr = Ol.Ast.OtherwiseI instr_ret $ at in
-      [ instr ]
   | (prem_h, iterprems_h) :: prems_internalized_t -> (
       let at = prem_h.at in
       match prem_h.it with
@@ -120,14 +117,25 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
 
 let struct_rule_matches (frees : IdSet.t)
     (exps_match_input_group : exp list list)
-    (prems_match_group : prem list list) : exp list * prem list list =
-  let exps_match_input_unified, prems_match_unified_group =
+    (prems_match_group : prem list list) (exps_match_else_opt : exp list option)
+    (prems_match_else_opt : prem list option) :
+    exp list * prem list list * prem list option =
+  let ( exps_match_input_unified,
+        prems_match_unified_group,
+        prems_match_unified_else_opt ) =
     Antiunify.antiunify_rule_match_group frees exps_match_input_group
+      exps_match_else_opt
   in
   let prems_match_group =
     List.map2 ( @ ) prems_match_unified_group prems_match_group
   in
-  (exps_match_input_unified, prems_match_group)
+  let prems_match_else_opt =
+    match (prems_match_unified_else_opt, prems_match_else_opt) with
+    | Some prems_match_unified_else, Some prems_match_else ->
+        Some (prems_match_unified_else @ prems_match_else)
+    | _ -> None
+  in
+  (exps_match_input_unified, prems_match_group, prems_match_else_opt)
 
 let struct_rule_paths (rel_signature : Ol.Ast.rel_signature)
     (prems_path : prem list) (exps_output : exp list) : Ol.Ast.instr list =
@@ -151,6 +159,18 @@ let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
   in
   struct_prems prems_match instr_group
 
+let struct_else_group (rel_signature : Ol.Ast.rel_signature)
+    (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
+    (rulepath : rulepath) : Ol.Ast.instr list =
+  let _, prems_path, exps_output = rulepath in
+  let instrs_path = struct_rule_paths rel_signature prems_path exps_output in
+  let instr_else = Ol.Ast.OtherwiseI instrs_path $ id_rulegroup.at in
+  let instr_group =
+    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, [ instr_else ])
+    $ id_rulegroup.at
+  in
+  struct_prems prems_match instr_group
+
 (* Structuring clauses *)
 
 let struct_clause_path ((prems, exp_output) : prem list * exp) :
@@ -158,6 +178,13 @@ let struct_clause_path ((prems, exp_output) : prem list * exp) :
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
   struct_prems prems instr_ret
+
+let struct_elseclause_path ((prems, exp_output) : prem list * exp) :
+    Ol.Ast.instr list =
+  let at = exp_output.at in
+  let instr_ret = Ol.Ast.ReturnI exp_output $ at in
+  let instr_else = Ol.Ast.OtherwiseI [ instr_ret ] $ at in
+  struct_prems prems instr_else
 
 (* Structuring table rows *)
 
@@ -177,16 +204,18 @@ let rec struct_def (tdenv : TDEnv.t) (def : def) : Sl.def =
       Sl.TypD (id, tparams, deftyp, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def at id nottyp inputs hints
-  | RelD (id, nottyp, inputs, rulegroups, hints) ->
-      struct_defined_rel_def tdenv at id nottyp inputs rulegroups hints
+  | RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) ->
+      struct_defined_rel_def tdenv at id nottyp inputs rulegroups elsegroup_opt
+        hints
   | ExternDecD (id, tparams, params, typ, hints) ->
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
   | TableDecD (id, params, typ, tablerows, hints) ->
       struct_table_dec_def tdenv at id params tablerows typ hints
-  | FuncDecD (id, tparams, params, typ, clauses, hints) ->
-      struct_func_dec_def tdenv at id tparams params typ clauses hints
+  | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
+      struct_func_dec_def tdenv at id tparams params typ clauses elseclause_opt
+        hints
 
 (* Structuring relation definitions *)
 
@@ -206,8 +235,12 @@ and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
 
 and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
     (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
-    (hints : hint list) : Sl.def =
-  let frees = Il.Free.free_rulegroups rulegroups in
+    (elsegroup_opt : elsegroup option) (hints : hint list) : Sl.def =
+  let frees =
+    IdSet.union
+      (Il.Free.free_rulegroups rulegroups)
+      (Il.Free.free_elsegroup_opt elsegroup_opt)
+  in
   let rulegroups, exps_match_group, prems_match_group =
     List.fold_left
       (fun (rulegroups, exps_match_input_group, prems_match_group) rulegroup ->
@@ -223,9 +256,18 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
         (rulegroups, exps_match_input_group, prems_match_group))
       ([], [], []) rulegroups
   in
-  let exps_match_unified, prems_match_group =
-    match rulegroups with
-    | [] ->
+  let elsegroup_opt, exps_match_else_opt, prems_match_else_opt =
+    match elsegroup_opt with
+    | Some elsegroup ->
+        let id_rulegroup, rulematch, rulepath = elsegroup.it in
+        let exps_match_signature, exps_match_input, prems_match = rulematch in
+        let elsegroup = (id_rulegroup, exps_match_signature, rulepath) in
+        (Some elsegroup, Some exps_match_input, Some prems_match)
+    | None -> (None, None, None)
+  in
+  let exps_match_unified, prems_match_group, prems_match_else_opt =
+    match (rulegroups, elsegroup_opt) with
+    | [], None ->
         let _, typs = nottyp.it in
         let typs_match = List.map (fun i -> List.nth typs i) inputs in
         let exps_match, _ =
@@ -235,18 +277,32 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
               (exps_match @ [ exp_match ], frees))
             ([], IdSet.empty) typs_match
         in
-        (exps_match, [])
-    | _ -> struct_rule_matches frees exps_match_group prems_match_group
+        (exps_match, [], None)
+    | _ ->
+        let exps_match_unified, prems_match_group, prems_match_else_opt =
+          struct_rule_matches frees exps_match_group prems_match_group
+            exps_match_else_opt prems_match_else_opt
+        in
+        (exps_match_unified, prems_match_group, prems_match_else_opt)
   in
   let rel_signature = (nottyp, inputs) in
-  let instrs =
+  let instrs_group =
     List.map2
       (fun prems_match (id_rulegroup, exps_match_signature, rulepaths) ->
         struct_rule_group rel_signature prems_match id_rulegroup
           exps_match_signature rulepaths)
       prems_match_group rulegroups
-    |> Merge.merge_blocks
   in
+  let instrs_else =
+    match (prems_match_else_opt, elsegroup_opt) with
+    | Some prems_match_else, Some (id_rulegroup, exps_match_signature, rulepath)
+      ->
+        struct_else_group rel_signature prems_match_else id_rulegroup
+          exps_match_signature rulepath
+    | _ -> []
+  in
+  let instrs_group = instrs_group @ [ instrs_else ] in
+  let instrs = instrs_group |> Merge.merge_blocks in
   let instrs = Optimize.optimize tdenv instrs in
   let instrs = Totalize.totalize tdenv instrs in
   let exps_match_unified, instrs =
@@ -280,7 +336,7 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
            (exps_signature, clause))
     |> List.split
   in
-  let args_input, paths = Antiunify.antiunify_clauses clauses in
+  let args_input, paths, _ = Antiunify.antiunify_clauses clauses None in
   let params = struct_params_from_args params args_input in
   let instrs_tablerows_group =
     paths
@@ -302,9 +358,19 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
 
 and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
     (tparams : tparam list) (params : param list) (typ : typ)
-    (clauses : clause list) (hints : hint list) : Sl.def =
-  let args_input, paths = Antiunify.antiunify_clauses clauses in
-  let instrs = paths |> List.map struct_clause_path |> Merge.merge_blocks in
+    (clauses : clause list) (elseclause_opt : clause option) (hints : hint list)
+    : Sl.def =
+  let args_input, paths, path_else_opt =
+    Antiunify.antiunify_clauses clauses elseclause_opt
+  in
+  let instrs_group = paths |> List.map struct_clause_path in
+  let instrs_else =
+    match path_else_opt with
+    | Some path_else -> struct_elseclause_path path_else
+    | None -> []
+  in
+  let instrs_group = instrs_group @ [ instrs_else ] in
+  let instrs = instrs_group |> Merge.merge_blocks in
   let instrs = Optimize.optimize tdenv instrs in
   let instrs = Totalize.totalize tdenv instrs in
   let args_input, instrs = Prettify.pretty_func args_input instrs in

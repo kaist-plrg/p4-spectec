@@ -180,7 +180,6 @@ and prem' =
   | IfPr of exp                           (* `if` exp *)
   | IfHoldPr of id * notexp               (* `if` id `:` notexp `holds` *)
   | IfNotHoldPr of id * notexp            (* `if` id `:` notexp `does not hold` *)
-  | ElsePr                                (* `otherwise` *)
   | LetPr of exp * exp                    (* `let` exp `=` exp *)
   | IterPr of prem * iterprem             (* prem iterprem *)
   | DebugPr of exp                        (* `debug` exp *)
@@ -195,10 +194,16 @@ and rulepath = id * prem list * exp list
 and rulegroup = rulegroup' phrase
 and rulegroup' = id * rulematch * rulepath list
 
+and elsegroup = elsegroup' phrase
+and elsegroup' = id * rulematch * rulepath
+
 (* Clauses *)
 
 and clause = clause' phrase
 and clause' = arg list * exp * prem list
+
+and elseclause = clause
+and elseclause' = clause'
 
 (* Table rows *)
 
@@ -220,7 +225,7 @@ and def' =
   (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
   | ExternRelD of id * nottyp * int list * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
-  | RelD of id * nottyp * Hints.Input.t * rulegroup list * hint list
+  | RelD of id * nottyp * Hints.Input.t * rulegroup list * elsegroup option * hint list
   (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
@@ -228,7 +233,7 @@ and def' =
   (* `table` `dec` id list(param, `,`) `:` typ hint* *)
   | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
-  | FuncDecD of id * tparam list * param list * typ * clause list * hint list
+  | FuncDecD of id * tparam list * param list * typ * clause list * elseclause option * hint list
 
 (* Spec *)
 

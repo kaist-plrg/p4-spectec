@@ -197,9 +197,9 @@ and replace_instr (replacer : t) (instr : instr) : t * instr =
       let cases = replace_cases replacer cases in
       let instr = CaseI (exp, cases, total) $ at in
       (replacer, instr)
-  | OtherwiseI instr ->
-      let _, instr = replace_instr replacer instr in
-      let instr = OtherwiseI instr $ at in
+  | OtherwiseI instrs ->
+      let instrs = replace_instrs replacer instrs in
+      let instr = OtherwiseI instrs $ at in
       (replacer, instr)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let exps_group = replace_exps replacer exps_group in

@@ -1181,7 +1181,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         eval_hold_instr ctx id notexp iterexps holdcase
     | CaseI (exp, cases, phantom_opt) ->
         eval_case_instr ctx exp cases phantom_opt
-    | OtherwiseI instr -> eval_instr ctx instr
+    | OtherwiseI instrs -> eval_otherwise_instr ctx instrs
     | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
         eval_group_instr ctx id_group rel_signature exps_group instrs_group
     | LetI (exp_l, exp_r, iterinstrs) ->
@@ -1417,6 +1417,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let _, sign = eval_instrs ctx Cont instrs in
         (ctx, sign)
     | None -> (ctx, Cont)
+
+  (* Otherwise instruction evaluation *)
+
+  and eval_otherwise_instr (ctx : Ctx.t) (instrs : instr list) : Ctx.t * Sign.t
+      =
+    let _, sign = eval_instrs ctx Cont instrs in
+    (ctx, sign)
 
   (* Group instruction evaluation *)
 

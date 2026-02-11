@@ -55,9 +55,9 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" header (string_of_exp exp)
         (log_cases ~level:(level + 1) cover cases)
-  | OtherwiseI instr ->
+  | OtherwiseI instrs ->
       Format.asprintf "%sOtherwise\n\n%s" header
-        (log_instr ~level:(level + 1) ~index:1 cover instr)
+        (log_instrs ~level:(level + 1) cover instrs)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" header (string_of_relid id_group)
         (string_of_relinput rel_signature exps_group)

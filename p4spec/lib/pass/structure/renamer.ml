@@ -201,9 +201,9 @@ and rename_instr (renamer : t) (instr : instr) : t * instr =
       let cases = rename_cases renamer cases in
       let instr = CaseI (exp, cases, total) $ at in
       (renamer, instr)
-  | OtherwiseI instr ->
-      let _, instr = rename_instr renamer instr in
-      let instr = OtherwiseI instr $ at in
+  | OtherwiseI instrs ->
+      let instrs = rename_instrs renamer instrs in
+      let instr = OtherwiseI instrs $ at in
       (renamer, instr)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let exps_group = rename_exps renamer exps_group in

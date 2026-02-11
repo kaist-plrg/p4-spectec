@@ -143,7 +143,7 @@ and instr' =
   | IfI of exp * iterexp list * instr list * phantom option
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
-  | OtherwiseI of instr
+  | OtherwiseI of instr list
   (* Aggregate instructions *)
   | GroupI of id * rel_signature * exp list * instr list
   (* Binding instructions *)

@@ -50,9 +50,9 @@ and string_of_instr ?(level = 0) ?(index = 0) (instr : instr) : string =
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" order (string_of_exp exp)
         (string_of_cases ~level:(level + 1) cases)
-  | OtherwiseI instr ->
+  | OtherwiseI instrs ->
       Format.asprintf "%sOtherwise\n\n%s" order
-        (string_of_instr ~level:(level + 1) ~index:1 instr)
+        (string_of_instrs ~level:(level + 1) instrs)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" order (string_of_relid id_group)
         (string_of_relinput rel_signature exps_group)

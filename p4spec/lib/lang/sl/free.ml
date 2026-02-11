@@ -89,7 +89,7 @@ and free_instr (instr : instr) : t =
   | IfI (exp, _, instrs, _) -> free_exp exp + free_instrs instrs
   | HoldI (_, (_, exps), _, _) -> free_exps exps
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
-  | OtherwiseI instr -> free_instr instr
+  | OtherwiseI instrs -> free_instrs instrs
   | GroupI (_, _, exps, instrs) -> free_exps exps + free_instrs instrs
   | LetI (exp_l, exp_r, _) -> free_exp exp_l + free_exp exp_r
   | RuleI (_, (_, exps), _, _) -> free_exps exps

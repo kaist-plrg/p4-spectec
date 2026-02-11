@@ -328,7 +328,7 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
       prosify_hold_instr at ctx id_rel notexp iterexps holdcase
   | CaseI (exp, cases, phantom_opt) ->
       prosify_case_instr at ctx exp cases phantom_opt
-  | OtherwiseI instr -> prosify_otherwise_instr at ctx instr
+  | OtherwiseI instrs -> prosify_otherwise_instr at ctx instrs
   | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterinstrs) ->
       prosify_let_instr at ctx exp_l exp_r iterinstrs
@@ -539,9 +539,9 @@ and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
 
 (* Otherwise instruction prosification *)
 
-and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instr : instr) :
+and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instrs : instr list) :
     Pl.instr list =
-  let instrs_pl = prosify_instr ctx instr in
+  let instrs_pl = prosify_instrs ctx instrs in
   let instr_pl = Pl.OtherwiseI instrs_pl $ at in
   [ instr_pl ]
 

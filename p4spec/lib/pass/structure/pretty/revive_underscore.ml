@@ -117,9 +117,11 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
       in
       let instr = CaseI (exp, cases, total) $ at in
       (underscores_revive, instr)
-  | OtherwiseI instr ->
-      let underscores_revive, instr = downstream_instr renamer_candid instr in
-      let instr = OtherwiseI instr $ at in
+  | OtherwiseI instrs ->
+      let underscores_revive, instrs =
+        downstream_instrs renamer_candid instrs
+      in
+      let instr = OtherwiseI instrs $ at in
       (underscores_revive, instr)
   | GroupI (id, rel_signature, exps_signature, instrs_group) ->
       let underscores_used = Underscore.init_exps exps_signature in

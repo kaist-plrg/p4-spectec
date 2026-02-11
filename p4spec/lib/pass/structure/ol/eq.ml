@@ -43,7 +43,7 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       && eq_instrs instrs_nothold_a instrs_nothold_b
   | CaseI (exp_a, cases_a, total_a), CaseI (exp_b, cases_b, total_b) ->
       eq_exp exp_a exp_b && eq_cases cases_a cases_b && total_a = total_b
-  | OtherwiseI instr_a, OtherwiseI instr_b -> eq_instr instr_a instr_b
+  | OtherwiseI instrs_a, OtherwiseI instrs_b -> eq_instrs instrs_a instrs_b
   | ( GroupI (id_group_a, rel_signature_a, exps_group_a, instrs_group_a),
       GroupI (id_group_b, rel_signature_b, exps_group_b, instrs_group_b) ) ->
       eq_id id_group_a id_group_b

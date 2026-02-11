@@ -313,12 +313,12 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
         Format.asprintf "%s%s\n\n%s%s" order s_short
           (string_of_cases ~level:(level + 1) cases)
           ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
-  | OtherwiseI instr ->
+  | OtherwiseI instrs ->
       let s_short = "Otherwise" in
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_instr ~level:(level + 1) ~index:1 instr)
+          (string_of_instrs ~level:(level + 1) instrs)
   | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
       let s_short =
         Format.asprintf "Group %s: %s" (string_of_relid id_group)

@@ -1266,62 +1266,88 @@ and elab_args ?(as_def = false) (at : region) (ctx : Ctx.t)
 
 (* Elaboration of premises *)
 
-and is_else_prem (prem_il : Il.prem) : bool =
-  match prem_il.it with ElsePr -> true | _ -> false
+type prem_internal = prem_internal' phrase
+and prem_internal' = SomePr of Il.prem' | VarPr | ElsePr
 
-and is_pure_prem (prem_il : Il.prem) : bool =
+let internalize_prem (prem_il : Il.prem) : prem_internal =
+  SomePr prem_il.it $ prem_il.at
+
+let externalize_prem (prem_internal : prem_internal) : Il.prem option =
+  match prem_internal.it with
+  | SomePr prem_il -> Some (prem_il $ prem_internal.at)
+  | VarPr | ElsePr -> None
+
+let is_else_prem_internal (prem_internal : prem_internal) : bool =
+  match prem_internal.it with ElsePr -> true | _ -> false
+
+let rec is_pure_prem (prem_il : Il.prem) : bool =
   match prem_il.it with
-  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ | ElsePr -> false
+  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ -> false
   | LetPr (_, exp_r_il) -> is_pure_exp exp_r_il
   | IterPr (prem_il, _) -> is_pure_prem prem_il
   | DebugPr exp_il -> is_pure_exp exp_il
 
-and check_prems (at : region) (prems_il : Il.prem list) : unit =
-  let prems_non_else_il =
-    prems_il |> List.filter (fun prem_il -> not (is_else_prem prem_il))
+let is_pure_prem_internal (prem_internal : prem_internal) : bool =
+  match prem_internal.it with
+  | SomePr prem_il -> is_pure_prem (prem_il $ prem_internal.at)
+  | VarPr -> true
+  | ElsePr -> false
+
+let check_prems_internal (at : region) (prems_internal : prem_internal list) :
+    unit =
+  let prems_non_else_internal =
+    prems_internal
+    |> List.filter (fun prem_internal ->
+           not (is_else_prem_internal prem_internal))
   in
-  if List.length prems_il = List.length prems_non_else_il then ()
-  else if List.length prems_il = List.length prems_non_else_il + 1 then
+  if List.length prems_internal = List.length prems_non_else_internal then ()
+  else if List.length prems_internal = List.length prems_non_else_internal + 1
+  then
     check
-      (List.for_all is_pure_prem prems_non_else_il)
-      at "only pure premises are alongside an else premise"
-  else error at "cannot use multiple else premises"
+      (List.for_all is_pure_prem_internal prems_non_else_internal)
+      at "cannot have non-pure premises alongside an otherwise premise"
+  else error at "cannot use multiple otherwise premises"
 
-and elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * Il.prem option =
-  let ctx, prem_il_opt = elab_prem' ctx prem.it in
-  let prem_il_opt = Option.map (fun prem_il -> prem_il $ prem.at) prem_il_opt in
-  (ctx, prem_il_opt)
+let rec elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal =
+  let ctx, prem_internal = elab_prem' ctx prem.it in
+  let prem_internal = prem_internal $ prem.at in
+  (ctx, prem_internal)
 
-and elab_prem' (ctx : Ctx.t) (prem : prem') : Ctx.t * Il.prem' option =
-  let wrap_ctx prem = (ctx, prem) in
-  let wrap_some (ctx, prem) = (ctx, Some prem) in
-  let wrap_none ctx = (ctx, None) in
+and elab_prem' (ctx : Ctx.t) (prem : prem') : Ctx.t * prem_internal' =
+  let wrap_some (ctx, prem) = (ctx, SomePr prem) in
+  let wrap_var ctx = (ctx, VarPr) in
+  let wrap_else ctx = (ctx, ElsePr) in
   match prem with
-  | VarPr (id, plaintyp) -> elab_var_prem ctx id plaintyp |> wrap_none
+  | VarPr (id, plaintyp) -> elab_var_prem ctx id plaintyp |> wrap_var
   | RulePr (id, exp) -> elab_rule_prem ctx id exp |> wrap_some
   | RuleNotPr (id, exp) -> elab_rule_not_prem ctx id exp |> wrap_some
   | IfPr exp -> elab_if_prem ctx exp |> wrap_some
-  | ElsePr -> elab_else_prem () |> wrap_ctx |> wrap_some
+  | ElsePr -> ctx |> wrap_else
   | IterPr (prem, iter) -> elab_iter_prem ctx prem iter |> wrap_some
   | DebugPr exp -> elab_debug_prem ctx exp |> wrap_some
 
-and elab_prem_with_bind (ctx : Ctx.t) (prem : prem) : Ctx.t * Il.prem list =
-  let ctx, prem_il_opt = elab_prem ctx prem in
-  match prem_il_opt with
-  | Some prem_il ->
+and elab_prem_with_bind (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal list
+    =
+  let ctx, prem_internal = elab_prem ctx prem in
+  match prem_internal.it with
+  | SomePr prem_il ->
       let ctx, prem_il, sideconditions_il =
-        Dataflow.Analysis.analyze_prem ctx prem_il
+        Dataflow.Analysis.analyze_prem ctx (prem_il $ prem_internal.at)
       in
       let prems_il = prem_il :: sideconditions_il in
-      (ctx, prems_il)
-  | None -> (ctx, [])
+      let prems_internal =
+        List.map (fun prem_il -> SomePr prem_il.it $ prem_il.at) prems_il
+      in
+      (ctx, prems_internal)
+  | VarPr -> (ctx, [ prem_internal ])
+  | ElsePr -> (ctx, [ prem_internal ])
 
 and elab_prems_with_bind (ctx : Ctx.t) (prems : prem list) :
-    Ctx.t * Il.prem list =
+    Ctx.t * prem_internal list =
   List.fold_left
-    (fun (ctx, prems_il_acc) prem ->
-      let ctx, prems_il = elab_prem_with_bind ctx prem in
-      (ctx, prems_il_acc @ prems_il))
+    (fun (ctx, prems_internal_acc) prem ->
+      let ctx, prems_internal = elab_prem_with_bind ctx prem in
+      (ctx, prems_internal_acc @ prems_internal))
     (ctx, []) prems
 
 and elab_prem_il_with_bind (ctx : Ctx.t) (prem_il : Il.prem) :
@@ -1380,20 +1406,18 @@ and elab_if_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
   let prem_il = Il.IfPr exp_il in
   (ctx, prem_il)
 
-(* Elaboration of else premises *)
-
-and elab_else_prem () : Il.prem' = Il.ElsePr
-
 (* Elaboration of iterated premises *)
 
 and elab_iter_prem (ctx : Ctx.t) (prem : prem) (iter : iter) : Ctx.t * Il.prem'
     =
-  check
-    (match prem.it with VarPr _ | ElsePr -> false | _ -> true)
-    prem.at "only rule or if premises can be iterated";
   let iter_il = elab_iter iter in
-  let ctx, prem_il_opt = elab_prem ctx prem in
-  let prem_il = Option.get prem_il_opt in
+  let ctx, prem_internal = elab_prem ctx prem in
+  let prem_il =
+    match prem_internal.it with
+    | SomePr prem_il -> prem_il $ prem_internal.at
+    | VarPr -> error prem.at "cannot iterate a var premise"
+    | ElsePr -> error prem.at "cannot iterate an otherwise premise"
+  in
   let prem_il = Il.IterPr (prem_il, (iter_il, [], [])) in
   (ctx, prem_il)
 
@@ -1406,18 +1430,31 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
 
 (* Elaboration of rules *)
 
-let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
+type rulepath_internal = SomePath of Il.rulepath | ElsePath of Il.rulepath
+
+type rulepaths_internal =
+  | SomePaths of Il.rulepath list
+  | ElsePaths of Il.rulepath
+
+type rulegroup_internal =
+  | SomeGroup of Il.rulegroup
+  | ElseGroup of Il.elsegroup
+
+let is_else_rulepath_internal (rulepath_internal : rulepath_internal) : bool =
+  match rulepath_internal with ElsePath _ -> true | SomePath _ -> false
+
+let elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
     Ctx.t * Il.exp list * Il.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
-and elab_rule_signature (ctx : Ctx.t) (exps_il : Il.exp list) : Il.exp list =
+let elab_rule_signature (ctx : Ctx.t) (exps_il : Il.exp list) : Il.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
-and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
+let elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
     Il.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
-and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
+let rec elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
     (exps_il_input_group : Il.exp list list) :
     Ctx.t list * Il.rulematch * Il.prem list list =
   let ctx_local_unified =
@@ -1463,43 +1500,58 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   in
   (ctxs_local, rulematch_il, prems_il_unified_group)
 
-and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
-    (prems_il_unified_group : Il.prem list list) (prems_group : prem list list)
-    (exps_il_output_group : Il.exp list list) : Il.rulepath list =
-  let ctxs_local, prems_il_group =
-    List.map2
-      (fun ctx_local prems ->
-        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-        (ctx_local, prems_il))
-      ctxs_local prems_group
-    |> List.split
-  in
-  let prems_il_group =
-    List.map2
-      (fun prems_il_unified prems_il ->
-        let prems_il_group = prems_il_unified @ prems_il in
-        check_prems (prems_il |> List.map at |> over_region) prems_il_group;
-        prems_il_group)
-      prems_il_unified_group prems_il_group
-  in
-  let exps_il_output_group =
-    List.map2
-      (fun ctx_local exps_il_output ->
-        elab_rule_output_with_bind ctx_local exps_il_output)
-      ctxs_local exps_il_output_group
-  in
-  let rulepaths_il =
-    List.combine prems_il_group exps_il_output_group
+and elab_rulepath (ctx_local : Ctx.t) (id_rule : id)
+    (prems_il_unified : Il.prem list) (prems : prem list)
+    (exps_il_output : Il.exp list) : rulepath_internal =
+  let prems_internal_unified = List.map internalize_prem prems_il_unified in
+  let ctx_local, prems_internal = elab_prems_with_bind ctx_local prems in
+  let prems_internal = prems_internal_unified @ prems_internal in
+  check_prems_internal id_rule.at prems_internal;
+  let is_else_path = List.exists is_else_prem_internal prems_internal in
+  let prems_il = List.filter_map externalize_prem prems_internal in
+  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
+  let rulepath_il = (id_rule, prems_il, exps_il_output) in
+  if is_else_path then ElsePath rulepath_il else SomePath rulepath_il
+
+and elab_rulepaths (at : region) (ctxs_local : Ctx.t list)
+    (id_rule_group : id list) (prems_il_unified_group : Il.prem list list)
+    (prems_group : prem list list) (exps_il_output_group : Il.exp list list) :
+    rulepaths_internal =
+  let rulepaths_internal =
+    ctxs_local |> List.map elab_rulepath
     |> List.map2
-         (fun id_rule (prems_il, exps_il_output) ->
-           (id_rule, prems_il, exps_il_output))
+         (fun id_rule elab_rulepath -> elab_rulepath id_rule)
          id_rule_group
+    |> List.map2
+         (fun prems_il_unified elab_rulepath -> elab_rulepath prems_il_unified)
+         prems_il_unified_group
+    |> List.map2 (fun prems elab_rulepath -> elab_rulepath prems) prems_group
+    |> List.map2
+         (fun exps_il_output elab_rulepath -> elab_rulepath exps_il_output)
+         exps_il_output_group
   in
-  rulepaths_il
+  let rulepaths_else_internal =
+    rulepaths_internal |> List.filter is_else_rulepath_internal
+  in
+  match rulepaths_else_internal with
+  | [] ->
+      let rulepaths_il =
+        rulepaths_internal
+        |> List.map (function
+             | SomePath rulepath_il -> rulepath_il
+             | _ -> assert false)
+      in
+      SomePaths rulepaths_il
+  | [ ElsePath rulepath_il_else ] ->
+      check
+        (List.length rulepaths_internal = 1)
+        at "cannot have other rule paths alongside an otherwise rule path";
+      ElsePaths rulepath_il_else
+  | _ -> error at "cannot use multiple otherwise rule paths in a rule group"
 
 and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
-    (rules : rule list) : Il.rulegroup =
-  let nottyp, _, inputs, _ = Ctx.find_defined_rel ctx id_rel in
+    (rules : rule list) : rulegroup_internal =
+  let nottyp, _, inputs, _, _ = Ctx.find_defined_rel ctx id_rel in
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1540,11 +1592,66 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
   let ctxs_local, rulematch_il, prems_il_unified_group =
     elab_rulematch ctx ctxs_local exps_il_input_group
   in
-  let rulepaths_il =
-    elab_rulepaths ctxs_local id_rule_group prems_il_unified_group prems_group
-      exps_il_output_group
+  let rulepaths_internal =
+    elab_rulepaths at ctxs_local id_rule_group prems_il_unified_group
+      prems_group exps_il_output_group
   in
-  (id_rulegroup, rulematch_il, rulepaths_il) $ at
+  match rulepaths_internal with
+  | SomePaths rulepaths_il ->
+      let rulegroup_il = (id_rulegroup, rulematch_il, rulepaths_il) $ at in
+      SomeGroup rulegroup_il
+  | ElsePaths rulepath_il ->
+      let elsegroup_il = (id_rulegroup, rulematch_il, rulepath_il) $ at in
+      ElseGroup elsegroup_il
+
+(* Elaboration of clauses *)
+
+type clause_internal = SomeClause of Il.clause | ElseClause of Il.clause
+
+let elab_clause_input_with_bind (ctx : Ctx.t) (at : region)
+    (params : param list) (args : arg list) : Ctx.t * Il.arg list * Il.prem list
+    =
+  let ctx, args_il = elab_args ~as_def:true at ctx params args in
+  let ctx, args_il, sideconditions_il =
+    Dataflow.Analysis.analyze_args_as_bind ctx args_il
+  in
+  (ctx, args_il, sideconditions_il)
+
+let elab_clause_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp)
+    : Ctx.t * Il.exp =
+  let+ ctx, exp_il = elab_exp ctx plaintyp exp in
+  let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
+  (ctx, exp_il)
+
+let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
+    (args : arg list) (exp : exp) (prems : prem list) : clause_internal =
+  let tparams_expected, params, plaintyp, _, _ = Ctx.find_defined_func ctx id in
+  check
+    (List.length tparams = List.length tparams_expected
+    && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
+    )
+    id.at "type arguments do not match";
+  check (List.length params = List.length args) at "arguments do not match";
+  let ctx_local = { ctx with frees = IdSet.empty } in
+  let ctx_local =
+    let def = FuncDefD (id, tparams, args, exp, prems) $ at in
+    El.Free.free_id_def def |> Ctx.add_frees ctx_local
+  in
+  let ctx_local = Ctx.add_tparams ctx_local tparams in
+  let ctx_local, args_il, sideconditions_il =
+    elab_clause_input_with_bind ctx_local at params args
+  in
+  let ctx_local, prems_internal = elab_prems_with_bind ctx_local prems in
+  let sideconditions_internal = List.map internalize_prem sideconditions_il in
+  let prems_internal = sideconditions_internal @ prems_internal in
+  check_prems_internal at prems_internal;
+  let is_else_clause = List.exists is_else_prem_internal prems_internal in
+  let prems_il = List.filter_map externalize_prem prems_internal in
+  let _ctx_local, exp_il =
+    elab_clause_output_with_bind ctx_local plaintyp exp
+  in
+  let clause_il = (args_il, exp_il, prems_il) $ at in
+  if is_else_clause then ElseClause clause_il else SomeClause clause_il
 
 (* Elaboration of definitions *)
 
@@ -1696,15 +1803,17 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
   let ctx = Ctx.add_defined_rel ctx id nottyp nottyp_il inputs in
-  let def_il = Il.RelD (id, nottyp_il, inputs, [], hints) $ at in
+  let def_il = Il.RelD (id, nottyp_il, inputs, [], None, hints) $ at in
   (ctx, def_il)
 
 (* Elaboration of rule groups *)
 
 and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
-  let rulegroup_il = elab_rulegroup ctx at id_rel id_rulegroup rules in
-  Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
+  let rulegroup_internal = elab_rulegroup ctx at id_rel id_rulegroup rules in
+  match rulegroup_internal with
+  | SomeGroup rulegroup_il -> Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
+  | ElseGroup elsegroup_il -> Ctx.add_defined_elsegroup ctx id_rel elsegroup_il
 
 (* Elaboration of function declarations *)
 
@@ -1762,7 +1871,9 @@ and elab_func_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let def_il = Il.FuncDecD (id, tparams, params_il, typ_il, [], hints) $ at in
+  let def_il =
+    Il.FuncDecD (id, tparams, params_il, typ_il, [], None, hints) $ at
+  in
   let ctx = Ctx.add_defined_func_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
@@ -1923,46 +2034,12 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
 
 (* Elaboration of function definitions *)
 
-and elab_def_input_with_bind (ctx : Ctx.t) (at : region) (params : param list)
-    (args : arg list) : Ctx.t * Il.arg list * Il.prem list =
-  let ctx, args_il = elab_args ~as_def:true at ctx params args in
-  let ctx, args_il, sideconditions_il =
-    Dataflow.Analysis.analyze_args_as_bind ctx args_il
-  in
-  (ctx, args_il, sideconditions_il)
-
-and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
-    Ctx.t * Il.exp =
-  let+ ctx, exp_il = elab_exp ctx plaintyp exp in
-  let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
-  (ctx, exp_il)
-
 and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
-  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_func ctx id in
-  check
-    (List.length tparams = List.length tparams_expected
-    && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
-    )
-    id.at "type arguments do not match";
-  check (List.length params = List.length args) at "arguments do not match";
-  let ctx_local = { ctx with frees = IdSet.empty } in
-  let ctx_local =
-    let def = FuncDefD (id, tparams, args, exp, prems) $ at in
-    El.Free.free_id_def def |> Ctx.add_frees ctx_local
-  in
-  let ctx_local = Ctx.add_tparams ctx_local tparams in
-  let ctx_local, args_il, sideconditions_il =
-    elab_def_input_with_bind ctx_local at params args
-  in
-  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-  let prems_il = sideconditions_il @ prems_il in
-  check_prems
-    (prems_il |> List.map (fun prem_il -> prem_il.at) |> over_region)
-    prems_il;
-  let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
-  let clause_il = (args_il, exp_il, prems_il) $ at in
-  Ctx.add_defined_func_clause ctx id clause_il
+  let clause_internal = elab_clause ctx at id tparams args exp prems in
+  match clause_internal with
+  | SomeClause clause_il -> Ctx.add_defined_func_clause ctx id clause_il
+  | ElseClause clause_il -> Ctx.add_defined_func_elseclause ctx id clause_il
 
 (* Elaboration of spec *)
 
@@ -1984,9 +2061,12 @@ let populate_typs (ctx : Ctx.t) : unit =
 
 let populate_rule (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
-  | Il.RelD (id, nottyp_il, inputs, [], hints) ->
-      let _, _, _, rulegroups_il = Ctx.find_defined_rel ctx id in
-      Il.RelD (id, nottyp_il, inputs, rulegroups_il, hints) $ def_il.at
+  | Il.RelD (id, nottyp_il, inputs, [], None, hints) ->
+      let _, _, _, rulegroups_il, elsegroup_il_opt =
+        Ctx.find_defined_rel ctx id
+      in
+      Il.RelD (id, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt, hints)
+      $ def_il.at
   | Il.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 
@@ -1995,7 +2075,7 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.RelD (id, _, _, [], _) ->
+      | Il.RelD (id, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "relation %s has no rule groups defined"
                (Id.to_string id))
@@ -2010,9 +2090,12 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   | Il.TableDecD (id, params_il, typ_il, [], hints) ->
       let _, _, tablerows_il = Ctx.find_table_func ctx id in
       Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
-  | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let _, _, _, clauses_il = Ctx.find_defined_func ctx id in
-      Il.FuncDecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
+  | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], None, hints) ->
+      let _, _, _, clauses_il, elseclause_il_opt =
+        Ctx.find_defined_func ctx id
+      in
+      Il.FuncDecD
+        (id, tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt, hints)
       $ def_il.at
   | Il.TableDecD _ -> error def_il.at "table was already populated"
   | Il.FuncDecD _ -> error def_il.at "function was already populated"
@@ -2026,7 +2109,7 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
       | Il.TableDecD (id, _, _, [], _) ->
           warn def_il.at
             (F.asprintf "table %s has no rows defined" (Id.to_string id))
-      | Il.FuncDecD (id, _, _, _, [], _) ->
+      | Il.FuncDecD (id, _, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
       | _ -> ())
