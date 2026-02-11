@@ -1117,9 +1117,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx, values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
-    | Fail _ ->
-        fail_without_reason id.at
-          (F.asprintf "condition hold %s was not met" id.it)
+    | Fail failtraces ->
+        Fail failtraces
+        |> nest id.at (F.asprintf "condition hold %s was not met" id.it)
 
   (* If-not-hold premise evaluation *)
 
@@ -1308,15 +1308,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     in
     (* Attempt a relation *)
     let attempt_relation (ctx : Ctx.t) : (Ctx.t * value list) attempt_reason =
-      let result =
-        rulegroups |> List.concat_map (attempt_rulegroup ctx) |> choice
+      let ids_path =
+        rulegroups
+        |> List.concat_map (fun rulegroup ->
+               let id_rulegroup, _, rulepaths = rulegroup.it in
+               rulepaths
+               |> List.map (fun rulepath ->
+                      let id_rulepath, _, _ = rulepath in
+                      F.asprintf "%s/%s" id_rulegroup.it id_rulepath.it))
       in
+      let attempts_path =
+        rulegroups |> List.concat_map (attempt_rulegroup ctx)
+      in
+      let result = choose_deterministic ids_path attempts_path in
       match result with
-      | Ok _ -> result
-      | Fail _ -> (
+      | Ok_det (ctx, values_output) -> Ok (ctx, values_output)
+      | Fail_det failtraces -> (
           match elsegroup_opt with
           | Some elsegroup -> attempt_elsegroup ctx elsegroup
-          | None -> result)
+          | None -> Fail failtraces)
+      | Multiple_det (id_path_a, id_path_b) ->
+          fail_without_reason id.at
+            (F.asprintf "non-deterministic application of relation %s: %s, %s"
+               id.it id_path_a id_path_b)
     in
     (* Start backtrack *)
     if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
@@ -1464,7 +1478,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             attempt_tablerow)
           tablerows
       in
-      choice attempt_tablerows'
+      choose_sequential attempt_tablerows'
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
@@ -1532,17 +1546,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     in
     (* Attempt a function *)
     let attempt_func (ctx : Ctx.t) =
-      let result =
-        clauses
-        |> List.mapi (fun idx clause -> attempt_clause ctx idx clause)
-        |> choice
+      let idxs_clause = clauses |> List.mapi (fun idx _ -> idx) in
+      let attempts_clause =
+        clauses |> List.mapi (fun idx clause -> attempt_clause ctx idx clause)
       in
+      let result = choose_deterministic idxs_clause attempts_clause in
       match result with
-      | Ok _ -> result
-      | Fail _ -> (
+      | Ok_det (ctx, value_output) -> Ok (ctx, value_output)
+      | Fail_det failtraces -> (
           match elseclause_opt with
           | Some elseclause -> attempt_clause ctx (-1) elseclause ()
-          | None -> result)
+          | None -> Fail failtraces)
+      | Multiple_det (idx_clause_a, idx_clause_b) ->
+          fail_without_reason id.at
+            (F.asprintf "non-deterministic application of function %s: %d, %d"
+               id.it idx_clause_a idx_clause_b)
     in
     (* Start backtrack *)
     if Cache.is_cached_func id.it then (

@@ -401,7 +401,7 @@ and infer_binop_exp (ctx : Ctx.t) (at : region) (binop : binop) (exp_l : exp)
 
 and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Xl.Bool.cmpop) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_r, plaintyp_r = infer_exp ctx exp_r in
@@ -502,7 +502,7 @@ and infer_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
 
 and infer_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_l, plaintyp_l = infer_exp ctx exp_l in
@@ -522,7 +522,7 @@ and infer_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
 
 and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
@@ -541,7 +541,7 @@ and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
 
 and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
@@ -562,7 +562,7 @@ and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
 
 and infer_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_e, plaintyp_e = infer_exp ctx exp_e in
@@ -611,7 +611,7 @@ and infer_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
 
 and infer_len_exp (ctx : Ctx.t) (exp : exp) :
     (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il, plaintyp = infer_exp ctx exp in
@@ -736,7 +736,7 @@ and elab_exp' (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
     (Ctx.t * Il.exp) attempt_unit =
   match as_iter_plaintyp ctx plaintyp_expect with
   | Ok (plaintyp_expect_base, iter_expect) ->
-      choice
+      choose_sequential
         [
           (fun () ->
             match exp.it with
@@ -916,7 +916,7 @@ and elab_cons_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_h : exp)
 
 and elab_cat_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_l : exp)
     (exp_r : exp) : (Ctx.t * Il.exp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* plaintyp_expect, iter_expect =
@@ -1141,7 +1141,7 @@ and elab_root_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) :
 
 and elab_idx_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
     (exp : exp) : (Ctx.t * Il.path' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
@@ -1161,7 +1161,7 @@ and elab_idx_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
 
 and elab_slice_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
     (exp_l : exp) (exp_h : exp) : (Ctx.t * Il.path' * plaintyp') attempt_unit =
-  choice
+  choose_sequential
     [
       (fun () ->
         let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in

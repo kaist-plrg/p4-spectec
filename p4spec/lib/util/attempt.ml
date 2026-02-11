@@ -7,6 +7,11 @@ type 'note failtrace =
 
 type ('a, 'note) attempt = Ok of 'a | Fail of 'note failtrace list
 
+type ('a, 'b, 'note) attempt_deterministic =
+  | Ok_det of 'a
+  | Fail_det of 'note failtrace list
+  | Multiple_det of 'b * 'b
+
 (* Failures *)
 
 let rec depth_of (failtrace : 'note failtrace) : int =
@@ -19,15 +24,43 @@ let fail (at : region) (note : 'note) (msg : string) : ('a, 'note) attempt =
 
 let fail_silent : ('a, 'note) attempt = Fail []
 
-let rec choice = function
+let fail_deterministic_silent : ('a, 'b, 'note) attempt_deterministic =
+  Fail_det []
+
+(* Choosing between attempts *)
+
+let rec choose_sequential = function
   | [] -> fail_silent
   | f :: fs -> (
       match f () with
       | Ok a -> Ok a
       | Fail failtraces_h -> (
-          match choice fs with
+          match choose_sequential fs with
           | Ok a -> Ok a
           | Fail failtraces_t -> Fail (failtraces_h @ failtraces_t)))
+
+let choose_deterministic items fs =
+  let choose_deterministic items fs =
+    List.fold_left2
+      (fun result item f ->
+        match result with
+        | Ok_det (item_det, a_det) -> (
+            match f () with
+            | Ok _ -> Multiple_det (item_det, item)
+            | Fail _ -> Ok_det (item_det, a_det))
+        | Fail_det failtraces_det -> (
+            match f () with
+            | Ok a -> Ok_det (item, a)
+            | Fail failtraces -> Fail_det (failtraces_det @ failtraces))
+        | Multiple_det _ -> result)
+      fail_deterministic_silent items fs
+  in
+  match choose_deterministic items fs with
+  | Ok_det (_, a_det) -> Ok_det a_det
+  | Fail_det failtraces -> Fail_det failtraces
+  | Multiple_det (item_a, item_b) -> Multiple_det (item_a, item_b)
+
+(* Nesting attempts *)
 
 let nest at note msg attempt =
   match attempt with
