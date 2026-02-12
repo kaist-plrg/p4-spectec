@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-02-08</span>
+<span id="revdate">2026-02-12</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -1764,6 +1764,15 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel3">
 <li><a href="#_type_checking_105">15.6.1. Type checking</a></li>
 <li><a href="#_runtime_evaluation_49">15.6.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-verify">15.7. <code>verify</code></a></li>
+<li><a href="#sec-packet-data-extract">15.8. Packet data extraction</a>
+<ul class="sectlevel3">
+<li><a href="#sec-packet-extract-fixed">15.8.1. Fixed-width extraction</a></li>
+<li><a href="#sec-packet-extract-variable">15.8.2. Variable-width extraction</a></li>
+<li><a href="#sec-packet-lookahead">15.8.3. Lookahead</a></li>
+<li><a href="#sec-skip-bits">15.8.4. Skipping bits</a></li>
 </ul>
 </li>
 </ul>
@@ -48424,6 +48433,355 @@ simple keyset expression is visited in turn.</p>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="sec-verify">15.7. <code>verify</code></h3>
+<div class="paragraph">
+<p>The <code>verify</code> statement provides a simple form of error
+handling. <code>verify</code> can only be invoked within a parser; it is
+used syntactically as if it were a function with the following
+signature:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #953800">void</span> <span style="color: #953800">verify</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bool</span> condition<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">error</span> err<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the first argument is <code>true</code>, then executing the statement has no
+side-effect. However, if the first argument is <code>false</code>, it causes an
+immediate transition to <code>reject</code>, which causes immediate parsing termination;
+at the same time, the <code>parserError</code> associated with the parser is set to the
+value of the second argument.</p>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code> the semantics of a <code>verify</code>
+statement is given by:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">ParserModel.verify(bool condition, error err) {
+    if (condition == false) {
+        ParserModel.parserError = err;
+        goto reject;
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="sec-packet-data-extract">15.8. Packet data extraction</h3>
+<div class="paragraph">
+<p>The P4 core library contains the following declaration of a built-in <code>extern</code>
+type called <code>packet_in</code> that represents incoming network packets. The
+<code>packet_in</code> extern is special: it cannot be instantiated by the user
+explicitly. Instead, the architecture supplies a separate instance for each
+<code>packet_in</code> argument to a <code>parser</code> instantiation.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> <span style="color: #cf222e">packet_in</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T headerLvalue<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T variableSizeHeader<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> varFieldSizeBits<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    T lookahead<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> length<span style="color: #24292f;background-color: #f6f8fa">();</span>  <span style="color: #6e7781">// This method may be unavailable in some architectures
+</span>    <span style="color: #953800">void</span> advance<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> bits<span style="color: #24292f;background-color: #f6f8fa">);</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To extract data from a packet represented by an argument <code>b</code> with type
+<code>packet_in</code>, a parser invokes the <code>extract</code> methods of <code>b</code>. There are two
+variants of the <code>extract</code> method: a one-argument variant for extracting
+fixed-size headers, and a two-argument variant for extracting variable-sized
+headers. Because these operations can cause runtime verification failures (see
+below), these methods can only be executed within parsers.</p>
+</div>
+<div class="paragraph">
+<p>When extracting data into a bit-string or integer, the first packet bit is
+extracted to the most significant bit of the integer.</p>
+</div>
+<div class="paragraph">
+<p>Some targets may perform cut-through packet processing, i.e., they may start
+processing a packet before its length is known (i.e., before all bytes have
+been received). On such a target calls to the <code>packet_in.length()</code> method
+cannot be implemented. Attempts to call this method should be flagged as errors
+(either at compilation time by the compiler back-end, or when attempting to
+load the compiled P4 program onto a target that does not support this method).</p>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code>, the semantics of <code>packet_in</code> can be captured
+using the following abstract model of packets:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">packet_in {
+    unsigned nextBitIndex;
+    byte[] data;
+    unsigned lengthInBits;
+    void initialize(byte[] data) {
+        this.data = data;
+        this.nextBitIndex = 0;
+        this.lengthInBits = data.sizeInBytes * 8;
+    }
+    bit&lt;32&gt; length() { return this.lengthInBits / 8; }
+}</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-packet-extract-fixed">15.8.1. Fixed-width extraction</h4>
+<div class="paragraph">
+<p>The single-argument <code>extract</code> method handles fixed-width headers, and is
+declared in P4 as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T headerLvalue<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The expression <code>headerLvalue</code> must evaluate to an l-value (see
+<a href="#sec-lvalue">Chapter 12</a>) of type <code>header</code> with a fixed width. If this method executes
+successfully, on completion the <code>headerLvalue</code> is filled with data from the
+packet and its validity bit is set to <code>true</code>. This method may fail in various
+ways&#8212;&#8203;e.g., if there are not enough bits left in the packet to fill the
+specified header.</p>
+</div>
+<div class="paragraph">
+<p>For example, the following program fragment extracts an Ethernet header:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">struct</span> Result <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #953800">Ethernet_h</span> ethernet<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">/* more fields omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">parser</span> P<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> Result r<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">state</span> start <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>r<span style="color: #0550ae">.</span>ethernet<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code>, the semantics of the single-argument <code>extract</code>
+is given in terms of the following pseudo-code method, using data from the
+<code>packet</code> class defined above. We use the special <code>valid$</code> identifier to
+indicate the hidden valid bit of a header, <code>isNext$</code> to indicate that the
+l-value was obtained using <code>next</code>, and <code>nextIndex$</code> to indicate the
+corresponding header or header union stack properties.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">void packet_in.extract&lt;T&gt;(out T headerLValue) {
+   bitsToExtract = sizeofInBits(headerLValue);
+   lastBitNeeded = this.nextBitIndex + bitsToExtract;
+   ParserModel.verify(this.lengthInBits &gt;= lastBitNeeded, error.PacketTooShort);
+   headerLValue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
+   headerLValue.valid$ = true;
+   if headerLValue.isNext$ {
+     verify(headerLValue.nextIndex$ &lt; headerLValue.size, error.StackOutOfBounds);
+     headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
+   }
+   this.nextBitIndex += bitsToExtract;
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-packet-extract-variable">15.8.2. Variable-width extraction</h4>
+<div class="paragraph">
+<p>The two-argument <code>extract</code> handles variable-width headers, and is declared in
+P4 as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">void</span> <span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">out</span> T headerLvalue<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> variableFieldSize<span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The expression <code>headerLvalue</code> must be an l-value representing a header that
+contains <strong>exactly one</strong> <code>varbit</code> field. The expression <code>variableFieldSize</code> must
+evaluate to a <code>bit&lt;32&gt;</code> value that indicates the number of bits to be extracted
+into the unique <code>varbit</code> field of the header (i.e., this size is not the size
+of the complete header, just the <code>varbit</code> field).</p>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code>, the semantics of the two-argument <code>extract</code> is
+captured by the following pseudo-code:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">void packet_in.extract&lt;T&gt;(out T headerLvalue,
+                          in bit&lt;32&gt; variableFieldSize) {
+   // targets are allowed to include the following line, but need not
+   // verify(variableFieldSize[2:0] == 0, error.ParserInvalidArgument);
+   bitsToExtract = sizeOfFixedPart(headerLvalue) + variableFieldSize;
+   lastBitNeeded = this.nextBitIndex + bitsToExtract;
+   ParserModel.verify(this.lengthInBits &gt;= lastBitNeeded, error.PacketTooShort);
+   ParserModel.verify(bitsToExtract &lt;= headerLvalue.maxSize, error.HeaderTooShort);
+   headerLvalue = this.data.extractBits(this.nextBitIndex, bitsToExtract);
+   headerLvalue.varbitField.size = variableFieldSize;
+   headerLvalue.valid$ = true;
+   if headerLValue.isNext$ {
+     verify(headerLValue.nextIndex$ &lt; headerLValue.size, error.StackOutOfBounds);
+     headerLValue.nextIndex$ = headerLValue.nextIndex$ + 1;
+   }
+   this.nextBitIndex += bitsToExtract;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following example shows one way to parse IPv4 options&#8212;&#8203;by splitting the
+IPv4 header into two separate headers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// IPv4 header without options
+</span><span style="color: #cf222e">header</span> <span style="color: #953800">IPv4_no_options_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>   version<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">4</span><span style="color: #0550ae">&gt;</span>   ihl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>   diffserv<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>  totalLen<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>  identification<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">3</span><span style="color: #0550ae">&gt;</span>   flags<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">13</span><span style="color: #0550ae">&gt;</span>  fragOffset<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>   ttl<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>   protocol<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span>  hdrChecksum<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span>  srcAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span>  dstAddr<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">header</span> <span style="color: #953800">IPv4_options_h</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #953800">varbit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">320</span><span style="color: #0550ae">&gt;</span> options<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #cf222e">struct</span> Parsed_headers <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">// Some fields omitted
+</span>    <span style="color: #953800">IPv4_no_options_h</span> ipv4<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">IPv4_options_h</span>    ipv4options<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #953800">error</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> InvalidIPv4Header <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #cf222e">parser</span> Top<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">packet_in</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">out</span> Parsed_headers headers<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #6e7781">// Some states omitted
+</span>
+   <span style="color: #cf222e">state</span> parse_ipv4 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>headers<span style="color: #0550ae">.</span>ipv4<span style="color: #24292f;background-color: #f6f8fa">);</span>
+       <span style="color: #953800">verify</span><span style="color: #24292f;background-color: #f6f8fa">(</span>headers<span style="color: #0550ae">.</span>ipv4<span style="color: #0550ae">.</span>ihl <span style="color: #0550ae">&gt;=</span> <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">error</span><span style="color: #0550ae">.</span>InvalidIPv4Header<span style="color: #24292f;background-color: #f6f8fa">);</span>
+       <span style="color: #cf222e">transition</span> <span style="color: #cf222e">select</span> <span style="color: #24292f;background-color: #f6f8fa">(</span>headers<span style="color: #0550ae">.</span>ipv4<span style="color: #0550ae">.</span>ihl<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+           <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">:</span> dispatch_on_protocol<span style="color: #24292f;background-color: #f6f8fa">;</span>
+           <span style="color: #0550ae">_</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_ipv4_options<span style="color: #24292f;background-color: #f6f8fa">;</span>
+       <span style="color: #24292f;background-color: #f6f8fa">}</span>
+   <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+   <span style="color: #cf222e">state</span> parse_ipv4_options <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       <span style="color: #6e7781">// use information in the ipv4 header to compute the number of bits to extract
+</span>       b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>headers<span style="color: #0550ae">.</span>ipv4options<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                 <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">)(((</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">)</span>headers<span style="color: #0550ae">.</span>ipv4<span style="color: #0550ae">.</span>ihl <span style="color: #0550ae">-</span> <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #0550ae">*</span> <span style="color: #0550ae">32</span><span style="color: #24292f;background-color: #f6f8fa">));</span>
+       <span style="color: #cf222e">transition</span> dispatch_on_protocol<span style="color: #24292f;background-color: #f6f8fa">;</span>
+   <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-packet-lookahead">15.8.3. Lookahead</h4>
+<div class="paragraph">
+<p>The <code>lookahead</code> method provided by the <code>packet_in</code> packet abstraction evaluates
+to a set of bits from the input packet without advancing the <code>nextBitIndex</code>
+pointer. Similar to <code>extract</code>, it will transition to <code>reject</code> and set the error
+if there are not enough bits in the packet. When <code>lookahead</code> returns a value
+that contains headers (e.g., a header type, or a struct containing headers),
+the headers values in the returned result are always valid (otherwise
+<code>lookahead</code> must have transitioned to the <code>reject</code> state).</p>
+</div>
+<div class="paragraph">
+<p>The <code>lookahead</code> method can be invoked as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">b<span style="color: #0550ae">.</span>lookahead<span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">()</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>where <code>T</code> must be a type with fixed width. In case of success the result of the
+evaluation of <code>lookahead</code> returns a value of type <code>T</code>.</p>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code>, the semantics of <code>lookahead</code> is given by the
+following pseudocode:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">T packet_in.lookahead&lt;T&gt;() {
+   bitsToExtract = sizeof(T);
+   lastBitNeeded = this.nextBitIndex + bitsToExtract;
+   ParserModel.verify(this.lengthInBits &gt;= lastBitNeeded, error.PacketTooShort);
+   T tmp = this.data.extractBits(this.nextBitIndex, bitsToExtract);
+   return tmp;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The TCP options example from <a href="#sec-header-union">Section 8.4.7</a> also illustrates how
+<code>lookahead</code> can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">state</span> start <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">transition</span> <span style="color: #cf222e">select</span><span style="color: #24292f;background-color: #f6f8fa">(</span>b<span style="color: #0550ae">.</span>lookahead<span style="color: #0550ae">&lt;</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;&gt;</span><span style="color: #24292f;background-color: #f6f8fa">())</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        <span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_tcp_option_end<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_tcp_option_nop<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_tcp_option_ss<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_tcp_option_s<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">:</span> parse_tcp_option_sack<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #6e7781">// Some states omitted
+</span>
+<span style="color: #cf222e">state</span> parse_tcp_option_sack <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> n <span style="color: #0550ae">=</span> b<span style="color: #0550ae">.</span>lookahead<span style="color: #0550ae">&lt;</span>Tcp_option_sack_top<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">()</span><span style="color: #0550ae">.</span>length<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #24292f;background-color: #f6f8fa">(</span>vec<span style="color: #0550ae">.</span>next<span style="color: #0550ae">.</span>sack<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">8</span> <span style="color: #0550ae">*</span> n <span style="color: #0550ae">-</span> <span style="color: #0550ae">16</span><span style="color: #24292f;background-color: #f6f8fa">));</span>
+    <span style="color: #cf222e">transition</span> start<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-skip-bits">15.8.4. Skipping bits</h4>
+<div class="paragraph">
+<p>P4 provides two ways to skip over bits in an input packet without assigning
+them to a header:</p>
+</div>
+<div class="paragraph">
+<p>One way is to <code>extract</code> to the underscore identifier, explicitly specifying the
+type of the data:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">b<span style="color: #0550ae">.</span><span style="color: #953800">extract</span><span style="color: #0550ae">&lt;</span>T<span style="color: #0550ae">&gt;</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">_</span><span style="color: #24292f;background-color: #f6f8fa">)</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Another way is to use the <code>advance</code> method of the packet when the number of
+bits to skip is known.</p>
+</div>
+<div class="paragraph">
+<p>In terms of the <code>ParserModel</code>, the meaning of <code>advance</code> is given in pseudocode
+as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">void packet_in.advance(bit&lt;32&gt; bits) {
+   // targets are allowed to include the following line, but need not
+   // verify(bits[2:0] == 0, error.ParserInvalidArgument);
+   lastBitNeeded = this.nextBitIndex + bits;
+   ParserModel.verify(this.lengthInBits &gt;= lastBitNeeded, error.PacketTooShort);
+   this.nextBitIndex += bits;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -60299,7 +60657,7 @@ annotation
 <p>Added comparison for tuples as a legal operation (<a href="#sec-tuple-exprs">[sec-tuple-exprs]</a>).</p>
 </li>
 <li>
-<p>Clarified the behavior of <code>lookahead</code> on header-typed values (<a href="#sec-packet-lookahead">[sec-packet-lookahead]</a>).</p>
+<p>Clarified the behavior of <code>lookahead</code> on header-typed values (<a href="#sec-packet-lookahead">Section 15.8.3</a>).</p>
 </li>
 <li>
 <p>Added <code>static_assert</code> function (<a href="#sec-static-assert">[sec-static-assert]</a>).</p>
@@ -60540,7 +60898,7 @@ and eliminate annotations on const entries (<a href="#sec-entries">[sec-entries]
 <p>Added <code>int</code> type (<a href="#sec-arbitrary-precision-integers">[sec-arbitrary-precision-integers]</a>).</p>
 </li>
 <li>
-<p>Added error <code>ParserInvalidArgument</code> (<a href="#sec-packet-extract-two">[sec-packet-extract-two]</a>, <a href="#sec-skip-bits">[sec-skip-bits]</a>).</p>
+<p>Added error <code>ParserInvalidArgument</code> (<a href="#sec-packet-extract-two">[sec-packet-extract-two]</a>, <a href="#sec-skip-bits">Section 15.8.4</a>).</p>
 </li>
 <li>
 <p>Clarified the significance of order of entries in <code>const entries</code> (<a href="#sec-entries">[sec-entries]</a>).</p>
@@ -62055,7 +62413,7 @@ p4program
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-02-08 16:22:04 +0900
+Last updated 2026-02-12 20:28:17 +0900
 </div>
 </div>
 </body>

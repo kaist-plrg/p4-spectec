@@ -1,0 +1,98 @@
+[#sec-packet-data-emit]
+=== Packet data emission
+
+// 1028
+The inverse of parsing is deparsing, or packet construction. P4 does not
+provide a separate language for packet deparsing; deparsing is done in a
+`control` block that has at least one parameter of type `packet_out`.
+
+// 1029
+For example, the following code sequence writes first an Ethernet header and
+then an IPv4 header into a `packet_out`:
+
+// 1030
+[source,p4]
+----
+control TopDeparser(inout Parsed_packet p, packet_out b) {
+    apply {
+        b.emit(p.ethernet);
+        b.emit(p.ip);
+    }
+}
+----
+
+// 1031
+Emitting a header appends the header to the `packet_out` only if the header is
+valid. Emitting a header stack will emit all elements of the stack in order of
+increasing indices.
+
+==== Data insertion into packets
+
+// 1032
+The `packet_out` datatype is defined in the P4 core library, and reproduced
+below. It provides a method for appending data to an output packet called
+`emit`:
+
+// 1033
+[source,p4]
+----
+extern packet_out {
+    void emit<T>(in T data);
+}
+----
+
+// 1034
+The `emit` method supports appending the data contained in a header, header
+stack, `struct`, or header union to the output packet.
+
+// 1035
+* When applied to a header, `emit` appends the data in the header to
+  the packet if it is valid and otherwise behaves like a no-op.
+* When applied to a header stack, `emit` recursively invokes itself to
+  each element of the stack.
+* When applied to a `struct` or header union, `emit` recursively
+  invokes itself to each field.  Note, a `struct` must not contain a field of
+  type `error` or `enum` because these types cannot be serialized.
+
+// 1036
+It is illegal to invoke `emit` on an expression whose type is a base type,
+`enum`, or `error`.
+
+// 1037
+We can define the meaning of the `emit` method in pseudocode as follows:
+
+// 1038
+[source,p4pseudo]
+----
+packet_out {
+    byte[] data;
+    unsigned lengthInBits;
+    void initializeForWriting() {
+        this.data.clear();
+        this.lengthInBits = 0;
+    }
+    /// Append data to the packet. Type T must be a header, header
+    /// stack, header union, or struct formed recursively from those types
+    void emit<T>(T data) {
+        if (isHeader(T))
+            if(data.valid$) {
+                this.data.append(data);
+                this.lengthInBits += data.lengthInBits;
+            }
+        else if (isHeaderStack(T))
+            for (e : data)
+                 emit(e);
+        else if (isHeaderUnion(T) || isStruct(T))
+            for (f : data.fields$)
+                 emit(e.f)
+        // Other cases for T are illegal
+    }
+----
+
+// 1039
+Here we use the special `valid$` identifier to indicate the hidden valid bit of
+headers and `fields$` to indicate the list of fields for a struct or header
+union. We also use standard `for-each` notation to iterate through the elements
+of a stack `(e : data)` and list of fields for header unions and structs `(f :
+data.fields$)`. The iteration order for a struct is the order those fields
+appear in the type declaration.
