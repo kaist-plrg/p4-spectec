@@ -57,6 +57,7 @@ module Cache = struct
 
   let create ~size = Table.create size
   let clear cache = Table.clear cache
+  let reset cache = Table.reset cache
   let find cache key = Table.find_opt cache key
   let add cache key value = Table.add cache key value
   let size cache = Table.length cache

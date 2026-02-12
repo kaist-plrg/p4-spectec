@@ -296,6 +296,7 @@ let sim_command =
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
        Command.Param.choose_one
          [
@@ -308,10 +309,22 @@ let sim_command =
      in
      fun () ->
        try
-         let _spec_sim, (module Driver) =
+         let spec_sim, (module Driver) =
            runner ~det ~arch mode filenames_spec
          in
-         match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result =
+           Driver.run_stf_test includes_p4 filename_p4 filename_stf
+         in
+         Inst.Hook.finish ();
+         match result with
          | Pass -> Format.printf "passed\n"
          | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg

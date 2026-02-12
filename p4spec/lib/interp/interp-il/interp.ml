@@ -1503,8 +1503,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let clear () : unit =
     Value.refresh ();
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rule_cache
+    Cache.Cache.reset !func_cache;
+    Cache.Cache.reset !rule_cache
 
   let do_eval_rel (relname : string) (values_input : value list) :
       value list attempt =

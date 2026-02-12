@@ -27138,7 +27138,7 @@ syntax keysetExpressionResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:59.1-64.74
 relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext arch keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:203.1-212.56
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:207.1-216.56
   rulegroup 
 
    match
@@ -30412,59 +30412,63 @@ def $match_keysets(setValue*, value*) : bool =
   -- let [value_key] = value*{value <- value*}
   -- if (setValue =/= set{...})
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:14.1-16.47
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:14.1-18.47
   clause 3 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = $match_keysets(setValue_t*{setValue_t <- setValue_t*}, value_key_t*{value_key_t <- value_key_t*})
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
   -- if value*{value <- value*} matches _ :: _
   -- let value_key_h :: value_key_t*{value_key_t <- value_key_t*} = value*{value <- value*}
+  -- if (setValue_t*{setValue_t <- setValue_t*} =/= [])
+  -- if (value_key_t*{value_key_t <- value_key_t*} =/= [])
   -- if $match_keyset(setValue_h, value_key_h)
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:17.1-19.48
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:19.1-23.48
   clause 4 : (setValue*{setValue <- setValue*}, value*{value <- value*}) = false
   -- if setValue*{setValue <- setValue*} matches _ :: _
   -- let setValue_h :: setValue_t*{setValue_t <- setValue_t*} = setValue*{setValue <- setValue*}
   -- if value*{value <- value*} matches _ :: _
   -- let value_key_h :: value_key_t*{value_key_t <- value_key_t*} = value*{value <- value*}
+  -- if (setValue_t*{setValue_t <- setValue_t*} =/= [])
+  -- if (value_key_t*{value_key_t <- value_key_t*} =/= [])
   -- if ~$match_keyset(setValue_h, value_key_h)
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:8.1-8.42
 def $match_keyset(setValue, value) : bool =
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:21.1-21.51
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:25.1-25.51
   clause 0 : (setValue, value_key) = true
   -- if setValue matches `SET{...}`
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:22.1-22.73
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:26.1-26.73
   clause 1 : (setValue, value_key) = $bin_eq(value, value_key)
   -- if setValue matches `SET{%}`
   -- let set{ value } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:23.1-24.41
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:27.1-28.41
   clause 2 : (setValue, value_key) = $exists_($bin_eq(value, value_key)*{value <- value*})
   -- if setValue matches `SET{%(%)}`
   -- let set{ value*{value <- value*} ( _nat )} = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:25.1-28.40
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:29.1-32.40
   clause 3 : (setValue, value_key) = $bin_eq($bin_band(value_base, value_mask), $bin_band(value_key, value_mask))
   -- if setValue matches `SET{%&&&%}`
   -- let set{ value_base &&& value_mask } = setValue
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:29.1-31.39
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:33.1-35.39
   clause 4 : (setValue, value_key) = ($bin_le(value_base, value_key) /\ $bin_le(value_key, value_limit))
   -- if setValue matches `SET{%..%}`
   -- let set{ value_base .. value_limit } = setValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:40.1-41.16
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:44.1-45.16
 syntax simpleKeysetExpressionResult = 
    | ` setValue
    | exit
    | reject errorValue
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:43.1-46.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:47.1-50.23
 relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR : evalContext arch simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:50.1-73.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:54.1-77.2
   rulegroup typedExpressionIR
 
    match
@@ -30504,7 +30508,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value*{value <- value*} ( n_size )}
     -- output: % % |- % : EC_1 ARCH_1 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:77.1-107.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:81.1-111.2
   rulegroup mask
 
    match
@@ -30541,7 +30545,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value_l &&& value_r }
     -- output: % % |- % : EC_2 ARCH_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:111.1-141.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:115.1-145.2
   rulegroup range
 
    match
@@ -30578,7 +30582,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{ value_l .. value_r }
     -- output: % % |- % : EC_2 ARCH_2 ` setValue as simpleKeysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:145.1-149.33
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:149.1-153.33
   rulegroup default-any
 
    match
@@ -30593,10 +30597,10 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = set{...}
     -- output: % % |- % : EC ARCH ` setValue as simpleKeysetExpressionResult
 
-;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:157.1-160.23
+;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:161.1-164.23
 relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionListIR : evalContext arch keysetExpressionResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:162.1-195.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:166.1-199.2
   rulegroup 
 
    match
