@@ -18,16 +18,16 @@ splice: spectec
 	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
 	python3 text_missing.py > text.missing
 
+${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
+	time asciidoctor -q \
+		-a rouge-css=$(ROUGE_CSS) $<
+
 ${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -q \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) $<
 
-${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
-	time asciidoctor -q \
-		-a rouge-css=$(ROUGE_CSS) $<
-
-build: ${SPEC}.pdf ${SPEC}.html
+build: ${SPEC}.html ${SPEC}.pdf
 build-html: ${SPEC}.html
 
 clean:

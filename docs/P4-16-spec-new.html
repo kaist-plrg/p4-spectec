@@ -1777,24 +1777,58 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 </ul>
 </li>
-<li><a href="#sec-abstract-control-machine">16. Abstract Control Machine</a>
+<li><a href="#sec-abstract-control-machine">16. Abstract control machine</a>
 <ul class="sectlevel2">
-<li><a href="#sec-control-local-declaration">16.1. Control local declarations</a>
+<li><a href="#sec-mau-abstract-mach">16.1. Match-action pipeline machine</a>
 <ul class="sectlevel3">
-<li><a href="#sec-control-local-constant-declaration">16.1.1. Constant declarations</a></li>
-<li><a href="#sec-control-local-instantiation">16.1.2. Instantiations</a></li>
-<li><a href="#sec-control-local-variable-declaration">16.1.3. Variable declarations</a></li>
-<li><a href="#sec-control-local-action-declaration">16.1.4. Action declarations</a></li>
-<li><a href="#sec-table-declaration">16.1.5. Table declarations</a></li>
+<li><a href="#sec-sub-control">16.1.1. Sub-controls</a></li>
+<li><a href="#_runtime_evaluation_of_a_control">16.1.2. Runtime evaluation of a control</a></li>
 </ul>
 </li>
-<li><a href="#sec-match-action-table">16.2. Match-action tables</a>
+<li><a href="#sec-control-local-declaration">16.2. Control local declarations</a>
 <ul class="sectlevel3">
-<li><a href="#sec-match-action-table-key">16.2.1. Table keys</a></li>
-<li><a href="#sec-match-action-table-action">16.2.2. Table actions</a></li>
-<li><a href="#sec-match-action-table-default-action">16.2.3. Table default actions</a></li>
-<li><a href="#sec-match-action-table-entry">16.2.4. Table entries</a></li>
-<li><a href="#sec-match-action-table-custom">16.2.5. Table custom properties</a></li>
+<li><a href="#_semantics_of_parser_local_declarations_2">16.2.1. Semantics of parser local declarations</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_106">16.2.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_69">16.2.1.2. Compile-time evaluation</a></li>
+<li><a href="#_runtime_evaluation_50">16.2.1.3. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#_constant_declarations_2">16.2.2. Constant declarations</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_107">16.2.2.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_70">16.2.2.2. Compile-time evaluation</a></li>
+<li><a href="#_runtime_evaluation_51">16.2.2.3. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#_instantiations_2">16.2.3. Instantiations</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_108">16.2.3.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_71">16.2.3.2. Compile-time evaluation</a></li>
+</ul>
+</li>
+<li><a href="#_variable_declarations_2">16.2.4. Variable declarations</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_109">16.2.4.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_72">16.2.4.2. Compile-time evaluation</a></li>
+<li><a href="#_runtime_evaluation_52">16.2.4.3. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#_action_declarations">16.2.5. Action declarations</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_110">16.2.5.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_73">16.2.5.2. Compile-time evaluation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-match-action-table">16.3. Match-action tables</a>
+<ul class="sectlevel3">
+<li><a href="#sec-match-action-table-key">16.3.1. Table keys</a></li>
+<li><a href="#sec-match-action-table-action">16.3.2. Table actions</a></li>
+<li><a href="#sec-match-action-table-default-action">16.3.3. Table default actions</a></li>
+<li><a href="#sec-match-action-table-entry">16.3.4. Table entries</a></li>
+<li><a href="#sec-match-action-table-custom">16.3.5. Table custom properties</a></li>
 </ul>
 </li>
 </ul>
@@ -13697,7 +13731,7 @@ in <a href="#sec-table-metadata">Section 8.6.6</a>.</p>
 </div>
 <div class="paragraph">
 <p>A table apply method definition is introduced by a <code>table</code> declaration. Its
-semantics rule is explained in <a href="#sec-table-declaration">Section 16.1.5</a>. A table declaration
+semantics rule is explained in <a href="#sec-table-declaration">[sec-table-declaration]</a>. A table declaration
 may not be generic. Thus, the table apply method type definition does not have
 type parameters, and is same as the table apply method type. A table apply
 method is represented internally as follows:</p>
@@ -20234,7 +20268,7 @@ parserStateIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let the updated context <code>TC<sub>5</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
+<p>Let the updated context <code>TC<sub>5</sub></code> and <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -20490,7 +20524,7 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let the updated context <code>TC<sub>5</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
+<p>Let the updated context <code>TC<sub>5</sub></code> and <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -25306,14 +25340,7 @@ relation.</p>
 <p>Runtime evaluation of <code>statementIR</code>, under cursor <code>cursor</code>, context <code>evalContext</code>, and state <code>arch</code>:</p>
 </li>
 <li>
-<p>Results in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>evalContext</code>, state <code>arch</code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Results in the updated context <code>evalContext</code>, state <code>arch</code>, and <code>statementResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -25496,14 +25523,7 @@ rejectTransitionResult
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC</code>, state <code>ARCH</code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC</code>, state <code>ARCH</code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -25824,14 +25844,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -25877,14 +25890,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -25913,14 +25919,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -25959,14 +25958,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -25989,14 +25981,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -26401,14 +26386,7 @@ callableTargetIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -26435,14 +26413,7 @@ callableTargetIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -26452,14 +26423,7 @@ callableTargetIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -27134,14 +27098,7 @@ See <a href="#sec-call-convention">Section 18.4</a> for details on copy-out beha
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC</code>, state <code>ARCH</code>, and <code>RETURN</code> <code>·</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC</code>, state <code>ARCH</code>, and <code>RETURN</code> <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -27168,14 +27125,7 @@ See <a href="#sec-call-convention">Section 18.4</a> for details on copy-out beha
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -27188,14 +27138,7 @@ See <a href="#sec-call-convention">Section 18.4</a> for details on copy-out beha
 <p>Let <code>value</code> be <code>expressionResult</code>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>RETURN</code> <code>value</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>RETURN</code> <code>value</code>.</p>
 </li>
 </ol>
 </div>
@@ -27433,14 +27376,7 @@ call, then the function/method call does not occur.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC</code>, state <code>ARCH</code>, and <code>EXIT</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC</code>, state <code>ARCH</code>, and <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
@@ -28141,14 +28077,7 @@ relation:</p>
 <p>Let <code>EC<sub>3</sub></code> be <a href="#exit_e"><code>EC<sub>2</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -28746,14 +28675,7 @@ programming languages.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -28773,14 +28695,7 @@ programming languages.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>then</sub></code>, state <code>ARCH<sub>then</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>then</sub></code>, state <code>ARCH<sub>then</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -28790,14 +28705,7 @@ programming languages.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -28827,14 +28735,7 @@ programming languages.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>cond</sub></code>, state <code>ARCH<sub>cond</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -28854,14 +28755,7 @@ programming languages.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>then</sub></code>, state <code>ARCH<sub>then</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>then</sub></code>, state <code>ARCH<sub>then</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -28881,14 +28775,7 @@ programming languages.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>else</sub></code>, state <code>ARCH<sub>else</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>else</sub></code>, state <code>ARCH<sub>else</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -29672,14 +29559,7 @@ forUpdateStatementIR
 <p>Let <code>EC<sub>3</sub></code> be <a href="#exit_e"><code>EC<sub>2</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -29702,14 +29582,7 @@ forUpdateStatementIR
 <p>Let <code>EC<sub>4</sub></code> be <a href="#exit_e"><code>EC<sub>3</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>4</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult'</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>4</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult'</code>.</p>
 </li>
 </ol>
 </div>
@@ -30935,14 +30808,7 @@ forCollectionExpressionIR
 <p>Let <code>EC<sub>3</sub></code> be <a href="#exit_e"><code>EC<sub>2</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -30977,14 +30843,7 @@ forCollectionExpressionIR
 <p>Let <code>EC<sub>5</sub></code> be <a href="#exit_e"><code>EC<sub>4</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>5</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>5</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -31007,14 +30866,7 @@ forCollectionExpressionIR
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -31524,14 +31376,7 @@ forCollectionExpressionIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC</code>, state <code>ARCH</code>, and <code>BREAK</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC</code>, state <code>ARCH</code>, and <code>BREAK</code>.</p>
 </li>
 </ol>
 </div>
@@ -31679,14 +31524,7 @@ loop.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC</code>, state <code>ARCH</code>, and <code>CONTINUE</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC</code>, state <code>ARCH</code>, and <code>CONTINUE</code>.</p>
 </li>
 </ol>
 </div>
@@ -32428,14 +32266,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -32478,14 +32309,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -32495,14 +32319,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -33182,14 +32999,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -33226,14 +33036,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 </div>
 </li>
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>3</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>3</sub></code>, and <code>statementResult</code>.</p>
 </li>
 </ol>
 </div>
@@ -33243,14 +33046,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ul>
-</div>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
 </li>
 </ol>
 </div>
@@ -43097,7 +42893,8 @@ evaluation.</p>
 <h2 id="sec-parser">15. Abstract parser machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>A parser declaration introduces a constructor for a parser object. See
+<p>A parser declaration introduces a constructor for a
+parser object. See <a href="#sec-parser-object">Section 10.4</a> and
 <a href="#sec-parser-declaration">Section 11.11</a> for details.</p>
 </div>
 <div class="listingblock">
@@ -43670,7 +43467,7 @@ parserLocalDeclarationList
 <p>Typing <code>parserLocalDeclaration</code>, under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Results in the updated context <code>typingContext</code> and the typed parser local declaration <code>parserLocalDeclarationIR</code>.</p>
+<p>Results in the updated context <code>typingContext</code> and <code>parserLocalDeclarationIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -43830,7 +43627,7 @@ declarations.</p>
 </div>
 </li>
 <li>
-<p>Result in the updated context <code>TC<sub>1</sub></code> and the typed parser local declaration <code>constantDeclarationIR</code>.</p>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -43971,7 +43768,7 @@ declarations.</p>
 </div>
 </li>
 <li>
-<p>Result in the updated context <code>TC<sub>1</sub></code> and the typed parser local declaration <code>instantiationIR</code>.</p>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -44068,7 +43865,7 @@ declarations.</p>
 </div>
 </li>
 <li>
-<p>Result in the updated context <code>TC<sub>1</sub></code> and the typed parser local declaration <code>variableDeclarationIR</code>.</p>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -44275,7 +44072,7 @@ valueSetType
 <p>Let <code>valueSetDeclarationIR</code> be <code>annotationList</code> <code>VALUE_SET</code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> <code>(</code> <code>typedExpressionIR</code> <code>)</code> <code>nameIR</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in the updated context <code>TC<sub>1</sub></code> and the typed parser local declaration <code>valueSetDeclarationIR</code>.</p>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>valueSetDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -48785,10 +48582,343 @@ as follows:</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="sec-abstract-control-machine">16. Abstract Control Machine</h2>
+<h2 id="sec-abstract-control-machine">16. Abstract control machine</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>A control declaration introduces a constructor for a control object. See
+<a href="#sec-control-object">Section 10.5</a> and <a href="#sec-control-declaration">Section 11.12</a> for details.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlDeclaration
+   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   ;
+
+controlLocalDeclaration
+   : constantDeclaration
+   | instantiation
+   | variableDeclaration
+   | actionDeclaration
+   | tableDeclaration
+   ;
+
+controlBody = blockStatement</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The rest of this section describes the core components of a <code>control</code> block.</p>
+</div>
 <div class="sect2">
-<h3 id="sec-control-local-declaration">16.1. Control local declarations</h3>
+<h3 id="sec-mau-abstract-mach">16.1. Match-action pipeline machine</h3>
+<div class="paragraph">
+<p>We can describe the computational model of a match-action pipeline, embodied by
+a control block: the body of the control block is executed, similarly to the
+execution of a traditional imperative program:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>At runtime, statements within a block are executed in the order they appear in
+the control block.</p>
+</li>
+<li>
+<p>Execution of the <code>return</code> statement causes immediate termination of the
+execution of the current <code>control</code> block, and a return to the caller.</p>
+</li>
+<li>
+<p>Execution of the <code>exit</code> statement causes the immediate termination of the
+execution of the current <code>control</code> block and of all the enclosing caller
+<code>control</code> blocks.</p>
+</li>
+<li>
+<p>Applying a <code>table</code> executes the corresponding match-action unit.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="sec-sub-control">16.1.1. Sub-controls</h4>
+<div class="paragraph">
+<p>P4 allows controls to invoke the services of other controls, similar to
+subroutines. To invoke the services of another control, it must be first
+instantiated; the services of an instance are invoked by calling it using its
+<code>apply</code> method.</p>
+</div>
+<div class="paragraph">
+<p>The following example shows a control invocation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> Callee<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> IPv4 ipv4<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">control</span> Caller<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> Headers h<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+     Callee<span style="color: #24292f;background-color: #f6f8fa">()</span> instance<span style="color: #24292f;background-color: #f6f8fa">;</span>  <span style="color: #6e7781">// instance of callee
+</span>     <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+          instance<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">(</span>h<span style="color: #0550ae">.</span>ipv4<span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// invoke control
+</span>     <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As with parsers, when a control is instantiated, local instantiations of
+stateful objects are evaluated recursively. That is, each instantiation of a
+control has a unique set of local tables, extern objects, inner control
+instances, etc. Thus, in general, invoking a control instance twice is not
+the same as invoking two copies of the same control instance. Note however,
+that local variables do not persist across invocations of the control. This
+semantics also applies to direct invocation (see
+<a href="#sec-direct-type-invocation">Section 13.5</a>).</p>
+</div>
+<div class="paragraph">
+<p>When a control is instantiated, all its local declarations of stateful
+instantiations are evaluated recursively. Each instantiation of a control
+will have a unique set of local tables, extern objects, and inner control
+instances. Thus, invoking a control instance twice is different from invoking
+two control instances each once, where the former accesses the same local
+stateful constructs while the latter access two different copies.</p>
+</div>
+<div class="paragraph">
+<p>The exactly-once evaluation only applies to local stateful instantiations.
+For local variable declarations, whether in the <code>apply</code> block or out, and
+whether with initializers or not, they are always evaluated when a control
+instance is invoked. That is, local variables in a control never persist
+across invocations. For variables declared outside the <code>apply</code> block, they
+are evaluated at the beginning of execution.</p>
+</div>
+<div class="paragraph">
+<p>All the behavior above also applies to direct invocation (see
+<a href="#sec-direct-type-invocation">Section 13.5</a>).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_runtime_evaluation_of_a_control">16.1.2. Runtime evaluation of a control</h4>
+<div class="paragraph">
+<p>At runtime, a control is evaluated by invoking its <code>apply</code> method. The following
+algorithm describes the evaluation of a control apply method invocation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/controlApplyMethodCallee:
+  rule Call_eval/controlApplyMethodCallee-copyin-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # EXIT
+  rule Call_eval/controlApplyMethodCallee-localDecl-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_2 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 EXIT
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_4 storageReference?* ~&gt; EC_2
+  rule Call_eval/controlApplyMethodCallee-controlBodyIR-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 `EMPTY
+ -- ControlBody_eval: EC_callee_4 ARCH_2 |- controlBodyIR : EC_callee_5 ARCH_3 EXIT
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2
+  rule Call_eval/controlApplyMethodCallee-cont:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 (RETURN eps)
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 `EMPTY
+ -- ControlBody_eval: EC_callee_4 ARCH_2 |- controlBodyIR : EC_callee_5 ARCH_3 (RETURN eps)
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>controlApplyMethodCallee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under cursor <code>p</code>, context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>CONTROL</code> <code>_</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>controlLocalDeclarationListIR</code> <code>;</code> <code>actionDefEnv</code> <code>;</code> <code>controlBodyIR</code> <code>}</code> be <code>controlApplyMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code> be <code>actionDefEnv</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub>[BLOCK.TYPE</code> <code>=</code> <code>theta][BLOCK.FRAME</code> <code>=</code> <code>frame]</code> with <code>BLOCK.CALLABLE</code> set to <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterListIR</code> with <code>argumentListIR</code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>·</code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let the updated state <code>ARCH<sub>1</sub></code>, caller&#8217;s context <code>EC<sub>1</sub></code>, callee&#8217;s context <code>EC<sub>callee_2</sub></code>, and the copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentListIR</code> in <code>BLOCK</code> layer of <code>EC<sub>callee_1</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>0</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>BLOCK</code> and context <code>EC<sub>callee_2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>callee_4</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>controlLocalDeclarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_eval">evaluating <code>controlLocalDeclarationListIR</code>, under context <code>EC<sub>callee_3</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>controlLocalDeclarationResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> in <code>BLOCK</code> layer of <code>EC<sub>callee_4</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>continueEmptyResult</code> be <code>controlLocalDeclarationResult</code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>callee_5</sub></code>, state <code>ARCH<sub>3</sub></code>, and result <code>controlBodyResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlBody_eval">evaluating <code>controlBodyIR</code>, under context <code>EC<sub>callee_4</sub></code>, and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>controlBodyResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> in <code>BLOCK</code> layer of <code>EC<sub>callee_5</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>controlBodyResult</code> is equal to <code>RETURN</code> <code>·</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> in <code>BLOCK</code> layer of <code>EC<sub>callee_5</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="sec-control-local-declaration">16.2. Control local declarations</h3>
+<div class="paragraph">
+<p>Control local declarations are defined as follows:</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclaration
@@ -48799,7 +48929,55 @@ as follows:</p>
    | tableDeclaration
    ;
 
-controlLocalDeclarationIR
+controlLocalDeclarationList
+   : /* empty */
+   | controlLocalDeclarationList controlLocalDeclaration
+   ;</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_semantics_of_parser_local_declarations_2">16.2.1. Semantics of parser local declarations</h4>
+<div class="sect4">
+<h5 id="_type_checking_106">16.2.1.1. Type checking</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingContext controlLocalDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlLocalDecl_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_ok">ControlLocalDecl_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>controlLocalDeclaration</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and <code>controlLocalDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, control local declarations are represented in P4<sub>IR</sub> as
+follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclarationIR
    : constantDeclarationIR
    | instantiationIR
    | variableDeclarationIR
@@ -48808,81 +48986,650 @@ controlLocalDeclarationIR
    ;</code></pre>
 </div>
 </div>
-<div class="sect3">
-<h4 id="sec-control-local-constant-declaration">16.1.1. Constant declarations</h4>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_69">16.2.1.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constantDeclaration
-   : annotationList CONST type name initializer ;
-   ;
+<pre>relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR : instContext store controlLocalDeclarationIR?</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
-constantDeclarationIR
-   : annotationList CONST typeIR nameIR constantInitializerIR ;
-   ;</code></pre>
+</div>
+</div>
+<div id="ControlLocalDecl_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_inst">ControlLocalDecl_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>controlLocalDeclarationIR</code>, under context <code>instContext</code>and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>instContext</code>, store <code>store</code>, and <code>controlLocalDeclarationIR<sup>?</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="sec-control-local-instantiation">16.1.2. Instantiations</h4>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_50">16.2.1.3. Runtime evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiation
-   : annotationList type `( argumentList ) name ;
-   | annotationList type `( argumentList ) name objectInitializer ;
-   ;
+<pre>relation ControlLocalDecl_eval: evalContext arch |- controlLocalDeclarationIR : evalContext arch controlLocalDeclarationResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
-instantiationIR
-   : annotationList typeIR constructorTargetIR `( argumentListIR ) nameIR objectInitializerOptIR ;
-   ;</code></pre>
+</div>
+</div>
+<div id="ControlLocalDecl_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_eval">ControlLocalDecl_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>controlLocalDeclarationIR</code>, under context <code>evalContext</code>, and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>evalContext</code>, state <code>arch</code>, and result <code>controlLocalDeclarationResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="sec-control-local-variable-declaration">16.1.3. Variable declarations</h4>
+<div class="paragraph">
+<p>Evaluation of a control local declaration yields:</p>
+</div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">variableDeclaration
-   : annotationList type name initializerOpt ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">continueEmptyResult
+   : /* empty */
    ;
 
-variableDeclarationIR
-   : annotationList typeIR nameIR initializerOptIR ;
+exitResult
+   : EXIT
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The subsequent sections describe each kind of declaration in detail. <code>table</code>
+declarations are special and are separately described in
+<a href="#sec-match-action-table">Section 16.3</a>.</p>
 </div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-control-local-action-declaration">16.1.4. Action declarations</h4>
+<h4 id="_constant_declarations_2">16.2.2. Constant declarations</h4>
+<div class="paragraph">
+<p>See <a href="#sec-constant-declaration">Section 11.3</a> for general information about constant
+declarations.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_107">16.2.2.1. Type checking</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDeclaration
-   : annotationList ACTION name `( parameterList ) blockStatement
-   ;
+<pre>rulegroup ControlLocalDecl_ok/constantDeclaration:
+  rule ControlLocalDecl_ok/constantDeclaration:
+  TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
+ -- ConstDecl_ok: BLOCK TC_0 |- constantDeclaration : TC_1 constantDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
-actionDeclarationIR
-   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
-   ;</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_ok">Typing <code>constantDeclaration</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ConstDecl_ok">typing <code>constantDeclaration</code>, under cursor <code>BLOCK</code> and context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_70">16.2.2.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_inst/constantDeclarationIR:
+  rule ControlLocalDecl_inst/constantDeclarationIR:
+  IC_0 STO |- constantDeclarationIR : IC_1 STO constantDeclarationIR
+ -- ConstDecl_inst: BLOCK IC_0 |- constantDeclarationIR : IC_1</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_inst">Compile-time evaluation of <code>constantDeclarationIR</code>, under context <code>IC<sub>0</sub></code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ConstDecl_inst">loading <code>constantDeclarationIR</code>, under cursor <code>BLOCK</code>, and context <code>IC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>1</sub></code>, store <code>STO</code>, and <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_51">16.2.2.3. Runtime evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_eval/constantDeclarationIR:
+  rule ControlLocalDecl_eval/constantDeclarationIR:
+  EC_0 ARCH |- constantDeclarationIR : EC_1 ARCH `EMPTY
+ -- ConstDecl_eval: BLOCK EC_0 |- constantDeclarationIR : EC_1</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_eval">Evaluating <code>constantDeclarationIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ConstDecl_eval">evaluating <code>constantDeclarationIR</code>, under cursor <code>BLOCK</code>, and context <code>EC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH</code>, and result <code>`EMPTY</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-table-declaration">16.1.5. Table declarations</h4>
-<div id="tableDeclarationIR" class="listingblock">
+<h4 id="_instantiations_2">16.2.3. Instantiations</h4>
+<div class="paragraph">
+<p>See <a href="#sec-instantiation-declaration">Section 11.4</a> for general information about instantiations.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_108">16.2.3.1. Type checking</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableDeclaration
-   : annotationList TABLE name `{ tablePropertyList }
-   ;
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_ok/instantiation:
+  rule ControlLocalDecl_ok/instantiation:
+  TC_0 |- instantiation : TC_1 instantiationIR
+ -- InstDecl_ok: BLOCK TC_0 |- instantiation : TC_1 instantiationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
-tableDeclarationIR
-   : annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
-   ;</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_ok">Typing <code>instantiation</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>instantiationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#InstDecl_ok">typing <code>instantiation</code>, under cursor <code>BLOCK</code> and context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>instantiationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_71">16.2.3.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_inst/instantiationIR:
+  rule ControlLocalDecl_inst/instantiationIR:
+  IC_0 STO_0 |- instantiationIR : IC_1 STO_1 constantDeclarationIR
+ -- InstDecl_inst: BLOCK IC_0 STO_0 |- instantiationIR : IC_1 STO_1 constantDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_inst">Compile-time evaluation of <code>instantiationIR</code>, under context <code>IC<sub>0</sub></code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and the reference to the object <code>constantDeclarationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#InstDecl_inst">loading <code>instantiationIR</code>, under cursor <code>BLOCK</code>, context <code>IC<sub>0</sub></code>, and store <code>STO</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>constantDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_variable_declarations_2">16.2.4. Variable declarations</h4>
+<div class="paragraph">
+<p>See <a href="#sec-variable-declaration">Section 11.2</a> for general information about variable
+declarations.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_109">16.2.4.1. Type checking</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_ok/variableDeclaration:
+  rule ControlLocalDecl_ok/variableDeclaration:
+  TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
+ -- VarDecl_ok: BLOCK TC_0 |- variableDeclaration : TC_1 variableDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_ok">Typing <code>variableDeclaration</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#VarDecl_ok">typing <code>variableDeclaration</code>, under cursor <code>BLOCK</code> and context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_72">16.2.4.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_inst/variableDeclarationIR:
+  rule ControlLocalDecl_inst/variableDeclarationIR:
+  IC STO |- variableDeclarationIR : IC STO variableDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_inst">Compile-time evaluation of <code>variableDeclarationIR</code>, under context <code>IC<sub>0</sub></code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>0</sub></code>, store <code>STO</code>, and <code>variableDeclarationIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_52">16.2.4.3. Runtime evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_eval/variableDeclarationIR:
+  rule ControlLocalDecl_eval/exit:
+  EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 EXIT
+ -- VarDecl_eval: BLOCK EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 EXIT
+  rule ControlLocalDecl_eval/cont:
+  EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY
+ -- VarDecl_eval: BLOCK EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_eval">Evaluating <code>variableDeclarationIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>,and the result <code>declarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#VarDecl_eval">evaluating <code>variableDeclarationIR</code>, under cursor <code>BLOCK</code>, context <code>EC<sub>0</sub></code>, and state <code>ARCH</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>declarationResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>EXIT</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>continueEmptyResult</code> be <code>declarationResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>`EMPTY</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_action_declarations">16.2.5. Action declarations</h4>
+<div class="paragraph">
+<p>See <a href="#sec-action-declaration">Section 11.6</a> for general information about action
+declarations.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_110">16.2.5.1. Type checking</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_ok/actionDeclaration:
+  rule ControlLocalDecl_ok/actionDeclaration:
+  TC_0 |- actionDeclaration : TC_1 actionDeclarationIR
+ -- ActionDecl_ok: BLOCK TC_0 |- actionDeclaration : TC_1 actionDeclarationIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_ok">Typing <code>actionDeclaration</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>actionDeclarationIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ActionDecl_ok">typing <code>actionDeclaration</code>, under cursor <code>BLOCK</code> and context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>actionDeclarationIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_73">16.2.5.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecl_inst/actionDeclarationIR:
+  rule ControlLocalDecl_inst/actionDeclarationIR:
+  IC_0 STO |- actionDeclarationIR : IC_1 STO eps
+ -- ActionDecl_inst: BLOCK IC_0 |- actionDeclarationIR : IC_1</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecl_inst">Compile-time evaluation of <code>actionDeclarationIR</code>, under context <code>IC<sub>0</sub></code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ActionDecl_inst">loading <code>actionDeclarationIR</code>, under cursor <code>BLOCK</code>, and context <code>IC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>1</sub></code>, store <code>STO</code>, and <code>·</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-match-action-table">16.2. Match-action tables</h3>
-<div class="listingblock">
+<h3 id="sec-match-action-table">16.3. Match-action tables</h3>
+<div id="tableDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableProperty
    : KEY = `{ tableKeyList }
@@ -48909,7 +49656,7 @@ tableDeclarationIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-key">16.2.1. Table keys</h4>
+<h4 id="sec-match-action-table-key">16.3.1. Table keys</h4>
 <div id="tableKeyIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKey
@@ -48923,7 +49670,7 @@ tableKeyIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-action">16.2.2. Table actions</h4>
+<h4 id="sec-match-action-table-action">16.3.2. Table actions</h4>
 <div id="tableActionIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableActionReference
@@ -48946,11 +49693,11 @@ tableActionIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-default-action">16.2.3. Table default actions</h4>
+<h4 id="sec-match-action-table-default-action">16.3.3. Table default actions</h4>
 
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-entry">16.2.4. Table entries</h4>
+<h4 id="sec-match-action-table-entry">16.3.4. Table entries</h4>
 <div id="tableEntryIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpression
@@ -48985,7 +49732,7 @@ tableEntryIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-custom">16.2.5. Table custom properties</h4>
+<h4 id="sec-match-action-table-custom">16.3.5. Table custom properties</h4>
 
 </div>
 </div>

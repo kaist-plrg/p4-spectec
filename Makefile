@@ -74,15 +74,30 @@ test-p4dynamic:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @p4dynamic --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
-test-p4dynamic-v1model:
-	echo "#### Running (dune build @p4dynamic-v1model)"
+test-p4dynamic-v1model-p4c:
+	echo "#### Running (dune build @p4dynamic-v1model-p4c)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic-v1model --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+	cd p4spec && opam exec -- dune build @p4dynamic-v1model-p4c --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
-test-p4dynamic-ebpf:
-	echo "#### Running (dune build @p4dynamic-ebpf)"
+test-p4dynamic-v1model-p4testgen:
+	echo "#### Running (dune build @p4dynamic-v1model-p4testgen)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic-ebpf --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+	cd p4spec && opam exec -- dune build @p4dynamic-v1model-p4testgen --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4dynamic-v1model-custom:
+	echo "#### Running (dune build @p4dynamic-v1model-custom)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4dynamic-v1model-custom --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4dynamic-ebpf-p4c:
+	echo "#### Running (dune build @p4dynamic-ebpf-p4c)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4dynamic-ebpf-p4c --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+test-p4dynamic-ebpf-p4testgen:
+	echo "#### Running (dune build @p4dynamic-ebpf-p4testgen)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @p4dynamic-ebpf-p4testgen --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 test-p4parse:
 	echo "#### Running (dune build @p4parse)"
