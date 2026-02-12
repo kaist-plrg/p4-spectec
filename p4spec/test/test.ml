@@ -60,7 +60,7 @@ let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
 let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
-let driver ?(arch : string option) mode specdir =
+let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =
     match mode with
     | `IL ->
@@ -75,7 +75,7 @@ let driver ?(arch : string option) mode specdir =
     | Some arch -> Backend_sim.Gen.gen arch
     | None -> Backend_sim.Gen.gen_placeholder ()
   in
-  Driver.init spec_sim;
+  Driver.init ~det spec_sim;
   (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
 
 let run_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
@@ -278,11 +278,11 @@ let prose_command =
 
 (* Interpreter test *)
 
-let run (module Driver : Sim.DRIVER) negative relname includes_p4 filename_p4 =
+let run (module Driver : Sim.DRIVER) neg relname includes_p4 filename_p4 =
   let time_start = start () in
   try
     (match Driver.run_program relname includes_p4 filename_p4 with
-    | Pass _ -> if negative then raise (TestRunNegErr time_start)
+    | Pass _ -> if neg then raise (TestRunNegErr time_start)
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
     time_start
@@ -291,7 +291,7 @@ let run (module Driver : Sim.DRIVER) negative relname includes_p4 filename_p4 =
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_test (module Driver : Sim.DRIVER) negative stat relname includes_p4
+let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
     excludes_p4 filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
@@ -304,7 +304,7 @@ let run_test (module Driver : Sim.DRIVER) negative stat relname includes_p4
   else
     try
       let time_start =
-        run (module Driver) negative relname includes_p4 filename_p4
+        run (module Driver) neg relname includes_p4 filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in
@@ -346,7 +346,7 @@ let run_test (module Driver : Sim.DRIVER) negative stat relname includes_p4
           fail_run = stat.fail_run + 1;
         }
 
-let run_test_driver mode negative specdir relname includes_p4 excludes_p4
+let run_test_driver mode det neg specdir relname includes_p4 excludes_p4
     testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
@@ -359,7 +359,7 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
-  let spec_sim, (module Driver) = driver mode specdir in
+  let spec_sim, (module Driver) = driver ~det mode specdir in
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
@@ -368,7 +368,7 @@ let run_test_driver mode negative specdir relname includes_p4 excludes_p4
         |> print_endline;
         run_test
           (module Driver)
-          negative stat relname includes_p4 excludes_p4 filename_p4)
+          neg stat relname includes_p4 excludes_p4 filename_p4)
       stat filenames_p4
   in
   log_stat
@@ -384,7 +384,8 @@ let run_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
-     and negative = flag "-neg" no_arg ~doc:"use negative typing rules"
+     and neg = flag "-neg" no_arg ~doc:"neg testsing (expect failure)"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
      and mode =
        Command.Param.choose_one
          [
@@ -396,7 +397,7 @@ let run_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       run_test_driver mode negative specdir relname includes_p4 excludes_p4
+       run_test_driver mode det neg specdir relname includes_p4 excludes_p4
          testdirs_p4)
 
 (* Simulator test *)
@@ -461,8 +462,8 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
           fail_run = stat.fail_run + 1;
         }
 
-let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
-    testdirs_stf patchdir =
+let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+    testdirs_p4 testdirs_stf patchdir =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../" ^ exclude_p4)
@@ -474,7 +475,7 @@ let run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
-  let spec_sim, (module Driver) = driver ~arch mode specdir in
+  let spec_sim, (module Driver) = driver ~det ~arch mode specdir in
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf) ->
@@ -501,6 +502,7 @@ let sim_command =
        flag "-stf-dir" (listed string) ~doc:"stf test directories"
      and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
      and mode =
        Command.Param.choose_one
          [
@@ -512,8 +514,8 @@ let sim_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       run_sim_test_driver mode arch specdir includes_p4 excludes_p4 testdirs_p4
-         testdirs_stf patchdir)
+       run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+         testdirs_p4 testdirs_stf patchdir)
 
 (* Dangling coverage test *)
 

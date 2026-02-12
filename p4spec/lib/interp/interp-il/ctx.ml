@@ -19,11 +19,11 @@ let error_dup (at : region) (kind : string) (id : string) =
 
 type cursor = Global | Local
 
+(* Mode *)
+
+let is_det : bool ref = ref false
+
 (* Context *)
-
-(* Config *)
-
-type config = { debug : bool }
 
 (* Global layer *)
 
@@ -47,67 +47,8 @@ type local = {
   venv : VEnv.t;
 }
 
-type t = {
-  (* Config *)
-  config : config;
-  (* Execution trace *)
-  trace : Trace.t;
-  (* Global layer *)
-  global : global;
-  (* Local layer *)
-  local : local;
-}
-
-(* Tracing *)
-
-let trace_open_rel (ctx : t) (id_rel : id) (id_rule : id)
-    (values_input : value list) : t =
-  let trace = Trace.open_rel id_rel id_rule values_input in
-  if ctx.config.debug then
-    Format.asprintf
-      "Opening rule %s/%s\n--- with input ---\n%s\n----------------\n" id_rel.it
-      id_rule.it
-      (values_input |> List.map Value.to_string |> String.concat "\n")
-    |> print_endline;
-  { ctx with trace }
-
-let trace_open_dec (ctx : t) (id_func : id) (idx_clause : int)
-    (values_input : value list) : t =
-  let trace = Trace.open_dec id_func idx_clause values_input in
-  if ctx.config.debug then
-    Format.asprintf
-      "Opening clause $%s/%d\n--- with input ---\n%s\n----------------\n"
-      id_func.it idx_clause
-      (values_input |> List.map Value.to_string |> String.concat "\n")
-    |> print_endline;
-  { ctx with trace }
-
-let trace_open_iter (ctx : t) (inner : string) : t =
-  let trace = Trace.open_iter inner in
-  { ctx with trace }
-
-let trace_close (ctx : t) : unit =
-  if ctx.config.debug then
-    match ctx.trace with
-    | Rel { id_rel; id_rule; _ } ->
-        Format.asprintf "Closing rule %s/%s\n" id_rel.it id_rule.it
-        |> print_endline
-    | Dec { id_func; idx_clause; _ } ->
-        Format.asprintf "Closing clause $%s/%d\n" id_func.it idx_clause
-        |> print_endline
-    | Iter _ -> Format.asprintf "Closing iteration\n" |> print_endline
-    | _ -> ()
-
-let trace_extend (ctx : t) (prem : prem) : t =
-  let trace = Trace.extend ctx.trace prem in
-  if ctx.config.debug then
-    Format.asprintf "Premise: %s\n" (prem |> Il.Print.string_of_prem)
-    |> print_endline;
-  { ctx with trace }
-
-let trace_commit (ctx : t) (trace : Trace.t) : t =
-  let trace = Trace.commit ctx.trace trace in
-  { ctx with trace }
+type t = { (* Global layer *)
+           global : global; (* Local layer *) local : local }
 
 (* Global constructor *)
 
@@ -163,17 +104,16 @@ let load_def (def : def) : unit =
       let func = Func.Defined (tparams, clauses, elseclause_opt) in
       add_func_global id func
 
-let init (spec : spec) : unit = List.iter load_def spec
+let init ~(det : bool) (spec : spec) : unit =
+  is_det := det;
+  List.iter load_def spec
 
 (* Constructor *)
 
 let empty_local () : local =
   { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
 
-let empty ~(debug : bool) : t =
-  let config = { debug } in
-  let trace = Trace.Empty in
-  { config; trace; global; local = empty_local () }
+let empty : t = { global; local = empty_local () }
 
 (* Finders *)
 
@@ -267,17 +207,15 @@ let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t =
 (* Constructing a local context *)
 
 let localize (ctx : t) : t =
-  let trace = Trace.Empty in
   let local = empty_local () in
-  { ctx with trace; local }
+  { ctx with local }
 
 (* Constructing sub-contexts *)
 
 (* Transpose a matrix of values, as a list of value batches
    that are to be each fed into an iterated expression *)
 
-let transpose (value_matrix : value list list) : value list list attempt_reason
-    =
+let transpose (value_matrix : value list list) : value list list attempt =
   match value_matrix with
   | [] -> Ok []
   | rows ->
@@ -295,7 +233,7 @@ let transpose (value_matrix : value list list) : value list list attempt_reason
       in
       Ok value_matrix
 
-let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
+let sub_opt (ctx : t) (vars : var list) : t option attempt =
   (* First collect the values that are to be iterated over *)
   let values =
     List.map
@@ -314,11 +252,9 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt_reason =
     in
     Ok (Some ctx_sub)
   else if List.for_all Option.is_none values then Ok None
-  else
-    fail_without_reason no_region
-      "mismatch in optionality of iterated variables"
+  else fail no_region "mismatch in optionality of iterated variables"
 
-let sub_list (ctx : t) (vars : var list) : t list attempt_reason =
+let sub_list (ctx : t) (vars : var list) : t list attempt =
   (* First break the values that are to be iterated over,
      into a batch of values *)
   let* values_batch =

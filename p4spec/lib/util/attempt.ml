@@ -2,30 +2,31 @@ open Source
 
 (* Backtracking *)
 
-type 'note failtrace =
-  | Failtrace of region * string * 'note * 'note failtrace list
+type failtrace = Failtrace of region * string * failtrace list
+type 'a attempt = Ok of 'a | Fail of failtrace list
 
-type ('a, 'note) attempt = Ok of 'a | Fail of 'note failtrace list
-
-type ('a, 'b, 'note) attempt_deterministic =
+type ('a, 'b) attempt_deterministic =
   | Ok_det of 'a
-  | Fail_det of 'note failtrace list
+  | Fail_det of failtrace list
   | Multiple_det of 'b * 'b
+
+(* Conversion *)
+
+let as_deterministic (attempt : 'a attempt) : ('a, 'b) attempt_deterministic =
+  match attempt with Ok a -> Ok_det a | Fail failtraces -> Fail_det failtraces
 
 (* Failures *)
 
-let rec depth_of (failtrace : 'note failtrace) : int =
-  let (Failtrace (_, _, _, subfailtraces)) = failtrace in
+let rec depth_of (failtrace : failtrace) : int =
+  let (Failtrace (_, _, subfailtraces)) = failtrace in
   let depth_sub = List.map depth_of subfailtraces |> List.fold_left max 0 in
   depth_sub + 1
 
-let fail (at : region) (note : 'note) (msg : string) : ('a, 'note) attempt =
-  Fail [ Failtrace (at, msg, note, []) ]
+let fail (at : region) (msg : string) : 'a attempt =
+  Fail [ Failtrace (at, msg, []) ]
 
-let fail_silent : ('a, 'note) attempt = Fail []
-
-let fail_deterministic_silent : ('a, 'b, 'note) attempt_deterministic =
-  Fail_det []
+let fail_silent : 'a attempt = Fail []
+let fail_deterministic_silent : ('a, 'b) attempt_deterministic = Fail_det []
 
 (* Choosing between attempts *)
 
@@ -62,16 +63,16 @@ let choose_deterministic items fs =
 
 (* Nesting attempts *)
 
-let nest at note msg attempt =
+let nest at msg attempt =
   match attempt with
   | Ok a -> Ok a
-  | Fail failtraces -> Fail [ Failtrace (at, msg, note, failtraces) ]
+  | Fail failtraces -> Fail [ Failtrace (at, msg, failtraces) ]
 
 (* Error with backfailtraces *)
 
 let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
-    ~(limit : int) ~(bullet : string) (failtrace : 'note failtrace) : string =
-  let (Failtrace (region, msg, _note, failtraces_sub)) = failtrace in
+    ~(limit : int) ~(bullet : string) (failtrace : failtrace) : string =
+  let (Failtrace (region, msg, failtraces_sub)) = failtrace in
   let root = level = 0 in
   let root_limit = level = limit in
   let sfailtrace =
@@ -103,7 +104,7 @@ let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
       (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
 
 and string_of_failtraces ?(indent = "") ?(level = 0) ~(limit : int)
-    (failtraces : 'note failtrace list) : string =
+    (failtraces : failtrace list) : string =
   match failtraces with
   | [] -> ""
   | [ failtrace ] ->
@@ -117,7 +118,7 @@ and string_of_failtraces ?(indent = "") ?(level = 0) ~(limit : int)
         failtraces
       |> String.concat ""
 
-and string_of_failtraces_short (failtraces : 'note failtrace list) : string =
+and string_of_failtraces_short (failtraces : failtrace list) : string =
   match failtraces with
   | [] -> ""
   | [ failtrace ] ->

@@ -19,15 +19,17 @@ module Make
 
   let spec : spec ref = ref Empty
 
-  let init (spec_ : spec) : unit =
+  let init ?(det = false) (spec_ : spec) : unit =
     match spec_ with
     | IL spec_il ->
         spec := IL spec_il;
         Arch.init IL_mode;
-        Interp_IL.init spec_il
+        Interp_IL.init ~det spec_il
     | SL spec_sl ->
         spec := SL spec_sl;
         Arch.init SL_mode;
+        if det then
+          warn_no_region "deterministic match mode is not supported for SL";
         Interp_SL.init spec_sl
     | Empty -> assert false
 
