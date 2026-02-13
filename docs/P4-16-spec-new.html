@@ -1011,10 +1011,10 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel4">
 <li><a href="#_operations_22">8.6.5.1. Operations</a>
 <ul class="sectlevel5">
-<li><a href="#_singleton_sets">8.6.5.1.1. Singleton sets</a></li>
-<li><a href="#_the_universal_set">8.6.5.1.2. The universal set</a></li>
-<li><a href="#_masks">8.6.5.1.3. Masks</a></li>
-<li><a href="#_ranges">8.6.5.1.4. Ranges</a></li>
+<li><a href="#sec-singleton-set">8.6.5.1.1. Singleton sets</a></li>
+<li><a href="#sec-universal-set">8.6.5.1.2. The universal set</a></li>
+<li><a href="#sec-mask-set">8.6.5.1.3. Masks</a></li>
+<li><a href="#sec-range-set">8.6.5.1.4. Ranges</a></li>
 <li><a href="#_products">8.6.5.1.5. Products</a></li>
 </ul>
 </li>
@@ -1824,11 +1824,34 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </li>
 <li><a href="#sec-match-action-table">16.3. Match-action tables</a>
 <ul class="sectlevel3">
-<li><a href="#sec-match-action-table-key">16.3.1. Table keys</a></li>
-<li><a href="#sec-match-action-table-action">16.3.2. Table actions</a></li>
-<li><a href="#sec-match-action-table-default-action">16.3.3. Table default actions</a></li>
-<li><a href="#sec-match-action-table-entry">16.3.4. Table entries</a></li>
-<li><a href="#sec-match-action-table-custom">16.3.5. Table custom properties</a></li>
+<li><a href="#_semantics_of_match_action_table_properties">16.3.1. Semantics of match-action table properties</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_111">16.3.1.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_74">16.3.1.2. Compile-time evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-table-key">16.3.2. Table keys</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_112">16.3.2.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_75">16.3.2.2. Compile-time evaluation</a></li>
+<li><a href="#_runtime_evaluation_53">16.3.2.3. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-table-action">16.3.3. Table actions</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_113">16.3.3.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_76">16.3.3.2. Compile-time evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-table-default-action">16.3.4. Table default actions</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_114">16.3.4.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_77">16.3.4.2. Compile-time evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-table-entries">16.3.5. Table entries</a></li>
+<li><a href="#sec-match-action-table-custom">16.3.6. Table custom properties</a></li>
+<li><a href="#sec-match-action-table-invocation">16.3.7. Match-action table invocation</a></li>
 </ul>
 </li>
 </ul>
@@ -3275,19 +3298,82 @@ inputs and results in a <code>typedExpressionIR</code>.</p>
 <div class="paragraph">
 <p>An algorithm is defined in terms of case-analysis, where each case corresponds
 to a variant of a P4 construct. For example, the following algorithm defines
-how to type check boolean literal expressions.</p>
+how to type check logical not expressions.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-
+<div class="paragraph">
+<p><a href="#Expr_ok">Typing <code>!</code> <code>expression'</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>typedExpressionIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression'</code>, under cursor <code>p</code> and context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until <code>$compat_lnot</code> is satisfied</a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Result in <a href="#typedExpressionIR"><code>!</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
 </div>
 </div>
 <div class="paragraph">
-<p>And the following algorithm defines type checking of integer literal expressions.</p>
+<p>And the following algorithm defines type checking of bitwise negation
+expressions.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-
+<div class="paragraph">
+<p><a href="#Expr_ok">Typing <code>~</code> <code>expression'</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>typedExpressionIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression'</code>, under cursor <code>p</code> and context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR</code> until <code>$compat_bnot</code> is satisfied</a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Result in <a href="#typedExpressionIR"><code>~</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
+</li>
+</ol>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -3371,14 +3457,21 @@ the formal inference rules are included to aid comprehension.</p>
 </div>
 <div class="paragraph">
 <p>For example, the following formal inference rule defines type checking of
-boolean literal expressions.</p>
+logical not expressions.</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre></pre>
+<pre>rulegroup Expr_ok/unaryExpression-lnot:
+  rule Expr_ok/unaryExpression-lnot:
+  p TC |- ! expression : (! typedExpressionIR_reduced) # expressionNoteIR
+ -- Expr_ok: p TC |- expression : typedExpressionIR
+ -- if typedExpressionIR_reduced = $reduce_serenum_unary(typedExpressionIR, $compat_lnot)
+ -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
+ -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
+ -- if expressionNoteIR = `(typeIR_reduced ctk_reduced)</pre>
 </div>
 </div>
 </div>
@@ -11823,7 +11916,7 @@ simpleKeysetExpression
 above the <code>?:</code> operator.</p>
 </div>
 <div class="sect5">
-<h6 id="_singleton_sets">8.6.5.1.1. Singleton sets</h6>
+<h6 id="sec-singleton-set">8.6.5.1.1. Singleton sets</h6>
 <div class="paragraph">
 <p>In a set context, expressions denote singleton sets. For example, in the
 following program fragment,</p>
@@ -11840,7 +11933,7 @@ following program fragment,</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_the_universal_set">8.6.5.1.2. The universal set</h6>
+<h6 id="sec-universal-set">8.6.5.1.2. The universal set</h6>
 <div class="paragraph">
 <p>In a set context, the expressions <code>default</code> or <code>_</code> denote the universal set,
 which contains all possible values of a given type:</p>
@@ -11855,7 +11948,7 @@ which contains all possible values of a given type:</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_masks">8.6.5.1.3. Masks</h6>
+<h6 id="sec-mask-set">8.6.5.1.3. Masks</h6>
 <div class="paragraph">
 <p>The infix operator <code>&amp;&amp;&amp;</code> takes two arguments of the same numeric type
 (<a href="#sec-numeric-values">[sec-numeric-values]</a>), and creates a value of the same type. The right value
@@ -11893,7 +11986,7 @@ either or both sub-expressions be compile-time known values.</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_ranges">8.6.5.1.4. Ranges</h6>
+<h6 id="sec-range-set">8.6.5.1.4. Ranges</h6>
 <div class="paragraph">
 <p>The infix operator <code>..</code> takes two arguments of the same numeric type <code>T</code>
 (<a href="#sec-numeric-values">[sec-numeric-values]</a>), and creates a value of the type <code>set&lt;T&gt;</code>. The set
@@ -15155,6 +15248,11 @@ properties are invalid and the compiler should reject them.</p>
    : annotationList TABLE name `{ tablePropertyList }
    ;
 
+tablePropertyList
+   : /* empty */
+   | tablePropertyList tableProperty
+   ;
+
 tableProperty
    : KEY = `{ tableKeyList }
    | ACTIONS = `{ tableActionList }
@@ -15164,60 +15262,7 @@ tableProperty
 </div>
 </div>
 <div class="paragraph">
-<p>The standard table properties include:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>key</code>: An expression that describes how the key used for look-up
-is computed.</p>
-</li>
-<li>
-<p><code>actions</code>: A list of all actions that may be found in the table.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>In addition, the tables may optionally define the following properties,</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>default_action</code>: an action to execute when the lookup in the
-lookup table fails to find a match for the key used.</p>
-</li>
-<li>
-<p><code>size</code>: an integer specifying the desired size of the table.</p>
-</li>
-<li>
-<p><code>entries</code>: entries that are initially added to a table when the P4
-program is loaded, some or all of which may be unchangeable by the
-control plane software.</p>
-</li>
-<li>
-<p><code>largest_priority_wins</code> - Only useful for some tables with the
-<code>entries</code> property.  See <a href="#sec-entries">[sec-entries]</a> for details.</p>
-</li>
-<li>
-<p><code>priority_delta</code> - Only useful for some tables with the <code>entries</code>
-property.  See <a href="#sec-entries">[sec-entries]</a> for details.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The compiler must set the <code>default_action</code> to <code>NoAction</code> (and also insert it
-into the list of <code>actions</code>) for tables that do not define the <code>default_action</code>
-property. Hence, all tables can be thought of as having a <code>default_action</code>
-property, either implicitly or explicitly.</p>
-</div>
-<div class="paragraph">
-<p>In addition, tables may contain architecture-specific properties (see
-<a href="#sec-additional-table-properties">[sec-additional-table-properties]</a>).</p>
-</div>
-<div class="paragraph">
-<p>A property marked as <code>const</code> cannot be changed dynamically by the control
-plane. The <code>key</code>, <code>actions</code>, and <code>size</code> properties cannot be modified so the
-<code>const</code> keyword is not needed for these.</p>
+<p>See <a href="#sec-match-action-table">Section 16.3</a> for details on the table properties.</p>
 </div>
 <div class="paragraph">
 <p>A <code>table</code> declaration creates a table object, thus table constructors are not
@@ -15684,6 +15729,113 @@ typeDeclarationIR
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of declarations is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Decls_ok: typingContext |- declaration* : typingContext declarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Decls_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decls_ok">Decls_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>declaration<sup>*</sup></code> under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and <code>declarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Decls_ok:
+  rule Decls_ok/nil:
+  TC |- eps : TC eps
+  rule Decls_ok/cons:
+  TC_0 |- declaration_h :: declaration_t* : TC_2 (declarationIR_h :: declarationIR_t*)
+ -- Decl_ok: TC_0 |- declaration_h : TC_1 declarationIR_h
+ -- Decls_ok: TC_1 |- declaration_t* : TC_2 declarationIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decls_ok">Typing <code>declaration<sup>*</sup></code> under context <code>typingContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>declaration<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>typingContext</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>declaration<sub>h</sub></code> <code>::</code> <code>declaration<sub>t</sub><sup>*</sup></code> be <code>declaration<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>declarationIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Decl_ok">typing <code>declaration<sub>h</sub></code> under context <code>typingContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>2</sub></code> and <code>declarationIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Decls_ok">typing <code>declaration<sub>t</sub><sup>*</sup></code> under context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>2</sub></code> and <code>declarationIR<sub>h</sub></code> <code>::</code> <code>declarationIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_compile_time_evaluation">11.1.2. Compile-time evaluation</h4>
@@ -15723,6 +15875,113 @@ typeDeclarationIR
 <p>Instantiation statically allocates instantiated objects in the global
 <code>store</code>. <a href="#sec-instantiation-declaration">Section 11.4</a> describes how objects are
 instantiated from a declaration.</p>
+</div>
+<div class="paragraph">
+<p>A list of declarations is instantiated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Decls_inst: instContext store |- declarationIR* : instContext store</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Decls_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decls_inst">Decls_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Loading <code>declarationIR<sup>*</sup></code>, under context <code>instContext</code>, and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>instContext</code> and the store <code>store</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Decls_inst:
+  rule Decls_inst/nil:
+  IC STO |- eps : IC STO
+  rule Decls_inst/cons:
+  IC_0 STO_0 |- declarationIR_h :: declarationIR_t* : IC_2 STO_2
+ -- Decl_inst: IC_0 STO_0 |- declarationIR_h : IC_1 STO_1
+ -- Decls_inst: IC_1 STO_1 |- declarationIR_t* : IC_2 STO_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Decls_inst">Loading <code>declarationIR<sup>*</sup></code>, under context <code>instContext</code>, and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>declarationIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>instContext</code> and the store <code>store</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>declarationIR<sub>h</sub></code> <code>::</code> <code>declarationIR<sub>t</sub><sup>*</sup></code> be <code>declarationIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code> and the store <code>STO<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Decl_inst">loading <code>declarationIR<sub>h</sub></code>, under context <code>instContext</code>, and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>IC<sub>2</sub></code> and the store <code>STO<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Decls_inst">loading <code>declarationIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code>, and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>IC<sub>2</sub></code> and the store <code>STO<sub>2</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 <div class="sect3">
@@ -27736,6 +27995,139 @@ relation:</p>
 </div>
 </div>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup BlockElementStmtList_ok:
+  rule BlockElementStmtList_ok:
+  TC_0 f l |- blockElementStatementList : TC_1 f_post blockElementStatementIR*
+ -- if blockElementStatement* = $flatten_blockElementStatementList(blockElementStatementList)
+ -- BlockElementStmts_ok: TC_0 f l |- blockElementStatement* : TC_1 f_post blockElementStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#BlockElementStmtList_ok">Typing <code>blockElementStatementList</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>blockElementStatement<sup>*</sup></code> be <a href="#flatten_blockElementStatementList">the list of block element statements in <code>blockElementStatementList</code></a>.</p>
+</li>
+<li>
+<p>Let <a href="#BlockElementStmts_ok">TC<sub>0</sub> f l |- blockElementStatement<sup>*</sup> : TC<sub>1</sub> f<sub>post</sub> blockElementStatementIR<sup>*</sup></a>.</p>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="BlockElementStmts_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#BlockElementStmts_ok">BlockElementStmts_ok: <code>typingContext</code> <code>flow</code> <code>l</code> <code>|-</code> <code>blockElementStatement<sup>*</sup></code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a></p>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup BlockElementStmts_ok:
+  rule BlockElementStmts_ok/nil:
+  TC f l |- eps : TC f eps
+  rule BlockElementStmts_ok/cons:
+  TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t* : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
+ -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h
+ -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t* : TC_2 f_2 blockElementStatementIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#BlockElementStmts_ok"><code>typingContext</code> <code>flow</code> <code>l</code> <code>|-</code> <code>blockElementStatement<sup>*</sup></code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>blockElementStatement<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in <code>typingContext</code>, <code>flow</code>, and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>blockElementStatement<sub>h</sub></code> <code>::</code> <code>blockElementStatement<sub>t</sub><sup>*</sup></code> be <code>blockElementStatement<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>1</sub></code>, and <code>blockElementStatementIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmt_ok">typing <code>blockElementStatement<sub>h</sub></code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>l</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <a href="#BlockElementStmts_ok">TC<sub>1</sub> f<sub>1</sub> l |- blockElementStatement<sub>t</sub><sup>*</sup> : TC<sub>2</sub> f<sub>2</sub> blockElementStatementIR<sub>t</sub><sup>*</sup></a>.</p>
+</li>
+<li>
+<p>Result in <code>TC<sub>2</sub></code>, <code>f<sub>2</sub></code>, and <code>blockElementStatementIR<sub>h</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_compile_time_evaluation_30">13.8.2. Compile-time evaluation</h4>
@@ -33695,6 +34087,113 @@ sequence of expressions can be evaluated with the following relation:</p>
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of expressions is evaluated with the following relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Exprs_inst: cursor instContext store |- typedExpressionIR* : store value*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Exprs_inst">Exprs_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>typedExpressionIR<sup>*</sup></code>, under cursor <code>cursor</code>, context <code>instContext</code>, and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in the updated store <code>store</code> and <code>value<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Exprs_inst:
+  rule Exprs_inst/nil:
+  p IC STO |- eps : STO eps
+  rule Exprs_inst/cons:
+  p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t* : STO_2 (value_h :: value_t*)
+ -- Expr_inst: p IC STO_0 |- typedExpressionIR_h : STO_1 value_h
+ -- Exprs_inst: p IC STO_1 |- typedExpressionIR_t* : STO_2 value_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Exprs_inst">Compile-time evaluation of <code>typedExpressionIR<sup>*</sup></code>, under cursor <code>p</code>, context <code>IC</code>, and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>typedExpressionIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated store <code>store</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>typedExpressionIR<sub>h</sub></code> <code>::</code> <code>typedExpressionIR<sub>t</sub><sup>*</sup></code> be <code>typedExpressionIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated store <code>STO<sub>1</sub></code> and <code>value<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR<sub>h</sub></code>, under cursor <code>p</code>, context <code>IC</code>, and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated store <code>STO<sub>2</sub></code> and <code>value<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Exprs_inst">compile-time evaluation of <code>typedExpressionIR<sub>t</sub><sup>*</sup></code>, under cursor <code>p</code>, context <code>IC</code>, and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated store <code>STO<sub>2</sub></code> and <code>value<sub>h</sub></code> <code>::</code> <code>value<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_runtime_evaluation_19">14.1.4. Runtime evaluation</h4>
@@ -33763,7 +34262,7 @@ rejectTransitionResult
 reject results.</p>
 </div>
 <div class="paragraph">
-<p>A sequence of expressions can be evaluated with the following relation:</p>
+<p>A list of expressions can be evaluated with the following relation:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -33794,6 +34293,149 @@ reject results.</p>
 <p>Results in the updated context <code>evalContext</code>, state <code>arch</code> and <code>expressionListResult</code>.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a list of expressions is represented as follows:</p>
+</div>
+<div id="expressionListResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">expressionListResult
+   : continueResult&lt;value*&gt;
+   | abortResult
+   ;</code></pre>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Exprs_eval:
+  rule Exprs_eval/nil:
+  p EC ARCH |- eps : EC ARCH (` eps)
+  rule Exprs_eval/cons-head-abort:
+  p EC_0 ARCH_0 |- typedExpressionIR_h :: typedExpressionIR_t* : EC_1 ARCH_1 abortResult
+ -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 abortResult
+  rule Exprs_eval/cons-head-reject:
+  p EC_0 ARCH_0 |- typedExpressionIR_h :: typedExpressionIR_t* : EC_1 ARCH_1 rejectTransitionResult
+ -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 rejectTransitionResult
+  rule Exprs_eval/cons-head-cont-tail-abort:
+  p EC_0 ARCH_0 |- typedExpressionIR_h :: typedExpressionIR_t* : EC_2 ARCH_2 abortResult
+ -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 (` value_h)
+ -- Exprs_eval: p EC_1 ARCH_1 |- typedExpressionIR_t* : EC_2 ARCH_2 abortResult
+  rule Exprs_eval/cons-head-cont-tail-cont:
+  p EC_0 ARCH_0 |- typedExpressionIR_h :: typedExpressionIR_t* : EC_2 ARCH_2 (` (value_h :: value_t*))
+ -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 (` value_h)
+ -- Exprs_eval: p EC_1 ARCH_1 |- typedExpressionIR_t* : EC_2 ARCH_2 (` value_t*)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Exprs_eval">Evaluating <code>typedExpressionIR<sup>*</sup></code>, under cursor <code>p</code>, context <code>evalContext</code>, and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>typedExpressionIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>typedExpressionIR<sub>h</sub></code> <code>::</code> <code>typedExpressionIR<sub>t</sub><sup>*</sup></code> be <code>typedExpressionIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>h</sub></code>, under cursor <code>p</code>, context <code>evalContext</code>, and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>value<sub>h</sub></code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionListResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Exprs_eval">evaluating <code>typedExpressionIR<sub>t</sub><sup>*</sup></code>, under cursor <code>p</code>, context <code>EC<sub>1</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionListResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>value<sub>t</sub><sup>*</sup></code> be <code>expressionListResult</code>.</p>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>value<sub>h</sub></code> <code>::</code> <code>value<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>expressionResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -43487,6 +44129,191 @@ follows:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of parser local declarations is type checked by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserLocalDeclList_ok: typingContext |- parserLocalDeclarationList : typingContext parserLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserLocalDeclList_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDeclList_ok">ParserLocalDeclList_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>parserLocalDeclarationList</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and <code>parserLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserLocalDeclList_ok:
+  rule ParserLocalDeclList_ok:
+  TC_0 |- parserLocalDeclarationList : TC_1 parserLocalDeclarationIR*
+ -- if parserLocalDeclaration* = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+ -- ParserLocalDecls_ok: TC_0 |- parserLocalDeclaration* : TC_1 parserLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDeclList_ok">Typing <code>parserLocalDeclarationList</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>parserLocalDeclaration<sup>*</sup></code> be <a href="#flatten_parserLocalDeclarationList">the list of parser local declarations in <code>parserLocalDeclarationList</code></a>.</p>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecls_ok">typing <code>parserLocalDeclaration<sup>*</sup></code>, under context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>parserLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingContext parserLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserLocalDecls_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_ok">ParserLocalDecls_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>parserLocalDeclaration<sup>*</sup></code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserLocalDecls_ok:
+  rule ParserLocalDecls_ok/nil:
+  TC |- eps : TC eps
+  rule ParserLocalDecls_ok/cons:
+  TC_0 |- parserLocalDeclaration_h :: parserLocalDeclaration_t* : TC_2 (parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*)
+ -- ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration_h : TC_1 parserLocalDeclarationIR_h
+ -- ParserLocalDecls_ok: TC_1 |- parserLocalDeclaration_t* : TC_2 parserLocalDeclarationIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_ok">Typing <code>parserLocalDeclaration<sup>*</sup></code>, under context <code>typingContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserLocalDeclaration<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>typingContext</code> and the typed parser local declarations <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserLocalDeclaration<sub>h</sub></code> <code>::</code> <code>parserLocalDeclaration<sub>t</sub><sup>*</sup></code> be <code>parserLocalDeclaration<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>parserLocalDeclarationIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecl_ok">typing <code>parserLocalDeclaration<sub>h</sub></code>, under context <code>typingContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>2</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecls_ok">typing <code>parserLocalDeclaration<sub>t</sub><sup>*</sup></code>, under context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>2</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>parserLocalDeclarationIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect4">
 <h5 id="_compile_time_evaluation_54">15.2.1.2. Compile-time evaluation</h5>
@@ -43519,6 +44346,113 @@ follows:</p>
 <p>Results in the updated context <code>instContext</code>, store <code>store</code>, and <code>parserLocalDeclarationIR</code>.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of parser local declarations is compile-time evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserLocalDecls_inst: instContext store |- parserLocalDeclarationIR* : instContext store parserLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserLocalDecls_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_inst">ParserLocalDecls_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>parserLocalDeclarationIR<sup>*</sup></code>, under context <code>instContext</code> and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>instContext</code>, store <code>store</code>, and <code>parserLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserLocalDecls_inst:
+  rule ParserLocalDecls_inst/nil:
+  IC STO |- eps : IC STO eps
+  rule ParserLocalDecls_inst/cons:
+  IC_0 STO_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t* : IC_2 STO_2 (parserLocalDeclarationIR_h_inst :: parserLocalDeclarationIR_t_inst*)
+ -- ParserLocalDecl_inst: IC_0 STO_0 |- parserLocalDeclarationIR_h : IC_1 STO_1 parserLocalDeclarationIR_h_inst
+ -- ParserLocalDecls_inst: IC_1 STO_1 |- parserLocalDeclarationIR_t* : IC_2 STO_2 parserLocalDeclarationIR_t_inst*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_inst">Compile-time evaluation of <code>parserLocalDeclarationIR<sup>*</sup></code>, under context <code>instContext</code> and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserLocalDeclarationIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>instContext</code>, store <code>store</code>, and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>parserLocalDeclarationIR<sub>t</sub><sup>*</sup></code> be <code>parserLocalDeclarationIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>parserLocalDeclarationIR<sub>h_inst</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecl_inst">compile-time evaluation of <code>parserLocalDeclarationIR<sub>h</sub></code>, under context <code>instContext</code> and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>parserLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecls_inst">compile-time evaluation of <code>parserLocalDeclarationIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code> and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>parserLocalDeclarationIR<sub>h_inst</sub></code> <code>::</code> <code>parserLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -43576,6 +44510,133 @@ continueEmptyResult
 rejectTransitionResult
    : REJECT errorValue
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of parser local declarations is runtime evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserLocalDecls_eval: evalContext arch |- parserLocalDeclarationIR* : evalContext arch parserDeclarationResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserLocalDecls_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_eval">ParserLocalDecls_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code>, under context <code>evalContext</code>, and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>evalContext</code>, state <code>arch</code>, and result <code>parserDeclarationResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserLocalDecls_eval:
+  rule ParserLocalDecls_eval/nil:
+  EC ARCH |- eps : EC ARCH `EMPTY
+  rule ParserLocalDecls_eval/cons-reject:
+  EC_0 ARCH_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationListIR_t : EC_1 ARCH_1 rejectTransitionResult
+ -- ParserLocalDecl_eval: EC_0 ARCH_0 |- parserLocalDeclarationIR_h : EC_1 ARCH_1 rejectTransitionResult
+  rule ParserLocalDecls_eval/cons-cont:
+  EC_0 ARCH_0 |- parserLocalDeclarationIR_h :: parserLocalDeclarationListIR_t : EC_2 ARCH_2 parserStatementResult
+ -- ParserLocalDecl_eval: EC_0 ARCH_0 |- parserLocalDeclarationIR_h : EC_1 ARCH_1 continueEmptyResult
+ -- ParserLocalDecls_eval: EC_1 ARCH_1 |- parserLocalDeclarationListIR_t : EC_2 ARCH_2 parserStatementResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserLocalDecls_eval">Evaluating parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code>, under context <code>evalContext</code>, and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserLocalDeclarationIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>evalContext</code>, state <code>arch</code>, and result <code>`EMPTY</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>parserLocalDeclarationListIR<sub>t</sub></code> be <code>parserLocalDeclarationIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>parserDeclarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecl_eval">evaluating parser local declaration <code>parserLocalDeclarationIR<sub>h</sub></code>, under context <code>evalContext</code>, and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>parserDeclarationResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>parserStatementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecls_eval">evaluating parser local declarations <code>parserLocalDeclarationListIR<sub>t</sub></code>, under context <code>EC<sub>1</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>parserStatementResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -44894,8 +45955,7 @@ parserStatementList
 </div>
 </div>
 <div class="paragraph">
-<p>After type checking, parser local statements are represented in P4<sub>IR</sub> as
-follows:</p>
+<p>After type checking, parser statements are represented in P4<sub>IR</sub> as follows:</p>
 </div>
 <div id="parserConditionalStatementIR" class="listingblock">
 <div class="content">
@@ -44918,6 +45978,191 @@ parserConditionalStatementIR
    : IF `( typedExpressionIR ) parserStatementIR
    | IF `( typedExpressionIR ) parserStatementIR ELSE parserStatementIR
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of parser statements is type checked by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserStmtList_ok: typingContext |- parserStatementList : typingContext parserStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserStmtList_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmtList_ok">ParserStmtList_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>parserStatementList</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserStmtList_ok:
+  rule ParserStmtList_ok:
+  TC_0 |- parserStatementList : TC_1 parserStatementIR*
+ -- if parserStatement* = $flatten_parserStatementList(parserStatementList)
+ -- ParserStmts_ok: TC_0 |- parserStatement* : TC_1 parserStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmtList_ok">Typing <code>parserStatementList</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>parserStatement<sup>*</sup></code> be <a href="#flatten_parserStatementList">the list of parser statements in <code>parserStatementList</code></a>.</p>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmts_ok">typing <code>parserStatement<sup>*</sup></code>, under context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parserStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserStmts_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_ok">ParserStmts_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>parserStatement<sup>*</sup></code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserStmts_ok:
+  rule ParserStmts_ok/nil:
+  TC |- eps : TC eps
+  rule ParserStmts_ok/cons:
+  TC_0 |- parserStatement_h :: parserStatement_t* : TC_2 (parserStatementIR_h :: parserStatementIR_t*)
+ -- ParserStmt_ok: TC_0 |- parserStatement_h : TC_1 parserStatementIR_h
+ -- ParserStmts_ok: TC_1 |- parserStatement_t* : TC_2 parserStatementIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_ok">Typing <code>parserStatement<sup>*</sup></code>, under context <code>typingContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserStatement<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>typingContext</code> and the typed parser statements <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserStatement<sub>h</sub></code> <code>::</code> <code>parserStatement<sub>t</sub><sup>*</sup></code> be <code>parserStatement<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and the typed parser statement <code>parserStatementIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmt_ok">typing <code>parserStatement<sub>h</sub></code>, under context <code>typingContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>2</sub></code> and the typed parser statements <code>parserStatementIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmts_ok">typing <code>parserStatement<sub>t</sub><sup>*</sup></code>, under context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>2</sub></code> and the typed parser statements <code>parserStatementIR<sub>h</sub></code> <code>::</code> <code>parserStatementIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 </div>
@@ -44952,6 +46197,113 @@ parserConditionalStatementIR
 <p>Results in the updated context <code>instContext</code> and store <code>store</code>.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of parser statements is compile-time evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserStmts_inst: instContext store |- parserStatementIR* : instContext store parserStatementIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserStmts_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_inst">ParserStmts_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>parserStatementIR<sup>*</sup></code>, under context <code>instContext</code> and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>instContext</code> and store <code>store</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserStmts_inst:
+  rule ParserStmts_inst/nil:
+  IC STO |- eps : IC STO eps
+  rule ParserStmts_inst/cons:
+  IC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t* : IC_2 STO_2 (parserStatementIR_h_inst :: parserStatementIR_t_inst*)
+ -- ParserStmt_inst: IC_0 STO_0 |- parserStatementIR_h : IC_1 STO_1 parserStatementIR_h_inst
+ -- ParserStmts_inst: IC_1 STO_1 |- parserStatementIR_t* : IC_2 STO_2 parserStatementIR_t_inst*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_inst">Compile-time evaluation of <code>parserStatementIR<sup>*</sup></code>, under context <code>instContext</code> and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserStatementIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>instContext</code> and store <code>store</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserStatementIR<sub>h</sub></code> <code>::</code> <code>parserStatementIR<sub>t</sub><sup>*</sup></code> be <code>parserStatementIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code> and store <code>STO<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmt_inst">compile-time evaluation of <code>parserStatementIR<sub>h</sub></code>, under context <code>instContext</code> and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>IC<sub>2</sub></code> and store <code>STO<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmts_inst">compile-time evaluation of <code>parserStatementIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code> and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>IC<sub>2</sub></code> and store <code>STO<sub>2</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -45014,6 +46366,164 @@ continueEmptyResult
 rejectTransitionResult
    : REJECT errorValue
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of parser statements is runtime evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParserStmts_eval: evalContext arch |- parserStatementListIR : evalContext arch parserStatementResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParserStmts_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_eval">ParserStmts_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Runtime evaluation of <code>parserStatementListIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>evalContext</code>, state <code>arch</code>, and <code>parserStatementResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParserStmts_eval:
+  rule ParserStmts_eval/nil:
+  EC ARCH |- eps : EC ARCH `EMPTY
+  rule ParserStmts_eval/cons-head-reject:
+  EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t* : EC_1 ARCH_1 rejectTransitionResult
+ -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 rejectTransitionResult
+  rule ParserStmts_eval/cons-head-cont:
+  EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t* : EC_2 ARCH_2 parserStatementResult
+ -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 `EMPTY
+ -- ParserStmts_eval: EC_1 ARCH_1 |- parserStatementIR_t* : EC_2 ARCH_2 parserStatementResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParserStmts_eval">Runtime evaluation of <code>parserStatementIR<sup>*</sup></code>, under context <code>evalContext</code> and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>parserStatementIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>evalContext</code>, state <code>arch</code>, and <code>`EMPTY</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>parserStatementIR<sub>h</sub></code> <code>::</code> <code>parserStatementIR<sub>t</sub><sup>*</sup></code> be <code>parserStatementIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>parserStatementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmt_eval">runtime evaluation of <code>parserStatementIR<sub>h</sub></code>, under context <code>evalContext</code> and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>parserStatementResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>rejectTransitionResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>continueEmptyResult</code> be <code>parserStatementResult</code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>parserStatementResult'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserStmts_eval">runtime evaluation of <code>parserStatementIR<sub>t</sub><sup>*</sup></code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>parserStatementResult'</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -45262,7 +46772,13 @@ declarations.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre></pre>
+<pre>rulegroup ParserStmt_eval/variableDeclarationIR:
+  rule ParserStmt_eval/reject:
+  EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 rejectTransitionResult
+ -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 rejectTransitionResult
+  rule ParserStmt_eval/cont:
+  EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY
+ -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY</pre>
 </div>
 </div>
 </div>
@@ -45274,7 +46790,57 @@ declarations.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-
+<div class="paragraph">
+<p><a href="#ParserStmt_eval">Runtime evaluation of <code>variableDeclarationIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>,and the result <code>declarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#VarDecl_eval">evaluating <code>variableDeclarationIR</code>, under cursor <code>LOCAL</code>, context <code>EC<sub>0</sub></code>, and state <code>ARCH</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>declarationResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>rejectTransitionResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>continueEmptyResult</code> be <code>declarationResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>`EMPTY</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 </div>
@@ -48986,6 +50552,191 @@ follows:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of control local declarations is type checked by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlLocalDeclList_ok: typingContext |- controlLocalDeclarationList : typingContext controlLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlLocalDeclList_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDeclList_ok">ControlLocalDeclList_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>controlLocalDeclarationList</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and <code>controlLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDeclList_ok:
+  rule ControlLocalDeclList_ok:
+  TC_0 |- controlLocalDeclarationList : TC_1 controlLocalDeclarationIR*
+ -- if controlLocalDeclaration* = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+ -- ControlLocalDecls_ok: TC_0 |- controlLocalDeclaration* : TC_1 controlLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDeclList_ok">Typing <code>controlLocalDeclarationList</code>, under context <code>TC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>controlLocalDeclaration<sup>*</sup></code> be <a href="#flatten_controlLocalDeclarationList">the list of control local declarations in <code>controlLocalDeclarationList</code></a>.</p>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_ok">typing <code>controlLocalDeclaration<sup>*</sup></code>, under context <code>TC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>1</sub></code> and <code>controlLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typingContext controlLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlLocalDecls_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_ok">ControlLocalDecls_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>controlLocalDeclaration<sup>*</sup></code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>typingContext</code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecls_ok:
+  rule ControlLocalDecls_ok/nil:
+  TC |- eps : TC eps
+  rule ControlLocalDecls_ok/cons:
+  TC_0 |- controlLocalDeclaration_h :: controlLocalDeclaration_t* : TC_2 (controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*)
+ -- ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration_h : TC_1 controlLocalDeclarationIR_h
+ -- ControlLocalDecls_ok: TC_1 |- controlLocalDeclaration_t* : TC_2 controlLocalDeclarationIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_ok">Typing <code>controlLocalDeclaration<sup>*</sup></code>, under context <code>typingContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>controlLocalDeclaration<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>typingContext</code> and the typed control local declarations <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>controlLocalDeclaration<sub>h</sub></code> <code>::</code> <code>controlLocalDeclaration<sub>t</sub><sup>*</sup></code> be <code>controlLocalDeclaration<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>TC<sub>1</sub></code> and <code>controlLocalDeclarationIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecl_ok">typing <code>controlLocalDeclaration<sub>h</sub></code>, under context <code>typingContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>TC<sub>2</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_ok">typing <code>controlLocalDeclaration<sub>t</sub><sup>*</sup></code>, under context <code>TC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>TC<sub>2</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>controlLocalDeclarationIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect4">
 <h5 id="_compile_time_evaluation_69">16.2.1.2. Compile-time evaluation</h5>
@@ -49025,6 +50776,175 @@ follows:</p>
 </div>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of control local declarations is compile-time evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlLocalDecls_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_inst">ControlLocalDecls_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>controlLocalDeclarationIR<sup>*</sup></code>, under context <code>instContext</code>and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>instContext</code>, store <code>store</code>, and <code>controlLocalDeclarationIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecls_inst:
+  rule ControlLocalDecls_inst/nil:
+  IC STO |- eps : IC STO eps
+  rule ControlLocalDecls_inst/cons-none:
+  IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t* : IC_2 STO_2 controlLocalDeclarationIR_t_inst*
+ -- ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR_h : IC_1 STO_1 eps
+ -- ControlLocalDecls_inst: IC_1 STO_1 |- controlLocalDeclarationIR_t* : IC_2 STO_2 controlLocalDeclarationIR_t_inst*
+  rule ControlLocalDecls_inst/cons-some:
+  IC_0 STO_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t* : IC_2 STO_2 (controlLocalDeclarationIR_h_inst :: controlLocalDeclarationIR_t_inst*)
+ -- ControlLocalDecl_inst: IC_0 STO_0 |- controlLocalDeclarationIR_h : IC_1 STO_1 controlLocalDeclarationIR_h_inst
+ -- ControlLocalDecls_inst: IC_1 STO_1 |- controlLocalDeclarationIR_t* : IC_2 STO_2 controlLocalDeclarationIR_t_inst*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_inst">Compile-time evaluation of <code>controlLocalDeclarationIR<sup>*</sup></code>, under context <code>instContext</code>and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>controlLocalDeclarationIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>instContext</code>, store <code>store</code>, and <code>·</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>controlLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>controlLocalDeclarationIR<sub>t</sub><sup>*</sup></code> be <code>controlLocalDeclarationIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>controlLocalDeclarationIR'<sup>?</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecl_inst">compile-time evaluation of <code>controlLocalDeclarationIR<sub>h</sub></code>, under context <code>instContext</code>and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If <code>controlLocalDeclarationIR'<sup>?</sup></code> is none:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>controlLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_inst">compile-time evaluation of <code>controlLocalDeclarationIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code>and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>controlLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>controlLocalDeclarationIR<sub>h_inst</sub></code> be <code>controlLocalDeclarationIR'<sup>?</sup></code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>controlLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_inst">compile-time evaluation of <code>controlLocalDeclarationIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code>and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>controlLocalDeclarationIR<sub>h_inst</sub></code> <code>::</code> <code>controlLocalDeclarationIR<sub>t_inst</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -49073,15 +50993,178 @@ follows:</p>
 <div class="paragraph">
 <p>Evaluation of a control local declaration yields:</p>
 </div>
-<div class="listingblock">
+<div id="controlLocalDeclarationResult" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">continueEmptyResult
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlLocalDeclarationResult
+   : continueEmptyResult
+   | exitResult
+   ;
+
+continueEmptyResult
    : /* empty */
    ;
 
 exitResult
    : EXIT
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of control local declarations is runtime evaluated by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlLocalDecls_eval: evalContext arch |- controlLocalDeclarationIR* : evalContext arch controlLocalDeclarationResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlLocalDecls_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_eval">ControlLocalDecls_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>controlLocalDeclarationIR<sup>*</sup></code>, under context <code>evalContext</code>, and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>evalContext</code>, state <code>arch</code>, and result <code>controlLocalDeclarationResult</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlLocalDecls_eval:
+  rule ControlLocalDecls_eval/nil:
+  EC ARCH |- eps : EC ARCH `EMPTY
+  rule ControlLocalDecls_eval/cons-head-exit:
+  EC_0 ARCH_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t : EC_1 ARCH_1 EXIT
+ -- ControlLocalDecl_eval: EC_0 ARCH_0 |- controlLocalDeclarationIR_h : EC_1 ARCH_1 EXIT
+  rule ControlLocalDecls_eval/cons-head-cont:
+  EC_0 ARCH_0 |- controlLocalDeclarationIR_h :: controlLocalDeclarationListIR_t : EC_2 ARCH_2 controlLocalDeclarationResult
+ -- ControlLocalDecl_eval: EC_0 ARCH_0 |- controlLocalDeclarationIR_h : EC_1 ARCH_1 `EMPTY
+ -- ControlLocalDecls_eval: EC_1 ARCH_1 |- controlLocalDeclarationListIR_t : EC_2 ARCH_2 controlLocalDeclarationResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlLocalDecls_eval">Evaluating <code>controlLocalDeclarationIR<sup>*</sup></code>, under context <code>evalContext</code>, and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>controlLocalDeclarationIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>evalContext</code>, state <code>arch</code>, and result <code>`EMPTY</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>controlLocalDeclarationIR<sub>h</sub></code> <code>::</code> <code>controlLocalDeclarationListIR<sub>t</sub></code> be <code>controlLocalDeclarationIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>controlLocalDeclarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecl_eval">evaluating <code>controlLocalDeclarationIR<sub>h</sub></code>, under context <code>evalContext</code>, and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>controlLocalDeclarationResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>EXIT</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>continueEmptyResult</code> be <code>controlLocalDeclarationResult</code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>controlLocalDeclarationResult'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_eval">evaluating <code>controlLocalDeclarationListIR<sub>t</sub></code>, under context <code>EC<sub>1</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>controlLocalDeclarationResult'</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 <div class="paragraph">
@@ -49629,18 +51712,288 @@ declarations.</p>
 </div>
 <div class="sect2">
 <h3 id="sec-match-action-table">16.3. Match-action tables</h3>
-<div id="tableDeclarationIR" class="listingblock">
+<div class="paragraph">
+<p><code>table</code>s are the primary mechanism for implementing match-action behavior
+in P4 programs. A table performs a lookup based on a key computed from the
+packet header fields and other metadata, and applies an action associated
+with the matching entry in the table.</p>
+</div>
+<div class="paragraph">
+<p>A table is declared with standard properties and target-specific custom
+properties.</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableProperty
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableDeclaration
+   : annotationList TABLE name `{ tablePropertyList }
+   ;
+
+tablePropertyList
+   : /* empty */
+   | tablePropertyList tableProperty
+   ;
+
+tableProperty
    : KEY = `{ tableKeyList }
    | ACTIONS = `{ tableActionList }
    | annotationList constOpt ENTRIES = `{ tableEntryList }
    | annotationList constOpt tableCustomName initializer ;
-   ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The standard table properties include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>key</code>: An expression that describes how the key used for look-up
+is computed.</p>
+</li>
+<li>
+<p><code>actions</code>: A list of all actions that may be found in the table.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In addition, the tables may optionally define the following properties,</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>default_action</code>: an action to execute when the lookup in the
+lookup table fails to find a match for the key used.</p>
+</li>
+<li>
+<p><code>size</code>: an integer specifying the desired size of the table.</p>
+</li>
+<li>
+<p><code>entries</code>: entries that are initially added to a table when the P4
+program is loaded, some or all of which may be unchangeable by the
+control plane software.</p>
+</li>
+<li>
+<p><code>largest_priority_wins</code>: Only useful for some tables with the
+<code>entries</code> property.  See <a href="#sec-table-entries">Section 16.3.5</a> for details.</p>
+</li>
+<li>
+<p><code>priority_delta</code>: Only useful for some tables with the <code>entries</code>
+property.  See <a href="#sec-table-entries">Section 16.3.5</a> for details.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The compiler must set the <code>default_action</code> to <code>NoAction</code> (and also insert it
+into the list of <code>actions</code>) for tables that do not define the <code>default_action</code>
+property. Hence, all tables can be thought of as having a <code>default_action</code>
+property, either implicitly or explicitly.</p>
+</div>
+<div class="paragraph">
+<p>In addition, tables may contain architecture-specific properties (see
+<a href="#sec-additional-table-properties">[sec-additional-table-properties]</a>).</p>
+</div>
+<div class="paragraph">
+<p>A property marked as <code>const</code> cannot be changed dynamically by the control
+plane. The <code>key</code>, <code>actions</code>, and <code>size</code> properties cannot be modified so the
+<code>const</code> keyword is not needed for these.</p>
+</div>
+<div class="sect3">
+<h4 id="_semantics_of_match_action_table_properties">16.3.1. Semantics of match-action table properties</h4>
+<div class="sect4">
+<h5 id="_type_checking_111">16.3.1.1. Type checking</h5>
+<div class="paragraph">
+<p>Table properties are type checked with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableProperty_ok: typingContext tableContext |- tableProperty : tableContext tablePropertyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
-tableDeclaration
-   : annotationList TABLE name `{ tablePropertyList }
-   ;
+</div>
+</div>
+<div id="TableProperty_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_ok">TableProperty_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableProperty</code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tablePropertyIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of table properties are type checked as:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableProperties_ok: typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableProperties_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperties_ok">TableProperties_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableProperty<sup>*</sup></code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tablePropertyListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperties_ok:
+  rule TableProperties_ok/nil:
+  TC TBLC |- eps : TBLC eps
+  rule TableProperties_ok/cons:
+  TC TBLC_0 |- (tableProperty_h :: tableProperty_t*) : TBLC_2 (tablePropertyIR_h :: tablePropertyIR_t*)
+ -- TableProperty_ok: TC TBLC_0 |- tableProperty_h : TBLC_1 tablePropertyIR_h
+ -- TableProperties_ok: TC TBLC_1 |- tableProperty_t* : TBLC_2 tablePropertyIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperties_ok">Typing <code>tableProperty<sup>*</sup></code>, under context <code>TC</code> and table context <code>tableContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>tableProperty<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated table context <code>tableContext</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>tableProperty<sub>h</sub></code> <code>::</code> <code>tableProperty<sub>t</sub><sup>*</sup></code> be <code>tableProperty<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated table context <code>TBLC<sub>1</sub></code> and <code>tablePropertyIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableProperty_ok">typing <code>tableProperty<sub>h</sub></code>, under context <code>TC</code> and table context <code>tableContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated table context <code>TBLC<sub>2</sub></code> and <code>tablePropertyIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableProperties_ok">typing <code>tableProperty<sub>t</sub><sup>*</sup></code>, under context <code>TC</code> and table context <code>TBLC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>2</sub></code> and <code>tablePropertyIR<sub>h</sub></code> <code>::</code> <code>tablePropertyIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_74">16.3.1.2. Compile-time evaluation</h5>
+<div class="paragraph">
+<p>Table properties are compile-time evaluated with the relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableProperty_inst: instContext store |- tablePropertyIR : store tablePropertyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableProperty_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_inst">TableProperty_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>tablePropertyIR</code>, under context <code>instContext</code>and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>store</code> and <code>tablePropertyIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, table properties are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="tablePropertyListIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tablePropertyListIR = tablePropertyIR*
 
 tablePropertyIR
    : tableKeysPropertyIR
@@ -49648,56 +52001,1926 @@ tablePropertyIR
    | tableDefaultActionPropertyIR
    | tableEntriesPropertyIR
    | tableCustomPropertyIR
-   ;
-
-tableDeclarationIR
-   : annotationList TABLE typeIR nameIR `{ tablePropertyListIR }
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>A list of table properties are compile-time evaluated as:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableProperties_inst: instContext store |- tablePropertyIR* : store tablePropertyIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableProperties_inst" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperties_inst">TableProperties_inst</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Compile-time evaluation of <code>tablePropertyIR<sup>*</sup></code>, under context <code>instContext</code>and store <code>store</code>:</p>
+</li>
+<li>
+<p>Results in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>store</code> and <code>tablePropertyIR<sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperties_inst:
+  rule TableProperties_inst/nil:
+  IC STO |- eps : STO eps
+  rule TableProperties_inst/cons:
+  IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t* : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
+ -- TableProperty_inst: IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+ -- TableProperties_inst: IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperties_inst">Compile-time evaluation of <code>tablePropertyIR<sup>*</sup></code>, under context <code>IC</code>and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>tablePropertyIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>store</code> and <code>·</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>tablePropertyIR<sub>h</sub></code> <code>::</code> <code>tablePropertyIR<sub>t</sub><sup>*</sup></code> be <code>tablePropertyIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated store <code>STO<sub>1</sub></code> and <code>tablePropertyIR<sub>h_inst</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableProperty_inst">compile-time evaluation of <code>tablePropertyIR<sub>h</sub></code>, under context <code>IC</code>and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated store <code>STO<sub>2</sub></code> and <code>tablePropertyIR<sub>t_inst</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableProperties_inst">compile-time evaluation of <code>tablePropertyIR<sub>t</sub><sup>*</sup></code>, under context <code>IC</code>and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO<sub>2</sub></code> and <code>tablePropertyIR<sub>h_inst</sub></code> <code>::</code> <code>tablePropertyIR<sub>t_inst</sub><sup>*</sup></code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>During compile-time evaluation, local instances within table properties are
+instantiated.</p>
+</div>
+<div class="paragraph">
+<p>The following subsections describe the standard properties of tables in more
+detail.</p>
+</div>
+</div>
+</div>
 <div class="sect3">
-<h4 id="sec-match-action-table-key">16.3.1. Table keys</h4>
+<h4 id="sec-table-key">16.3.2. Table keys</h4>
+<div class="paragraph">
+<p>The <code>key</code> is a table property which specifies the data-plane values that
+should be used to look up an entry. A key is a list of pairs of the form
+<code>(e : m)</code>, where <code>e</code> is an expression that describes the data to be
+matched in the table, and <code>m</code> is a <code>match_kind</code> that describes the algorithm
+used to perform the lookup (see Section <a href="#sec-match-kind">Section 8.2.5</a>).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKeyList
+   : /* empty */
+   | tableKeyList tableKey
+   ;
+
+tableKey
+   : expression : name annotationList ;
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, consider the following program fragment:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>table Fwd {
+    key = {
+       ipv4header.dstAddress : ternary;
+       ipv4header.version    : exact;
+    }
+    // more fields omitted
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here the key comprises two fields from the <code>ipv4header</code>
+header: <code>dstAddress</code> and <code>version</code>. The <code>match_kind</code> elements
+serve three purposes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>They specify the algorithm used to match data-plane values against
+the entries in the table at runtime.</p>
+</li>
+<li>
+<p>They are used to synthesize the control-plane API that is used to
+populate the table.</p>
+</li>
+<li>
+<p>They are used by the compiler back-end to allocate resources for the
+implementation of the table.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The P4 core library contains three predefined <code>match_kind</code> identifiers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">match_kind</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   exact<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   ternary<span style="color: #24292f;background-color: #f6f8fa">,</span>
+   lpm
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These identifiers correspond to the P4<sub>14</sub> match kinds with the same names. The
+semantics of these match kinds is actually not needed to describe the behavior
+of the P4 abstract machine; how they are used influences only the control-plane
+API and the implementation of the look-up table. From the point of view of the
+P4 program, a look-up table is an abstract finite map that is given a key and
+produces as a result either an action or a "miss" indication, as described in
+<a href="#sec-match-action-table-invocation">Section 16.3.7</a>.</p>
+</div>
+<div class="paragraph">
+<p>The expected meaning of these values is as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>an <code>exact</code> match kind on a key field means that the value of the field in the
+table specifies exactly the value the lookup key field must have in order to
+match. This is applicable for all legal key fields whose types support
+equality comparisons.</p>
+</li>
+<li>
+<p>a <code>ternary</code> match kind on a key field means that the field in the table
+specifies a set of values for the key field using a value and a mask. The
+meaning of the <code>(value, mask)</code> pair is similar to the P4 mask expressions, as
+described in <a href="#sec-mask-set">Section 8.6.5.1.3</a>: a key field <code>k</code> matches the table entry when
+<code>k &amp; mask == value &amp; mask</code>.</p>
+</li>
+<li>
+<p>a <code>lpm</code> (longest prefix match) match kind on a key field is a specific type of
+<code>ternary</code> match where the mask is required to have a form in binary that is a
+contiguous set of 1 bits followed by a contiguous set of 0 bits. Masks with
+more 1 bits have automatically higher priorities. A mask with all bits 0 is
+legal.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Some table entries, in particular the ones with at least one <code>ternary</code> field,
+also require a priority value. A priority is a numeric value which is used to
+break ties when a particular key belongs to multiple sets. When table entries
+are specified in the P4 program the priorities are generated by the compiler;
+when entries are specified by the control-plane, the priority may need to be
+explicitly specified. Entries with higher priority are matched first. This
+specification does not mandate whether "higher" priorities are represented by
+higher or lower numeric values; this choice is left to the target
+implementation.</p>
+</div>
+<div class="paragraph">
+<p>An example specifying entries for a table is given in <a href="#sec-table-entries">Section 16.3.5</a>.</p>
+</div>
+<div class="paragraph">
+<p>If a table has no <code>key</code> property, or if the value of its <code>key</code> property is the
+empty tuple, i.e. <code>key = {}</code>, then it contains no look-up table, just a default
+action&#8212;&#8203;i.e., the associated lookup table is always the empty map.</p>
+</div>
+<div class="paragraph">
+<p>Each key element can have an optional <code>@name</code> annotation which is used to
+synthesize the control-plane-visible name for the key field.</p>
+</div>
+<div class="paragraph">
+<p>Note some implementations might only support a limited number of keys or a
+limited combinations of match_kind for the keys. The implementation should
+reject those cases with an error message in this case.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_112">16.3.2.1. Type checking</h5>
+<div class="paragraph">
+<p>A table key property is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_ok/key:
+  rule TableProperty_ok/key:
+  TC TBLC_0 |- KEY = `{tableKeyList} : TBLC_1 (KEY = `{tableKeyIR*})
+ -- if tableKey* = $flatten_tableKeyList(tableKeyList)
+ -- TableKeys_ok: TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_ok">Typing <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyList</code> <code>}</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>tableKey<sup>*</sup></code> be <a href="#flatten_tableKeyList">the list of table keys in <code>tableKeyList</code></a>.</p>
+</li>
+<li>
+<p>Let the updated table context <code>TBLC<sub>1</sub></code> and <code>tableKeyIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableKeys_ok">typing <code>tableKey<sup>*</sup></code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>1</sub></code> and <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyIR<sup>*</sup></code> <code>}</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, a table key property is represented in P4<sub>IR</sub> as:</p>
+</div>
 <div id="tableKeyIR" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKey
-   : expression : name annotationList ;
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKeysPropertyIR
+   : KEY = `{ tableKeyListIR }
    ;
+
+tableKeyListIR = tableKeyIR*
 
 tableKeyIR
    : typedExpressionIR : nameIR annotationList ;
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Table keys are type checked with the following relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableKeys_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKeys_ok">TableKeys_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableKey<sup>*</sup></code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tableKeyListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableKeys_ok:
+  rule TableKeys_ok/nil:
+  TC TBLC |- eps : TBLC eps
+  rule TableKeys_ok/cons:
+  TC TBLC_0 |- (tableKey_h :: tableKey_t*) : TBLC_2 (tableKeyIR_h :: tableKeyIR_t*)
+ -- TableKey_ok: TC TBLC_0 |- tableKey_h : TBLC_1 tableKeyIR_h
+ -- TableKeys_ok: TC TBLC_1 |- tableKey_t* : TBLC_2 tableKeyIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKeys_ok">Typing <code>tableKey<sup>*</sup></code>, under context <code>TC</code> and table context <code>tableContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>tableKey<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated table context <code>tableContext</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>tableKey<sub>h</sub></code> <code>::</code> <code>tableKey<sub>t</sub><sup>*</sup></code> be <code>tableKey<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated table context <code>TBLC<sub>1</sub></code> and <code>tableKeyIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableKey_ok">typing <code>tableKey<sub>h</sub></code>, under context <code>TC</code> and table context <code>tableContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableKeys_ok">typing <code>tableKey<sub>t</sub><sup>*</sup></code>, under context <code>TC</code> and table context <code>TBLC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR<sub>h</sub></code> <code>::</code> <code>tableKeyIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The relation invokes the following relation for each key:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tableKeyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableKey_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKey_ok">TableKey_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableKey</code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tableKeyIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableKey_ok:
+  rule TableKey_ok:
+  TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_2 tableKeyIR
+ -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+ -- if typedExpressionIR_reduced = $reduce_serenum(typedExpressionIR)
+ -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
+ -- Type_wf: $bound(LOCAL, TC) |- SET `&lt;typeIR_reduced&gt;
+ -- if nameIR_matchkind = $name(name_matchkind)
+ -- if MATCH_KIND . nameIR_matchkind = $find_var_value_t(` nameIR_matchkind, LOCAL, TC)
+ -- if $compat_table_key(nameIR_matchkind, typeIR_reduced)
+ -- if TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR_reduced)
+ -- if TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR_reduced)
+ -- if tableKeyIR = typedExpressionIR_reduced : nameIR_matchkind annotationList ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKey_ok">Typing <code>expression</code> <code>:</code> <code>name<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>typedExpressionIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression</code>, under cursor <code>LOCAL</code> and context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#reduce_serenum"><code>typedExpressionIR</code> with surrounding serializable enums reduced</a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_wf"><code>SET</code> <code>&lt;</code> <code>typeIR<sub>reduced</sub></code> <code>&gt;</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR<sub>matchkind</sub></code> be <a href="#name">the name of <code>name<sub>matchkind</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>MATCH_KIND</code> <code>.</code> <code>nameIR<sub>matchkind</sub></code> is equal to <a href="#find_var_value_t">the value of variable <code>nameIR<sub>matchkind</sub></code> from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#compat_table_key"><code>typeIR<sub>reduced</sub></code> can be used with match kind <code>nameIR<sub>matchkind</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>0</sub></code> with match mode updated based on key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR<sub>reduced</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>TBLC<sub>2</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>1</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR<sub>reduced</sub></code> added</a>.</p>
+</li>
+<li>
+<p>Let <code>tableKeyIR</code> be <code>typedExpressionIR<sub>reduced</sub></code> <code>:</code> <code>nameIR<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_75">16.3.2.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_inst/tableKeysPropertyIR:
+  rule TableProperty_inst/tableKeysPropertyIR:
+  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_inst">Compile-time evaluation of <code>tableKeysPropertyIR</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO</code> and <code>tableKeysPropertyIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_53">16.3.2.3. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A table key is evaluated at runtime as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableKey_eval: evalContext arch |- tableKeyIR : evalContext arch tableKeyResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableKey_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKey_eval">TableKey_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>tableKeyIR</code> under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeyResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a table key is:</p>
+</div>
+<div id="tableKeyValue" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKeyResult
+   : continueResult&lt;tableKeyValue&gt;
+   | exitResult
+   ;
+
+tableKeyValue
+   : value : nameIR
+   ;
+
+exitResult
+   : EXIT
+   ;</code></pre>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableKey_eval:
+  rule TableKey_eval/exit:
+  EC_0 ARCH_0 |- typedExpressionIR : nameIR _ ; : EC_1 ARCH_1 EXIT
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 EXIT
+  rule TableKey_eval/cont:
+  EC_0 ARCH_0 |- typedExpressionIR : nameIR _ ; : EC_1 ARCH_1 (` tableKeyValue)
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
+ -- if tableKeyValue = value : nameIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKey_eval">Evaluating <code>typedExpressionIR</code> <code>:</code> <code>nameIR</code> <code>annotationList</code> <code>;</code> under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR</code>, under cursor <code>LOCAL</code>, context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>expressionResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>value</code> be <code>expressionResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>tableKeyValue</code> be <code>value</code> <code>:</code> <code>nameIR</code>.</p>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyValue</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A list of table keys is evaluated at runtime as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableKeys_eval: evalContext arch |- tableKeyListIR : evalContext arch tableKeysResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableKeys_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKeys_eval">TableKeys_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>tableKeyListIR</code> under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Results in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeysResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating table keys is:</p>
+</div>
+<div id="tableKeysResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableKeysResult
+   : continueResult&lt;tableKeyValue*&gt;
+   | exitResult
+   ;</code></pre>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableKeys_eval:
+  rule TableKeys_eval/nil:
+  EC ARCH |- eps : EC ARCH (` eps)
+  rule TableKeys_eval/cons-head-exit:
+  EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t* : EC_1 ARCH_1 EXIT
+ -- TableKey_eval: EC_0 ARCH_0 |- tableKeyIR_h : EC_1 ARCH_1 EXIT
+  rule TableKeys_eval/cons-head-cont-tail-exit:
+  EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t* : EC_2 ARCH_2 EXIT
+ -- TableKey_eval: EC_0 ARCH_0 |- tableKeyIR_h : EC_1 ARCH_1 (` tableKeyValue_h)
+ -- TableKeys_eval: EC_1 ARCH_1 |- tableKeyIR_t* : EC_2 ARCH_2 EXIT
+  rule TableKeys_eval/cons-head-cont-tail-cont:
+  EC_0 ARCH_0 |- tableKeyIR_h :: tableKeyIR_t* : EC_2 ARCH_2 (` tableKeyValue*)
+ -- TableKey_eval: EC_0 ARCH_0 |- tableKeyIR_h : EC_1 ARCH_1 (` tableKeyValue_h)
+ -- TableKeys_eval: EC_1 ARCH_1 |- tableKeyIR_t* : EC_2 ARCH_2 (` tableKeyValue_t*)
+ -- if tableKeyValue* = tableKeyValue_h :: tableKeyValue_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableKeys_eval">Evaluating <code>tableKeyIR<sup>*</sup></code> under context <code>evalContext</code> and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>tableKeyIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>tableKeyIR<sub>h</sub></code> <code>::</code> <code>tableKeyIR<sub>t</sub><sup>*</sup></code> be <code>tableKeyIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableKey_eval">evaluating <code>tableKeyIR<sub>h</sub></code> under context <code>evalContext</code> and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>tableKeyResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>tableKeyValue<sub>h</sub></code> be <code>tableKeyResult</code>.</p>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeysResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableKeys_eval">evaluating <code>tableKeyIR<sub>t</sub><sup>*</sup></code> under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>tableKeysResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>tableKeyValue<sub>t</sub><sup>*</sup></code> be <code>tableKeysResult</code>.</p>
+</li>
+<li>
+<p>Let <code>tableKeyValue<sup>*</sup></code> be <code>tableKeyValue<sub>h</sub></code> <code>::</code> <code>tableKeyValue<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeyValue<sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-action">16.3.2. Table actions</h4>
-<div id="tableActionIR" class="listingblock">
+<h4 id="sec-table-action">16.3.3. Table actions</h4>
+<div class="paragraph">
+<p>A table must declare all possible actions that may appear within the associated
+lookup table or in the default action. This is done with the <code>actions</code>
+property; the value of this property is always an <code>actionList</code>:</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableActionReference
-   : prefixedNonTypeName
-   | prefixedNonTypeName `( argumentList )
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableActionList
+   : /* empty */
+   | tableActionList tableAction
    ;
 
 tableAction
    : annotationList tableActionReference ;
    ;
 
-tableActionReferenceIR
-   : prefixedNameIR `( argumentListIR )
-   ;
-
-tableActionIR
-   : annotationList tableActionReferenceIR # `( parameterListIR , parameterListIR ) ;
+tableActionReference
+   : prefixedNonTypeName
+   | prefixedNonTypeName `( argumentList )
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>To illustrate, recall the example Very Simple Switch program in
+<a href="#sec-vss-all">Section 5.3</a>:</p>
 </div>
-<div class="sect3">
-<h4 id="sec-match-action-table-default-action">16.3.3. Table default actions</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">action</span> Drop_action<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #0550ae">=</span> DROP_PORT<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #cf222e">action</span> Rewrite_smac<span style="color: #24292f;background-color: #f6f8fa">(</span>EthernetAddress sourceMac<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+  headers<span style="color: #0550ae">.</span>ethernet<span style="color: #0550ae">.</span>srcAddr <span style="color: #0550ae">=</span> sourceMac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #cf222e">table</span> smac <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> outCtrl<span style="color: #0550ae">.</span>outputPort <span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        Drop_action<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        Rewrite_smac<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The entries in the <code>smac</code> <code>table</code> may contain two different actions:
+<code>Drop_action</code> and <code>Rewrite_mac</code>.</p>
+</li>
+<li>
+<p>The <code>Rewrite_smac</code> action has one parameter, <code>sourceMac</code>, which in this case
+will be provided by the control plane.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Each action in the list of actions for a table must have a distinct name&#8212;&#8203;e.g.,
+the following program fragment is illegal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">action</span> a<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+<span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">action</span> a<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+    <span style="color: #6e7781">// Illegal table: two actions with the same name
+</span>    <span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #0550ae">.</span>a<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each action parameter that has a direction (<code>in</code>, <code>inout</code>, or <code>out</code>) must be
+bound in the <code>actions</code> list specification; conversely, no directionless
+parameters may be bound in the list. The expressions supplied as arguments to
+an <code>action</code> are not evaluated until the action is invoked. Applying tables,
+whether directly via an expression like <code>table1.apply().hit</code>, or indirectly,
+are forbidden in the expressions supplied as action arguments.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">action</span> a<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> z<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">action</span> b<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> data<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       <span style="color: #6e7781">// a; -- illegal, x parameter must be bound
+</span>       a<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// binding a's parameter x to 5
+</span>       b<span style="color: #24292f;background-color: #f6f8fa">(</span>z<span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// binding b's parameter x to z
+</span>       <span style="color: #6e7781">// b(z, 3); -- illegal, cannot bind directionless data parameter
+</span>       <span style="color: #6e7781">// b(); -- illegal, x parameter must be bound
+</span>       <span style="color: #6e7781">// a(table2.apply().hit ? 5 : 3); -- illegal, cannot apply a table here
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_113">16.3.3.1. Type checking</h5>
+<div class="paragraph">
+<p>A table action property is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_ok/actions:
+  rule TableProperty_ok/actions:
+  TC TBLC_0 |- ACTIONS = `{tableActionList} : TBLC_1 (ACTIONS = `{tableActionIR*})
+ -- if tableAction* = $flatten_tableActionList(tableActionList)
+ -- TableActions_ok: TC TBLC_0 |- tableAction* : TBLC_1 tableActionIR*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
 </div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_ok">Typing <code>ACTIONS</code> <code>=</code> <code>{</code> <code>tableActionList</code> <code>}</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>tableAction<sup>*</sup></code> be <a href="#flatten_tableActionList">the list of table actions in <code>tableActionList</code></a>.</p>
+</li>
+<li>
+<p>Let the updated table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableActions_ok">typing <code>tableAction<sup>*</sup></code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>1</sub></code> and <code>ACTIONS</code> <code>=</code> <code>{</code> <code>tableActionIR<sup>*</sup></code> <code>}</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, a table action property is represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="tableActionReferenceIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableActionsPropertyIR
+   : ACTIONS = `{ tableActionListIR }
+   ;
+
+tableActionListIR = tableActionIR*
+
+tableActionIR
+   : annotationList tableActionReferenceIR # `( parameterListIR , parameterListIR ) ;
+   ;
+
+tableActionReferenceIR
+   : prefixedNameIR `( argumentListIR )
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Table actions are type checked with the following relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableActions_ok: typingContext tableContext |- tableAction* : tableContext tableActionListIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableActions_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableActions_ok">TableActions_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableAction<sup>*</sup></code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tableActionListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableActions_ok:
+  rule TableActions_ok/nil:
+  TC TBLC |- eps : TBLC eps
+  rule TableActions_ok/cons:
+  TC TBLC_0 |- (tableAction_h :: tableAction_t*) : TBLC_2 (tableActionIR_h :: tableActionIR_t*)
+ -- TableAction_ok: TC TBLC_0 |- tableAction_h : TBLC_1 tableActionIR_h
+ -- TableActions_ok: TC TBLC_1 |- tableAction_t* : TBLC_2 tableActionIR_t*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableActions_ok">Typing <code>tableAction<sup>*</sup></code>, under context <code>TC</code> and table context <code>tableContext</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>tableAction<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated table context <code>tableContext</code> and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>tableAction<sub>h</sub></code> <code>::</code> <code>tableAction<sub>t</sub><sup>*</sup></code> be <code>tableAction<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let the updated table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR<sub>h</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableAction_ok">typing <code>tableAction<sub>h</sub></code>, under context <code>TC</code> and table context <code>tableContext</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated table context <code>TBLC<sub>2</sub></code> and <code>tableActionIR<sub>t</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableActions_ok">typing <code>tableAction<sub>t</sub><sup>*</sup></code>, under context <code>TC</code> and table context <code>TBLC<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>2</sub></code> and <code>tableActionIR<sub>h</sub></code> <code>::</code> <code>tableActionIR<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The relation invokes the following relation for each action:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableAction_ok: typingContext tableContext |- tableAction : tableContext tableActionIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableAction_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableAction_ok">TableAction_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>tableAction</code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in the updated table context <code>tableContext</code> and <code>tableActionIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableAction_ok:
+  rule TableAction_ok/prefixedNonTypeName:
+  TC TBLC_0 |- annotationList prefixedNonTypeName ; : TBLC_1 tableActionIR
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if (_, ACTION _ `(parameterIR*)) = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+ -- Call_action_partial_ok: TC |- parameterIR* @ eps : parameterIR_data* , parameterIR_control* @ eps
+ -- if TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, eps)
+ -- if tableActionIR = annotationList (prefixedNameIR `(eps)) # `(parameterIR_data* , parameterIR_control*) ;
+  rule TableAction_ok/prefixedNonTypeName-argumentList:
+  TC TBLC_0 |- annotationList (prefixedNonTypeName `(argumentList)) ; : TBLC_1 tableActionIR
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if (_, ACTION _ `(parameterIR*)) = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+ -- Call_action_partial_ok: TC |- parameterIR* @ argumentIR* : parameterIR_data* , parameterIR_control* @ argumentIR_cast*
+ -- if TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
+ -- if tableActionIR = annotationList (prefixedNameIR `(argumentIR_cast*)) # `(parameterIR_data* , parameterIR_control*) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableAction_ok">Typing <code>annotationList</code> <code>tableActionReference</code> <code>;</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>prefixedNonTypeName</code> be <code>tableActionReference</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>_,</code> <code>callableTypeDefIR</code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_non_overloaded_t">the non-overloaded callable definition of <code>prefixedNameIR</code> from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeDefIR</code> has type <code>actionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>ACTION</code> <code>_</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>callableTypeDefIR</code>.</p>
+</li>
+<li>
+<p>Let parameters <code>parameterIR<sub>data</sub><sup>*</sup></code> for data-plane, <code>parameterIR<sub>control</sub><sup>*</sup></code> for control-plane, and casted <code>argumentIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_action_partial_ok">typing the partial action call on <code>parameterIR<sup>*</sup></code> with <code>·</code>, under context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>argumentIR<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_action_tbl"><code>TBLC<sub>0</sub></code> with match action <code>prefixedNameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> applied using <code>·</code> added</a>.</p>
+</li>
+<li>
+<p>Let <code>tableActionIR</code> be <code>annotationList</code> <code>prefixedNameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>prefixedNonTypeName</code> <code>(</code> <code>argumentList</code> <code>)</code> be <code>tableActionReference</code>.</p>
+</li>
+<li>
+<p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>_,</code> <code>callableTypeDefIR</code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_callableDef_non_overloaded_t">the non-overloaded callable definition of <code>prefixedNameIR</code> from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeDefIR</code> has type <code>actionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>ACTION</code> <code>_</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>callableTypeDefIR</code>.</p>
+</li>
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>argumentIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>LOCAL</code> and context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let parameters <code>parameterIR<sub>data</sub><sup>*</sup></code> for data-plane, <code>parameterIR<sub>control</sub><sup>*</sup></code> for control-plane, and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_action_partial_ok">typing the partial action call on <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code>, under context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_action_tbl"><code>TBLC<sub>0</sub></code> with match action <code>prefixedNameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> applied using <code>argumentIR<sub>cast</sub><sup>*</sup></code> added</a>.</p>
+</li>
+<li>
+<p>Let <code>tableActionIR</code> be <code>annotationList</code> <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>To check that each action conforms to the calling convention, the following
+relation is used:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Call_action_partial_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_action_partial_ok">Call_action_partial_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing the partial action call on <code>parameterIR<sup>*</sup></code> with <code>argumentListIR</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in parameters <code>parameterIR<sup>*</sup></code> for data-plane, <code>parameterIR<sup>*</sup></code> for control-plane, and casted <code>argumentListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_action_partial_ok:
+  rule Call_action_partial_ok:
+  TC |- parameterIR* @ argumentIR* : parameterIR_data* , parameterIR_control* @ argumentIR_cast*
+ -- if (parameterIR_data*, parameterIR_control*) = $split_dataplane_parameters(parameterIR*)
+ -- if |parameterIR_data*| = |argumentIR*|
+ -- if typedExpressionIR_sub* = $subexpressions_of_argumentListIR(argumentIR*)
+ -- if $forall_((~$is_table_application(typedExpressionIR_sub))*)
+ -- Call_convention_ok: LOCAL TC ACTION |- parameterIR_data* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_action_partial_ok">Typing the partial action call on <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code>, under context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> be <a href="#split_dataplane_parameters"><code>parameterIR<sup>*</sup></code> split into data-plane and control-plane parameters</a>.</p>
+</li>
+<li>
+<p>Check that the length of <code>parameterIR<sub>data</sub><sup>*</sup></code> is equal to the length of <code>argumentIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>sub</sub><sup>*</sup></code> be <a href="#subexpressions_of_argumentListIR">the sub-expressions of <code>argumentIR<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#forall_">all <code><sub>$is_table_application(typedExpressionIR</sub>sub~)<sup>*</sup></code> are true</a>.</p>
+</li>
+<li>
+<p>Let the casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking the calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>data</sub><sup>*</sup></code>, under cursor <code>LOCAL</code>, context <code>TC</code>, and action context <code>ACTION</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in parameters <code>parameterIR<sub>data</sub><sup>*</sup></code> for data-plane, <code>parameterIR<sub>control</sub><sup>*</sup></code> for control-plane, and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_76">16.3.3.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_inst/tableActionsPropertyIR:
+  rule TableProperty_inst/tableActionsPropertyIR:
+  IC STO |- tableActionsPropertyIR : STO tableActionsPropertyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_inst">Compile-time evaluation of <code>tableActionsPropertyIR</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO</code> and <code>tableActionsPropertyIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="sect3">
-<h4 id="sec-match-action-table-entry">16.3.4. Table entries</h4>
+<h4 id="sec-table-default-action">16.3.4. Table default actions</h4>
+<div class="paragraph">
+<p>The default action for a table is an action that is invoked automatically by
+the match-action unit whenever the lookup table does not find a match for the
+supplied key.</p>
+</div>
+<div class="paragraph">
+<p>If present, the <code>default_action</code> property <em>must</em> appear after the <code>action</code>
+property. It may be declared as <code>const</code>, indicating that it cannot be changed
+dynamically by the control-plane. The <code>default action</code> <em>must</em> be one of the
+actions that appear in the actions list. In particular, the expressions passed
+as <code>in</code>, <code>out</code>, or <code>inout</code> parameters must be syntactically identical to the
+expressions used in one of the elements of the <code>actions</code> list.</p>
+</div>
+<div class="paragraph">
+<p>For example, in the above <code>table</code> we could set the default action as follows
+(marking it also as constant):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">const</span> <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> Rewrite_smac<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">48w0xAA_BB_CC_DD_EE_FF</span><span style="color: #24292f;background-color: #f6f8fa">);</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the specified default action must supply arguments for the
+control-plane-bound parameters (i.e., the directionless parameters), since the
+action is synthesized at compilation time. The expressions supplied as
+arguments for parameters with a direction (<code>in</code>, <code>inout</code>, or <code>out</code>) are
+evaluated when the action is invoked while the expressions supplied as
+arguments for directionless parameters are evaluated at compile time.</p>
+</div>
+<div class="paragraph">
+<p>Continuing the example from the previous section, the following are several
+legal and illegal specifications of default actions for the <code>table t</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">  <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> a<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// OK - no control-plane parameters
+</span>  <span style="color: #6e7781">// default_action = a(z); -- illegal, a's x parameter is already bound to 5
+</span>  <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> b<span style="color: #24292f;background-color: #f6f8fa">(</span>z<span style="color: #24292f;background-color: #f6f8fa">,</span><span style="color: #0550ae">8w8</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// OK - bind b's data parameter to 8w8
+</span>  <span style="color: #6e7781">// default_action = b(z); -- illegal, b's data parameter is not bound
+</span>  <span style="color: #6e7781">// default_action = b(x, 3); -- illegal: x parameter of b bound to x instead of z</span></code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_114">16.3.4.1. Type checking</h5>
+<div class="paragraph">
+<p>A table default action property is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_ok/default-action:
+  rule TableProperty_ok/default-action:
+  TC TBLC |- annotationList constOpt tableCustomName initializer ; : TBLC tablePropertyIR
+ -- if "default_action" = $tableCustomName(tableCustomName)
+ -- TableDefaultAction_ok: TC TBLC |- initializer : tableActionReferenceIR
+ -- if constOptIR = $flatten_constOpt(constOpt)
+ -- if tablePropertyIR = annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_ok">Typing <code>annotationList</code> <code>constOpt</code> <code>tableCustomName</code> <code>initializer</code> <code>;</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <code>"default_action"</code> is equal to <a href="#tableCustomName">the name of <code>tableCustomName</code></a>.</p>
+</li>
+<li>
+<p>Let <code>tableActionReferenceIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableDefaultAction_ok">typing <code>initializer</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>constOptIR</code> be <a href="#flatten_constOpt">the optional const qualifier in <code>constOpt</code></a>.</p>
+</li>
+<li>
+<p>Let <code>tablePropertyIR</code> be <code>annotationList</code> <code>constOptIR</code> <code>DEFAULT_ACTION</code> <code>=</code> <code>tableActionReferenceIR</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in the updated table context <code>TBLC<sub>0</sub></code> and <code>tablePropertyIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, a table default action property is represented in P4<sub>IR</sub>
+as:</p>
+</div>
+<div id="tableDefaultActionPropertyIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableDefaultActionPropertyIR
+   : annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;
+   ;
+
+tableActionReferenceIR
+   : prefixedNameIR `( argumentListIR )
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Table default actions are type checked with the following relation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation TableDefaultAction_ok: typingContext tableContext |- initializer : tableActionReferenceIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="TableDefaultAction_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableDefaultAction_ok">TableDefaultAction_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing <code>initializer</code>, under context <code>typingContext</code> and table context <code>tableContext</code>:</p>
+</li>
+<li>
+<p>Results in <code>tableActionReferenceIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableDefaultAction_ok:
+  rule TableDefaultAction_ok/prefixedNonTypeName:
+  TC TBLC |- = prefixedNonTypeName : prefixedNameIR `(eps)
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if (eps, eps) = $find_action(TBLC, prefixedNameIR)
+  rule TableDefaultAction_ok/prefixedNonTypeName-argumentList:
+  TC TBLC |- = (prefixedNonTypeName `(argumentList)) : prefixedNameIR `(argumentIR_cast*)
+ -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
+ -- if (parameterIR_action*, argumentIR_action*) = $find_action(TBLC, prefixedNameIR)
+ -- if argument* = $flatten_argumentList(argumentList)
+ -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+ -- Call_action_default_ok: TC |- parameterIR_action* @ argumentIR* : parameterIR_action_data* , parameterIR_action_control* @ argumentIR_cast*
+ -- if argumentIR_action_data* = argumentIR_action*[0 : |parameterIR_action_data*|]
+ -- if argumentIR_cast_data* = argumentIR_cast*[0 : |parameterIR_action_data*|]
+ -- (if (argumentIR_action_data = argumentIR_cast_data))*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableDefaultAction_ok">Typing <code>=</code> <code>expression</code>, under context <code>TC</code> and table context <code>TBLC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>prefixedNonTypeName</code> be <code>expression</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
+</li>
+<li>
+<p>Check that ( <code>·</code>, <code>·</code> ) is equal to <code><a href="#find_action">$find_action(TBLC,</code> <code>prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Result in <code>prefixedNameIR</code> <code>(</code> <code>·</code> <code>)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>callExpression</code> be <code>expression</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>callExpression</code> matches pattern <code>%</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+</li>
+<li>
+<p>Let <code>callTarget</code> <code>(</code> <code>argumentList</code> <code>)</code> be <code>callExpression</code>.</p>
+</li>
+<li>
+<p>Check that <code>callTarget</code> has type <code>prefixedNonTypeName</code>.</p>
+</li>
+<li>
+<p>Let <code>prefixedNonTypeName</code> be <code>callTarget</code>.</p>
+</li>
+<li>
+<p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>parameterIR<sub>action</sub><sup>*</sup>,</code> <code>argumentIR<sub>action</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#find_action">$find_action(TBLC,</code> <code>prefixedNameIR)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
+</li>
+<li>
+<p>Let <code>argumentIR<sup>*</sup></code> be the list of <code>argumentIR</code>, obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>argumentIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Argument_ok">typing <code>argument</code>, under cursor <code>LOCAL</code> and context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let parameters <code>parameterIR<sub>action_data</sub><sup>*</sup></code> for data-plane, <code>parameterIR<sub>action_control</sub><sup>*</sup></code> for control-plane,and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_action_default_ok">typing the action call on <code>parameterIR<sub>action</sub><sup>*</sup></code> with <code>argumentIR<sup>*</sup></code>, under context <code>TC</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>argumentIR<sub>action_data</sub><sup>*</sup></code> be <code>argumentIR<sub>action</sub><sup>*</sup>[0</code> <code>:</code> <code>the</code> <code>length</code> <code>of</code> <code>parameterIR<sub>action_data</sub><sup>*</sup>]</code>.</p>
+</li>
+<li>
+<p>Let <code>argumentIR<sub>cast_data</sub><sup>*</sup></code> be <code>argumentIR<sub>cast</sub><sup>*</sup>[0</code> <code>:</code> <code>the</code> <code>length</code> <code>of</code> <code>parameterIR<sub>action_data</sub><sup>*</sup>]</code>.</p>
+</li>
+<li>
+<p>Check that <code>argumentIR<sub>action_data</sub></code> is equal to <code>argumentIR<sub>cast_data</sub></code>, for all <code>argumentIR<sub>action_data</sub></code> in <code>argumentIR<sub>action_data</sub><sup>*</sup></code> and <code>argumentIR<sub>cast_data</sub></code> in <code>argumentIR<sub>cast_data</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Result in <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>To check that a default action conforms to the calling convention, the
+following relation is used:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Call_action_default_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_action_default_ok">Call_action_default_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing the action call on <code>parameterIR<sup>*</sup></code> with <code>argumentListIR</code>, under context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Results in parameters <code>parameterIR<sup>*</sup></code> for data-plane, <code>parameterIR<sup>*</sup></code> for control-plane,and casted <code>argumentListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_action_partial_ok:
+  rule Call_action_partial_ok:
+  TC |- parameterIR* @ argumentIR* : parameterIR_data* , parameterIR_control* @ argumentIR_cast*
+ -- if (parameterIR_data*, parameterIR_control*) = $split_dataplane_parameters(parameterIR*)
+ -- if |parameterIR_data*| = |argumentIR*|
+ -- if typedExpressionIR_sub* = $subexpressions_of_argumentListIR(argumentIR*)
+ -- if $forall_((~$is_table_application(typedExpressionIR_sub))*)
+ -- Call_convention_ok: LOCAL TC ACTION |- parameterIR_data* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_action_partial_ok">Typing the partial action call on <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code>, under context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> be <a href="#split_dataplane_parameters"><code>parameterIR<sup>*</sup></code> split into data-plane and control-plane parameters</a>.</p>
+</li>
+<li>
+<p>Check that the length of <code>parameterIR<sub>data</sub><sup>*</sup></code> is equal to the length of <code>argumentIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typedExpressionIR<sub>sub</sub><sup>*</sup></code> be <a href="#subexpressions_of_argumentListIR">the sub-expressions of <code>argumentIR<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#forall_">all <code><sub>$is_table_application(typedExpressionIR</sub>sub~)<sup>*</sup></code> are true</a>.</p>
+</li>
+<li>
+<p>Let the casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking the calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>data</sub><sup>*</sup></code>, under cursor <code>LOCAL</code>, context <code>TC</code>, and action context <code>ACTION</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in parameters <code>parameterIR<sub>data</sub><sup>*</sup></code> for data-plane, <code>parameterIR<sub>control</sub><sup>*</sup></code> for control-plane, and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_77">16.3.4.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_inst/tableDefaultActionPropertyIR:
+  rule TableProperty_inst/tableDefaultActionPropertyIR:
+  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_inst">Compile-time evaluation of <code>tableDefaultActionPropertyIR</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Result in</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the updated store <code>STO</code> and <code>tableDefaultActionPropertyIR</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-table-entries">16.3.5. Table entries</h4>
 <div id="tableEntryIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpression
@@ -49732,7 +53955,11 @@ tableEntryIR
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-match-action-table-custom">16.3.5. Table custom properties</h4>
+<h4 id="sec-match-action-table-custom">16.3.6. Table custom properties</h4>
+
+</div>
+<div class="sect3">
+<h4 id="sec-match-action-table-invocation">16.3.7. Match-action table invocation</h4>
 
 </div>
 </div>

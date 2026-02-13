@@ -4411,6 +4411,101 @@ xref:find_non_overloadeds[$find_non_overloadeds<V>(set<pair<callableId, V>>, nam
   ... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
   ... Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
 
+xref:subexpressions_of_typedExpressionIR[The sub-expressions of ``typedExpressionIR``]
+
+
+. Let ``expressionIR`` be the expression of ``typedExpressionIR``.
+. Let ``typedExpressionListIR`` be xref:subexpressions_of_expressionIR[the sub-expressions of ``expressionIR``].
+. Return ``typedExpressionIR`` ``{two-colons}`` ``typedExpressionListIR``.
+
+xref:subexpressions_of_typedExpressionListIR[The sub-expressions of ``typedExpressionIR^{asterisk}^``]
+
+
+. Let ``typedExpressionListIR^{asterisk}^`` be the list of ``typedExpressionListIR``, obtained by repeating:
++
+--
+ ** Let ``typedExpressionListIR`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+--
++
+for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
+. Return ``xref:concat_[$concat_<typedExpressionIR>(typedExpressionListIR^{asterisk}^)]``.
+
+xref:subexpressions_of_expressionIR[The sub-expressions of ``expressionIR``]
+
+
+. If let ``unop`` ``typedExpressionIR`` be ``expressionIR``:
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Else if let ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR~r~`` be ``expressionIR``:
+ .. Let ``typedExpressionListIR'`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~l~``].
+ .. Let ``typedExpressionListIR''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~r~``].
+ .. Return ``typedExpressionListIR'`` concatenated with ``typedExpressionListIR''``.
+. Else if let ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionIR~then~`` ``+:+`` ``typedExpressionIR~else~`` be ``expressionIR``:
+ .. Let ``typedExpressionListIR'`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~cond~``].
+ .. Let ``typedExpressionListIR''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~then~``].
+ .. Let ``typedExpressionListIR'''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~else~``].
+ .. Return ``typedExpressionListIR'`` concatenated with ``typedExpressionListIR''`` concatenated with ``typedExpressionListIR'''``.
+. Else if let ``+(+`` ``typeIR`` ``+)+`` ``typedExpressionIR`` be ``expressionIR``:
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Else if let ``sequenceExpressionIR`` be ``expressionIR``:
+ .. If let ``+SEQ+`` ``+{+`` ``typedExpressionListIR`` ``+}+`` be ``sequenceExpressionIR``:
+  ... Return xref:subexpressions_of_typedExpressionListIR[the sub-expressions of ``typedExpressionListIR``].
+ .. Else:
+  ... Let ``+SEQ+`` ``+{+`` ``typedExpressionListIR`` ``+,+`` ``+...+`` ``+}+`` be ``sequenceExpressionIR``.
+  ... Return xref:subexpressions_of_typedExpressionListIR[the sub-expressions of ``typedExpressionListIR``].
+. Else if let ``recordExpressionIR`` be ``expressionIR``:
+ .. If let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+}+`` be ``recordExpressionIR``:
+  ... Return xref:subexpressions_of_typedExpressionListIR[the sub-expressions of ``typedExpressionIR^{asterisk}^``].
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordExpressionIR``.
+  ... Return xref:subexpressions_of_typedExpressionListIR[the sub-expressions of ``typedExpressionIR^{asterisk}^``].
+. Else if let ``memberAccessBaseIR`` ``+.+`` ``nameIR`` be ``expressionIR``:
+ .. Check that ``memberAccessBaseIR`` has type ``typedExpressionIR``.
+ .. Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~index~`` ``+]+`` be ``expressionIR``:
+ .. Let ``typedExpressionListIR'`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~base~``].
+ .. Let ``typedExpressionListIR''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~index~``].
+ .. Return ``typedExpressionListIR'`` concatenated with ``typedExpressionListIR''``.
+. Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` be ``expressionIR``:
+ .. Let ``typedExpressionListIR'`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~base~``].
+ .. Let ``typedExpressionListIR''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~hi~``].
+ .. Let ``typedExpressionListIR'''`` be xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR~lo~``].
+ .. Return ``typedExpressionListIR'`` concatenated with ``typedExpressionListIR''`` concatenated with ``typedExpressionListIR'''``.
+. Else if let ``callExpressionIR`` be ``expressionIR``:
+ .. If let ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``:
+  ... Return xref:subexpressions_of_argumentListIR[the sub-expressions of ``argumentIR^{asterisk}^``].
+ .. Else:
+  ... Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``.
+  ... Return xref:subexpressions_of_argumentListIR[the sub-expressions of ``argumentIR^{asterisk}^``].
+. Else:
+ .. Let ``+(+`` ``typedExpressionIR`` ``+)+`` be ``expressionIR``.
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Otherwise:
+ .. Return ``·``.
+
+xref:subexpressions_of_argumentIR[The sub-expressions of ``argumentIR``]
+
+
+. If let ``typedExpressionIR`` be ``argumentIR``:
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Else:
+ .. Let ``nameIR`` ``+=+`` ``typedExpressionIR`` be ``argumentIR``.
+ .. Return xref:subexpressions_of_typedExpressionIR[the sub-expressions of ``typedExpressionIR``].
+. Otherwise:
+ .. Return ``·``.
+
+xref:subexpressions_of_argumentListIR[The sub-expressions of ``argumentIR^{asterisk}^``]
+
+
+. Let ``typedExpressionListIR^{asterisk}^`` be the list of ``typedExpressionListIR``, obtained by repeating:
++
+--
+ ** Let ``typedExpressionListIR`` be xref:subexpressions_of_argumentIR[the sub-expressions of ``argumentIR``].
+--
++
+for each ``argumentIR`` in ``argumentIR^{asterisk}^``
+. Return ``xref:concat_[$concat_<typedExpressionIR>(typedExpressionListIR^{asterisk}^)]``.
+
 xref:join_flow[The merged control flow of ``flow`` and ``flow'``]
 
 
@@ -4802,16 +4897,16 @@ xref:empty_tableContext[$empty_tableContext]
 . Let ``matchEntry`` be +{++SIZE+ ``0``, +CONST+ ``true``+}+.
 . Return +{++KEYS+ ``·``, +ACTIONS+ ``·``, +PRIORITIES+ ``matchPriority``, +ENTRIES+ ``matchEntry``, +MODE+ ``+NOPRI+``+}+.
 
-xref:add_key[$add_key(TBLC, id, typeIR)]
+xref:add_key_tbl[``TBLC`` with match key ``id`` of type ``typeIR`` added]
 
 
-. Let ``matchKey`` be ( ``typeIR``, ``id`` ).
+. Let ``matchKey`` be ``typeIR`` ``+:+`` ``id``.
 . Return ``TBLC`` with ``+KEYS+`` set to ``TBLC.+KEYS+`` ``{pp}`` ``matchKey``.
 
-xref:add_action[$add_action(TBLC, prefixedNameIR, parameterIR^{asterisk}^, argumentListIR)]
+xref:add_action_tbl[``TBLC`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``argumentListIR`` added]
 
 
-. Let ``matchAction`` be ( ``prefixedNameIR``, ``parameterIR^{asterisk}^``, ``argumentListIR`` ).
+. Let ``matchAction`` be ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+@+`` ``argumentListIR`` ``+)+``.
 . Return ``TBLC`` with ``+ACTIONS+`` set to ``TBLC.+ACTIONS+`` ``{pp}`` ``matchAction``.
 
 xref:add_table_priority[$add_table_priority(TBLC, n)]
@@ -4819,7 +4914,7 @@ xref:add_table_priority[$add_table_priority(TBLC, n)]
 
 . Return ``TBLC`` with ``+PRIORITIES+.+VALUES+`` set to ``TBLC.+PRIORITIES+.+VALUES+`` ``{pp}`` ``n``.
 
-xref:update_mode[$update_mode(TBLC, text, typeIR)]
+xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``text`` of type ``typeIR``]
 
 
 . If ``text`` is equal to ``"lpm"``:
@@ -4833,11 +4928,12 @@ xref:update_mode[$update_mode(TBLC, text, typeIR)]
   ... Check that ``TBLC.+MODE+`` is ``NOPRI``.
   ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
  .. Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR'`` be ``typeIR``:
-  ... Return ``xref:update_mode[$update_mode(TBLC,`` ``"lpm",`` ``typeIR')]``.
+  ... Return xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``"lpm"`` of type ``typeIR'``].
  .. Else:
   ... Let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``.
-  ... Return ``xref:update_mode[$update_mode(TBLC,`` ``"lpm",`` ``typeIR')]``.
- .. If ``TBLC.+MODE+`` is ``PRI``:
+  ... Return xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``"lpm"`` of type ``typeIR'``].
+ .. If ``typeIR`` does not have type ``aliasTypeIR``:
+  ... Check that ``TBLC.+MODE+`` is ``PRI``.
   ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
 . Else if ``text`` is equal to ``"range"``:
  .. If ``TBLC.+MODE+`` is ``NOPRI``:
@@ -4872,7 +4968,7 @@ xref:find_action'[$find_action'(matchAction^{asterisk}^, prefixedNameIR)]
  .. Return ``·``.
 . Else:
  .. Let ``matchAction~h~`` ``{two-colons}`` ``matchAction~t~^{asterisk}^`` be ``matchAction^{asterisk}^``.
- .. Let ``(`` ``prefixedNameIR',`` ``parameterIR^{asterisk}^,`` ``argumentListIR`` ``)`` be ``matchAction~h~``.
+ .. Let ``prefixedNameIR'`` ``+(+`` ``parameterIR^{asterisk}^`` ``+@+`` ``argumentListIR`` ``+)+`` be ``matchAction~h~``.
  .. If ``prefixedNameIR'`` is equal to ``prefixedNameIR``:
   ... Return ( ``parameterIR^{asterisk}^``, ``argumentListIR`` ).
  .. Else:
@@ -6236,18 +6332,17 @@ xref:TypeArguments_ok[TypeArguments_ok]:
 * Typing ``typeArgument^{asterisk}^``, under cursor ``cursor`` and context ``typingContext``:
 * Results in ``typeArgumentListIR`` and a set of fresh type variables ``typeId^{asterisk}^``.
 
-xref:TypeArguments_ok[Typing ``·``, under cursor ``p`` and context ``TC``]:
+xref:TypeArguments_ok[Typing ``typeArgument^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
-. Result in ``·`` and a set of fresh type variables ``·``.
-
-xref:TypeArguments_ok[Typing ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
-
-. Let ``typeArgumentIR~h~`` and a set of fresh type variables ``typeId~impl_h~^{asterisk}^`` be
+. If ``typeArgument^{asterisk}^`` is equal to ``·``:
+ .. Result in ``·`` and a set of fresh type variables ``·``.
+. If let ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^`` be ``typeArgument^{asterisk}^``:
+ .. Let ``typeArgumentIR~h~`` and a set of fresh type variables ``typeId~impl_h~^{asterisk}^`` be
 * the result of xref:TypeArgument_ok[typing ``typeArgument~h~``, under cursor ``p`` and context ``TC``].
-. Let ``typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl_t~^{asterisk}^`` be
+ .. Let ``typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl_t~^{asterisk}^`` be
 * the result of xref:TypeArguments_ok[typing ``typeArgument~t~^{asterisk}^``, under cursor ``p`` and context ``TC``].
-. Let ``typeId~impl~^{asterisk}^`` be ``typeId~impl_h~^{asterisk}^`` concatenated with ``typeId~impl_t~^{asterisk}^``.
-. Result in ``typeArgumentIR~h~`` ``{two-colons}`` ``typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
+ .. Let ``typeId~impl~^{asterisk}^`` be ``typeId~impl_h~^{asterisk}^`` concatenated with ``typeId~impl_t~^{asterisk}^``.
+ .. Result in ``typeArgumentIR~h~`` ``{two-colons}`` ``typeArgumentIR~t~^{asterisk}^`` and a set of fresh type variables ``typeId~impl~^{asterisk}^``.
 
 xref:TypeArgumentList_ok[TypeArgumentList_ok]:
 
@@ -8431,7 +8526,7 @@ xref:ParserLocalDeclList_ok[Typing ``parserLocalDeclarationList``, under context
 xref:TableKey_ok[TableKey_ok]:
 
 * Typing ``tableKey``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table key ``tableKeyIR``.
+* Results in the updated table context ``tableContext`` and ``tableKeyIR``.
 
 xref:TableKey_ok[Typing ``expression`` ``+:+`` ``name~matchkind~`` ``annotationList`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
@@ -8443,145 +8538,150 @@ xref:TableKey_ok[Typing ``expression`` ``+:+`` ``name~matchkind~`` ``annotationL
 . Check that xref:Type_wf[``+SET+`` ``+<+`` ``typeIR~reduced~`` ``+>+`` is a well-formed type, with bound type variables ``bound``].
 . Let ``nameIR~matchkind~`` be xref:name[the name of ``name~matchkind~``].
 . Check that ``+MATCH_KIND+`` ``+.+`` ``nameIR~matchkind~`` is equal to xref:find_var_value_t[the value of variable ``nameIR~matchkind~`` from the ``+LOCAL+`` layer of ``TC``].
-. Check that ``xref:compat_table_key[$compat_table_key(nameIR~matchkind~,`` ``typeIR~reduced~)]``.
-. Let ``TBLC~1~`` be ``xref:update_mode[$update_mode(TBLC~0~,`` ``nameIR~matchkind~,`` ``typeIR~reduced~)]``.
-. Let ``TBLC~2~`` be ``xref:add_key[$add_key(TBLC~1~,`` ``nameIR~matchkind~,`` ``typeIR~reduced~)]``.
+. Check that xref:compat_table_key[``typeIR~reduced~`` can be used with match kind ``nameIR~matchkind~``].
+. Let ``TBLC~1~`` be xref:update_mode_tbl[``TBLC~0~`` with match mode updated based on key ``nameIR~matchkind~`` of type ``typeIR~reduced~``].
+. Let ``TBLC~2~`` be xref:add_key_tbl[``TBLC~1~`` with match key ``nameIR~matchkind~`` of type ``typeIR~reduced~`` added].
 . Let ``tableKeyIR`` be ``typedExpressionIR~reduced~`` ``+:+`` ``nameIR~matchkind~`` ``annotationList`` ``+;+``.
-. Result in the updated table context ``TBLC~2~`` and the typed table key ``tableKeyIR``.
+. Result in the updated table context ``TBLC~2~`` and ``tableKeyIR``.
 
 xref:TableKeys_ok[TableKeys_ok]:
 
 * Typing ``tableKey^{asterisk}^``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table keys ``tableKeyListIR``.
+* Results in the updated table context ``tableContext`` and ``tableKeyListIR``.
 
-xref:TableKeys_ok[Typing ``·``, under context ``TC`` and table context ``TBLC``]:
+xref:TableKeys_ok[Typing ``tableKey^{asterisk}^``, under context ``TC`` and table context ``tableContext``]:
 
-. Result in the updated table context ``TBLC`` and the typed table keys ``·``.
-
-xref:TableKeys_ok[Typing ``tableKey~h~`` ``{two-colons}`` ``tableKey~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
-
-. Let the updated table context ``TBLC~1~`` and the typed table key ``tableKeyIR~h~`` be
-* the result of xref:TableKey_ok[typing ``tableKey~h~``, under context ``TC`` and table context ``TBLC``].
-. Let the updated table context ``TBLC~2~`` and the typed table keys ``tableKeyIR~t~^{asterisk}^`` be
+. If ``tableKey^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated table context ``tableContext`` and ``·``.
+. If let ``tableKey~h~`` ``{two-colons}`` ``tableKey~t~^{asterisk}^`` be ``tableKey^{asterisk}^``:
+ .. Let the updated table context ``TBLC~1~`` and ``tableKeyIR~h~`` be
+* the result of xref:TableKey_ok[typing ``tableKey~h~``, under context ``TC`` and table context ``tableContext``].
+ .. Let the updated table context ``TBLC~2~`` and ``tableKeyIR~t~^{asterisk}^`` be
 * the result of xref:TableKeys_ok[typing ``tableKey~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC~1~``].
-. Result in the updated table context ``TBLC~2~`` and the typed table keys ``tableKeyIR~h~`` ``{two-colons}`` ``tableKeyIR~t~^{asterisk}^``.
+ .. Result in the updated table context ``TBLC~2~`` and ``tableKeyIR~h~`` ``{two-colons}`` ``tableKeyIR~t~^{asterisk}^``.
 
 xref:Call_action_partial_ok[Call_action_partial_ok]:
 
-* Typing ``argumentListIR``, under context ``typingContext``:
-* Results in the typed argument list ``parameterIR^{asterisk}^``.
+* Typing the partial action call on ``parameterIR^{asterisk}^`` with ``argumentListIR``, under context ``typingContext``:
+* Results in parameters ``parameterIR^{asterisk}^`` for data-plane, ``parameterIR^{asterisk}^`` for control-plane, and casted ``argumentListIR``.
 
-xref:Call_action_partial_ok[Typing ``argumentIR^{asterisk}^``, under context ``TC``]:
+xref:Call_action_partial_ok[Typing the partial action call on ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``]:
 
-. Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be ``xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR^{asterisk}^)]``.
+. Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be xref:split_dataplane_parameters[``parameterIR^{asterisk}^`` split into data-plane and control-plane parameters].
 . Check that the length of ``parameterIR~data~^{asterisk}^`` is equal to the length of ``argumentIR^{asterisk}^``.
-. Check that xref:forall_[all ``~$has_table_apply_arg(argumentIR)^{asterisk}^`` are true].
-. Let xref:Call_convention_ok[+LOCAL+ TC +ACTION+ +|-+ parameterIR~data~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
-. Result in the typed argument list ``parameterIR~data~^{asterisk}^``.
+. Let ``typedExpressionIR~sub~^{asterisk}^`` be xref:subexpressions_of_argumentListIR[the sub-expressions of ``argumentIR^{asterisk}^``].
+. Check that xref:forall_[all ``~$is_table_application(typedExpressionIR~sub~)^{asterisk}^`` are true].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~data~^{asterisk}^``, under cursor ``+LOCAL+``, context ``TC``, and action context ``+ACTION+``].
+. Result in parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:TableAction_ok[TableAction_ok]:
 
 * Typing ``tableAction``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table action ``tableActionIR``.
+* Results in the updated table context ``tableContext`` and ``tableActionIR``.
 
-xref:TableAction_ok[Typing ``annotationList`` ``prefixedNonTypeName`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
+xref:TableAction_ok[Typing ``annotationList`` ``tableActionReference`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
-. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
-. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
-. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
-. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
-. Let the typed argument list ``parameterIR~data~^{asterisk}^`` be
-* the result of xref:Call_action_partial_ok[typing ``·``, under context ``TC``].
-. Check that ``argumentIR^{asterisk}^`` is an empty list.
-. Let ``TBLC~1~`` be ``xref:add_action[$add_action(TBLC~0~,`` ``prefixedNameIR,`` ``parameterIR^{asterisk}^,`` ``·)]``.
-. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
-. Result in the updated table context ``TBLC~1~`` and the typed table action ``tableActionIR``.
-
-xref:TableAction_ok[Typing ``annotationList`` ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
-
-. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
-. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
-. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
-. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
-. Let ``argument^{asterisk}^`` be xref:flatten_argumentList[the list of arguments in ``argumentList``].
-. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
+. If let ``prefixedNonTypeName`` be ``tableActionReference``:
+ .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
+ .. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
+ .. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
+ .. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR^{asterisk}^`` be
+* the result of xref:Call_action_partial_ok[typing the partial action call on ``parameterIR^{asterisk}^`` with ``·``, under context ``TC``].
+ .. Check that ``argumentIR^{asterisk}^`` is an empty list.
+ .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``·`` added].
+ .. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Result in the updated table context ``TBLC~1~`` and ``tableActionIR``.
+. Else:
+ .. Let ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+`` be ``tableActionReference``.
+ .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
+ .. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
+ .. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
+ .. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let ``argument^{asterisk}^`` be xref:flatten_argumentList[the list of arguments in ``argumentList``].
+ .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
 +
 --
- ** Let ``argumentIR`` be
+  *** Let ``argumentIR`` be
 * the result of xref:Argument_ok[typing ``argument``, under cursor ``+LOCAL+`` and context ``TC``].
 --
 +
 for each ``argument`` in ``argument^{asterisk}^``
-. Let the typed argument list ``parameterIR~data~^{asterisk}^`` be
-* the result of xref:Call_action_partial_ok[typing ``argumentIR^{asterisk}^``, under context ``TC``].
-. Let ``TBLC~1~`` be ``xref:add_action[$add_action(TBLC~0~,`` ``prefixedNameIR,`` ``parameterIR^{asterisk}^,`` ``argumentIR~cast~^{asterisk}^)]``.
-. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
-. Result in the updated table context ``TBLC~1~`` and the typed table action ``tableActionIR``.
+ .. Let parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_action_partial_ok[typing the partial action call on ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
+ .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``argumentIR~cast~^{asterisk}^`` added].
+ .. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Result in the updated table context ``TBLC~1~`` and ``tableActionIR``.
 
 xref:TableActions_ok[TableActions_ok]:
 
 * Typing ``tableAction^{asterisk}^``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table actions ``tableActionListIR``.
+* Results in the updated table context ``tableContext`` and ``tableActionListIR``.
 
-xref:TableActions_ok[Typing ``·``, under context ``TC`` and table context ``TBLC``]:
+xref:TableActions_ok[Typing ``tableAction^{asterisk}^``, under context ``TC`` and table context ``tableContext``]:
 
-. Result in the updated table context ``TBLC`` and the typed table actions ``·``.
-
-xref:TableActions_ok[Typing ``tableAction~h~`` ``{two-colons}`` ``tableAction~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
-
-. Let the updated table context ``TBLC~1~`` and the typed table action ``tableActionIR~h~`` be
-* the result of xref:TableAction_ok[typing ``tableAction~h~``, under context ``TC`` and table context ``TBLC``].
-. Let the updated table context ``TBLC~2~`` and the typed table actions ``tableActionIR~t~^{asterisk}^`` be
+. If ``tableAction^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated table context ``tableContext`` and ``·``.
+. If let ``tableAction~h~`` ``{two-colons}`` ``tableAction~t~^{asterisk}^`` be ``tableAction^{asterisk}^``:
+ .. Let the updated table context ``TBLC~1~`` and ``tableActionIR~h~`` be
+* the result of xref:TableAction_ok[typing ``tableAction~h~``, under context ``TC`` and table context ``tableContext``].
+ .. Let the updated table context ``TBLC~2~`` and ``tableActionIR~t~^{asterisk}^`` be
 * the result of xref:TableActions_ok[typing ``tableAction~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC~1~``].
-. Result in the updated table context ``TBLC~2~`` and the typed table actions ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^``.
+ .. Result in the updated table context ``TBLC~2~`` and ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^``.
 
 xref:Call_action_default_ok[Call_action_default_ok]:
 
-* Typing ``argumentListIR``, under context ``typingContext``:
-* Results in the typed argument list ``parameterIR^{asterisk}^``.
+* Typing the action call on ``parameterIR^{asterisk}^`` with ``argumentListIR``, under context ``typingContext``:
+* Results in parameters ``parameterIR^{asterisk}^`` for data-plane, ``parameterIR^{asterisk}^`` for control-plane,and casted ``argumentListIR``.
 
-xref:Call_action_default_ok[Typing ``argumentIR^{asterisk}^``, under context ``TC``]:
+xref:Call_action_default_ok[Typing the action call on ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``]:
 
-. Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be ``xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR^{asterisk}^)]``.
-. Check that xref:forall_[all ``~$has_table_apply_arg(argumentIR)^{asterisk}^`` are true].
-. Let xref:Call_convention_ok[+LOCAL+ TC +ACTION+ +|-+ parameterIR^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
-. Result in the typed argument list ``parameterIR~data~^{asterisk}^``.
+. Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be xref:split_dataplane_parameters[``parameterIR^{asterisk}^`` split into data-plane and control-plane parameters].
+. Let ``typedExpressionIR~sub~^{asterisk}^`` be xref:subexpressions_of_argumentListIR[the sub-expressions of ``argumentIR^{asterisk}^``].
+. Check that xref:forall_[all ``~$is_table_application(typedExpressionIR~sub~)^{asterisk}^`` are true].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR^{asterisk}^``, under cursor ``+LOCAL+``, context ``TC``, and action context ``+ACTION+``].
+. Result in parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane,and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:TableDefaultAction_ok[TableDefaultAction_ok]:
 
 * Typing ``initializer``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the typed default action ``tableActionReferenceIR``.
+* Results in ``tableActionReferenceIR``.
 
-xref:TableDefaultAction_ok[Typing ``+=+`` ``prefixedNonTypeName``, under context ``TC`` and table context ``TBLC``]:
+xref:TableDefaultAction_ok[Typing ``+=+`` ``expression``, under context ``TC`` and table context ``TBLC``]:
 
-. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
-. Check that ( ``·``, ``·`` ) is equal to ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
-. Result in the typed default action ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
-
-xref:TableDefaultAction_ok[Typing ``+=+`` ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
-
-. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
-. Let ``(`` ``parameterIR~action~^{asterisk}^,`` ``argumentIR~action~^{asterisk}^`` ``)`` be xref:option_get[*!*] ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
-. Let ``argument^{asterisk}^`` be xref:flatten_argumentList[the list of arguments in ``argumentList``].
-. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
+. If let ``prefixedNonTypeName`` be ``expression``:
+ .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
+ .. Check that ( ``·``, ``·`` ) is equal to ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
+ .. Result in ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
+. Else if let ``callExpression`` be ``expression``:
+ .. Check that ``callExpression`` matches pattern ``%`` ``(`` ``%`` ``)``.
+ .. Let ``callTarget`` ``+(+`` ``argumentList`` ``+)+`` be ``callExpression``.
+ .. Check that ``callTarget`` has type ``prefixedNonTypeName``.
+ .. Let ``prefixedNonTypeName`` be ``callTarget``.
+ .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
+ .. Let ``(`` ``parameterIR~action~^{asterisk}^,`` ``argumentIR~action~^{asterisk}^`` ``)`` be xref:option_get[*!*] ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
+ .. Let ``argument^{asterisk}^`` be xref:flatten_argumentList[the list of arguments in ``argumentList``].
+ .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
 +
 --
- ** Let ``argumentIR`` be
+  *** Let ``argumentIR`` be
 * the result of xref:Argument_ok[typing ``argument``, under cursor ``+LOCAL+`` and context ``TC``].
 --
 +
 for each ``argument`` in ``argument^{asterisk}^``
-. Let the typed argument list ``parameterIR~action_data~^{asterisk}^`` be
-* the result of xref:Call_action_default_ok[typing ``argumentIR^{asterisk}^``, under context ``TC``].
-. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
-. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
-. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
-. Result in the typed default action ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
+ .. Let parameters ``parameterIR~action_data~^{asterisk}^`` for data-plane, ``parameterIR~action_control~^{asterisk}^`` for control-plane,and casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_action_default_ok[typing the action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
+ .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
+ .. Result in ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_keyset_ok[TableEntry_keyset_ok]:
 
 * Typing ``keysetExpression``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableEntryState`` and the typed keyset expression ``keysetExpressionIR``.
+* Results in the updated table context ``tableEntryState`` and ``keysetExpressionIR``.
 
 xref:TableEntry_keyset_ok[Typing ``expression``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8589,7 +8689,7 @@ xref:TableEntry_keyset_ok[Typing ``expression``, under context ``TC`` and table 
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ expression +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``simpleKeysetExpressionIR'``.
+. Result in the updated table context ``TBLS`` and ``simpleKeysetExpressionIR'``.
 
 xref:TableEntry_keyset_ok[Typing ``+(+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8597,7 +8697,7 @@ xref:TableEntry_keyset_ok[Typing ``+(+`` ``expression~l~`` ``+&&&+`` ``expressio
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ expression~l~ +&&&+ expression~r~ +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
+. Result in the updated table context ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
 
 xref:TableEntry_keyset_ok[Typing ``+(+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8605,27 +8705,27 @@ xref:TableEntry_keyset_ok[Typing ``+(+`` ``expression~l~`` ``+..+`` ``expression
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ expression~l~ +..+ expression~r~ +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
+. Result in the updated table context ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
 
 xref:TableEntry_keyset_ok[Typing ``+(+`` ``+DEFAULT+`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
 . Let ``matchMode`` be ``TBLC.+MODE+``.
 . If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
  .. Let ``TBLS`` be ``+LPM+`` ``n``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``+DEFAULT+`` ``+)+``.
+ .. Result in the updated table context ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
 . If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
  .. Let ``TBLS`` be ``+NOLPM+``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``+DEFAULT+`` ``+)+``.
+ .. Result in the updated table context ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
 
 xref:TableEntry_keyset_ok[Typing ``+(+`` ``+_+`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
 . Let ``matchMode`` be ``TBLC.+MODE+``.
 . If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
  .. Let ``TBLS`` be ``+LPM+`` ``0``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``+_+`` ``+)+``.
+ .. Result in the updated table context ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
 . If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
  .. Let ``TBLS`` be ``+NOLPM+``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``+_+`` ``+)+``.
+ .. Result in the updated table context ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
 
 xref:TableEntry_keyset_ok[Typing ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` ``simpleKeysetExpressionList~t~`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8633,7 +8733,7 @@ xref:TableEntry_keyset_ok[Typing ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` `
 . Let ``simpleKeysetExpression^{asterisk}^`` be ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^``.
 . Check that the length of ``TBLC.+KEYS+`` is equal to the length of ``simpleKeysetExpression^{asterisk}^``.
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ simpleKeysetExpression^{asterisk}^ +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
+. Result in the updated table context ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_keyset_ok[Typing ``expression~l~`` ``+&&&+`` ``expression~r~``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8641,7 +8741,7 @@ xref:TableEntry_keyset_ok[Typing ``expression~l~`` ``+&&&+`` ``expression~r~``, 
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ expression~l~ +&&&+ expression~r~ +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``simpleKeysetExpressionIR'``.
+. Result in the updated table context ``TBLS`` and ``simpleKeysetExpressionIR'``.
 
 xref:TableEntry_keyset_ok[Typing ``expression~l~`` ``+..+`` ``expression~r~``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8649,38 +8749,38 @@ xref:TableEntry_keyset_ok[Typing ``expression~l~`` ``+..+`` ``expression~r~``, u
 . Let xref:TableEntry_keysets_simple_ok[TC TBLC +NOLPM+ +|-+ TBLC.+KEYS+ +@+ expression~l~ +..+ expression~r~ +:+ TBLS simpleKeysetExpressionIR^{asterisk}^].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Result in the updated table context ``TBLS`` and the typed keyset expression ``simpleKeysetExpressionIR'``.
+. Result in the updated table context ``TBLS`` and ``simpleKeysetExpressionIR'``.
 
 xref:TableEntry_keyset_ok[Typing ``+DEFAULT+``, under context ``TC`` and table context ``TBLC``]:
 
 . Let ``matchMode`` be ``TBLC.+MODE+``.
 . If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
  .. Let ``TBLS`` be ``+LPM+`` ``n``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+DEFAULT+``.
+ .. Result in the updated table context ``TBLS`` and ``+DEFAULT+``.
 . If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
  .. Let ``TBLS`` be ``+NOLPM+``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+DEFAULT+``.
+ .. Result in the updated table context ``TBLS`` and ``+DEFAULT+``.
 
 xref:TableEntry_keyset_ok[Typing ``+_+``, under context ``TC`` and table context ``TBLC``]:
 
 . Let ``matchMode`` be ``TBLC.+MODE+``.
 . If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
  .. Let ``TBLS`` be ``+LPM+`` ``0``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+_+``.
+ .. Result in the updated table context ``TBLS`` and ``+_+``.
 . If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
  .. Let ``TBLS`` be ``+NOLPM+``.
- .. Result in the updated table context ``TBLS`` and the typed keyset expression ``+_+``.
+ .. Result in the updated table context ``TBLS`` and ``+_+``.
 
 xref:TableEntry_action_ok[TableEntry_action_ok]:
 
 * Typing ``tableActionReference``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the typed table action reference ``tableActionReferenceIR``.
+* Results in ``tableActionReferenceIR``.
 
 xref:TableEntry_action_ok[Typing ``prefixedNonTypeName``, under context ``TC`` and table context ``TBLC``]:
 
 . Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
 . Check that ( ``·``, ``·`` ) is equal to ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
-. Result in the typed table action reference ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
+. Result in ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
 
 xref:TableEntry_action_ok[Typing ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+``, under context ``TC`` and table context ``TBLC``]:
 
@@ -8695,27 +8795,27 @@ xref:TableEntry_action_ok[Typing ``prefixedNonTypeName`` ``+(+`` ``argumentList`
 --
 +
 for each ``argument`` in ``argument^{asterisk}^``
-. Let the typed argument list ``parameterIR~action_data~^{asterisk}^`` be
-* the result of xref:Call_action_default_ok[typing ``argumentIR^{asterisk}^``, under context ``TC``].
+. Let parameters ``parameterIR~action_data~^{asterisk}^`` for data-plane, ``parameterIR~action_control~^{asterisk}^`` for control-plane,and casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_action_default_ok[typing the action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
 . Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
 . Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
 . Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
-. Result in the typed table action reference ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
+. Result in ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_priority_ok[TableEntry_priority_ok]:
 
 * Typing ``tableEntryPriority^?^``, under context ``typingContext`` and table context ``tableContext``, and table entry state ``tableEntryState``:
-* Results in the updated table context ``tableContext`` and the typed table entry priority ``tableEntryPriorityOptIR``.
+* Results in the updated table context ``tableContext`` and ``tableEntryPriorityOptIR``.
 
 xref:TableEntry_priority_ok[Typing ``·``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
 
 . If ``tableContext.+MODE+`` is ``NOPRI``:
- .. Result in the updated table context ``tableContext`` and the typed table entry priority ``·``.
+ .. Result in the updated table context ``tableContext`` and ``·``.
 . Let ``matchMode`` be ``tableContext.+MODE+``.
 . If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
  .. Check that ``TBLS`` matches pattern ``LPM`` ``%``.
  .. Let ``+LPM+`` ``n~prefix~`` be ``TBLS``.
- .. Result in the updated table context ``tableContext`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+D+`` ``n~prefix~`` ``+:+``.
+ .. Result in the updated table context ``tableContext`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n~prefix~`` ``+:+``.
 . If ``tableContext.+MODE+`` is equal to ``+PRI+`` or ``tableContext.+MODE+`` is equal to ``+PRILPM+``:
  .. If ``tableContext.+PRIORITIES+.+VALUES+`` is equal to ``·``:
   ... If ``tableContext.+PRIORITIES+.+LARGEST_WINS+``:
@@ -8725,10 +8825,10 @@ xref:TableEntry_priority_ok[Typing ``·``, under context ``TC`` and table contex
    .... Check that ``int`` has type ``nat``.
    .... Let ``n`` be ``int``.
    .... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+   .... Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
   ... Else:
    .... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``1)]``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+D+`` ``1`` ``+:+``.
+   .... Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``1`` ``+:+``.
  .. Else:
   ... If ``tableContext.+PRIORITIES+.+LARGEST_WINS+``:
    .... Let ``n~last~`` be ``xref:find_table_priority_last[$find_table_priority_last(tableContext)]``.
@@ -8737,13 +8837,13 @@ xref:TableEntry_priority_ok[Typing ``·``, under context ``TC`` and table contex
    .... Check that ``int`` has type ``nat``.
    .... Let ``n`` be ``int``.
    .... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+   .... Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
   ... Else:
    .... Let ``n~last~`` be ``xref:find_table_priority_last[$find_table_priority_last(tableContext)]``.
    .... Let ``n~delta~`` be ``tableContext.+PRIORITIES+.+DELTA+``.
    .... Let ``n`` be ``n~last~`` ``+`` ``n~delta~``.
    .... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
-   .... Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+   .... Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
 
 xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
 
@@ -8753,12 +8853,12 @@ xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
  .. Let ``TBLC~1~`` be ``tableContext`` with ``+PRIORITIES+.+INIT+`` set to ``true``.
  .. Let ``TBLC~2~`` be ``xref:add_table_priority[$add_table_priority(TBLC~1~,`` ``n)]``.
- .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
+ .. Result in the updated table context ``TBLC~2~`` and ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
 . Else:
  .. Check that ``tableContext.+PRIORITIES+.+INIT+``.
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
  .. Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
- .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
+ .. Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
 
 xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression`` ``+)+`` ``+:+``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
 
@@ -8775,7 +8875,7 @@ xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression``
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
  .. Let ``TBLC~1~`` be ``tableContext`` with ``+PRIORITIES+.+INIT+`` set to ``true``.
  .. Let ``TBLC~2~`` be ``xref:add_table_priority[$add_table_priority(TBLC~1~,`` ``n)]``.
- .. Result in the updated table context ``TBLC~2~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+:+``.
+ .. Result in the updated table context ``TBLC~2~`` and ``+PRIORITY+`` ``+=+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+:+``.
 . Else:
  .. Check that ``tableContext.+PRIORITIES+.+INIT+``.
  .. Let ``typedExpressionIR`` be
@@ -8787,72 +8887,71 @@ xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression``
  .. Let ``integerValue`` be ``value``.
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
  .. Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
- .. Result in the updated table context ``TBLC~1~`` and the typed table entry priority ``+PRIORITY+`` ``+=+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+:+``.
+ .. Result in the updated table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+:+``.
 
 xref:TableEntry_ok[TableEntry_ok]:
 
 * Typing ``tableEntry``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table entry ``tableEntryIR``.
+* Results in the updated table context ``tableContext`` and ``tableEntryIR``.
 
 xref:TableEntry_ok[Typing ``constOpt`` ``tableEntryPriority`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
-. Let the updated table context ``TBLS`` and the typed keyset expression ``keysetExpressionIR`` be
+. Let the updated table context ``TBLS`` and ``keysetExpressionIR`` be
 * the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC~0~``].
-. Let the typed table action reference ``tableActionReferenceIR`` be
+. Let ``tableActionReferenceIR`` be
 * the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC~0~``].
-. Let the updated table context ``TBLC~1~`` and the typed table entry priority ``tableEntryPriorityOptIR`` be
+. Let the updated table context ``TBLC~1~`` and ``tableEntryPriorityOptIR`` be
 * the result of xref:TableEntry_priority_ok[typing ``tableEntryPriority``, under context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``].
 . Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
 . Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
-. Result in the updated table context ``TBLC~1~`` and the typed table entry ``tableEntryIR``.
+. Result in the updated table context ``TBLC~1~`` and ``tableEntryIR``.
 
 xref:TableEntry_ok[Typing ``constOpt`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
-. Let the updated table context ``TBLS`` and the typed keyset expression ``keysetExpressionIR`` be
+. Let the updated table context ``TBLS`` and ``keysetExpressionIR`` be
 * the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC~0~``].
-. Let the typed table action reference ``tableActionReferenceIR`` be
+. Let ``tableActionReferenceIR`` be
 * the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC~0~``].
-. Let the updated table context ``TBLC~1~`` and the typed table entry priority ``tableEntryPriorityOptIR`` be
+. Let the updated table context ``TBLC~1~`` and ``tableEntryPriorityOptIR`` be
 * the result of xref:TableEntry_priority_ok[typing ``·``, under context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``].
 . Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
 . Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
-. Result in the updated table context ``TBLC~1~`` and the typed table entry ``tableEntryIR``.
+. Result in the updated table context ``TBLC~1~`` and ``tableEntryIR``.
 
 xref:TableEntries_ok[TableEntries_ok]:
 
 * Typing ``tableEntry^{asterisk}^``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table entries ``tableEntryListIR``.
+* Results in the updated table context ``tableContext`` and ``tableEntryListIR``.
 
-xref:TableEntries_ok[Typing ``·``, under context ``TC`` and table context ``TBLC``]:
+xref:TableEntries_ok[Typing ``tableEntry^{asterisk}^``, under context ``TC`` and table context ``tableContext``]:
 
-. Result in the updated table context ``TBLC`` and the typed table entries ``·``.
-
-xref:TableEntries_ok[Typing ``tableEntry~h~`` ``{two-colons}`` ``tableEntry~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
-
-. Let the updated table context ``TBLC~1~`` and the typed table entry ``tableEntryIR~h~`` be
-* the result of xref:TableEntry_ok[typing ``tableEntry~h~``, under context ``TC`` and table context ``TBLC``].
-. Let the updated table context ``TBLC~2~`` and the typed table entries ``tableEntryIR~t~^{asterisk}^`` be
+. If ``tableEntry^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated table context ``tableContext`` and ``·``.
+. If let ``tableEntry~h~`` ``{two-colons}`` ``tableEntry~t~^{asterisk}^`` be ``tableEntry^{asterisk}^``:
+ .. Let the updated table context ``TBLC~1~`` and ``tableEntryIR~h~`` be
+* the result of xref:TableEntry_ok[typing ``tableEntry~h~``, under context ``TC`` and table context ``tableContext``].
+ .. Let the updated table context ``TBLC~2~`` and ``tableEntryIR~t~^{asterisk}^`` be
 * the result of xref:TableEntries_ok[typing ``tableEntry~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC~1~``].
-. Result in the updated table context ``TBLC~2~`` and the typed table entries ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^``.
+ .. Result in the updated table context ``TBLC~2~`` and ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^``.
 
 xref:TableProperty_ok[TableProperty_ok]:
 
 * Typing ``tableProperty``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table property ``tablePropertyIR``.
+* Results in the updated table context ``tableContext`` and ``tablePropertyIR``.
 
 xref:TableProperty_ok[Typing ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyList`` ``+}+``, under context ``TC`` and table context ``TBLC~0~``]:
 
 . Let ``tableKey^{asterisk}^`` be xref:flatten_tableKeyList[the list of table keys in ``tableKeyList``].
-. Let the updated table context ``TBLC~1~`` and the typed table keys ``tableKeyIR^{asterisk}^`` be
+. Let the updated table context ``TBLC~1~`` and ``tableKeyIR^{asterisk}^`` be
 * the result of xref:TableKeys_ok[typing ``tableKey^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
-. Result in the updated table context ``TBLC~1~`` and the typed table property ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+``.
+. Result in the updated table context ``TBLC~1~`` and ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionList`` ``+}+``, under context ``TC`` and table context ``TBLC~0~``]:
 
 . Let ``tableAction^{asterisk}^`` be xref:flatten_tableActionList[the list of table actions in ``tableActionList``].
-. Let the updated table context ``TBLC~1~`` and the typed table actions ``tableActionIR^{asterisk}^`` be
+. Let the updated table context ``TBLC~1~`` and ``tableActionIR^{asterisk}^`` be
 * the result of xref:TableActions_ok[typing ``tableAction^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
-. Result in the updated table context ``TBLC~1~`` and the typed table property ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionIR^{asterisk}^`` ``+}+``.
+. Result in the updated table context ``TBLC~1~`` and ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionIR^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryList`` ``+}+``, under context ``TC`` and table context ``TBLC~0~``]:
 
@@ -8861,18 +8960,18 @@ xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``+ENTRIES+`` ``+=+
 . Let ``TBLC~1~`` be ``TBLC~0~`` with ``+ENTRIES+.+SIZE+`` set to ``the`` ``length`` ``of`` ``tableEntry^{asterisk}^``.
 . Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
 . Let ``TBLC~2~`` be ``TBLC~1~`` with ``+ENTRIES+.+CONST+`` set to ``constOptIR`` ``=`` ``+CONST+``.
-. Let the updated table context ``TBLC~3~`` and the typed table entries ``tableEntryIR^{asterisk}^`` be
+. Let the updated table context ``TBLC~3~`` and ``tableEntryIR^{asterisk}^`` be
 * the result of xref:TableEntries_ok[typing ``tableEntry^{asterisk}^``, under context ``TC`` and table context ``TBLC~2~``].
-. Result in the updated table context ``TBLC~3~`` and the typed table property ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+``.
+. Result in the updated table context ``TBLC~3~`` and ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``tableCustomName`` ``initializer`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
 . Check that ``"default_action"`` is equal to xref:tableCustomName[the name of ``tableCustomName``].
-. Let the typed default action ``tableActionReferenceIR`` be
+. Let ``tableActionReferenceIR`` be
 * the result of xref:TableDefaultAction_ok[typing ``initializer``, under context ``TC`` and table context ``TBLC~0~``].
 . Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
 . Let ``tablePropertyIR`` be ``annotationList`` ``constOptIR`` ``+DEFAULT_ACTION+`` ``+=+`` ``tableActionReferenceIR`` ``+;+``.
-. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
+. Result in the updated table context ``TBLC~0~`` and ``tablePropertyIR``.
 
 xref:TableProperty_ok[Typing ``annotationList'`` ``constOpt'`` ``tableCustomName'`` ``+=+`` ``expression`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
@@ -8884,7 +8983,7 @@ xref:TableProperty_ok[Typing ``annotationList'`` ``constOpt'`` ``tableCustomName
  .. Check that ``typeIR~unroll~`` has type ``integerTypeIR`` and ``typeIR~unroll~`` does not have type ``varBitTypeIR``.
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt'``].
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``+CUSTOM+`` ``"size"`` ``+=+`` ``typedExpressionIR`` ``+;+``.
- .. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
+ .. Result in the updated table context ``TBLC~0~`` and ``tablePropertyIR``.
 . If ``"largest_priority_wins"`` is equal to xref:tableCustomName[the name of ``tableCustomName'``]:
  .. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under cursor ``+LOCAL+`` and context ``TC``].
@@ -8898,7 +8997,7 @@ xref:TableProperty_ok[Typing ``annotationList'`` ``constOpt'`` ``tableCustomName
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``+PRIORITIES+.+LARGEST_WINS+`` set to ``b~largest_priority_wins~``.
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt'``].
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``+CUSTOM_CONST+`` ``"largest_priority_wins"`` ``+=+`` ``+`VALUE+`` ``+`B+`` ``b~largest_priority_wins~`` ``+;+``.
- .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
+ .. Result in the updated table context ``TBLC~1~`` and ``tablePropertyIR``.
 . If ``"priority_delta"`` is equal to xref:tableCustomName[the name of ``tableCustomName'``]:
  .. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under cursor ``+LOCAL+`` and context ``TC``].
@@ -8915,36 +9014,35 @@ xref:TableProperty_ok[Typing ``annotationList'`` ``constOpt'`` ``tableCustomName
  .. Let ``TBLC~1~`` be ``TBLC~0~`` with ``+PRIORITIES+.+DELTA+`` set to ``n~delta~``.
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt'``].
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``+CUSTOM_CONST+`` ``"priority_delta"`` ``+=+`` ``+`VALUE+`` ``+D+`` ``n~delta~`` ``+;+``.
- .. Result in the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR``.
+ .. Result in the updated table context ``TBLC~1~`` and ``tablePropertyIR``.
 . Let ``nameIR`` be xref:tableCustomName[the name of ``tableCustomName'``].
 . If ``nameIR`` is not equal to ``"size"`` and ``nameIR`` is not equal to ``"largest_priority_wins"`` and ``nameIR`` is not equal to ``"priority_delta"``:
  .. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under cursor ``+LOCAL+`` and context ``TC``].
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt'``].
  .. Let ``tablePropertyIR`` be ``annotationList'`` ``constOptIR`` ``+CUSTOM+`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``+;+``.
- .. Result in the updated table context ``TBLC~0~`` and the typed table property ``tablePropertyIR``.
+ .. Result in the updated table context ``TBLC~0~`` and ``tablePropertyIR``.
 
 xref:TableProperties_ok[TableProperties_ok]:
 
 * Typing ``tableProperty^{asterisk}^``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated table context ``tableContext`` and the typed table properties ``tablePropertyListIR``.
+* Results in the updated table context ``tableContext`` and ``tablePropertyListIR``.
 
-xref:TableProperties_ok[Typing ``·``, under context ``TC`` and table context ``TBLC``]:
+xref:TableProperties_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``tableContext``]:
 
-. Result in the updated table context ``TBLC`` and the typed table properties ``·``.
-
-xref:TableProperties_ok[Typing ``tableProperty~h~`` ``{two-colons}`` ``tableProperty~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
-
-. Let the updated table context ``TBLC~1~`` and the typed table property ``tablePropertyIR~h~`` be
-* the result of xref:TableProperty_ok[typing ``tableProperty~h~``, under context ``TC`` and table context ``TBLC``].
-. Let the updated table context ``TBLC~2~`` and the typed table properties ``tablePropertyIR~t~^{asterisk}^`` be
+. If ``tableProperty^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated table context ``tableContext`` and ``·``.
+. If let ``tableProperty~h~`` ``{two-colons}`` ``tableProperty~t~^{asterisk}^`` be ``tableProperty^{asterisk}^``:
+ .. Let the updated table context ``TBLC~1~`` and ``tablePropertyIR~h~`` be
+* the result of xref:TableProperty_ok[typing ``tableProperty~h~``, under context ``TC`` and table context ``tableContext``].
+ .. Let the updated table context ``TBLC~2~`` and ``tablePropertyIR~t~^{asterisk}^`` be
 * the result of xref:TableProperties_ok[typing ``tableProperty~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC~1~``].
-. Result in the updated table context ``TBLC~2~`` and the typed table properties ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^``.
+ .. Result in the updated table context ``TBLC~2~`` and ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^``.
 
 xref:Table_ok[Table_ok]:
 
 * Typing ``tableProperty^{asterisk}^``, under context ``typingContext``:
-* Results in the updated context ``tableContext`` and the typed table ``tablePropertyListIR``.
+* Results in the updated context ``tableContext`` and ``tablePropertyListIR``.
 
 xref:Table_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC``]:
 
@@ -8952,27 +9050,27 @@ xref:Table_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC``]:
 . Check that the length of xref:filter_[``tableProperty^{asterisk}^`` filtered by ``$is_tableActionsProperty(tableProperty)^{asterisk}^``] is equal to ``1``.
 . If the length of xref:filter_[``tableProperty^{asterisk}^`` filtered by ``$is_tableDefaultActionProperty(tableProperty)^{asterisk}^``] is equal to ``0``:
  .. Let ``TBLC~0~`` be ``xref:empty_tableContext[$empty_tableContext]``.
- .. Let the updated table context ``TBLC~1~`` and the typed table properties ``tablePropertyIR^{asterisk}^`` be
+ .. Let the updated table context ``TBLC~1~`` and ``tablePropertyIR^{asterisk}^`` be
 * the result of xref:TableProperties_ok[typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
  .. Let ``tablePropertyIR~default_action~`` be ``+`EMPTY+`` ``·`` ``+DEFAULT_ACTION+`` ``+=+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+`` ``+;+``.
  .. Let ``(`` ``TBLC~2~,`` ``tablePropertyIR~updated~^{asterisk}^`` ``)`` be ``xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC~1~,`` ``tablePropertyIR^{asterisk}^)]``.
- .. Result in the updated context ``TBLC~2~`` and the typed table ``tablePropertyIR~updated~^{asterisk}^`` concatenated with ``tablePropertyIR~default_action~``.
+ .. Result in the updated context ``TBLC~2~`` and ``tablePropertyIR~updated~^{asterisk}^`` concatenated with ``tablePropertyIR~default_action~``.
 . Else if the length of xref:filter_[``tableProperty^{asterisk}^`` filtered by ``$is_tableDefaultActionProperty(tableProperty)^{asterisk}^``] is equal to ``1``:
  .. Let ``TBLC~0~`` be ``xref:empty_tableContext[$empty_tableContext]``.
- .. Let the updated table context ``TBLC~1~`` and the typed table properties ``tablePropertyIR^{asterisk}^`` be
+ .. Let the updated table context ``TBLC~1~`` and ``tablePropertyIR^{asterisk}^`` be
 * the result of xref:TableProperties_ok[typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
- .. Result in the updated context ``TBLC~1~`` and the typed table ``tablePropertyIR^{asterisk}^``.
+ .. Result in the updated context ``TBLC~1~`` and ``tablePropertyIR^{asterisk}^``.
 
 xref:TableType_ok[TableType_ok]:
 
 * Typing ``name``, under context ``typingContext`` and table context ``tableContext``:
-* Results in the updated context ``typingContext`` and the table type ``typeIR``.
+* Results in the updated context ``typingContext`` and type of the table ``typeIR``.
 
 xref:TableType_ok[Typing ``name``, under context ``TC~0~`` and table context ``TBLC``]:
 
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``typeId~enum~`` be ``"action_list("`` concatenated with ``nameIR`` concatenated with ``")"``.
-. Let ``(`` ``prefixedNameIR~action~,`` ``++_++^{asterisk}^,`` ``++_++`` ``)^{asterisk}^`` be ``TBLC.+ACTIONS+``.
+. Let ``(`` ``prefixedNameIR~action~`` ``+(+`` ``++_++^{asterisk}^`` ``+@+`` ``++_++`` ``+)+`` ``)^{asterisk}^`` be ``TBLC.+ACTIONS+``.
 . Let ``nameIR~enum_field~^{asterisk}^`` be the list of ``nameIR~enum_field~``, obtained by repeating:
 +
 --
@@ -8999,7 +9097,7 @@ for each ``value~enum_field~`` in ``value~enum_field~^{asterisk}^``
 . Let ``typeId~struct~`` be ``"apply_result("`` concatenated with ``nameIR`` concatenated with ``")"``.
 . Let ``tableMetadataStructTypeIR`` be ``+TABLE_STRUCT+`` ``typeId~struct~`` ``+{+`` ``+HIT+`` ``+BOOL+`` ``+;+`` ``+MISS+`` ``+BOOL+`` ``+;+`` ``+ACTION_RUN+`` ``tableMetadataEnumTypeIR`` ``+;+`` ``+}+``.
 . Let ``typeIR~table~`` be ``+TABLE+`` ``nameIR`` ``+{+`` ``tableMetadataStructTypeIR`` ``+}+``.
-. Result in the updated context ``TC~1~`` and the table type ``typeIR~table~``.
+. Result in the updated context ``TC~1~`` and type of the table ``typeIR~table~``.
 
 xref:ControlLocalDecl_ok[ControlLocalDecl_ok]:
 
@@ -9034,10 +9132,10 @@ xref:ControlLocalDecl_ok[Typing ``annotationList`` ``+TABLE+`` ``name`` ``+{+`` 
 
 . Let ``TC~1~`` be ``TC~0~`` with ``+LOCAL+.+KIND+`` set to ``+TABLE_APPLY_METHOD+``.
 . Let ``tableProperty^{asterisk}^`` be xref:flatten_tablePropertyList[the list of table properties in ``tablePropertyList``].
-. Let the updated context ``TBLC`` and the typed table ``tablePropertyIR^{asterisk}^`` be
+. Let the updated context ``TBLC`` and ``tablePropertyIR^{asterisk}^`` be
 * the result of xref:Table_ok[typing ``tableProperty^{asterisk}^``, under context ``TC~1~``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
-. Let the updated context ``TC~2~`` and the table type ``typeIR~table~`` be
+. Let the updated context ``TC~2~`` and type of the table ``typeIR~table~`` be
 * the result of xref:TableType_ok[typing ``name``, under context ``TC~1~`` and table context ``TBLC``].
 . Let ``varTypeIR`` be ``+`EMPTY+`` ``typeIR~table~`` ``+DYN+`` ``·``.
 . Let ``TC~3~`` be xref:add_var_t[``TC~2~`` where ``nameIR`` to ``varTypeIR`` is added to the ``+BLOCK+`` layer].
@@ -9779,19 +9877,23 @@ xref:Call_convention_argument_ok[Checking the calling convention of ``+_+`` appl
 . Check that ``direction`` is ``OUT``.
 . Result in ``+_+``.
 
-xref:Call_convention_ok[Call_convention_ok: ``p`` ``TC`` ``actctxt`` ``+|-+`` ``parameterIR^{asterisk}^`` ``+@+`` ``argumentIR^{asterisk}^`` ``+:+`` ``%``]
+xref:Call_convention_ok[Call_convention_ok]:
 
-xref:Call_convention_ok[Checking the calling convention of ``argumentIR^{asterisk}^`` applied to parameter types ``parameterIR^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``actctxt``]:
+* Checking the calling convention of ``argumentListIR`` applied on ``parameterIR^{asterisk}^``, under cursor ``cursor``, context ``typingContext``, and action context ``actctxt``:
+* Results in the casted ``argumentListIR``.
+
+xref:Call_convention_ok[Checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``actctxt``]:
 
 . If ``parameterIR^{asterisk}^`` is equal to ``·``:
  .. Check that ``argumentIR^{asterisk}^`` is equal to ``·``.
- .. Result in ``·``.
+ .. Result in the casted ``·``.
 . If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Let xref:Call_convention_argument_ok[p TC actctxt +|-+ parameterIR~h~ +@+ argumentIR~h~ +:+ argumentIR~h_cast~].
- .. Let xref:Call_convention_ok[p TC actctxt +|-+ parameterIR~t~^{asterisk}^ +@+ argumentIR~t~^{asterisk}^ +:+ argumentIR~t_cast~^{asterisk}^].
- .. Result in ``argumentIR~h_cast~`` ``{two-colons}`` ``argumentIR~t_cast~^{asterisk}^``.
+ .. Let the casted ``argumentIR~t_cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR~t~^{asterisk}^`` applied on ``parameterIR~t~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``actctxt``].
+ .. Result in the casted ``argumentIR~h_cast~`` ``{two-colons}`` ``argumentIR~t_cast~^{asterisk}^``.
 
 xref:is_static_callableTypeIR[The compile-time known-ness of ``callableTypeIR``]
 
@@ -9990,7 +10092,8 @@ xref:Call_ok[Typing the invocation ``actionTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+
 . Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``actionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_action[$callable_action(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +ACTION+ +|-+ parameterIR~aligned~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+ACTION+``].
 . Result in the return type ``+VOID+`` with inferred type arguments ``·`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``definedFunctionTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10026,7 +10129,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
 . Check that xref:CallableType_wf[``functionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
 . Check that ``xref:callable_definedFunction[$callable_definedFunction(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``externFunctionTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10062,7 +10166,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
 . Check that xref:CallableType_wf[``functionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
 . Check that ``xref:callable_externFunction[$callable_externFunction(p,`` ``TC,`` ``nameIR)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``builtinMethodTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10070,7 +10175,8 @@ xref:Call_ok[Typing the invocation ``builtinMethodTypeIR`` ``+<+`` ``typeArgumen
 . Let ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``builtinMethodTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_builtinMethod[$callable_builtinMethod(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``typeIR~ret~`` with inferred type arguments ``typeArgumentIR^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``externMethodTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10107,7 +10213,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
 . Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
 . Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``externMethodTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10144,7 +10251,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
 . Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
 . Check that ``xref:callable_externAbstractMethod[$callable_externAbstractMethod(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``typeIR~ret_inferred~`` with inferred type arguments ``typeArgumentIR~inferred~^{asterisk}^`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``parserApplyMethodTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10152,7 +10260,8 @@ xref:Call_ok[Typing the invocation ``parserApplyMethodTypeIR`` ``+<+`` ``·`` ``
 . Let ``+PARSER_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``parserApplyMethodTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_parserApplyMethod[$callable_parserApplyMethod(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``+VOID+`` with inferred type arguments ``·`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``controlApplyMethodTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
@@ -10160,7 +10269,8 @@ xref:Call_ok[Typing the invocation ``controlApplyMethodTypeIR`` ``+<+`` ``·`` `
 . Let ``+CONTROL_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``controlApplyMethodTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_controlApplyMethod[$callable_controlApplyMethod(p,`` ``TC)]``.
-. Let xref:Call_convention_ok[p TC +NOACTION+ +|-+ parameterIR~aligned~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under cursor ``p``, context ``TC``, and action context ``+NOACTION+``].
 . Result in the return type ``+VOID+`` with inferred type arguments ``·`` and the casted argument list ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing the invocation ``tableApplyMethodTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+`` with omitted type arguments ``·``, defaults ``·`` and optionals ``·``, under cursor ``p`` and context ``TC``]:
@@ -10245,7 +10355,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC``].
 . Check that xref:ConstructorType_wf[``constructorTypeIR~inferred~`` is a well-formed constructor type, with bound type variables ``bound``].
 . Check that ``xref:instantiable[$instantiable(+GLOBAL+,`` ``TC,`` ``instctxt,`` ``typeIR~object_inferred~)]``.
-. Let xref:Call_convention_ok[+BLOCK+ TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``+BLOCK+``, context ``TC``, and action context ``+NOACTION+``].
 . Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^``.
 
 xref:Inst_ok[Typing the instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``cursor``, context ``TC``, and ``instctxt`` instantiation site context]:
@@ -10283,7 +10394,8 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``bound`` be xref:bound[bound type variables from the ``cursor`` layer of ``TC``].
 . Check that xref:ConstructorType_wf[``constructorTypeIR~inferred~`` is a well-formed constructor type, with bound type variables ``bound``].
 . Check that ``xref:instantiable[$instantiable(cursor,`` ``TC,`` ``instctxt,`` ``typeIR~object_inferred~)]``.
-. Let xref:Call_convention_ok[cursor TC +NOACTION+ +|-+ parameterIR~aligned_inferred~^{asterisk}^ +@+ argumentIR^{asterisk}^ +:+ argumentIR~cast~^{asterisk}^].
+. Let the casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking the calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under cursor ``cursor``, context ``TC``, and action context ``+NOACTION+``].
 . Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and cast-inserted ``argumentIR~cast~^{asterisk}^``.
 
 xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums reduced]
@@ -11430,7 +11542,7 @@ xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(type
 
 |===
 
-xref:compat_table_key[$compat_table_key(nameIR, typeIR)]
+xref:compat_table_key[``typeIR`` can be used with match kind ``nameIR``]
 
 
 . If ``nameIR`` is equal to ``"exact"`` or ``nameIR`` is equal to ``"optional"``:
@@ -11441,7 +11553,7 @@ xref:compat_table_key[$compat_table_key(nameIR, typeIR)]
  .. Return ``true``.
 . Otherwise: return ``false``.
 
-xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR^{asterisk}^)]
+xref:split_dataplane_parameters[``parameterIR^{asterisk}^`` split into data-plane and control-plane parameters]
 
 
 . If ``parameterIR^{asterisk}^`` is an empty list:
@@ -11450,157 +11562,22 @@ xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR^{asteris
  .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
  .. Let ``direction`` be the direction of ``parameterIR~h~``.
  .. If ``direction`` is ```EMPTY``:
-  ... Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be ``xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR~t~^{asterisk}^)]``.
+  ... Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be xref:split_dataplane_parameters[``parameterIR~t~^{asterisk}^`` split into data-plane and control-plane parameters].
   ... Return ( ``parameterIR~data~^{asterisk}^``, ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~control~^{asterisk}^`` ).
  .. Else:
-  ... Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be ``xref:split_dataplane_parameters[$split_dataplane_parameters(parameterIR~t~^{asterisk}^)]``.
+  ... Let ``(`` ``parameterIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` be xref:split_dataplane_parameters[``parameterIR~t~^{asterisk}^`` split into data-plane and control-plane parameters].
   ... Return ( ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~data~^{asterisk}^``, ``parameterIR~control~^{asterisk}^`` ).
 
-xref:has_table_apply_arg[$has_table_apply_arg(argumentIR)]
+xref:is_table_application[``typedExpressionIR`` is a table application expression]
 
 
-. If let ``typedExpressionIR`` be ``argumentIR``:
- .. Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-. Else if let ``nameIR`` ``+=+`` ``typedExpressionIR`` be ``argumentIR``:
- .. Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-. Else if ``argumentIR`` matches pattern ``%`` ``=`` ``_``: return ``false``.
-. Else: return ``false``.
-
-xref:has_table_apply_expr[$has_table_apply_expr(expressionIR +#+ expressionNoteIR)]
-
-
-. Let ``typeIR`` be the type of ``expressionNoteIR``.
+. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
-. If ``typeIR~unroll~`` has type ``tableMetadataStructTypeIR``: return ``true``.
-. Otherwise:
- .. Return ``xref:has_table_apply_expr'[$has_table_apply_expr'(expressionIR)]``.
+. Return ``typeIR~unroll~`` has type ``tableMetadataStructTypeIR``.
 
-xref:has_table_apply_expr'[$has_table_apply_expr'(expressionIR)]
+xref:TableEntry_keyset_simple_ok[TableEntry_keyset_simple_ok: ``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``simpleKeysetExpression`` ``+:+`` ``%`` ``%``]
 
-
-. If ``expressionIR`` has type ``literalExpressionIR``: return ``false``.
-. Else if ``expressionIR`` has type ``referenceExpressionIR``: return ``false``.
-. Else if ``expressionIR`` has type ``defaultExpressionIR``: return ``false``.
-. Else if let ``unop`` ``typedExpressionIR`` be ``expressionIR``:
- .. Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-. Else if let ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR~r~`` be ``expressionIR``:
- .. Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~l~)]``.
- .. Let ``bool'`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~r~)]``.
- .. Return ``bool`` or ``bool'``.
-. Else if let ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionIR~then~`` ``+:+`` ``typedExpressionIR~else~`` be ``expressionIR``:
- .. Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~cond~)]``.
- .. Let ``bool'`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~then~)]``.
- .. Let ``bool''`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~else~)]``.
- .. Return ``bool`` or ``bool'`` or ``bool''``.
-. Else if let ``+(+`` ``typeIR`` ``+)+`` ``typedExpressionIR`` be ``expressionIR``:
- .. Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-. Else if let ``invalidHeaderExpression`` be ``expressionIR``: return ``false``.
-. Else if let ``sequenceExpressionIR`` be ``expressionIR``:
- .. If let ``+SEQ+`` ``+{+`` ``typedExpressionIR^{asterisk}^`` ``+}+`` be ``sequenceExpressionIR``:
-  ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-   **** Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
---
-+
-for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
-  ... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
- .. Else:
-  ... Let ``+SEQ+`` ``+{+`` ``typedExpressionIR^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``sequenceExpressionIR``.
-  ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-   **** Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
---
-+
-for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
-  ... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
-. Else if let ``recordExpressionIR`` be ``expressionIR``:
- .. If let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+}+`` be ``recordExpressionIR``:
-  ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-   **** Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
---
-+
-for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
-  ... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
- .. Else:
-  ... Let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordExpressionIR``.
-  ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-   **** Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
---
-+
-for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
-  ... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
-. Else if ``expressionIR`` has type ``errorAccessExpressionIR``: return ``false``.
-. Else if let ``memberAccessBaseIR`` ``+.+`` ``nameIR`` be ``expressionIR``:
- .. If ``memberAccessBaseIR`` matches pattern ``TYPE`` ``%``: return ``false``.
- .. Else:
-  ... Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
-  ... Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-. Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~index~`` ``+]+`` be ``expressionIR``:
- .. Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~base~)]``.
- .. Let ``bool'`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~index~)]``.
- .. Return ``bool`` or ``bool'``.
-. Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` be ``expressionIR``:
- .. Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~base~)]``.
- .. Let ``bool'`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~lo~)]``.
- .. Let ``bool''`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR~hi~)]``.
- .. Return ``bool`` or ``bool'`` or ``bool''``.
-. Else if let ``callExpressionIR`` be ``expressionIR``:
- .. If let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``:
-  ... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-   **** Let ``bool`` be ``xref:has_table_apply_arg[$has_table_apply_arg(argumentIR)]``.
---
-+
-for each ``argumentIR`` in ``argumentIR^{asterisk}^``
-  ... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
- .. Else:
-  ... Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``.
-  ... If ``callableTargetIR`` has type ``referenceExpressionIR``:
-   .... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-    ***** Let ``bool`` be ``xref:has_table_apply_arg[$has_table_apply_arg(argumentIR)]``.
---
-+
-for each ``argumentIR`` in ``argumentIR^{asterisk}^``
-   .... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
-  ... Else if let ``typedExpressionIR`` ``+.+`` ``nameIR`` be ``callableTargetIR``:
-   .... Let ``bool`` be ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-   .... Let ``bool''^{asterisk}^`` be the list of ``bool''``, obtained by repeating:
-+
---
-    ***** Let ``bool''`` be ``xref:has_table_apply_arg[$has_table_apply_arg(argumentIR)]``.
---
-+
-for each ``argumentIR`` in ``argumentIR^{asterisk}^``
-   .... Let ``bool'`` be xref:exists_[some of ``bool''^{asterisk}^`` is true].
-   .... Return ``bool`` or ``bool'``.
-  ... Else if ``callableTargetIR`` matches pattern ``TYPE`` ``%`` ``.`` ``%``:
-   .... Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
-+
---
-    ***** Let ``bool`` be ``xref:has_table_apply_arg[$has_table_apply_arg(argumentIR)]``.
---
-+
-for each ``argumentIR`` in ``argumentIR^{asterisk}^``
-   .... Return xref:exists_[some of ``bool^{asterisk}^`` is true].
-  ... Else:
-   .... Let ``+(+`` ``callableTargetIR'`` ``+)+`` be ``callableTargetIR``.
-   .... Return ``xref:has_table_apply_expr'[$has_table_apply_expr'(callableTargetIR'`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+)]``.
-. Else:
- .. Let ``+(+`` ``typedExpressionIR`` ``+)+`` be ``expressionIR``.
- .. Return ``xref:has_table_apply_expr[$has_table_apply_expr(typedExpressionIR)]``.
-
-xref:TableEntry_keyset_simple_ok[TableEntry_keyset_simple_ok: ``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``text`` ``)`` ``+@+`` ``simpleKeysetExpression`` ``+:+`` ``%`` ``%``]
-
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``text`` ``)`` ``+@+`` ``expression`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``expression`` ``+:+`` ``%`` ``%``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11624,7 +11601,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,``
  .. Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with type ``typeIR~set~`` and compile-time known-ness ``ctk``].
  .. Result in ``+NOLPM+`` and ``typedExpressionIR~set~``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``text`` ``)`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11657,7 +11634,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,``
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be xref:option_get[*!*] xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
  .. Result in ``+NOLPM+`` and ``typedExpressionIR~l_reduced~`` ``+&&&+`` ``typedExpressionIR~r_reduced~``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``text`` ``)`` ``+@+`` ``+DEFAULT+`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``+DEFAULT+`` ``+:+`` ``%`` ``%``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11668,7 +11645,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,``
  .. Check that ``text`` is not equal to ``"exact"``.
  .. Result in ``+NOLPM+`` and ``+DEFAULT+``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``text`` ``)`` ``+@+`` ``+_+`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``+_+`` ``+:+`` ``%`` ``%``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11678,7 +11655,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,``
  .. Check that ``text`` is not equal to ``"exact"``.
  .. Result in ``+NOLPM+`` and ``+_+``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,`` ``"range"`` ``)`` ``+@+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``"range"`` ``+@+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
 
 . Let ``typedExpressionIR~l~`` be
 * the result of xref:Expr_ok[typing ``expression~l~``, under cursor ``+LOCAL+`` and context ``TC``].
@@ -11689,18 +11666,20 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``(`` ``typeIR~key~,``
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be xref:option_get[*!*] xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
 . Result in ``+NOLPM+`` and ``typedExpressionIR~l_reduced~`` ``+..+`` ``typedExpressionIR~r_reduced~``.
 
-xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok: ``TC`` ``TBLC`` ``TBLS`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]
+xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok: ``TC`` ``TBLC`` ``tableEntryState`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]
 
-xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``TBLS`` ``+|-+`` ``·`` ``+@+`` ``·`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``tableEntryState`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]:
 
-. Result in ``TBLS`` and ``·``.
-
-xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``TBLS`` ``+|-+`` ``matchKey~h~`` ``{two-colons}`` ``matchKey~t~^{asterisk}^`` ``+@+`` ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` ``+:+`` ``%`` ``%``]:
-
-. Let xref:TableEntry_keyset_simple_ok[TC TBLC +|-+ matchKey~h~ +@+ simpleKeysetExpression~h~ +:+ TBLS~1~ simpleKeysetExpressionIR~h~].
-. Let ``TBLS~2~`` be ``xref:join_tableEntryState[$join_tableEntryState(TBLS,`` ``TBLS~1~)]``.
-. Let xref:TableEntry_keysets_simple_ok[TC TBLC TBLS~2~ +|-+ matchKey~t~^{asterisk}^ +@+ simpleKeysetExpression~t~^{asterisk}^ +:+ TBLS~3~ simpleKeysetExpressionIR~t~^{asterisk}^].
-. Result in ``TBLS~3~`` and ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
+. If ``matchKey^{asterisk}^`` is equal to ``·``:
+ .. Check that ``simpleKeysetExpression^{asterisk}^`` is equal to ``·``.
+ .. Result in ``tableEntryState`` and ``·``.
+. If let ``matchKey~h~`` ``{two-colons}`` ``matchKey~t~^{asterisk}^`` be ``matchKey^{asterisk}^``:
+ .. Check that ``simpleKeysetExpression^{asterisk}^`` is a non-empty list.
+ .. Let ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` be ``simpleKeysetExpression^{asterisk}^``.
+ .. Let xref:TableEntry_keyset_simple_ok[TC TBLC +|-+ matchKey~h~ +@+ simpleKeysetExpression~h~ +:+ TBLS~1~ simpleKeysetExpressionIR~h~].
+ .. Let ``TBLS~2~`` be ``xref:join_tableEntryState[$join_tableEntryState(tableEntryState,`` ``TBLS~1~)]``.
+ .. Let xref:TableEntry_keysets_simple_ok[TC TBLC TBLS~2~ +|-+ matchKey~t~^{asterisk}^ +@+ simpleKeysetExpression~t~^{asterisk}^ +:+ TBLS~3~ simpleKeysetExpressionIR~t~^{asterisk}^].
+ .. Result in ``TBLS~3~`` and ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
 
 xref:is_tableKeysProperty[$is_tableKeysProperty(tableProperty)]
 
@@ -11739,7 +11718,7 @@ xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC, tabl
 for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
   ... Let ``tableActionReferenceIR~NoAction~`` be ``+.+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+``.
   ... If ``tableActionReferenceIR~NoAction~`` is not in ``tableActionReferenceIR^{asterisk}^``:
-   .... Let ``TBLC~1~`` be ``xref:add_action[$add_action(TBLC,`` ``+.+`` ``"NoAction",`` ``·,`` ``·)]``.
+   .... Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC`` with match action ``+.+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+`` applied using ``·`` added].
    .... Let ``tableActionIR~NoAction~`` be ``+`EMPTY+`` ``tableActionReferenceIR~NoAction~`` ``+#+`` ``+(+`` ``·`` ``+,+`` ``·`` ``+)+`` ``+;+``.
    .... Let ``tablePropertyIR~h_updated~`` be ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionIR^{asterisk}^`` ``{pp}`` ``tableActionIR~NoAction~`` ``+}+``.
    .... Return ( ``TBLC~1~``, ``tablePropertyIR~h_updated~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` ).
@@ -13077,17 +13056,16 @@ xref:Exprs_inst[Exprs_inst]:
 * Compile-time evaluation of ``typedExpressionIR^{asterisk}^``, under cursor ``cursor``, context ``instContext``, and store ``store``:
 * Results in the updated store ``store`` and ``value^{asterisk}^``.
 
-xref:Exprs_inst[Compile-time evaluation of ``·``, under cursor ``p``, context ``IC``, and store ``STO``]:
+xref:Exprs_inst[Compile-time evaluation of ``typedExpressionIR^{asterisk}^``, under cursor ``p``, context ``IC``, and store ``store``]:
 
-. Result in the updated store ``STO`` and ``·``.
-
-xref:Exprs_inst[Compile-time evaluation of ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^``, under cursor ``p``, context ``IC``, and store ``STO``]:
-
-. Let the updated store ``STO~1~`` and ``value~h~`` be
-* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~h~``, under cursor ``p``, context ``IC``, and store ``STO``].
-. Let the updated store ``STO~2~`` and ``value~t~^{asterisk}^`` be
+. If ``typedExpressionIR^{asterisk}^`` is equal to ``·``:
+ .. Result in the updated store ``store`` and ``·``.
+. If let ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``:
+ .. Let the updated store ``STO~1~`` and ``value~h~`` be
+* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~h~``, under cursor ``p``, context ``IC``, and store ``store``].
+ .. Let the updated store ``STO~2~`` and ``value~t~^{asterisk}^`` be
 * the result of xref:Exprs_inst[compile-time evaluation of ``typedExpressionIR~t~^{asterisk}^``, under cursor ``p``, context ``IC``, and store ``STO~1~``].
-. Result in the updated store ``STO~2~`` and ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^``.
+ .. Result in the updated store ``STO~2~`` and ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^``.
 
 xref:Argument_inst[Argument_inst: ``p`` ``IC`` ``STO~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``%`` ``%``]
 
@@ -13488,45 +13466,65 @@ xref:ParserLocalDecls_inst[Compile-time evaluation of ``parserLocalDeclarationIR
 * the result of xref:ParserLocalDecls_inst[compile-time evaluation of ``parserLocalDeclarationIR~t~^{asterisk}^``, under context ``IC~1~`` and store ``STO~1~``].
  .. Result in the updated context ``IC~2~``, store ``STO~2~``, and ``parserLocalDeclarationIR~h_inst~`` ``{two-colons}`` ``parserLocalDeclarationIR~t_inst~^{asterisk}^``.
 
-xref:TableProperty_inst[TableProperty_inst: ``IC`` ``STO`` ``+|-+`` ``tablePropertyIR`` ``+:+`` ``%`` ``%``]
+xref:TableProperty_inst[TableProperty_inst]:
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyListIR`` ``+}+`` ``+:+`` ``%`` ``%``]:
+* Compile-time evaluation of ``tablePropertyIR``, under context ``instContext``and store ``store``:
+* Results in 
+ ** the updated store ``store`` and ``tablePropertyIR``.
 
-. Result in ``STO`` and ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyListIR`` ``+}+``.
+xref:TableProperty_inst[Compile-time evaluation of ``tableKeysPropertyIR``, under context ``IC``and store ``STO``]:
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR`` ``+}+`` ``+:+`` ``%`` ``%``]:
+. Result in 
+* the updated store ``STO`` and ``tableKeysPropertyIR``.
 
-. Result in ``STO`` and ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR`` ``+}+``.
+xref:TableProperty_inst[Compile-time evaluation of ``tableActionsPropertyIR``, under context ``IC``and store ``STO``]:
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryListIR`` ``+}+`` ``+:+`` ``%`` ``%``]:
+. Result in 
+* the updated store ``STO`` and ``tableActionsPropertyIR``.
 
-. Result in ``STO`` and ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryListIR`` ``+}+``.
+xref:TableProperty_inst[Compile-time evaluation of ``tableDefaultActionPropertyIR``, under context ``IC``and store ``STO``]:
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``annotationList`` ``constOptIR`` ``+DEFAULT_ACTION+`` ``+=+`` ``tableActionReferenceIR`` ``+;+`` ``+:+`` ``%`` ``%``]:
+. Result in 
+* the updated store ``STO`` and ``tableDefaultActionPropertyIR``.
 
-. Result in ``STO`` and ``annotationList`` ``constOptIR`` ``+DEFAULT_ACTION+`` ``+=+`` ``tableActionReferenceIR`` ``+;+``.
+xref:TableProperty_inst[Compile-time evaluation of ``tableEntriesPropertyIR``, under context ``IC``and store ``STO``]:
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``annotationList`` ``constOptIR`` ``+CUSTOM+`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``+;+`` ``+:+`` ``%`` ``%``]:
+. Result in 
+* the updated store ``STO`` and ``tableEntriesPropertyIR``.
 
-. Let ``IC~inner~`` be xref:enter_path_i[``IC`` with ``nameIR`` added to the path].
-. Let the updated store ``STO~1~`` and ``value`` be
+xref:TableProperty_inst[Compile-time evaluation of ``tableCustomPropertyIR``, under context ``IC``and store ``STO``]:
+
+. If let ``annotationList`` ``constOptIR`` ``+CUSTOM+`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``+;+`` be ``tableCustomPropertyIR``:
+ .. Let ``IC~inner~`` be xref:enter_path_i[``IC`` with ``nameIR`` added to the path].
+ .. Let the updated store ``STO~1~`` and ``value`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under cursor ``+LOCAL+``, context ``IC~inner~``, and store ``STO``].
-. Result in ``STO~1~`` and ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``value`` ``+;+``.
+ .. Let ``tableCustomPropertyIR~inst~`` be ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``value`` ``+;+``.
+ .. Result in 
+* the updated store ``STO~1~`` and ``tableCustomPropertyIR~inst~``.
+. Else:
+ .. Let ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``constantInitializerIR`` ``+;+`` be ``tableCustomPropertyIR``.
+ .. Let ``tableCustomPropertyIR~inst~`` be ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``constantInitializerIR`` ``+;+``.
+ .. Result in 
+* the updated store ``STO`` and ``tableCustomPropertyIR~inst~``.
 
-xref:TableProperty_inst[``IC`` ``STO`` ``+|-+`` ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``constantInitializerIR`` ``+;+`` ``+:+`` ``%`` ``%``]:
+xref:TableProperties_inst[TableProperties_inst]:
 
-. Result in ``STO`` and ``annotationList`` ``constOptIR`` ``+CUSTOM_CONST+`` ``nameIR`` ``constantInitializerIR`` ``+;+``.
+* Compile-time evaluation of ``tablePropertyIR^{asterisk}^``, under context ``instContext``and store ``store``:
+* Results in 
+ ** the updated store ``store`` and ``tablePropertyIR^{asterisk}^``.
 
-xref:TableProperties_inst[TableProperties_inst: ``IC`` ``store`` ``+|-+`` ``tablePropertyIR^{asterisk}^`` ``+:+`` ``%`` ``%``]
-
-xref:TableProperties_inst[``IC`` ``store`` ``+|-+`` ``tablePropertyIR^{asterisk}^`` ``+:+`` ``%`` ``%``]:
+xref:TableProperties_inst[Compile-time evaluation of ``tablePropertyIR^{asterisk}^``, under context ``IC``and store ``store``]:
 
 . If ``tablePropertyIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``store`` and ``·``.
+ .. Result in 
+* the updated store ``store`` and ``·``.
 . If let ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` be ``tablePropertyIR^{asterisk}^``:
- .. Let xref:TableProperty_inst[IC store +|-+ tablePropertyIR~h~ +:+ STO~1~ tablePropertyIR~h_inst~].
- .. Let xref:TableProperties_inst[IC STO~1~ +|-+ tablePropertyIR~t~^{asterisk}^ +:+ STO~2~ tablePropertyIR~t_inst~^{asterisk}^].
- .. Result in ``STO~2~`` and ``tablePropertyIR~h_inst~`` ``{two-colons}`` ``tablePropertyIR~t_inst~^{asterisk}^``.
+ .. Let the updated store ``STO~1~`` and ``tablePropertyIR~h_inst~`` be
+* the result of xref:TableProperty_inst[compile-time evaluation of ``tablePropertyIR~h~``, under context ``IC``and store ``store``].
+ .. Let the updated store ``STO~2~`` and ``tablePropertyIR~t_inst~^{asterisk}^`` be
+* the result of xref:TableProperties_inst[compile-time evaluation of ``tablePropertyIR~t~^{asterisk}^``, under context ``IC``and store ``STO~1~``].
+ .. Result in 
+* the updated store ``STO~2~`` and ``tablePropertyIR~h_inst~`` ``{two-colons}`` ``tablePropertyIR~t_inst~^{asterisk}^``.
 
 xref:ControlLocalDecl_inst[ControlLocalDecl_inst]:
 
@@ -13564,7 +13562,8 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``+TABL
 
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+BLOCK+`` layer].
 . Let ``IC~frame~`` be xref:enter_i[``IC~callee_0~`` with a new local frame].
-. Let xref:TableProperties_inst[IC~frame~ STO +|-+ tablePropertyListIR +:+ STO~1~ tablePropertyListIR~inst~].
+. Let the updated store ``STO~1~`` and ``tablePropertyListIR~inst~`` be
+* the result of xref:TableProperties_inst[compile-time evaluation of ``tablePropertyListIR``, under context ``IC~frame~``and store ``STO``].
 . Let ``TBL`` be ``xref:init_table[$init_table(tablePropertyListIR~inst~)]``.
 . Let ``frame^{asterisk}^`` be ``IC~frame~.+LOCAL+.+FRAMES+``.
 . Check that ``frame^{asterisk}^`` is a non-empty list.
@@ -15589,18 +15588,11 @@ xref:ParserStmt_eval[Runtime evaluation of ``variableDeclarationIR``, under cont
 
 . Let the updated context ``EC~1~``, state ``ARCH~1~``,and the result ``declarationResult`` be
 * the result of xref:VarDecl_eval[evaluating ``variableDeclarationIR``, under cursor ``+LOCAL+``, context ``EC~0~``, and state ``ARCH``].
-. Check that ``declarationResult`` has type ``rejectTransitionResult``.
-. Let ``rejectTransitionResult`` be ``declarationResult``.
-. Result in 
+. If let ``rejectTransitionResult`` be ``declarationResult``:
+ .. Result in 
 * the updated context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
-
-xref:ParserStmt_eval[Runtime evaluation of ``variableDeclarationIR``, under context ``EC~0~`` and state ``ARCH``]:
-
-. Let the updated context ``EC~1~``, state ``ARCH~1~``,and the result ``declarationResult`` be
-* the result of xref:VarDecl_eval[evaluating ``variableDeclarationIR``, under cursor ``+LOCAL+``, context ``EC~0~``, and state ``ARCH``].
-. Check that ``declarationResult`` has type ``continueEmptyResult``.
-. Let ``continueEmptyResult`` be ``declarationResult``.
-. Result in 
+. Else if let ``continueEmptyResult`` be ``declarationResult``:
+ .. Result in 
 * the updated context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
 
 xref:ParserStmt_eval[Runtime evaluation of ``emptyStatementIR``, under context ``EC~0~`` and state ``ARCH``]:
@@ -15828,7 +15820,8 @@ xref:Table_eval[Table_eval: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typeId`` ``TBL`` ``
 xref:Table_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typeId`` ``TBL`` ``+:+`` ``%`` ``%`` ``%``]:
 
 . Let ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyListIR`` ``+}+`` be ``TBL.+KEYS+``.
-. Let xref:TableKeys_eval[EC~0~ ARCH~0~ +|-+ tableKeyListIR +:+ EC~1~ ARCH~1~ tableKeysResult].
+. Let the updated context ``EC~1~``, state ``ARCH~1~`` , and result ``tableKeysResult`` be
+* the result of xref:TableKeys_eval[evaluating ``tableKeyListIR`` under context ``EC~0~`` and state ``ARCH~0~``].
 . If let ``exitResult`` be ``tableKeysResult``:
  .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
 . Else:
@@ -17194,37 +17187,45 @@ xref:SelectCases_match[Matching ``value~key~^{asterisk}^`` against ``selectCaseI
 * the result of xref:SelectCases_match[matching ``value~key~^{asterisk}^`` against ``selectCaseIR~t~^{asterisk}^`` under context ``EC~1~`` and state ``ARCH~1~``].
   ... Result in the updated context ``EC~2~``, state ``ARCH~2~``, and ``selectCaseMatchResult'``.
 
-xref:TableKey_eval[TableKey_eval: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typedExpressionIR`` ``+:+`` ``nameIR`` ``annotationList`` ``+;+`` ``+:+`` ``%`` ``%`` ``%``]
+xref:TableKey_eval[TableKey_eval]:
 
-xref:TableKey_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typedExpressionIR`` ``+:+`` ``nameIR`` ``annotationList`` ``+;+`` ``+:+`` ``%`` ``%`` ``%``]:
+* Evaluating ``tableKeyIR`` under context ``evalContext`` and state ``arch``:
+* Results in the updated context ``evalContext``, state ``arch`` , and result ``tableKeyResult``.
+
+xref:TableKey_eval[Evaluating ``typedExpressionIR`` ``+:+`` ``nameIR`` ``annotationList`` ``+;+`` under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let the updated context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under cursor ``+LOCAL+``, context ``EC~0~``, and state ``ARCH~0~``].
 . If let ``exitResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+ .. Result in the updated context ``EC~1~``, state ``ARCH~1~`` , and result ``+EXIT+``.
 . Else if let ``value`` be ``expressionResult``:
  .. Let ``tableKeyValue`` be ``value`` ``+:+`` ``nameIR``.
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``tableKeyValue``.
+ .. Result in the updated context ``EC~1~``, state ``ARCH~1~`` , and result ``tableKeyValue``.
 
-xref:TableKeys_eval[TableKeys_eval: ``evalContext`` ``arch`` ``+|-+`` ``tableKeyIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]
+xref:TableKeys_eval[TableKeys_eval]:
 
-xref:TableKeys_eval[``evalContext`` ``arch`` ``+|-+`` ``tableKeyIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]:
+* Evaluating ``tableKeyListIR`` under context ``evalContext`` and state ``arch``:
+* Results in the updated context ``evalContext``, state ``arch`` , and result ``tableKeysResult``.
+
+xref:TableKeys_eval[Evaluating ``tableKeyIR^{asterisk}^`` under context ``evalContext`` and state ``arch``]:
 
 . If ``tableKeyIR^{asterisk}^`` is equal to ``·``:
- .. Result in ``evalContext``, ``arch``, and ``·``.
+ .. Result in the updated context ``evalContext``, state ``arch`` , and result ``·``.
 . If let ``tableKeyIR~h~`` ``{two-colons}`` ``tableKeyIR~t~^{asterisk}^`` be ``tableKeyIR^{asterisk}^``:
- .. Let xref:TableKey_eval[evalContext arch +|-+ tableKeyIR~h~ +:+ EC~1~ ARCH~1~ tableKeyResult].
+ .. Let the updated context ``EC~1~``, state ``ARCH~1~`` , and result ``tableKeyResult`` be
+* the result of xref:TableKey_eval[evaluating ``tableKeyIR~h~`` under context ``evalContext`` and state ``arch``].
  .. If let ``exitResult`` be ``tableKeyResult``:
-  ... Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+  ... Result in the updated context ``EC~1~``, state ``ARCH~1~`` , and result ``+EXIT+``.
  .. Else:
   ... Let ``tableKeyValue~h~`` be ``tableKeyResult``.
-  ... Let xref:TableKeys_eval[EC~1~ ARCH~1~ +|-+ tableKeyIR~t~^{asterisk}^ +:+ EC~2~ ARCH~2~ tableKeysResult].
+  ... Let the updated context ``EC~2~``, state ``ARCH~2~`` , and result ``tableKeysResult`` be
+* the result of xref:TableKeys_eval[evaluating ``tableKeyIR~t~^{asterisk}^`` under context ``EC~1~`` and state ``ARCH~1~``].
   ... If let ``exitResult`` be ``tableKeysResult``:
-   .... Result in ``EC~2~``, ``ARCH~2~``, and ``+EXIT+``.
+   .... Result in the updated context ``EC~2~``, state ``ARCH~2~`` , and result ``+EXIT+``.
   ... Else:
    .... Let ``tableKeyValue~t~^{asterisk}^`` be ``tableKeysResult``.
    .... Let ``tableKeyValue^{asterisk}^`` be ``tableKeyValue~h~`` ``{two-colons}`` ``tableKeyValue~t~^{asterisk}^``.
-   .... Result in ``EC~2~``, ``ARCH~2~``, and ``tableKeyValue^{asterisk}^``.
+   .... Result in the updated context ``EC~2~``, state ``ARCH~2~`` , and result ``tableKeyValue^{asterisk}^``.
 
 xref:TableEntryPriority_eval[TableEntryPriority_eval: ``EC`` ``ARCH`` ``+|-+`` ``tableEntryPriorityIR^?^`` ``+:+`` ``%``]
 

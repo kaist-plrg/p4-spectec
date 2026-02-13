@@ -197,6 +197,10 @@ syntax typedExpressionIR =
 
 syntax typedExpressionListIR = typedExpressionIR*
 
+syntax memberAccessBaseIR =
+  | TYPE prefixedNameIR
+  | typedExpressionIR
+
 dec $type_of_typedExpressionIR(typedExpressionIR) : typeIR
   hint(prose_in "the type of" %0)
 def $type_of_typedExpressionIR(_ `# `( typeIR _ )) = typeIR
@@ -204,10 +208,6 @@ def $type_of_typedExpressionIR(_ `# `( typeIR _ )) = typeIR
 dec $ctk_of_typedExpressionIR(typedExpressionIR) : ctk
   hint(prose_in "the compile-time known-ness of" %0)
 def $ctk_of_typedExpressionIR(_ `# `( _ ctk )) = ctk
-
-syntax memberAccessBaseIR =
-  | TYPE prefixedNameIR
-  | typedExpressionIR
 
 ;;
 ;; Keyset expressions

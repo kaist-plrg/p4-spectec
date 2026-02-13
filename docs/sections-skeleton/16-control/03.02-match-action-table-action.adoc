@@ -1,0 +1,136 @@
+[#sec-table-action]
+==== Table actions
+
+// 912
+A table must declare all possible actions that may appear within the associated
+lookup table or in the default action. This is done with the `actions`
+property; the value of this property is always an `actionList`:
+
+// 913 - Modified
+${syntax: tableActionList tableAction tableActionReference}
+
+// 914
+To illustrate, recall the example Very Simple Switch program in
+<<sec-vss-all>>:
+
+// 915
+[source,p4]
+----
+action Drop_action() {
+  outCtrl.outputPort = DROP_PORT;
+}
+
+action Rewrite_smac(EthernetAddress sourceMac) {
+  headers.ethernet.srcAddr = sourceMac;
+}
+
+table smac {
+    key = { outCtrl.outputPort : exact; }
+    actions = {
+        Drop_action;
+        Rewrite_smac;
+    }
+}
+----
+
+// 916
+* The entries in the `smac` `table` may contain two different actions:
+  `Drop_action` and `Rewrite_mac`.
+* The `Rewrite_smac` action has one parameter, `sourceMac`, which in this case
+  will be provided by the control plane.
+
+// 917
+Each action in the list of actions for a table must have a distinct name--e.g.,
+the following program fragment is illegal:
+
+// 918
+[source,p4]
+----
+action a() {}
+control c() {
+    action a() {}
+    // Illegal table: two actions with the same name
+    table t { actions = { a; .a; } }
+}
+----
+
+// 919
+Each action parameter that has a direction (`in`, `inout`, or `out`) must be
+bound in the `actions` list specification; conversely, no directionless
+parameters may be bound in the list. The expressions supplied as arguments to
+an `action` are not evaluated until the action is invoked. Applying tables,
+whether directly via an expression like `table1.apply().hit`, or indirectly,
+are forbidden in the expressions supplied as action arguments.
+
+// 920
+[source,p4]
+----
+action a(in bit<32> x) { /* body omitted */ }
+bit<32> z;
+action b(inout bit<32> x, bit<8> data) { /* body omitted */ }
+table t {
+    actions = {
+       // a; -- illegal, x parameter must be bound
+       a(5);  // binding a's parameter x to 5
+       b(z);  // binding b's parameter x to z
+       // b(z, 3); -- illegal, cannot bind directionless data parameter
+       // b(); -- illegal, x parameter must be bound
+       // a(table2.apply().hit ? 5 : 3); -- illegal, cannot apply a table here
+    }
+}
+----
+
+===== Type checking
+
+// Added
+A table action property is type checked as follows:
+
+${rulegroup-source: TableProperty_ok/actions}
+${rulegroup-prose: TableProperty_ok/actions}
+
+// Added
+After type checking, a table action property is represented in P4~IR~ as:
+
+// Added
+${syntax: tableActionsPropertyIR tableActionListIR
+          tableActionIR tableActionReferenceIR}
+
+// Added
+Table actions are type checked with the following relation:
+
+// Added
+${relation-title-source: TableActions_ok}
+${relation-title-prose: TableActions_ok}
+
+// Added
+${rulegroup-source: TableActions_ok}
+${rulegroup-prose: TableActions_ok}
+
+// Added
+The relation invokes the following relation for each action:
+
+// Added
+${relation-title-source: TableAction_ok}
+${relation-title-prose: TableAction_ok}
+
+// Added
+${rulegroup-source: TableAction_ok}
+${rulegroup-prose: TableAction_ok}
+
+// Added
+To check that each action conforms to the calling convention, the following
+relation is used:
+
+// Added
+${relation-title-source: Call_action_partial_ok}
+${relation-title-prose: Call_action_partial_ok}
+
+// Added
+${rulegroup-source: Call_action_partial_ok}
+${rulegroup-prose: Call_action_partial_ok}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: TableProperty_inst/tableActionsPropertyIR}
+${rulegroup-prose: TableProperty_inst/tableActionsPropertyIR}

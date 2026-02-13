@@ -6,42 +6,45 @@
 
 ;;; KEY `= `{ tableKeyListIR }
 
-rule TableProperty_inst/key:
-  IC STO |- KEY `= `{ tableKeyListIR }
-          : STO (KEY `= `{ tableKeyListIR })
+rule TableProperty_inst/tableKeysPropertyIR:
+  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
 
 ;;; ACTIONS `= `{ tableActionListIR }
 
-rule TableProperty_inst/actions:
-  IC STO |- ACTIONS `= `{ tableActionListIR }
-          : STO (ACTIONS `= `{ tableActionListIR })
-
-;;; annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
-
-rule TableProperty_inst/entries:
-  IC STO |- annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
-          : STO (annotationList constOptIR ENTRIES `= `{ tableEntryListIR })
+rule TableProperty_inst/tableActionsPropertyIR:
+  IC STO |- tableActionsPropertyIR : STO tableActionsPropertyIR
 
 ;;; annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
 
-rule TableProperty_inst/custom-default-action:
-  IC STO |- annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
-          : STO (annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;)
+rule TableProperty_inst/tableDefaultActionPropertyIR:
+  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
+
+;;; annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
+
+rule TableProperty_inst/tableEntriesPropertyIR:
+  IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
 
 ;;; annotationList constOptIR CUSTOM nameIR initializerIR `;
-
-rule TableProperty_inst/custom:
-  IC STO_0 |- annotationList constOptIR CUSTOM nameIR (`= typedExpressionIR) `;
-            : STO_1 (annotationList constOptIR CUSTOM_CONST nameIR (`= `VALUE value) `;)
-  ---- ;; instantiate expression and replace custom property with evaluated result
-  -- if IC_inner = $enter_path_i(IC, nameIR)
-  -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
-
 ;;; annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
 
-rule TableProperty_inst/custom-const:
-  IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
-          : STO (annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;)
+rulegroup TableProperty_inst/tableCustomPropertyIR {
+
+  rule TableProperty_inst/custom:
+    IC STO_0 |- annotationList constOptIR CUSTOM nameIR (`= typedExpressionIR) `;
+              : STO_1 tableCustomPropertyIR_inst
+    ---- ;; instantiate expression and replace custom property with evaluated result
+    -- if IC_inner = $enter_path_i(IC, nameIR)
+    -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
+    -- if tableCustomPropertyIR_inst
+        = annotationList constOptIR CUSTOM_CONST nameIR (`= `VALUE value) `;
+
+  rule TableProperty_inst/custom-const:
+    IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
+            : STO tableCustomPropertyIR_inst
+    -- if tableCustomPropertyIR_inst
+        = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
+
+}
 
 ;;
 ;; Table property list instantiation
