@@ -1174,30 +1174,68 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         traces
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
+    let wrap_ctx sign = (ctx, sign) in
     match instr.it with
     | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
-        eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt
+        eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt |> wrap_ctx
     | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr ctx id notexp iterexps holdcase
+        eval_hold_instr ctx id notexp iterexps holdcase |> wrap_ctx
     | CaseI (exp, cases, phantom_opt) ->
-        eval_case_instr ctx exp cases phantom_opt
-    | OtherwiseI instrs -> eval_otherwise_instr ctx instrs
+        eval_case_instr ctx exp cases phantom_opt |> wrap_ctx
+    | OtherwiseI instrs -> eval_otherwise_instr ctx instrs |> wrap_ctx
     | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
         eval_group_instr ctx id_group rel_signature exps_group instrs_group
+        |> wrap_ctx
     | LetI (exp_l, exp_r, iterinstrs) ->
         eval_let_instr ctx exp_l exp_r iterinstrs
     | RuleI (id, notexp, inputs, iterinstrs) ->
         eval_rule_instr ctx id notexp inputs iterinstrs
-    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
-    | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI exp -> eval_debug_instr ctx exp
+    | ResultI (rel_signature, exps) ->
+        eval_result_instr ctx rel_signature exps |> wrap_ctx
+    | ReturnI exp -> eval_return_instr ctx exp |> wrap_ctx
+    | DebugI exp -> eval_debug_instr ctx exp |> wrap_ctx
 
-  and eval_instrs (ctx : Ctx.t) (sign : Sign.t) (instrs : instr list) :
+  and eval_instrs (ctx : Ctx.t) (instrs : instr list) : Ctx.t * Sign.t =
+    if !Ctx.is_det then eval_instrs_deterministic ctx instrs
+    else eval_instrs_sequential ctx instrs
+
+  and eval_instrs_deterministic (ctx : Ctx.t) (instrs : instr list) :
+      Ctx.t * Sign.t =
+    let eval_instr_deterministic (ctx_pre : Ctx.t) (sign_pre : Sign.t)
+        (instr : instr) : Ctx.t * Sign.t =
+      try
+        let ctx_post, sign_post = eval_instr ctx_pre instr in
+        match (sign_pre, sign_post) with
+        | Sign.Cont, _ -> (ctx_post, sign_post)
+        | Sign.Res _, Sign.Cont -> (ctx_post, sign_pre)
+        | Sign.Res _, Sign.Res (otherwise, _) ->
+            if not otherwise then raise (Sign.Nondeterminism instr.at)
+            else (ctx_pre, sign_pre)
+        | Sign.Res _, Sign.Ret _ -> assert false
+        | Sign.Ret _, Sign.Cont -> (ctx_post, sign_pre)
+        | Sign.Ret _, Sign.Res _ -> assert false
+        | Sign.Ret _, Sign.Ret (otherwise, _) ->
+            if not otherwise then raise (Sign.Nondeterminism instr.at)
+            else (ctx_pre, sign_pre)
+      with Backtrace traces -> (
+        match sign_pre with
+        | Sign.Cont -> raise (Backtrace traces)
+        | _ -> (ctx_pre, sign_pre))
+    in
+    try
+      List.fold_left
+        (fun (ctx_pre, sign_pre) instr ->
+          eval_instr_deterministic ctx_pre sign_pre instr)
+        (ctx, Sign.Cont) instrs
+    with Sign.Nondeterminism at ->
+      back at "nondeterministic instruction evaluation"
+
+  and eval_instrs_sequential (ctx : Ctx.t) (instrs : instr list) :
       Ctx.t * Sign.t =
     List.fold_left
       (fun (ctx, sign) instr ->
         match sign with Sign.Cont -> eval_instr ctx instr | _ -> (ctx, sign))
-      (ctx, sign) instrs
+      (ctx, Sign.Cont) instrs
 
   (* If instruction evaluation *)
 
@@ -1255,8 +1293,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_if_cond_iter' ctx exp_cond iterexps
 
   and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-      (instrs_then : instr list) (phantom_opt : phantom option) : Ctx.t * Sign.t
-      =
+      (instrs_then : instr list) (phantom_opt : phantom option) : Sign.t =
     (* Evaluate the if condition and mark phantom *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     (match phantom_opt with
@@ -1264,9 +1301,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
     if cond then
-      let _, sign_then = eval_instrs ctx Cont instrs_then in
-      (ctx, sign_then)
-    else (ctx, Cont)
+      let _, sign_then = eval_instrs ctx instrs_then in
+      sign_then
+    else Cont
 
   (* Hold instruction evaluation *)
 
@@ -1340,7 +1377,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_hold_cond_iter' ctx id notexp iterexps
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Sign.t =
+      (iterexps : iterexp list) (holdcase : holdcase) : Sign.t =
     (* Backup in case of failure *)
     Hook.backup ();
     (* Evaluate the hold condition *)
@@ -1349,21 +1386,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
        if the expected behavior is the relation not holding *)
     match holdcase with
     | BothH (instrs_hold, instrs_not_hold) ->
-        if cond then eval_instrs ctx Cont instrs_hold
-        else (
-          Hook.restore ();
-          eval_instrs ctx Cont instrs_not_hold)
+        let _, sign =
+          if cond then eval_instrs ctx instrs_hold
+          else (
+            Hook.restore ();
+            eval_instrs ctx instrs_not_hold)
+        in
+        sign
     | HoldH (instrs_hold, phantom_opt) ->
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
         | None -> ());
-        if cond then eval_instrs ctx Cont instrs_hold else (ctx, Cont)
+        if cond then
+          let _, sign = eval_instrs ctx instrs_hold in
+          sign
+        else Cont
     | NotHoldH (instrs_not_hold, phantom_opt) ->
         Hook.restore ();
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling cond pid value_cond
         | None -> ());
-        if not cond then eval_instrs ctx Cont instrs_not_hold else (ctx, Cont)
+        if not cond then
+          let _, sign = eval_instrs ctx instrs_not_hold in
+          sign
+        else Cont
 
   (* Case analysis instruction evaluation *)
 
@@ -1403,7 +1449,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (block_match, value_cond)
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (phantom_opt : phantom option) : Ctx.t * Sign.t =
+      (phantom_opt : phantom option) : Sign.t =
     (* Evaluate the matching case and mark phantom *)
     let instrs_opt, value_cond = eval_cases ctx exp cases in
     (match phantom_opt with
@@ -1414,24 +1460,26 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Evaluate the matching case if any *)
     match instrs_opt with
     | Some instrs ->
-        let _, sign = eval_instrs ctx Cont instrs in
-        (ctx, sign)
-    | None -> (ctx, Cont)
+        let _, sign = eval_instrs ctx instrs in
+        sign
+    | None -> Cont
 
   (* Otherwise instruction evaluation *)
 
-  and eval_otherwise_instr (ctx : Ctx.t) (instrs : instr list) : Ctx.t * Sign.t
-      =
-    let _, sign = eval_instrs ctx Cont instrs in
-    (ctx, sign)
+  and eval_otherwise_instr (ctx : Ctx.t) (instrs : instr list) : Sign.t =
+    let _, sign = eval_instrs ctx instrs in
+    match sign with
+    | Cont -> back no_region "otherwise must return or result"
+    | Res (_, values) -> Sign.Res (true, values)
+    | Ret (_, value) -> Sign.Ret (true, value)
 
   (* Group instruction evaluation *)
 
   and eval_group_instr (ctx : Ctx.t) (_id_group : id)
       (_rel_signature : rel_signature) (_exps_group : exp list)
-      (instrs_group : instr list) : Ctx.t * Sign.t =
-    let _, sign_group = eval_instrs ctx Cont instrs_group in
-    (ctx, sign_group)
+      (instrs_group : instr list) : Sign.t =
+    let _, sign_group = eval_instrs ctx instrs_group in
+    sign_group
 
   (* Let instruction evaluation *)
 
@@ -1661,24 +1709,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Result instruction evaluation *)
 
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
-      (exps : exp list) : Ctx.t * Sign.t =
+      (exps : exp list) : Sign.t =
     let values = eval_exps ctx exps in
-    (ctx, Sign.Res values)
+    Sign.Res (false, values)
 
   (* Return instruction evaluation *)
 
-  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
+  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Sign.t =
     let value = eval_exp ctx exp in
-    (ctx, Sign.Ret value)
+    Sign.Ret (false, value)
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Sign.t =
+  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Sign.t =
     let value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
     print_endline @@ Il.Print.string_of_value value;
-    (ctx, Sign.Cont)
+    Sign.Cont
 
   (* Invoke a relation *)
 
@@ -1726,9 +1774,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
-      let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+      let _ctx_local, sign = eval_instrs ctx_local instrs in
       match sign with
-      | Res values_output ->
+      | Res (_, values_output) ->
           List.iteri
             (fun idx_arg value_input ->
               List.iter
@@ -1833,9 +1881,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+    let _ctx_local, sign = eval_instrs_sequential ctx_local instrs in
     match sign with
-    | Ret value_output ->
+    | Ret (_, value_output) ->
         List.iteri
           (fun idx_arg value_input ->
             Hook.on_value_dependency value_output value_input
@@ -1860,9 +1908,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let invoke_defined_func' () =
       let ctx_local = assign_params ctx ctx_local params values_input in
-      let _ctx_local, sign = eval_instrs ctx_local Cont instrs in
+      let _ctx_local, sign = eval_instrs ctx_local instrs in
       match sign with
-      | Ret value_output ->
+      | Ret (_, value_output) ->
           List.iteri
             (fun idx_arg value_input ->
               Hook.on_value_dependency value_output value_input
@@ -1943,10 +1991,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Initialization *)
 
-  let init (spec : spec) : unit =
+  let init ~(det : bool) (spec : spec) : unit =
     let printer value =
       Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
     in
     Builtin.Call.init printer;
-    Ctx.init spec
+    Ctx.init ~det spec
 end

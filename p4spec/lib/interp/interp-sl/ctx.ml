@@ -25,6 +25,10 @@ let back_dup (at : region) (kind : string) (id : string) =
 
 type cursor = Global | Local
 
+(* Mode *)
+
+let is_det : bool ref = ref false
+
 (* Context *)
 
 (* Global layer *)
@@ -119,7 +123,9 @@ let load_def (def : def) : unit =
       let func = Func.Defined (tparams, params, instrs) in
       add_func_global id func
 
-let init (spec : spec) : unit = List.iter load_def spec
+let init ~(det : bool) (spec : spec) : unit =
+  is_det := det;
+  List.iter load_def spec
 
 (* Constructor *)
 

@@ -28,9 +28,7 @@ module Make
     | SL spec_sl ->
         spec := SL spec_sl;
         Arch.init SL_mode;
-        if det then
-          warn_no_region "deterministic match mode is not supported for SL";
-        Interp_SL.init spec_sl
+        Interp_SL.init ~det spec_sl
     | Empty -> assert false
 
   (* Logger *)

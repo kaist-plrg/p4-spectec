@@ -94,7 +94,7 @@ module type INTERP_SL = sig
 
   (* Initialization *)
 
-  val init : Sl.spec -> unit
+  val init : det:bool -> Sl.spec -> unit
 end
 
 module type DRIVER = sig
