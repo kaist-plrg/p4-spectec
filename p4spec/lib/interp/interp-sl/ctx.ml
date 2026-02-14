@@ -4,7 +4,7 @@ open Sl
 open Runtime.Dynamic_Sl
 open Envs
 open Error
-open Util.Backtrace
+open Backtrace
 open Util.Source
 
 (* Error *)
@@ -13,13 +13,13 @@ let error_undef (at : region) (kind : string) (id : string) =
   error at (Format.asprintf "%s `%s` is undefined" kind id)
 
 let back_undef (at : region) (kind : string) (id : string) =
-  back at (Format.asprintf "%s `%s` is undefined" kind id)
+  back_err at (Format.asprintf "%s `%s` is undefined" kind id)
 
 let error_dup (at : region) (kind : string) (id : string) =
   error at (Format.asprintf "%s `%s` was already defined" kind id)
 
 let back_dup (at : region) (kind : string) (id : string) =
-  back at (Format.asprintf "%s `%s` was already defined" kind id)
+  back_err at (Format.asprintf "%s `%s` was already defined" kind id)
 
 (* Cursor *)
 
@@ -144,7 +144,7 @@ let find_values_input_opt (ctx : t) : Value.t list option =
 let find_values_input (ctx : t) : Value.t list =
   match find_values_input_opt ctx with
   | Some values_input -> values_input
-  | None -> back no_region "cannot find input values in empty local context"
+  | None -> back_err no_region "cannot find input values in empty local context"
 
 (* Finders for values *)
 
@@ -230,7 +230,7 @@ let add_value (ctx : t) (var : Var.t) (value : Value.t) : t =
   match ctx.local with
   | Empty ->
       let id, _ = var in
-      back id.at "cannot add value to empty local context"
+      back_err id.at "cannot add value to empty local context"
   | Rel { rid; values_input; venv } ->
       let venv = VEnv.add var value venv in
       { ctx with local = Rel { rid; values_input; venv } }
@@ -243,8 +243,8 @@ let add_value (ctx : t) (var : Var.t) (value : Value.t) : t =
 let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
   if bound_typdef ctx tid then back_dup tid.at "type" tid.it;
   match ctx.local with
-  | Empty -> back tid.at "cannot add type to empty local context"
-  | Rel _ -> back tid.at "cannot add type to rule context"
+  | Empty -> back_err tid.at "cannot add type to empty local context"
+  | Rel _ -> back_err tid.at "cannot add type to rule context"
   | Func { fid; values_input; tdenv; fenv; venv } ->
       let tdenv = TDEnv.add tid td tdenv in
       { ctx with local = Func { fid; values_input; tdenv; fenv; venv } }
@@ -254,8 +254,8 @@ let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
 let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t =
   if bound_func ctx fid then back_dup fid.at "function" fid.it;
   match ctx.local with
-  | Empty -> back fid.at "cannot add function to empty local context"
-  | Rel _ -> back fid.at "cannot add function to relation context"
+  | Empty -> back_err fid.at "cannot add function to empty local context"
+  | Rel _ -> back_err fid.at "cannot add function to relation context"
   | Func { fid = fid_local; values_input; tdenv; fenv; venv } ->
       let fenv = FEnv.add fid func fenv in
       {
@@ -282,7 +282,7 @@ let localize_func (ctx : t) (fid : FId.t) (values_input : value list)
 
 let localize_clear (ctx : t) : t =
   match ctx.local with
-  | Empty -> back no_region "cannot clear empty local context"
+  | Empty -> back_err no_region "cannot clear empty local context"
   | Rel { rid; values_input; _ } ->
       { ctx with local = Rel { rid; values_input; venv = VEnv.empty } }
   | Func { fid; values_input; tdenv; fenv; _ } ->
@@ -301,7 +301,7 @@ let transpose (value_matrix : value list list) : value list list =
   | [] -> []
   | rows ->
       let width = List.length (List.hd rows) in
-      check_back
+      check_back_err
         (List.for_all (fun row -> List.length row = width) rows)
         no_region "cannot transpose a matrix of value batches";
       List.fold_right
@@ -328,7 +328,7 @@ let sub_opt (ctx : t) (vars : var list) : t option =
     in
     Some ctx_sub
   else if List.for_all Option.is_none values then None
-  else back no_region "mismatch in optionality of iterated variables"
+  else back_err no_region "mismatch in optionality of iterated variables"
 
 let sub_list (ctx : t) (vars : var list) : t list =
   (* First break the values that are to be iterated over,
