@@ -1168,9 +1168,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Hook.on_instr instr;
     try eval_instr' ctx instr
     with Backtrace backtrace ->
-      back_nest instr.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
-        backtrace
+      backtrace
+      |> back_nest instr.at
+           (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
     match instr.it with
@@ -1200,15 +1200,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       try
         let flow_post = eval_instr ctx instr in
         match flow_pre with
-        | Cont -> flow_post
+        | Cont traces_pre -> (
+            match flow_post with
+            | Cont traces_post -> Cont (traces_pre @ traces_post)
+            | _ -> flow_post)
         | Res _ -> (
             match flow_post with
-            | Cont -> flow_pre
+            | Cont _ -> flow_pre
             | Res _ -> nondet instr.at
             | Ret _ -> back_err instr.at "cannot have both result and return")
         | Ret _ -> (
             match flow_post with
-            | Cont -> flow_pre
+            | Cont _ -> flow_pre
             | Res _ -> back_err instr.at "cannot have both return and result"
             | Ret _ -> nondet instr.at)
       with Backtrace (Unmatch _) -> flow_pre
@@ -1216,22 +1219,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       List.fold_left
         (fun flow_pre instr -> eval_instr_deterministic flow_pre instr)
-        Flow.Cont block
+        (Flow.Cont []) block
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
   and eval_block_sequential (ctx : Ctx.t) (block : block) : Flow.t =
     List.fold_left
       (fun flow_pre instr ->
-        match flow_pre with Flow.Cont -> eval_instr ctx instr | _ -> flow_pre)
-      Flow.Cont block
+        match flow_pre with
+        | Flow.Cont _ -> eval_instr ctx instr
+        | _ -> flow_pre)
+      (Flow.Cont []) block
 
   and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
     match flow with
-    | Flow.Cont -> (
+    | Flow.Cont traces -> (
         match elseblock_opt with
         | Some block_else -> eval_block ctx block_else
-        | None -> Flow.Cont)
+        | None -> Flow.Cont traces)
     | _ -> flow
 
   (* If instruction evaluation *)
@@ -1316,7 +1321,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block ctx block_then else Cont
+    if cond then eval_block ctx block_then else Cont []
 
   (* Hold instruction evaluation *)
 
@@ -1410,13 +1415,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
         | None -> ());
-        if cond then eval_block ctx block_hold else Cont
+        if cond then eval_block ctx block_hold else Cont []
     | NotHoldH (block_not_hold, phantom_opt) ->
         Hook.restore ();
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling cond pid value_cond
         | None -> ());
-        if not cond then eval_block ctx block_not_hold else Cont
+        if not cond then eval_block ctx block_not_hold else Cont []
 
   (* Case analysis instruction evaluation *)
 
@@ -1465,7 +1470,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_instr_dangling (not matched) pid value_cond
     | None -> ());
     (* Evaluate the matching case if any *)
-    match block_opt with Some block -> eval_block ctx block | None -> Cont
+    match block_opt with Some block -> eval_block ctx block | None -> Cont []
 
   (* Group instruction evaluation *)
 
@@ -1614,7 +1619,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
       eval_block ctx block
-    with Backtrace (Unmatch _) -> Cont
+    with Backtrace (Unmatch traces) -> Cont traces
 
   (* Rule instruction evaluation *)
 
@@ -1702,7 +1707,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
       eval_block ctx block
-    with Backtrace (Unmatch _) -> Cont
+    with Backtrace (Unmatch traces) -> Cont traces
 
   (* Result instruction evaluation *)
 
@@ -1724,7 +1729,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
     print_endline @@ Il.Print.string_of_value value;
-    Flow.Cont
+    Flow.Cont []
 
   (* Invoke a relation *)
 
@@ -1790,7 +1795,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 values_output)
             values_input;
           values_output
-      | _ -> back_unmatch id.at "relation did not produce results"
+      | Ret _ -> back_err id.at "relation cannot return a value"
+      | Cont traces -> Unmatch traces |> back
     in
     if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
       let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
@@ -1878,7 +1884,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Builtin.Call.invoke
           (fun value -> Hook.on_value value)
           id targs values_input
-      with Util.Error.BuiltinError (at, msg) -> back_err at msg
+      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
     List.iteri
       (fun idx_arg value_input ->
@@ -1929,7 +1935,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 (Dep.Edges.Func (id, idx_arg)))
             values_input;
           value_output
-      | _ -> back_unmatch id.at "function did not return a value"
+      | Res _ -> back_err id.at "relation cannot return a value"
+      | Cont traces -> Unmatch traces |> back
     in
     if Hook.is_cache_on () && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in

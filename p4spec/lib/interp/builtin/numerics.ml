@@ -2,6 +2,7 @@ open Lang
 open Xl
 open Il
 module Value = Runtime.Dynamic_Il.Value
+open Error
 open Util.Source
 
 (* Conversion between meta-bits and OCaml bool array *)
@@ -152,6 +153,7 @@ let bits_to_int_unsigned (add : value -> unit) (at : region) (targs : targ list)
 (* dec $bits_to_int_signed(bool* ) : int *)
 
 let bits_to_int_signed' (bits : bool array) : Bigint.t =
+  if Array.length bits = 0 then error no_region "empty bit array";
   let sign = bits.(0) in
   let int_unsigned = bits_to_int_unsigned' bits in
   if sign then

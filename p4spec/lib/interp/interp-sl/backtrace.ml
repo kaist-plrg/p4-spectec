@@ -22,6 +22,8 @@ let back_failtraces (backtrace : backtrace) : failtrace list =
 
 (* Backtracing *)
 
+let back (backtrace : backtrace) = raise (Backtrace backtrace)
+
 let back_err (at : region) (msg : string) =
   let traces = [ (at, msg) ] in
   raise (Backtrace (Err traces))

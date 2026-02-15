@@ -1358,11 +1358,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (values_input : value list) : value backtrack =
     (* Invoke builtin function *)
     let invoke_func_builtin' () =
-      let value_output =
-        try Builtin.Call.invoke (fun _ -> ()) id targs values_input
-        with Util.Error.BuiltinError (at, msg) -> error at msg
-      in
-      Ok value_output
+      try
+        let value_output =
+          Builtin.Call.invoke (fun _ -> ()) id targs values_input
+        in
+        Ok value_output
+      with Util.Error.BuiltinError (at, msg) -> back_err at msg
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
