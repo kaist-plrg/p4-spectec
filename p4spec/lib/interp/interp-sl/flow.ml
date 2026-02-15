@@ -3,5 +3,4 @@ open Sl
 
 (* Signatures for control flow *)
 
-type otherwise = bool
-type t = Cont | Res of otherwise * value list | Ret of otherwise * value
+type t = Cont | Res of value list | Ret of value

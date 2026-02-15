@@ -14,8 +14,7 @@ module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
 open Error
 open Backtrace
-
-(* open Nondet *)
+open Nondet
 module F = Format
 open Util.Source
 
@@ -1166,7 +1165,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
-    (* Hook.on_instr instr; *)
+    Hook.on_instr instr;
     try eval_instr' ctx instr
     with Backtrace backtrace ->
       back_nest instr.at
@@ -1192,6 +1191,35 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | DebugI exp -> eval_debug_instr ctx exp
 
   and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
+    if !Ctx.is_det then eval_block_deterministic ctx block
+    else eval_block_sequential ctx block
+
+  and eval_block_deterministic (ctx : Ctx.t) (block : block) : Flow.t =
+    let eval_instr_deterministic (flow_pre : Flow.t) (instr : instr) : Flow.t =
+      let open Flow in
+      try
+        let flow_post = eval_instr ctx instr in
+        match flow_pre with
+        | Cont -> flow_post
+        | Res _ -> (
+            match flow_post with
+            | Cont -> flow_pre
+            | Res _ -> nondet instr.at
+            | Ret _ -> back_err instr.at "cannot have both result and return")
+        | Ret _ -> (
+            match flow_post with
+            | Cont -> flow_pre
+            | Res _ -> back_err instr.at "cannot have both return and result"
+            | Ret _ -> nondet instr.at)
+      with Backtrace (Unmatch _) -> flow_pre
+    in
+    try
+      List.fold_left
+        (fun flow_pre instr -> eval_instr_deterministic flow_pre instr)
+        Flow.Cont block
+    with Nondet at -> back_err at "nondeterministic instruction evaluation"
+
+  and eval_block_sequential (ctx : Ctx.t) (block : block) : Flow.t =
     List.fold_left
       (fun flow_pre instr ->
         match flow_pre with Flow.Cont -> eval_instr ctx instr | _ -> flow_pre)
@@ -1681,13 +1709,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
       (exps : exp list) : Flow.t =
     let values = eval_exps ctx exps in
-    Flow.Res (false, values)
+    Flow.Res values
 
   (* Return instruction evaluation *)
 
   and eval_return_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
     let value = eval_exp ctx exp in
-    Flow.Ret (false, value)
+    Flow.Ret value
 
   (* Debug instruction evaluation *)
 
@@ -1752,7 +1780,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let flow = eval_block ctx_local block in
       let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
       match flow with
-      | Res (_, values_output) ->
+      | Res values_output ->
           List.iteri
             (fun idx_arg value_input ->
               List.iter
@@ -1864,9 +1892,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block ctx_local instrs in
+    let flow = eval_block_sequential ctx_local instrs in
     match flow with
-    | Ret (_, value_output) ->
+    | Ret value_output ->
         List.iteri
           (fun idx_arg value_input ->
             Hook.on_value_dependency value_output value_input
@@ -1894,7 +1922,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let flow = eval_block ctx_local block in
       let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
       match flow with
-      | Ret (_, value_output) ->
+      | Ret value_output ->
           List.iteri
             (fun idx_arg value_input ->
               Hook.on_value_dependency value_output value_input
