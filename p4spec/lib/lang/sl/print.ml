@@ -331,7 +331,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block ~level ~index block)
+          (string_of_block ~level:(level + 1) block)
   | RuleI (id_rel, notexp, _inputs, iterinstrs, block) ->
       let s_short =
         Format.asprintf "(%s: %s)%s" (string_of_relid id_rel)
@@ -341,7 +341,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block ~level ~index block)
+          (string_of_block ~level:(level + 1) block)
   | ResultI (_, []) ->
       let s_short = "The relation holds" in
       if short then s_short else Format.asprintf "%s%s" order s_short

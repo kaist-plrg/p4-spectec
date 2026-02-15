@@ -216,14 +216,14 @@ let rec upstream (block : block) : block =
   match block with
   | [] -> []
   | { it = IfI (exp_cond, iterexps, block_then); at; _ } :: block_t ->
-      let block_then = block_then |> upstream in
+      let block_then = upstream block_then in
       let instr_h = IfI (exp_cond, iterexps, block_then) $ at in
       let block_t = upstream block_t in
       instr_h :: block_t
   | { it = HoldI (id, notexp, iterexps, block_hold, block_nothold); at; _ }
     :: block_t ->
-      let block_hold = block_hold |> upstream in
-      let block_nothold = block_nothold |> upstream in
+      let block_hold = upstream block_hold in
+      let block_nothold = upstream block_nothold in
       let instr_h =
         HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
       in
@@ -277,7 +277,7 @@ let rec upstream (block : block) : block =
           let block_t = upstream block_t in
           instr_h :: block_t)
   | instr_h :: block_t ->
-      let block_t = block_t |> upstream in
+      let block_t = upstream block_t in
       instr_h :: block_t
 
 let apply (block : block) : block = upstream block

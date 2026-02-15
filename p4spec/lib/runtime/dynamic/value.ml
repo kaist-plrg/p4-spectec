@@ -3,6 +3,7 @@ open Lang
 open Xl
 open Il
 open Il.Print
+open Util.Source
 
 (* Ticker for node identifier tracking *)
 
@@ -46,7 +47,9 @@ let rec compare (value_l : t) (value_r : t) =
   | TextV s_l, TextV s_r -> String.compare s_l s_r
   | StructV fields_l, StructV fields_r ->
       let atoms_l, values_l = List.split fields_l in
+      let atoms_l = List.map it atoms_l in
       let atoms_r, values_r = List.split fields_r in
+      let atoms_r = List.map it atoms_r in
       let cmp_atoms = List.compare Atom.compare atoms_l atoms_r in
       if cmp_atoms <> 0 then cmp_atoms else compares values_l values_r
   | CaseV (mixop_l, values_l), CaseV (mixop_r, values_r) ->
