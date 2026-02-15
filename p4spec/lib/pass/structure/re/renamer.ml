@@ -24,6 +24,8 @@ let filter (p : Id.t -> 'a -> bool) (renamer : t) : t = Rename.filter p renamer
 
 (* Renaming *)
 
+(* Expressions *)
+
 let rec rename_exp (renamer : t) (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
@@ -130,6 +132,8 @@ and rename_iterexp (renamer : t) (iterexp : iterexp) : iterexp =
 and rename_iterexps (renamer : t) (iterexps : iterexp list) : iterexp list =
   List.map (rename_iterexp renamer) iterexps
 
+(* Paths *)
+
 and rename_path (renamer : t) (path : path) : path =
   let at, note = (path.at, path.note) in
   match path.it with
@@ -147,6 +151,8 @@ and rename_path (renamer : t) (path : path) : path =
       let path = rename_path renamer path in
       Il.DotP (path, atom) $$ (at, note)
 
+(* Arguments *)
+
 and rename_arg (renamer : t) (arg : arg) : arg =
   let at = arg.at in
   match arg.it with
@@ -158,11 +164,13 @@ and rename_arg (renamer : t) (arg : arg) : arg =
 and rename_args (renamer : t) (args : arg list) : arg list =
   List.map (rename_arg renamer) args
 
+(* Cases *)
+
 and rename_case (renamer : t) (case : case) : case =
-  let guard, instrs = case in
+  let guard, block = case in
   let guard = rename_guard renamer guard in
-  let instrs = rename_instrs renamer instrs in
-  (guard, instrs)
+  let block = rename_block renamer block in
+  (guard, block)
 
 and rename_cases (renamer : t) (cases : case list) : case list =
   List.map (rename_case renamer) cases
@@ -178,48 +186,38 @@ and rename_guard (renamer : t) (guard : guard) : guard =
       let exp = rename_exp renamer exp in
       MemG exp
 
-and rename_instr (renamer : t) (instr : instr) : t * instr =
+(* Instructions *)
+
+and rename_instr (renamer : t) (instr : instr) : instr =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then) ->
+  | IfI (exp_cond, iterexps, block_then) ->
       let exp_cond = rename_exp renamer exp_cond in
       let iterexps = rename_iterexps renamer iterexps in
-      let instrs_then = rename_instrs renamer instrs_then in
-      let instr = IfI (exp_cond, iterexps, instrs_then) $ at in
-      (renamer, instr)
-  | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
+      let block_then = rename_block renamer block_then in
+      IfI (exp_cond, iterexps, block_then) $ at
+  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
       let exps = rename_exps renamer exps in
       let iterexps = rename_iterexps renamer iterexps in
-      let instrs_hold = rename_instrs renamer instrs_hold in
-      let instrs_nothold = rename_instrs renamer instrs_nothold in
-      let instr =
-        HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
-      in
-      (renamer, instr)
+      let block_hold = rename_block renamer block_hold in
+      let block_nothold = rename_block renamer block_nothold in
+      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) ->
       let exp = rename_exp renamer exp in
       let cases = rename_cases renamer cases in
-      let instr = CaseI (exp, cases, total) $ at in
-      (renamer, instr)
-  | OtherwiseI instrs ->
-      let instrs = rename_instrs renamer instrs in
-      let instr = OtherwiseI instrs $ at in
-      (renamer, instr)
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+      CaseI (exp, cases, total) $ at
+  | GroupI (id_group, rel_signature, exps_group, block) ->
       let exps_group = rename_exps renamer exps_group in
-      let instrs_group = rename_instrs renamer instrs_group in
-      let instr =
-        GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
-      in
-      (renamer, instr)
-  | LetI (exp_l, exp_r, iterinstrs) ->
+      let block = rename_block renamer block in
+      GroupI (id_group, rel_signature, exps_group, block) $ at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let exp_r = rename_exp renamer exp_r in
       let frees_l = Ol.Free.free_exp exp_l in
       let renamer = filter (fun id _ -> not (IdSet.mem id frees_l)) renamer in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
-      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
-      (renamer, instr)
-  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs) ->
+      let block = rename_block renamer block in
+      LetI (exp_l, exp_r, iterinstrs, block) $ at
+  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) ->
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let exps_input = rename_exps renamer exps_input in
       let frees_output = Ol.Free.free_exps exps_output in
@@ -228,28 +226,23 @@ and rename_instr (renamer : t) (instr : instr) : t * instr =
       in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
-      let instr = RuleI (id_rel, (mixop, exps), inputs, iterinstrs) $ at in
-      (renamer, instr)
+      let block = rename_block renamer block in
+      RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) $ at
   | ResultI (rel_signature, exps) ->
       let exps = rename_exps renamer exps in
-      let instr = ResultI (rel_signature, exps) $ at in
-      (renamer, instr)
+      ResultI (rel_signature, exps) $ at
   | ReturnI exp ->
       let exp = rename_exp renamer exp in
-      let instr = ReturnI exp $ at in
-      (renamer, instr)
+      ReturnI exp $ at
   | DebugI exp ->
       let exp = rename_exp renamer exp in
-      let instr = DebugI exp $ at in
-      (renamer, instr)
+      DebugI exp $ at
 
 and rename_instrs (renamer : t) (instrs : instr list) : instr list =
-  List.fold_left
-    (fun (renamer, instrs) instr ->
-      let renamer, instr = rename_instr renamer instr in
-      (renamer, instrs @ [ instr ]))
-    (renamer, []) instrs
-  |> snd
+  List.map (rename_instr renamer) instrs
+
+and rename_block (renamer : t) (block : block) : block =
+  rename_instrs renamer block
 
 and rename_iterinstr_bound (renamer : t) (iterinstr : iterinstr) : iterinstr =
   let iter, vars_bound, vars_bind = iterinstr in

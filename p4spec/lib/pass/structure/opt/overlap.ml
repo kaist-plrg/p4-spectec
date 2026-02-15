@@ -3,6 +3,7 @@ open Lib
 open Lang
 open Xl
 open Ol.Ast
+open Ol.Eq
 module Typ = Runtime.Dynamic_Sl.Typ
 open Runtime.Dynamic_Sl.Envs
 open Util.Source
@@ -18,19 +19,18 @@ open Util.Source
 
 let exp_as_guard (exp_target : exp) (exp_cond : exp) : guard option =
   match exp_cond.it with
-  | UnE (`NotOp, _, exp) when Sl.Eq.eq_exp exp_target exp -> Some (BoolG false)
-  | CmpE (`EqOp, optyp, exp_l, exp_r) when Sl.Eq.eq_exp exp_target exp_l ->
+  | UnE (`NotOp, _, exp) when eq_exp exp_target exp -> Some (BoolG false)
+  | CmpE (`EqOp, optyp, exp_l, exp_r) when eq_exp exp_target exp_l ->
       Some (CmpG (`EqOp, optyp, exp_r))
-  | CmpE (`EqOp, optyp, exp_l, exp_r) when Sl.Eq.eq_exp exp_target exp_r ->
+  | CmpE (`EqOp, optyp, exp_l, exp_r) when eq_exp exp_target exp_r ->
       Some (CmpG (`EqOp, optyp, exp_l))
-  | CmpE (`NeOp, optyp, exp_l, exp_r) when Sl.Eq.eq_exp exp_target exp_l ->
+  | CmpE (`NeOp, optyp, exp_l, exp_r) when eq_exp exp_target exp_l ->
       Some (CmpG (`NeOp, optyp, exp_r))
-  | CmpE (`NeOp, optyp, exp_l, exp_r) when Sl.Eq.eq_exp exp_target exp_r ->
+  | CmpE (`NeOp, optyp, exp_l, exp_r) when eq_exp exp_target exp_r ->
       Some (CmpG (`NeOp, optyp, exp_l))
-  | SubE (exp, typ) when Sl.Eq.eq_exp exp_target exp -> Some (SubG typ)
-  | MatchE (exp, pattern) when Sl.Eq.eq_exp exp_target exp ->
-      Some (MatchG pattern)
-  | MemE (exp_e, exp_s) when Sl.Eq.eq_exp exp_target exp_e -> Some (MemG exp_s)
+  | SubE (exp, typ) when eq_exp exp_target exp -> Some (SubG typ)
+  | MatchE (exp, pattern) when eq_exp exp_target exp -> Some (MatchG pattern)
+  | MemE (exp_e, exp_s) when eq_exp exp_target exp_e -> Some (MemG exp_s)
   | _ -> None
 
 let guard_as_exp (exp_target : exp) (guard : guard) : exp =
@@ -122,7 +122,7 @@ let rec overlap_pattern (exp : exp) (pattern_a : pattern) (pattern_b : pattern)
         Partition (exp, guard_a, guard_b)
     | _ -> Fuzzy
   in
-  if Sl.Eq.eq_pattern pattern_a pattern_b then Identical
+  if eq_pattern pattern_a pattern_b then Identical
   else overlap_pattern_unequal ()
 
 and overlap_typ_and_pattern (tdenv : TDEnv.t) (exp : exp) (typ : typ)
@@ -153,15 +153,14 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
   let overlap_exp_unequal () : overlap =
     match (exp_a.it, exp_b.it) with
     (* Negation *)
-    | UnE (`NotOp, _, exp_a), _ when Sl.Eq.eq_exp exp_a exp_b ->
+    | UnE (`NotOp, _, exp_a), _ when eq_exp exp_a exp_b ->
         Partition (exp_a, BoolG false, BoolG true)
-    | _, UnE (`NotOp, _, exp_b) when Sl.Eq.eq_exp exp_a exp_b ->
+    | _, UnE (`NotOp, _, exp_b) when eq_exp exp_a exp_b ->
         Partition (exp_b, BoolG true, BoolG false)
     (* Equals literal *)
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_l
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_l
            && partition_exp_literal exp_a_r exp_b_r ->
         Partition
           ( exp_a_l,
@@ -169,8 +168,7 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
             CmpG (`EqOp, optyp_b, exp_b_r) )
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_r
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_r
            && partition_exp_literal exp_a_r exp_b_l ->
         Partition
           ( exp_a_l,
@@ -178,8 +176,7 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
             CmpG (`EqOp, optyp_b, exp_b_l) )
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_l
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_l
            && disjoint_exp_literal exp_a_r exp_b_r ->
         Disjoint
           ( exp_a_l,
@@ -187,8 +184,7 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
             CmpG (`EqOp, optyp_b, exp_b_r) )
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`EqOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_r
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_r
            && disjoint_exp_literal exp_a_r exp_b_l ->
         Disjoint
           ( exp_a_l,
@@ -197,40 +193,36 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
     (* Equals and not equals *)
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`NeOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_l
-           && Sl.Eq.eq_exp exp_a_r exp_b_r ->
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_l && eq_exp exp_a_r exp_b_r
+      ->
         Partition
           ( exp_a_l,
             CmpG (`EqOp, optyp_a, exp_a_r),
             CmpG (`NeOp, optyp_b, exp_b_r) )
     | ( CmpE (`EqOp, optyp_a, exp_a_l, exp_a_r),
         CmpE (`NeOp, optyp_b, exp_b_l, exp_b_r) )
-      when optyp_a = optyp_b
-           && Sl.Eq.eq_exp exp_a_l exp_b_r
-           && Sl.Eq.eq_exp exp_a_r exp_b_l ->
+      when optyp_a = optyp_b && eq_exp exp_a_l exp_b_r && eq_exp exp_a_r exp_b_l
+      ->
         Partition
           ( exp_a_l,
             CmpG (`EqOp, optyp_a, exp_a_r),
             CmpG (`NeOp, optyp_b, exp_b_l) )
     (* Subtyping *)
-    | SubE (exp_a, typ_a), SubE (exp_b, typ_b) when Sl.Eq.eq_exp exp_a exp_b ->
+    | SubE (exp_a, typ_a), SubE (exp_b, typ_b) when eq_exp exp_a exp_b ->
         overlap_typ tdenv exp_a typ_a typ_b
     (* Match on patterns *)
     | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b)
-      when Sl.Eq.eq_exp exp_a exp_b ->
+      when eq_exp exp_a exp_b ->
         overlap_pattern exp_a pattern_a pattern_b
     (* Subtyping and match on patterns *)
-    | SubE (exp_a, typ_a), MatchE (exp_b, pattern_b)
-      when Sl.Eq.eq_exp exp_a exp_b ->
+    | SubE (exp_a, typ_a), MatchE (exp_b, pattern_b) when eq_exp exp_a exp_b ->
         overlap_typ_and_pattern tdenv exp_a typ_a pattern_b
-    | MatchE (exp_a, pattern_a), SubE (exp_b, typ_b)
-      when Sl.Eq.eq_exp exp_a exp_b ->
+    | MatchE (exp_a, pattern_a), SubE (exp_b, typ_b) when eq_exp exp_a exp_b ->
         overlap_pattern_and_typ tdenv exp_a pattern_a typ_b
     (* Membership on literals *)
     | ( MemE (exp_e_a, ({ it = ListE exps_s_a; _ } as exp_s_a)),
         MemE (exp_e_b, ({ it = ListE exps_s_b; _ } as exp_s_b)) )
-      when Sl.Eq.eq_exp exp_e_a exp_e_b
+      when eq_exp exp_e_a exp_e_b
            && List.for_all
                 (fun exp_s_a ->
                   List.for_all (disjoint_exp_literal exp_s_a) exps_s_b)
@@ -238,7 +230,7 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
         Disjoint (exp_e_a, MemG exp_s_a, MemG exp_s_b)
     | _ -> Fuzzy
   in
-  if Sl.Eq.eq_exp exp_a exp_b then Identical else overlap_exp_unequal ()
+  if eq_exp exp_a exp_b then Identical else overlap_exp_unequal ()
 
 let overlap_guard (tdenv : TDEnv.t) (exp : exp) (guard_a : guard)
     (guard_b : guard) : overlap =

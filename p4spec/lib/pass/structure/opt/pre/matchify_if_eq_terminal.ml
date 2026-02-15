@@ -4,7 +4,7 @@ open Util.Source
 
 (* Matchify equals terminal *)
 
-let matchify_exp_eq_terminal (exp : exp) : exp =
+let matchify_exp (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
   | CmpE (`EqOp, _, exp_l, { it = OptE None; _ }) ->
@@ -23,30 +23,35 @@ let matchify_exp_eq_terminal (exp : exp) : exp =
       Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
   | _ -> exp
 
-let rec matchify_if_eq_terminal (instr : instr) : instr =
+let rec matchify_instr (instr : instr) : instr =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then) ->
-      let exp_cond = matchify_exp_eq_terminal exp_cond in
-      let instrs_then = matchify_if_eq_terminals instrs_then in
-      IfI (exp_cond, iterexps, instrs_then) $ at
-  | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
-      let instrs_hold = matchify_if_eq_terminals instrs_hold in
-      let instrs_nothold = matchify_if_eq_terminals instrs_nothold in
-      HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
+  | IfI (exp_cond, iterexps, block_then) ->
+      let exp_cond = matchify_exp exp_cond in
+      let block_then = matchify_block block_then in
+      IfI (exp_cond, iterexps, block_then) $ at
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let block_hold = matchify_block block_hold in
+      let block_nothold = matchify_block block_nothold in
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) ->
       let cases =
         let guards, blocks = List.split cases in
-        let blocks = List.map matchify_if_eq_terminals blocks in
+        let blocks = List.map matchify_block blocks in
         List.combine guards blocks
       in
       CaseI (exp, cases, total) $ at
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-      let instrs_group = matchify_if_eq_terminals instrs_group in
-      GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
+  | GroupI (id_group, rel_signature, exps_group, block) ->
+      let block = matchify_block block in
+      GroupI (id_group, rel_signature, exps_group, block) $ at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
+      let block = matchify_block block in
+      LetI (exp_l, exp_r, iterinstrs, block) $ at
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
+      let block = matchify_block block in
+      RuleI (id, notexp, inputs, iterinstrs, block) $ at
   | _ -> instr
 
-and matchify_if_eq_terminals (instrs : instr list) : instr list =
-  List.map matchify_if_eq_terminal instrs
+and matchify_block (block : block) : block = List.map matchify_instr block
 
-let apply (instrs : instr list) : instr list = matchify_if_eq_terminals instrs
+let apply (block : block) : block = matchify_block block

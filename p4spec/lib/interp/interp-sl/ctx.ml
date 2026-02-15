@@ -107,8 +107,8 @@ let load_def (def : def) : unit =
   | ExternRelD (id, _, _, _) ->
       let rel = Rel.Extern in
       add_rel_global id rel
-  | RelD (id, _, relmatch, relpaths, _) ->
-      let rel = Rel.Defined (relmatch, relpaths) in
+  | RelD (id, _, exps_match, block, elseblock_opt, _) ->
+      let rel = Rel.Defined (exps_match, block, elseblock_opt) in
       add_rel_global id rel
   | ExternDecD (id, _, _, _, _) ->
       let func = Func.Extern in
@@ -119,8 +119,8 @@ let load_def (def : def) : unit =
   | TableDecD (id, params, _typ, tablerows, _) ->
       let func = Func.Table (params, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, params, _typ, instrs, _) ->
-      let func = Func.Defined (tparams, params, instrs) in
+  | FuncDecD (id, tparams, params, _typ, block, elseblock_opt, _) ->
+      let func = Func.Defined (tparams, params, block, elseblock_opt) in
       add_func_global id func
 
 let init ~(det : bool) (spec : spec) : unit =

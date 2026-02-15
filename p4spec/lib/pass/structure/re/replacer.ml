@@ -27,6 +27,8 @@ let filter (p : Id.t -> 'a -> bool) (replacer : t) : t =
 
 (* Replacement *)
 
+(* Expressions *)
+
 let rec replace_exp (replacer : t) (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
@@ -126,6 +128,8 @@ and replace_iterexp (replacer : t) (iterexp : iterexp) : iterexp =
 and replace_iterexps (replacer : t) (iterexps : iterexp list) : iterexp list =
   List.map (replace_iterexp replacer) iterexps
 
+(* Paths *)
+
 and replace_path (replacer : t) (path : path) : path =
   let at, note = (path.at, path.note) in
   match path.it with
@@ -143,6 +147,8 @@ and replace_path (replacer : t) (path : path) : path =
       let path = replace_path replacer path in
       Il.DotP (path, atom) $$ (at, note)
 
+(* Arguments *)
+
 and replace_arg (replacer : t) (arg : arg) : arg =
   let at = arg.at in
   match arg.it with
@@ -154,11 +160,13 @@ and replace_arg (replacer : t) (arg : arg) : arg =
 and replace_args (replacer : t) (args : arg list) : arg list =
   List.map (replace_arg replacer) args
 
+(* Cases *)
+
 and replace_case (replacer : t) (case : case) : case =
-  let guard, instrs = case in
+  let guard, block = case in
   let guard = replace_guard replacer guard in
-  let instrs = replace_instrs replacer instrs in
-  (guard, instrs)
+  let block = replace_block replacer block in
+  (guard, block)
 
 and replace_cases (replacer : t) (cases : case list) : case list =
   List.map (replace_case replacer) cases
@@ -174,48 +182,38 @@ and replace_guard (replacer : t) (guard : guard) : guard =
       let exp = replace_exp replacer exp in
       MemG exp
 
-and replace_instr (replacer : t) (instr : instr) : t * instr =
+(* Instructions *)
+
+and replace_instr (replacer : t) (instr : instr) : instr =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then) ->
+  | IfI (exp_cond, iterexps, block_then) ->
       let exp_cond = replace_exp replacer exp_cond in
       let iterexps = replace_iterexps replacer iterexps in
-      let instrs_then = replace_instrs replacer instrs_then in
-      let instr = IfI (exp_cond, iterexps, instrs_then) $ at in
-      (replacer, instr)
-  | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
+      let block_then = replace_block replacer block_then in
+      IfI (exp_cond, iterexps, block_then) $ at
+  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
       let exps = replace_exps replacer exps in
       let iterexps = replace_iterexps replacer iterexps in
-      let instrs_hold = replace_instrs replacer instrs_hold in
-      let instrs_nothold = replace_instrs replacer instrs_nothold in
-      let instr =
-        HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
-      in
-      (replacer, instr)
+      let block_hold = replace_block replacer block_hold in
+      let block_nothold = replace_block replacer block_nothold in
+      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) ->
       let exp = replace_exp replacer exp in
       let cases = replace_cases replacer cases in
-      let instr = CaseI (exp, cases, total) $ at in
-      (replacer, instr)
-  | OtherwiseI instrs ->
-      let instrs = replace_instrs replacer instrs in
-      let instr = OtherwiseI instrs $ at in
-      (replacer, instr)
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+      CaseI (exp, cases, total) $ at
+  | GroupI (id_group, rel_signature, exps_group, block) ->
       let exps_group = replace_exps replacer exps_group in
-      let instrs_group = replace_instrs replacer instrs_group in
-      let instr =
-        GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
-      in
-      (replacer, instr)
-  | LetI (exp_l, exp_r, iterinstrs) ->
+      let block = replace_block replacer block in
+      GroupI (id_group, rel_signature, exps_group, block) $ at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let frees_l = Ol.Free.free_exp exp_l in
       let replacer = filter (fun id _ -> not (IdSet.mem id frees_l)) replacer in
       let exp_r = replace_exp replacer exp_r in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
-      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
-      (replacer, instr)
-  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs) ->
+      let block = replace_block replacer block in
+      LetI (exp_l, exp_r, iterinstrs, block) $ at
+  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) ->
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let exps_input = replace_exps replacer exps_input in
       let frees_output = Ol.Free.free_exps exps_output in
@@ -224,28 +222,23 @@ and replace_instr (replacer : t) (instr : instr) : t * instr =
       in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
-      let instr = RuleI (id_rel, (mixop, exps), inputs, iterinstrs) $ at in
-      (replacer, instr)
+      let block = replace_block replacer block in
+      RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) $ at
   | ResultI (rel_signature, exps) ->
       let exps = replace_exps replacer exps in
-      let instr = ResultI (rel_signature, exps) $ at in
-      (replacer, instr)
+      ResultI (rel_signature, exps) $ at
   | ReturnI exp ->
       let exp = replace_exp replacer exp in
-      let instr = ReturnI exp $ at in
-      (replacer, instr)
+      ReturnI exp $ at
   | DebugI exp ->
       let exp = replace_exp replacer exp in
-      let instr = DebugI exp $ at in
-      (replacer, instr)
+      DebugI exp $ at
 
 and replace_instrs (replacer : t) (instrs : instr list) : instr list =
-  List.fold_left
-    (fun (replacer, instrs) instr ->
-      let replacer, instr = replace_instr replacer instr in
-      (replacer, instrs @ [ instr ]))
-    (replacer, []) instrs
-  |> snd
+  List.map (replace_instr replacer) instrs
+
+and replace_block (replacer : t) (block : block) : block =
+  replace_instrs replacer block
 
 and replace_iterinstr_bound (replacer : t) (iterinstr : iterinstr) : iterinstr =
   let iter, vars_bind, vars_bound = iterinstr in

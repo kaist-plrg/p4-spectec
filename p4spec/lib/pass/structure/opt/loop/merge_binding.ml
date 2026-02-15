@@ -6,8 +6,7 @@ module Typ = Runtime.Dynamic_Sl.Typ
 open Util.Source
 
 (* Remove redundant let and rule bindings from the code,
-   which appears due to the concatenation of multiple rules and clauses
-   This operation is safe because IL is already in SSA form *)
+   which appears due to the concatenation of multiple rules and clauses *)
 
 module Bind = struct
   (* Expression unit *)
@@ -104,13 +103,13 @@ module Bind = struct
      and the left-hand sides are equal up to renaming,
      then we can collapse them into a single binding *)
 
-  let rec collapse_exp (renamer : Renamer.t) (exp : exp) (exp_target : exp) :
-      Renamer.t option =
+  let rec collapse_exp (renamer : Re.Renamer.t) (exp : exp) (exp_target : exp) :
+      Re.Renamer.t option =
     match (exp.it, exp_target.it) with
     | VarE id, VarE id_target ->
         let renamer =
           if Sl.Eq.eq_id id id_target then renamer
-          else Renamer.add id_target id renamer
+          else Re.Renamer.add id_target id renamer
         in
         Some renamer
     | TupleE exps, TupleE exps_target -> collapse_exps renamer exps exps_target
@@ -123,19 +122,29 @@ module Bind = struct
         if Sl.Eq.eq_atoms atoms atoms_target then
           collapse_exps renamer exps exps_target
         else None
+    | OptE exp_opt, OptE exp_opt_target -> (
+        match (exp_opt, exp_opt_target) with
+        | Some exp, Some exp_target -> collapse_exp renamer exp exp_target
+        | None, None -> Some renamer
+        | _ -> None)
+    | ListE exps, ListE exps_target -> collapse_exps renamer exps exps_target
+    | ConsE (exp_head, exp_tail), ConsE (exp_head_target, exp_tail_target) ->
+        let exps = [ exp_head; exp_tail ] in
+        let exps_target = [ exp_head_target; exp_tail_target ] in
+        collapse_exps renamer exps exps_target
     | IterE (exp, iterexp), IterE (exp_target, iterexp_target) -> (
         match collapse_exp renamer exp exp_target with
         | Some renamer ->
             let iterexp_target_renamed =
-              Renamer.rename_iterexp renamer iterexp_target
+              Re.Renamer.rename_iterexp renamer iterexp_target
             in
             if Sl.Eq.eq_iterexp iterexp iterexp_target_renamed then Some renamer
             else None
         | None -> None)
     | _ -> None
 
-  and collapse_exps (renamer : Renamer.t) (exps : exp list)
-      (exps_target : exp list) : Renamer.t option =
+  and collapse_exps (renamer : Re.Renamer.t) (exps : exp list)
+      (exps_target : exp list) : Re.Renamer.t option =
     match (exps, exps_target) with
     | [], [] -> Some renamer
     | exp_h :: exps_t, exp_target_h :: exps_target_t -> (
@@ -144,22 +153,22 @@ module Bind = struct
         | None -> None)
     | _ -> None
 
-  let collapse_expunit (renamer : Renamer.t) (expunit : expunit)
-      (expunit_target : expunit) : Renamer.t option =
+  let collapse_expunit (renamer : Re.Renamer.t) (expunit : expunit)
+      (expunit_target : expunit) : Re.Renamer.t option =
     let exp, iterexps = expunit in
     let exp_target, iterexps_target = expunit_target in
     let renamer_opt = collapse_exp renamer exp exp_target in
     match renamer_opt with
     | Some renamer ->
         let iterexps_target_renamed =
-          Renamer.rename_iterexps renamer iterexps_target
+          Re.Renamer.rename_iterexps renamer iterexps_target
         in
         if Sl.Eq.eq_iterexps iterexps iterexps_target_renamed then Some renamer
         else None
     | None -> None
 
-  let rec collapse_expunits (renamer : Renamer.t) (expunits : expunit list)
-      (expunits_target : expunit list) : Renamer.t option =
+  let rec collapse_expunits (renamer : Re.Renamer.t) (expunits : expunit list)
+      (expunits_target : expunit list) : Re.Renamer.t option =
     match (expunits, expunits_target) with
     | [], [] -> Some renamer
     | expunit_h :: expunits_t, expunit_target_h :: expunits_target_t -> (
@@ -168,124 +177,107 @@ module Bind = struct
         | None -> None)
     | _ -> None
 
-  let collapse_bind (bind : t) (bind_target : t) : Renamer.t option =
+  let collapse_bind (bind : t) (bind_target : t) : Re.Renamer.t option =
     match (bind, bind_target) with
     | ( LetBind (expunit_l, expunit_r),
         LetBind (expunit_target_l, expunit_target_r) )
       when eq_expunit expunit_r expunit_target_r ->
-        collapse_expunit Renamer.empty expunit_l expunit_target_l
+        collapse_expunit Re.Renamer.empty expunit_l expunit_target_l
     | ( RuleBind (id, expunits_input, expunits_output),
         RuleBind (id_target, expunits_target_input, expunits_target_output) )
       when Sl.Eq.eq_id id id_target
            && eq_expunits expunits_input expunits_target_input ->
-        collapse_expunits Renamer.empty expunits_output expunits_target_output
+        collapse_expunits Re.Renamer.empty expunits_output
+          expunits_target_output
     | _ -> None
 end
 
-let rec downstream (bind : Bind.t) (instrs : instr list) : instr list =
-  match instrs with
-  | [] -> []
-  | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
-      let instrs_then = instrs_then |> downstream bind in
-      let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let instrs_t = downstream bind instrs_t in
-      instr_h :: instrs_t
-  | { it = HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold); at; _ }
-    :: instrs_t ->
-      let instrs_hold = instrs_hold |> downstream bind in
-      let instrs_nothold = instrs_nothold |> downstream bind in
-      let instr_h =
-        HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
-      in
-      let instrs_t = downstream bind instrs_t in
-      instr_h :: instrs_t
-  | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
-      let cases =
-        let guards, blocks = List.split cases in
-        let blocks = List.map (downstream bind) blocks in
-        List.combine guards blocks
-      in
-      let instr_h = CaseI (exp, cases, total) $ at in
-      let instrs_t = downstream bind instrs_t in
-      instr_h :: instrs_t
-  | ({ it = LetI (exp_l, exp_r, iterinstrs); _ } as instr_h) :: instrs_t -> (
+let downstream (bind : Bind.t) (block : block) : (block * block) option =
+  match block with
+  | { it = LetI (exp_l, exp_r, iterinstrs, block); _ } :: block_t -> (
       let bind_target = Bind.init_let_bind exp_l exp_r iterinstrs in
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t |> Renamer.rename_instrs renamer |> downstream bind
-      | None ->
-          let instrs_t = downstream bind instrs_t in
-          instr_h :: instrs_t)
-  | ({ it = RuleI (id, notexp, inputs, iterinstrs); _ } as instr_h) :: instrs_t
-    -> (
+          let block = Re.Renamer.rename_block renamer block in
+          Some (block, block_t)
+      | None -> None)
+  | { it = RuleI (id, notexp, inputs, iterinstrs, block); _ } :: block_t -> (
       let bind_target = Bind.init_rule_bind id notexp inputs iterinstrs in
       let renamer_opt = Bind.collapse_bind bind bind_target in
       match renamer_opt with
       | Some renamer ->
-          instrs_t |> Renamer.rename_instrs renamer |> downstream bind
-      | None ->
-          let instrs_t = downstream bind instrs_t in
-          instr_h :: instrs_t)
-  | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
-     instr_h)
-    :: instrs_t ->
-      let instrs_group = instrs_group |> downstream bind in
-      let instr_h =
-        GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
-      in
-      let instrs_t = downstream bind instrs_t in
-      instr_h :: instrs_t
-  | instr_h :: instrs_t ->
-      let instrs_t = downstream bind instrs_t in
-      instr_h :: instrs_t
+          let block = Re.Renamer.rename_block renamer block in
+          Some (block, block_t)
+      | None -> None)
+  | _ -> None
 
-let rec upstream (instrs : instr list) : instr list =
-  match instrs with
+let rec upstream (block : block) : block =
+  match block with
   | [] -> []
-  | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
-      let instrs_then = instrs_then |> upstream in
-      let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let instrs_t = upstream instrs_t in
-      instr_h :: instrs_t
-  | { it = HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold); at; _ }
-    :: instrs_t ->
-      let instrs_hold = instrs_hold |> upstream in
-      let instrs_nothold = instrs_nothold |> upstream in
+  | { it = IfI (exp_cond, iterexps, block_then); at; _ } :: block_t ->
+      let block_then = block_then |> upstream in
+      let instr_h = IfI (exp_cond, iterexps, block_then) $ at in
+      let block_t = upstream block_t in
+      instr_h :: block_t
+  | { it = HoldI (id, notexp, iterexps, block_hold, block_nothold); at; _ }
+    :: block_t ->
+      let block_hold = block_hold |> upstream in
+      let block_nothold = block_nothold |> upstream in
       let instr_h =
-        HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
+        HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
       in
-      let instrs_t = upstream instrs_t in
-      instr_h :: instrs_t
-  | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
+      let block_t = upstream block_t in
+      instr_h :: block_t
+  | { it = CaseI (exp, cases, total); at; _ } :: block_t ->
       let cases =
         let guards, blocks = List.split cases in
         let blocks = List.map upstream blocks in
         List.combine guards blocks
       in
       let instr_h = CaseI (exp, cases, total) $ at in
-      let instrs_t = upstream instrs_t in
-      instr_h :: instrs_t
-  | ({ it = LetI (exp_l, exp_r, iterinstrs); _ } as instr_h) :: instrs_t ->
-      let bind = Bind.init_let_bind exp_l exp_r iterinstrs in
-      let instrs_t = instrs_t |> downstream bind |> upstream in
-      instr_h :: instrs_t
-  | ({ it = RuleI (id, notexp, inputs, iterinstrs); _ } as instr_h) :: instrs_t
-    ->
-      let bind = Bind.init_rule_bind id notexp inputs iterinstrs in
-      let instrs_t = instrs_t |> downstream bind |> upstream in
-      instr_h :: instrs_t
-  | ({ it = GroupI (id_group, rel_signature, exps_group, instrs_group); _ } as
-     instr_h)
-    :: instrs_t ->
-      let instrs_group = instrs_group |> upstream in
+      let block_t = upstream block_t in
+      instr_h :: block_t
+  | ({ it = GroupI (id_group, rel_signature, exps_group, block); _ } as instr_h)
+    :: block_t ->
+      let block = upstream block in
       let instr_h =
-        GroupI (id_group, rel_signature, exps_group, instrs_group) $ instr_h.at
+        GroupI (id_group, rel_signature, exps_group, block) $ instr_h.at
       in
-      let instrs_t = upstream instrs_t in
-      instr_h :: instrs_t
-  | instr_h :: instrs_t ->
-      let instrs_t = instrs_t |> upstream in
-      instr_h :: instrs_t
+      let block_t = upstream block_t in
+      instr_h :: block_t
+  | ({ it = LetI (exp_l, exp_r, iterinstrs, block); _ } as instr_h) :: block_t
+    -> (
+      let bind = Bind.init_let_bind exp_l exp_r iterinstrs in
+      match downstream bind block_t with
+      | Some (block_merge, block_t) ->
+          let block = Merge.merge_block block block_merge in
+          let instr_h = LetI (exp_l, exp_r, iterinstrs, block) $ instr_h.at in
+          upstream (instr_h :: block_t)
+      | None ->
+          let block = upstream block in
+          let instr_h = LetI (exp_l, exp_r, iterinstrs, block) $ instr_h.at in
+          let block_t = upstream block_t in
+          instr_h :: block_t)
+  | ({ it = RuleI (id, notexp, inputs, iterinstrs, block); _ } as instr_h)
+    :: block_t -> (
+      let bind = Bind.init_rule_bind id notexp inputs iterinstrs in
+      match downstream bind block_t with
+      | Some (block_merge, block_t) ->
+          let block = Merge.merge_block block block_merge in
+          let instr_h =
+            RuleI (id, notexp, inputs, iterinstrs, block) $ instr_h.at
+          in
+          upstream (instr_h :: block_t)
+      | None ->
+          let block = upstream block in
+          let instr_h =
+            RuleI (id, notexp, inputs, iterinstrs, block) $ instr_h.at
+          in
+          let block_t = upstream block_t in
+          instr_h :: block_t)
+  | instr_h :: block_t ->
+      let block_t = block_t |> upstream in
+      instr_h :: block_t
 
-let apply (instrs : instr list) : instr list = upstream instrs
+let apply (block : block) : block = upstream block

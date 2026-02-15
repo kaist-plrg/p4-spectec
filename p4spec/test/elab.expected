@@ -27063,50 +27063,39 @@ syntax expressionListResult =
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:48.1-53.66
 relation Exprs_eval: cursor evalContext arch |- typedExpressionIR* : evalContext arch expressionListResult
 
-  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:583.1-622.2
+  ;; ../../../../spec-concrete/8-dynamic/8.03.1-eval-expression.watsup:583.1-615.2
   rulegroup 
 
    match
 
-    (signature) p evalContext arch |- typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} : % % %
-    p evalContext arch |- typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} : % % %
+    (signature) p evalContext arch |- typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*} : % % %
+    p evalContext arch |- typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*} : % % %
 
    paths
 
     rulepath nil
     -- let EC = evalContext
     -- let ARCH = arch
-    -- if (typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} = [])
+    -- if (typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*} = [])
     -- output: % % % |- % : EC ARCH ` [] as expressionListResult
 
     rulepath cons-head-abort
     -- let EC_0 = evalContext
     -- let ARCH_0 = arch
-    -- let typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
-    -- if typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} matches _ :: _
-    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*}
+    -- let typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} = typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*}
+    -- if typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % : EC_1 ARCH_1 abortResult as expressionListResult
 
-    rulepath cons-head-reject
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
-    -- if typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} matches _ :: _
-    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*}
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: rejectTransitionResult
-    -- let rejectTransitionResult = expressionResult as rejectTransitionResult
-    -- output: % % % |- % : EC_1 ARCH_1 rejectTransitionResult as expressionListResult
-
     rulepath cons-head-cont-tail-abort
     -- let EC_0 = evalContext
     -- let ARCH_0 = arch
-    -- let typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
-    -- if typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} matches _ :: _
-    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*}
+    -- let typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} = typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*}
+    -- if typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value_h = expressionResult as continueResult<value>
@@ -27118,9 +27107,9 @@ relation Exprs_eval: cursor evalContext arch |- typedExpressionIR* : evalContext
     rulepath cons-head-cont-tail-cont
     -- let EC_0 = evalContext
     -- let ARCH_0 = arch
-    -- let typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
-    -- if typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*} matches _ :: _
-    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR''''*{typedExpressionIR'''' <- typedExpressionIR''''*}
+    -- let typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} = typedExpressionIR''*{typedExpressionIR'' <- typedExpressionIR''*}
+    -- if typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*} matches _ :: _
+    -- let typedExpressionIR_h :: typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} = typedExpressionIR'''*{typedExpressionIR''' <- typedExpressionIR'''*}
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value_h = expressionResult as continueResult<value>

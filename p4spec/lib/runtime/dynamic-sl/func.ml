@@ -7,7 +7,7 @@ type t =
   | Extern
   | Builtin
   | Table of param list * tablerow list
-  | Defined of tparam list * param list * instr list
+  | Defined of tparam list * param list * block * elseblock option
 
 let to_string = function
   | Extern -> "extern function"

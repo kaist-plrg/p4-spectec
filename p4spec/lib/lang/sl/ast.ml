@@ -114,14 +114,14 @@ and phantom = pid
 (* Holding conditions *)
 
 and holdcase =
-  | BothH of instr list * instr list
-  | HoldH of instr list * phantom option
-  | NotHoldH of instr list * phantom option
+  | BothH of block * block
+  | HoldH of block * phantom option
+  | NotHoldH of block * phantom option
 [@@deriving yojson]
 
 (* Case analysis *)
 
-and case = guard * instr list
+and case = guard * block
 [@@deriving yojson]
 
 and guard =
@@ -140,20 +140,25 @@ and inote = { iid : iid } [@@deriving yojson]
 and instr = (instr', inote) note_phrase [@@deriving yojson]
 and instr' =
   (* Branching instructions *)
-  | IfI of exp * iterexp list * instr list * phantom option
+  | IfI of exp * iterexp list * block * phantom option
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * phantom option 
-  | OtherwiseI of instr list
   (* Aggregate instructions *)
-  | GroupI of id * rel_signature * exp list * instr list
+  | GroupI of id * rel_signature * exp list * block
   (* Binding instructions *)
-  | LetI of exp * exp * iterinstr list
-  | RuleI of id * notexp * Hints.Input.t * iterinstr list
+  | LetI of exp * exp * iterinstr list * block
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list * block
   (* Result/Return instructions *)
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   (* Debugging instructions *)
   | DebugI of exp
+[@@deriving yojson]
+
+and block = instr list
+[@@deriving yojson]
+
+and elseblock = instr list
 [@@deriving yojson]
 
 and iterinstr = Il.iterprem
@@ -174,8 +179,8 @@ and rel_signature = nottyp * Hints.Input.t
 type externrel = id * rel_signature * exp list * hint list
 [@@deriving yojson]
 
-(* id `:` mixop `hint(input` `%`int* `)` exp* instr* hint* *)
-type rel = id * rel_signature * exp list * instr list * hint list
+(* id `:` mixop `hint(input` `%`int* `)` exp* block elseblock? hint* *)
+type rel = id * rel_signature * exp list * block * elseblock option * hint list
 [@@deriving yojson]
 
 (* Functions *)
@@ -188,16 +193,16 @@ type externfunc = id * tparam list * param list * typ * hint list
 type builtinfunc = id * tparam list * param list * typ * hint list
 [@@deriving yojson]
 
-(* `(` list(exp, `,`)* `)` `->` exp instr* *)
-type tablerow = exp list * exp * instr list
+(* `(` list(exp, `,`)* `)` `->` exp block *)
+type tablerow = exp list * exp * block
 [@@deriving yojson]
 
 (* id `(` list(param, `,`) `)` `:` typ tablerow* hint* *)
 type tablefunc = id * param list * typ * tablerow list * hint list
 [@@deriving yojson]
 
-(* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ instr* hint* *)
-type definedfunc = id * tparam list * param list * typ * instr list * hint list
+(* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ block elseblock? hint* *)
+type definedfunc = id * tparam list * param list * typ * block * elseblock option * hint list
 [@@deriving yojson]
 
 (* Definitions *)

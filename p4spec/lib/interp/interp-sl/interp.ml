@@ -14,7 +14,8 @@ module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
 open Error
 open Backtrace
-open Nondet
+
+(* open Nondet *)
 module F = Format
 open Util.Source
 
@@ -797,7 +798,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           (F.asprintf "indexing expects either a text or a list, but got %s"
              (Sl.Print.string_of_value ~short:true value_b))
 
-  (* Slice expression evaluation *)
+  (* Sl.ce expression evaluation *)
 
   and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
       (exp_n : exp) : value =
@@ -1164,88 +1165,46 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Instruction evaluation *)
 
-  and eval_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-    Hook.on_instr instr;
-    try
-      let ctx, sign = eval_instr' ctx instr in
-      (ctx, sign)
+  and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
+    (* Hook.on_instr instr; *)
+    try eval_instr' ctx instr
     with Backtrace backtrace ->
       back_nest instr.at
         (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
         backtrace
 
-  and eval_instr' (ctx : Ctx.t) (instr : instr) : Ctx.t * Sign.t =
-    let wrap_ctx sign = (ctx, sign) in
+  and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
     match instr.it with
-    | IfI (exp_cond, iterexps, instrs_then, phantom_opt) ->
-        eval_if_instr ctx exp_cond iterexps instrs_then phantom_opt |> wrap_ctx
+    | IfI (exp_cond, iterexps, block_then, phantom_opt) ->
+        eval_if_instr ctx exp_cond iterexps block_then phantom_opt
     | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr ctx id notexp iterexps holdcase |> wrap_ctx
+        eval_hold_instr ctx id notexp iterexps holdcase
     | CaseI (exp, cases, phantom_opt) ->
-        eval_case_instr ctx exp cases phantom_opt |> wrap_ctx
-    | OtherwiseI instrs -> eval_otherwise_instr ctx instrs |> wrap_ctx
-    | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-        eval_group_instr ctx id_group rel_signature exps_group instrs_group
-        |> wrap_ctx
-    | LetI (exp_l, exp_r, iterinstrs) ->
-        eval_let_instr ctx exp_l exp_r iterinstrs
-    | RuleI (id, notexp, inputs, iterinstrs) ->
-        eval_rule_instr ctx id notexp inputs iterinstrs
-    | ResultI (rel_signature, exps) ->
-        eval_result_instr ctx rel_signature exps |> wrap_ctx
-    | ReturnI exp -> eval_return_instr ctx exp |> wrap_ctx
-    | DebugI exp -> eval_debug_instr ctx exp |> wrap_ctx
+        eval_case_instr ctx exp cases phantom_opt
+    | GroupI (id_group, rel_signature, exps_group, block) ->
+        eval_group_instr ctx id_group rel_signature exps_group block
+    | LetI (exp_l, exp_r, iterinstrs, block) ->
+        eval_let_instr ctx exp_l exp_r iterinstrs block
+    | RuleI (id, notexp, inputs, iterinstrs, block) ->
+        eval_rule_instr ctx id notexp inputs iterinstrs block
+    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
+    | ReturnI exp -> eval_return_instr ctx exp
+    | DebugI exp -> eval_debug_instr ctx exp
 
-  and eval_instrs (ctx : Ctx.t) (instrs : instr list) : Ctx.t * Sign.t =
-    if !Ctx.is_det then eval_instrs_deterministic ctx instrs
-    else eval_instrs_sequential ctx instrs
-
-  and eval_instrs_deterministic (ctx : Ctx.t) (instrs : instr list) :
-      Ctx.t * Sign.t =
-    (* In deterministic evaluation, continue evaluating even after a result or return sign,
-       and raise an error if there are multiple results or returns *)
-    (* If an instruction raises Unmatch, ignore the error and continue evaluating the next instruction *)
-    let eval_instr_deterministic (ctx_pre : Ctx.t) (sign_pre : Sign.t)
-        (instr : instr) : Ctx.t * Sign.t =
-      let open Sign in
-      try
-        let ctx_post, sign_post = eval_instr ctx_pre instr in
-        match (sign_pre, sign_post) with
-        | Cont, _ -> (ctx_post, sign_post)
-        | Res _, Cont -> (ctx_post, sign_pre)
-        | Res _, Res (otherwise, _) ->
-            if not otherwise then nondet instr.at else (ctx_pre, sign_pre)
-        | Res _, Ret _ -> assert false
-        | Ret _, Cont -> (ctx_post, sign_pre)
-        | Ret _, Res _ -> assert false
-        | Ret _, Ret (otherwise, _) ->
-            if not otherwise then nondet instr.at else (ctx_pre, sign_pre)
-      with Backtrace (Unmatch _) -> (ctx_pre, sign_pre)
-    in
-    try
-      List.fold_left
-        (fun (ctx_pre, sign_pre) instr ->
-          eval_instr_deterministic ctx_pre sign_pre instr)
-        (ctx, Sign.Cont) instrs
-    with Nondet at -> back_err at "nondeterministic instruction evaluation"
-
-  and eval_instrs_sequential (ctx : Ctx.t) (instrs : instr list) :
-      Ctx.t * Sign.t =
-    (* In sequential evaluation, stop evaluation on the first result or return sign *)
-    (* If an instruction raises Unmatch, ignore the error and continue evaluating the next instruction *)
-    let eval_instr_sequential (ctx_pre : Ctx.t) (sign_pre : Sign.t)
-        (instr : instr) : Ctx.t * Sign.t =
-      let open Sign in
-      try
-        match sign_pre with
-        | Cont -> eval_instr ctx_pre instr
-        | _ -> (ctx_pre, sign_pre)
-      with Backtrace (Unmatch _) -> (ctx_pre, sign_pre)
-    in
+  and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
     List.fold_left
-      (fun (ctx_pre, sign_pre) instr ->
-        eval_instr_sequential ctx_pre sign_pre instr)
-      (ctx, Sign.Cont) instrs
+      (fun flow_pre instr ->
+        match flow_pre with Flow.Cont -> eval_instr ctx instr | _ -> flow_pre)
+      Flow.Cont block
+
+  and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
+      (elseblock_opt : elseblock option) : Flow.t =
+    match flow with
+    | Flow.Cont -> (
+        match elseblock_opt with
+        | Some block_else -> eval_block ctx block_else
+        | None -> Flow.Cont)
+    | _ -> flow
 
   (* If instruction evaluation *)
 
@@ -1322,17 +1281,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_if_cond_iter' ctx exp_cond iterexps
 
   and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-      (instrs_then : instr list) (phantom_opt : phantom option) : Sign.t =
+      (block_then : block) (phantom_opt : phantom option) : Flow.t =
     (* Evaluate the if condition and mark phantom *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     (match phantom_opt with
     | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
     | None -> ());
     (* Evaluate the then branch if the condition holds *)
-    if cond then
-      let _, sign_then = eval_instrs ctx instrs_then in
-      sign_then
-    else Cont
+    if cond then eval_block ctx block_then else Cont
 
   (* Hold instruction evaluation *)
 
@@ -1409,7 +1365,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_hold_cond_iter' ctx id notexp iterexps
 
   and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) (holdcase : holdcase) : Sign.t =
+      (iterexps : iterexp list) (holdcase : holdcase) : Flow.t =
     (* Backup in case of failure *)
     Hook.backup ();
     (* Evaluate the hold condition *)
@@ -1417,36 +1373,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (* Evaluate the hold case, and restore the coverage information
        if the expected behavior is the relation not holding *)
     match holdcase with
-    | BothH (instrs_hold, instrs_not_hold) ->
-        let _, sign =
-          if cond then eval_instrs ctx instrs_hold
-          else (
-            Hook.restore ();
-            eval_instrs ctx instrs_not_hold)
-        in
-        sign
-    | HoldH (instrs_hold, phantom_opt) ->
+    | BothH (block_hold, block_not_hold) ->
+        if cond then eval_block ctx block_hold
+        else (
+          Hook.restore ();
+          eval_block ctx block_not_hold)
+    | HoldH (block_hold, phantom_opt) ->
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
         | None -> ());
-        if cond then
-          let _, sign = eval_instrs ctx instrs_hold in
-          sign
-        else Cont
-    | NotHoldH (instrs_not_hold, phantom_opt) ->
+        if cond then eval_block ctx block_hold else Cont
+    | NotHoldH (block_not_hold, phantom_opt) ->
         Hook.restore ();
         (match phantom_opt with
         | Some pid -> Hook.on_instr_dangling cond pid value_cond
         | None -> ());
-        if not cond then
-          let _, sign = eval_instrs ctx instrs_not_hold in
-          sign
-        else Cont
+        if not cond then eval_block ctx block_not_hold else Cont
 
   (* Case analysis instruction evaluation *)
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
-      instr list option * value =
+      block option * value =
     let block_match, values_cond_rev =
       List.fold_left
         (fun (block_match, values_cond_rev) (guard, block) ->
@@ -1481,37 +1428,23 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     (block_match, value_cond)
 
   and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (phantom_opt : phantom option) : Sign.t =
+      (phantom_opt : phantom option) : Flow.t =
     (* Evaluate the matching case and mark phantom *)
-    let instrs_opt, value_cond = eval_cases ctx exp cases in
+    let block_opt, value_cond = eval_cases ctx exp cases in
     (match phantom_opt with
     | Some pid ->
-        let matched = Option.is_some instrs_opt in
+        let matched = Option.is_some block_opt in
         Hook.on_instr_dangling (not matched) pid value_cond
     | None -> ());
     (* Evaluate the matching case if any *)
-    match instrs_opt with
-    | Some instrs ->
-        let _, sign = eval_instrs ctx instrs in
-        sign
-    | None -> Cont
-
-  (* Otherwise instruction evaluation *)
-
-  and eval_otherwise_instr (ctx : Ctx.t) (instrs : instr list) : Sign.t =
-    let _, sign = eval_instrs ctx instrs in
-    match sign with
-    | Cont -> back_err no_region "otherwise must return or result"
-    | Res (_, values) -> Sign.Res (true, values)
-    | Ret (_, value) -> Sign.Ret (true, value)
+    match block_opt with Some block -> eval_block ctx block | None -> Cont
 
   (* Group instruction evaluation *)
 
   and eval_group_instr (ctx : Ctx.t) (_id_group : id)
       (_rel_signature : rel_signature) (_exps_group : exp list)
-      (instrs_group : instr list) : Sign.t =
-    let _, sign_group = eval_instrs ctx instrs_group in
-    sign_group
+      (block : instr list) : Flow.t =
+    eval_block ctx block
 
   (* Let instruction evaluation *)
 
@@ -1649,9 +1582,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_let_iter' ctx exp_l exp_r iterinstrs
 
   and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
-    let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
-    (ctx, Sign.Cont)
+      (iterinstrs : iterinstr list) (block : block) : Flow.t =
+    try
+      let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
+      eval_block ctx block
+    with Backtrace (Unmatch _) -> Cont
 
   (* Rule instruction evaluation *)
 
@@ -1734,31 +1669,34 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     eval_rule_iter' ctx id notexp inputs iterinstrs
 
   and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) : Ctx.t * Sign.t =
-    let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-    (ctx, Sign.Cont)
+      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
+      Flow.t =
+    try
+      let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+      eval_block ctx block
+    with Backtrace (Unmatch _) -> Cont
 
   (* Result instruction evaluation *)
 
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
-      (exps : exp list) : Sign.t =
+      (exps : exp list) : Flow.t =
     let values = eval_exps ctx exps in
-    Sign.Res (false, values)
+    Flow.Res (false, values)
 
   (* Return instruction evaluation *)
 
-  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Sign.t =
+  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
     let value = eval_exp ctx exp in
-    Sign.Ret (false, value)
+    Flow.Ret (false, value)
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Sign.t =
+  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
     let value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
     print_endline @@ Il.Print.string_of_value value;
-    Sign.Cont
+    Flow.Cont
 
   (* Invoke a relation *)
 
@@ -1778,8 +1716,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let rel = Ctx.find_rel ctx id in
     match rel with
     | Rel.Extern -> invoke_extern_rel id values_input
-    | Rel.Defined (exps_input, instrs) ->
-        invoke_defined_rel ctx id exps_input instrs values_input
+    | Rel.Defined (exps_input, block, elseblock_opt) ->
+        invoke_defined_rel ctx id exps_input block elseblock_opt values_input
 
   and invoke_extern_rel (id : id) (values_input : value list) : value list =
     let invoke_extern_rel' (id : id) (values_input : value list) : value list =
@@ -1806,12 +1744,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     with Util.Error.ArchError (at, msg) -> back_unmatch at msg
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
-      (instrs : instr list) (values_input : value list) : value list =
+      (block : block) (elseblock_opt : elseblock option)
+      (values_input : value list) : value list =
     let invoke_defined_rel' () =
       let ctx_local = Ctx.localize_rule ctx id values_input in
       let ctx_local = assign_exps ctx_local exps_input values_input in
-      let _ctx_local, sign = eval_instrs ctx_local instrs in
-      match sign with
+      let flow = eval_block ctx_local block in
+      let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+      match flow with
       | Res (_, values_output) ->
           List.iteri
             (fun idx_arg value_input ->
@@ -1872,8 +1812,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | Func.Builtin -> invoke_builtin_func id targs values_input
         | Func.Table (params, tablerows) ->
             invoke_table_func ctx id params tablerows values_input
-        | Func.Defined (tparams, params, instrs) ->
-            invoke_defined_func ctx id tparams params instrs targs values_input
+        | Func.Defined (tparams, params, block, elseblock_opt) ->
+            invoke_defined_func ctx id tparams params block elseblock_opt targs
+              values_input
       in
       Hook.on_func_exit id;
       value_output
@@ -1923,8 +1864,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let _ctx_local, sign = eval_instrs_sequential ctx_local instrs in
-    match sign with
+    let flow = eval_block ctx_local instrs in
+    match flow with
     | Ret (_, value_output) ->
         List.iteri
           (fun idx_arg value_input ->
@@ -1935,8 +1876,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | _ -> back_err id.at "table did not return a value"
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
-      (params : param list) (instrs : instr list) (targs : targ list)
-      (values_input : value list) : value =
+      (params : param list) (block : block) (elseblock_opt : elseblock option)
+      (targs : targ list) (values_input : value list) : value =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1950,8 +1891,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let invoke_defined_func' () =
       let ctx_local = assign_params ctx ctx_local params values_input in
-      let _ctx_local, sign = eval_instrs ctx_local instrs in
-      match sign with
+      let flow = eval_block ctx_local block in
+      let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+      match flow with
       | Ret (_, value_output) ->
           List.iteri
             (fun idx_arg value_input ->

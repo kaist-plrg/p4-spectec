@@ -18,11 +18,11 @@ module Underscore = struct
   let union (underscore_a : t) (underscore_b : t) : t =
     IdSet.union underscore_a underscore_b
 
-  let revive (renamer_candid : Renamer.t) (underscores_used : t) : t =
-    IdSet.inter (Renamer.dom renamer_candid) underscores_used
+  let revive (renamer_candid : Re.Renamer.t) (underscores_used : t) : t =
+    IdSet.inter (Re.Renamer.dom renamer_candid) underscores_used
 
   let candid_renamer (frees : IdSet.t) (underscores_bound : t) :
-      IdSet.t * Renamer.t =
+      IdSet.t * Re.Renamer.t =
     underscores_bound |> IdSet.to_list
     |> List.fold_left
          (fun (frees, renamer_candid) id_underscore ->
@@ -31,58 +31,58 @@ module Underscore = struct
            in
            let frees = IdSet.add id_revive frees in
            let renamer_candid =
-             Renamer.add id_underscore id_revive renamer_candid
+             Re.Renamer.add id_underscore id_revive renamer_candid
            in
            (frees, renamer_candid))
-         (frees, Renamer.empty)
+         (frees, Re.Renamer.empty)
 
-  let include_renamer (renamer : Renamer.t) (underscores_used : IdSet.t) :
-      Renamer.t =
-    Renamer.filter (fun id _ -> IdSet.mem id underscores_used) renamer
+  let include_renamer (renamer : Re.Renamer.t) (underscores_used : IdSet.t) :
+      Re.Renamer.t =
+    Re.Renamer.filter (fun id _ -> IdSet.mem id underscores_used) renamer
 
-  let exclude_renamer (renamer : Renamer.t) (underscores_bound : IdSet.t) :
-      Renamer.t =
-    Renamer.filter (fun id _ -> not (IdSet.mem id underscores_bound)) renamer
+  let exclude_renamer (renamer : Re.Renamer.t) (underscores_bound : IdSet.t) :
+      Re.Renamer.t =
+    Re.Renamer.filter (fun id _ -> not (IdSet.mem id underscores_bound)) renamer
 end
 
-let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
+let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
     Underscore.t * instr =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then) ->
+  | IfI (exp_cond, iterexps, block_then) ->
       let underscores_used = Underscore.init_exp exp_cond in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exp_cond = Renamer.rename_exp renamer_candid exp_cond in
-      let iterexps = Renamer.rename_iterexps renamer_candid iterexps in
-      let underscores_revive_then, instrs_then =
-        downstream_instrs renamer_candid instrs_then
+      let exp_cond = Re.Renamer.rename_exp renamer_candid exp_cond in
+      let iterexps = Re.Renamer.rename_iterexps renamer_candid iterexps in
+      let underscores_revive_then, block_then =
+        downstream_block renamer_candid block_then
       in
       let underscores_revive =
         Underscore.union underscores_revive underscores_revive_then
       in
-      let instr = IfI (exp_cond, iterexps, instrs_then) $ at in
+      let instr = IfI (exp_cond, iterexps, block_then) $ at in
       (underscores_revive, instr)
-  | HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) ->
+  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
       let underscores_used = Underscore.init_exps exps in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exps = Renamer.rename_exps renamer_candid exps in
-      let iterexps = Renamer.rename_iterexps renamer_candid iterexps in
-      let underscores_revive_hold, instrs_hold =
-        downstream_instrs renamer_candid instrs_hold
+      let exps = Re.Renamer.rename_exps renamer_candid exps in
+      let iterexps = Re.Renamer.rename_iterexps renamer_candid iterexps in
+      let underscores_revive_hold, block_hold =
+        downstream_block renamer_candid block_hold
       in
-      let underscores_revive_nothold, instrs_nothold =
-        downstream_instrs renamer_candid instrs_nothold
+      let underscores_revive_nothold, block_nothold =
+        downstream_block renamer_candid block_nothold
       in
       let underscores_revive =
         Underscore.union underscores_revive
           (Underscore.union underscores_revive_hold underscores_revive_nothold)
       in
       let instr =
-        HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
+        HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
       in
       (underscores_revive, instr)
   | CaseI (exp, cases, total) ->
@@ -90,7 +90,7 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exp = Renamer.rename_exp renamer_candid exp in
+      let exp = Re.Renamer.rename_exp renamer_candid exp in
       let underscores_revive_cases, cases =
         List.fold_left
           (fun (underscores_revive, cases) case ->
@@ -99,9 +99,9 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
             let underscores_revive_guard =
               Underscore.revive renamer_candid underscores_used_guard
             in
-            let guard = Renamer.rename_guard renamer_candid guard in
+            let guard = Re.Renamer.rename_guard renamer_candid guard in
             let underscores_revive_block, block =
-              downstream_instrs renamer_candid block
+              downstream_block renamer_candid block
             in
             let underscores_revive =
               Underscore.union underscores_revive
@@ -117,60 +117,74 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
       in
       let instr = CaseI (exp, cases, total) $ at in
       (underscores_revive, instr)
-  | OtherwiseI instrs ->
-      let underscores_revive, instrs =
-        downstream_instrs renamer_candid instrs
-      in
-      let instr = OtherwiseI instrs $ at in
-      (underscores_revive, instr)
-  | GroupI (id, rel_signature, exps_signature, instrs_group) ->
+  | GroupI (id, rel_signature, exps_signature, block) ->
       let underscores_used = Underscore.init_exps exps_signature in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exps_signature = Renamer.rename_exps renamer_candid exps_signature in
-      let underscores_revive_group, instrs_group =
-        downstream_instrs renamer_candid instrs_group
+      let exps_signature =
+        Re.Renamer.rename_exps renamer_candid exps_signature
+      in
+      let underscores_revive_group, block =
+        downstream_block renamer_candid block
       in
       let underscores_revive =
         Underscore.union underscores_revive underscores_revive_group
       in
-      let instr =
-        GroupI (id, rel_signature, exps_signature, instrs_group) $ at
-      in
+      let instr = GroupI (id, rel_signature, exps_signature, block) $ at in
       (underscores_revive, instr)
-  | LetI (exp_l, exp_r, iterinstrs) ->
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let underscores_used = Underscore.init_exp exp_r in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exp_r = Renamer.rename_exp renamer_candid exp_r in
+      let exp_r = Re.Renamer.rename_exp renamer_candid exp_r in
       let iterinstrs =
-        Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
+        Re.Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
       in
-      let instr = LetI (exp_l, exp_r, iterinstrs) $ at in
+      let underscores_revive_block, block =
+        let underscores_l = Underscore.init_exp exp_l in
+        let renamer_candid =
+          Underscore.exclude_renamer renamer_candid underscores_l
+        in
+        downstream_block renamer_candid block
+      in
+      let underscores_revive =
+        Underscore.union underscores_revive underscores_revive_block
+      in
+      let instr = LetI (exp_l, exp_r, iterinstrs, block) $ at in
       (underscores_revive, instr)
-  | RuleI (id, notexp, inputs, iterinstrs) ->
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
       let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let underscores_used = Underscore.init_exps exps_input in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exps_input = Renamer.rename_exps renamer_candid exps_input in
+      let exps_input = Re.Renamer.rename_exps renamer_candid exps_input in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let notexp = (mixop, exps) in
       let iterinstrs =
-        Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
+        Re.Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
       in
-      let instr = RuleI (id, notexp, inputs, iterinstrs) $ at in
+      let underscores_revive_block, block =
+        let underscores_output = Underscore.init_exps exps_output in
+        let renamer_candid =
+          Underscore.exclude_renamer renamer_candid underscores_output
+        in
+        downstream_block renamer_candid block
+      in
+      let underscores_revive =
+        Underscore.union underscores_revive underscores_revive_block
+      in
+      let instr = RuleI (id, notexp, inputs, iterinstrs, block) $ at in
       (underscores_revive, instr)
   | ResultI (rel_signature, exps) ->
       let underscores_used = Underscore.init_exps exps in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exps = Renamer.rename_exps renamer_candid exps in
+      let exps = Re.Renamer.rename_exps renamer_candid exps in
       let instr = ResultI (rel_signature, exps) $ at in
       (underscores_revive, instr)
   | ReturnI exp ->
@@ -178,7 +192,7 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exp = Renamer.rename_exp renamer_candid exp in
+      let exp = Re.Renamer.rename_exp renamer_candid exp in
       let instr = ReturnI exp $ at in
       (underscores_revive, instr)
   | DebugI exp ->
@@ -186,172 +200,166 @@ let rec downstream_instr (renamer_candid : Renamer.t) (instr : instr) :
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
-      let exp = Renamer.rename_exp renamer_candid exp in
+      let exp = Re.Renamer.rename_exp renamer_candid exp in
       let instr = DebugI exp $ at in
       (underscores_revive, instr)
 
-and downstream_instrs (renamer_candid : Renamer.t) (instrs : instr list) :
-    Underscore.t * instr list =
-  match instrs with
-  | [] -> (IdSet.empty, instrs)
-  | ({ it = LetI (exp_l, _, _); _ } as instr_h) :: instrs_t ->
+and downstream_block (renamer_candid : Re.Renamer.t) (block : block) :
+    Underscore.t * block =
+  match block with
+  | [] -> (IdSet.empty, block)
+  | instr_h :: block_t ->
       let underscores_revive_h, instr_h =
         downstream_instr renamer_candid instr_h
       in
-      let underscores_h = Underscore.init_exp exp_l in
-      let renamer_candid =
-        Underscore.exclude_renamer renamer_candid underscores_h
-      in
-      let underscoress_revive_t, instrs_t =
-        downstream_instrs renamer_candid instrs_t
-      in
-      let underscores_revive =
-        Underscore.union underscores_revive_h underscoress_revive_t
-      in
-      (underscores_revive, instr_h :: instrs_t)
-  | ({ it = RuleI (_, (_, exps), inputs, _); _ } as instr_h) :: instrs_t ->
-      let underscores_revive_h, instr_h =
-        downstream_instr renamer_candid instr_h
-      in
-      let _, exps_output = Hints.Input.split inputs exps in
-      let underscores_h = Underscore.init_exps exps_output in
-      let renamer_candid =
-        Underscore.exclude_renamer renamer_candid underscores_h
-      in
-      let underscores_revive_t, instrs_t =
-        downstream_instrs renamer_candid instrs_t
+      let underscores_revive_t, block_t =
+        downstream_block renamer_candid block_t
       in
       let underscores_revive =
         Underscore.union underscores_revive_h underscores_revive_t
       in
-      (underscores_revive, instr_h :: instrs_t)
-  | instr_h :: instrs_t ->
-      let underscores_revive_h, instr_h =
-        downstream_instr renamer_candid instr_h
-      in
-      let underscores_revive_t, instrs_t =
-        downstream_instrs renamer_candid instrs_t
-      in
-      let underscores_revive =
-        Underscore.union underscores_revive_h underscores_revive_t
-      in
-      (underscores_revive, instr_h :: instrs_t)
+      (underscores_revive, instr_h :: block_t)
 
-let rec upstream (frees : IdSet.t) (instrs : instr list) : IdSet.t * instr list
-    =
-  match instrs with
-  | [] -> (frees, [])
-  | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
-      let frees, instrs_then = upstream frees instrs_then in
-      let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
-  | { it = HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold); at; _ }
-    :: instrs_t ->
-      let frees, instrs_hold = upstream frees instrs_hold in
-      let frees, instrs_nothold = upstream frees instrs_nothold in
-      let instr_h =
-        HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
-      in
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
-  | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
-      let free, cases =
-        List.fold_left
-          (fun (free, cases) case ->
-            let guard, block = case in
-            let free, block = upstream free block in
-            let case = (guard, block) in
-            (free, cases @ [ case ]))
-          (frees, []) cases
-      in
-      let instr_h = CaseI (exp, cases, total) $ at in
-      let frees, instrs_t = upstream free instrs_t in
-      (frees, instr_h :: instrs_t)
-  | { it = GroupI (id, rel_signature, exps_signature, instrs_group); at; _ }
-    :: instrs_t ->
-      let frees, instrs = upstream frees instrs_group in
-      let instr_h = GroupI (id, rel_signature, exps_signature, instrs) $ at in
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
-  | { it = LetI (exp_l, exp_r, iterinstrs); at; _ } :: instrs_t ->
+let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
+  match instr.it with
+  | IfI (exp_cond, iterexps, block_then) ->
+      let block_then = upstream_block frees block_then in
+      IfI (exp_cond, iterexps, block_then) $ instr.at
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let block_hold = upstream_block frees block_hold in
+      let block_nothold = upstream_block frees block_nothold in
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ instr.at
+  | CaseI (exp, cases, total) ->
+      let guards, blocks = List.split cases in
+      let blocks = List.map (upstream_block frees) blocks in
+      let cases = List.combine guards blocks in
+      CaseI (exp, cases, total) $ instr.at
+  | GroupI (id, rel_signature, exps_signature, block) ->
+      let block = upstream_block frees block in
+      GroupI (id, rel_signature, exps_signature, block) $ instr.at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let underscores_bound =
-        Ol.Free.free_exp exp_l |> IdSet.filter Id.is_underscored
+        Underscore.init_exp exp_l |> IdSet.filter Id.is_underscored
       in
-      let frees, renamer_candid =
+      let _, renamer_candid =
         Underscore.candid_renamer frees underscores_bound
       in
-      let underscores_revive, instrs_t =
-        downstream_instrs renamer_candid instrs_t
-      in
+      let underscores_revive, block = downstream_block renamer_candid block in
       let renamer_revive =
         Underscore.include_renamer renamer_candid underscores_revive
       in
-      let exp_l = Renamer.rename_exp renamer_revive exp_l in
+      let exp_l = Re.Renamer.rename_exp renamer_revive exp_l in
       let iterinstrs =
-        Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
+        Re.Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
       in
-      let instr_h = LetI (exp_l, exp_r, iterinstrs) $ at in
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
-  | { it = RuleI (id, notexp, inputs, iterinstrs); at; _ } :: instrs_t ->
+      let block = Re.Renamer.rename_block renamer_revive block in
+      LetI (exp_l, exp_r, iterinstrs, block) $ instr.at
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
       let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
-      let underscores_bound = Underscore.init_exps exps_output in
-      let frees, renamer_candid =
+      let underscores_bound =
+        Underscore.init_exps exps_output |> IdSet.filter Id.is_underscored
+      in
+      let _, renamer_candid =
         Underscore.candid_renamer frees underscores_bound
       in
-      let underscores_revive, instrs_t =
-        downstream_instrs renamer_candid instrs_t
-      in
+      let underscores_revive, block = downstream_block renamer_candid block in
       let renamer_revive =
         Underscore.include_renamer renamer_candid underscores_revive
       in
       let notexp =
-        let exps_output = Renamer.rename_exps renamer_revive exps_output in
+        let exps_output = Re.Renamer.rename_exps renamer_revive exps_output in
         let exps = Hints.Input.combine inputs exps_input exps_output in
         (mixop, exps)
       in
       let iterinstrs =
-        Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
+        Re.Renamer.rename_iterinstrs_bind renamer_revive iterinstrs
       in
-      let instr_h = RuleI (id, notexp, inputs, iterinstrs) $ at in
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
-  | instr_h :: instrs_t ->
-      let frees, instrs_t = upstream frees instrs_t in
-      (frees, instr_h :: instrs_t)
+      RuleI (id, notexp, inputs, iterinstrs, block) $ instr.at
+  | _ -> instr
 
-let apply_rel ((exps_match, instrs) : exp list * instr list) :
-    exp list * instr list =
+and upstream_block (frees : IdSet.t) (block : block) : block =
+  match block with
+  | [] -> []
+  | instr_h :: block_t ->
+      let instr_h = upstream_instr frees instr_h in
+      let block_t = upstream_block frees block_t in
+      instr_h :: block_t
+
+let apply_rel
+    ((exps_match, block, elseblock_opt) : exp list * block * elseblock option) :
+    exp list * block * elseblock option =
   let underscores_bound = Underscore.init_exps exps_match in
   let frees =
-    IdSet.union (Ol.Free.free_exps exps_match) (Ol.Free.free_instrs instrs)
+    let frees_exps_match = Ol.Free.free_exps exps_match in
+    let frees_block = Ol.Free.free_block block in
+    let frees_elseblock_opt =
+      elseblock_opt
+      |> Option.map Ol.Free.free_block
+      |> Option.value ~default:IdSet.empty
+    in
+    frees_exps_match |> IdSet.union frees_block
+    |> IdSet.union frees_elseblock_opt
   in
   let frees, renamer_candid =
     Underscore.candid_renamer frees underscores_bound
   in
-  let underscores_revive, instrs = downstream_instrs renamer_candid instrs in
+  let underscores_revive, block = downstream_block renamer_candid block in
+  let underscores_revive, elseblock_opt =
+    match elseblock_opt with
+    | Some elseblock ->
+        let underscores_revive_else, elseblock =
+          downstream_block renamer_candid elseblock
+        in
+        let underscores_revive =
+          Underscore.union underscores_revive underscores_revive_else
+        in
+        (underscores_revive, Some elseblock)
+    | None -> (underscores_revive, None)
+  in
   let renamer_revive =
     Underscore.include_renamer renamer_candid underscores_revive
   in
-  let exps_match = Renamer.rename_exps renamer_revive exps_match in
-  let _, instrs = upstream frees instrs in
-  (exps_match, instrs)
+  let exps_match = Re.Renamer.rename_exps renamer_revive exps_match in
+  let block = upstream_block frees block in
+  let elseblock_opt = Option.map (upstream_block frees) elseblock_opt in
+  (exps_match, block, elseblock_opt)
 
-let apply_func ((args_input, instrs) : arg list * instr list) :
-    arg list * instr list =
+let apply_func
+    ((args_input, block, elseblock_opt) : arg list * block * elseblock option) :
+    arg list * block * elseblock option =
   let underscores_bound = Underscore.init_args args_input in
   let frees =
-    IdSet.union (Ol.Free.free_args args_input) (Ol.Free.free_instrs instrs)
+    let frees_args_input = Ol.Free.free_args args_input in
+    let frees_block = Ol.Free.free_block block in
+    let frees_elseblock_opt =
+      elseblock_opt
+      |> Option.map Ol.Free.free_block
+      |> Option.value ~default:IdSet.empty
+    in
+    frees_args_input |> IdSet.union frees_block
+    |> IdSet.union frees_elseblock_opt
   in
   let frees, renamer_candid =
     Underscore.candid_renamer frees underscores_bound
   in
-  let underscores_revive, instrs = downstream_instrs renamer_candid instrs in
+  let underscores_revive, block = downstream_block renamer_candid block in
+  let underscores_revive, elseblock_opt =
+    match elseblock_opt with
+    | Some elseblock ->
+        let underscores_revive_else, elseblock =
+          downstream_block renamer_candid elseblock
+        in
+        let underscores_revive =
+          Underscore.union underscores_revive underscores_revive_else
+        in
+        (underscores_revive, Some elseblock)
+    | None -> (underscores_revive, None)
+  in
   let renamer_revive =
     Underscore.include_renamer renamer_candid underscores_revive
   in
-  let args_input = Renamer.rename_args renamer_revive args_input in
-  let _, instrs = upstream frees instrs in
-  (args_input, instrs)
+  let args_input = Re.Renamer.rename_args renamer_revive args_input in
+  let block = upstream_block frees block in
+  let elseblock_opt = Option.map (upstream_block frees) elseblock_opt in
+  (args_input, block, elseblock_opt)

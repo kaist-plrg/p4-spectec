@@ -22,20 +22,19 @@ let find_variant_case_analysis (tdenv : TDEnv.t) (cases : case list) :
       | None -> None)
     (Some []) cases
 
-let rec totalize_case_analysis (tdenv : TDEnv.t) (instrs : instr list) :
-    instr list =
-  List.map (totalize_case_analysis' tdenv) instrs
+let rec totalize_case_analysis (tdenv : TDEnv.t) (block : block) : block =
+  List.map (totalize_case_analysis' tdenv) block
 
 and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then) ->
-      let instrs_then = totalize_case_analysis tdenv instrs_then in
-      IfI (exp_cond, iterexps, instrs_then) $ at
-  | HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) ->
-      let instrs_hold = totalize_case_analysis tdenv instrs_hold in
-      let instrs_nothold = totalize_case_analysis tdenv instrs_nothold in
-      HoldI (id, notexp, iterexps, instrs_hold, instrs_nothold) $ at
+  | IfI (exp_cond, iterexps, block_then) ->
+      let block_then = totalize_case_analysis tdenv block_then in
+      IfI (exp_cond, iterexps, block_then) $ at
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let block_hold = totalize_case_analysis tdenv block_hold in
+      let block_nothold = totalize_case_analysis tdenv block_nothold in
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) -> (
       let cases =
         let guards, blocks = List.split cases in
@@ -54,10 +53,22 @@ and totalize_case_analysis' (tdenv : TDEnv.t) (instr : instr) : instr =
           let total = Set.equal mixops_case mixops_total in
           CaseI (exp, cases, total) $ at
       | None -> CaseI (exp, cases, total) $ at)
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
-      let instrs_group = totalize_case_analysis tdenv instrs_group in
-      GroupI (id_group, rel_signature, exps_group, instrs_group) $ at
+  | GroupI (id_group, rel_signature, exps_group, block) ->
+      let block = totalize_case_analysis tdenv block in
+      GroupI (id_group, rel_signature, exps_group, block) $ at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
+      let block = totalize_case_analysis tdenv block in
+      LetI (exp_l, exp_r, iterinstrs, block) $ at
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
+      let block = totalize_case_analysis tdenv block in
+      RuleI (id, notexp, inputs, iterinstrs, block) $ at
   | _ -> instr
 
-let totalize (tdenv : TDEnv.t) (instrs : instr list) : instr list =
-  totalize_case_analysis tdenv instrs
+let totalize (tdenv : TDEnv.t) (block : block)
+    (elseblock_opt : elseblock option) : block * elseblock option =
+  let block = totalize_case_analysis tdenv block in
+  let elseblock_opt = Option.map (totalize_case_analysis tdenv) elseblock_opt in
+  (block, elseblock_opt)
+
+let totalize_without_else (tdenv : TDEnv.t) (block : block) : block =
+  totalize_case_analysis tdenv block

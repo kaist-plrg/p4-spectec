@@ -51,8 +51,8 @@ module Cover = struct
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
     match instr.it with
-    | IfI (_, _, instrs_then, phantom_opt) -> (
-        let cover = init_instrs cover id instrs_then in
+    | IfI (_, _, block_then, phantom_opt) -> (
+        let cover = init_block cover id block_then in
         match phantom_opt with
         | Some pid ->
             let branch = Branch.init id in
@@ -60,18 +60,18 @@ module Cover = struct
         | None -> cover)
     | HoldI (_, _, _, holdcase) -> (
         match holdcase with
-        | BothH (instrs_hold, instrs_nothold) ->
-            let cover = init_instrs cover id instrs_hold in
-            init_instrs cover id instrs_nothold
-        | HoldH (instrs_hold, phantom_opt) -> (
-            let cover = init_instrs cover id instrs_hold in
+        | BothH (block_hold, block_nothold) ->
+            let cover = init_block cover id block_hold in
+            init_block cover id block_nothold
+        | HoldH (block_hold, phantom_opt) -> (
+            let cover = init_block cover id block_hold in
             match phantom_opt with
             | Some pid ->
                 let branch = Branch.init id in
                 add pid branch cover
             | None -> cover)
-        | NotHoldH (instrs_nothold, phantom_opt) -> (
-            let cover = init_instrs cover id instrs_nothold in
+        | NotHoldH (block_nothold, phantom_opt) -> (
+            let cover = init_block cover id block_nothold in
             match phantom_opt with
             | Some pid ->
                 let branch = Branch.init id in
@@ -81,7 +81,7 @@ module Cover = struct
         let blocks = cases |> List.split |> snd in
         let cover =
           List.fold_left
-            (fun cover instrs -> init_instrs cover id instrs)
+            (fun cover block -> init_block cover id block)
             cover blocks
         in
         match phantom_opt with
@@ -89,16 +89,17 @@ module Cover = struct
             let branch = Branch.init id in
             add pid branch cover
         | None -> cover)
-    | OtherwiseI instrs -> init_instrs cover id instrs
-    | GroupI (_, _, _, instrs_group) -> init_instrs cover id instrs_group
+    | GroupI (_, _, _, block_group) -> init_block cover id block_group
+    | LetI (_, _, _, block) -> init_block cover id block
+    | RuleI (_, _, _, _, block) -> init_block cover id block
     | _ -> cover
 
-  and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
-    List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
+  and init_block (cover : t) (id : id) (block : block) : t =
+    List.fold_left (fun cover instr -> init_instr cover id instr) cover block
 
   let init_tablerow (cover : t) (id : id) (tablerow : tablerow) : t =
-    let _, _, instrs = tablerow in
-    init_instrs cover id instrs
+    let _, _, block = tablerow in
+    init_block cover id block
 
   let init_tablerows (cover : t) (id : id) (tablerows : tablerow list) : t =
     List.fold_left
@@ -107,10 +108,18 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) when not (is_ignored hints) ->
-        init_instrs cover id instrs
-    | FuncDecD (id, _, _, _, instrs, hints) when not (is_ignored hints) ->
-        init_instrs cover id instrs
+    | RelD (id, _, _, block, elseblock_opt, hints) when not (is_ignored hints)
+      -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
+    | FuncDecD (id, _, _, _, block, elseblock_opt, hints)
+      when not (is_ignored hints) -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
     | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
         init_tablerows cover id tablerows
     | _ -> cover

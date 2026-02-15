@@ -62,9 +62,11 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
       let at = prem_h.at in
       match prem_h.it with
       | RulePr (id, notexp, inputs) ->
-          let instr_h = Ol.Ast.RuleI (id, notexp, inputs, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          instr_h :: instrs_t
+          let instr_h =
+            Ol.Ast.RuleI (id, notexp, inputs, iterprems_h, instrs_t) $ at
+          in
+          [ instr_h ]
       | IfPr exp ->
           let iterexps_h =
             List.map
@@ -104,9 +106,11 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
           in
           [ instr_h ]
       | LetPr (exp_l, exp_r) ->
-          let instr_h = Ol.Ast.LetI (exp_l, exp_r, iterprems_h) $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          instr_h :: instrs_t
+          let instr_h =
+            Ol.Ast.LetI (exp_l, exp_r, iterprems_h, instrs_t) $ at
+          in
+          [ instr_h ]
       | DebugPr exp ->
           let instr_h = Ol.Ast.DebugI exp $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
@@ -138,15 +142,15 @@ let struct_rule_matches (frees : IdSet.t)
   (exps_match_input_unified, prems_match_group, prems_match_else_opt)
 
 let struct_rule_paths (rel_signature : Ol.Ast.rel_signature)
-    (prems_path : prem list) (exps_output : exp list) : Ol.Ast.instr list =
+    (prems_path : prem list) (exps_output : exp list) : Ol.Ast.block =
   let at = exps_output |> List.map Util.Source.at |> over_region in
   let instr_res = Ol.Ast.ResultI (rel_signature, exps_output) $ at in
   struct_prems prems_path instr_res
 
 let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
     (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
-    (rulepaths : rulepath list) : Ol.Ast.instr list =
-  let instrs_path =
+    (rulepaths : rulepath list) : Ol.Ast.block =
+  let block_path =
     List.map
       (fun (_, prems_path, exps_output) ->
         struct_rule_paths rel_signature prems_path exps_output)
@@ -154,19 +158,18 @@ let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
     |> Merge.merge_blocks
   in
   let instr_group =
-    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, instrs_path)
+    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, block_path)
     $ id_rulegroup.at
   in
   struct_prems prems_match instr_group
 
 let struct_else_group (rel_signature : Ol.Ast.rel_signature)
     (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
-    (rulepath : rulepath) : Ol.Ast.instr list =
+    (rulepath : rulepath) : Ol.Ast.block =
   let _, prems_path, exps_output = rulepath in
-  let instrs_path = struct_rule_paths rel_signature prems_path exps_output in
-  let instr_else = Ol.Ast.OtherwiseI instrs_path $ id_rulegroup.at in
+  let block_path = struct_rule_paths rel_signature prems_path exps_output in
   let instr_group =
-    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, [ instr_else ])
+    Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, block_path)
     $ id_rulegroup.at
   in
   struct_prems prems_match instr_group
@@ -183,8 +186,7 @@ let struct_elseclause_path ((prems, exp_output) : prem list * exp) :
     Ol.Ast.instr list =
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
-  let instr_else = Ol.Ast.OtherwiseI [ instr_ret ] $ at in
-  struct_prems prems instr_else
+  struct_prems prems instr_ret
 
 (* Structuring table rows *)
 
@@ -286,30 +288,36 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
         (exps_match_unified, prems_match_group, prems_match_else_opt)
   in
   let rel_signature = (nottyp, inputs) in
-  let instrs_group =
+  let block =
     List.map2
       (fun prems_match (id_rulegroup, exps_match_signature, rulepaths) ->
         struct_rule_group rel_signature prems_match id_rulegroup
           exps_match_signature rulepaths)
       prems_match_group rulegroups
+    |> Merge.merge_blocks
   in
-  let instrs_else =
+  let elseblock_opt =
     match (prems_match_else_opt, elsegroup_opt) with
     | Some prems_match_else, Some (id_rulegroup, exps_match_signature, rulepath)
       ->
-        struct_else_group rel_signature prems_match_else id_rulegroup
-          exps_match_signature rulepath
-    | _ -> []
+        let elseblock =
+          struct_else_group rel_signature prems_match_else id_rulegroup
+            exps_match_signature rulepath
+        in
+        Some elseblock
+    | _ -> None
   in
-  let instrs_group = instrs_group @ [ instrs_else ] in
-  let instrs = instrs_group |> Merge.merge_blocks in
-  let instrs = Optimize.optimize tdenv instrs in
-  let instrs = Totalize.totalize tdenv instrs in
-  let exps_match_unified, instrs =
-    Prettify.pretty_rel exps_match_unified instrs
+  let block, elseblock_opt =
+    Optimize.optimize_with_else tdenv block elseblock_opt
   in
-  let instrs = Instrument.instrument instrs in
-  Sl.RelD (id_rel, rel_signature, exps_match_unified, instrs, hints) $ at
+  let block, elseblock_opt = Totalize.totalize tdenv block elseblock_opt in
+  let exps_match_unified, block, elseblock_opt =
+    Prettify.pretty_rel exps_match_unified block elseblock_opt
+  in
+  let block, elseblock_opt = Instrument.instrument block elseblock_opt in
+  Sl.RelD
+    (id_rel, rel_signature, exps_match_unified, block, elseblock_opt, hints)
+  $ at
 
 (* Structuring declaration definitions *)
 
@@ -338,12 +346,12 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   in
   let args_input, paths, _ = Antiunify.antiunify_clauses clauses None in
   let params = struct_params_from_args params args_input in
-  let instrs_tablerows_group =
+  let blocks_tablerows =
     paths
     |> List.map struct_tablerow_path
-    |> List.map (Optimize.optimize tdenv)
-    |> List.map (Totalize.totalize tdenv)
-    |> List.map Instrument.instrument
+    |> List.map (Optimize.optimize_without_else tdenv)
+    |> List.map (Totalize.totalize_without_else tdenv)
+    |> List.map Instrument.instrument_without_else
   in
   let exp_output_group = paths |> List.split |> snd in
   let tablerows =
@@ -351,7 +359,7 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
     |> List.map2
          (fun instrs_tablerows (exps_signature, exp_output) ->
            (exps_signature, exp_output, instrs_tablerows))
-         instrs_tablerows_group
+         blocks_tablerows
   in
   let tablefunc = (id_dec, params, typ, tablerows, hints) in
   Sl.TableDecD tablefunc $ at
@@ -363,20 +371,18 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   let args_input, paths, path_else_opt =
     Antiunify.antiunify_clauses clauses elseclause_opt
   in
-  let instrs_group = paths |> List.map struct_clause_path in
-  let instrs_else =
-    match path_else_opt with
-    | Some path_else -> struct_elseclause_path path_else
-    | None -> []
+  let block = paths |> List.map struct_clause_path |> Merge.merge_blocks in
+  let elseblock_opt = Option.map struct_elseclause_path path_else_opt in
+  let block, elseblock_opt =
+    Optimize.optimize_with_else tdenv block elseblock_opt
   in
-  let instrs_group = instrs_group @ [ instrs_else ] in
-  let instrs = instrs_group |> Merge.merge_blocks in
-  let instrs = Optimize.optimize tdenv instrs in
-  let instrs = Totalize.totalize tdenv instrs in
-  let args_input, instrs = Prettify.pretty_func args_input instrs in
+  let block, elseblock_opt = Totalize.totalize tdenv block elseblock_opt in
+  let args_input, block, elseblock_opt =
+    Prettify.pretty_func args_input block elseblock_opt
+  in
   let params = struct_params_from_args params args_input in
-  let instrs = Instrument.instrument instrs in
-  let func = (id_dec, tparams, params, typ, instrs, hints) in
+  let block, elseblock_opt = Instrument.instrument block elseblock_opt in
+  let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in
   Sl.FuncDecD func $ at
 
 (* Load type definitions *)
