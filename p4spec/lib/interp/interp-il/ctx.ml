@@ -4,7 +4,7 @@ open Il
 open Runtime.Dynamic_Il
 open Envs
 open Error
-open Attempt
+open Backtrack
 open Util.Source
 
 (* Error *)
@@ -215,13 +215,13 @@ let localize (ctx : t) : t =
 (* Transpose a matrix of values, as a list of value batches
    that are to be each fed into an iterated expression *)
 
-let transpose (value_matrix : value list list) : value list list attempt =
+let transpose (value_matrix : value list list) : value list list backtrack =
   match value_matrix with
   | [] -> Ok []
   | rows ->
       let width = List.length (List.hd rows) in
       let* _ =
-        check_fail
+        check_back_err
           (List.for_all (fun row -> List.length row = width) rows)
           no_region "cannot transpose a matrix of value batches"
       in
@@ -233,7 +233,7 @@ let transpose (value_matrix : value list list) : value list list attempt =
       in
       Ok value_matrix
 
-let sub_opt (ctx : t) (vars : var list) : t option attempt =
+let sub_opt (ctx : t) (vars : var list) : t option backtrack =
   (* First collect the values that are to be iterated over *)
   let values =
     List.map
@@ -252,9 +252,9 @@ let sub_opt (ctx : t) (vars : var list) : t option attempt =
     in
     Ok (Some ctx_sub)
   else if List.for_all Option.is_none values then Ok None
-  else fail no_region "mismatch in optionality of iterated variables"
+  else back_err no_region "mismatch in optionality of iterated variables"
 
-let sub_list (ctx : t) (vars : var list) : t list attempt =
+let sub_list (ctx : t) (vars : var list) : t list backtrack =
   (* First break the values that are to be iterated over,
      into a batch of values *)
   let* values_batch =

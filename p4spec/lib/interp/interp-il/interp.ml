@@ -10,7 +10,8 @@ module Dep = Runtime.Testgen_neg.Dep
 module DCov_single = Coverage.Dangling.Single
 module Hook = Inst.Hook
 open Error
-open Attempt
+open Backtrack
+open Nondet
 module F = Format
 open Util.Source
 
@@ -103,7 +104,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           ctx vars
     | _ ->
         error exp.at
-          (F.asprintf "(TODO) match failed %s <- %s"
+          (F.asprintf "match failed %s <- %s"
              (Il.Print.string_of_exp exp)
              (Il.Print.string_of_value ~short:true value))
 
@@ -1019,10 +1020,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Premise evaluation *)
 
-  and eval_prem (ctx : Ctx.t) (prem : prem) : Ctx.t attempt =
+  and eval_prem (ctx : Ctx.t) (prem : prem) : Ctx.t backtrack =
     eval_prem' ctx prem
 
-  and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t attempt =
+  and eval_prem' (ctx : Ctx.t) (prem : prem) : Ctx.t backtrack =
     match prem.it with
     | RulePr (id, notexp, inputs) -> eval_rule_prem ctx id notexp inputs
     | IfPr exp_cond -> eval_if_prem ctx exp_cond
@@ -1032,7 +1033,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | IterPr (prem, iterprem) -> eval_iter_prem ctx prem iterprem
     | DebugPr exp -> eval_debug_prem ctx exp
 
-  and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t attempt =
+  and eval_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t backtrack =
     List.fold_left
       (fun ctx prem ->
         let* ctx = ctx in
@@ -1042,7 +1043,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Rule premise evaluation *)
 
   and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (inputs : Hints.Input.t) : Ctx.t attempt =
+      (inputs : Hints.Input.t) : Ctx.t backtrack =
     let _, exps = notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let values_input = eval_exps ctx exps_input in
@@ -1052,40 +1053,45 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* If premise evaluation *)
 
-  and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t attempt =
+  and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t backtrack =
     let value_cond = eval_exp ctx exp_cond in
     let cond = Value.get_bool value_cond in
     if cond then Ok ctx
     else
-      fail exp_cond.at
+      back_unmatch exp_cond.at
         (F.asprintf "condition %s was not met"
            (Il.Print.string_of_exp exp_cond))
 
   (* If-hold premise evaluation *)
 
   and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt =
+      Ctx.t backtrack =
     let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
-    | Fail failtraces ->
-        Fail failtraces
-        |> nest id.at (F.asprintf "condition hold %s was not met" id.it)
+    | Err _ as backtrack -> backtrack
+    | Unmatch _ as backtrack ->
+        backtrack
+        |> back_nest id.at (F.asprintf "condition hold %s was not met" id.it)
 
   (* If-not-hold premise evaluation *)
 
   and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
-      Ctx.t attempt =
+      Ctx.t backtrack =
     let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
-    | Ok _ -> fail id.at (F.asprintf "condition not-hold %s was not met" id.it)
-    | Fail _ -> Ok ctx
+    | Ok _ ->
+        back_unmatch id.at
+          (F.asprintf "condition not-hold %s was not met" id.it)
+    | Err _ as backtrack -> backtrack
+    | Unmatch _ -> Ok ctx
 
   (* Let premise evaluation *)
 
-  and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t attempt =
+  and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t backtrack
+      =
     let value = eval_exp ctx exp_r in
     let ctx = assign_exp ctx exp_l value in
     Ok ctx
@@ -1093,7 +1099,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Iterated premise evaluation *)
 
   and eval_iter_prem_list (ctx : Ctx.t) (prem : prem) (vars_bound : var list)
-      (vars_bind : var list) : Ctx.t attempt =
+      (vars_bind : var list) : Ctx.t backtrack =
     (* Create a subcontext for each batch of bound values *)
     let* ctxs_sub = Ctx.sub_list ctx vars_bound in
     let* ctx, values_binding =
@@ -1144,7 +1150,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Ok ctx
 
   and eval_iter_prem (ctx : Ctx.t) (prem : prem) (iterprem : iterprem) :
-      Ctx.t attempt =
+      Ctx.t backtrack =
     let iter, vars_bound, vars_bind = iterprem in
     match iter with
     | Opt -> error prem.at "(TODO) eval_iter_prem"
@@ -1152,7 +1158,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Debug premise evaluation *)
 
-  and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t attempt =
+  and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t backtrack =
     let value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
@@ -1171,14 +1177,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (ctx, prems_input)
 
   and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
+      value list backtrack =
     Hook.on_rel_enter id values_input;
-    let result = invoke_rel' ctx id values_input in
+    let backtrack = invoke_rel' ctx id values_input in
     Hook.on_rel_exit id;
-    result |> nest id.at (F.asprintf "invocation of relation %s failed" id.it)
+    backtrack
+    |> back_nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list attempt =
+      value list backtrack =
     let rel = Ctx.find_rel ctx id in
     match rel with
     | Rel.Extern -> invoke_extern_rel id values_input
@@ -1186,7 +1193,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
 
   and invoke_extern_rel (id : id) (values_input : value list) :
-      value list attempt =
+      value list backtrack =
     match id.it with
     | "ExternFunctionCall_eval_lctk" ->
         let values_output = Arch.eval_extern_func_lctk_call values_input in
@@ -1197,15 +1204,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | "ExternMethodCall_eval" ->
         let values_output = Arch.eval_extern_method_call values_input in
         Ok values_output
-    | _ -> fail id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    | _ -> back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
       (elsegroup_opt : elsegroup option) (values_input : value list) :
-      value list attempt =
-    (* Attempt a rule path *)
-    let attempt_rulepath_inner (ctx : Ctx.t) (_id_rulegroup : id)
+      value list backtrack =
+    (* Backtrack a rule path *)
+    let do_backtrack_rulepath_inner (ctx : Ctx.t) (_id_rulegroup : id)
         (rulematch : rulematch) (id_rulepath : id) (prems : prem list)
-        (exps_output : exp list) : unit -> value list attempt =
+        (exps_output : exp list) : unit -> value list backtrack =
      fun () ->
       (* Create a subtrace for the rule path *)
       let ctx_local = Ctx.localize ctx in
@@ -1219,31 +1226,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let values_output = eval_exps ctx_local exps_output in
       Ok values_output
     in
-    let attempt_rulepath (ctx : Ctx.t) (id_rulegroup : id)
+    let do_backtrack_rulepath (ctx : Ctx.t) (id_rulegroup : id)
         (rulematch : rulematch) (rulepath : rulepath) :
-        unit -> value list attempt =
+        unit -> value list backtrack =
      fun () ->
       let id_rulepath, prems, exps_output = rulepath in
-      attempt_rulepath_inner ctx id_rulegroup rulematch id_rulepath prems
+      do_backtrack_rulepath_inner ctx id_rulegroup rulematch id_rulepath prems
         exps_output ()
-      |> nest id.at
+      |> back_nest id.at
            (F.asprintf "application of rule %s/%s/%s failed" id.it
               id_rulegroup.it id_rulepath.it)
     in
-    (* Attempt a rule group *)
-    let attempt_rulegroup (ctx : Ctx.t) (rulegroup : rulegroup) :
-        (unit -> value list attempt) list =
+    (* Backtrack a rule group *)
+    let do_backtrack_rulegroup (ctx : Ctx.t) (rulegroup : rulegroup) :
+        (unit -> value list backtrack) list =
       let id_rulegroup, rulematch, rulepaths = rulegroup.it in
-      rulepaths |> List.map (attempt_rulepath ctx id_rulegroup rulematch)
+      rulepaths |> List.map (do_backtrack_rulepath ctx id_rulegroup rulematch)
     in
-    (* Attempt an else group *)
-    let attempt_elsegroup (ctx : Ctx.t) (elsegroup : elsegroup) :
-        value list attempt =
+    (* Backtrack an else group *)
+    let do_backtrack_elsegroup (ctx : Ctx.t) (elsegroup : elsegroup) :
+        value list backtrack =
       let id_rulegroup, rulematch, rulepath = elsegroup.it in
-      (attempt_rulepath ctx id_rulegroup rulematch rulepath) ()
+      (do_backtrack_rulepath ctx id_rulegroup rulematch rulepath) ()
     in
-    (* Attempt a relation *)
-    let attempt_relation (ctx : Ctx.t) : value list attempt =
+    (* Backtrack a relation *)
+    let backtrack_relation (ctx : Ctx.t) : value list backtrack =
       let ids_path =
         rulegroups
         |> List.concat_map (fun rulegroup ->
@@ -1253,21 +1260,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                       let id_rulepath, _, _ = rulepath in
                       F.asprintf "%s/%s" id_rulegroup.it id_rulepath.it))
       in
-      let attempts_path =
-        rulegroups |> List.concat_map (attempt_rulegroup ctx)
+      let backtracks_path =
+        rulegroups |> List.concat_map (do_backtrack_rulegroup ctx)
       in
-      let result =
-        if !Ctx.is_det then attempts_path |> choose_deterministic ids_path
-        else attempts_path |> choose_sequential |> as_deterministic
+      let backtrack_det =
+        if !Ctx.is_det then backtracks_path |> choose_deterministic ids_path
+        else backtracks_path |> choose_sequential |> as_det
       in
-      match result with
+      match backtrack_det with
       | Ok_det values_output -> Ok values_output
-      | Fail_det failtraces -> (
+      | Err_det failtraces -> Err failtraces
+      | Unmatch_det failtraces -> (
           match elsegroup_opt with
-          | Some elsegroup -> attempt_elsegroup ctx elsegroup
-          | None -> Fail failtraces)
-      | Multiple_det (id_path_a, id_path_b) ->
-          fail id.at
+          | Some elsegroup -> do_backtrack_elsegroup ctx elsegroup
+          | None -> Unmatch failtraces)
+      | Nondet_det (id_path_a, id_path_b) ->
+          back_err id.at
             (F.asprintf "non-deterministic application of relation %s: %s, %s"
                id.it id_path_a id_path_b)
     in
@@ -1277,24 +1285,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let* values_output = attempt_relation ctx in
+          let* values_output = backtrack_relation ctx in
           Cache.Cache.add !rule_cache (id.it, values_input) values_output;
           Ok values_output)
-    else attempt_relation ctx
+    else backtrack_relation ctx
 
   (* Invoke a function *)
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value attempt =
+      : value backtrack =
     invoke_func' ctx id targs args
-    |> nest id.at
+    |> back_nest id.at
          (F.asprintf "invocation of function %s%s%s failed"
             (Il.Print.string_of_defid id)
             (Il.Print.string_of_targs targs)
             (Il.Print.string_of_args args))
 
   and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value attempt =
+      : value backtrack =
     (* Evaluate type arguments *)
     let targs =
       match targs with
@@ -1317,7 +1325,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     invoke_func_with_values ctx id targs values_input
 
   and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
     (* Find the function *)
     let func = Ctx.find_func ctx id in
@@ -1336,7 +1344,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     result
 
   and invoke_extern_func (id : id) (_targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value backtrack =
     match id.it with
     | "init_objectState" ->
         let value_output = Arch.eval_extern_init values_input in
@@ -1344,10 +1352,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | "init_archState" ->
         let value_output = Arch.init_arch_state in
         Ok value_output
-    | _ -> fail id.at (F.asprintf "unimplemented extern function %s" id.it)
+    | _ -> back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
 
   and invoke_builtin_func (id : id) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value backtrack =
     (* Invoke builtin function *)
     let invoke_func_builtin' () =
       let value_output =
@@ -1379,18 +1387,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (ctx, args_input, prems, exp_output)
 
   and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
-      (values_input : value list) : value attempt =
-    let attempt_tablerows () =
-      let attempt_tablerow' (ctx_local : Ctx.t) (prems : prem list)
-          (exp_output : exp) : value attempt =
+      (values_input : value list) : value backtrack =
+    let backtrack_tablerows () =
+      let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
+          (exp_output : exp) : value backtrack =
         let* ctx_local = eval_prems ctx_local prems in
         let value_output = eval_exp ctx_local exp_output in
         Ok value_output
       in
-      let attempt_tablerows' =
+      let backtrack_tablerows' =
         List.mapi
           (fun _idx_row tablerow ->
-            let attempt_tablerow () : value attempt =
+            let backtrack_tablerow () : value backtrack =
               (* Create a subtrace for the table row *)
               let ctx_local = Ctx.localize ctx in
               (* Try to match the table row *)
@@ -1398,25 +1406,25 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                 match_tablerow ctx ctx_local tablerow values_input
               in
               (* Try evaluating the row *)
-              attempt_tablerow' ctx_local prems exp_output
-              |> nest id.at
+              backtrack_tablerow' ctx_local prems exp_output
+              |> back_nest id.at
                    (F.asprintf "application of table row %s%s failed" id.it
                       (Il.Print.string_of_args args_input))
             in
-            attempt_tablerow)
+            backtrack_tablerow)
           tablerows
       in
-      choose_sequential attempt_tablerows'
+      choose_sequential backtrack_tablerows'
     in
     if Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = attempt_tablerows () in
+          let* value_output = backtrack_tablerows () in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
-    else attempt_tablerows ()
+    else backtrack_tablerows ()
 
   and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
       (values_input : value list) : Ctx.t * arg list * prem list * exp =
@@ -1429,10 +1437,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (elseclause_opt : elseclause option)
-      (targs : targ list) (values_input : value list) : value attempt =
-    (* Attempt a clause *)
-    let attempt_clause_inner (ctx : Ctx.t) (_idx_clause : int) (clause : clause)
-        : unit -> value attempt =
+      (targs : targ list) (values_input : value list) : value backtrack =
+    (* Backtrack a clause *)
+    let do_backtrack_clause_inner (ctx : Ctx.t) (_idx_clause : int)
+        (clause : clause) : unit -> value backtrack =
      fun () ->
       (* Create a subtrace for the clause *)
       let ctx_local = Ctx.localize ctx in
@@ -1457,34 +1465,37 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let value_output = eval_exp ctx_local exp_output in
       Ok value_output
     in
-    let attempt_clause (ctx : Ctx.t) (idx_clause : int) (clause : clause) :
-        unit -> value attempt =
+    let do_backtrack_clause (ctx : Ctx.t) (idx_clause : int) (clause : clause) :
+        unit -> value backtrack =
      fun () ->
-      attempt_clause_inner ctx idx_clause clause ()
-      |> nest id.at
+      do_backtrack_clause_inner ctx idx_clause clause ()
+      |> back_nest id.at
            (F.asprintf "application of clause %s%s failed" id.it
               (Il.Print.string_of_args
                  (let args_input, _, _ = clause.it in
                   args_input)))
     in
-    (* Attempt a function *)
-    let attempt_func (ctx : Ctx.t) =
+    (* Backtrack a function *)
+    let backtrack_func (ctx : Ctx.t) =
       let idxs_clause = clauses |> List.mapi (fun idx _ -> idx) in
-      let attempts_clause =
-        clauses |> List.mapi (fun idx clause -> attempt_clause ctx idx clause)
+      let backtracks_clause =
+        clauses
+        |> List.mapi (fun idx clause -> do_backtrack_clause ctx idx clause)
       in
-      let result =
-        if !Ctx.is_det then attempts_clause |> choose_deterministic idxs_clause
-        else attempts_clause |> choose_sequential |> as_deterministic
+      let backtrack_det =
+        if !Ctx.is_det then
+          backtracks_clause |> choose_deterministic idxs_clause
+        else backtracks_clause |> choose_sequential |> as_det
       in
-      match result with
+      match backtrack_det with
       | Ok_det value_output -> Ok value_output
-      | Fail_det failtraces -> (
+      | Err_det failtraces -> Err failtraces
+      | Unmatch_det failtraces -> (
           match elseclause_opt with
-          | Some elseclause -> attempt_clause ctx (-1) elseclause ()
-          | None -> Fail failtraces)
-      | Multiple_det (idx_clause_a, idx_clause_b) ->
-          fail id.at
+          | Some elseclause -> do_backtrack_clause ctx (-1) elseclause ()
+          | None -> Unmatch failtraces)
+      | Nondet_det (idx_clause_a, idx_clause_b) ->
+          back_err id.at
             (F.asprintf "non-deterministic application of function %s: %d, %d"
                id.it idx_clause_a idx_clause_b)
     in
@@ -1494,10 +1505,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
-          let* value_output = attempt_func ctx in
+          let* value_output = backtrack_func ctx in
           Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
-    else attempt_func ctx
+    else backtrack_func ctx
 
   (* Entry points for evaluation *)
 
@@ -1507,12 +1518,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Cache.Cache.reset !rule_cache
 
   let do_eval_rel (relname : string) (values_input : value list) :
-      value list attempt =
+      value list backtrack =
     let ctx = Ctx.empty in
     invoke_rel ctx (relname $ no_region) values_input
 
   let do_eval_func (funcname : string) (targs : targ list)
-      (values_input : value list) : value attempt =
+      (values_input : value list) : value backtrack =
     let ctx = Ctx.empty in
     invoke_func_with_values ctx (funcname $ no_region) targs values_input
 
