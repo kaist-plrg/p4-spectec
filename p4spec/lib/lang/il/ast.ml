@@ -67,7 +67,7 @@ and typcase = nottyp * hint list
 (* Values *)
 
 and vid = int
-and vnote = { vid : vid; typ : typ' } [@@deriving yojson]
+and vnote = { vid : vid; typ : typ'; vhash : int } [@@deriving yojson]
 
 and value = (value', vnote) note [@@deriving yojson]
 and value' =

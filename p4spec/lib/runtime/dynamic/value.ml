@@ -113,3 +113,46 @@ let get_opt (value : t) =
 
 let get_struct (value : t) =
   match value.it with StructV fields -> fields | _ -> failwith "get_struct"
+
+(* Hash computation *)
+
+let hash_of (v : value') : int =
+  let h = ref 0 in
+  let go (v : value') =
+    match v with
+    | BoolV b -> h := (!h * 31) + if b then 1231 else 1237
+    | NumV (`Nat n) -> h := (!h * 31) + (1 + Bigint.hash n)
+    | NumV (`Int i) -> h := (!h * 31) + (2 + Bigint.hash i)
+    | TextV s -> h := (!h * 31) + Hashtbl.hash s
+    | StructV valuefields ->
+        List.iter
+          (fun (atom, value_field) ->
+            h := (!h * 31) + Hashtbl.hash atom.Util.Source.it;
+            h := (!h * 31) + value_field.Util.Source.note.Il.vhash)
+          valuefields
+    | CaseV (mixop, values) ->
+        List.iter
+          (fun atoms ->
+            List.iter
+              (fun atom -> h := (!h * 31) + Hashtbl.hash atom.Util.Source.it)
+              atoms)
+          mixop;
+        List.iter (fun v -> h := (!h * 31) + v.Util.Source.note.Il.vhash) values
+    | TupleV values | ListV values ->
+        List.iter (fun v -> h := (!h * 31) + v.Util.Source.note.Il.vhash) values
+    | OptV None -> h := (!h * 31) + 997
+    | OptV (Some value) ->
+        h := (!h * 31) + 1009;
+        h := (!h * 31) + value.Util.Source.note.Il.vhash
+    | FuncV id -> h := (!h * 31) + Hashtbl.hash id.Util.Source.it
+    | ExternV json -> h := (!h * 31) + Hashtbl.hash json
+  in
+  go v;
+  !h land 0x7FFFFFFF
+
+(* Value constructor with precomputed hash *)
+
+let make (typ : Il.typ') (v : value') : value =
+  let vid = fresh () in
+  let vhash = hash_of v in
+  Util.Source.( $$$ ) v { vid; typ; vhash }

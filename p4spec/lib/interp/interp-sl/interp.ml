@@ -64,11 +64,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         ctx
     | ConsE (exp_h, exp_t), ListV values_inner ->
         let value_h = List.hd values_inner in
-        let value_t =
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.(ListV (List.tl values_inner) $$$ { vid; typ })
-        in
+        let value_t = Value.make note (ListV (List.tl values_inner)) in
         Hook.on_value value_t;
         let ctx = assign_exp ctx exp_h value_h in
         Hook.on_value_dependency value_h value Dep.Edges.Assign;
@@ -80,9 +76,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let value_sub =
-              let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
-              Il.(OptV None $$$ { vid; typ = typ.it })
+              Value.make typ.it (OptV None)
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
@@ -96,9 +91,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           (fun ctx (id, typ, iters) ->
             let value_sub =
               let value = Ctx.find_value ctx (id, iters) in
-              let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
-              Il.(OptV (Some value) $$$ { vid; typ = typ.it })
+              Value.make typ.it (OptV (Some value))
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
@@ -122,9 +116,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
             in
             let value_sub =
-              let vid = Value.fresh () in
               let typ = Typ.iterate typ (iters @ [ Il.List ]) in
-              Il.(ListV values $$$ { vid; typ = typ.it })
+              Value.make typ.it (ListV values)
             in
             Hook.on_value value_sub;
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
@@ -240,11 +233,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Boolean expression evaluation *)
 
   and eval_bool_exp (note : typ') (ctx : Ctx.t) (b : bool) : value =
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(BoolV b $$$ { vid; typ })
-    in
+    let value_res = Value.make note (BoolV b) in
     Hook.on_value value_res;
     List.iter
       (fun value_input ->
@@ -255,11 +244,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Numeric expression evaluation *)
 
   and eval_num_exp (note : typ') (ctx : Ctx.t) (n : Num.t) : value =
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(NumV n $$$ { vid; typ })
-    in
+    let value_res = Value.make note (NumV n) in
     Hook.on_value value_res;
     List.iter
       (fun value_input ->
@@ -270,11 +255,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Text expression evaluation *)
 
   and eval_text_exp (note : typ') (ctx : Ctx.t) (s : string) : value =
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(TextV s $$$ { vid; typ })
-    in
+    let value_res = Value.make note (TextV s) in
     Hook.on_value value_res;
     List.iter
       (fun value_input ->
@@ -305,11 +286,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | #Bool.unop as unop -> eval_un_bool unop value
       | #Num.unop as unop -> eval_un_num unop value
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(value_res $$$ { vid; typ })
-    in
+    let value_res = Value.make note value_res in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value (Dep.Edges.Op (UnOp unop));
     value_res
@@ -341,11 +318,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | #Bool.binop as binop -> eval_bin_bool binop value_l value_r
       | #Num.binop as binop -> eval_bin_num binop value_l value_r
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(value_res $$$ { vid; typ })
-    in
+    let value_res = Value.make note value_res in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value_l (Dep.Edges.Op (BinOp binop));
     Hook.on_value_dependency value_res value_r (Dep.Edges.Op (BinOp binop));
@@ -373,11 +346,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | #Bool.cmpop as cmpop -> eval_cmp_bool cmpop value_l value_r
       | #Num.cmpop as cmpop -> eval_cmp_num cmpop value_l value_r
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(value_res $$$ { vid; typ })
-    in
+    let value_res = Value.make note value_res in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value_l (Dep.Edges.Op (CmpOp cmpop));
     Hook.on_value_dependency value_res value_r (Dep.Edges.Op (CmpOp cmpop));
@@ -396,11 +365,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | NumT `IntT -> (
         match value.it with
         | NumV (`Nat n) ->
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = typ.it in
-              Il.(NumV (`Int n) $$$ { vid; typ })
-            in
+            let value_res = Value.make typ.it (NumV (`Int n)) in
             Hook.on_value value_res;
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
@@ -418,11 +383,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match value.it with
         | TupleV values ->
             let values = List.map2 (upcast ctx) typs values in
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = typ.it in
-              Il.(TupleV values $$$ { vid; typ })
-            in
+            let value_res = Value.make typ.it (TupleV values) in
             Hook.on_value value_res;
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
@@ -448,11 +409,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match value.it with
         | NumV (`Nat _) -> value
         | NumV (`Int i) when Bigint.(i >= zero) ->
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = typ.it in
-              Il.(NumV (`Nat i) $$$ { vid; typ })
-            in
+            let value_res = Value.make typ.it (NumV (`Nat i)) in
             Hook.on_value value_res;
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
@@ -469,11 +426,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match value.it with
         | TupleV values ->
             let values = List.map2 (downcast ctx) typs values in
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = typ.it in
-              Il.(TupleV values $$$ { vid; typ })
-            in
+            let value_res = Value.make typ.it (TupleV values) in
             Hook.on_value value_res;
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
@@ -547,11 +500,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
     let value = eval_exp ctx exp in
     let sub = subtyp ctx typ value in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(BoolV sub $$$ { vid; typ })
-    in
+    let value_res = Value.make note (BoolV sub) in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value (Dep.Edges.Op (SubOp typ));
     value_res
@@ -574,11 +523,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | OptP `None, OptV None -> true
       | _ -> false
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(BoolV matches $$$ { vid; typ })
-    in
+    let value_res = Value.make note (BoolV matches) in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value (Dep.Edges.Op (MatchOp pattern));
     value_res
@@ -587,11 +532,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
     let values = eval_exps ctx exps in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(TupleV values $$$ { vid; typ })
-    in
+    let value_res = Value.make note (TupleV values) in
     Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
@@ -605,11 +546,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : value =
     let mixop, exps = notexp in
     let values = eval_exps ctx exps in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(CaseV (mixop, values) $$$ { vid; typ })
-    in
+    let value_res = Value.make note (CaseV (mixop, values)) in
     Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
@@ -625,11 +562,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let atoms, exps = List.split fields in
     let values = eval_exps ctx exps in
     let fields = List.combine atoms values in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(StructV fields $$$ { vid; typ })
-    in
+    let value_res = Value.make note (StructV fields) in
     Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
@@ -642,11 +575,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) : value =
     let value_opt = Option.map (eval_exp ctx) exp_opt in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(OptV value_opt $$$ { vid; typ })
-    in
+    let value_res = Value.make note (OptV value_opt) in
     Hook.on_value value_res;
     if Option.is_none value_opt then
       List.iter
@@ -659,11 +588,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
     let values = eval_exps ctx exps in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(ListV values $$$ { vid; typ })
-    in
+    let value_res = Value.make note (ListV values) in
     Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
@@ -679,11 +604,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value_h = eval_exp ctx exp_h in
     let value_t = eval_exp ctx exp_t in
     let values_t = Value.get_list value_t in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(ListV (value_h :: values_t) $$$ { vid; typ })
-    in
+    let value_res = Value.make note (ListV (value_h :: values_t)) in
     Hook.on_value value_res;
     value_res
 
@@ -705,11 +626,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                (Sl.Print.string_of_value ~short:true value_l)
                (Sl.Print.string_of_value ~short:true value_r))
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(value_res $$$ { vid; typ })
-    in
+    let value_res = Value.make note value_res in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value_l (Dep.Edges.Op CatOp);
     Hook.on_value_dependency value_res value_r (Dep.Edges.Op CatOp);
@@ -723,9 +640,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value_s = eval_exp ctx exp_s in
     let values_s = Value.get_list value_s in
     let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(BoolV (List.exists (Value.eq value_e) values_s) $$$ { vid; typ })
+      Value.make note (BoolV (List.exists (Value.eq value_e) values_s))
     in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value_e (Dep.Edges.Op MemOp);
@@ -746,11 +661,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                "length operation expects either a text or a list, but got %s"
                (Sl.Print.string_of_value ~short:true value))
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(NumV (`Nat len) $$$ { vid; typ })
-    in
+    let value_res = Value.make note (NumV (`Nat len)) in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value (Dep.Edges.Op LenOp);
     value_res
@@ -781,11 +692,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
     | TextV s ->
         let s = String.get s idx |> String.make 1 in
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = Il.TextT in
-          Il.(TextV s $$$ { vid; typ })
-        in
+        let value_res = Value.make Il.TextT (TextV s) in
         Hook.on_value value_res;
         value_res
     | ListV values when idx < 0 || idx >= List.length values ->
@@ -814,11 +721,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
              (String.length s))
     | TextV s ->
         let s_slice = String.sub s idx_l (idx_h - idx_l) in
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = Il.TextT in
-          Il.(TextV s_slice $$$ { vid; typ })
-        in
+        let value_res = Value.make Il.TextT (TextV s_slice) in
         Hook.on_value value_res;
         value_res
     | ListV values when idx_l < 0 || idx_h > List.length values ->
@@ -833,11 +736,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             values
           |> List.filter_map Fun.id
         in
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.(ListV values_slice $$$ { vid; typ })
-        in
+        let value_res = Value.make note (ListV values_slice) in
         Hook.on_value value_res;
         value_res
     | _ ->
@@ -860,11 +759,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
         | TextV s ->
             let s = String.get s idx |> String.make 1 in
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = Il.TextT in
-              Il.(TextV s $$$ { vid; typ })
-            in
+            let value_res = Value.make Il.TextT (TextV s) in
             Hook.on_value value_res;
             value_res
         | ListV values when idx < 0 || idx >= List.length values ->
@@ -894,11 +789,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                  (String.length s))
         | TextV s ->
             let s_slice = String.sub s idx_l (idx_h - idx_l) in
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = Il.TextT in
-              Il.(TextV s_slice $$$ { vid; typ })
-            in
+            let value_res = Value.make Il.TextT (TextV s_slice) in
             Hook.on_value value_res;
             value_res
         | ListV values when idx_l < 0 || idx_h > List.length values ->
@@ -913,11 +804,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 values
               |> List.filter_map Fun.id
             in
-            let value_res =
-              let vid = Value.fresh () in
-              let typ = path.note in
-              Il.(ListV values_slice $$$ { vid; typ })
-            in
+            let value_res = Value.make path.note (ListV values_slice) in
             Hook.on_value value_res;
             value_res
         | _ ->
@@ -960,11 +847,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 ^ String.sub s (idx_target + 1)
                     (String.length s - idx_target - 1)
               in
-              let value =
-                let vid = Value.fresh () in
-                let typ = Il.TextT in
-                Il.(TextV s_updated $$$ { vid; typ })
-              in
+              let value = Value.make Il.TextT (TextV s_updated) in
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_target < 0 || idx_target >= List.length values
@@ -978,11 +861,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 (fun idx value -> if idx = idx_target then value_n else value)
                 values
             in
-            let value =
-              let vid = Value.fresh () in
-              let typ = path.note in
-              Il.(ListV values_updated $$$ { vid; typ })
-            in
+            let value = Value.make path.note (ListV values_updated) in
             Hook.on_value value;
             eval_update_path ctx value_b path value
         | _ ->
@@ -1019,11 +898,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 String.sub s 0 idx_l ^ s_n
                 ^ String.sub s idx_h (String.length s - idx_h)
               in
-              let value =
-                let vid = Value.fresh () in
-                let typ = Il.TextT in
-                Il.(TextV s_updated $$$ { vid; typ })
-              in
+              let value = Value.make Il.TextT (TextV s_updated) in
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
@@ -1048,11 +923,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                     else value)
                   values
               in
-              let value =
-                let vid = Value.fresh () in
-                let typ = path.note in
-                Il.(ListV values_updated $$$ { vid; typ })
-              in
+              let value = Value.make path.note (ListV values_updated) in
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | _ ->
@@ -1069,11 +940,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               else (atom_f, value_f))
             fields
         in
-        let value =
-          let vid = Value.fresh () in
-          let typ = path.note in
-          Il.(StructV fields $$$ { vid; typ })
-        in
+        let value = Value.make path.note (StructV fields) in
         Hook.on_value value;
         eval_update_path ctx value_b path value
 
@@ -1098,13 +965,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       match ctx_sub_opt with
       | Some ctx_sub ->
           let value = eval_exp ctx_sub exp in
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.(OptV (Some value) $$$ { vid; typ })
-      | None ->
-          let vid = Value.fresh () in
-          let typ = note in
-          Il.(OptV None $$$ { vid; typ })
+          Value.make note (OptV (Some value))
+      | None -> Value.make note (OptV None)
     in
     Hook.on_value value_res;
     List.iter
@@ -1118,11 +980,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (vars : var list) : value =
     let ctxs_sub = Ctx.sub_list ctx vars in
     let values = List.map (fun ctx_sub -> eval_exp ctx_sub exp) ctxs_sub in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = note in
-      Il.(ListV values $$$ { vid; typ })
-    in
+    let value_res = Value.make note (ListV values) in
     Hook.on_value value_res;
     List.iter
       (fun (id, _typ, iters) ->
@@ -1151,11 +1009,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
-        let value_res =
-          let vid = Value.fresh () in
-          let typ = Il.FuncT in
-          Il.(FuncV id $$$ { vid; typ })
-        in
+        let value_res = Value.make Il.FuncT (FuncV id) in
         Hook.on_value value_res;
         value_res
 
@@ -1280,9 +1134,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               eval_if_cond_opt ctx exp_cond vars_h iterexps_t
             in
             let value_cond =
-              let vid = Value.fresh () in
-              let typ = Il.IterT (Il.BoolT $ no_region, Il.Opt) in
-              Il.(OptV value_cond_opt $$$ { vid; typ })
+              Value.make
+                (Il.IterT (Il.BoolT $ no_region, Il.Opt))
+                (OptV value_cond_opt)
             in
             Hook.on_value value_cond;
             List.iter
@@ -1296,9 +1150,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               eval_if_cond_list ctx exp_cond vars_h iterexps_t
             in
             let value_cond =
-              let vid = Value.fresh () in
-              let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
-              Il.(ListV values_cond $$$ { vid; typ })
+              Value.make
+                (Il.IterT (Il.BoolT $ no_region, Il.List))
+                (ListV values_cond)
             in
             Hook.on_value value_cond;
             List.iter
@@ -1337,11 +1191,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Backtrace backtrace ->
           back_nest id.at "hold condition evaluation failed" backtrace
     in
-    let value_res =
-      let vid = Value.fresh () in
-      let typ = Il.BoolT in
-      Il.(BoolV hold $$$ { vid; typ })
-    in
+    let value_res = Value.make Il.BoolT (BoolV hold) in
     Hook.on_value value_res;
     List.iteri
       (fun idx value_input ->
@@ -1380,9 +1230,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               eval_hold_cond_list ctx id notexp vars_h iterexps_t
             in
             let value_cond =
-              let vid = Value.fresh () in
-              let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
-              Il.(ListV values_cond $$$ { vid; typ })
+              Value.make
+                (Il.IterT (Il.BoolT $ no_region, Il.List))
+                (ListV values_cond)
             in
             Hook.on_value value_cond;
             List.iter
@@ -1453,9 +1303,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let values_cond = List.rev values_cond_rev in
     let value_cond =
-      let vid = Value.fresh () in
-      let typ = Il.IterT (Il.BoolT $ no_region, Il.List) in
-      Il.(ListV values_cond $$$ { vid; typ })
+      Value.make (Il.IterT (Il.BoolT $ no_region, Il.List)) (ListV values_cond)
     in
     Hook.on_value value_cond;
     (block_match, value_cond)
@@ -1498,11 +1346,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             List.map
               (fun (_id_binding, typ_binding, iters_binding) ->
                 let value_binding =
-                  let vid = Value.fresh () in
                   let typ =
                     Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                   in
-                  Il.(OptV None $$$ { vid; typ = typ.it })
+                  Value.make typ.it (OptV None)
                 in
                 Hook.on_value value_binding;
                 List.iter
@@ -1527,11 +1374,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   Ctx.find_value ctx_sub (id_binding, iters_binding)
                 in
                 let value_binding =
-                  let vid = Value.fresh () in
                   let typ =
                     Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                   in
-                  Il.(OptV (Some value_binding) $$$ { vid; typ = typ.it })
+                  Value.make typ.it (OptV (Some value_binding))
                 in
                 Hook.on_value value_binding;
                 List.iter
@@ -1582,9 +1428,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.fold_left2
       (fun ctx (id_binding, typ_binding, iters_binding) values_binding ->
         let value_binding =
-          let vid = Value.fresh () in
           let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
-          Il.(ListV values_binding $$$ { vid; typ = typ.it })
+          Value.make typ.it (ListV values_binding)
         in
         Hook.on_value value_binding;
         List.iter
@@ -1667,9 +1512,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.fold_left2
       (fun ctx (id_binding, typ_binding, iters_binding) values_binding ->
         let value_binding =
-          let vid = Value.fresh () in
           let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
-          Il.(ListV values_binding $$$ { vid; typ = typ.it })
+          Value.make typ.it (ListV values_binding)
         in
         Hook.on_value value_binding;
         List.iter

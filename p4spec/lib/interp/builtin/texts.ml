@@ -11,11 +11,7 @@ let text_to_int (add : value -> unit) (at : region) (targs : targ list)
   Extract.zero at targs;
   let text = Extract.one at values_input |> Value.get_text in
   let i = text |> int_of_string |> Bigint.of_int in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.NumT `IntT in
-    NumV (`Int i) $$$ { vid; typ }
-  in
+  let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
   add value;
   value
 
@@ -25,11 +21,7 @@ let int_to_text (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let num = Extract.one at values_input |> Value.get_num in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.TextT in
-    TextV (Num.string_of_num num) $$$ { vid; typ }
-  in
+  let value = Value.make Il.TextT (TextV (Num.string_of_num num)) in
   add value;
   value
 
@@ -46,11 +38,7 @@ let strip_prefix (add : value -> unit) (at : region) (targs : targ list)
     String.sub text (String.length prefix)
       (String.length text - String.length prefix)
   in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.TextT in
-    TextV text $$$ { vid; typ }
-  in
+  let value = Value.make Il.TextT (TextV text) in
   add value;
   value
 
@@ -64,11 +52,7 @@ let strip_suffix (add : value -> unit) (at : region) (targs : targ list)
   let suffix = Value.get_text value_suffix in
   assert (String.ends_with ~suffix text);
   let text = String.sub text 0 (String.length text - String.length suffix) in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.TextT in
-    TextV text $$$ { vid; typ }
-  in
+  let value = Value.make Il.TextT (TextV text) in
   add value;
   value
 
@@ -81,10 +65,6 @@ let strip_all_whitespace (add : value -> unit) (at : region) (targs : targ list)
   let text =
     value |> Value.get_text |> String.split_on_char ' ' |> String.concat ""
   in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.TextT in
-    TextV text $$$ { vid; typ }
-  in
+  let value = Value.make Il.TextT (TextV text) in
   add value;
   value

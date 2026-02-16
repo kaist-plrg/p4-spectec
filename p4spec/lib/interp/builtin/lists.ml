@@ -11,9 +11,8 @@ let rev_ (add : value -> unit) (at : region) (targs : targ list)
   let typ = Extract.one at targs in
   let values = Extract.one at values_input |> Value.get_list in
   let value =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ, Il.List) in
-    ListV (List.rev values) $$$ { vid; typ }
+    Value.make typ (ListV (List.rev values))
   in
   add value;
   value
@@ -29,9 +28,8 @@ let concat_ (add : value -> unit) (at : region) (targs : targ list)
     |> List.concat_map Value.get_list
   in
   let value =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ, Il.List) in
-    ListV values $$$ { vid; typ }
+    Value.make typ (ListV values)
   in
   add value;
   value
@@ -44,9 +42,7 @@ let distinct_ (add : value -> unit) (at : region) (targs : targ list)
   let values = Extract.one at values_input |> Value.get_list in
   let set = Sets.VSet.of_list values in
   let value =
-    let vid = Value.fresh () in
-    let typ = Il.BoolT in
-    BoolV (Sets.VSet.cardinal set = List.length values) $$$ { vid; typ }
+    Value.make Il.BoolT (BoolV (Sets.VSet.cardinal set = List.length values))
   in
   add value;
   value
@@ -65,24 +61,21 @@ let partition_ (add : value -> unit) (at : region) (targs : targ list)
     |> List.partition (fun (idx, _) -> idx < len)
   in
   let value_left =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ, Il.List) in
-    ListV (List.map snd values_left) $$$ { vid; typ }
+    Value.make typ (ListV (List.map snd values_left))
   in
   add value_left;
   let value_right =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ, Il.List) in
-    ListV (List.map snd values_right) $$$ { vid; typ }
+    Value.make typ (ListV (List.map snd values_right))
   in
   add value_right;
   let value =
-    let vid = Value.fresh () in
     let typ =
       Il.TupleT
         [ value_left.note.typ $ no_region; value_right.note.typ $ no_region ]
     in
-    TupleV [ value_left; value_right ] $$$ { vid; typ }
+    Value.make typ (TupleV [ value_left; value_right ])
   in
   add value;
   value
@@ -110,9 +103,8 @@ let assoc_ (add : value -> unit) (at : region) (targs : targ list)
       None values
   in
   let value =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ_value, Il.Opt) in
-    OptV value_opt $$$ { vid; typ }
+    Value.make typ (OptV value_opt)
   in
   add value;
   value
@@ -141,10 +133,6 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
         TupleV [ value_key; value_value ] $$$ note)
       values
   in
-  let value =
-    let vid = Value.fresh () in
-    let typ = value_list.note.typ in
-    ListV values $$$ { vid; typ }
-  in
+  let value = Value.make value_list.note.typ (ListV values) in
   add value;
   value

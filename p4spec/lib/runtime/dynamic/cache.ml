@@ -18,35 +18,7 @@ module Entry = struct
 
   let hash ((id, values) : t) : int =
     let h = ref ((Hashtbl.hash id * 31) + 17) in
-    let rec hash_value (value : Value.t) =
-      match value.it with
-      | BoolV b -> h := (!h * 31) + if b then 1231 else 1237
-      | NumV (`Nat n) -> h := (!h * 31) + (1 + Bigint.hash n)
-      | NumV (`Int i) -> h := (!h * 31) + (2 + Bigint.hash i)
-      | TextV s -> h := (!h * 31) + Hashtbl.hash s
-      | StructV valuefields ->
-          List.iter
-            (fun (atom, value_field) ->
-              h := (!h * 31) + Hashtbl.hash atom.it;
-              hash_value value_field)
-            valuefields
-      | CaseV (mixop, values) ->
-          List.iter
-            (fun atoms ->
-              List.iter
-                (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it)
-                atoms)
-            mixop;
-          List.iter hash_value values
-      | TupleV values | ListV values -> List.iter hash_value values
-      | OptV None -> h := (!h * 31) + 997
-      | OptV (Some value) ->
-          h := (!h * 31) + 1009;
-          hash_value value
-      | FuncV id -> h := (!h * 31) + Hashtbl.hash id.it
-      | ExternV json -> h := (!h * 31) + Hashtbl.hash json
-    in
-    List.iter hash_value values;
+    List.iter (fun (v : Value.t) -> h := (!h * 31) + v.note.vhash) values;
     !h land 0x7FFFFFFF
 end
 
