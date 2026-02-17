@@ -18,7 +18,7 @@ open Util.Source
 (* Cache *)
 
 let func_cache = ref (Cache.Cache.create ~size:10000)
-let rule_cache = ref (Cache.Cache.create ~size:10000)
+let rel_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Assignments *)
@@ -1099,13 +1099,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                id.it id_path_a id_path_b)
     in
     (* Start backtrack *)
-    if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
-      let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
+    if Hook.is_cache_on () && Cache.is_cached_rel id.it then (
+      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let* values_output = backtrack_relation ctx in
-          Cache.Cache.add !rule_cache (id.it, values_input) values_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the relation does not create a side-effect *)
+          if builtin_ctr_after = builtin_ctr_before then
+            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
           Ok values_output)
     else backtrack_relation ctx
 
@@ -1184,13 +1188,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         Ok value_output
       with Util.Error.BuiltinError (at, msg) -> back_err at msg
     in
-    if Cache.is_cached_func id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let* value_output = invoke_func_builtin' () in
-          Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the function does not create a side-effect *)
+          if builtin_ctr_after = builtin_ctr_before then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
     else
       let* value_output = invoke_func_builtin' () in
@@ -1236,13 +1244,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       in
       choose_sequential backtrack_tablerows'
     in
-    if Cache.is_cached_func id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let* value_output = backtrack_tablerows () in
-          Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the function does not create a side-effect *)
+          if builtin_ctr_after = builtin_ctr_before then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
     else backtrack_tablerows ()
 
@@ -1320,13 +1332,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                id.it idx_clause_a idx_clause_b)
     in
     (* Start backtrack *)
-    if Cache.is_cached_func id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> Ok value_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let* value_output = backtrack_func ctx in
-          Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the function does not create a side-effect *)
+          if builtin_ctr_after = builtin_ctr_before then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
           Ok value_output)
     else backtrack_func ctx
 
@@ -1335,7 +1351,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let clear () : unit =
     Value.refresh ();
     Cache.Cache.reset !func_cache;
-    Cache.Cache.reset !rule_cache
+    Cache.Cache.reset !rel_cache
 
   let do_eval_rel (relname : string) (values_input : value list) :
       value list backtrack =

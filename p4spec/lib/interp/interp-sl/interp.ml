@@ -20,8 +20,8 @@ open Util.Source
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create ~size:10000)
-let rule_cache = ref (Cache.Cache.create ~size:10000)
+let func_cache = ref (Cache.Cache.create ~size:50000)
+let rel_cache = ref (Cache.Cache.create ~size:50000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assignments *)
@@ -1642,13 +1642,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Ret _ -> back_err id.at "relation cannot return a value"
       | Cont traces -> Unmatch traces |> back
     in
-    if Hook.is_cache_on () && Cache.is_cached_rule id.it then (
-      let cache_result = Cache.Cache.find !rule_cache (id.it, values_input) in
+    if Hook.is_cache_on () && Cache.is_cached_rel id.it then (
+      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> values_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let values_output = invoke_defined_rel' () in
-          Cache.Cache.add !rule_cache (id.it, values_input) values_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the relation does not create a side-effect *)
+          if builtin_ctr_before = builtin_ctr_after then
+            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
           values_output)
     else invoke_defined_rel' ()
 
@@ -1723,35 +1727,65 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_builtin_func (id : id) (targs : targ list)
       (values_input : value list) : value =
-    let value_output =
-      try
-        Builtin.Call.invoke
-          (fun value -> Hook.on_value value)
-          id targs values_input
-      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
+    let invoke_builtin_func' () =
+      let value_output =
+        try
+          Builtin.Call.invoke
+            (fun value -> Hook.on_value value)
+            id targs values_input
+        with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
+      in
+      List.iteri
+        (fun idx_arg value_input ->
+          Hook.on_value_dependency value_output value_input
+            (Dep.Edges.Func (id, idx_arg)))
+        values_input;
+      value_output
     in
-    List.iteri
-      (fun idx_arg value_input ->
-        Hook.on_value_dependency value_output value_input
-          (Dep.Edges.Func (id, idx_arg)))
-      values_input;
-    value_output
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
+      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
+      match cache_result with
+      | Some value_output -> value_output
+      | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let value_output = invoke_builtin_func' () in
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the builtin function does not create a side-effect *)
+          if builtin_ctr_before = builtin_ctr_after then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          value_output)
+    else invoke_builtin_func' ()
 
   and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
       (tablerows : tablerow list) (values_input : value list) : value =
-    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
-    let ctx_local = assign_params ctx ctx_local params values_input in
-    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block_sequential ctx_local instrs in
-    match flow with
-    | Ret value_output ->
-        List.iteri
-          (fun idx_arg value_input ->
-            Hook.on_value_dependency value_output value_input
-              (Dep.Edges.Func (id, idx_arg)))
-          values_input;
-        value_output
-    | _ -> back_err id.at "table did not return a value"
+    let invoke_table_func' () =
+      let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
+      let ctx_local = assign_params ctx ctx_local params values_input in
+      let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
+      let flow = eval_block_sequential ctx_local instrs in
+      match flow with
+      | Ret value_output ->
+          List.iteri
+            (fun idx_arg value_input ->
+              Hook.on_value_dependency value_output value_input
+                (Dep.Edges.Func (id, idx_arg)))
+            values_input;
+          value_output
+      | _ -> back_err id.at "table did not return a value"
+    in
+    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
+      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
+      match cache_result with
+      | Some value_output -> value_output
+      | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let value_output = invoke_table_func' () in
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the table function does not create a side-effect *)
+          if builtin_ctr_before = builtin_ctr_after then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          value_output)
+    else invoke_table_func' ()
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (params : param list) (block : block) (elseblock_opt : elseblock option)
@@ -1787,8 +1821,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       match cache_result with
       | Some value_output -> value_output
       | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
           let value_output = invoke_defined_func' () in
-          Cache.Cache.add !func_cache (id.it, values_input) value_output;
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the function does not create a side-effect *)
+          if builtin_ctr_before = builtin_ctr_after then
+            Cache.Cache.add !func_cache (id.it, values_input) value_output;
           value_output)
     else invoke_defined_func' ()
 
@@ -1797,7 +1835,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let clear () : unit =
     Value.refresh ();
     Cache.Cache.reset !func_cache;
-    Cache.Cache.reset !rule_cache
+    Cache.Cache.reset !rel_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try

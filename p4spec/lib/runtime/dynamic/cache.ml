@@ -37,10 +37,14 @@ end
 
 (* Cache targets *)
 
-let is_cached_func = function
-  | "specialize_typeDefIR" | "unroll_typeIR" | "free_typeIR" | "bound" -> true
-  | _ -> false
+(* let is_cached_func = function *)
+(*   | "specialize_typeDefIR" | "unroll_typeIR" | "free_typeIR" | "bound" -> true *)
+(*   | _ -> false *)
 
-let is_cached_rule = function
-  | "Cast_expl" | "Cast_impl" | "Type_wf" | "Type_alpha" -> true
-  | _ -> false
+let is_cached_func _ = true
+
+(* let is_cached_rel = function *)
+(*   | "Cast_expl" | "Cast_impl" | "Type_wf" | "Type_alpha" -> true *)
+(*   | _ -> false *)
+
+let is_cached_rel _ = true
