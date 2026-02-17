@@ -27,12 +27,17 @@ end
 module Cache = struct
   module Table = Hashtbl.Make (Entry)
 
-  let create ~size = Table.create size
+  let capacity = ref 1024
+
+  let create ~size =
+    capacity := size;
+    Table.create size
+
+  let size cache = Table.length cache
   let clear cache = Table.clear cache
   let reset cache = Table.reset cache
   let find cache key = Table.find_opt cache key
   let add cache key value = Table.add cache key value
-  let size cache = Table.length cache
 end
 
 (* Cache targets *)

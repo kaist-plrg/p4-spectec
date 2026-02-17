@@ -167,14 +167,16 @@ let bound_rel (ctx : t) (rid : RId.t) : bool =
 
 (* Finders for definitions *)
 
-let find_func_opt (ctx : t) (fid : FId.t) : Func.t option =
+let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
   match FEnv.find_opt fid ctx.local.fenv with
-  | Some func -> Some func
-  | None -> FTbl.find_opt fid ctx.global.ftbl
+  | Some func -> Some (Local, func)
+  | None ->
+      FTbl.find_opt fid ctx.global.ftbl
+      |> Option.map (fun func -> (Global, func))
 
-let find_func (ctx : t) (fid : FId.t) : Func.t =
+let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   match find_func_opt ctx fid with
-  | Some func -> func
+  | Some (cursor, func) -> (cursor, func)
   | None -> error_undef fid.at "function" fid.it
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
@@ -218,20 +220,19 @@ let localize (ctx : t) : t =
 let transpose (value_matrix : value list list) : value list list backtrack =
   match value_matrix with
   | [] -> Ok []
-  | rows ->
-      let width = List.length (List.hd rows) in
-      let* _ =
-        check_back_err
-          (List.for_all (fun row -> List.length row = width) rows)
-          no_region "cannot transpose a matrix of value batches"
-      in
-      let value_matrix =
-        List.fold_right
-          (List.map2 (fun element row -> element :: row))
-          rows
-          (List.init width (fun _ -> []))
-      in
-      Ok value_matrix
+  | row_h :: _ -> (
+      let width = List.length row_h in
+      let cols = Array.make width [] in
+      try
+        List.iter
+          (fun row ->
+            if List.length row <> width then
+              raise
+                (Invalid_argument "cannot transpose a matrix of value batches");
+            List.iteri (fun j v -> cols.(j) <- v :: cols.(j)) row)
+          (List.rev value_matrix);
+        Ok (Array.to_list cols)
+      with Invalid_argument msg -> back_err no_region msg)
 
 let sub_opt (ctx : t) (vars : var list) : t option backtrack =
   (* First collect the values that are to be iterated over *)

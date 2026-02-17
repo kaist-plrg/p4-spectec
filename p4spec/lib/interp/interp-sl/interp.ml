@@ -20,8 +20,8 @@ open Util.Source
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create ~size:50000)
-let rel_cache = ref (Cache.Cache.create ~size:50000)
+let func_cache = ref (Cache.Cache.create ~size:10000)
+let rel_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assignments *)
@@ -39,8 +39,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
-    | CaseE notexp, CaseV (_mixop_value, values_inner) ->
-        let _mixop_exp, exps_inner = notexp in
+    | CaseE (_, exps_inner), CaseV (_mixop_value, values_inner) ->
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
@@ -166,7 +165,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (value : value) : Ctx.t =
     match value.it with
     | FuncV id_f ->
-        let func = Ctx.find_func ctx_caller id_f in
+        let _, func = Ctx.find_func ctx_caller id_f in
         Ctx.add_func ctx_callee id func
     | _ ->
         back_err id.at
@@ -674,8 +673,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let fields = Value.get_struct value_b in
     let value_res =
       fields
-      |> List.map (fun (atom, value) -> (atom.it, value))
-      |> List.assoc atom.it
+      |> List.find (fun (atom_field, _) -> Atom.eq atom_field.it atom.it)
+      |> snd
     in
     value_res
 
@@ -815,8 +814,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let value = eval_access_path ctx value_b path in
         let fields = value |> Value.get_struct in
         fields
-        |> List.map (fun (atom, value) -> (atom.it, value))
-        |> List.assoc atom.it
+        |> List.find (fun (atom_field, _) -> Atom.eq atom_field.it atom.it)
+        |> snd
 
   and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
       (value_n : value) : value =
@@ -1658,6 +1657,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Invoke a function *)
 
+  and is_high_order_func (values_input : value list) : bool =
+    List.exists
+      (fun value_input ->
+        match value_input.it with Il.FuncV _ -> true | _ -> false)
+      values_input
+
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
       : value =
     let targs =
@@ -1687,16 +1692,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
-      let func = Ctx.find_func ctx id in
+      let cursor, func = Ctx.find_func ctx id in
+      let anon = cursor = Ctx.Local in
       let value_output =
         match func with
-        | Func.Extern -> invoke_extern_func id targs values_input
-        | Func.Builtin -> invoke_builtin_func id targs values_input
+        | Func.Extern -> invoke_extern_func ~anon id targs values_input
+        | Func.Builtin -> invoke_builtin_func ~anon id targs values_input
         | Func.Table (params, tablerows) ->
-            invoke_table_func ctx id params tablerows values_input
+            invoke_table_func ~anon ctx id params tablerows values_input
         | Func.Defined (tparams, params, block, elseblock_opt) ->
-            invoke_defined_func ctx id tparams params block elseblock_opt targs
-              values_input
+            invoke_defined_func ~anon ctx id tparams params block elseblock_opt
+              targs values_input
       in
       Hook.on_func_exit id;
       value_output
@@ -1704,8 +1710,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Hook.on_func_exit id;
       back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
 
-  and invoke_extern_func (id : id) (targs : targ list)
+  and invoke_extern_func ~(anon : bool) (id : id) (targs : targ list)
       (values_input : value list) : value =
+    anon |> ignore;
     let invoke_extern_func' (id : id) (_targs : targ list)
         (values_input : value list) : value =
       let value_output =
@@ -1725,7 +1732,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try invoke_extern_func' id targs values_input
     with Util.Error.ArchError (at, msg) -> back_unmatch at msg
 
-  and invoke_builtin_func (id : id) (targs : targ list)
+  and invoke_builtin_func ~(anon : bool) (id : id) (targs : targ list)
       (values_input : value list) : value =
     let invoke_builtin_func' () =
       let value_output =
@@ -1742,7 +1749,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         values_input;
       value_output
     in
-    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
+    if
+      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
+      && not (is_high_order_func values_input)
+    then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
@@ -1756,8 +1766,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output)
     else invoke_builtin_func' ()
 
-  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
-      (tablerows : tablerow list) (values_input : value list) : value =
+  and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (params : param list) (tablerows : tablerow list)
+      (values_input : value list) : value =
     let invoke_table_func' () =
       let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
       let ctx_local = assign_params ctx ctx_local params values_input in
@@ -1773,7 +1784,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output
       | _ -> back_err id.at "table did not return a value"
     in
-    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
+    if Hook.is_cache_on () && Cache.is_cached_func id.it && not anon then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
@@ -1787,9 +1798,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output)
     else invoke_table_func' ()
 
-  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
-      (params : param list) (block : block) (elseblock_opt : elseblock option)
-      (targs : targ list) (values_input : value list) : value =
+  and invoke_defined_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (tparams : tparam list) (params : param list) (block : block)
+      (elseblock_opt : elseblock option) (targs : targ list)
+      (values_input : value list) : value =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1816,7 +1828,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Res _ -> back_err id.at "relation cannot return a value"
       | Cont traces -> Unmatch traces |> back
     in
-    if Hook.is_cache_on () && Cache.is_cached_func id.it then (
+    if
+      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
+      && not (is_high_order_func values_input)
+    then (
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
@@ -1894,7 +1909,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let init ~(det : bool) (spec : spec) : unit =
     let printer value =
-      Format.asprintf "%a" (Interface.Unparse.pp_program_sl spec) value
+      let henv = Interface.Hint.hints_of_spec_sl spec in
+      Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
     in
     Builtin.Call.init printer;
     Ctx.init ~det spec

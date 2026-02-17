@@ -204,19 +204,21 @@ let bound_rel (ctx : t) (rid : RId.t) : bool =
 
 (* Finders for definitions *)
 
-let find_func_opt (ctx : t) (fid : FId.t) : Func.t option =
+let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
   let fenv =
     match ctx.local with
     | Empty | Rel _ -> FEnv.empty
     | Func { fenv; _ } -> fenv
   in
   match FEnv.find_opt fid fenv with
-  | Some func -> Some func
-  | None -> FTbl.find_opt fid ctx.global.ftbl
+  | Some func -> Some (Local, func)
+  | None ->
+      FTbl.find_opt fid ctx.global.ftbl
+      |> Option.map (fun func -> (Global, func))
 
-let find_func (ctx : t) (fid : FId.t) : Func.t =
+let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   match find_func_opt ctx fid with
-  | Some func -> func
+  | Some (cursor, func) -> (cursor, func)
   | None -> back_undef fid.at "function" fid.it
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
@@ -299,15 +301,17 @@ let localize_clear (ctx : t) : t =
 let transpose (value_matrix : value list list) : value list list =
   match value_matrix with
   | [] -> []
-  | rows ->
-      let width = List.length (List.hd rows) in
-      check_back_err
-        (List.for_all (fun row -> List.length row = width) rows)
-        no_region "cannot transpose a matrix of value batches";
-      List.fold_right
-        (List.map2 (fun element row -> element :: row))
-        rows
-        (List.init width (fun _ -> []))
+  | row_h :: _ ->
+      let width = List.length row_h in
+      let cols = Array.make width [] in
+      List.iter
+        (fun row ->
+          check_back_err
+            (List.length row = width)
+            no_region "cannot transpose a matrix of value batches";
+          List.iteri (fun j v -> cols.(j) <- v :: cols.(j)) row)
+        (List.rev value_matrix);
+      Array.to_list cols
 
 let sub_opt (ctx : t) (vars : var list) : t option =
   (* First collect the values that are to be iterated over *)
