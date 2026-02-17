@@ -41,7 +41,9 @@ fmt:
 .PHONY: test-light
 .PHONY: test-speclang
 .PHONY: test-p4static test-p4static-il test-p4static-sl
-.PHONY: test-p4dynamic test-p4dynamic-v1model test-p4dynamic-ebpf
+.PHONY: test-p4dynamic test-p4dynamic-il test-p4dynamic-sl
+.PHONY: test-p4dynamic-v1model-il test-p4dynamic-v1model-sl
+.PHONY: test-p4dynamic-ebpf-il test-p4dynamic-ebpf-sl
 .PHONY: test-p4parse
 .PHONY: promote 
 
