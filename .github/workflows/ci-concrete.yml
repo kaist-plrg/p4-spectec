@@ -17,6 +17,14 @@ jobs:
     - name: Initialize p4c submodule
       run: git submodule update --init p4c
 
+    - name: Cache opam packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.opam
+        key: opam-${{ runner.os }}-ocaml-5.1.0-${{ hashFiles('.github/workflows/ci-concrete.yml') }}
+        restore-keys: |
+          opam-${{ runner.os }}-ocaml-5.1.0-
+
     - name: Set up OCaml
       uses: ocaml/setup-ocaml@v3
       with:
@@ -30,8 +38,7 @@ jobs:
 
     - name: Install OCaml dependencies
       run: |
-        opam update
-        opam install dune bignum menhir core core_unix bisect_ppx yojson ppx_deriving_yojson
+        opam install dune bignum menhir menhirLib core core_unix bisect_ppx yojson ppx_deriving_yojson
         opam install . --deps-only --with-test
 
     - name: Run fast tests
