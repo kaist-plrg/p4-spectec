@@ -612,7 +612,7 @@ and render_rel_title (rel_title : rel_title) : string =
         (render_alter_hint ~caps:true in_prose hint_input
            (reindent_lines ~level:1) render_exp exps_input)
         (adoc_unordered_bullet 0)
-        ("Results in "
+        ("Result in "
         ^ render_alter_hint ~caps:false in_prose hint_output
             (reindent_lines ~level:1) render_exp exps_output)
   | MathRelTitle (id_rel, mixop, exps) ->
