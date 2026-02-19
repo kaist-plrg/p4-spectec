@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-02-12</span>
+<span id="revdate">2026-02-08</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -747,7 +747,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-p4-abstract-machine">7. The P4 Abstract Machine</a>
 <ul class="sectlevel2">
 <li><a href="#sec-preprocessing">7.1. Preprocessing</a></li>
-<li><a href="#sec-type-checking">7.2. Type Checking</a>
+<li><a href="#sec-type-checking">7.2. Type checking</a>
 <ul class="sectlevel3">
 <li><a href="#sec-p4-ir">7.2.1. P4 Intermediate Representation</a></li>
 <li><a href="#_typing_a_p4_program">7.2.2. Typing a P4 program</a></li>
@@ -4494,8 +4494,8 @@ the P4 type system.</p>
 instantiated.</p>
 </li>
 <li>
-<p><strong>runtime evaluation</strong>: at runtime each P4 functional block is executed to
-completion, in isolation, when it receives control from the architecture</p>
+<p><strong>runtime evaluation</strong>: at runtime, each P4 functional block is executed to
+completion, in isolation, when it receives control from the architecture.</p>
 </li>
 </ul>
 </div>
@@ -4613,7 +4613,7 @@ the core library is done with</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="sec-type-checking">7.2. Type Checking</h3>
+<h3 id="sec-type-checking">7.2. Type checking</h3>
 <div class="paragraph">
 <p>P4<sub>16</sub> is a statically-typed language. Programs that do not pass the type
 checker are considered invalid and rejected by the compiler. P4 provides a
@@ -5929,7 +5929,7 @@ respectively.</p>
 <p>Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.</p>
 </li>
 <li>
-<p>Sequence expression where all components are local compile-time known values.</p>
+<p>Tuple expression where all components are local compile-time known values.</p>
 </li>
 <li>
 <p>Structure-valued expressions, where all fields are local compile-time known values.</p>
@@ -5947,10 +5947,9 @@ respectively.</p>
 <p>Accessing a field of a local compile-time known struct, header, or header union value.</p>
 </li>
 <li>
-<p>The following expressions (<code>`, `-`, `||</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>,
-<code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt; `, `&gt;&gt;</code>, <code>~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>,
-<code>&#8656;</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>) when their operands are all local compile-time known
-values.</p>
+<p>The following expressions (<code>&#43;</code>, <code>-</code>, <code>|&#43;|</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>,
+<code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code>, <code>~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>)
+when their operands are all local compile-time known values.</p>
 </li>
 <li>
 <p>Expressions of the form <code>e.minSizeInBits()</code>, <code>e.minSizeInBytes()</code>,
@@ -5989,9 +5988,6 @@ A related spec issue is made here: <a href="https://github.com/p4lang/p4-spec/is
 <p>Tuple expression where all components are compile-time known values.</p>
 </li>
 <li>
-<p>Expressions evaluating to a list type, where all elements are compile-time known values.</p>
-</li>
-<li>
 <p>Structure-valued expressions, where all fields are compile-time known values.</p>
 </li>
 <li>
@@ -6007,10 +6003,9 @@ A related spec issue is made here: <a href="https://github.com/p4lang/p4-spec/is
 <p>Accessing a field of a compile-time known struct, header, or header union value.</p>
 </li>
 <li>
-<p>The following expressions (<code>`, `-`, `||</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>,
-<code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt; `, `&gt;&gt; `, `~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>,
-<code>&#8656;</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>) when their operands are all compile-time known
-values.</p>
+<p>The following expressions (<code>&#43;</code>, <code>-</code>, <code>|&#43;|</code>, <code>|-|</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>!</code>, <code>&amp;</code>, <code>|</code>, <code>^</code>,
+<code>&amp;&amp;</code>, <code>||</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code>, <code>~</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>++</code>, <code>[:]</code>, <code>?:</code>)
+when their operands are all compile-time known values.</p>
 </li>
 <li>
 <p>Expressions of the form <code>e.minSizeInBits()</code>, <code>e.minSizeInBytes()</code>,
@@ -67387,7 +67382,7 @@ p4program
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-02-12 20:28:17 +0900
+Last updated 2026-02-08 16:22:04 +0900
 </div>
 </div>
 </body>
