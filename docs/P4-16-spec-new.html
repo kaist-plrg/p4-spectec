@@ -3290,10 +3290,10 @@ type checking of P4 expressions.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Detailed discussion of what <code>cursor</code>, <code>typingContext</code>, and <code>typedExpressionIR</code>
-mean is given in <a href="#sec-type-checking">Section 7.2</a>. For now, it suffices to know that
-<code>Expr_ok</code> takes a <code>cursor</code>, a <code>typingContext</code>, and a <code>typedExpressionIR</code> as
-inputs and results in a <code>typedExpressionIR</code>.</p>
+<p>Detailed discussion of what <code>cursor</code>, <code>typingContext</code>, and
+<code>typedExpressionIR</code> mean is given in <a href="#sec-type-checking">Section 7.2</a>. For now, it
+suffices to know that <code>Expr_ok</code> takes an <code>expression</code>, a <code>cursor</code>, and a
+<code>typingContext</code> as inputs and results in a <code>typedExpressionIR</code>.</p>
 </div>
 <div class="paragraph">
 <p>An algorithm is defined in terms of case-analysis, where each case corresponds
@@ -3327,7 +3327,7 @@ how to type check logical not expressions.</p>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>!</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -3337,8 +3337,10 @@ how to type check logical not expressions.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>And the following algorithm defines type checking of bitwise negation
-expressions.</p>
+<p>The shorthand <strong>!</strong> in step 2 is explained in <a href="#option_get">Section 6.1.2.2.1</a> and
+<code>$compat_lnot</code> is a helper function used to check compatibility of the
+operand with logical not expressions. And the following algorithm defines
+type checking of bitwise negation expressions.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
@@ -3367,7 +3369,7 @@ expressions.</p>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>~</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -3426,7 +3428,7 @@ when the algorithm is called.</p>
 <div id="modulo_42" class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#modulo_42"><code>n</code> mod 42</a></p>
+<p><a href="#modulo_42"><code>n</code> mod forty-two</a></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -24528,7 +24530,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>index</sub></code> and compile-time known-ness <code>ctk<sub>index</sub></code></a> be the note of <code>typedExpressionIR<sub>index</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>index</sub></code> and compile-time known-ness <code>ctk<sub>index</sub></code></a> be the note of <code>typedExpressionIR<sub>index</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>index_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>index</sub></code> until <code>$compat_array_index</code> is satisfied</a>.</p>
@@ -24999,10 +25001,10 @@ abortResult
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_index</code> is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>lo_reduced</sub></code> and compile-time known-ness <code>ctk<sub>lo_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>lo_reduced</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>lo_reduced</sub></code> and compile-time known-ness <code>ctk<sub>lo_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>lo_reduced</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk<sub>hi_reduced</sub></code> is <code>LCTK</code>.</p>
@@ -25858,7 +25860,7 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- if assignop =/= =
  -- if binop = $assignop_as_binop(assignop)
  -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
- -- if expression_lvalue = $lvalue_to_expression(lvalue)
+ -- if expression_lvalue = $lvalue_as_expression(lvalue)
  -- if expression_binary = expression_lvalue binop expression
  -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
  -- if _ # `(typeIR_lvalue) = typedLvalueIR
@@ -25943,7 +25945,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 </div>
 </li>
 <li>
-<p>Let <code>expression<sub>lvalue</sub></code> be <code><a href="#lvalue_to_expression">$lvalue_to_expression(lvalue)</a></code>.</p>
+<p>Let <code>expression<sub>lvalue</sub></code> be <a href="#lvalue_as_expression">the expression corresponding to <code>lvalue</code></a>.</p>
 </li>
 <li>
 <p>Let <code>expression<sub>binary</sub></code> be <code>expression<sub>lvalue</sub></code> <code>binop'</code> <code>expression</code>.</p>
@@ -26404,7 +26406,7 @@ callableTargetIR
 <p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be</p>
@@ -26835,7 +26837,7 @@ Specify the contollable name part carefully in P4-SpecTec.
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionIR</code> annotated with type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>_</code> be</p>
+<p>Let <code>expressionIR</code> annotated with a pair of type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>_</code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -26909,7 +26911,7 @@ Specify the contollable name part carefully in P4-SpecTec.
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Check that <a href="#typedExpressionIR"><code>nameIR<sub>object</sub></code> annotated with type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a> is equal to <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Check that <a href="#typedExpressionIR"><code>nameIR<sub>object</sub></code> annotated with a pair of type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a> is equal to <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>constructorTargetIR</code> is equal to <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code>.</p>
@@ -27066,7 +27068,7 @@ desugared into a method call on that instance with the relation:</p>
 <p>Let <code>constantDeclarationIR</code> be <code>`EMPTY</code> <code>CONST</code> <code>typeIR</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>REF</code> <code>objectId</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>base</sub></code> be <a href="#typedExpressionIR"><code>nameIR</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>CTK</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>base</sub></code> be <a href="#typedExpressionIR"><code>nameIR</code> annotated with a pair of type <code>typeIR</code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
 <p>Let <code>callableTargetIR</code> be <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"apply"</code>.</p>
@@ -30942,7 +30944,7 @@ forCollectionExpressionIR
 </div>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>list</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR</code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>list</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>list</sub></code> with typedefs unrolled</a>.</p>
@@ -31010,10 +31012,10 @@ forCollectionExpressionIR
 <p>Let <code>typedExpressionIR<sub>r_castd</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>var</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>l_castd</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>l_castd</sub></code>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>r_castd</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>r_castd</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code><a href="#compat_range">$compat_range(typeIR<sub>l</sub>,</code> <code>typeIR<sub>r</sub>)</a></code>.</p>
@@ -32395,7 +32397,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Check that <code>value<sub>label</sub></code> is equal to <code>TABLE_ENUM</code> <code>typeId<sub>table_enum</sub></code> <code>.</code> <code>nameIR<sub>label</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>label</sub></code> be <a href="#typedExpressionIR"><code>nameIR<sub>label</sub></code> annotated with type <code>typeIR<sub>label</sub></code> and compile-time known-ness <code>ctk<sub>label</sub></code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>label</sub></code> be <a href="#typedExpressionIR"><code>nameIR<sub>label</sub></code> annotated with a pair of type <code>typeIR<sub>label</sub></code> and compile-time known-ness <code>ctk<sub>label</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>label</sub></code>.</p>
@@ -33313,7 +33315,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>typedExpressionIR<sub>label_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>label</sub></code> implicitly cast to <code>typeIR</code></a>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>_</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>_</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>label_cast</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>ctk</code> is <code>LCTK</code>.</p>
@@ -34517,7 +34519,7 @@ stringLiteral
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BOOL</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>booleanLiteral</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34534,7 +34536,7 @@ stringLiteral
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>INT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>D</code> <code>i</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34547,7 +34549,7 @@ stringLiteral
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>INT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>INT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>n</code> <code>S</code> <code>i</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34563,7 +34565,7 @@ stringLiteral
 <p>Let <code>n</code> <code>W</code> <code>i</code> be <code>integerLiteral</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BIT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>n</code> <code>W</code> <code>i</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34579,7 +34581,7 @@ stringLiteral
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>STRING</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>STRING</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>stringLiteral</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34888,7 +34890,7 @@ prefixedNonTypeName
 <p>Let <code>_</code> <code>typeIR</code> <code>ctk</code> <code>_<sup>?</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_var_t">the type of variable <code>prefixedNameIR</code> from the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>prefixedNameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -34907,7 +34909,7 @@ prefixedNonTypeName
 <p>Let <code>_</code> <code>typeIR</code> <code>ctk</code> <code>_<sup>?</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_var_t">the type of variable <code>prefixedNameIR</code> from the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>prefixedNameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -35525,7 +35527,7 @@ See <a href="#sec-default-value">Section 19.3</a> for more details on default va
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>DEFAULT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>DEFAULT</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>...</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -35725,7 +35727,7 @@ evaluated.</p>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>!</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -35786,7 +35788,7 @@ evaluated.</p>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>~</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -35851,7 +35853,7 @@ evaluated.</p>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>unop</code> <code>typedExpressionIR<sub>reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36145,7 +36147,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36233,7 +36235,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36364,7 +36366,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36380,7 +36382,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36494,7 +36496,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36513,7 +36515,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>l_reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36604,7 +36606,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>cast</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_cast</sub></code> and <code>ctk<sub>r_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>cast</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>cast</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_cast</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_cast</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36692,7 +36694,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BOOL</code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36780,7 +36782,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36872,7 +36874,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code></code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -36960,7 +36962,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>reduced</sub></code> and compile-time known-ness <code>ctk<sub>reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>l_reduced</sub></code> <code>binop</code> <code>typedExpressionIR<sub>r_reduced</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -37705,7 +37707,7 @@ time.</p>
 <p>Let <code>ctk</code> be <a href="#joins_ctk">the join of <code>[</code> <code>ctk<sub>cond</sub>,</code> <code>ctk<sub>true_cast</sub>,</code> <code>ctk<sub>false_cast</sub></code> <code>]</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>cond</sub></code> <code>?</code> <code>typedExpressionIR<sub>true_cast</sub></code> <code>:</code> <code>typedExpressionIR<sub>false_cast</sub></code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -38075,7 +38077,7 @@ where <code>t</code> is a type and <code>e</code> is an expression.</p>
 <p>Check that <a href="#Cast_expl"><code>typeIR</code> can be explicitly cast to <code>typeIR<sub>t</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>t</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>t</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>t</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -38305,7 +38307,7 @@ more details.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>HEADER_INVALID</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>HEADER_INVALID</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>{#}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -38572,7 +38574,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>ctk</code> be <a href="#joins_ctk">the join of <code>ctk<sub>e</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>SEQ</code> <code>{</code> <code>typedExpressionIR<sub>e</sub><sup>*</sup></code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -38670,7 +38672,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>ctk</code> be <a href="#joins_ctk">the join of <code>ctk<sub>e_h</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>SEQ</code> <code>{</code> <code>typedExpressionIR<sub>e_h</sub><sup>*</sup></code> <code>,</code> <code>...</code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39127,7 +39129,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>RECORD</code> <code>{</code> <code>nameIR<sub>f</sub></code> <code>=</code> <code>typedExpressionIR<sub>f</sub></code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39162,7 +39164,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>typeIR</code> be <code>RECORD</code> <code>{</code> <code>`EMPTY</code> <code>typeIR<sub>f</sub></code> <code>nameIR<sub>f</sub></code> <code>;</code> <code>,</code> <code>...</code> <code>}</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>f</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>RECORD</code> <code>{</code> <code>nameIR<sub>f</sub></code> <code>=</code> <code>typedExpressionIR<sub>f</sub></code> <code>,</code> <code>...</code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39265,7 +39267,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>ctk</code> be <a href="#joins_ctk">the join of <code>ctk<sub>f</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>RECORD</code> <code>{</code> <code>(</code> <code>nameIR<sub>f</sub></code> <code>=</code> <code>typedExpressionIR<sub>f</sub></code> <code>)<sup>*</sup></code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39371,7 +39373,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>ctk</code> be <a href="#joins_ctk">the join of <code>ctk<sub>f</sub><sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>RECORD</code> <code>{</code> <code>(</code> <code>nameIR<sub>f</sub></code> <code>=</code> <code>typedExpressionIR<sub>f</sub></code> <code>)<sup>*</sup></code> <code>,</code> <code>...</code> <code>}</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39764,7 +39766,7 @@ See <a href="#sec-error">Section 8.2.4</a> for details about error types and val
 <p>Check that <code>ERROR</code> <code>.</code> <code>nameIR</code> is equal to <a href="#find_var_value_t">the value of variable <code>nameIR<sub>error</sub></code> from the <code>p</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>ERROR</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>ERROR</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>ERROR</code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -39798,7 +39800,7 @@ See <a href="#sec-error">Section 8.2.4</a> for details about error types and val
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Expr_eval_lctk">Local compile-time evaluation of <code>ERROR</code> <code>.</code> <code>nameIR</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>ctk</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+<p><a href="#Expr_eval_lctk">Local compile-time evaluation of <code>ERROR</code> <code>.</code> <code>nameIR</code> annotated with a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -40015,7 +40017,7 @@ memberAccessBaseIR
 <p>Check that <code>nameIR</code> is in <code>nameIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>TYPE</code> <code>prefixedNameIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40037,7 +40039,7 @@ memberAccessBaseIR
 <p>Check that <code>nameIR</code> is in <code>nameIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>TYPE</code> <code>prefixedNameIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40179,7 +40181,7 @@ memberAccessBaseIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT</code> <code>&lt;</code> <code>32</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BIT</code> <code>&lt;</code> <code>32</code> <code>&gt;</code> and compile-time known-ness <code>LCTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"size"</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40195,7 +40197,7 @@ memberAccessBaseIR
 <p>Check that <code>p</code> is equal to <code>BLOCK</code> and <code>TC.BLOCK.KIND</code> is equal to <code>PARSER</code> or <code>p</code> is equal to <code>LOCAL</code> and <code>TC.LOCAL.KIND</code> is equal to <code>PARSER_STATE</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>BIT</code> <code>&lt;</code> <code>32</code> <code>&gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>BIT</code> <code>&lt;</code> <code>32</code> <code>&gt;</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"lastIndex"</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40211,7 +40213,7 @@ memberAccessBaseIR
 <p>Check that <code>p</code> is equal to <code>BLOCK</code> and <code>TC.BLOCK.KIND</code> is equal to <code>PARSER</code> or <code>p</code> is equal to <code>LOCAL</code> and <code>TC.LOCAL.KIND</code> is equal to <code>PARSER_STATE</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"last"</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40227,7 +40229,7 @@ memberAccessBaseIR
 <p>Check that <code>p</code> is equal to <code>BLOCK</code> and <code>TC.BLOCK.KIND</code> is equal to <code>PARSER</code> or <code>p</code> is equal to <code>LOCAL</code> and <code>TC.LOCAL.KIND</code> is equal to <code>PARSER_STATE</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>"next"</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40252,7 +40254,7 @@ memberAccessBaseIR
 <p>Let <code>typeIR''</code> be <a href="#option_get"><strong>!</strong></a> <a href="#assoc_">the value associated to <code>nameIR</code> in <code>(</code> <code>nameIR<sub>f</sub>,</code> <code>typeIR<sub>f</sub></code> <code>)<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40271,7 +40273,7 @@ memberAccessBaseIR
 <p>Let <code>typeIR''</code> be <a href="#option_get"><strong>!</strong></a> <a href="#assoc_">the value associated to <code>nameIR</code> in <code>(</code> <code>nameIR<sub>f</sub>,</code> <code>typeIR<sub>f</sub></code> <code>)<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40290,7 +40292,7 @@ memberAccessBaseIR
 <p>Let <code>typeIR''</code> be <a href="#option_get"><strong>!</strong></a> <a href="#assoc_">the value associated to <code>nameIR</code> in <code>(</code> <code>nameIR<sub>f</sub>,</code> <code>typeIR<sub>f</sub></code> <code>)<sup>*</sup></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR''</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40310,7 +40312,7 @@ memberAccessBaseIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>boolTypeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>boolTypeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40323,7 +40325,7 @@ memberAccessBaseIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>boolTypeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>boolTypeIR'</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -40336,7 +40338,7 @@ memberAccessBaseIR
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>tableMetadataEnumTypeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>tableMetadataEnumTypeIR</code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -41334,7 +41336,7 @@ memberAccessBaseIR
 <p>Check that <code>n<sub>index</sub></code> is less than the length of <code>typeIR<sub>e</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>e</sub><sup>*</sup>[n<sub>index</sub>]</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>e</sub><sup>*</sup>[n<sub>index</sub>]</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>index_reduced</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -41373,7 +41375,7 @@ memberAccessBaseIR
 <p>Check that <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR'</code> and compile-time known-ness <code>ctk<sub>base</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>index_reduced</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -41389,7 +41391,7 @@ memberAccessBaseIR
 <p>Let <code>ctk</code> be <a href="#join_ctk">the join of <code>ctk<sub>base</sub></code> and <code>ctk<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR'</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR'</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>index_reduced</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -41953,7 +41955,7 @@ follows:</p>
 <p>Let <code>typeIR</code> be <code>BIT</code> <code>&lt;</code> <code>n<sub>slice</sub></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>base_reduced</sub></code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi_reduced</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo_reduced</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -42370,7 +42372,7 @@ constructorTargetIR
 <p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Let <code>value</code> be</p>
@@ -42418,7 +42420,7 @@ constructorTargetIR
 <p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -42502,7 +42504,7 @@ constructorTargetIR
 <p>Let <code>callExpressionIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>ret</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -42606,7 +42608,7 @@ constructorTargetIR
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -42674,7 +42676,7 @@ constructorTargetIR
 <p>Let <code>callExpressionIR</code> be <code>prefixedNameIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>object</sub></code> and compile-time known-ness <code>CTK</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>callExpressionIR</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -42896,7 +42898,7 @@ constructorTargetIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>[</code> <code>"minSizeInBits",</code> <code>"minSizeInBytes",</code> <code>"maxSizeInBits",</code> <code>"maxSizeInBytes"</code> <code>]</code>.</p>
@@ -42964,7 +42966,7 @@ constructorTargetIR
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>callableTargetIR'</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> annotated with type <code>typeIR</code> and compile-time known-ness <code>ctk</code>, under cursor <code>p</code> and context <code>TC</code></a>.</p>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>callableTargetIR'</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> annotated with a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code>, under cursor <code>p</code> and context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -43032,7 +43034,7 @@ type, while a callable call evaluates to the result of the call.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
 </li>
 <li>
 <p>Check that <code>nameIR</code> is in <code>[</code> <code>"minSizeInBits",</code> <code>"minSizeInBytes",</code> <code>"maxSizeInBits",</code> <code>"maxSizeInBytes"</code> <code>]</code>.</p>
@@ -43378,7 +43380,7 @@ evaluation.</p>
 <p>Let <code>ctk</code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Result in <a href="#typedExpressionIR"><code>(</code> <code>typedExpressionIR</code> <code>)</code> annotated with <code>expressionNoteIR</code></a>.</p>
@@ -49082,7 +49084,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>typeIR<sub>cast</sub></code> be <code>SET</code> <code>&lt;</code> <code>typeIR<sub>key</sub></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>cast</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>cast</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with a pair of type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>cast</sub></code>.</p>
@@ -49104,7 +49106,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>typeIR<sub>cast</sub></code> be <code>SET</code> <code>&lt;</code> <code>typeIR<sub>key</sub></code> <code>&gt;</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>cast</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>DYN</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>cast</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with a pair of type <code>typeIR<sub>cast</sub></code> and compile-time known-ness <code>DYN</code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>cast</sub></code>.</p>
@@ -56600,7 +56602,7 @@ def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR</code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR</code>.</p>
 </li>
 <li>
 <p>If <a href="#Type_alpha"><code>typeIR</code> and <code>typeIR<sub>to</sub></code> are the same type</a>:</p>
@@ -56620,7 +56622,7 @@ def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
 <p>Check that <a href="#Cast_impl"><code>typeIR</code> can be implicitly cast to <code>typeIR<sub>to</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>to</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with type <code>typeIR<sub>to</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>to</sub></code> <code>)</code> <code>typedExpressionIR</code> annotated with a pair of type <code>typeIR<sub>to</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Return <code>typedExpressionIR<sub>cast</sub></code>.</p>
@@ -56731,10 +56733,10 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>l</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>l</sub></code>.</p>
 </li>
 <li>
-<p>Let <a href="#expressionNoteIR">type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>r</sub></code>.</p>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>ctk</code></a> be the note of <code>typedExpressionIR<sub>r</sub></code>.</p>
 </li>
 <li>
 <p>If <a href="#Type_alpha"><code>typeIR<sub>l</sub></code> and <code>typeIR<sub>r</sub></code> are the same type</a>:</p>
@@ -56755,7 +56757,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let <code>typedExpressionIR<sub>l_cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>r</sub></code> <code>)</code> <code>typedExpressionIR<sub>l</sub></code> annotated with type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>l_cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>r</sub></code> <code>)</code> <code>typedExpressionIR<sub>l</sub></code> annotated with a pair of type <code>typeIR<sub>r</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Return ( <code>typedExpressionIR<sub>l_cast</sub></code>, <code>typedExpressionIR<sub>r</sub></code> ).</p>
@@ -56772,7 +56774,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>typedExpressionIR<sub>r_cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>l</sub></code> <code>)</code> <code>typedExpressionIR<sub>r</sub></code> annotated with type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
+<p>Let <code>typedExpressionIR<sub>r_cast</sub></code> be <a href="#typedExpressionIR"><code>(</code> <code>typeIR<sub>l</sub></code> <code>)</code> <code>typedExpressionIR<sub>r</sub></code> annotated with a pair of type <code>typeIR<sub>l</sub></code> and compile-time known-ness <code>ctk</code></a>.</p>
 </li>
 <li>
 <p>Return ( <code>typedExpressionIR<sub>l</sub></code>, <code>typedExpressionIR<sub>r_cast</sub></code> ).</p>
