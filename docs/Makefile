@@ -4,6 +4,8 @@ ROUGE_CSS=style
 SPECTEC=p4spectec
 SPECFILES=../spec-concrete/*/*.watsup
 SPEC=P4-16-spec-new
+RELEASE=P4-16-spec-release
+DRAFT=P4-16-spec-draft
 
 grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
@@ -18,17 +20,35 @@ splice: spectec
 	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
 	python3 text_missing.py > text.missing
 
-${SPEC}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
+${DRAFT}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -q \
-		-a rouge-css=$(ROUGE_CSS) $<
+		-a rouge-css=$(ROUGE_CSS) \
+		-o $@ $<
 
-${SPEC}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
+${RELEASE}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
+	time asciidoctor -q \
+		-a release \
+		-a rouge-css=$(ROUGE_CSS) \
+		-o $@ $<
+
+${DRAFT}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -q \
 		-a pdf-fontsdir=resources/fonts \
-		-a rouge-style=$(ROUGE_STYLE) $<
+		-a rouge-style=$(ROUGE_STYLE) \
+		-o $@ $<
 
-build: ${SPEC}.html ${SPEC}.pdf
-build-html: ${SPEC}.html
+${RELEASE}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
+	time asciidoctor-pdf -q \
+		-a release \
+		-a pdf-fontsdir=resources/fonts \
+		-a rouge-style=$(ROUGE_STYLE) \
+		-o $@ $<
+
+draft: ${DRAFT}.html ${DRAFT}.pdf
+draft-html: ${DRAFT}.html
+
+release: ${RELEASE}.html ${RELEASE}.pdf
+release-html: ${RELEASE}.html
 
 clean:
-	/bin/rm -f ${SPEC}.pdf ${SPEC}.html ${NEWSPEC}.pdf grammar.trimmed.adoc resources/figs/stem-*.png
+	/bin/rm -f ${SPEC}.pdf ${SPEC}.html ${DRAFT}.html ${DRAFT}.pdf ${RELEASE}.html ${RELEASE}.pdf grammar.trimmed.adoc resources/figs/stem-*.png

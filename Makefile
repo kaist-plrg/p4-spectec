@@ -22,10 +22,15 @@ release:
 
 # Spec
 
-spec:
-	cd docs && make build && cd ..
-spec-html:
-	cd docs && make build-html && cd ..
+spec-draft:
+	cd docs && make draft && cd ..
+spec-draft-html:
+	cd docs && make draft-html && cd ..
+
+spec-release:
+	cd docs && make release && cd ..
+spec-release-html:
+	cd docs && make release-html && cd ..
 
 # Format
 
