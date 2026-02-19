@@ -433,7 +433,7 @@ def $modulo(n_a, n_b)
 
 2. Else Phantom#11
 
-;; ../../../../spec-concrete/0-aux/0.1-example.watsup:9.1-10.29
+;; ../../../../spec-concrete/0-aux/0.1-example.watsup:9.1-10.36
 def $modulo_42(n)
 
 1. (Let (nat)? be $modulo(n, 42))
@@ -10348,7 +10348,7 @@ syntax expressionIR =
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:188.27-190.54
 syntax expressionNoteIR = 
-   | ( typeIR ctk ) hint(prose "type" %0 "and compile-time known-ness" %1) hint(prose_fields "type" "compile-time known-ness")
+   | ( typeIR ctk ) hint(prose "a pair of type" %0 "and compile-time known-ness" %1) hint(prose_fields "type" "compile-time known-ness")
 
 ;; ../../../../spec-concrete/4-p4-ir/4.0-ir-syntax.watsup:193.3-196.41
 syntax typedExpressionIR = 
@@ -19160,7 +19160,7 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             2. (Lvalue_ok: p TC |- lvalue : typedLvalueIR)
 
-            3. (Let expression_lvalue be $lvalue_to_expression(lvalue))
+            3. (Let expression_lvalue be $lvalue_as_expression(lvalue))
 
             4. (Let expression_binary be ((expression_lvalue binop' expression) as expression))
 
@@ -24669,49 +24669,6 @@ def $is_concrete_extern_object''(externMethodTypeDefIR)
 2. Otherwise
 
   1. Return false
-
-;; ../../../../spec-concrete/5-typing/5.08-typing-lvalue.watsup:7.1-7.47
-def $lvalue_to_expression(lvalue)
-
-1. Case analysis on lvalue
-
-  1. Case (% has type referenceExpression)
-
-    1. (Let referenceExpression be (lvalue as referenceExpression))
-
-    2. Return (referenceExpression as expression)
-
-  2. Case (% matches pattern `%.%`)
-
-    1. (Let (lvalue_base . member) be lvalue)
-
-    2. (Let expression_base be $lvalue_to_expression(lvalue_base))
-
-    3. Return (((expression_base as memberAccessBase) . member) as expression)
-
-  3. Case (% matches pattern `%[%]`)
-
-    1. (Let (lvalue_base [ expression_index ]) be lvalue)
-
-    2. (Let expression_base be $lvalue_to_expression(lvalue_base))
-
-    3. Return ((expression_base [ expression_index ]) as expression)
-
-  4. Case (% matches pattern `%[%:%]`)
-
-    1. (Let (lvalue_base [ expression_hi : expression_lo ]) be lvalue)
-
-    2. (Let expression_base be $lvalue_to_expression(lvalue_base))
-
-    3. Return ((expression_base [ expression_hi : expression_lo ]) as expression)
-
-  5. Case (% matches pattern `(%)`)
-
-    1. (Let (( lvalue' )) be lvalue)
-
-    2. (Let expression be $lvalue_to_expression(lvalue'))
-
-    3. Return ((( expression )) as expression)
 
 ;; ../../../../spec-concrete/5-typing/5.09-typing-parameter.watsup:84.1-87.23
 relation ParameterList_ok_inner: p typingContext |- (parameter)* : % % # %
@@ -35768,111 +35725,53 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
     2. If (((typeArgumentIR)* matches pattern [])), then
 
-      1. Group actionCallee-global: p EC_0 ARCH_0 |- (actionCallee as callee) @< [] >( argumentListIR ): % % %
+      1. Group actionCallee: p EC_0 ARCH_0 |- (actionCallee as callee) @< [] >( argumentListIR ): % % %
 
-        1. (Let (action cursor . nameIR ( (parameterIR)* # (id_default)* ) blockStatementIR) be actionCallee)
+        1. (Let (action p_shared . nameIR ( (parameterIR)* # (id_default)* ) blockStatementIR) be actionCallee)
 
-        2. If ((cursor matches pattern `GLOBAL`)), then
+        2. (Let EC_callee_0 be $inherit_e(p_shared, EC_0))
 
-          1. (Let EC_callee_0 be $inherit_e((global), EC_0))
+        3. (Let (given (parameterIR_aligned)* default (parameterIR_default)*) be $align_parameterListIR((parameterIR)*, argumentListIR, (id_default)*, []))
 
-          2. (Let (given (parameterIR_aligned)* default (parameterIR_default)*) be $align_parameterListIR((parameterIR)*, argumentListIR, (id_default)*, []))
+        4. (Copy_in: p_shared ARCH_0 |- p EC_0 (parameterIR_aligned)* @ (local) EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 # copyInResult)
 
-          3. (Let p_shared be (global))
+        5. Case analysis on copyInResult
 
-          4. (Copy_in: p_shared ARCH_0 |- p EC_0 (parameterIR_aligned)* @ (local) EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 # copyInResult)
+          1. Case (% has type exitResult)
 
-          5. Case analysis on copyInResult
+            1. (Let exitResult be (copyInResult as exitResult))
 
-            1. Case (% has type exitResult)
+            2. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 ((exit) as callResult)
 
-              1. (Let exitResult be (copyInResult as exitResult))
+          2. Case (% has type continueResult<storageReference?*>)
 
-              2. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 ((exit) as callResult)
+            1. (Let (` ((storageReference)?)*) be (copyInResult as continueResult<storageReference?*>))
 
-            2. Case (% has type continueResult<storageReference?*>)
+            2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_1 ~> EC_callee_2)
 
-              1. (Let (` ((storageReference)?)*) be (copyInResult as continueResult<storageReference?*>))
+            3. (ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 actionResult)
 
-              2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_1 ~> EC_callee_2)
+            4. If ((actionResult has type exitResult)), then
 
-              3. (ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 actionResult)
+              1. (Let exitResult be (actionResult as exitResult))
 
-              4. If ((actionResult has type exitResult)), then
+              2. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
 
-                1. (Let exitResult be (actionResult as exitResult))
+              3. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((exit) as callResult)
 
-                2. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
+            4. Else Phantom#2122
 
-                3. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((exit) as callResult)
+            5. If ((actionResult = ((return ?()) as actionResult))), then
 
-              4. Else Phantom#2122
+              1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
 
-              5. If ((actionResult = ((return ?()) as actionResult))), then
+              2. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((return ?()) as callResult)
 
-                1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
+            5. Else Phantom#2123
 
-                2. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((return ?()) as callResult)
+        5. Else Phantom#2124
 
-              5. Else Phantom#2123
-
-          5. Else Phantom#2124
-
-        2. Else Phantom#2125
-
-      2. Group actionCallee-block: p EC_0 ARCH_0 |- (actionCallee as callee) @< [] >( argumentListIR ): % % %
-
-        1. (Let (action cursor . nameIR ( (parameterIR)* # (id_default)* ) blockStatementIR) be actionCallee)
-
-        2. If ((cursor matches pattern `BLOCK`)), then
-
-          1. (Let EC_callee_0 be $inherit_e((block), EC_0))
-
-          2. (Let (given (parameterIR_aligned)* default (parameterIR_default)*) be $align_parameterListIR((parameterIR)*, argumentListIR, (id_default)*, []))
-
-          3. (Let p_shared be (block))
-
-          4. (Copy_in: p_shared ARCH_0 |- p EC_0 (parameterIR_aligned)* @ (local) EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 # copyInResult)
-
-          5. Case analysis on copyInResult
-
-            1. Case (% has type exitResult)
-
-              1. (Let exitResult be (copyInResult as exitResult))
-
-              2. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 ((exit) as callResult)
-
-            2. Case (% has type continueResult<storageReference?*>)
-
-              1. (Let (` ((storageReference)?)*) be (copyInResult as continueResult<storageReference?*>))
-
-              2. (Copy_in_default: (parameterIR_default)* @ (local) EC_callee_1 ~> EC_callee_2)
-
-              3. (ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 actionResult)
-
-              4. If ((actionResult has type exitResult)), then
-
-                1. (Let exitResult be (actionResult as exitResult))
-
-                2. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
-
-                3. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((exit) as callResult)
-
-              4. Else Phantom#2126
-
-              5. If ((actionResult = ((return ?()) as actionResult))), then
-
-                1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_3 ((storageReference)?)* ~> EC_2)
-
-                2. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((return ?()) as callResult)
-
-              5. Else Phantom#2127
-
-          5. Else Phantom#2128
-
-        2. Else Phantom#2129
-
-    2. Else Phantom#2130
+    2. Else Phantom#2125
 
   2. Case (% has type definedFunctionCallee)
 
@@ -35912,7 +35811,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
           5. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-2. Else Phantom#2131
+2. Else Phantom#2126
 
 3. (Let (argumentIR)* be argumentListIR)
 
@@ -36034,17 +35933,17 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                               7. Result in: % % % |- % @< % >( % ): EC_2 ARCH_1 ((return ?()) as callResult)
 
-                            5. Else Phantom#2132
+                            5. Else Phantom#2127
 
-                          3. Else Phantom#2133
+                          3. Else Phantom#2128
 
-                        2. Else Phantom#2134
+                        2. Else Phantom#2129
 
-                  2. Else Phantom#2135
+                  2. Else Phantom#2130
 
-                1. Else Phantom#2136
+                1. Else Phantom#2131
 
-              1. Else Phantom#2137
+              1. Else Phantom#2132
 
             2. Case (% = "pop_front")
 
@@ -36104,21 +36003,21 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                               8. Result in: % % % |- % @< % >( % ): EC_2 ARCH_1 ((return ?()) as callResult)
 
-                            3. Else Phantom#2138
+                            3. Else Phantom#2133
 
-                          3. Else Phantom#2139
+                          3. Else Phantom#2134
 
-                        2. Else Phantom#2140
+                        2. Else Phantom#2135
 
-                  2. Else Phantom#2141
+                  2. Else Phantom#2136
 
-                1. Else Phantom#2142
+                1. Else Phantom#2137
 
-              1. Else Phantom#2143
+              1. Else Phantom#2138
 
-          3. Else Phantom#2144
+          3. Else Phantom#2139
 
-        1. Else Phantom#2145
+        1. Else Phantom#2140
 
         2. If ((argumentListIR = [])), then
 
@@ -36160,11 +36059,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                       6. Result in: % % % |- % @< % >( % ): EC_0 ARCH_0 (returnResult as callResult)
 
-                  2. Else Phantom#2146
+                  2. Else Phantom#2141
 
-                1. Else Phantom#2147
+                1. Else Phantom#2142
 
-              1. Else Phantom#2148
+              1. Else Phantom#2143
 
             2. Case (% = "setValid")
 
@@ -36188,11 +36087,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                     6. Result in: % % % |- % @< % >( % ): EC_1 ARCH_0 (returnResult as callResult)
 
-                  2. Else Phantom#2149
+                  2. Else Phantom#2144
 
-                1. Else Phantom#2150
+                1. Else Phantom#2145
 
-              1. Else Phantom#2151
+              1. Else Phantom#2146
 
             3. Case (% = "setInvalid")
 
@@ -36216,17 +36115,17 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                     6. Result in: % % % |- % @< % >( % ): EC_1 ARCH_0 (returnResult as callResult)
 
-                  2. Else Phantom#2152
+                  2. Else Phantom#2147
 
-                1. Else Phantom#2153
+                1. Else Phantom#2148
 
-              1. Else Phantom#2154
+              1. Else Phantom#2149
 
-          2. Else Phantom#2155
+          2. Else Phantom#2150
 
-        2. Else Phantom#2156
+        2. Else Phantom#2151
 
-    2. Else Phantom#2157
+    2. Else Phantom#2152
 
   3. Case (% has type externMethodCallee)
 
@@ -36274,7 +36173,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
             6. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
-      2. Else Phantom#2158
+      2. Else Phantom#2153
 
   4. Case (% has type parserApplyMethodCallee)
 
@@ -36342,9 +36241,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                   3. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
 
-              2. Else Phantom#2159
+              2. Else Phantom#2154
 
-      7. Else Phantom#2160
+      7. Else Phantom#2155
 
   5. Case (% has type controlApplyMethodCallee)
 
@@ -36406,7 +36305,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                 3. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((exit) as callResult)
 
-              3. Else Phantom#2161
+              3. Else Phantom#2156
 
               4. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
 
@@ -36414,9 +36313,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                 2. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
 
-              4. Else Phantom#2162
+              4. Else Phantom#2157
 
-      8. Else Phantom#2163
+      8. Else Phantom#2158
 
   6. Case (% has type tableApplyMethodCallee)
 
@@ -36446,9 +36345,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
           3. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 ((exit) as callResult)
 
-        3. Else Phantom#2164
+        3. Else Phantom#2159
 
-      5. Else Phantom#2165
+      5. Else Phantom#2160
 
       6. (Let EC_callee_1' be EC_callee_0[local.frames = [frame]])
 
@@ -36466,11 +36365,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
           3. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 (returnResult as callResult)
 
-        3. Else Phantom#2166
+        3. Else Phantom#2161
 
-      7. Else Phantom#2167
+      7. Else Phantom#2162
 
-4. Else Phantom#2168
+4. Else Phantom#2163
 
 ;; ../../../../spec-concrete/8-dynamic/8.02-evaluation-relation.watsup:401.1-406.79
 extern relation ExternFunctionCall_eval: evalContext arch |- nameIR ( (nameIR')* ): % % %
@@ -36489,7 +36388,7 @@ def $match_keysets((setValue)*, (value)*)
 
       1. Return true
 
-    1. Else Phantom#2169
+    1. Else Phantom#2164
 
   2. Case (% matches pattern [ _/1 ])
 
@@ -36503,9 +36402,9 @@ def $match_keysets((setValue)*, (value)*)
 
         1. Return $match_keyset(setValue', value_key)
 
-      2. Else Phantom#2170
+      2. Else Phantom#2165
 
-    2. Else Phantom#2171
+    2. Else Phantom#2166
 
   3. Case (% matches pattern _ :: _)
 
@@ -36525,15 +36424,15 @@ def $match_keysets((setValue)*, (value)*)
 
           1. Return false
 
-    2. Else Phantom#2172
+    2. Else Phantom#2167
 
-1. Else Phantom#2173
+1. Else Phantom#2168
 
 2. If (((setValue)* = [(set{...})])), then
 
   1. Return true
 
-2. Else Phantom#2174
+2. Else Phantom#2169
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:8.1-8.42
 def $match_keyset(setValue, value_key)
@@ -36625,11 +36524,11 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
                   3. Result in: % % |- % : EC_1 ARCH_1 ((` setValue) as simpleKeysetExpressionResult)
 
-                2. Else Phantom#2175
+                2. Else Phantom#2170
 
-              3. Else Phantom#2176
+              3. Else Phantom#2171
 
-          2. Else Phantom#2177
+          2. Else Phantom#2172
 
   2. Case (% matches pattern `%&&&%`)
 
@@ -36707,7 +36606,7 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
               3. Result in: % % |- % : EC_2 ARCH_2 ((` setValue) as simpleKeysetExpressionResult)
 
-1. Else Phantom#2178
+1. Else Phantom#2173
 
 2. Group default-any: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
@@ -36717,7 +36616,7 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
     2. Result in: % % |- % : EC_0 ARCH_0 ((` setValue) as simpleKeysetExpressionResult)
 
-  1. Else Phantom#2179
+  1. Else Phantom#2174
 
 ;; ../../../../spec-concrete/8-dynamic/8.03.2-eval-keyset-expression.watsup:157.1-160.23
 relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR)* : % % %
@@ -36728,7 +36627,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
     1. Result in: % % |- % : evalContext arch ((` []) as keysetExpressionResult)
 
-  1. Else Phantom#2180
+  1. Else Phantom#2175
 
   2. If (((simpleKeysetExpressionIR)* matches pattern _ :: _)), then
 
@@ -36766,7 +36665,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
             3. Result in: % % |- % : EC_2 ARCH_2 keysetExpressionResult'
 
-  2. Else Phantom#2181
+  2. Else Phantom#2176
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:250.1-257.42
 relation ForUpdateStmt_eval: EC_0 ARCH_0 |- forUpdateStatementIR : % % %
@@ -36800,7 +36699,7 @@ relation ForUpdateStmts_eval: evalContext arch |- (forUpdateStatementIR)* : % % 
 
     1. Result in: % % |- % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#2182
+  1. Else Phantom#2177
 
   2. If (((forUpdateStatementIR)* matches pattern _ :: _)), then
 
@@ -36824,9 +36723,9 @@ relation ForUpdateStmts_eval: evalContext arch |- (forUpdateStatementIR)* : % % 
 
         3. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
-    3. Else Phantom#2183
+    3. Else Phantom#2178
 
-  2. Else Phantom#2184
+  2. Else Phantom#2179
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:313.1-320.42
 relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
@@ -36849,7 +36748,7 @@ relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
 
         4. Result in: % % |- % : EC_1 arch ((`empty) as statementResult)
 
-      2. Else Phantom#2185
+      2. Else Phantom#2180
 
       3. (Let (annotationList' typeIR' nameIR' initializerOptIR) be forInitStatementIR)
 
@@ -36875,7 +36774,7 @@ relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
 
             3. Result in: % % |- % : EC_2 ARCH_1 ((`empty) as statementResult)
 
-      4. Else Phantom#2186
+      4. Else Phantom#2181
 
     2. Case (% has type forUpdateStatementIR)
 
@@ -36894,7 +36793,7 @@ relation ForInitStmts_eval: evalContext arch |- (forInitStatementIR)* : % % %
 
     1. Result in: % % |- % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#2187
+  1. Else Phantom#2182
 
   2. If (((forInitStatementIR)* matches pattern _ :: _)), then
 
@@ -36918,9 +36817,9 @@ relation ForInitStmts_eval: evalContext arch |- (forInitStatementIR)* : % % %
 
         3. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
-    3. Else Phantom#2188
+    3. Else Phantom#2183
 
-  2. Else Phantom#2189
+  2. Else Phantom#2184
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:400.1-407.42
 relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
@@ -36935,13 +36834,13 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
     2. Result in: % % |- % % % : EC_1 ARCH_1 (abortResult as statementResult)
 
-  2. Else Phantom#2190
+  2. Else Phantom#2185
 
   3. If ((expressionResult = ((` ((`b false) as value)) as expressionResult))), then
 
     1. Result in: % % |- % % % : EC_1 ARCH_1 ((`empty) as statementResult)
 
-  3. Else Phantom#2191
+  3. Else Phantom#2186
 
   4. If ((expressionResult = ((` ((`b true) as value)) as expressionResult))), then
 
@@ -36967,7 +36866,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
         2. Result in: % % |- % % % : EC_2 ARCH_2 ((`empty) as statementResult)
 
-    2. Else Phantom#2192
+    2. Else Phantom#2187
 
     3. If (((statementResult = ((`empty) as statementResult)) \/ (statementResult = ((continue) as statementResult)))), then
 
@@ -36989,11 +36888,11 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
           3. Result in: % % |- % % % : EC_4 ARCH_4 statementResult''
 
-      2. Else Phantom#2193
+      2. Else Phantom#2188
 
-    3. Else Phantom#2194
+    3. Else Phantom#2189
 
-  4. Else Phantom#2195
+  4. Else Phantom#2190
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:530.1-537.42
 relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % %
@@ -37038,7 +36937,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
               3. Result in: % % |- % : EC_1 ARCH_1 ((` (value')*) as expressionListResult)
 
-          2. Else Phantom#2196
+          2. Else Phantom#2191
 
   2. Case (% matches pattern `%..%`)
 
@@ -37095,21 +36994,21 @@ def $values_of_setValue((set< typeIR >), setValue)
 
     3. Return value_l :: $values_of_setValue((set< typeIR >), (set{ value_l_inc .. value_r }))
 
-  2. Else Phantom#2197
+  2. Else Phantom#2192
 
   3. If ($bin_eq(value_l, value_r)), then
 
     1. Return [value_l]
 
-  3. Else Phantom#2198
+  3. Else Phantom#2193
 
   4. If ($bin_gt(value_l, value_r)), then
 
     1. Return []
 
-  4. Else Phantom#2199
+  4. Else Phantom#2194
 
-1. Else Phantom#2200
+1. Else Phantom#2195
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:618.1-625.42
 relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
@@ -37120,7 +37019,7 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
     1. Result in: % % |- % % % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#2201
+  1. Else Phantom#2196
 
   2. If (((value)* matches pattern _ :: _)), then
 
@@ -37150,7 +37049,7 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
         2. Result in: % % |- % % % : EC_2 ARCH_1 ((`empty) as statementResult)
 
-    4. Else Phantom#2202
+    4. Else Phantom#2197
 
     5. If (((statementResult = ((`empty) as statementResult)) \/ (statementResult = ((continue) as statementResult)))), then
 
@@ -37158,9 +37057,9 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
       2. Result in: % % |- % % % : EC_3 ARCH_2 statementResult'
 
-    5. Else Phantom#2203
+    5. Else Phantom#2198
 
-  2. Else Phantom#2204
+  2. Else Phantom#2199
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:738.1-740.43
 def $match_switchLabelIR_table(id, switchLabelIR)
@@ -37200,7 +37099,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
     1. Result in: % |- % : ?()
 
-  1. Else Phantom#2205
+  1. Else Phantom#2200
 
   2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -37244,9 +37143,9 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
                 2. Result in: % |- % : ?(blockStatementIR)
 
-              2. Else Phantom#2206
+              2. Else Phantom#2201
 
-            2. Else Phantom#2207
+            2. Else Phantom#2202
 
           2. Case false
 
@@ -37254,7 +37153,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
             2. Result in: % |- % : (blockStatementIR)?
 
-  2. Else Phantom#2208
+  2. Else Phantom#2203
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:756.1-758.48
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
@@ -37290,7 +37189,7 @@ relation SwitchLabel_general_eval: cursor EC_0 ARCH_0 |- switchLabelIR : % % %
 
         3. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-1. Else Phantom#2209
+1. Else Phantom#2204
 
 ;; ../../../../spec-concrete/8-dynamic/8.06-eval-statement.watsup:878.1-880.43
 def $match_switchLabelIR_general(value, value')
@@ -37316,7 +37215,7 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
       1. Result in: % % % % |- % : EC_0 ARCH_0 ?()
 
-    1. Else Phantom#2210
+    1. Else Phantom#2205
 
     2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -37346,7 +37245,7 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                 2. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?
 
-          3. Else Phantom#2211
+          3. Else Phantom#2206
 
         2. Case (% matches pattern `%:`)
 
@@ -37374,9 +37273,9 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                     2. Result in: % % % % |- % : EC_1 ARCH_1 ?(blockStatementIR)
 
-                  2. Else Phantom#2212
+                  2. Else Phantom#2207
 
-                2. Else Phantom#2213
+                2. Else Phantom#2208
 
               2. Case false
 
@@ -37384,11 +37283,11 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                 2. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?
 
-          3. Else Phantom#2214
+          3. Else Phantom#2209
 
-    2. Else Phantom#2215
+    2. Else Phantom#2210
 
-1. Else Phantom#2216
+1. Else Phantom#2211
 
 ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:8.1-9.27
 syntax selectCaseMatchResult = 
@@ -37424,7 +37323,7 @@ relation SelectCase_match: EC_0 ARCH_0 (value_key)* |- (keysetExpressionIR : nam
 
           1. Result in: % % % |- % : EC_1 ARCH_1 ((` ?(nameIR)) as selectCaseMatchResult)
 
-  2. Else Phantom#2217
+  2. Else Phantom#2212
 
 ;; ../../../../spec-concrete/8-dynamic/8.08.1-eval-parser-statement.watsup:50.1-55.67
 relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : % % %
@@ -37435,7 +37334,7 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
     1. Result in: % % % |- % : evalContext arch ((` ?()) as selectCaseMatchResult)
 
-  1. Else Phantom#2218
+  1. Else Phantom#2213
 
   2. If (((selectCaseIR)* matches pattern _ :: _)), then
 
@@ -37461,7 +37360,7 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
           2. Result in: % % % |- % : EC_1 ARCH_1 ((` ?(nameIR_state)) as selectCaseMatchResult)
 
-        2. Else Phantom#2219
+        2. Else Phantom#2214
 
     4. If ((selectCaseMatchResult = ((` ?()) as selectCaseMatchResult))), then
 
@@ -37469,9 +37368,9 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
       2. Result in: % % % |- % : EC_2 ARCH_2 selectCaseMatchResult'
 
-    4. Else Phantom#2220
+    4. Else Phantom#2215
 
-  2. Else Phantom#2221
+  2. Else Phantom#2216
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:5.24-5.39
 syntax tableKeyValue = 
@@ -37505,7 +37404,7 @@ relation TableKey_eval: EC_0 ARCH_0 |- (typedExpressionIR : nameIR annotationLis
 
       3. Result in: % % |- % : EC_1 ARCH_1 ((` tableKeyValue) as tableKeyResult)
 
-  2. Else Phantom#2222
+  2. Else Phantom#2217
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:38.1-39.15
 syntax tableKeysResult = 
@@ -37521,7 +37420,7 @@ relation TableKeys_eval: evalContext arch |- (tableKeyIR)* : % % %
 
     1. Result in: % % |- % : evalContext arch ((` []) as tableKeysResult)
 
-  1. Else Phantom#2223
+  1. Else Phantom#2218
 
   2. If (((tableKeyIR)* matches pattern _ :: _)), then
 
@@ -37559,7 +37458,7 @@ relation TableKeys_eval: evalContext arch |- (tableKeyIR)* : % % %
 
             3. Result in: % % |- % : EC_2 ARCH_2 ((` (tableKeyValue)*) as tableKeysResult)
 
-  2. Else Phantom#2224
+  2. Else Phantom#2219
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:86.1-88.23
 relation TableEntryPriority_eval: EC ARCH |- (tableEntryPriorityIR)? : %
@@ -37590,9 +37489,9 @@ relation TableEntryPriority_eval: EC ARCH |- (tableEntryPriorityIR)? : %
 
           2. Result in: % % |- % : ?(n)
 
-        2. Else Phantom#2225
+        2. Else Phantom#2220
 
-    2. Else Phantom#2226
+    2. Else Phantom#2221
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:103.21-103.51
 syntax tableMatch = 
@@ -37640,7 +37539,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- (tableKeyValue)* @ tableEntryIR : % % %
 
           2. Result in: % % |- % @ % : EC_1 ARCH_1 ((` ?(tableMatch)) as tableMatchResult)
 
-  4. Else Phantom#2227
+  4. Else Phantom#2222
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:171.1-172.15
 syntax tableMatchesResult = 
@@ -37656,7 +37555,7 @@ relation TableMatches_eval: evalContext arch |- (tableKeyValue)* @ (tableEntryIR
 
     1. Result in: % % |- % @ % : evalContext arch ((` []) as tableMatchesResult)
 
-  1. Else Phantom#2228
+  1. Else Phantom#2223
 
   2. If (((tableEntryIR)* matches pattern _ :: _)), then
 
@@ -37694,7 +37593,7 @@ relation TableMatches_eval: evalContext arch |- (tableKeyValue)* @ (tableEntryIR
 
             3. Result in: % % |- % @ % : EC_2 ARCH_2 ((` (tableMatch)*) as tableMatchesResult)
 
-  2. Else Phantom#2229
+  2. Else Phantom#2224
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:220.1-220.60
 def $is_largest_priority_wins(tableCustomPropertyIR)
@@ -37732,17 +37631,17 @@ def $largest_priority_wins(TBL)
 
       2. Return b
 
-    2. Else Phantom#2230
+    2. Else Phantom#2225
 
-  2. Else Phantom#2231
+  2. Else Phantom#2226
 
-3. Else Phantom#2232
+3. Else Phantom#2227
 
 4. If (([] = $filter_<tableCustomPropertyIR>((tableCustomPropertyIR)*, ($is_largest_priority_wins(tableCustomPropertyIR))*))), then
 
   1. Return true
 
-4. Else Phantom#2233
+4. Else Phantom#2228
 
 ;; ../../../../spec-concrete/8-dynamic/8.09.1-eval-control-table.watsup:242.1-243.27
 def $select_action(TBL, (tableMatch)*)
@@ -37763,7 +37662,7 @@ def $select_action(TBL, (tableMatch)*)
 
     3. Return tableActionReferenceIR
 
-1. Else Phantom#2234
+1. Else Phantom#2229
 
 2. If ((|(tableMatch)*| > 1)), then
 
@@ -37787,7 +37686,7 @@ def $select_action(TBL, (tableMatch)*)
 
           2. Return tableActionReferenceIR_h
 
-        2. Else Phantom#2235
+        2. Else Phantom#2230
 
       2. Case false
 
@@ -37797,11 +37696,11 @@ def $select_action(TBL, (tableMatch)*)
 
           2. Return tableActionReferenceIR_h
 
-        1. Else Phantom#2236
+        1. Else Phantom#2231
 
-  2. Else Phantom#2237
+  2. Else Phantom#2232
 
-2. Else Phantom#2238
+2. Else Phantom#2233
 
 ;; ../../../../spec-concrete/8-dynamic/8.10.3-eval-call-copyout.watsup:47.1-52.35
 relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
@@ -37814,9 +37713,9 @@ relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee 
 
       1. Result in: % |- % % % @ % % % ~> evalContext
 
-    1. Else Phantom#2239
+    1. Else Phantom#2234
 
-  1. Else Phantom#2240
+  1. Else Phantom#2235
 
   2. If (((parameterIR)* matches pattern _ :: _)), then
 
@@ -37834,16 +37733,16 @@ relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee 
 
       4. Result in: % |- % % % @ % % % ~> EC_caller_2
 
-    3. Else Phantom#2241
+    3. Else Phantom#2236
 
-  2. Else Phantom#2242
+  2. Else Phantom#2237
 
 ;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:12.1-13.17
 syntax actionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:15.1-18.23
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:15.1-20.72
 relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
 1. Group : EC_0 ARCH_0 |- blockStatementIR : % % %
@@ -37864,20 +37763,20 @@ relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
       2. Result in: % % |- % : EC_1 ARCH_1 ((exit) as actionResult)
 
-  2. Else Phantom#2243
+  2. Else Phantom#2238
 
   3. If ((statementResult = ((return ?()) as statementResult))), then
 
     1. Result in: % % |- % : EC_1 ARCH_1 ((return ?()) as actionResult)
 
-  3. Else Phantom#2244
+  3. Else Phantom#2239
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:244.1-245.17
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:144.1-145.17
 syntax definedFunctionResult = 
    | exit
    | return value?
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:247.1-250.23
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:147.1-150.23
 relation DefinedFunctionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
 1. Group : EC_0 ARCH_0 |- blockStatementIR : % % %
@@ -37904,9 +37803,9 @@ relation DefinedFunctionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
       2. Result in: % % |- % : EC_1 ARCH_1 (returnResult as definedFunctionResult)
 
-  2. Else Phantom#2245
+  2. Else Phantom#2240
 
-;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:427.1-427.43
+;; ../../../../spec-concrete/8-dynamic/8.10.4-eval-call.watsup:327.1-327.43
 def $isValid_fieldValue((value id ;))
 
 1. Return $isValid_header(value)
@@ -37949,11 +37848,11 @@ relation Extern_init: EC ARCH_0 |- nameIR : %
 
         6. Result in: % % |- % : ARCH_2
 
-      1. Else Phantom#2246
+      1. Else Phantom#2241
 
-    1. Else Phantom#2247
+    1. Else Phantom#2242
 
-  3. Else Phantom#2248
+  3. Else Phantom#2243
 
 ;; ../../../../spec-concrete/9-arch/9.0-eval-arch.watsup:58.1-62.72
 relation Program_init: |- p4program : % %
@@ -38008,9 +37907,9 @@ relation V1Model_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
       5. Result in: % % |- % : EC_1 ARCH_2
 
-    2. Else Phantom#2249
+    2. Else Phantom#2244
 
-  4. Else Phantom#2250
+  4. Else Phantom#2245
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:42.1-44.23
 relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
@@ -38039,9 +37938,9 @@ relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
       5. Result in: % % |- % : EC_1 ARCH_2
 
-    2. Else Phantom#2251
+    2. Else Phantom#2246
 
-  4. Else Phantom#2252
+  4. Else Phantom#2247
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:61.1-63.23
 relation V1Model_init_globals: EC_0 ARCH |- i_port : %
@@ -38092,15 +37991,15 @@ relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
             7. Result in: % % |- % : EC_4
 
-          5. Else Phantom#2253
+          5. Else Phantom#2248
 
-        3. Else Phantom#2254
+        3. Else Phantom#2249
 
-      3. Else Phantom#2255
+      3. Else Phantom#2250
 
-    2. Else Phantom#2256
+    2. Else Phantom#2251
 
-  2. Else Phantom#2257
+  2. Else Phantom#2252
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:90.1-90.64
 def $V1Model_setup_packet_in_argument(EC)
@@ -38117,7 +38016,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
   4. Return argumentIR_packet_in
 
-2. Else Phantom#2258
+2. Else Phantom#2253
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:99.1-99.65
 def $V1Model_setup_packet_out_argument(EC)
@@ -38134,7 +38033,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
   4. Return argumentIR_packet_out
 
-2. Else Phantom#2259
+2. Else Phantom#2254
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:108.1-108.51
 def $V1Model_setup_hdr_argument(ARCH)
@@ -38159,11 +38058,11 @@ def $V1Model_setup_hdr_argument(ARCH)
 
       3. Return argumentIR_hdr
 
-    3. Else Phantom#2260
+    3. Else Phantom#2255
 
-  2. Else Phantom#2261
+  2. Else Phantom#2256
 
-2. Else Phantom#2262
+2. Else Phantom#2257
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:116.1-116.52
 def $V1Model_setup_meta_argument(ARCH)
@@ -38188,11 +38087,11 @@ def $V1Model_setup_meta_argument(ARCH)
 
       3. Return argumentIR_meta
 
-    3. Else Phantom#2263
+    3. Else Phantom#2258
 
-  2. Else Phantom#2264
+  2. Else Phantom#2259
 
-2. Else Phantom#2265
+2. Else Phantom#2260
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:124.1-124.72
 def $V1Model_setup_standard_metadata_argument(EC)
@@ -38209,7 +38108,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
   4. Return argumentIR_standard_metadata
 
-2. Else Phantom#2266
+2. Else Phantom#2261
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:133.1-133.70
 def $V1Model_setup_main_callee(EC, ARCH)
@@ -38248,15 +38147,15 @@ def $V1Model_setup_main_callee(EC, ARCH)
 
           4. Return typedExpressionIR_main
 
-        3. Else Phantom#2267
+        3. Else Phantom#2262
 
-      3. Else Phantom#2268
+      3. Else Phantom#2263
 
-    2. Else Phantom#2269
+    2. Else Phantom#2264
 
-  3. Else Phantom#2270
+  3. Else Phantom#2265
 
-2. Else Phantom#2271
+2. Else Phantom#2266
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:149.1-151.22
 def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
@@ -38295,15 +38194,15 @@ def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
 
           4. Return typedExpressionIR_parser
 
-        3. Else Phantom#2272
+        3. Else Phantom#2267
 
-      3. Else Phantom#2273
+      3. Else Phantom#2268
 
-    2. Else Phantom#2274
+    2. Else Phantom#2269
 
-  3. Else Phantom#2275
+  3. Else Phantom#2270
 
-2. Else Phantom#2276
+2. Else Phantom#2271
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:168.1-170.22
 def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
@@ -38342,15 +38241,15 @@ def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
 
           4. Return typedExpressionIR_verify
 
-        3. Else Phantom#2277
+        3. Else Phantom#2272
 
-      3. Else Phantom#2278
+      3. Else Phantom#2273
 
-    2. Else Phantom#2279
+    2. Else Phantom#2274
 
-  3. Else Phantom#2280
+  3. Else Phantom#2275
 
-2. Else Phantom#2281
+2. Else Phantom#2276
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:188.1-190.22
 def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
@@ -38389,15 +38288,15 @@ def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
 
           4. Return typedExpressionIR_ingress
 
-        3. Else Phantom#2282
+        3. Else Phantom#2277
 
-      3. Else Phantom#2283
+      3. Else Phantom#2278
 
-    2. Else Phantom#2284
+    2. Else Phantom#2279
 
-  3. Else Phantom#2285
+  3. Else Phantom#2280
 
-2. Else Phantom#2286
+2. Else Phantom#2281
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:208.1-210.22
 def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
@@ -38436,15 +38335,15 @@ def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
 
           4. Return typedExpressionIR_egress
 
-        3. Else Phantom#2287
+        3. Else Phantom#2282
 
-      3. Else Phantom#2288
+      3. Else Phantom#2283
 
-    2. Else Phantom#2289
+    2. Else Phantom#2284
 
-  3. Else Phantom#2290
+  3. Else Phantom#2285
 
-2. Else Phantom#2291
+2. Else Phantom#2286
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:228.1-230.22
 def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
@@ -38483,15 +38382,15 @@ def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
 
           4. Return typedExpressionIR_check
 
-        3. Else Phantom#2292
+        3. Else Phantom#2287
 
-      3. Else Phantom#2293
+      3. Else Phantom#2288
 
-    2. Else Phantom#2294
+    2. Else Phantom#2289
 
-  3. Else Phantom#2295
+  3. Else Phantom#2290
 
-2. Else Phantom#2296
+2. Else Phantom#2291
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:248.1-250.22
 def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
@@ -38524,13 +38423,13 @@ def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
 
         4. Return typedExpressionIR_deparse
 
-      3. Else Phantom#2297
+      3. Else Phantom#2292
 
-    2. Else Phantom#2298
+    2. Else Phantom#2293
 
-  3. Else Phantom#2299
+  3. Else Phantom#2294
 
-2. Else Phantom#2300
+2. Else Phantom#2295
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:271.1-273.20
 relation V1Model_parser: EC_0 ARCH_0 |- % % %
@@ -38569,7 +38468,7 @@ relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  10. Else Phantom#2301
+  10. Else Phantom#2296
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:331.1-333.20
 relation V1Model_verify: EC_0 ARCH_0 |- % % %
@@ -38604,7 +38503,7 @@ relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-  8. Else Phantom#2302
+  8. Else Phantom#2297
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:379.1-381.20
 relation V1Model_ingress: EC_0 ARCH_0 |- % % %
@@ -38641,7 +38540,7 @@ relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((return ?()) as callResult)
 
-  9. Else Phantom#2303
+  9. Else Phantom#2298
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:432.1-434.20
 relation V1Model_egress: EC_0 ARCH_0 |- % % %
@@ -38678,7 +38577,7 @@ relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-  9. Else Phantom#2304
+  9. Else Phantom#2299
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:486.1-488.20
 relation V1Model_check: EC_0 ARCH_0 |- % % %
@@ -38713,7 +38612,7 @@ relation V1Model_check: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-  8. Else Phantom#2305
+  8. Else Phantom#2300
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:534.1-536.20
 relation V1Model_deparse: EC_0 ARCH_0 |- % % %
@@ -38748,7 +38647,7 @@ relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-  8. Else Phantom#2306
+  8. Else Phantom#2301
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:582.1-582.67
 def $field_list_annotation_index(annotationList)
@@ -38875,13 +38774,13 @@ def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index)
 
         3. Return (nameIR_field)*
 
-      2. Else Phantom#2307
+      2. Else Phantom#2302
 
-    3. Else Phantom#2308
+    3. Else Phantom#2303
 
-  2. Else Phantom#2309
+  2. Else Phantom#2304
 
-2. Else Phantom#2310
+2. Else Phantom#2305
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:629.1-631.26
 relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
@@ -38892,7 +38791,7 @@ relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
     1. Result in: % % % |- % : EC_0
 
-  1. Else Phantom#2311
+  1. Else Phantom#2306
 
   2. If (((nameIR)* matches pattern _ :: _)), then
 
@@ -38908,7 +38807,7 @@ relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
     6. Result in: % % % |- % : EC_2
 
-  2. Else Phantom#2312
+  2. Else Phantom#2307
 
 ;; ../../../../spec-concrete/9-arch/9.A-v1model.watsup:650.1-652.23
 relation V1Model_setup_preserved_meta_fields: EC_0 ARCH |- integerLiteral_index : %
@@ -38939,11 +38838,11 @@ relation V1Model_setup_preserved_meta_fields: EC_0 ARCH |- integerLiteral_index 
 
         5. Result in: % % |- % : EC_2
 
-      3. Else Phantom#2313
+      3. Else Phantom#2308
 
-    2. Else Phantom#2314
+    2. Else Phantom#2309
 
-  2. Else Phantom#2315
+  2. Else Phantom#2310
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:5.1-10.72
 relation EBPF_init: |- p4program : % %
@@ -38983,9 +38882,9 @@ relation EBPF_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
       5. Result in: % % |- % : EC_1 ARCH_2
 
-    2. Else Phantom#2316
+    2. Else Phantom#2311
 
-  4. Else Phantom#2317
+  4. Else Phantom#2312
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:43.1-45.20
 relation EBPF_init_globals: EC_0 ARCH |- %
@@ -39014,11 +38913,11 @@ relation EBPF_init_globals: EC_0 ARCH |- %
 
         4. Result in: % % |- EC_2
 
-      3. Else Phantom#2318
+      3. Else Phantom#2313
 
-    2. Else Phantom#2319
+    2. Else Phantom#2314
 
-  2. Else Phantom#2320
+  2. Else Phantom#2315
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:61.1-61.61
 def $eBPF_setup_packet_in_argument(EC)
@@ -39035,7 +38934,7 @@ def $eBPF_setup_packet_in_argument(EC)
 
   4. Return argumentIR_packet_in
 
-2. Else Phantom#2321
+2. Else Phantom#2316
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:70.1-70.52
 def $eBPF_setup_headers_argument(ARCH)
@@ -39060,11 +38959,11 @@ def $eBPF_setup_headers_argument(ARCH)
 
       3. Return argumentIR_headers
 
-    3. Else Phantom#2322
+    3. Else Phantom#2317
 
-  2. Else Phantom#2323
+  2. Else Phantom#2318
 
-2. Else Phantom#2324
+2. Else Phantom#2319
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:78.1-78.67
 def $eBPF_setup_main_callee(EC, ARCH)
@@ -39097,13 +38996,13 @@ def $eBPF_setup_main_callee(EC, ARCH)
 
         4. Return typedExpressionIR_main
 
-      3. Else Phantom#2325
+      3. Else Phantom#2320
 
-    2. Else Phantom#2326
+    2. Else Phantom#2321
 
-  3. Else Phantom#2327
+  3. Else Phantom#2322
 
-2. Else Phantom#2328
+2. Else Phantom#2323
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:93.1-96.22
 def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
@@ -39136,13 +39035,13 @@ def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
 
         4. Return typedExpressionIR_parse
 
-      3. Else Phantom#2329
+      3. Else Phantom#2324
 
-    2. Else Phantom#2330
+    2. Else Phantom#2325
 
-  3. Else Phantom#2331
+  3. Else Phantom#2326
 
-2. Else Phantom#2332
+2. Else Phantom#2327
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:113.1-116.22
 def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
@@ -39175,13 +39074,13 @@ def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
 
         4. Return typedExpressionIR_filter
 
-      3. Else Phantom#2333
+      3. Else Phantom#2328
 
-    2. Else Phantom#2334
+    2. Else Phantom#2329
 
-  3. Else Phantom#2335
+  3. Else Phantom#2330
 
-2. Else Phantom#2336
+2. Else Phantom#2331
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:138.1-140.20
 relation EBPF_parse: EC_0 ARCH_0 |- % % %
@@ -39216,7 +39115,7 @@ relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  8. Else Phantom#2337
+  8. Else Phantom#2332
 
 ;; ../../../../spec-concrete/9-arch/9.B-ebpf.watsup:186.1-188.20
 relation EBPF_filter: EC_0 ARCH_0 |- % % %
@@ -39251,4 +39150,4 @@ relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
       2. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-  8. Else Phantom#2338
+  8. Else Phantom#2333

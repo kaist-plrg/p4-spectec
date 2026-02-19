@@ -16,6 +16,8 @@ relation ActionBody_eval:
   evalContext arch |- blockStatementIR
                     : evalContext arch actionResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating action body" %2#", under context" %0 "and state" %1)
+  hint(prose_out "the updated context" %3#", state" %4 "and result" %5)
 
 rulegroup ActionBody_eval {
 
@@ -42,25 +44,25 @@ rulegroup ActionBody_eval {
 
 }
 
-rulegroup Call_eval/actionCallee-global {
+rulegroup Call_eval/actionCallee {
 
   rule Call_eval/copyin-exit:
     p EC_0 ARCH_0 |- actionCallee
-                      `@ `< eps > `( argumentListIR )
+                    `@ `< eps > `( argumentListIR )
                    : EC_1 ARCH_1 EXIT
-    ---- ;; if the action is in the top-level scope
-    -- if ACTION GLOBAL `. nameIR
+    ---- ;; unpack the action callee
+    ---- ;; if the action is in a block
+    -- if ACTION p_shared `. nameIR
             `( parameterIR* `# id_default* ) blockStatementIR
         = actionCallee
     ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
     ---- ;; align parameters with arguments
     -- if GIVEN parameterIR_aligned*
           DEFAULT parameterIR_default*
         = $align_parameterListIR(
             parameterIR*, argumentListIR, id_default*, eps)
     ---- ;; copy-in
-    -- if p_shared = GLOBAL
     -- Copy_in:
         p_shared ARCH_0 |-
           p EC_0 parameterIR_aligned*
@@ -71,19 +73,19 @@ rulegroup Call_eval/actionCallee-global {
     p EC_0 ARCH_0 |- actionCallee
                     `@ `< eps > `( argumentListIR )
                    : EC_2 ARCH_2 EXIT
-    ---- ;; if the action is in the top-level scope
-    -- if ACTION GLOBAL `. nameIR
+    ---- ;; unpack the action callee
+    ---- ;; if the action is in a block
+    -- if ACTION p_shared `. nameIR
             `( parameterIR* `# id_default* ) blockStatementIR
         = actionCallee
     ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
     ---- ;; align parameters with arguments
     -- if GIVEN parameterIR_aligned*
           DEFAULT parameterIR_default*
         = $align_parameterListIR(
             parameterIR*, argumentListIR, id_default*, eps)
     ---- ;; copy-in
-    -- if p_shared = GLOBAL
     -- Copy_in:
         p_shared ARCH_0 |-
           p EC_0 parameterIR_aligned*
@@ -107,119 +109,17 @@ rulegroup Call_eval/actionCallee-global {
                     `@ `< eps > `( argumentListIR )
                    : EC_2 ARCH_2 (RETURN eps)
     ---- ;; unpack the action callee
-    ---- ;; if the action is in the top-level scope
-    -- if ACTION GLOBAL `. nameIR
+    -- if ACTION p_shared `. nameIR
             `( parameterIR* `# id_default* ) blockStatementIR
         = actionCallee
     ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
     ---- ;; align parameters with arguments
     -- if GIVEN parameterIR_aligned*
           DEFAULT parameterIR_default*
         = $align_parameterListIR(
             parameterIR*, argumentListIR, id_default*, eps)
     ---- ;; copy-in
-    -- if p_shared = GLOBAL
-    -- Copy_in:
-        p_shared ARCH_0 |-
-          p EC_0 parameterIR_aligned*
-          `@ LOCAL EC_callee_0 argumentListIR
-        ~> ARCH_1 EC_1 EC_callee_1 `# (`` storageReference?*)
-    -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 ~> EC_callee_2
-    ---- ;; evaluate action body
-    -- ActionBody_eval:
-        EC_callee_2 ARCH_1 |- blockStatementIR
-                            : EC_callee_3 ARCH_2 (RETURN eps)
-    ---- ;; copy-out
-    -- Copy_out:
-        p_shared ARCH_2 |-
-          p EC_1 parameterIR_aligned*
-          `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_2
-
-}
-
-rulegroup Call_eval/actionCallee-block {
-
-  rule Call_eval/copyin-exit:
-    p EC_0 ARCH_0 |- actionCallee
-                    `@ `< eps > `( argumentListIR )
-                   : EC_1 ARCH_1 EXIT
-    ---- ;; unpack the action callee
-    ---- ;; if the action is in a block
-    -- if ACTION BLOCK `. nameIR
-            `( parameterIR* `# id_default* ) blockStatementIR
-        = actionCallee
-    ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
-    ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned*
-          DEFAULT parameterIR_default*
-        = $align_parameterListIR(
-            parameterIR*, argumentListIR, id_default*, eps)
-    ---- ;; copy-in
-    -- if p_shared = BLOCK
-    -- Copy_in:
-        p_shared ARCH_0 |-
-          p EC_0 parameterIR_aligned*
-          `@ LOCAL EC_callee_0 argumentListIR
-        ~> ARCH_1 EC_1 EC_callee_1 `# EXIT
-
-  rule Call_eval/block-copyin-cont-ActionBody-exit:
-    p EC_0 ARCH_0 |- actionCallee
-                    `@ `< eps > `( argumentListIR )
-                   : EC_2 ARCH_2 EXIT
-    ---- ;; unpack the action callee
-    ---- ;; if the action is in a block
-    -- if ACTION BLOCK `. nameIR
-            `( parameterIR* `# id_default* ) blockStatementIR
-        = actionCallee
-    ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
-    ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned*
-          DEFAULT parameterIR_default*
-        = $align_parameterListIR(
-            parameterIR*, argumentListIR, id_default*, eps)
-    ---- ;; copy-in
-    -- if p_shared = BLOCK
-    -- Copy_in:
-        p_shared ARCH_0 |-
-          p EC_0 parameterIR_aligned*
-          `@ LOCAL EC_callee_0 argumentListIR
-        ~> ARCH_1 EC_1 EC_callee_1 `# (`` storageReference?*)
-    -- Copy_in_default:
-        parameterIR_default* `@ LOCAL EC_callee_1 ~> EC_callee_2
-    ---- ;; evaluate action body
-    -- ActionBody_eval:
-        EC_callee_2 ARCH_1 |- blockStatementIR
-                            : EC_callee_3 ARCH_2 EXIT
-    ---- ;; copy-out
-    -- Copy_out:
-        p_shared ARCH_2 |-
-          p EC_1 parameterIR_aligned*
-          `@ LOCAL EC_callee_3 storageReference?*
-        ~> EC_2
-
-  rule Call_eval/block-return:
-    p EC_0 ARCH_0 |- actionCallee
-                    `@ `< eps > `( argumentListIR )
-                   : EC_2 ARCH_2 (RETURN eps)
-    ---- ;; unpack the action callee
-    ---- ;; if the action is in a block
-    -- if ACTION BLOCK `. nameIR
-            `( parameterIR* `# id_default* ) blockStatementIR
-        = actionCallee
-    ---- ;; create the callee context
-    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
-    ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned*
-          DEFAULT parameterIR_default*
-        = $align_parameterListIR(
-            parameterIR*, argumentListIR, id_default*, eps)
-    ---- ;; copy-in
-    -- if p_shared = BLOCK
     -- Copy_in:
         p_shared ARCH_0 |-
           p EC_0 parameterIR_aligned*

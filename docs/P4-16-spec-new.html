@@ -781,7 +781,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_evaluation_context">7.4.2. Evaluation context</a></li>
 <li><a href="#sec-dynamic-evaluation-parser">7.4.3. The parser abstract machine</a></li>
 <li><a href="#_the_match_action_pipeline_abstract_machine">7.4.4. The match-action pipeline abstract machine</a></li>
-<li><a href="#_concurrency_model">7.4.5. Concurrency model</a></li>
+<li><a href="#sec-concurrency-model">7.4.5. Concurrency model</a></li>
 </ul>
 </li>
 <li><a href="#sec-compile-time-known">7.5. Compile-time known and local compile-time known values</a></li>
@@ -1895,7 +1895,18 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#sec-call-convention">18.4. Call convention</a></li>
-<li><a href="#_runtime_evaluation_of_calls">18.5. Runtime evaluation of calls</a></li>
+<li><a href="#_runtime_evaluation_of_constructor_calls">18.5. Runtime evaluation of constructor calls</a></li>
+<li><a href="#_runtime_evaluation_of_callable_calls">18.6. Runtime evaluation of callable calls</a>
+<ul class="sectlevel3">
+<li><a href="#sec-call-action">18.6.1. Actions</a></li>
+<li><a href="#_functions_2">18.6.2. Functions</a></li>
+<li><a href="#_built_in_methods_3">18.6.3. Built-in methods</a></li>
+<li><a href="#_extern_methods_2">18.6.4. Extern methods</a></li>
+<li><a href="#_parser_apply_methods_3">18.6.5. Parser apply methods</a></li>
+<li><a href="#_control_apply_methods_3">18.6.6. Control apply  methods</a></li>
+<li><a href="#_table_apply_methods_3">18.6.7. Table apply methods</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-operation">19. Operations</a>
@@ -1905,7 +1916,32 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-default-value">19.3. Default values</a></li>
 </ul>
 </li>
-<li><a href="#sec-annotation">20. Annotations</a></li>
+<li><a href="#sec-annotation">20. Annotations</a>
+<ul class="sectlevel2">
+<li><a href="#_bodies_of_unstructured_annotations">20.1. Bodies of Unstructured Annotations</a>
+<ul class="sectlevel3">
+<li><a href="#_structured_annotation_examples">20.1.1. Structured Annotation Examples</a></li>
+</ul>
+</li>
+<li><a href="#_predefined_annotations">20.2. Predefined annotations</a>
+<ul class="sectlevel3">
+<li><a href="#sec-optional-parameter-annotations">20.2.1. Optional parameter annotations</a></li>
+<li><a href="#sec-table-action-annotations">20.2.2. Annotations on the table action list</a></li>
+<li><a href="#sec-control-plane-api-annotations">20.2.3. Control-plane API annotations</a>
+<ul class="sectlevel4">
+<li><a href="#_restrictions">20.2.3.1. Restrictions</a></li>
+</ul>
+</li>
+<li><a href="#_concurrency_control_annotations">20.2.4. Concurrency control annotations</a></li>
+<li><a href="#sec-branch-annotations">20.2.5. Branch prediction annotations</a></li>
+<li><a href="#sec-value-set-annotations">20.2.6. Value set annotations</a></li>
+<li><a href="#sec-extern-annotations">20.2.7. Extern function/method annotations</a></li>
+<li><a href="#sec-deprecated-anno">20.2.8. Deprecated annotation</a></li>
+<li><a href="#sec-nowarn-anno">20.2.9. No warnings annotation</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#sec-revision-history">Appendix A: Revision History</a>
 <ul class="sectlevel2">
 <li><a href="#_summary_of_changes_made_in_unreleased_version">A.1. Summary of changes made in unreleased version</a></li>
@@ -4031,7 +4067,7 @@ the corresponding argument when the invocation is executed.</p>
 </li>
 <li>
 <p><code>out</code> parameters are, with a few exceptions listed below, uninitialized and are
-treated as l-values (See <a href="#sec-lvalues">[sec-lvalues]</a>) within the body of the method or
+treated as l-values (See <a href="#sec-lvalue">Chapter 12</a>) within the body of the method or
 function. An argument passed as an <code>out</code> parameter must be an l-value; after
 the execution of the call, the value of the parameter is copied to the
 corresponding storage location for that l-value.</p>
@@ -4055,7 +4091,7 @@ must be a compile-time known value (see <a href="#sec-compile-time-known">Sectio
 </li>
 <li>
 <p>For an action, a directionless parameter indicates that it is "action data".
-See <a href="#sec-actions">[sec-actions]</a> for the meaning of action data, but its meaning includes
+See <a href="#sec-action">Section 9.3</a> for the meaning of action data, but its meaning includes
 the following possibilities:</p>
 <div class="ulist">
 <ul>
@@ -4066,7 +4102,7 @@ need not be a compile-time known value.</p>
 </li>
 <li>
 <p>The parameter&#8217;s value is provided by the control plane software when an entry
-is added to a table that uses that action.  See <a href="#sec-actions">[sec-actions]</a>.</p>
+is added to a table that uses that action.  See <a href="#sec-action">Section 9.3</a>.</p>
 </li>
 </ul>
 </div>
@@ -4094,7 +4130,7 @@ to "invalid".</p>
 <li>
 <p>If a direction <code>out</code> parameter is of type header stack, all elements
 of the header stack are set to "invalid", and its <code>nextIndex</code> field
-is initialized to 0 (see <a href="#sec-expr-hs">[sec-expr-hs]</a>).</p>
+is initialized to 0 (see <a href="#sec-header-stack">Section 8.4.3</a>).</p>
 </li>
 <li>
 <p>If a direction <code>out</code> parameter is a compound type, e.g. a struct or tuple,
@@ -4288,13 +4324,13 @@ parameters.</p>
 consequence they must all be directionless (they cannot be <code>in</code>, <code>out</code>, or
 <code>inout</code>); this applies to <code>package</code>, <code>control</code>, <code>parser</code>, and <code>extern</code> objects.
 Expressions for these parameters must be supplied at compile-time, and they
-must evaluate to compile-time known values. See <a href="#sec-parameterization">[sec-parameterization]</a> for
+must evaluate to compile-time known values. See <a href="#sec-constructor-parameter">Section 10.2.1</a> for
 further details.</p>
 </li>
 <li>
 <p>For actions all directionless parameters must be at the end of the parameter
 list.  When an action appears in a <code>table</code>'s <code>actions</code> list, only the
-parameters with a direction must be bound. See <a href="#sec-actions">[sec-actions]</a> for further
+parameters with a direction must be bound. See <a href="#sec-action">Section 9.3</a> for further
 details.</p>
 </li>
 <li>
@@ -4302,7 +4338,7 @@ details.</p>
 a control block or from another action. In this case, values for all action
 parameters must be supplied explicitly, including values for the directionless
 parameters. The directionless parameters in this case behave like <code>in</code>
-parameters. See <a href="#sec-invoke-actions">[sec-invoke-actions]</a> for further details.</p>
+parameters. See <a href="#sec-call-action">Section 18.6.1</a> for further details.</p>
 </li>
 <li>
 <p>Default expressions are only allowed for <code>in</code> or directionless parameters, and
@@ -5210,7 +5246,7 @@ keys with names <code>data.f1</code> and <code>hdrs[3].f2</code>.</p>
 <div class="paragraph">
 <p>If a compiler cannot generate a name for a key it <strong>requires</strong> the key expression
 to be annotated with a <code>@name</code> annotation
-(<a href="#sec-control-plane-api-annotations">[sec-control-plane-api-annotations]</a>), as in the following example:</p>
+(<a href="#sec-control-plane-api-annotations">Section 20.2.3</a>), as in the following example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -5354,7 +5390,7 @@ name of its corresponding formal parameter.</p>
 <div class="sect4">
 <h5 id="_annotations_controlling_naming">7.3.1.2. Annotations controlling naming</h5>
 <div class="paragraph">
-<p>Control plane-related annotations (<a href="#sec-control-plane-api-annotations">[sec-control-plane-api-annotations]</a>) can
+<p>Control plane-related annotations (<a href="#sec-control-plane-api-annotations">Section 20.2.3</a>) can
 alter the names exposed to the control plane in the following ways.</p>
 </div>
 <div class="ulist">
@@ -5795,7 +5831,7 @@ execution of the current <code>control</code> block and of all the enclosing cal
 </div>
 </div>
 <div class="sect3">
-<h4 id="_concurrency_model">7.4.5. Concurrency model</h4>
+<h4 id="sec-concurrency-model">7.4.5. Concurrency model</h4>
 <div class="paragraph">
 <p>A typical packet processing system needs to execute multiple simultaneous
 logical "threads." At the very least there is a thread executing the control
@@ -61283,8 +61319,342 @@ result of callee resolution is:</p>
 
 </div>
 <div class="sect2">
-<h3 id="_runtime_evaluation_of_calls">18.5. Runtime evaluation of calls</h3>
+<h3 id="_runtime_evaluation_of_constructor_calls">18.5. Runtime evaluation of constructor calls</h3>
 
+</div>
+<div class="sect2">
+<h3 id="_runtime_evaluation_of_callable_calls">18.6. Runtime evaluation of callable calls</h3>
+<div class="paragraph">
+<p>At runtime, callable callees are evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Call_eval: cursor evalContext arch |- callee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : evalContext arch callResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Call_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Calling <code>callee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under cursor <code>cursor</code>, context <code>evalContext</code>, and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in the updated context <code>evalContext</code>, state <code>arch</code>, and call result <code>callResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The following subsections describe the evaluation of callable calls for
+different types of callees.</p>
+</div>
+<div class="sect3">
+<h4 id="sec-call-action">18.6.1. Actions</h4>
+<div class="paragraph">
+<p>An action call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/actionCallee:
+  rule Call_eval/copyin-exit:
+  p EC_0 ARCH_0 |- actionCallee @ `&lt;eps&gt; `(argumentListIR) : EC_1 ARCH_1 EXIT
+ -- if ACTION p_shared . nameIR `(parameterIR* # id_default*) blockStatementIR = actionCallee
+ -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentListIR, id_default*, eps)
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_0 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_1 # EXIT
+  rule Call_eval/copyin-cont-ActionBody-exit:
+  p EC_0 ARCH_0 |- actionCallee @ `&lt;eps&gt; `(argumentListIR) : EC_2 ARCH_2 EXIT
+ -- if ACTION p_shared . nameIR `(parameterIR* # id_default*) blockStatementIR = actionCallee
+ -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentListIR, id_default*, eps)
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_0 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_1 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_1 ~&gt; EC_callee_2
+ -- ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 EXIT
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ LOCAL EC_callee_3 storageReference?* ~&gt; EC_2
+  rule Call_eval/return:
+  p EC_0 ARCH_0 |- actionCallee @ `&lt;eps&gt; `(argumentListIR) : EC_2 ARCH_2 (RETURN eps)
+ -- if ACTION p_shared . nameIR `(parameterIR* # id_default*) blockStatementIR = actionCallee
+ -- if EC_callee_0 = $inherit_e(p_shared, EC_0)
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentListIR, id_default*, eps)
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_0 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_1 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_1 ~&gt; EC_callee_2
+ -- ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 (RETURN eps)
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ LOCAL EC_callee_3 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>actionCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under cursor <code>p</code>, context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>ACTION</code> <code>p<sub>shared</sub></code> <code>.</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>blockStatementIR</code> be <code>actionCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>p<sub>shared</sub></code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentListIR</code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>·</code></a>.</p>
+</li>
+<li>
+<p>Let the updated state <code>ARCH<sub>1</sub></code>, caller&#8217;s context <code>EC<sub>1</sub></code>, callee&#8217;s context <code>EC<sub>callee_1</sub></code>, and the copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentListIR</code> in <code>LOCAL</code> layer of <code>EC<sub>callee_0</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>0</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>callee_2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>LOCAL</code> and context <code>EC<sub>callee_1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let the updated context <code>EC<sub>callee_3</sub></code>, state <code>ARCH<sub>2</sub></code> and result <code>actionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ActionBody_eval">evaluating action body <code>blockStatementIR</code>, under context <code>EC<sub>callee_2</sub></code> and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>actionResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> in <code>LOCAL</code> layer of <code>EC<sub>callee_3</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>actionResult</code> is equal to <code>RETURN</code> <code>·</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> layer of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> in <code>LOCAL</code> layer of <code>EC<sub>callee_3</sub></code>, under cursor <code>p<sub>shared</sub></code> and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>An action body is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ActionBody_eval: evalContext arch |- blockStatementIR : evalContext arch actionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ActionBody_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ActionBody_eval">ActionBody_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating action body <code>blockStatementIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> and result <code>actionResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating an action body is either an <code>exit</code> or a <code>return</code>.</p>
+</div>
+<div class="paragraph">
+<p>${sytnax: actionResult}</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ActionBody_eval:
+  rule ActionBody_eval/cont:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 (RETURN eps)
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 `EMPTY
+  rule ActionBody_eval/exit:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 EXIT
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 EXIT
+  rule ActionBody_eval/return-void:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 (RETURN eps)
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 (RETURN eps)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ActionBody_eval">Evaluating action body <code>blockStatementIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Block_eval">runtime evaluation of <code>blockStatementIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>continueEmptyResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>exitResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>statementResult</code> is equal to <code>RETURN</code> <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_functions_2">18.6.2. Functions</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_built_in_methods_3">18.6.3. Built-in methods</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_extern_methods_2">18.6.4. Extern methods</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_parser_apply_methods_3">18.6.5. Parser apply methods</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_control_apply_methods_3">18.6.6. Control apply  methods</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_table_apply_methods_3">18.6.7. Table apply methods</h4>
+
+</div>
 </div>
 </div>
 </div>
@@ -65279,101 +65649,17 @@ def $default(ENUM typeId `&lt;typeIR&gt; `{(nameIR_field = value_field ;)*}) = t
 <div class="sect1">
 <h2 id="sec-annotation">20. Annotations</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>Annotations are a simple mechanism for extending the P4 language to some
+limited degree without changing the grammar. Annotations are attached to types,
+fields, variables, etc. using the <code>@</code> syntax (as shown explicitly in the P4
+grammar). Unstructured annotations, or just "annotations," have an optional
+body; structured annotations have a mandatory body, containing at least a pair
+of square brackets <code>[]</code>.</p>
+</div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">annotationToken
-   : UNEXPECTED_TOKEN
-   | ABSTRACT
-   | ACTION
-   | ACTIONS
-   | APPLY
-   | BOOL
-   | BIT
-   | BREAK
-   | CONST
-   | CONTINUE
-   | CONTROL
-   | DEFAULT
-   | ELSE
-   | ENTRIES
-   | ENUM
-   | ERROR
-   | EXIT
-   | EXTERN
-   | FALSE
-   | FOR
-   | HEADER
-   | HEADER_UNION
-   | IF
-   | IN
-   | INOUT
-   | INT
-   | KEY
-   | MATCH_KIND
-   | TYPE
-   | OUT
-   | PARSER
-   | PACKAGE
-   | PRAGMA
-   | RETURN
-   | SELECT
-   | STATE
-   | STRING
-   | STRUCT
-   | SWITCH
-   | TABLE
-   | THIS
-   | TRANSITION
-   | TRUE
-   | TUPLE
-   | TYPEDEF
-   | VARBIT
-   | VALUE_SET
-   | LIST
-   | VOID
-   | _
-   | identifier
-   | typeIdentifier
-   | stringLiteral
-   | integerLiteral
-   | &amp;&amp;&amp;
-   | ..
-   | &lt;&lt;
-   | &amp;&amp;
-   | ||
-   | ==
-   | !=
-   | &gt;=
-   | &lt;=
-   | ++
-   | +
-   | |+|
-   | -
-   | |-|
-   | *
-   | /
-   | %
-   | |
-   | &amp;
-   | ^
-   | ~
-   | [
-   | ]
-   | {
-   | }
-   | &lt;
-   | &gt;
-   | !
-   | :
-   | ,
-   | ?
-   | .
-   | =
-   | ;
-   | @
-   ;
-
-annotationBody
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">annotationBody
    : /* empty */
    | annotationBody `( annotationBody )
    | annotationBody annotationToken
@@ -65389,6 +65675,592 @@ annotation
    | @ name `[ structuredAnnotationBody ]
    | @ PRAGMA name annotationBody
    ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Structured annotations and unstructured annotations on any one element must not
+use the same <code>name</code>. Thus, a given <code>name</code> can only be applied to one type of
+annotation or the other for any one element. An annotation used on one element
+does not affect the annotation on another because they have different scope.</p>
+</div>
+<div class="paragraph">
+<p>This is legal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> T <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #cf222e">table</span> U <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// OK - different scope than previous
+</span>                                           <span style="color: #6e7781">// use of my_anno</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is illegal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #cf222e">table</span> U <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// Error - changed type of anno
+</span>                                           <span style="color: #6e7781">// on an element</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Multiple unstructured annotations using the same <code>name</code> can appear on a given
+element; they are cumulative. Each one will be bound to that element. In
+contrast, only one structured annotation using a given <code>name</code> may appear on an
+element; multiple uses of the same <code>name</code> will produce an error.</p>
+</div>
+<div class="paragraph">
+<p>This is legal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> U <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>  <span style="color: #6e7781">// OK - unstructured annos accumulate</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is illegal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">]</span>
+<span style="color: #0550ae">@my_anno</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #cf222e">table</span> U <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span> <span style="color: #6e7781">// Error - reused the same structured
+</span>                                           <span style="color: #6e7781">// anno on an element</span></code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_bodies_of_unstructured_annotations">20.1. Bodies of Unstructured Annotations</h3>
+<div class="paragraph">
+<p>The flexibility of P4 unstructured annotations comes from the minimal structure
+mandated by the P4 grammar: unstructured annotation bodies may contain any
+sequence of terminals, so long as parentheses are balanced. In the following
+grammar fragment, the <code>annotationToken</code> non-terminal represents any terminal
+produced by the lexer, including keywords, identifiers, string and integer
+literals, and symbols, but excluding parentheses.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">annotationBody
+   : /* empty */
+   | annotationBody `( annotationBody )
+   | annotationBody annotationToken
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unstructured annotations may impose additional structure on their bodies, and
+are not confined to the P4 language. For example, the P4Runtime specification
+<sup class="footnoteref">[<a class="footnote" href="#_footnotedef_2" title="View footnote.">2</a>]</sup> defines a <code>@pkginfo</code> annotation that expects key-value
+pairs.
+=== Bodies of Structured Annotations</p>
+</div>
+<div class="paragraph">
+<p>Unlike unstructured annotations, structured annotations use square brackets
+<code>[&#8230;&#8203;]</code> and have a restricted format. They are commonly used to declare custom
+metadata, consisting of expression lists or key-value lists but not both. An
+<code>expressionList</code> may be empty or contain a comma-separated list of member
+<code>expression</code>s. A <code>namedExpressionList</code> consists of one or more
+<code>namedExpression</code>s, each consisting of a key and a value <code>expression</code>. Note
+the syntax for <code>expression</code> is rich, see <a href="#sec-grammar">Appendix E</a> for details.</p>
+</div>
+<div class="paragraph">
+<p>All <code>expression</code>s within a <code>structuredAnnotationBody</code> must be compile-time
+known values with a result type that is either: <code>string</code>, <code>int</code>, or <code>bool</code>. In
+particular, structured <code>expression</code>s (e.g. an <code>expression</code> containing an
+<code>expressionList</code>, a <code>namedExpressionList</code>, etc.) are not allowed. Note that
+P4Runtime information (P4Info) may stipulate additional restrictions. For
+example, an integer expression might be limited to 64-bit values.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+P4-SpecTec does not evaluate any structured annotation body anyhow.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>It is illegal to duplicate a <code>name</code> within the <code>namedExpressionList</code> of a
+structured annotation.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">structuredAnnotationBody
+   : sequenceOrRecordElementExpression trailingCommaOpt
+   ;
+
+sequenceOrRecordElementExpression
+   : sequenceElementExpression
+   | recordElementExpression
+   ;
+
+sequenceElementExpression = expressionList
+
+recordElementExpression
+   : name = expression
+   | name = expression , ...
+   | name = expression , namedExpressionList
+   | name = expression , namedExpressionList , ...
+   ;
+
+namedExpression
+   : name = expression
+   ;</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_structured_annotation_examples">20.1.1. Structured Annotation Examples</h4>
+<div class="paragraph">
+<p><strong>Empty Expression List</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example produces an empty annotation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@Empty</span><span style="color: #24292f;background-color: #f6f8fa">[]</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Mixed Expression List</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example will produce an effective expression list as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code>[1,"hello",true, false, 11]</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">#define</span> TEXT_CONST <span style="color: #0a3069">"hello"</span>
+<span style="color: #6e7781">#define</span> NUM_CONST <span style="color: #0550ae">6</span>
+<span style="color: #0550ae">@MixedExprList</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">,</span>TEXT_CONST<span style="color: #24292f;background-color: #f6f8fa">,</span>true<span style="color: #24292f;background-color: #f6f8fa">,</span><span style="color: #0550ae">1</span><span style="color: #0550ae">==</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">,</span><span style="color: #0550ae">5</span><span style="color: #0550ae">+</span>NUM_CONST<span style="color: #24292f;background-color: #f6f8fa">]</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong><code>namedExprssionList</code> of Strings</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@Labels</span><span style="color: #24292f;background-color: #f6f8fa">[</span>short<span style="color: #0550ae">=</span><span style="color: #0a3069">"Short Label"</span><span style="color: #24292f;background-color: #f6f8fa">,</span> hover<span style="color: #0550ae">=</span><span style="color: #0a3069">"My Longer Table Label to appear in hover-help"</span><span style="color: #24292f;background-color: #f6f8fa">]</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong><code>namedExpressionList</code> of Mixed Expressions</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example will produce an effective <code>namedExpressionList</code> as
+follows.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code>[label="text", my_bool=true, int_val=6]</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@MixedKV</span><span style="color: #24292f;background-color: #f6f8fa">[</span>label<span style="color: #0550ae">=</span><span style="color: #0a3069">"text"</span><span style="color: #24292f;background-color: #f6f8fa">,</span> my_bool<span style="color: #0550ae">=</span>true<span style="color: #24292f;background-color: #f6f8fa">,</span> int_val<span style="color: #0550ae">=</span><span style="color: #0550ae">2</span><span style="color: #0550ae">*</span><span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">]</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Illegal Mixing of <code>namedExpression</code> and <code>expressionList</code></strong></p>
+</div>
+<div class="paragraph">
+<p>The following example is invalid because the body contains both a
+<code>namedExpression</code> and an <code>expression</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@IllegalMixing</span><span style="color: #24292f;background-color: #f6f8fa">[</span><span style="color: #cf222e">key</span><span style="color: #0550ae">=</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #6e7781">// illegal mixing
+</span><span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Illegal Duplicate Key</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example is invalid because the same key occurs more than once:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@DupKey</span><span style="color: #24292f;background-color: #f6f8fa">[</span>k1<span style="color: #0550ae">=</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">,</span>k1<span style="color: #0550ae">=</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #6e7781">// illegal duplicate key
+</span><span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Illegal Duplicate Structured Annotation</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example is invalid because the annotation <code>name</code> occurs more than
+once on the same element, e.g. <code>table t</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@DupAnno</span><span style="color: #24292f;background-color: #f6f8fa">[</span>k1<span style="color: #0550ae">=</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">]</span>
+<span style="color: #0550ae">@DupAnno</span><span style="color: #24292f;background-color: #f6f8fa">[</span>k2<span style="color: #0550ae">=</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #6e7781">// illegal duplicate name
+</span><span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Illegal Simultaneous Use of Both Structured and Unstructured Annotation</strong></p>
+</div>
+<div class="paragraph">
+<p>The following example is invalid because the annotation <code>name</code> is used by both
+an unstructured and structured annotation on the same element <code>table t</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #0550ae">@MixAnno</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"Anything"</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #0550ae">@MixAnno</span><span style="color: #24292f;background-color: #f6f8fa">[</span>k2<span style="color: #0550ae">=</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">]</span> <span style="color: #6e7781">// illegal use in both annotation types
+</span><span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_predefined_annotations">20.2. Predefined annotations</h3>
+<div class="paragraph">
+<p>Annotation names that start with lowercase letters are reserved for the
+standard library and architecture. This document pre-defines a set of
+"standard" annotations in <a href="#sec-p4-reserved-annotations">Appendix C</a>. We expect that this
+list will grow. We encourage custom architectures to define annotations
+starting with a manufacturer prefix: e.g., an organization named X would use
+annotations named like <code>@X_annotation</code></p>
+</div>
+<div class="sect3">
+<h4 id="sec-optional-parameter-annotations">20.2.1. Optional parameter annotations</h4>
+<div class="paragraph">
+<p>A parameter to a package, parser type, control type, extern method, extern
+function or extern object constructor can be annotated with <code>@optional</code> to
+indicate that the user does not need to provide a corresponding argument for
+that parameter. The meaning of a parameter with no supplied value is
+target-dependent.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-table-action-annotations">20.2.2. Annotations on the table action list</h4>
+<div class="paragraph">
+<p>The following two annotations can be used to give additional information to the
+compiler and control-plane about actions in a table. These annotations have no
+bodies.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>@tableonly</code>: actions with this annotation can only appear within the table,
+and never as default action.</p>
+</li>
+<li>
+<p><code>@defaultonly</code>: actions with this annotation can only appear in the default
+action, and never in the table.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+       a<span style="color: #24292f;background-color: #f6f8fa">,</span>              <span style="color: #6e7781">// can appear anywhere
+</span>       <span style="color: #0550ae">@tableonly</span> b<span style="color: #24292f;background-color: #f6f8fa">,</span>   <span style="color: #6e7781">// can only appear in the table
+</span>       <span style="color: #0550ae">@defaultonly</span> c<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #6e7781">// can only appear in the default action
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@tableonly</code> and <code>@defaultonly</code> are currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-control-plane-api-annotations">20.2.3. Control-plane API annotations</h4>
+<div class="paragraph">
+<p>The <code>@name</code> annotation directs the compiler to use a different local name when
+generating the external APIs used to manipulate a language element from the
+control plane. This annotation takes a local compile-time known value of type
+<code>string</code> (typically a string literal). In the following example, the
+fully-qualified name of the table is <code>c_inst.t1</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">(</span> <span style="color: #6e7781">/* parameters omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">)()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"t1"</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+c<span style="color: #24292f;background-color: #f6f8fa">()</span> c_inst<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>@hidden</code> annotation hides a controllable entity, e.g. a table, key,
+action, or extern, from the control plane. This effectively removes its
+fully-qualified name (<a href="#sec-fully-qualified-names">Section 10.1.1</a>). This annotation does
+not have a body.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@hidden</code> is currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_restrictions">20.2.3.1. Restrictions</h5>
+<div class="paragraph">
+<p>Each element may be annotated with at most one <code>@name</code> or <code>@hidden</code> annotation,
+and each control plane name must refer to at most one controllable entity. This
+is of special concern when using an absolute <code>@name</code> annotation: if a type
+containing a <code>@name</code> annotation with an absolute pathname (i.e., one starting
+with a dot) is instantiated more than once, it will result in the same name
+referring to two controllable entities.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">control</span> noargs<span style="color: #24292f;background-color: #f6f8fa">();</span>
+<span style="color: #cf222e">package</span> top<span style="color: #24292f;background-color: #f6f8fa">(</span>noargs c1<span style="color: #24292f;background-color: #f6f8fa">,</span> noargs c2<span style="color: #24292f;background-color: #f6f8fa">);</span>
+
+<span style="color: #cf222e">control</span> c<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">".foo.bar"</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+top<span style="color: #24292f;background-color: #f6f8fa">(</span>c<span style="color: #24292f;background-color: #f6f8fa">(),</span> c<span style="color: #24292f;background-color: #f6f8fa">())</span> main<span style="color: #24292f;background-color: #f6f8fa">;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Without the <code>@name</code> annotation, this program would produce two controllable
+entities with fully-qualified names <code>main.c1.t</code> and <code>main.c2.t</code>. However, the
+<code>@name(".foo.bar")</code> annotation renames table <code>t</code> in both instances to
+<code>foo.bar</code>, resulting in one name that refers to two controllable entities,
+which is illegal.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_concurrency_control_annotations">20.2.4. Concurrency control annotations</h4>
+<div class="paragraph">
+<p>The <code>@atomic</code> annotation, described in <a href="#sec-concurrency-model">Section 7.4.5</a> can be used to
+enforce the atomic execution of a code block.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@atomic</code> is currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-branch-annotations">20.2.5. Branch prediction annotations</h4>
+<div class="paragraph">
+<p>The <code>@likely</code> and <code>@unlikely</code> annotation can be used on blocks that are used in
+<code>if</code>-<code>else</code> or <code>switch</code> statements to hint when a branch is likely or unlikely
+to be taken.</p>
+</div>
+<div class="listingblock p4">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code>if (error_failure) @unlikely {
+    /* code that is unlikely to execute as the condition is probably false */
+}
+
+switch(value) {
+    1: @likely {
+        /* code for the most common case */
+       }
+    2: { /* ... */ }
+    default: @unlikely {
+        /* code for rare case */
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These annotations have no effect on the semantics of the program; they are just
+hints to help an optimizer. A warning may be issued if a <code>@likely</code> block is
+found to never execute or an <code>@unlikely</code> block will always execute, but is not
+required.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@likely</code> and <code>@unlikely</code> are currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-value-set-annotations">20.2.6. Value set annotations</h4>
+<div class="paragraph">
+<p>The <code>@match</code> annotation, described in <a href="#sec-select-expression">Section 15.6</a>, is used to
+specify a <code>match_kind</code> value other than the default <code>match_kind</code> of <code>exact</code> for
+a field of a <code>value_set</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@match</code> is currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-extern-annotations">20.2.7. Extern function/method annotations</h4>
+<div class="paragraph">
+<p>Various annotations may appear on extern function and method declarations to
+describe limitations on the behavior and interactions of those functions. By
+default extern functions might have any effect on the environment of the P4
+program and might interact in non-trivial ways (subject to a few limitations&#8201;&#8212;&#8201;see <a href="#sec-calling-convention">[sec-calling-convention]</a>). Since externs are architecture-specific and
+their behavior is known to the architecture definition, these annotations are
+not strictly necessary (an implementation can have knowledge of how externs
+interact based on their names built into it), but these annotations provide a
+uniform way of describing certain well-defined interactions (or their absence),
+allowing architecture-independent analysis of P4 programs.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>@pure</code> - Describes a function that depends solely on its <code>in</code> parameter
+values, and has no effect other than returning a value, and copy-out behavior
+on its <code>out</code> and <code>inout</code> parameters. No hidden state is recorded between calls,
+and its value does not depend on any hidden state that may be changed by other
+calls. An example is a <code>hash</code> function that computes a deterministic hash of
+its arguments, and its return value does not depend upon any control-plane
+writable seed or initialization vector value. A <code>@pure</code> function whose results
+are unused may be safely eliminated with no adverse effects, and multiple calls
+with identical arguments may be combined into a single call (subject to the
+limits imposed by copy-out behavior of <code>out</code> and <code>inout</code> parameters). <code>@pure</code>
+functions may also be reordered with respect to other computations that are not
+data dependent.</p>
+</li>
+<li>
+<p><code>@noSideEffects</code> - Weaker than <code>@pure</code> and describes a function that does not
+change any hidden state, but may depend on hidden state. One example is a
+<code>hash</code> function that computes a deterministic hash of its arguments, plus some
+internal state that can be modified via control plane API calls such as a seed
+or initialization vector. Another example is a read of one element of a
+register array extern object.  Such a function may be dead code eliminated, and
+may be reordered or combined with other <code>@noSideEffects</code> or <code>@pure</code> calls
+(subject to the limits imposed by copy-out behavior of <code>out</code> and <code>inout</code>
+parameters), but not with other function calls that may have side effects that
+affect the function.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@pure</code> and <code>@noSideEffects</code> are currently unimplemented in P4-SpecTec.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-deprecated-anno">20.2.8. Deprecated annotation</h4>
+<div class="paragraph">
+<p>The <code>deprecated</code> annotation has a required string argument that is a message
+that will be printed by a compiler when a program is using the deprecated
+construct. This is mostly useful for annotating library constructs, such as
+externs. The parameter must be a local compile-time known value of type
+<code>string</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">#define</span> DEPR_V1_2_2 <span style="color: #0a3069">"Deprecated in v1.2.2"</span>
+<span style="color: #0550ae">@deprecated</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"Please use the 'check' function instead."</span> <span style="color: #0550ae">++</span> DEPR_V1_2_2<span style="color: #24292f;background-color: #f6f8fa">)</span>
+<span style="color: #cf222e">extern</span> Checker <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   <span style="color: #6e7781">/* body omitted */</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-nowarn-anno">20.2.9. No warnings annotation</h4>
+<div class="paragraph">
+<p>The <code>noWarn</code> annotation has a required string argument that indicates a
+compiler warning that will be inhibited. For example <code>@noWarn("unused")</code> on a
+declaration will prevent a compiler warning if that declaration is not used.
+The parameter must be a local compile-time known value of type <code>string</code>.
+=== Target-specific annotations</p>
+</div>
+<div class="paragraph">
+<p>Each P4 compiler implementation can define additional annotations specific to
+the target of the compiler. The syntax of the annotations should conform to the
+above description. The semantics of such annotations is target-specific. They
+could be used in a similar way to pragmas in other languages.</p>
+</div>
+<div class="paragraph">
+<p>The P4 compiler should provide:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Errors when annotations are used incorrectly (e.g., an annotation
+expecting a parameter but used without arguments, or with arguments of the
+wrong type)</p>
+</li>
+<li>
+<p>Warnings for unknown annotations.</p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
@@ -65407,7 +66279,7 @@ annotation
 <p>Clarified that <code>switch</code> statements are allowed in action and function bodies, and that <code>switch</code> statements with <code>action_run</code> expressions are only allowed in control <code>apply</code> blocks (<a href="#sec-stmts">[sec-stmts]</a> and <a href="#sec-switch-stmt">[sec-switch-stmt]</a>).</p>
 </li>
 <li>
-<p>Added standard branch prediction annotations (<a href="#sec-branch-annotations">[sec-branch-annotations]</a>)</p>
+<p>Added standard branch prediction annotations (<a href="#sec-branch-annotations">Section 20.2.5</a>)</p>
 </li>
 <li>
 <p>Added support for compile-time string concatenation using <code>++</code> operator (<a href="#sec-string-type">[sec-string-type]</a> and <a href="#sec-string-ops">[sec-string-ops]</a>).</p>
@@ -65670,10 +66542,10 @@ of keys is empty (<a href="#sec-table-keys">[sec-table-keys]</a>).</p>
 <p>Added key-value and list-structured annotations (<a href="#sec-annotations">[sec-annotations]</a>).</p>
 </li>
 <li>
-<p>Added <code>@pure</code> and <code>@noSideEffects</code> annotations (<a href="#sec-extern-annotations">[sec-extern-annotations]</a>).</p>
+<p>Added <code>@pure</code> and <code>@noSideEffects</code> annotations (<a href="#sec-extern-annotations">Section 20.2.7</a>).</p>
 </li>
 <li>
-<p>Added <code>@noWarn</code> annotation (<a href="#sec-nowarn-anno">[sec-nowarn-anno]</a>).</p>
+<p>Added <code>@noWarn</code> annotation (<a href="#sec-nowarn-anno">Section 20.2.9</a>).</p>
 </li>
 <li>
 <p>Generalized typing for masks to allow serializable <code>enum</code>s (<a href="#sec-cubes">[sec-cubes]</a>).</p>
@@ -66040,22 +66912,22 @@ are treated as keywords only in specific contexts (e.g., the keyword <code>actio
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>deprecated</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Construct has been deprecated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-deprecated-anno">[sec-deprecated-anno]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-deprecated-anno">Section 20.2.8</a></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>pure</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">pure function</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-extern-annotations">[sec-extern-annotations]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-extern-annotations">Section 20.2.7</a></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>noSideEffects</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">function with no side effects</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-extern-annotations">[sec-extern-annotations]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-extern-annotations">Section 20.2.7</a></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>noWarn</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Has a string argument; inhibits compiler warnings</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-nowarn-anno">[sec-nowarn-anno]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#sec-nowarn-anno">Section 20.2.9</a></p></td>
 </tr>
 </tbody>
 </table>
