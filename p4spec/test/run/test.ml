@@ -43,12 +43,9 @@ let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
     with
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
-        let log =
-          Format.asprintf "Error on run: %s\n%s" filename_p4
-            (string_of_error at msg)
-        in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
+        Format.asprintf "Error on run: %s" filename_p4 |> print_endline;
+        Format.eprintf "Error on run: %s\n%s\n" filename_p4
+          (string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
@@ -57,16 +54,16 @@ let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
         }
     | TestRunNegErr time_start ->
         let duration = stop time_start in
-        let log = Format.asprintf "Error on run: should fail" in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
+        Format.asprintf "Error on run: %s (should fail)" filename_p4
+        |> print_endline;
+        Format.eprintf "Error on run: %s (should fail)\n" filename_p4;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         { stat with durations = duration :: stat.durations }
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        let log = Format.asprintf "Error on run: unknown" in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
+        Format.asprintf "Error on run: %s (unknown)" filename_p4
+        |> print_endline;
+        Format.eprintf "Error on run: %s (unknown)\n" filename_p4;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with

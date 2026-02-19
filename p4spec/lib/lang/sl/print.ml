@@ -464,8 +464,6 @@ let string_of_defined_func (func : definedfunc) =
 (* Definitions *)
 
 let rec string_of_def def =
-  ";; " ^ string_of_region def.at ^ "\n"
-  ^
   match def.it with
   | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (id, tparams, deftyp, _) ->

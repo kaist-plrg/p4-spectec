@@ -74,6 +74,14 @@ DET_ALIASES := \
 
 $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
 
+.PHONY: test-fast
+test-fast:
+	echo "#### Running fast tests (speclang, p4parse, run-sl, sim-sl)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
+	  (echo "####>" Failure running fast tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
 .PHONY: test-all
 test-all:
 	echo "#### Running (dune runtest)"

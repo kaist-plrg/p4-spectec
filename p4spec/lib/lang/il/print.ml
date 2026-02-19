@@ -397,9 +397,7 @@ and string_of_rulepaths nottyp inputs rulepaths =
 
 and string_of_rulegroup nottyp inputs rulegroup =
   let rulegroupid, rulematch, rulepaths = rulegroup.it in
-  indent 1 ^ ";; "
-  ^ string_of_region rulegroup.at
-  ^ "\n" ^ indent 1 ^ "rulegroup "
+  indent 1 ^ "rulegroup "
   ^ string_of_rulegroupid rulegroupid
   ^ "\n\n " ^ indent 1 ^ "match\n\n"
   ^ string_of_rulematch nottyp inputs rulematch
@@ -413,9 +411,7 @@ and string_of_rulegroups nottyp inputs rulegroups =
 
 and string_of_elsegroup nottyp inputs elsegroup =
   let rulegroupid, rulematch, rulepath = elsegroup.it in
-  indent 1 ^ ";; "
-  ^ string_of_region elsegroup.at
-  ^ "\n" ^ indent 1 ^ "rulegroup "
+  indent 1 ^ "rulegroup "
   ^ string_of_rulegroupid rulegroupid
   ^ "\n\n " ^ indent 1 ^ "match\n\n"
   ^ string_of_rulematch nottyp inputs rulematch
@@ -433,8 +429,8 @@ and string_of_elsegroup_opt nottyp inputs elsegroup_opt =
 
 and string_of_clause idx clause =
   let args, exp, prems = clause.it in
-  ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
-  ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = " ^ string_of_exp exp
+  "clause " ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = "
+  ^ string_of_exp exp
   ^ string_of_prems ~level:1 prems
 
 and string_of_clauses clauses =
@@ -477,8 +473,6 @@ and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
 (* Definitions *)
 
 let rec string_of_def def =
-  ";; " ^ string_of_region def.at ^ "\n"
-  ^
   match def.it with
   | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (typid, tparams, deftyp, _) ->

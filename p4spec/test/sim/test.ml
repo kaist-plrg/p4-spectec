@@ -42,12 +42,9 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
     with
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
-        let log =
-          Format.asprintf "Error on run: %s\n%s" filename_stf
-            (string_of_error at msg)
-        in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
+        Format.asprintf "Error on run: %s" filename_stf |> print_endline;
+        Format.eprintf "Error on run: %s\n%s\n" filename_stf
+          (string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
@@ -56,9 +53,9 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
         }
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        let log = Format.asprintf "Error on run: unknown" in
-        log |> print_endline;
-        Format.eprintf "%s\n" log;
+        Format.asprintf "Error on run: %s (unknown)" filename_stf
+        |> print_endline;
+        Format.eprintf "Error on run: %s (unknown)\n" filename_stf;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
