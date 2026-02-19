@@ -11,7 +11,11 @@ the specification parser and the high-level architecture of the tool.
 
 - [Building the Project](#building-the-project)
   - [Building from Source](#building-from-source)
-    - [Prerequisites](#prerequisites)
+    - [Submodule(s)](#submodules)
+    - [Prerequisites (Linux)](#prerequisites-linux)
+    - [Prerequisites (MacOS)](#prerequisites-macos)
+    - [Prerequisites (Windows)](#prerequisites-windows)
+    - [OCaml compiler and packages](#ocaml-compiler-and-packages)
     - [Compiling the Project](#compiling-the-project)
     - [Additional Notes](#additional-notes)
   - [Docker builds](#docker-builds)
@@ -28,26 +32,20 @@ the specification parser and the high-level architecture of the tool.
 
 ### Building from Source
 
-#### Prerequisites
-
-* Install `opam` version 2.0.5 or higher.
-  ```shell
-  $ apt-get install opam
-  $ opam init
-  ```
-
-* Create OCaml switch for version 5.1.0
-  Install `dune` version 3.16.1, `bignum` version v0.17.0, `menhir` version 20240715, `core` version v0.17.1, `core_unix` version v0.17.0, and `bisect_ppx` version 2.8.3 via `opam`.
-  ```shell
-  $ opam switch create 5.1.0
-  $ eval $(opam env)
-  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson
-  ```
+#### Submodule(s)
 
 * `p4c` is a submodule of this project, as we reuse the tests and the P4 include files from `p4c`.
   You can initialize it by running:
   ```shell
   $ git submodule update --init
+  ```
+
+#### Prerequisites (Linux)
+
+* Install `opam` version 2.0.5 or higher.
+  ```shell
+  $ apt-get install opam
+  $ opam init
   ```
 
 * `creduce` is used in the test generation beckend to reduce the generated test cases.
@@ -56,9 +54,39 @@ the specification parser and the high-level architecture of the tool.
   $ apt-get install creduce
   ```
   Apply the patch in `creduce-patches/creduce` to adapt it to our use case.
+  Note that `creduce` is only necessary for the test generation backend, so you
+  can skip this step if you only want to use the specification and the
+  simulation features.
 
 * `asciidoctor` is used to generate HTML/PDF document from the AsciiDoc source files.
   Use `docs/install-asciidoctor-linux.sh` to install it on Linux.
+
+#### Prerequisites (MacOS)
+
+* Install `opam` version 2.0.5 or higher following the instructions [here](https://ocaml.org/docs/installing-ocaml).
+
+* Install `creduce` using [Homebrew](https://formulae.brew.sh/formula/creduce).
+  Apply the patch in `creduce-patches/creduce` to adapt it to our use case.
+  Note that `creduce` is only necessary for the test generation backend, so you
+  can skip this step if you only want to use the specification and the
+  simulation features.
+
+* Install `asciidoctor` following the instructions [here](https://docs.asciidoctor.org/asciidoctor/latest/install/macos/).
+
+#### Prerequisites (Windows)
+
+* For now, we do *not* have instructions for building on Windows.
+  We recommend using WSL2 or using [Docker](#docker-builds) to build and run P4-SpecTec on Windows.
+
+#### OCaml compiler and packages
+
+* Create OCaml switch for version 5.1.0
+  Install `dune` version 3.16.1, `bignum` version v0.17.0, `menhir` version 20240715, `core` version v0.17.1, `core_unix` version v0.17.0, and `bisect_ppx` version 2.8.3 via `opam`.
+  ```shell
+  $ opam switch create 5.1.0
+  $ eval $(opam env)
+  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson
+  ```
 
 #### Compiling the Project
 
