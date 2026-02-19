@@ -20,7 +20,6 @@ open Lexing
 open Context
 open Parser
 open Wrap
-open Util.Source
 module Value = Runtime.Dynamic_Il.Value
 module F = Format
 
@@ -163,9 +162,7 @@ rule tokenize = parse
       { let str, end_info = (string lexbuf) in
         debug_token ("\"" ^ str ^ "\"");
         end_info |> ignore;
-        let value = 
-          TextV str $$$ { vid = Value.fresh (); typ = TextT }
-        in
+        let value = Value.make TextT (TextV str) in
         STRING_LITERAL value
       }
   | whitespace
@@ -297,11 +294,7 @@ rule tokenize = parse
   | name
       { let text = Lexing.lexeme lexbuf in
         debug_token text;
-        let value =
-          let vid = Value.fresh () in
-          let typ = Il.TextT in
-          TextV text $$$ { vid; typ }
-        in
+        let value = Value.make Il.TextT (TextV text) in
         NAME value }
   | "<="
       { debug_token "<="; LE (info lexbuf) }
@@ -410,11 +403,7 @@ rule tokenize = parse
   | _
       { let text = lexeme lexbuf in
         debug_token text;
-        let value =
-          let vid = Value.fresh () in
-          let typ = Il.TextT in
-          TextV text $$$ { vid; typ }
-        in
+        let value = Value.make Il.TextT (TextV text) in
         UNEXPECTED_TOKEN value }
       
 and string = parse

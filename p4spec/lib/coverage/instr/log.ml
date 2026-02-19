@@ -10,9 +10,9 @@ let rec log_case ?(level = 0) ?(index = 0) (cover : Multi.t) (case : case) :
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let header = "  " ^ order in
-  let guard, instrs = case in
+  let guard, block = case in
   Format.asprintf "%sCase %s\n\n%s" header (string_of_guard guard)
-    (log_instrs ~level:(level + 1) cover instrs)
+    (log_block ~level:(level + 1) cover block)
 
 and log_cases ?(level = 0) (cover : Multi.t) (cases : case list) : string =
   cases
@@ -29,47 +29,46 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
   let header = (if hit then "+ " else "- ") ^ order in
   let header_trailing = "  " ^ order in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then, _) ->
+  | IfI (exp_cond, iterexps, block_then, _) ->
       Format.asprintf "%sIf (%s)%s, then\n\n%s" header (string_of_exp exp_cond)
         (string_of_iterexps iterexps)
-        (log_instrs ~level:(level + 1) cover instrs_then)
+        (log_block ~level:(level + 1) cover block_then)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
-      | BothH (instrs_hold, instrs_nothold) ->
+      | BothH (block_hold, block_nothold) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s\n\n%sElse,\n\n%s"
             header (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~level:(level + 1) cover instrs_hold)
+            (log_block ~level:(level + 1) cover block_hold)
             header_trailing
-            (log_instrs ~level:(level + 1) cover instrs_nothold)
-      | HoldH (instrs_hold, _) ->
+            (log_block ~level:(level + 1) cover block_nothold)
+      | HoldH (block_hold, _) ->
           Format.asprintf "%sIf (%s: %s)%s holds, then\n\n%s" header
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~level:(level + 1) cover instrs_hold)
-      | NotHoldH (instrs_nothold, _) ->
+            (log_block ~level:(level + 1) cover block_hold)
+      | NotHoldH (block_nothold, _) ->
           Format.asprintf "%sIf (%s: %s)%s does not hold, then\n\n%s" header
             (string_of_relid id) (string_of_notexp notexp)
             (string_of_iterexps iterexps)
-            (log_instrs ~level:(level + 1) cover instrs_nothold))
+            (log_block ~level:(level + 1) cover block_nothold))
   | CaseI (exp, cases, _) ->
       Format.asprintf "%sCase analysis on %s\n\n%s" header (string_of_exp exp)
         (log_cases ~level:(level + 1) cover cases)
-  | OtherwiseI instr ->
-      Format.asprintf "%sOtherwise\n\n%s" header
-        (log_instr ~level:(level + 1) ~index:1 cover instr)
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, block_group) ->
       Format.asprintf "%sGroup %s: %s\n\n%s" header (string_of_relid id_group)
         (string_of_relinput rel_signature exps_group)
-        (log_instrs ~level:(level + 1) cover instrs_group)
-  | LetI (exp_l, exp_r, iterinstrs) ->
-      Format.asprintf "%s(Let %s be %s)%s" header (string_of_exp exp_l)
+        (log_block ~level:(level + 1) cover block_group)
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
+      Format.asprintf "%s(Let %s be %s)%s\n\n%s" header (string_of_exp exp_l)
         (string_of_exp exp_r)
         (string_of_iterinstrs iterinstrs)
-  | RuleI (id_rel, notexp, _inputs, iterinstrs) ->
-      Format.asprintf "%s(%s: %s)%s" header (string_of_relid id_rel)
+        (log_block ~level:(level + 1) ~index cover block)
+  | RuleI (id_rel, notexp, _inputs, iterinstrs, block) ->
+      Format.asprintf "%s(%s: %s)%s\n\n%s" header (string_of_relid id_rel)
         (string_of_notexp notexp)
         (string_of_iterinstrs iterinstrs)
+        (log_block ~level:(level + 1) ~index cover block)
   | ResultI (_, []) -> Format.asprintf "%sThe relation holds" header
   | ResultI (rel_signature, exps) ->
       Format.asprintf "%sResult in: %s" header
@@ -77,27 +76,43 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
   | ReturnI exp -> Format.asprintf "%sReturn %s" header (string_of_exp exp)
   | DebugI exp -> Format.asprintf "%sDebug: %s" header (string_of_exp exp)
 
-and log_instrs ?(level = 0) (cover : Multi.t) (instrs : instr list) : string =
-  instrs
-  |> List.mapi (fun idx instr -> log_instr ~level ~index:(idx + 1) cover instr)
+and log_block ?(level = 0) ?(index = 0) (cover : Multi.t) (block : block) :
+    string =
+  block
+  |> List.mapi (fun idx instr ->
+         log_instr ~level ~index:(index + idx + 1) cover instr)
   |> String.concat "\n\n"
+
+and log_elseblock ?(level = 0) ?(index = 0) (cover : Multi.t)
+    (elseblock : elseblock) : string =
+  Format.asprintf "%s%d. Otherwise,\n\n%s"
+    (String.make (level * 2) ' ')
+    (index + 1)
+    (log_block ~level:(level + 1) cover elseblock)
+
+and log_elseblock_opt ?(level = 0) ?(index = 0) (cover : Multi.t)
+    (elseblock_opt : elseblock option) : string =
+  match elseblock_opt with
+  | Some elseblock -> log_elseblock ~level ~index cover elseblock
+  | None -> ""
 
 (* Relations *)
 
 let log_defined_rel (cover : Multi.t) (rel : rel) : string =
-  let relid, rel_signature, exps_match, instrs, _hints = rel in
+  let relid, rel_signature, exps_match, block, elseblock_opt, _hints = rel in
   string_of_relid relid ^ ": "
   ^ string_of_relinput rel_signature exps_match
-  ^ "\n\n" ^ log_instrs cover instrs
+  ^ "\n\n" ^ log_block cover block
+  ^ log_elseblock_opt ~index:(List.length block) cover elseblock_opt
 
 (* Functions *)
 
 let log_tablerow (cover : Multi.t) (tablerow : tablerow) : string =
-  let exps_match, exp_result, instrs = tablerow in
+  let exps_match, exp_result, block = tablerow in
   "\n Row : "
   ^ string_of_exps ", " exps_match
   ^ " -> " ^ string_of_exp exp_result ^ "\n\n"
-  ^ log_instrs ~level:2 cover instrs
+  ^ log_block ~level:2 cover block
 
 let log_tablerows (cover : Multi.t) (tablerows : tablerow list) : string =
   tablerows |> List.map (log_tablerow cover) |> String.concat "\n"
@@ -108,9 +123,10 @@ let log_table_func (cover : Multi.t) (tablefunc : tablefunc) : string =
   ^ log_tablerows cover tablerows
 
 let log_defined_func (cover : Multi.t) (func : definedfunc) : string =
-  let defid, tparams, params, _typ_ret, instrs, _hints = func in
+  let defid, tparams, params, _typ_ret, block, elseblock_opt, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
-  ^ "\n\n" ^ log_instrs cover instrs
+  ^ "\n\n" ^ log_block cover block
+  ^ log_elseblock_opt ~index:(List.length block) cover elseblock_opt
 
 (* Definitions *)
 

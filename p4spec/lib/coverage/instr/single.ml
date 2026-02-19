@@ -48,29 +48,30 @@ module Cover = struct
     let node = Node.init id in
     let cover = add iid node cover in
     match instr.it with
-    | IfI (_, _, instrs_then, _) -> init_instrs cover id instrs_then
+    | IfI (_, _, block_then, _) -> init_block cover id block_then
     | HoldI (_, _, _, holdcase) -> (
         match holdcase with
-        | BothH (instrs_hold, instrs_nothold) ->
-            let cover = init_instrs cover id instrs_hold in
-            init_instrs cover id instrs_nothold
-        | HoldH (instrs_hold, _) -> init_instrs cover id instrs_hold
-        | NotHoldH (instrs_nothold, _) -> init_instrs cover id instrs_nothold)
+        | BothH (block_hold, block_nothold) ->
+            let cover = init_block cover id block_hold in
+            init_block cover id block_nothold
+        | HoldH (block_hold, _) -> init_block cover id block_hold
+        | NotHoldH (block_nothold, _) -> init_block cover id block_nothold)
     | CaseI (_, cases, _) ->
         let blocks = cases |> List.split |> snd in
         List.fold_left
-          (fun cover instrs -> init_instrs cover id instrs)
+          (fun cover block -> init_block cover id block)
           cover blocks
-    | OtherwiseI instr -> init_instr cover id instr
-    | GroupI (_, _, _, instrs_group) -> init_instrs cover id instrs_group
+    | GroupI (_, _, _, block_group) -> init_block cover id block_group
+    | LetI (_, _, _, block) -> init_block cover id block
+    | RuleI (_, _, _, _, block) -> init_block cover id block
     | _ -> cover
 
-  and init_instrs (cover : t) (id : id) (instrs : instr list) : t =
-    List.fold_left (fun cover instr -> init_instr cover id instr) cover instrs
+  and init_block (cover : t) (id : id) (block : block) : t =
+    List.fold_left (fun cover instr -> init_instr cover id instr) cover block
 
   let init_tablerow (cover : t) (id : id) (tablerow : tablerow) : t =
-    let _, _, instrs = tablerow in
-    init_instrs cover id instrs
+    let _, _, block = tablerow in
+    init_block cover id block
 
   let init_tablerows (cover : t) (id : id) (tablerows : tablerow list) : t =
     List.fold_left
@@ -79,10 +80,18 @@ module Cover = struct
 
   let init_def (cover : t) (def : def) : t =
     match def.it with
-    | RelD (id, _, _, instrs, hints) when not (is_ignored hints) ->
-        init_instrs cover id instrs
-    | FuncDecD (id, _, _, _, instrs, hints) when not (is_ignored hints) ->
-        init_instrs cover id instrs
+    | RelD (id, _, _, block, elseblock_opt, hints) when not (is_ignored hints)
+      -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
+    | FuncDecD (id, _, _, _, block, elseblock_opt, hints)
+      when not (is_ignored hints) -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
     | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
         init_tablerows cover id tablerows
     | _ -> cover

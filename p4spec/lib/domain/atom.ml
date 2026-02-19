@@ -77,7 +77,7 @@ type t =
 [@@@ocamlformat "enable"]
 
 let compare atom_a atom_b = compare atom_a atom_b
-let eq atom_a atom_b = compare atom_a atom_b = 0
+let eq atom_a atom_b = atom_a = atom_b
 
 let string_of_atom = function
   | Atom id -> id

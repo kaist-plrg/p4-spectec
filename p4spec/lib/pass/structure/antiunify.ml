@@ -232,17 +232,32 @@ let antiunify_args_group (frees : IdSet.t) (args_group : arg list list) :
 (* Anti-unification of rule matches *)
 
 let antiunify_rule_match_group (frees : IdSet.t)
-    (exps_match_group : exp list list) : exp list * prem list list =
-  let uenv, exps_match_template = antiunify_exps_group frees exps_match_group in
+    (exps_match_group : exp list list) (exps_match_else_opt : exp list option) :
+    exp list * prem list list * prem list option =
+  let uenv, exps_match_template =
+    let exps_match_group =
+      exps_match_group
+      @
+      match exps_match_else_opt with
+      | Some exps_match_else -> [ exps_match_else ]
+      | None -> []
+    in
+    antiunify_exps_group frees exps_match_group
+  in
   let prems_match_group =
     List.map (populate_exps_templates uenv exps_match_template) exps_match_group
   in
-  (exps_match_template, prems_match_group)
+  let prems_match_else_opt =
+    Option.map
+      (populate_exps_templates uenv exps_match_template)
+      exps_match_else_opt
+  in
+  (exps_match_template, prems_match_group, prems_match_else_opt)
 
 (* Anti-unification of clauses *)
 
-let antiunify_clauses (clauses : clause list) :
-    arg list * (prem list * exp) list =
+let antiunify_clauses (clauses : clause list) (elseclause_opt : clause option) :
+    arg list * (prem list * exp) list * (prem list * exp) option =
   let args_input_group, exp_output_group, prems_group, frees =
     List.fold_left
       (fun (args_input_group, exp_output_group, prems_group, frees) clause ->
@@ -254,7 +269,24 @@ let antiunify_clauses (clauses : clause list) :
         (args_input_group, exp_output_group, prems_group, frees))
       ([], [], [], IdSet.empty) clauses
   in
-  let uenv, args_input_template = antiunify_args_group frees args_input_group in
+  let args_input_else_opt, exp_output_else_opt, prems_else_opt, frees =
+    match elseclause_opt with
+    | Some elseclause ->
+        let args_input, exp_output, prems = elseclause.it in
+        let frees = elseclause |> Il.Free.free_clause |> IdSet.union frees in
+        (Some args_input, Some exp_output, Some prems, frees)
+    | None -> (None, None, None, frees)
+  in
+  let uenv, args_input_template =
+    let args_input_group =
+      args_input_group
+      @
+      match args_input_else_opt with
+      | Some args_input_else -> [ args_input_else ]
+      | None -> []
+    in
+    antiunify_args_group frees args_input_group
+  in
   let prems_group =
     List.map2
       (fun args_input prems ->
@@ -265,4 +297,13 @@ let antiunify_clauses (clauses : clause list) :
       args_input_group prems_group
   in
   let paths = List.combine prems_group exp_output_group in
-  (args_input_template, paths)
+  let path_else_opt =
+    match (args_input_else_opt, prems_else_opt, exp_output_else_opt) with
+    | Some args_input_else, Some prems_else, Some exp_output_else ->
+        let prems_template =
+          populate_args_templates uenv args_input_template args_input_else
+        in
+        Some (prems_template @ prems_else, exp_output_else)
+    | _ -> None
+  in
+  (args_input_template, paths, path_else_opt)

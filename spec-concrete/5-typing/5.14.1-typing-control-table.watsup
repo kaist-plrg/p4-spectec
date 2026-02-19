@@ -963,7 +963,8 @@ rulegroup TableProperty_ok/custom {
              : TBLC tablePropertyIR
     ---- ;; check that the custom property is not one of the predefined ones
     -- if nameIR = $tableCustomName(tableCustomName)
-    -- if nameIR =/= "size"
+    -- if nameIR =/= "default_action"
+          /\ nameIR =/= "size"
           /\ nameIR =/= "largest_priority_wins"
           /\ nameIR =/= "priority_delta"
     ---- ;; check initializer
@@ -1050,6 +1051,7 @@ def $insert_NoAction_tablePropertyIR(
     TBLC_0,
     tablePropertyIR_h :: tablePropertyIR_t*)
   = (TBLC_1, tablePropertyIR_h :: tablePropertyIR_t_updated*)
+  -- if ~(tablePropertyIR_h <: tableActionsPropertyIR)
   -- if (TBLC_1, tablePropertyIR_t_updated*)
       = $insert_NoAction_tablePropertyIR(
           TBLC_0, tablePropertyIR_t*)

@@ -2,6 +2,7 @@ open Lang
 open Xl
 open Il
 module Value = Runtime.Dynamic_Il.Value
+open Error
 open Util.Source
 
 (* Conversion between meta-bits and OCaml bool array *)
@@ -11,16 +12,11 @@ let bits_of_value (value : value) : bool array =
 
 let value_of_bits (add : value -> unit) (bits : bool array) : value =
   let value =
-    let vid = Value.fresh () in
     let typ = VarT ("bits" $ no_region, []) in
     let values_bit =
-      Array.to_list bits
-      |> List.map (fun b ->
-             let vid = Value.fresh () in
-             let typ = BoolT in
-             BoolV b $$$ { vid; typ })
+      Array.to_list bits |> List.map (fun b -> Value.make BoolT (BoolV b))
     in
-    ListV values_bit $$$ { vid; typ }
+    Value.make typ (ListV values_bit)
   in
   add value;
   value
@@ -31,11 +27,7 @@ let bigint_of_value (value : value) : Bigint.t =
   value |> Value.get_num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.NumT `IntT in
-    NumV (`Int i) $$$ { vid; typ }
-  in
+  let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
   add value;
   value
 
@@ -152,6 +144,7 @@ let bits_to_int_unsigned (add : value -> unit) (at : region) (targs : targ list)
 (* dec $bits_to_int_signed(bool* ) : int *)
 
 let bits_to_int_signed' (bits : bool array) : Bigint.t =
+  if Array.length bits = 0 then error no_region "empty bit array";
   let sign = bits.(0) in
   let int_unsigned = bits_to_int_unsigned' bits in
   if sign then

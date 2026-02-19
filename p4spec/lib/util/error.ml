@@ -53,6 +53,7 @@ let warn_builtin (at : region) (msg : string) = warn at "builtin" msg
 let error_interp (at : region) (msg : string) = raise (InterpError (at, msg))
 let warn_interp (at : region) (msg : string) = warn at "interp" msg
 let error_arch (at : region) (msg : string) = raise (ArchError (at, msg))
+let warn_arch (at : region) (msg : string) = warn at "arch" msg
 let error_stf (msg : string) = raise (StfError msg)
 
 (* Splicer errors *)

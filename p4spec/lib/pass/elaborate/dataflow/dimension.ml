@@ -286,7 +286,6 @@ and annotate_prem_inner (bounds : VEnv.t) (prem : prem) : VEnv.t * VEnv.t * prem
       let notexp = (mixop, exps) in
       let prem = IfNotHoldPr (id, notexp) $ at in
       (empty, occurs, prem)
-  | ElsePr -> (empty, empty, prem)
   | LetPr (exp_l, exp_r) ->
       let occurs_l, exp_l = annotate_exp bounds exp_l in
       let occurs_r, exp_r = annotate_exp bounds exp_r in

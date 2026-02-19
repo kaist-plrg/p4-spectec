@@ -82,7 +82,7 @@ module type INTERP_IL = sig
 
   (* Initialization *)
 
-  val init : Il.spec -> unit
+  val init : cache:bool -> det:bool -> Il.spec -> unit
 end
 
 module type INTERP_SL = sig
@@ -94,7 +94,7 @@ module type INTERP_SL = sig
 
   (* Initialization *)
 
-  val init : Sl.spec -> unit
+  val init : cache:bool -> det:bool -> Sl.spec -> unit
 end
 
 module type DRIVER = sig
@@ -109,5 +109,5 @@ module type DRIVER = sig
 
   (* Initialization *)
 
-  val init : spec -> unit
+  val init : ?cache:bool -> ?det:bool -> spec -> unit
 end

@@ -88,11 +88,8 @@ let wrap_iter_t (i : iter) (t : typ') : typ' = IterT (t $ no_region, i)
 
 (* Value note generators *)
 
-let with_fresh_val (typ : typ') : vnote =
-  let vid = Runtime.Dynamic_Il.Value.fresh () in
-  { vid; typ }
-
-let with_typ (typ : typ') (v : value') : value = v $$$ with_fresh_val typ
+let with_typ (typ : typ') (v : value') : value =
+  Runtime.Dynamic_Il.Value.make typ v
 
 (* Value generators *)
 

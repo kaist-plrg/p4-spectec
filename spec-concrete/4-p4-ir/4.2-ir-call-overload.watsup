@@ -6,8 +6,11 @@ syntax callTargetKey = nameIR `( id?* )
 syntax namedCallTargetKey = nameIR `( id* )
 syntax unnamedCallTargetKey = nameIR `( nat )
 
+syntax callTargetParameter = nameIR `# bool `# bool
+syntax callTargetValue = callTargetParameter*
+
 syntax callTargetMatch =
-  | MATCH id* id* hint(prose MATCH "with defaults" %0 and "optionals" %1)
+  | MATCH id* id*   hint(prose MATCH "with defaults" %0 and "optionals" %1)
   | NOMATCH
 
 syntax callResolution<V> =
@@ -48,10 +51,13 @@ def $match_overloaded_named<V>(
   = $ite<callTargetMatch>(
       $eq_set<id>(`{ id_param* }, `{ id_arg* }),
       MATCH eps eps, NOMATCH)
+  ----
   -- if nameIR_f `( id_param* ) = callTargetId
-  -- if |id_param*| = |id_arg*|
+  ----
   -- if parameterIR* = $get_parameterListIR(V)
   -- if (id_param = $id_of_parameterIR(parameterIR))*
+  ----
+  -- if |id_param*| = |id_arg*|
 
 ;;; When call target names match and arity is less than parameters,
 ;;; i.e., some default parameters used or some optional parameters omitted
@@ -61,12 +67,15 @@ def $match_overloaded_named<V>(
     nameIR_f `( id_arg* ),
     def $get_parameterListIR)
   = MATCH id_default* id_optional*
+  ----
   -- if nameIR_f `( id_param* ) = callTargetId
-  -- if $(|id_param*| > |id_arg*|)
+  ----
   -- if parameterIR* = $get_parameterListIR(V)
   -- if (id_param = $id_of_parameterIR(parameterIR))*
   -- if (b_default = $is_default_parameterIR(parameterIR))*
   -- if (b_optional = $is_optional_parameterIR(parameterIR))*
+  ----
+  -- if $(|id_param*| > |id_arg*|)
   -- if `{ id_param_omitted* }
       = $diff_set<id>(`{ id_param* }, `{ id_arg* })
   -- if id_default_param*
@@ -112,12 +121,13 @@ def $match_overloaded_unnamed<V>(
     def $get_parameterListIR)
   = MATCH eps eps
   ----
+  -- if nameIR_f `( id_param* ) = callTargetId
+  ----
   -- if parameterIR* = $get_parameterListIR(V)
   -- if (b_default = $is_default_parameterIR(parameterIR))*
   -- if (b_optional = $is_optional_parameterIR(parameterIR))*
   -- if ~($exists_(b_default*) /\ $exists_(b_optional*))
   ----
-  -- if nameIR_f `( id_param* ) = callTargetId
   -- if |id_param*| = n_arg
 
 ;;; When call target names match, arity is less than parameters,
@@ -129,12 +139,13 @@ def $match_overloaded_unnamed<V>(
     def $get_parameterListIR)
   = MATCH id_default* eps
   ----
+  -- if nameIR_f `( id_param* ) = callTargetId
+  ----
   -- if parameterIR* = $get_parameterListIR(V)
   -- if (b_default = $is_default_parameterIR(parameterIR))*
   -- if (b_optional = $is_optional_parameterIR(parameterIR))*
   -- if ~($exists_(b_default*) /\ $exists_(b_optional*))
   ----
-  -- if nameIR_f `( id_param* ) = callTargetId
   -- if $(|id_param*| > n_arg)
   ----
   -- if (parameterIR_given*, parameterIR_omitted*)
@@ -152,12 +163,13 @@ def $match_overloaded_unnamed<V>(
     def $get_parameterListIR)
   = MATCH eps id_optional*
   ----
+  -- if nameIR_f `( id_param* ) = callTargetId
+  ----
   -- if parameterIR* = $get_parameterListIR(V)
   -- if (b_default = $is_default_parameterIR(parameterIR))*
   -- if (b_optional = $is_optional_parameterIR(parameterIR))*
   -- if ~($exists_(b_default*) /\ $exists_(b_optional*))
   ----
-  -- if nameIR_f `( id_param* ) = callTargetId
   -- if $(|id_param*| > n_arg)
   ----
   -- if (parameterIR_given*, parameterIR_omitted*)

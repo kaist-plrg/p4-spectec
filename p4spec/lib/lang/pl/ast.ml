@@ -146,8 +146,8 @@ and instr' =
   (* Iteration instructions *)
   | ForEachI of var list * instr * var list
   (* Branching instructions *)
-  | BranchI of branch * cond * instr list
-  | OtherwiseI of instr list
+  | BranchI of branch * cond * block
+  | OtherwiseI of block
   | CheckI of cond
   (* Binding instructions *)
   | LetI of exp * exp
@@ -159,6 +159,8 @@ and instr' =
   | DestructI of (exp * string) list * exp
   | CheckLetI of exp * exp
   | OptionGetI of exp * exp
+
+and block = instr list
 
 (* Relations *)
 
@@ -176,7 +178,7 @@ type rulegroup_title =
     | `Yield of id * Hints.Alter.t * exp list ]
   | MathRuleTitle of id * mixop * exp list
 
-type rulegroup = rulegroup_title * instr list
+type rulegroup = rulegroup_title * block
 
 type rel = rel_title * rulegroup list
 
@@ -192,11 +194,11 @@ type externfunc = func_title
 
 type builtinfunc = func_title
 
-type tablerow = exp list * exp * instr list
+type tablerow = exp list * exp * block
 
 type tablefunc = func_title * tablerow list
 
-type func = func_title * instr list
+type func = func_title * block
 
 (* Definitions *)
 
