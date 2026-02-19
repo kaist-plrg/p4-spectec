@@ -20,7 +20,8 @@ let structure filenames_spec =
 let prosify filenames_spec =
   filenames_spec |> structure |> Prose.Prosify.prosify_spec
 
-let runner ?(det = false) ?(arch : string option) mode filenames_spec =
+let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
+    filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
@@ -35,7 +36,7 @@ let runner ?(det = false) ?(arch : string option) mode filenames_spec =
     | Some arch -> Backend_sim.Gen.gen arch
     | None -> Backend_sim.Gen.gen_placeholder ()
   in
-  Driver.init ~det spec_sim;
+  Driver.init ~cache ~det spec_sim;
   (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
 
 let run_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
@@ -250,6 +251,7 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
@@ -264,7 +266,10 @@ let run_command =
      in
      fun () ->
        try
-         let spec_sim, (module Driver) = runner ~det mode filenames_spec in
+         let cache = not no_cache in
+         let spec_sim, (module Driver) =
+           runner ~cache ~det mode filenames_spec
+         in
          let handlers =
            if profile then
              let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
@@ -295,6 +300,7 @@ let sim_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and filename_stf = flag "-stf" (required string) ~doc:"stf test file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and mode =
@@ -309,8 +315,9 @@ let sim_command =
      in
      fun () ->
        try
+         let cache = not no_cache in
          let spec_sim, (module Driver) =
-           runner ~det ~arch mode filenames_spec
+           runner ~cache ~det ~arch mode filenames_spec
          in
          let handlers =
            if profile then

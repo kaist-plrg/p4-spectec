@@ -1556,23 +1556,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
       (exps : exp list) : Flow.t =
-    let values = eval_exps ctx exps in
-    Flow.Res values
+    try
+      let values = eval_exps ctx exps in
+      Flow.Res values
+    with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Return instruction evaluation *)
 
   and eval_return_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
-    let value = eval_exp ctx exp in
-    Flow.Ret value
+    try
+      let value = eval_exp ctx exp in
+      Flow.Ret value
+    with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Debug instruction evaluation *)
 
   and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
-    let value = eval_exp ctx exp in
-    print_endline
-    @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
-    print_endline @@ Il.Print.string_of_value value;
-    Flow.Cont []
+    try
+      let value = eval_exp ctx exp in
+      print_endline
+      @@ F.sprintf "%s: %s" (string_of_region exp.at)
+           (Il.Print.string_of_exp exp);
+      print_endline @@ Il.Print.string_of_value value;
+      Flow.Cont []
+    with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Invoke a relation *)
 
@@ -1907,7 +1914,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Initialization *)
 
-  let init ~(det : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
+    if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value =
       let henv = Interface.Hint.hints_of_spec_sl spec in
       Format.asprintf "%a" (Interface.Unparse.pp_value henv) value

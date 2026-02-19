@@ -154,7 +154,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
      Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
-  let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
+  let rec eval_exp (ctx : Ctx.t) (exp : exp) : value backtrack =
     let at, note = (exp.at, exp.note) in
     match exp.it with
     | BoolE b -> eval_bool_exp note b
@@ -186,26 +186,37 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | CallE (id, targs, args) -> eval_call_exp note ctx id targs args
     | IterE (exp, iterexp) -> eval_iter_exp note ctx exp iterexp
 
-  and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
-    List.map (eval_exp ctx) exps
+  and eval_exps (ctx : Ctx.t) (exps : exp list) : value list backtrack =
+    match exps with
+    | [] -> Ok []
+    | exp_h :: exps_t ->
+        let* value_h = eval_exp ctx exp_h in
+        let* values_t = eval_exps ctx exps_t in
+        Ok (value_h :: values_t)
 
   (* Boolean expression evaluation *)
 
-  and eval_bool_exp (note : typ') (b : bool) : value = Value.make note (BoolV b)
+  and eval_bool_exp (note : typ') (b : bool) : value backtrack =
+    let value_res = Value.make note (BoolV b) in
+    Ok value_res
 
   (* Numeric expression evaluation *)
 
-  and eval_num_exp (note : typ') (n : Num.t) : value = Value.make note (NumV n)
+  and eval_num_exp (note : typ') (n : Num.t) : value backtrack =
+    let value_res = Value.make note (NumV n) in
+    Ok value_res
 
   (* Text expression evaluation *)
 
-  and eval_text_exp (note : typ') (s : string) : value =
-    Value.make note (TextV s)
+  and eval_text_exp (note : typ') (s : string) : value backtrack =
+    let value_res = Value.make note (TextV s) in
+    Ok value_res
 
   (* Variable expression evaluation *)
 
-  and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value =
-    Ctx.find_value ctx (id, [])
+  and eval_var_exp (_note : typ') (ctx : Ctx.t) (id : id) : value backtrack =
+    let value_res = Ctx.find_value ctx (id, []) in
+    Ok value_res
 
   (* Unary expression evaluation *)
 
@@ -218,14 +229,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     NumV num
 
   and eval_un_exp (note : typ') (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
-      (exp : exp) : value =
-    let value = eval_exp ctx exp in
+      (exp : exp) : value backtrack =
+    let* value = eval_exp ctx exp in
     let value_res =
       match unop with
       | #Bool.unop as unop -> eval_un_bool unop value
       | #Num.unop as unop -> eval_un_num unop value
     in
-    Value.make note value_res
+    let value_res = Value.make note value_res in
+    Ok value_res
 
   (* Binary expression evaluation *)
 
@@ -246,15 +258,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     NumV (Num.bin binop num_l num_r)
 
   and eval_bin_exp (note : typ') (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_l : exp) (exp_r : exp) : value backtrack =
+    let* value_l = eval_exp ctx exp_l in
+    let* value_r = eval_exp ctx exp_r in
     let value_res =
       match binop with
       | #Bool.binop as binop -> eval_bin_bool binop value_l value_r
       | #Num.binop as binop -> eval_bin_num binop value_l value_r
     in
-    Value.make note value_res
+    let value_res = Value.make note value_res in
+    Ok value_res
 
   (* Comparison expression evaluation *)
 
@@ -270,15 +283,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     BoolV (Num.cmp cmpop num_l num_r)
 
   and eval_cmp_exp (note : typ') (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp)
-      (exp_l : exp) (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_l : exp) (exp_r : exp) : value backtrack =
+    let* value_l = eval_exp ctx exp_l in
+    let* value_r = eval_exp ctx exp_r in
     let value_res =
       match cmpop with
       | #Bool.cmpop as cmpop -> eval_cmp_bool cmpop value_l value_r
       | #Num.cmpop as cmpop -> eval_cmp_num cmpop value_l value_r
     in
-    Value.make note value_res
+    let value_res = Value.make note value_res in
+    Ok value_res
 
   (* Upcast expression evaluation *)
 
@@ -312,9 +326,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | _ -> value
 
   and eval_upcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
-    let value = eval_exp ctx exp in
-    upcast ctx typ value
+      value backtrack =
+    let* value = eval_exp ctx exp in
+    let value_res = upcast ctx typ value in
+    Ok value_res
 
   (* Downcast expression evaluation *)
 
@@ -349,9 +364,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | _ -> value
 
   and eval_downcast_exp (_note : typ') (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
-    let value = eval_exp ctx exp in
-    downcast ctx typ value
+      value backtrack =
+    let* value = eval_exp ctx exp in
+    let value_res = downcast ctx typ value in
+    Ok value_res
 
   (* Subtype check expression evaluation *)
 
@@ -412,16 +428,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     List.length typs = List.length values
     && List.for_all2 (subtyp ctx) typs values
 
-  and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
-    let value = eval_exp ctx exp in
+  and eval_sub_exp (note : typ') (ctx : Ctx.t) (exp : exp) (typ : typ) :
+      value backtrack =
+    let* value = eval_exp ctx exp in
     let sub = subtyp ctx typ value in
-    Value.make note (BoolV sub)
+    let value_res = Value.make note (BoolV sub) in
+    Ok value_res
 
   (* Pattern match check expression evaluation *)
 
   and eval_match_exp (note : typ') (ctx : Ctx.t) (exp : exp) (pattern : pattern)
-      : value =
-    let value = eval_exp ctx exp in
+      : value backtrack =
+    let* value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
       | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
@@ -435,78 +453,98 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       | OptP `None, OptV None -> true
       | _ -> false
     in
-    Value.make note (BoolV matches)
+    let value_res = Value.make note (BoolV matches) in
+    Ok value_res
 
   (* Tuple expression evaluation *)
 
-  and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
-    let values = eval_exps ctx exps in
-    Value.make note (TupleV values)
+  and eval_tuple_exp (note : typ') (ctx : Ctx.t) (exps : exp list) :
+      value backtrack =
+    let* values = eval_exps ctx exps in
+    let value_res = Value.make note (TupleV values) in
+    Ok value_res
 
   (* Case expression evaluation *)
 
-  and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) : value =
+  and eval_case_exp (note : typ') (ctx : Ctx.t) (notexp : notexp) :
+      value backtrack =
     let mixop, exps = notexp in
-    let values = eval_exps ctx exps in
-    Value.make note (CaseV (mixop, values))
+    let* values = eval_exps ctx exps in
+    let value_res = Value.make note (CaseV (mixop, values)) in
+    Ok value_res
 
   (* Struct expression evaluation *)
 
   and eval_str_exp (note : typ') (ctx : Ctx.t) (fields : (atom * exp) list) :
-      value =
+      value backtrack =
     let atoms, exps = List.split fields in
-    let values = eval_exps ctx exps in
+    let* values = eval_exps ctx exps in
     let fields = List.combine atoms values in
-    Value.make note (StructV fields)
+    let value_res = Value.make note (StructV fields) in
+    Ok value_res
 
   (* Option expression evaluation *)
 
-  and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) : value =
-    let value_opt = Option.map (eval_exp ctx) exp_opt in
-    Value.make note (OptV value_opt)
+  and eval_opt_exp (note : typ') (ctx : Ctx.t) (exp_opt : exp option) :
+      value backtrack =
+    let* value_opt =
+      match exp_opt with
+      | Some exp ->
+          let* value = eval_exp ctx exp in
+          Ok (Some value)
+      | None -> Ok None
+    in
+    let value_res = Value.make note (OptV value_opt) in
+    Ok value_res
 
   (* List expression evaluation *)
 
-  and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) : value =
-    let values = eval_exps ctx exps in
-    Value.make note (ListV values)
+  and eval_list_exp (note : typ') (ctx : Ctx.t) (exps : exp list) :
+      value backtrack =
+    let* values = eval_exps ctx exps in
+    let value_res = Value.make note (ListV values) in
+    Ok value_res
 
   (* Cons expression evaluation *)
 
   and eval_cons_exp (note : typ') (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
-      value =
-    let value_h = eval_exp ctx exp_h in
-    let value_t = eval_exp ctx exp_t in
+      value backtrack =
+    let* value_h = eval_exp ctx exp_h in
+    let* value_t = eval_exp ctx exp_t in
     let values_t = Value.get_list value_t in
-    Value.make note (ListV (value_h :: values_t))
+    let value_res = Value.make note (ListV (value_h :: values_t)) in
+    Ok value_res
 
   (* Concatenation expression evaluation *)
 
   and eval_cat_exp (note : typ') (ctx : Ctx.t) (at : region) (exp_l : exp)
-      (exp_r : exp) : value =
-    let value_l = eval_exp ctx exp_l in
-    let value_r = eval_exp ctx exp_r in
+      (exp_r : exp) : value backtrack =
+    let* value_l = eval_exp ctx exp_l in
+    let* value_r = eval_exp ctx exp_r in
     let value_res =
       match (value_l.it, value_r.it) with
       | TextV s_l, TextV s_r -> TextV (s_l ^ s_r)
       | ListV values_l, ListV values_r -> ListV (values_l @ values_r)
       | _ -> error at "concatenation expects either two texts or two lists"
     in
-    Value.make note value_res
+    let value_res = Value.make note value_res in
+    Ok value_res
 
   (* Membership expression evaluation *)
 
   and eval_mem_exp (note : typ') (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-      value =
-    let value_e = eval_exp ctx exp_e in
-    let value_s = eval_exp ctx exp_s in
+      value backtrack =
+    let* value_e = eval_exp ctx exp_e in
+    let* value_s = eval_exp ctx exp_s in
     let values_s = Value.get_list value_s in
-    Value.make note (BoolV (List.exists (Value.eq value_e) values_s))
+    let mem = List.exists (Value.eq value_e) values_s in
+    let value_res = Value.make note (BoolV mem) in
+    Ok value_res
 
   (* Length expression evaluation *)
 
-  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value =
-    let value = eval_exp ctx exp in
+  and eval_len_exp (note : typ') (ctx : Ctx.t) (exp : exp) : value backtrack =
+    let* value = eval_exp ctx exp in
     let len =
       match value.it with
       | TextV s -> s |> String.length |> Bigint.of_int
@@ -517,27 +555,28 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                "length operation expects either a text or a list, but got %s"
                (Il.Print.string_of_value ~short:true value))
     in
-    Value.make note (NumV (`Nat len))
+    let value_res = Value.make note (NumV (`Nat len)) in
+    Ok value_res
 
   (* Dot expression evaluation *)
 
   and eval_dot_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (atom : atom) :
-      value =
-    let value_b = eval_exp ctx exp_b in
+      value backtrack =
+    let* value_b = eval_exp ctx exp_b in
     let fields = Value.get_struct value_b in
     let value_res =
       fields
       |> List.find (fun (atom_field, _) -> Atom.eq atom_field.it atom.it)
       |> snd
     in
-    value_res
+    Ok value_res
 
   (* Index expression evaluation *)
 
   and eval_idx_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-      value =
-    let value_b = eval_exp ctx exp_b in
-    let value_i = eval_exp ctx exp_i in
+      value backtrack =
+    let* value_b = eval_exp ctx exp_b in
+    let* value_i = eval_exp ctx exp_i in
     let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     let value_res =
       match value_b.it with
@@ -557,16 +596,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             (F.asprintf "indexing expects either a text or a list, but got %s"
                (Il.Print.string_of_value ~short:true value_b))
     in
-    value_res
+    Ok value_res
 
   (* Slice expression evaluation *)
 
   and eval_slice_exp (note : typ') (ctx : Ctx.t) (exp_b : exp) (exp_i : exp)
-      (exp_n : exp) : value =
-    let value_b = eval_exp ctx exp_b in
-    let value_i = eval_exp ctx exp_i in
+      (exp_n : exp) : value backtrack =
+    let* value_b = eval_exp ctx exp_b in
+    let* value_i = eval_exp ctx exp_i in
     let idx_l = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
-    let value_n = eval_exp ctx exp_n in
+    let* value_n = eval_exp ctx exp_n in
     let idx_n = value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
     let idx_h = idx_l + idx_n in
     let value_res =
@@ -596,83 +635,96 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             (F.asprintf "slicing expects either a text or a list, but got %s"
                (Il.Print.string_of_value ~short:true value_b))
     in
-    value_res
+    Ok value_res
 
   (* Update expression evaluation *)
 
-  and eval_access_path (ctx : Ctx.t) (value_b : value) (path : path) : value =
+  and eval_access_path (ctx : Ctx.t) (value_b : value) (path : path) :
+      value backtrack =
     match path.it with
-    | RootP -> value_b
-    | IdxP (path, exp_i) -> (
-        let value = eval_access_path ctx value_b path in
-        let value_i = eval_exp ctx exp_i in
+    | RootP -> Ok value_b
+    | IdxP (path, exp_i) ->
+        let* value = eval_access_path ctx value_b path in
+        let* value_i = eval_exp ctx exp_i in
         let idx = value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn in
-        match value.it with
-        | TextV s when idx < 0 || idx >= String.length s ->
-            error exp_i.at
-              (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
-        | TextV s ->
-            let s = String.get s idx |> String.make 1 in
-            Value.make Il.TextT (TextV s)
-        | ListV values when idx < 0 || idx >= List.length values ->
-            error exp_i.at
-              (F.asprintf "index %d out of bounds [0, %d)" idx
-                 (List.length values))
-        | ListV values -> List.nth values idx
-        | _ ->
-            error path.at
-              (F.asprintf "indexing expects either a text or a list, but got %s"
-                 (Il.Print.string_of_value ~short:true value)))
-    | SliceP (path, exp_i, exp_n) -> (
-        let value = eval_access_path ctx value_b path in
-        let value_i = eval_exp ctx exp_i in
+        let value_res =
+          match value.it with
+          | TextV s when idx < 0 || idx >= String.length s ->
+              error exp_i.at
+                (F.asprintf "index %d out of bounds [0, %d)" idx
+                   (String.length s))
+          | TextV s ->
+              let s = String.get s idx |> String.make 1 in
+              Value.make Il.TextT (TextV s)
+          | ListV values when idx < 0 || idx >= List.length values ->
+              error exp_i.at
+                (F.asprintf "index %d out of bounds [0, %d)" idx
+                   (List.length values))
+          | ListV values -> List.nth values idx
+          | _ ->
+              error path.at
+                (F.asprintf
+                   "indexing expects either a text or a list, but got %s"
+                   (Il.Print.string_of_value ~short:true value))
+        in
+        Ok value_res
+    | SliceP (path, exp_i, exp_n) ->
+        let* value = eval_access_path ctx value_b path in
+        let* value_i = eval_exp ctx exp_i in
         let idx_l =
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let value_n = eval_exp ctx exp_n in
+        let* value_n = eval_exp ctx exp_n in
         let idx_n =
           value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
         let idx_h = idx_l + idx_n in
-        match value.it with
-        | TextV s when idx_l < 0 || idx_h > String.length s ->
-            error exp_n.at
-              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-                 (String.length s))
-        | TextV s ->
-            let s_slice = String.sub s idx_l (idx_h - idx_l) in
-            Value.make Il.TextT (TextV s_slice)
-        | ListV values when idx_l < 0 || idx_h > List.length values ->
-            error exp_n.at
-              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-                 (List.length values))
-        | ListV values ->
-            let values_slice =
-              List.mapi
-                (fun idx value ->
-                  if idx_l <= idx && idx < idx_h then Some value else None)
-                values
-              |> List.filter_map Fun.id
-            in
-            Value.make path.note (ListV values_slice)
-        | _ ->
-            error path.at
-              (F.asprintf "slicing expects either a text or a list, but got %s"
-                 (Il.Print.string_of_value ~short:true value)))
+        let value_res =
+          match value.it with
+          | TextV s when idx_l < 0 || idx_h > String.length s ->
+              error exp_n.at
+                (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                   (String.length s))
+          | TextV s ->
+              let s_slice = String.sub s idx_l (idx_h - idx_l) in
+              Value.make Il.TextT (TextV s_slice)
+          | ListV values when idx_l < 0 || idx_h > List.length values ->
+              error exp_n.at
+                (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                   (List.length values))
+          | ListV values ->
+              let values_slice =
+                List.mapi
+                  (fun idx value ->
+                    if idx_l <= idx && idx < idx_h then Some value else None)
+                  values
+                |> List.filter_map Fun.id
+              in
+              Value.make path.note (ListV values_slice)
+          | _ ->
+              error path.at
+                (F.asprintf
+                   "slicing expects either a text or a list, but got %s"
+                   (Il.Print.string_of_value ~short:true value))
+        in
+        Ok value_res
     | DotP (path, atom) ->
-        let value = eval_access_path ctx value_b path in
+        let* value = eval_access_path ctx value_b path in
         let fields = value |> Value.get_struct in
-        fields
-        |> List.find (fun (atom_field, _) -> Atom.eq atom_field.it atom.it)
-        |> snd
+        let value_res =
+          fields
+          |> List.find (fun (atom_field, _) -> Atom.eq atom_field.it atom.it)
+          |> snd
+        in
+        Ok value_res
 
   and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
-      (value_n : value) : value =
+      (value_n : value) : value backtrack =
     match path.it with
-    | RootP -> value_n
+    | RootP -> Ok value_n
     | IdxP (path, exp_i) -> (
-        let value = eval_access_path ctx value_b path in
-        let value_i = eval_exp ctx exp_i in
+        let* value = eval_access_path ctx value_b path in
+        let* value_i = eval_exp ctx exp_i in
         let idx_target =
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
@@ -715,12 +767,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               (F.asprintf "indexing expects either a text or a list, but got %s"
                  (Sl.Print.string_of_value ~short:true value)))
     | SliceP (path, exp_i, exp_n) -> (
-        let value = eval_access_path ctx value_b path in
-        let value_i = eval_exp ctx exp_i in
+        let* value = eval_access_path ctx value_b path in
+        let* value_i = eval_exp ctx exp_i in
         let idx_l =
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let value_n = eval_exp ctx exp_n in
+        let* value_n = eval_exp ctx exp_n in
         let idx_n =
           value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
@@ -775,7 +827,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
               (F.asprintf "slicing expects either a text or a list, but got %s"
                  (Il.Print.string_of_value ~short:true value)))
     | DotP (path, atom) ->
-        let value = eval_access_path ctx value_b path in
+        let* value = eval_access_path ctx value_b path in
         let fields = value |> Value.get_struct in
         let fields =
           List.map
@@ -788,37 +840,48 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         eval_update_path ctx value_b path value
 
   and eval_upd_exp (_note : typ') (ctx : Ctx.t) (exp_b : exp) (path : path)
-      (exp_f : exp) : value =
-    let value_b = eval_exp ctx exp_b in
-    let value_f = eval_exp ctx exp_f in
+      (exp_f : exp) : value backtrack =
+    let* value_b = eval_exp ctx exp_b in
+    let* value_f = eval_exp ctx exp_f in
     eval_update_path ctx value_b path value_f
 
   (* Function call expression evaluation *)
 
   and eval_call_exp (_note : typ') (ctx : Ctx.t) (id : id) (targs : targ list)
-      (args : arg list) : value =
-    let+ value_res = invoke_func ctx id targs args in
-    value_res
+      (args : arg list) : value backtrack =
+    invoke_func ctx id targs args
 
   (* Iterated expression evaluation *)
 
   and eval_iter_exp_opt (note : typ') (ctx : Ctx.t) (exp : exp)
-      (vars : var list) : value =
-    let+ ctx_sub_opt = Ctx.sub_opt ctx vars in
+      (vars : var list) : value backtrack =
+    let* ctx_sub_opt = Ctx.sub_opt ctx vars in
     match ctx_sub_opt with
     | Some ctx_sub ->
-        let value = eval_exp ctx_sub exp in
-        Value.make note (OptV (Some value))
-    | None -> Value.make note (OptV None)
+        let* value = eval_exp ctx_sub exp in
+        let value_res = Value.make note (OptV (Some value)) in
+        Ok value_res
+    | None ->
+        let value_res = Value.make note (OptV None) in
+        Ok value_res
 
   and eval_iter_exp_list (note : typ') (ctx : Ctx.t) (exp : exp)
-      (vars : var list) : value =
-    let+ ctxs_sub = Ctx.sub_list ctx vars in
-    let values = List.map (fun ctx_sub -> eval_exp ctx_sub exp) ctxs_sub in
-    Value.make note (ListV values)
+      (vars : var list) : value backtrack =
+    let* ctxs_sub = Ctx.sub_list ctx vars in
+    let* values_rev =
+      List.fold_left
+        (fun values_rev ctx_sub ->
+          let* values_rev = values_rev in
+          let* value = eval_exp ctx_sub exp in
+          Ok (value :: values_rev))
+        (Ok []) ctxs_sub
+    in
+    let values = List.rev values_rev in
+    let value_res = Value.make note (ListV values) in
+    Ok value_res
 
   and eval_iter_exp (note : typ') (ctx : Ctx.t) (exp : exp) (iterexp : iterexp)
-      : value =
+      : value backtrack =
     let iter, vars = iterexp in
     match iter with
     | Opt -> eval_iter_exp_opt note ctx exp vars
@@ -826,13 +889,20 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Argument evaluation *)
 
-  and eval_arg (ctx : Ctx.t) (arg : arg) : value =
+  and eval_arg (ctx : Ctx.t) (arg : arg) : value backtrack =
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
-    | DefA id -> Value.make FuncT (FuncV id)
+    | DefA id ->
+        let value_res = Value.make FuncT (FuncV id) in
+        Ok value_res
 
-  and eval_args (ctx : Ctx.t) (args : arg list) : value list =
-    List.map (eval_arg ctx) args
+  and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =
+    List.fold_left
+      (fun values arg ->
+        let* values = values in
+        let* value = eval_arg ctx arg in
+        Ok (values @ [ value ]))
+      (Ok []) args
 
   (* Premise evaluation *)
 
@@ -862,7 +932,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (inputs : Hints.Input.t) : Ctx.t backtrack =
     let _, exps = notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
-    let values_input = eval_exps ctx exps_input in
+    let* values_input = eval_exps ctx exps_input in
     let* values_output = invoke_rel ctx id values_input in
     let ctx = assign_exps ctx exps_output values_output in
     Ok ctx
@@ -870,7 +940,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* If premise evaluation *)
 
   and eval_if_prem (ctx : Ctx.t) (exp_cond : exp) : Ctx.t backtrack =
-    let value_cond = eval_exp ctx exp_cond in
+    let* value_cond = eval_exp ctx exp_cond in
     let cond = Value.get_bool value_cond in
     if cond then Ok ctx
     else
@@ -883,7 +953,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
     let _, exps_input = notexp in
-    let values_input = eval_exps ctx exps_input in
+    let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
     | Err _ as backtrack -> backtrack
@@ -896,7 +966,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
     let _, exps_input = notexp in
-    let values_input = eval_exps ctx exps_input in
+    let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ ->
         back_unmatch id.at
@@ -908,7 +978,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t backtrack
       =
-    let value = eval_exp ctx exp_r in
+    let* value = eval_exp ctx exp_r in
     let ctx = assign_exp ctx exp_l value in
     Ok ctx
 
@@ -974,7 +1044,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Debug premise evaluation *)
 
   and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t backtrack =
-    let value = eval_exp ctx exp in
+    let* value = eval_exp ctx exp in
     print_endline
     @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
     print_endline @@ Il.Print.string_of_value value;
@@ -1038,7 +1108,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (* Evaluate the premises *)
       let* ctx_local = eval_prems ctx_local (prems_input @ prems) in
       (* Evaluate the output expressions *)
-      let values_output = eval_exps ctx_local exps_output in
+      let* values_output = eval_exps ctx_local exps_output in
       Ok values_output
     in
     let do_backtrack_rulepath (ctx : Ctx.t) (id_rulegroup : id)
@@ -1145,7 +1215,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           List.map (Typ.subst_typ theta) targs
     in
     (* Evaluate arguments *)
-    let values_input = eval_args ctx args in
+    let* values_input = eval_args ctx args in
     (* Invoke the function *)
     invoke_func_with_values ctx id targs values_input
 
@@ -1228,7 +1298,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
           (exp_output : exp) : value backtrack =
         let* ctx_local = eval_prems ctx_local prems in
-        let value_output = eval_exp ctx_local exp_output in
+        let* value_output = eval_exp ctx_local exp_output in
         Ok value_output
       in
       tablerows
@@ -1300,7 +1370,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (* Try evaluating the clause *)
       let* ctx_local = eval_prems ctx_local prems in
       (* Evaluate the output expression *)
-      let value_output = eval_exp ctx_local exp_output in
+      let* value_output = eval_exp ctx_local exp_output in
       Ok value_output
     in
     let do_backtrack_clause (ctx : Ctx.t) (idx_clause : int) (clause : clause) :
@@ -1400,7 +1470,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Initialization *)
 
-  let init ~(det : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
+    if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value =
       let henv = Interface.Hint.hints_of_spec_il spec in
       Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
