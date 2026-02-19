@@ -53,7 +53,7 @@ the specification parser and the high-level architecture of the tool.
   ```shell
   $ apt-get install creduce
   ```
-  Apply the patch in `creduce-patches/creduce` to adapt it to our use case.
+  <!-- Apply the patch in `creduce-patches/creduce` to adapt it to our use case. -->
   Note that `creduce` is only necessary for the test generation backend, so you
   can skip this step if you only want to use the specification and the
   simulation features.
@@ -66,7 +66,7 @@ the specification parser and the high-level architecture of the tool.
 * Install `opam` version 2.0.5 or higher following the instructions [here](https://ocaml.org/docs/installing-ocaml).
 
 * Install `creduce` using [Homebrew](https://formulae.brew.sh/formula/creduce).
-  Apply the patch in `creduce-patches/creduce` to adapt it to our use case.
+  <!-- Apply the patch in `creduce-patches/creduce` to adapt it to our use case. -->
   Note that `creduce` is only necessary for the test generation backend, so you
   can skip this step if you only want to use the specification and the
   simulation features.
@@ -166,6 +166,11 @@ $ ./p4spectec run spec-concrete/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [F
 $ ./p4spectec run spec-concrete/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
 ```
 
+e.g., `$ ./p4spectec run spec-concrete/*/*.watsup -rel Program_ok -i
+p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -sl` type
+checks the `basic_routing-bmv2.p4` program using the relation `Program_ok`
+specified in the spec.
+
 ### Running the specification against packet inputs
 
 We currently support the V1Model and eBPF architectures, and the STF format for specifying input/output packets.
@@ -173,10 +178,17 @@ We currently support the V1Model and eBPF architectures, and the STF format for 
 
 ```shell
 # To run the IL
-$ ./p4spectec sim spec-concrete/*/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
+$ ./p4spectec sim spec-concrete/*/*.watsup -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
 # To run the SL
-$ ./p4spectec sim spec-concrete/*/*.watsup -arch v1model -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
+$ ./p4spectec sim spec-concrete/*/*.watsup -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
 ```
+
+e.g., `$ ./p4spectec sim spec-concrete/*/*.watsup -arch v1model -i
+p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -stf
+testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf -sl` runs the
+`basic_routing-bmv2.p4` program on the input packet specified in
+`basic_routing-bmv2_1.stf`, and checks if the output packet matches the
+expected output specified in the same STF file.
 
 ### To initiate a fuzz loop generating (intentionally) ill-typed P4 programs
 
@@ -184,11 +196,15 @@ P4-SpecTec also supports fuzzing negative type checker tests for P4 type checker
 i.e., it can generate various ill-typed P4 programs that should be rejected by the type checker.
 
 ```shell
+$ mkdir [GEN_DIR]
 $ ./p4spectec testgen spec-concrete/*/*.watsup -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-dir [BOOT_DIR]
 ```
 
-This will generate P4 programs in the directory `[GEN_DIR]` using the seed files in the directory `[BOOT_DIR]`.
-`[NUM]` is the number of fuzz cycles to run.
+This will generate P4 programs in the directory `[GEN_DIR]` using the seed
+files in the directory `[BOOT_DIR]`. `[NUM]` is the number of fuzz cycles to
+run. For instance, you may set `[BOOT_DIR]` to `p4c/testdata/p4_16_samples`,
+and `[NUM]` to `10` to run 10 fuzzing iterations starting from the sample P4
+programs in `p4c/testdata/p4_16_samples`.
 
 After the fuzz loop, you may find the generated P4 programs in the directory `[GEN_DIR]`, with the log file `fuzz.log`,
 query files for mutations `query.log` and an initial coverage file `boot.coverage`.
