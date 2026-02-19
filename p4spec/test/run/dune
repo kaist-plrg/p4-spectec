@@ -1,0 +1,155 @@
+;; P4 static semantics tests
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_static_pos_il.expected p4_static_pos_il.actual))
+   (ignore-outputs
+    (diff p4_static_pos_sl.expected p4_static_pos_sl.actual))
+   (ignore-outputs
+    (diff p4_static_neg_il.expected p4_static_neg_il.actual))
+   (ignore-outputs
+    (diff p4_static_neg_sl.expected p4_static_neg_sl.actual)))))
+
+(rule
+ (alias p4static)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_static_pos_il.expected p4_static_pos_il.actual))
+   (ignore-outputs
+    (diff p4_static_pos_sl.expected p4_static_pos_sl.actual))
+   (ignore-outputs
+    (diff p4_static_neg_il.expected p4_static_neg_il.actual))
+   (ignore-outputs
+    (diff p4_static_neg_sl.expected p4_static_neg_sl.actual)))))
+
+(rule
+ (alias p4static-il)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_static_pos_il.expected p4_static_pos_il.actual))
+   (ignore-outputs
+    (diff p4_static_neg_il.expected p4_static_neg_il.actual)))))
+
+(rule
+ (alias p4static-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff p4_static_pos_sl.expected p4_static_pos_sl.actual))
+   (ignore-outputs
+    (diff p4_static_neg_sl.expected p4_static_neg_sl.actual)))))
+
+;; Rules to generate outputs
+
+(rule
+ (target p4_static_pos_il.actual)
+ (action
+  (with-stdout-to
+   p4_static_pos_il.actual
+   (with-stderr-to
+    p4_static_pos_il.err
+    (run
+     ./test.exe
+     run
+     -il
+     -det
+     -s
+     ../../../../../spec-concrete
+     -rel
+     Program_inst
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p4-dir
+     ../../../../../testdata/custom)))))
+
+(rule
+ (target p4_static_neg_il.actual)
+ (action
+  (with-stdout-to
+   p4_static_neg_il.actual
+   (with-stderr-to
+    p4_static_neg_il.err
+    (run
+     ./test.exe
+     run
+     -il
+     -det
+     -s
+     ../../../../../spec-concrete
+     -rel
+     Program_ok
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target p4_static_pos_sl.actual)
+ (action
+  (with-stdout-to
+   p4_static_pos_sl.actual
+   (with-stderr-to
+    p4_static_pos_sl.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -det
+     -s
+     ../../../../../spec-concrete
+     -rel
+     Program_inst
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p4-dir
+     ../../../../../testdata/custom)))))
+
+(rule
+ (target p4_static_neg_sl.actual)
+ (action
+  (with-stdout-to
+   p4_static_neg_sl.actual
+   (with-stderr-to
+    p4_static_neg_sl.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -det
+     -s
+     ../../../../../spec-concrete
+     -rel
+     Program_ok
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_errors
+     -neg)))))

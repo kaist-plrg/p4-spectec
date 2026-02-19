@@ -1,0 +1,67 @@
+;; P4 parsing tests
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff parser_pos.expected parser_pos.actual))
+   (ignore-outputs
+    (diff parser_neg.expected parser_neg.actual)))))
+
+(rule
+ (alias p4parse)
+ (action
+  (progn
+   (ignore-outputs
+    (diff parser_pos.expected parser_pos.actual))
+   (ignore-outputs
+    (diff parser_neg.expected parser_neg.actual)))))
+
+;; Rules to generate outputs
+
+(rule
+ (target parser_pos.actual)
+ (action
+  (with-stdout-to
+   parser_pos.actual
+   (with-stderr-to
+    parser_pos.err
+    (run
+     ./test.exe
+     parser
+     -s
+     ../../../../../spec-concrete
+     -i
+     ../../../../../p4c/p4include
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p4-dir
+     ../../../../../testdata/custom)))))
+
+(rule
+ (target parser_neg.actual)
+ (action
+  (with-stdout-to
+   parser_neg.actual
+   (with-stderr-to
+    parser_neg.err
+    (run
+     ./test.exe
+     parser
+     -i
+     ../../../../../p4c/p4include
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_errors
+     -s
+     ../../../../../spec-concrete)))))
