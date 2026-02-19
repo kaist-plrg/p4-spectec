@@ -1260,7 +1260,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Builtin.Call.invoke (fun _ -> ()) id targs values_input
         in
         Ok value_output
-      with Util.Error.BuiltinError (at, msg) -> back_err at msg
+      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
     if
       Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)

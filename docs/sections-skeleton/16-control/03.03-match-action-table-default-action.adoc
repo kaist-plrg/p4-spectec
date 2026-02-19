@@ -1,0 +1,91 @@
+[#sec-table-default-action]
+==== Table default actions
+
+// 921
+The default action for a table is an action that is invoked automatically by
+the match-action unit whenever the lookup table does not find a match for the
+supplied key.
+
+// 922
+If present, the `default_action` property _must_ appear after the `action`
+property. It may be declared as `const`, indicating that it cannot be changed
+dynamically by the control-plane. The `default action` _must_ be one of the
+actions that appear in the actions list. In particular, the expressions passed
+as `in`, `out`, or `inout` parameters must be syntactically identical to the
+expressions used in one of the elements of the `actions` list.
+
+// 923
+For example, in the above `table` we could set the default action as follows
+(marking it also as constant):
+
+// 924
+[source,p4]
+----
+const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
+----
+
+// 925
+Note that the specified default action must supply arguments for the
+control-plane-bound parameters (i.e., the directionless parameters), since the
+action is synthesized at compilation time. The expressions supplied as
+arguments for parameters with a direction (`in`, `inout`, or `out`) are
+evaluated when the action is invoked while the expressions supplied as
+arguments for directionless parameters are evaluated at compile time.
+
+// 926
+Continuing the example from the previous section, the following are several
+legal and illegal specifications of default actions for the `table t`:
+
+// 927
+[source,p4]
+----
+  default_action = a(5); // OK - no control-plane parameters
+  // default_action = a(z); -- illegal, a's x parameter is already bound to 5
+  default_action = b(z,8w8); // OK - bind b's data parameter to 8w8
+  // default_action = b(z); -- illegal, b's data parameter is not bound
+  // default_action = b(x, 3); -- illegal: x parameter of b bound to x instead of z
+----
+
+===== Type checking
+
+// Added
+A table default action property is type checked as follows:
+
+${rulegroup-source: TableProperty_ok/default-action}
+${rulegroup-prose: TableProperty_ok/default-action}
+
+// Added
+After type checking, a table default action property is represented in P4~IR~
+as:
+
+// Added
+${syntax: tableDefaultActionPropertyIR tableActionReferenceIR}
+
+// Added
+Table default actions are type checked with the following relation:
+
+// Added
+${relation-title-source: TableDefaultAction_ok}
+${relation-title-prose: TableDefaultAction_ok}
+
+// Added
+${rulegroup-source: TableDefaultAction_ok}
+${rulegroup-prose: TableDefaultAction_ok}
+
+// Added
+To check that a default action conforms to the calling convention, the
+following relation is used:
+
+// Added
+${relation-title-source: Call_action_default_ok}
+${relation-title-prose: Call_action_default_ok}
+
+// Added
+${rulegroup-source: Call_action_partial_ok}
+${rulegroup-prose: Call_action_partial_ok}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: TableProperty_inst/tableDefaultActionPropertyIR}
+${rulegroup-prose: TableProperty_inst/tableDefaultActionPropertyIR}

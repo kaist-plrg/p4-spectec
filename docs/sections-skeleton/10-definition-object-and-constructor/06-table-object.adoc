@@ -38,45 +38,11 @@ can be extended by target-specific compilers as needed. Note that duplicated
 properties are invalid and the compiler should reject them.
 
 // 888 - Modified
-${syntax: tableDeclaration tableProperty}
+${syntax: tableDeclaration
+          tablePropertyList tableProperty}
 
-// 889
-The standard table properties include:
-
-// 890
-* `key`: An expression that describes how the key used for look-up
-  is computed.
-* `actions`: A list of all actions that may be found in the table.
-
-// 891
-In addition, the tables may optionally define the following properties,
-
-// 892
-* `default_action`: an action to execute when the lookup in the
-  lookup table fails to find a match for the key used.
-* `size`: an integer specifying the desired size of the table.
-* `entries`: entries that are initially added to a table when the P4
-  program is loaded, some or all of which may be unchangeable by the
-  control plane software.
-* `largest_priority_wins` - Only useful for some tables with the
-  `entries` property.  See <<sec-entries>> for details.
-* `priority_delta` - Only useful for some tables with the `entries`
-  property.  See <<sec-entries>> for details.
-
-// 893
-The compiler must set the `default_action` to `NoAction` (and also insert it
-into the list of `actions`) for tables that do not define the `default_action`
-property. Hence, all tables can be thought of as having a `default_action`
-property, either implicitly or explicitly.
-
-// 894
-In addition, tables may contain architecture-specific properties (see
-<<sec-additional-table-properties>>).
-
-// 895
-A property marked as `const` cannot be changed dynamically by the control
-plane. The `key`, `actions`, and `size` properties cannot be modified so the
-`const` keyword is not needed for these.
+// Added
+See <<sec-match-action-table>> for details on the table properties.
 
 // Added
 A `table` declaration creates a table object, thus table constructors are not

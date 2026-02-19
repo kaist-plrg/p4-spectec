@@ -304,14 +304,14 @@ relation ParserLocalDecl_ok:
                  : typingContext parserLocalDeclarationIR
   hint(input %0 %1)
   hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "the updated context" %2 "and the typed parser local declaration" %3)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 relation ParserLocalDeclList_ok:
   typingContext |- parserLocalDeclarationList
                  : typingContext parserLocalDeclarationIR*
   hint(input %0 %1)
   hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "the updated context" %2 "and the typed parser local declarations" %3)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 ;;
 ;;;; Control typing
@@ -321,57 +321,59 @@ relation TableKey_ok:
   typingContext tableContext |- tableKey : tableContext tableKeyIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table key" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableKeys_ok:
   typingContext tableContext |- tableKey* : tableContext tableKeyListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table keys" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation Call_action_partial_ok:
   typingContext |- parameterIR* `@ argumentListIR
                  : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under context" %0)
-  hint(prose_out "the typed argument list" %3)
+  hint(prose_in "typing the partial action call on" %1 "with" %2#", under context" %0)
+  hint(prose_out "parameters" %3 "for data-plane," %4 "for control-plane,"
+                 "and casted" %5)
 
 relation TableAction_ok:
   typingContext tableContext |- tableAction : tableContext tableActionIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table action" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableActions_ok:
   typingContext tableContext |- tableAction* : tableContext tableActionListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table actions" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation Call_action_default_ok:
   typingContext |- parameterIR* `@ argumentListIR
                  : parameterIR* `, parameterIR* `@ argumentListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under context" %0)
-  hint(prose_out "the typed argument list" %3)
+  hint(prose_in "typing the action call on" %1 "with" %2#", under context" %0)
+  hint(prose_out "parameters" %3 "for data-plane," %4 "for control-plane,"#
+                 "and casted" %5)
 
 relation TableDefaultAction_ok:
   typingContext tableContext |- initializer : tableActionReferenceIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the typed default action" %3)
+  hint(prose_out %3)
 
 relation TableEntry_keyset_ok:
   typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed keyset expression" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableEntry_action_ok:
   typingContext tableContext |- tableActionReference : tableActionReferenceIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the typed table action reference" %3)
+  hint(prose_out %3)
 
 relation TableEntry_priority_ok:
   typingContext tableContext tableEntryState |- tableEntryPriority?
@@ -379,57 +381,57 @@ relation TableEntry_priority_ok:
   hint(input %0 %1 %2 %3)
   hint(prose_in "typing" %3#", under context" %0 "and table context" %1
              #", and table entry state" %2)
-  hint(prose_out "the updated table context" %4 "and the typed table entry priority" %5)
+  hint(prose_out "the updated table context" %4 "and" %5)
 
 relation TableEntry_ok:
   typingContext tableContext |- tableEntry : tableContext tableEntryIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table entry" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableEntries_ok:
   typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table entries" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableProperty_ok:
   typingContext tableContext |- tableProperty : tableContext tablePropertyIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table property" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation TableProperties_ok:
   typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated table context" %3 "and the typed table properties" %4)
+  hint(prose_out "the updated table context" %3 "and" %4)
 
 relation Table_ok:
   typingContext |- tableProperty* : tableContext tablePropertyListIR
   hint(input %0 %1)
   hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "the updated context" %2 "and the typed table" %3)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 relation TableType_ok:
   typingContext tableContext |- name : typingContext typeIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "the updated context" %3 "and the table type" %4)
+  hint(prose_out "the updated context" %3 "and type of the table" %4)
 
 relation ControlLocalDecl_ok:
   typingContext |- controlLocalDeclaration
                  : typingContext controlLocalDeclarationIR
   hint(input %0 %1)
   hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "the updated context" %2 "and the typed control local declaration" %3)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 relation ControlLocalDeclList_ok:
   typingContext |- controlLocalDeclarationList
                  : typingContext controlLocalDeclarationIR*
   hint(input %0 %1)
   hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "the updated context" %2 "and the typed control local declarations" %3)
+  hint(prose_out "the updated context" %2 "and" %3)
 
 ;;
 ;;;; Declaration typing
@@ -516,8 +518,9 @@ relation Call_convention_ok:
   cursor typingContext actctxt |- parameterIR* `@ argumentListIR
                                 : argumentListIR
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "checking the calling convention of" %4 "applied to parameter types" %3
-             #", under cursor" %0#", context" %1 #", and action context" %2)
+  hint(prose_in "checking the calling convention of" %4 "applied on" %3#
+                ", under cursor" %0#", context" %1 #", and action context" %2)
+  hint(prose_out "the casted" %5)
 
 ;;
 ;;;; Callable typing
