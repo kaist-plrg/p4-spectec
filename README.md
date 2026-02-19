@@ -91,7 +91,7 @@ the specification parser and the high-level architecture of the tool.
 #### Compiling the Project
 
 ```shell
-$ make build-spec
+$ make build
 ```
 
 This creates an executable `p4spectec` in the project root.
