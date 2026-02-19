@@ -1,0 +1,38 @@
+name: CI (concrete)
+
+on:
+  push:
+    branches: [ concrete ]
+
+jobs:
+  test-fast:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 1
+
+    - name: Initialize p4c submodule
+      run: git submodule update --init p4c
+
+    - name: Set up OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: 5.1.0
+        dune-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install OCaml dependencies
+      run: |
+        opam update
+        opam install dune bignum menhir core core_unix bisect_ppx yojson ppx_deriving_yojson
+        opam install . --deps-only --with-test
+
+    - name: Run fast tests
+      run: make test-fast
