@@ -453,9 +453,9 @@ let run_testgen_command =
      and randseed =
        flag "-seed" (optional int) ~doc:"seed for random number generator"
      and bootdir =
-       flag "-boot-dir" (optional string) ~doc:"seed p4 directory for cold boot"
+       flag "-boot-dir" (optional string) ~doc:"seed p4 directory for boot"
      and filename_boot =
-       flag "-boot-file" (optional string) ~doc:"coverage file for warm boot"
+       flag "-boot-file" (optional string) ~doc:"coverage file for boot"
      and random = flag "-random" no_arg ~doc:"randomize AST selection"
      and hybrid =
        flag "-hybrid" no_arg
@@ -480,7 +480,7 @@ let run_testgen_command =
            | Some _, Some _ ->
                raise
                  (CommandError
-                    "Error: should specify only one of -cold or -warm")
+                    "Error: should specify only one of -boot-dir or -boot-file")
            | None, None ->
                raise
                  (CommandError "Error: should specify either -cold or -warm")
