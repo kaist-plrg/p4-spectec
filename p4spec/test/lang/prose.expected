@@ -1039,6 +1039,17 @@ xref:unroll_typeIR[``typeIR`` with typedefs unrolled]
 . Otherwise:
  .. Return ``typeIR``.
 
+xref:unroll_aliasType[``typeIR`` with aliases unrolled]
+
+
+. If let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``:
+ .. Return xref:unroll_aliasType[``typeIR'`` with aliases unrolled].
+. Else:
+ .. Let ``+TYPEDEF+`` ``++_++`` ``typeIR'`` be ``typeIR``.
+ .. Return xref:unroll_aliasType[``typeIR'`` with aliases unrolled].
+. Otherwise:
+ .. Return ``typeIR``.
+
 xref:is_defaultable_typeIR[``typeIR''`` can be default-initialized]:
 [cols="2", options="header"]
 |===
@@ -1307,7 +1318,7 @@ xref:parameterListIR_of_callableTypeDefIR[The parameters of ``callableTypeDefIR`
  .. Let ``methodTypeDefIR`` be ``callableTypeDefIR``.
  .. Return ``xref:parameterListIR_of_methodTypeDefIR[$parameterListIR_of_methodTypeDefIR(methodTypeDefIR)]``.
 
-xref:parameterListIR_of_actionTypeDefIR[$parameterListIR_of_actionTypeDefIR(+ACTION+ ++_++ +(+ parameterIR^{asterisk}^ +)+)]
+xref:parameterListIR_of_actionTypeDefIR[$parameterListIR_of_actionTypeDefIR(++_++ +ACTION+ ++_++ +(+ parameterIR^{asterisk}^ +)+)]
 
 
 . Return ``parameterIR^{asterisk}^``.
@@ -1595,7 +1606,7 @@ xref:free_parameterIR[Free type identifiers in ``++_++`` ``++_++`` ``typeIR`` ``
 xref:free_callableTypeIR[Free type identifiers in ``callableTypeIR``]
 
 
-. If let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeIR``:
+. If let ``++_++`` ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeIR``:
  .. Let ``bound^{asterisk}^`` be the list of ``bound``, obtained by repeating:
 +
 --
@@ -2022,7 +2033,7 @@ xref:subst_callableTypeIR[``callableTypeIR`` substituted by ``set<pair<typeId,``
 xref:subst_callableTypeIR'[``callableTypeIR`` substituted by a non-empty ``theta``]
 
 
-. If let ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeIR``:
+. If let ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
 --
@@ -2030,7 +2041,7 @@ xref:subst_callableTypeIR'[``callableTypeIR`` substituted by a non-empty ``theta
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
- .. Return ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR~subst~^{asterisk}^`` ``+)+``.
+ .. Return ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR~subst~^{asterisk}^`` ``+)+``.
 . Else if let ``+FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR`` be ``callableTypeIR``:
  .. Let ``parameterIR~subst~^{asterisk}^`` be the list of ``parameterIR~subst~``, obtained by repeating:
 +
@@ -4417,6 +4428,85 @@ xref:find_non_overloadeds[$find_non_overloadeds<V>(set<pair<callableId, V>>, nam
   ... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
   ... Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
 
+xref:name_annotation[$name_annotation(annotationList)]
+
+
+. Let ``annotation^{asterisk}^`` be xref:flatten_annotationList[the list of annotations in ``annotationList``].
+. Let ``nameIR~opt~^?^^{asterisk}^`` be the list of ``nameIR~opt~^?^``, obtained by repeating:
++
+--
+ ** Let ``nameIR~opt~^?^`` be ``xref:name_annotation_opt[$name_annotation_opt(annotation)]``.
+--
++
+for each ``annotation`` in ``annotation^{asterisk}^``
+. Let ``nameIR~found~^{asterisk}^^{asterisk}^`` be ``xref:opt_as_seq_[$opt_as_seq_<nameIR>(nameIR~opt~^?^)]^{asterisk}^``.
+. Return ``xref:concat_[$concat_<nameIR>(nameIR~found~^{asterisk}^^{asterisk}^)]``.
+
+xref:name_annotation_opt[$name_annotation_opt(annotation)]
+
+
+. If let ``+@+`` ``name`` ``+(+`` ``annotationBody`` ``+)+`` be ``annotation``:
+ .. Check that ``"name"`` is equal to xref:name[the name of ``name``].
+ .. Let ``annotationBody'`` be ``annotationBody``.
+ .. Check that ``annotationBody'`` matches pattern ``%`` ```` ``%``.
+ .. Let ``annotationBody''`` ``annotationToken`` be ``annotationBody'``.
+ .. Check that ``annotationBody''`` is ```EMPTY``.
+ .. Let ``nameIR`` be xref:print_[``annotationToken`` as text].
+ .. Let ``text'`` be xref:strip_suffix[the text ``nameIR`` with the suffix ``"\""`` removed].
+ .. Let ``text`` be xref:strip_prefix[the text ``text'`` with the prefix ``"\""`` removed].
+ .. Return ``text``.
+. Otherwise:
+ .. Return ``·``.
+
+xref:name_annotation_default[$name_annotation_default(annotationList, nameIR)]
+
+
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
+. If let ``nameIR~found~`` be ``nameIR'^{asterisk}^``:
+ .. Return ``nameIR~found~``.
+. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+ .. Return ``nameIR``.
+
+xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
+
+
+. If ``annotationList`` is ```EMPTY``:
+ .. Return ``·``.
+. Else:
+ .. Let ``annotation`` be ``annotationList``.
+ .. Let ``annotation'`` be ``annotation``.
+ .. Check that ``annotation'`` matches pattern ``@`` ``%`` ``(`` ``%`` ``)``.
+ .. Let ``+@+`` ``name`` ``+(+`` ``annotationBody`` ``+)+`` be ``annotation'``.
+ .. If ``"name"`` is equal to xref:name[the name of ``name``]:
+  ... Return ``annotation``.
+ .. Else:
+  ... Return ``·``.
+. If let ``annotationListNonEmpty`` be ``annotationList``:
+ .. Check that ``annotationListNonEmpty`` matches pattern ``%`` ```` ``%``.
+ .. Let ``annotationListNonEmpty'`` ``annotation`` be ``annotationListNonEmpty``.
+ .. If ``·`` is equal to ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``:
+  ... Return ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationListNonEmpty')]``.
+ .. Let ``annotation'^?^`` be ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.
+ .. If let ``annotation~found~`` be ``annotation'^?^``:
+  ... Return ``annotation~found~``.
+. Otherwise:
+ .. Return ``·``.
+
+xref:add_annotationList[$add_annotationList(annotationList, annotation^?^)]
+
+
+. If ``annotation^?^`` is none:
+ .. Return ``annotationList``.
+. If ``annotationList`` is ```EMPTY``:
+ .. Check that ``annotation^?^`` is defined.
+ .. Let ``annotation'`` be ``annotation^?^``.
+ .. Return ``annotation'``.
+. Else:
+ .. Let ``annotationListNonEmpty`` be ``annotationList``.
+ .. Check that ``annotation^?^`` is defined.
+ .. Let ``annotation'`` be ``annotation^?^``.
+ .. Return ``annotationListNonEmpty`` ``annotation'``.
+
 xref:subexpressions_of_typedExpressionIR[The sub-expressions of ``typedExpressionIR``]
 
 
@@ -5234,7 +5324,7 @@ xref:CallableType_wf[CallableType_wf]:
 
 * ``callableTypeIR`` is a well-formed callable type, with bound type variables ``B``
 
-xref:CallableType_wf[``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` is a well-formed callable type, with bound type variables ``B`` when]:
+xref:CallableType_wf[``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` is a well-formed callable type, with bound type variables ``B`` when]:
 
 . Check that xref:ParameterType_wf[``parameterIR`` is a well-formed parameter type, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . Check that ``~xref:is_optional_parameterIR[$is_optional_parameterIR(parameterIR)]``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
@@ -8640,19 +8730,23 @@ xref:TableAction_ok[Typing ``annotationList`` ``tableActionReference`` ``+;+``, 
  .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
  .. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
  .. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
- .. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let ``annotationList~action~`` ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let ``annotation~name~^?^`` be ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList~action~)]``.
+ .. Let ``annotationList~update~`` be ``xref:add_annotationList[$add_annotationList(annotationList,`` ``annotation~name~^?^)]``.
  .. Let parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR^{asterisk}^`` be
 * the result of xref:Call_action_partial_ok[typing the partial action call on ``parameterIR^{asterisk}^`` with ``·``, under context ``TC``].
  .. Check that ``argumentIR^{asterisk}^`` is an empty list.
  .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``·`` added].
- .. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
  .. Result in the updated table context ``TBLC~1~`` and ``tableActionIR``.
 . Else:
  .. Let ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+`` be ``tableActionReference``.
  .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
  .. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``TC``].
  .. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
- .. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let ``annotationList~action~`` ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``callableTypeDefIR``.
+ .. Let ``annotation~name~^?^`` be ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList~action~)]``.
+ .. Let ``annotationList~update~`` be ``xref:add_annotationList[$add_annotationList(annotationList,`` ``annotation~name~^?^)]``.
  .. Let ``argument^{asterisk}^`` be xref:flatten_argumentList[the list of arguments in ``argumentList``].
  .. Let ``argumentIR^{asterisk}^`` be the list of ``argumentIR``, obtained by repeating:
 +
@@ -8665,7 +8759,7 @@ for each ``argument`` in ``argument^{asterisk}^``
  .. Let parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_action_partial_ok[typing the partial action call on ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
  .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``argumentIR~cast~^{asterisk}^`` added].
- .. Let ``tableActionIR`` be ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
  .. Result in the updated table context ``TBLC~1~`` and ``tableActionIR``.
 
 xref:TableActions_ok[TableActions_ok]:
@@ -9336,7 +9430,7 @@ xref:ActionDecl_ok[Typing ``annotationList`` ``+ACTION+`` ``name`` ``+(+`` ``par
 * the result of xref:Block_ok[typing ``blockStatement``, under context ``TC~2~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
 . Let ``callableId`` be xref:callableId[the callable identifier for ``name`` ``+(+`` ``parameterList`` ``+)+``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
-. Let ``actionTypeDefIR`` be ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
+. Let ``actionTypeDefIR`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
 . Check that xref:CallableTypeDef_wf[``actionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
 . Let ``TC~3~`` be xref:add_callableDef_non_overload_t[``TC~0~`` where ``callableId`` to ``actionTypeDefIR`` is added as a non-overloaded callable to the ``p`` layer].
@@ -10154,7 +10248,7 @@ xref:Call_ok[Call_ok]:
 
 xref:Call_ok[Typing the invocation ``actionTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
-. Let ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``actionTypeIR``.
+. Let ``++_++`` ``+ACTION+`` ``++_++`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``actionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_action[$callable_action(p,`` ``TC)]``.
 . Let the casted ``argumentIR~cast~^{asterisk}^`` be
@@ -12362,63 +12456,6 @@ xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(+KEY
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 . Return xref:exists_[some of ``(`` ``nameIR~matchKind~`` ``=`` ``"ternary"`` ``)^{asterisk}^`` is true].
 
-xref:name_annotation_of_tableKeyIR[$name_annotation_of_tableKeyIR(annotationList)]
-
-
-. Let ``annotation^{asterisk}^`` be xref:flatten_annotationList[the list of annotations in ``annotationList``].
-. Let ``nameIR~name~^?^^{asterisk}^`` be the list of ``nameIR~name~^?^``, obtained by repeating:
-+
---
- ** Let ``nameIR~name~^?^`` be ``xref:name_annotation_of_tableKeyIR'[$name_annotation_of_tableKeyIR'(annotation)]``.
---
-+
-for each ``annotation`` in ``annotation^{asterisk}^``
-. Let ``nameIR^?^^{asterisk}^`` be ``nameIR~name~^?^^{asterisk}^``.
-. If let ``nameIR'^?^`` be ``nameIR^?^^{asterisk}^``:
- .. Check that ``nameIR'^?^`` is defined.
- .. Let ``nameIR~name_found~`` be ``nameIR'^?^``.
- .. Return ``nameIR~name_found~``.
-. Otherwise:
- .. Return ``·``.
-
-xref:name_annotation_of_tableKeyIR'[$name_annotation_of_tableKeyIR'(annotation)]
-
-
-. If let ``+@+`` ``name`` ``+(+`` ``annotationBody`` ``+)+`` be ``annotation``:
- .. Check that ``"name"`` is equal to xref:name[the name of ``name``].
- .. Let ``annotationBody'`` be ``annotationBody``.
- .. Check that ``annotationBody'`` matches pattern ``%`` ```` ``%``.
- .. Let ``annotationBody''`` ``annotationToken`` be ``annotationBody'``.
- .. Check that ``annotationBody''`` is ```EMPTY``.
- .. Let ``nameIR~name~`` be xref:print_[``annotationToken`` as text].
- .. Let ``text'`` be xref:strip_suffix[the text ``nameIR~name~`` with the suffix ``"\""`` removed].
- .. Let ``text`` be xref:strip_prefix[the text ``text'`` with the prefix ``"\""`` removed].
- .. Return ``text``.
-. Otherwise:
- .. Return ``·``.
-
-xref:name_annotation_default[$name_annotation_default(annotationList, nameIR)]
-
-
-. Let ``nameIR'^?^`` be ``xref:name_annotation_of_tableKeyIR[$name_annotation_of_tableKeyIR(annotationList)]``.
-. If let ``nameIR~found~`` be ``nameIR'^?^``:
- .. Return ``nameIR~found~``.
-. If ``·`` is equal to ``xref:name_annotation_of_tableKeyIR[$name_annotation_of_tableKeyIR(annotationList)]``:
- .. Return ``nameIR``.
-
-xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +:+ nameIR~matchKind~ annotationList +;+)]
-
-
-. Let ``nameIR^?^`` be ``xref:name_annotation_of_tableKeyIR[$name_annotation_of_tableKeyIR(annotationList)]``.
-. If let ``nameIR~key~`` be ``nameIR^?^``:
- .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
-. If ``·`` is equal to ``xref:name_annotation_of_tableKeyIR[$name_annotation_of_tableKeyIR(annotationList)]``:
- .. Let ``text`` be xref:print_[``typedExpressionIR`` as text].
- .. Let ``nameIR~key~`` be xref:strip_all_whitespace[the text ``text`` with all whitespace removed].
- .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
-
 xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, text, typeIR ), tableKeyInterface^{asterisk}^)]
 
 
@@ -12436,24 +12473,26 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``+`BIN+`` ``text~key_value~`` be ``tableKeyValueInterface'``:
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 . Else if ``text`` is equal to ``"lpm"``:
@@ -12464,12 +12503,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``+`BIN+`` ``text~key_value~`` be ``tableKeyValueInterface'``:
@@ -12478,12 +12518,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_base_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)]``.
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
   ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
   ... Let ``i~key_mask_value~`` be ``xref:text_to_int[$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)]``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ``+`SLASH+`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
@@ -12495,12 +12536,13 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(( nameIR~key~, t
   ... Let ``n~key_remaining_width~`` be ``int``.
   ... Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
   ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR``].
+  ... Let ``typeIR~unrolled~`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Let ``typedExpressionIR~base_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~base~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``int'`` be xref:pow2[2 to the power of ``n~key_type_width~``].
   ... Let ``int''`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
   ... Let ``i~key_mask_value~`` be ``int'`` ``-`` ``int''``.
   ... Let ``typedExpressionIR~mask~`` be xref:typedExpressionIR[``+D+`` ``i~key_mask_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR``].
+  ... Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~mask~`` implicitly cast to ``typeIR~unrolled~``].
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
 
@@ -12514,6 +12556,19 @@ xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((nameIR, nameI
  .. Let ``simpleKeysetExpressionIR~h~`` be ``xref:tableObject_create_entry_key[$tableObject_create_entry_key((`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)]``.
  .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
  .. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
+
+xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +:+ nameIR~matchKind~ annotationList +;+)]
+
+
+. Let ``nameIR^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
+. If let ``nameIR~key~`` be ``nameIR^{asterisk}^``:
+ .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+ .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
+. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+ .. Let ``text`` be xref:print_[``typedExpressionIR`` as text].
+ .. Let ``nameIR~key~`` be xref:strip_all_whitespace[the text ``text`` with all whitespace removed].
+ .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+ .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
 
 xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(+KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+, tableKeyInterface^{asterisk}^)]
 
@@ -12536,13 +12591,65 @@ for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
 . Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
 . Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
+xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
+
+
+. Let ``annotationList^{asterisk}^`` be the list of ``annotationList`` and ``id^{asterisk}^`` be the list of ``id``, obtained by repeating:
++
+--
+ ** Let ``annotationList`` and ``id`` be the annotations and the name of ``parameterIR``.
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+. Let ``annotation^{asterisk}^^{asterisk}^`` be the list of ``annotation^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``annotation^{asterisk}^`` be xref:flatten_annotationList[the list of annotations in ``annotationList``].
+--
++
+for each ``annotationList`` in ``annotationList^{asterisk}^``
+. Let ``nameIR^?^^{asterisk}^`` be the list of ``nameIR^?^`` and ``nameIR^?^^{asterisk}^^{asterisk}^`` be the list of ``nameIR^?^^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``nameIR^?^`` be ``xref:name_annotation_opt[$name_annotation_opt(annotation)]``.
+--
++
+for each ``annotation`` in ``annotation^{asterisk}^`` and ``annotation^{asterisk}^`` in ``annotation^{asterisk}^^{asterisk}^``
+. Check that ``nameIR^?^`` is defined, for all ``nameIR^?^`` in ``nameIR^?^^{asterisk}^`` and ``nameIR^?^^{asterisk}^`` in ``nameIR^?^^{asterisk}^^{asterisk}^``.
+. Let ``nameIR~names~^{asterisk}^`` be the list of ``nameIR~names~`` and ``nameIR~names~^{asterisk}^^{asterisk}^`` be the list of ``nameIR~names~^{asterisk}^``, obtained by repeating:
++
+--
+ ** Let ``nameIR~names~`` be ``nameIR^?^``.
+--
++
+for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^`` and ``nameIR^?^^{asterisk}^`` in ``nameIR^?^^{asterisk}^^{asterisk}^``
+. Let ``(`` ``nameIR~original~,`` ``nameIR~aliases~^{asterisk}^`` ``)^{asterisk}^`` be xref:filter_[``(`` ``id,`` ``nameIR~names~^{asterisk}^`` ``)^{asterisk}^`` filtered by ``(`` ``the`` ``length`` ``of`` ``nameIR~names~^{asterisk}^`` ``>`` ``0`` ``)^{asterisk}^``].
+. Let ``nameIR~alias~^{asterisk}^`` be ``nameIR~aliases~^{asterisk}^[0]^{asterisk}^``.
+. Return ``xref:extend_map[$extend_map<nameIR,`` ``nameIR>(+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+,`` ``+{+`` ``(`` ``id`` ``+:+`` ``id`` ``)^{asterisk}^`` ``+}+)]``.
+
 xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR^{asterisk}^, ( nameIR~arg~, i~arg~ )^{asterisk}^)]
 
 
+. Let ``+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+`` be ``xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]``.
+. Let ``nameIR^?^^{asterisk}^`` be the list of ``nameIR^?^``, obtained by repeating:
++
+--
+ ** Let ``nameIR^?^`` be xref:find_map[``nameIR~arg~`` in map ``+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``
+. Check that ``nameIR^?^`` is defined, for all ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``.
+. Let ``nameIR~arg_resolved~^{asterisk}^`` be the list of ``nameIR~arg_resolved~``, obtained by repeating:
++
+--
+ ** Let ``nameIR~arg_resolved~`` be ``nameIR^?^``.
+--
++
+for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``
 . Let ``int^?^^{asterisk}^`` be the list of ``int^?^``, obtained by repeating:
 +
 --
- ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
+ ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
@@ -12561,56 +12668,147 @@ xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(
 
 . Return xref:find_map[``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
 
+xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{asterisk}^, nameIR)]
+
+
+. If ``tableActionIR^{asterisk}^`` is an empty list:
+ .. Return ``·``.
+. Else:
+ .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
+ .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
+ .. Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
+ .. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+  ... If ``nameIR~action~`` is equal to ``nameIR``:
+   .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+  ... Else:
+   .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
+ .. If ``nameIR~annotation~^{asterisk}^`` is not equal to ``·``:
+  ... Let ``b~hit~`` be ``nameIR`` is equal to ``nameIR~action~`` or ``nameIR`` is in ``nameIR~annotation~^{asterisk}^``.
+  ... If ``b~hit~``:
+   .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+  ... Else:
+   .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+
+xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^, nameIR)]
+
+
+. If ``tableActionIR^{asterisk}^`` is an empty list:
+ .. Return ``·``.
+. Else:
+ .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
+ .. Let ``annotationList`` ``++_++`` ``+(+`` ``++_++`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``++_++`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
+ .. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
+ .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
+ .. If ``nameIR~annotation~^{asterisk}^`` is not equal to ``·``:
+  ... Check that ``·`` is equal to xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``(`` ``$starts_with(nameIR~annotation~,`` ``".")`` ``)^{asterisk}^``].
+  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``bool^{asterisk}^`` be the list of ``bool``, obtained by repeating:
++
+--
+  *** Let ``bool`` be ``xref:starts_with[$starts_with(nameIR~annotation~,`` ``".")]``.
+--
++
+for each ``nameIR~annotation~`` in ``nameIR~annotation~^{asterisk}^``
+ .. Let ``nameIR~annotation_dotPrefix~^{asterisk}^`` be xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``bool^{asterisk}^``].
+ .. If ``nameIR~annotation_dotPrefix~^{asterisk}^`` is not equal to ``·``:
+  ... Let ``nameIR~annotation_strip~^{asterisk}^`` be ``(`` ``xref:strip_prefix[$strip_prefix(nameIR~annotation_dotPrefix~,`` ``".")]`` ``)^{asterisk}^``.
+  ... Check that ``nameIR`` is not in ``nameIR~annotation_strip~^{asterisk}^``.
+  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. Let ``nameIR~annotation_strip~^{asterisk}^`` be ``(`` ``xref:strip_prefix[$strip_prefix(nameIR~annotation_dotPrefix~,`` ``".")]`` ``)^{asterisk}^``.
+ .. If ``nameIR`` is in ``nameIR~annotation_strip~^{asterisk}^``:
+  ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
+  ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+
 xref:tableObject_create_entry_action[$tableObject_create_entry_action(+ACTIONS+ +=+ +{+ tableActionIR^{asterisk}^ +}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
 
 
-. Let ``argumentIR~data~^{asterisk}^^{asterisk}^`` be the list of ``argumentIR~data~^{asterisk}^``, ``parameterIR~control~^{asterisk}^^{asterisk}^`` be the list of ``parameterIR~control~^{asterisk}^``, and ``prefixedNameIR^{asterisk}^`` be the list of ``prefixedNameIR``, obtained by repeating:
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
+. If let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``:
+ .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
+ .. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
+ .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~`` and ``typeIR~param~^{asterisk}^`` be the list of ``typeIR~param~``, obtained by repeating:
 +
 --
- ** Let ``++_++`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR``.
+  *** Let ``typeIR~param~`` and ``nameIR~param~`` be the type and the name of ``parameterIR~control~``.
 --
 +
-for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
-. Let ``nameIR~action~^{asterisk}^`` be the list of ``nameIR~action~``, obtained by repeating:
+for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
+ .. Let ``typeIR~param_unrolled~^{asterisk}^`` be the list of ``typeIR~param_unrolled~``, obtained by repeating:
 +
 --
- ** Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
+  *** Let ``typeIR~param_unrolled~`` be xref:unroll_aliasType[``typeIR~param~`` with aliases unrolled].
 --
 +
-for each ``prefixedNameIR`` in ``prefixedNameIR^{asterisk}^``
-. Let ``(`` ``argumentIR~data_update~^{asterisk}^,`` ``parameterIR~control_update~^{asterisk}^`` ``)`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR~action_update~`` in ``(`` ``nameIR~action~,`` ``(`` ``argumentIR~data~^{asterisk}^,`` ``parameterIR~control~^{asterisk}^`` ``)`` ``)^{asterisk}^``].
-. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control_update~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
-. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~`` and ``typeIR~param~^{asterisk}^`` be the list of ``typeIR~param~``, obtained by repeating:
+for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``
+ .. Let ``typedExpressionIR~arg~^{asterisk}^`` be the list of ``typedExpressionIR~arg~``, obtained by repeating:
 +
 --
- ** Let ``typeIR~param~`` and ``nameIR~param~`` be the type and the name of ``parameterIR~control_update~``.
---
-+
-for each ``parameterIR~control_update~`` in ``parameterIR~control_update~^{asterisk}^``
-. Let ``typedExpressionIR~arg~^{asterisk}^`` be the list of ``typedExpressionIR~arg~``, obtained by repeating:
-+
---
- ** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+  *** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
 --
 +
 for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
-. Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
+ .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
 +
 --
- ** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param_unrolled~``].
 --
 +
-for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
-. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
-. Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the list of ``typedExpressionIR~arg_cast~``, obtained by repeating:
+for each ``typeIR~param_unrolled~`` in ``typeIR~param_unrolled~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
+ .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
+ .. Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the list of ``typedExpressionIR~arg_cast~``, obtained by repeating:
 +
 --
- ** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+  *** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
 --
 +
 for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
-. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data_update~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
-. Return ``nameIR~action_update~`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
+ .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+ .. Return ``nameIR~found~`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
+. If ``·`` is equal to ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``:
+ .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be xref:option_get[*!*] ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
+ .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
+ .. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
+ .. Let ``nameIR~param~^{asterisk}^`` be the list of ``nameIR~param~`` and ``typeIR~param~^{asterisk}^`` be the list of ``typeIR~param~``, obtained by repeating:
++
+--
+  *** Let ``typeIR~param~`` and ``nameIR~param~`` be the type and the name of ``parameterIR~control~``.
+--
++
+for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
+ .. Let ``typeIR~param_unrolled~^{asterisk}^`` be the list of ``typeIR~param_unrolled~``, obtained by repeating:
++
+--
+  *** Let ``typeIR~param_unrolled~`` be xref:unroll_aliasType[``typeIR~param~`` with aliases unrolled].
+--
++
+for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``
+ .. Let ``typedExpressionIR~arg~^{asterisk}^`` be the list of ``typedExpressionIR~arg~``, obtained by repeating:
++
+--
+  *** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+--
++
+for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
+ .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list of ``typedExpressionIR^?^``, obtained by repeating:
++
+--
+  *** Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param_unrolled~``].
+--
++
+for each ``typeIR~param_unrolled~`` in ``typeIR~param_unrolled~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``
+ .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
+ .. Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the list of ``typedExpressionIR~arg_cast~``, obtained by repeating:
++
+--
+  *** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+--
++
+for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
+ .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+ .. Return ``nameIR~found~`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
 
 xref:tableObject_add_entry[$tableObject_add_entry(+TABLE+ typeId +{+ frame TBL +}+, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
 
@@ -13616,10 +13814,19 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``+TABL
 . Let ``nameIR~object~`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
 . Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in 
+. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+ .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
+ .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
+ .. Result in 
 * the updated context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
+. If let ``nameIR~annotation~`` be ``nameIR'^{asterisk}^``:
+ .. Let ``objectId~annotation~`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~annotation~``.
+ .. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].
+ .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
+ .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
+ .. Result in 
+* the updated context ``IC~1~``, store ``STO~3~``, and ``constantDeclarationIR``.
 
 xref:ControlLocalDecls_inst[ControlLocalDecls_inst]:
 

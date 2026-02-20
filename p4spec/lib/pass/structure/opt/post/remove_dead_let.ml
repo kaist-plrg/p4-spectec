@@ -27,6 +27,9 @@ module Used = struct
   let init_exps (defined : Defined.t) (exps : exp list) : t =
     Ol.Free.free_exps exps |> IdSet.inter defined
 
+  let init_guard (defined : Defined.t) (guard : guard) : t =
+    Ol.Free.free_guard guard |> IdSet.inter defined
+
   let union (used_a : t) (used_b : t) : t = IdSet.union used_a used_b
 end
 
@@ -70,9 +73,10 @@ let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
       let used = Used.init_exp defined exp in
       let used_cases =
         List.fold_left
-          (fun acc (_, block) ->
+          (fun used_cases (guard, block) ->
+            let used_guard = Used.init_guard defined guard in
             let used_block = downstream_block defined block in
-            Used.union acc used_block)
+            used_cases |> Used.union used_guard |> Used.union used_block)
           Used.empty cases
       in
       Used.union used used_cases

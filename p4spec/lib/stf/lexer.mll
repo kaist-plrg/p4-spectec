@@ -111,6 +111,12 @@ and keyword = parse
     { REMOVE }
   | "setdefault"
     { SETDEFAULT }
+  | "mc_mgrp_create"
+    { MC_GROUP_CREATE }
+  | "mc_node_create"
+    { MC_NODE_CREATE }
+  | "mc_node_associate"
+    { MC_NODE_ASSOCIATE }
   | "wait"
     { WAIT }
   | '\n'

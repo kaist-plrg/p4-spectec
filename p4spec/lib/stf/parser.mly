@@ -19,6 +19,7 @@ open Ast
 
 %token END
 %token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT MIRRORING_ADD PACKET_WILDCARD
+%token MC_GROUP_CREATE MC_NODE_CREATE MC_NODE_ASSOCIATE
 %token<string> ID
 %token COLON COMMA DATA_TERN DOT
 %token<string> INT_CONST_DEC TERN_CONST_HEX INT_CONST_HEX INT_CONST_BIN DATA_DEC DATA_HEX
@@ -61,6 +62,12 @@ stmt:
     { Packet($2, $3) }
   | SETDEFAULT qualified_name action
     { SetDefault($2, $3) }
+  | MC_GROUP_CREATE mgid
+    { McGroupCreate($2) }
+  | MC_NODE_CREATE rid number
+    { McNodeCreate($2, $3) }
+  | MC_NODE_ASSOCIATE mgid handle
+    { McNodeAssociate($2, $3) }
   | REMOVE ALL
     { RemoveAll }
   | WAIT
@@ -150,6 +157,18 @@ session:
 
 port:
   | DATA_DEC
+    { $1 }
+
+mgid:
+  | INT_CONST_DEC
+    { $1 }
+
+rid:
+  | INT_CONST_DEC
+    { $1 }
+
+handle:
+  | INT_CONST_DEC
     { $1 }
 
 priority:

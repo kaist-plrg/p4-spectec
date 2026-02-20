@@ -146,40 +146,46 @@ rulegroup TableAction_ok {
                : TBLC_1 tableActionIR
     ---- ;; check that the action exists
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if (_, ACTION _ `( parameterIR* ))
+    -- if (_, annotationList_action ACTION _ `( parameterIR* ))
         = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+    -- if annotation_name? = $find_name_annotation_opt(annotationList_action)
+    -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
     ---- ;; check that the action reference is a valid data-plane call
-    -- Call_action_partial_ok: TC |- parameterIR* `@ eps
-                                   : parameterIR_data* `, parameterIR_control*
-                                     `@ eps
+    -- Call_action_partial_ok:
+          TC |- parameterIR* `@ eps
+              : parameterIR_data* `, parameterIR_control* `@ eps
     ---- ;; update the table context with the action
     -- if TBLC_1
         = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, eps)
     ---- ;; create IR
     -- if tableActionIR
-        = annotationList (prefixedNameIR `( eps ))
+        = annotationList_update (prefixedNameIR `( eps ))
             `# `( parameterIR_data* `, parameterIR_control* ) `;
+
+  ;;;; prefixedNonTypeName `( argumentList )
 
   rule TableAction_ok/prefixedNonTypeName-argumentList:
     TC TBLC_0 |- annotationList (prefixedNonTypeName `( argumentList )) `;
                : TBLC_1 tableActionIR
     ---- ;; check that the action exists
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if (_, ACTION _ `( parameterIR* ))
+    -- if (_, annotationList_action ACTION _ `( parameterIR* ))
         = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
+    -- if annotation_name? = $find_name_annotation_opt(annotationList_action)
+    -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
     ---- ;; check arguments
     -- if argument* = $flatten_argumentList(argumentList)
     -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
     ---- ;; check that the action reference is a valid data-plane call
-    -- Call_action_partial_ok: TC |- parameterIR* `@ argumentIR*
-                                   : parameterIR_data* `, parameterIR_control*
-                                     `@ argumentIR_cast*
+    -- Call_action_partial_ok:
+        TC |- parameterIR* `@ argumentIR*
+            : parameterIR_data* `, parameterIR_control* `@ argumentIR_cast*
     ---- ;; update the table context with the action
     -- if TBLC_1
         = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
     ---- ;; create IR
     -- if tableActionIR
-        = annotationList (prefixedNameIR `( argumentIR_cast* ))
+        = annotationList_update (prefixedNameIR `( argumentIR_cast* ))
             `# `( parameterIR_data* `, parameterIR_control* ) `;
 
 }

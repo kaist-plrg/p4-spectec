@@ -89,7 +89,7 @@ test-fast:
 
 .PHONY: test-all
 test-all:
-	echo "#### Running (dune runtest)"
+	echo "#### Running all tests (without -det)"
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune runtest test --profile=release && echo OK || \
 	  (echo "####>" Failure running dune test. && \
@@ -97,9 +97,9 @@ test-all:
 
 .PHONY: test-all-det
 test-all-det:
-	echo "#### Running all det tests"
+	echo "#### Running all tests (with -det)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @run-det @sim-il-det @sim-sl-det --profile=release && echo OK || \
+	cd p4spec && opam exec -- dune build @speclang @p4parse @run-det @sim-il-det @sim-sl-det --profile=release && echo OK || \
 	  (echo "####>" Failure running det tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 

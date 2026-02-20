@@ -79,6 +79,7 @@ struct
     | Counter of Object.Counter.t
     | Register of Object.Register.t
     | DirectCounter of Object.DirectCounter.t
+    | DirectMeter of Object.DirectMeter.t
   [@@deriving yojson]
 
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
@@ -123,6 +124,10 @@ struct
         in
         let direct_counter = DirectCounter direct_counter in
         direct_counter |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "direct_meter" ->
+        let direct_meter = Object.DirectMeter.init value_type_args value_args in
+        let direct_meter = DirectMeter direct_meter in
+        direct_meter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -188,6 +193,8 @@ struct
           (* TODO: when to resolve port id? *)
       | "resubmit_preserving_field_list", [ "index" ] ->
           Func.resubmit_preserving_field_list value_ctx value_arch
+      | "recirculate_preserving_field_list", [ "index" ] ->
+          Func.recirculate_preserving_field_list value_ctx value_arch
       | "hash", [ "result"; "algo"; "base"; "data"; "max" ] ->
           Func.hash value_ctx value_arch
       | "log_msg", [ "msg" ] -> Func.log_msg value_ctx value_arch
@@ -294,6 +301,13 @@ struct
           in
           let direct_counter = DirectCounter direct_counter in
           (direct_counter, value_ctx, value_arch, value_callResult)
+      | DirectMeter direct_meter, "read", [ "result" ] ->
+          let packet_in = get_packet_in value_arch in
+          let direct_meter, value_ctx, value_arch, value_callResult =
+            Object.DirectMeter.read value_ctx value_arch packet_in direct_meter
+          in
+          let direct_meter = DirectMeter direct_meter in
+          (direct_meter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
@@ -383,6 +397,41 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
+  (* Multicast interface *)
+
+  let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast = Multicast.State.group_create mgid arch_state.multicast in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
+
+  let mc_node_create (value_arch : Value.t) (rid : int) (port : int) : Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast = Multicast.State.node_create rid port arch_state.multicast in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
+
+  let mc_node_associate (value_arch : Value.t) (mgid : int) (handle : int) :
+      Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast =
+      Multicast.State.node_associate mgid handle arch_state.multicast
+    in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
+
   (* Packet state *)
 
   let insert_packet (packet : Packet.t) : unit state =
@@ -437,6 +486,15 @@ struct
       unpack_p4_fixedBit value_egress_spec
     in
     Bigint.(width_egress_spec = of_int 9 && int_egress_spec = of_int 511)
+
+  let get_mcast_grp : int state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_mcast_grp =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
+        "mcast_grp"
+    in
+    let _, int_mcast_grp = unpack_p4_fixedBit value_mcast_grp in
+    Bigint.to_int_exn int_mcast_grp
 
   (* Pipeline initializer *)
 
@@ -501,134 +559,6 @@ struct
     put_arch_state (Arch.reset arch_state)
     >> remove_packet_in >> drive_p >> drive_vr
 
-  (* Prepare context for resubmit/clone *)
-
-  let prepare_resubmit_ctx (index : int) : unit state =
-    let* value_ctx, value_arch, _ = get in
-    let value_ctx =
-      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
-        (Packet.ResubmitInfo.to_value index)
-    in
-    (* Set standard_metadata.instance_type as 6 *)
-    let value_ctx =
-      let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
-      in
-      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
-        "instance_type" value_instance_type
-    in
-    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
-
-  let prepare_clone_ctx (clone_type : Packet.CloneInfo.clone_type) (port : int)
-      (index : int) : unit state =
-    let* value_ctx, value_arch, _ = get in
-    let value_index =
-      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
-    in
-    let value_ctx =
-      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
-        value_index
-    in
-    let value_ctx =
-      let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
-      let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
-          (Bigint.of_int instance_type)
-      in
-      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
-        "instance_type" value_instance_type
-    in
-    let value_ctx =
-      let value_egress_spec =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
-      in
-      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
-        "egress_spec" value_egress_spec
-    in
-    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
-
-  (* Schedule resubmit/clone if needed *)
-
-  let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
-    let* value_ctx, value_arch, _ = get in
-    let packet_in = get_packet_in value_arch in
-    let packet : Packet.t = { value_ctx; packet_in; entrypoint } in
-    let* arch_state = get_arch_state in
-    let queue =
-      match entrypoint with
-      | Ingress -> Scheduler.push_front packet arch_state.queue
-      | Egress -> Scheduler.push_back packet arch_state.queue
-    in
-    arch_state |> Arch.with_queue queue |> put_arch_state
-
-  let schedule_resubmit (arch_state : Arch.t) : bool state =
-    let open Arch in
-    match arch_state.resubmit_opt with
-    | None -> return false
-    | Some field_index ->
-        let* value_ctx_original, _, _ = get in
-        prepare_resubmit_ctx field_index
-        >> drive_pipe_pre >> schedule_packet Ingress
-        >> modify (fun (_, value_arch, txs) ->
-               (value_ctx_original, value_arch, txs))
-        >> return true
-
-  let schedule_clone (arch_state : Arch.t) : bool state =
-    let open Arch in
-    match arch_state.clone_opt with
-    | None -> return false
-    | Some (clone_type, session, field_index) -> (
-        match Mirror.Table.find_opt session arch_state.mirrortable with
-        | Some port ->
-            let* value_ctx_original, _, _ = get in
-            prepare_clone_ctx clone_type port field_index
-            >> drive_pipe_pre >> schedule_packet Egress
-            >> modify (fun (_, value_arch, txs) ->
-                   (value_ctx_original, value_arch, txs))
-            >> return true
-        | None -> return false)
-
-  (* Ingress + Handle clone, resubmit, drop *)
-
-  let drive_ig : Value.t state =
-    let* result = apply Spec.Rel.v1model_ingress in
-    let* arch_state = get_arch_state in
-    let* _cloned = schedule_clone arch_state in
-    let* resubmitted = schedule_resubmit arch_state in
-    if resubmitted then return result
-    else
-      let* drop = is_dropped in
-      if drop then return result else schedule_packet Egress >> return result
-
-  (* Egress + Handle clone
-
-     This field is assigned a predictable value just before the packet begins
-     egress processing, equal to the output port that this packet is destined
-     to
-
-     - 'Standard metadata' at
-     https://github.com/p4lang/behavioral-model/blob/168eca/docs/simple_switch.md *)
-
-  let prepare_egress_ctx : unit state =
-    let* value_ctx, value_arch, _ = get in
-    let value_egress_spec =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
-        "egress_spec"
-    in
-    let value_ctx =
-      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
-        "egress_port" value_egress_spec
-    in
-    modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
-
-  let drive_eg : Value.t state =
-    let* () = prepare_egress_ctx in
-    let* result = apply Spec.Rel.v1model_egress in
-    let* arch_state = get_arch_state in
-    let* _cloned = schedule_clone arch_state in
-    let* drop = is_dropped in
-    guard (not drop) >> return result
-
   (* Checksum + Deparser *)
 
   let drive_ck : Value.t state = apply Spec.Rel.v1model_check
@@ -657,12 +587,252 @@ struct
         (value_ctx, value_arch, tx :: txs))
     >> return result
 
+  (* Prepare context for resubmit/clone/recirculate/multicast *)
+
+  let prepare_resubmit_ctx (index : int) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
+        (Packet.ResubmitInfo.to_value index)
+    in
+    (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RESUBMIT *)
+    let value_ctx =
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
+
+  let prepare_clone_ctx (clone_type : Packet.CloneInfo.clone_type) (port : int)
+      (index : int) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+    in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
+        value_index
+    in
+    (* Set standard_metadata.instance_type according to clone type *)
+    let value_ctx =
+      let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
+          (Bigint.of_int instance_type)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    let value_ctx =
+      let value_egress_spec =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
+
+  let prepare_recirculate_ctx (index : int) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_ctx =
+      Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
+        (Packet.RecirculateInfo.to_value index)
+    in
+    (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RECIRC *)
+    let value_ctx =
+      let value_instance_type =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 4)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
+
+  let prepare_multicast_ctx (rid : Multicast.rid) (port : Multicast.port) :
+      unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_ctx =
+      let value_egress_rid =
+        pack_p4_fixedBit (Bigint.of_int 16) (Bigint.of_int rid)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_rid" value_egress_rid
+    in
+    let value_ctx =
+      let value_egress_spec =
+        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec" value_egress_spec
+    in
+    (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_REPLICATION *)
+    let value_ctx =
+      let value_instance_type =
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 5)
+      in
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "instance_type" value_instance_type
+    in
+    modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
+
+  (* Schedule resubmit/clone/recirculate/multicast if needed *)
+
+  let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let packet_in = get_packet_in value_arch in
+    let packet = Packet.{ value_ctx; packet_in; entrypoint } in
+    let* arch_state = get_arch_state in
+    let queue =
+      match entrypoint with
+      | Ingress -> Scheduler.push_front packet arch_state.queue
+      | Egress -> Scheduler.push_back packet arch_state.queue
+    in
+    arch_state |> Arch.with_queue queue |> put_arch_state
+
+  let schedule_resubmit (arch_state : Arch.t) : bool state =
+    let open Arch in
+    match arch_state.action.resubmit_opt with
+    | None -> return false
+    | Some field_index ->
+        let* value_ctx_original, _, _ = get in
+        prepare_resubmit_ctx field_index
+        >> drive_pipe_pre >> schedule_packet Ingress
+        >> modify (fun (_, value_arch, txs) ->
+               (value_ctx_original, value_arch, txs))
+        >> return true
+
+  let schedule_clone (arch_state : Arch.t) : bool state =
+    let open Arch in
+    match arch_state.action.clone_opt with
+    | None -> return false
+    | Some (clone_type, session, field_index) -> (
+        match Mirror.Table.find_opt session arch_state.mirrortable with
+        | Some port ->
+            let* value_ctx_original, _, _ = get in
+            prepare_clone_ctx clone_type port field_index
+            >> (match clone_type with
+               | I2E -> drive_pipe_pre >> return ()
+               | E2E -> return ())
+            >> schedule_packet Egress
+            >> modify (fun (_, value_arch, txs) ->
+                   (value_ctx_original, value_arch, txs))
+            >> return true
+        | None -> return false)
+
+  let schedule_recirculate (arch_state : Arch.t) : bool state =
+    let open Arch in
+    match arch_state.action.recirculate_opt with
+    | None -> return false
+    | Some field_index ->
+        let* value_ctx_original, _, _ = get in
+        (* run ck and dep block *)
+        let* _ =
+          prepare_recirculate_ctx field_index
+          >> drive_ck >> remove_packet_out >> drive_dep
+        in
+        (* take output packet from deparser and feed it back to pipeline *)
+        let* value_ctx, value_arch, _ = get in
+        let packet_in =
+          let packet_in = get_packet_in value_arch in
+          let packet_out = get_packet_out value_arch in
+          Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+        in
+        let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
+        let value_packet_in =
+          PacketIn (Core.Object.PacketIn.init packet_in)
+          |> object_state_to_yojson
+          |> wrap_extern_v "objectState"
+        in
+        let* _ =
+          modify (fun (_, value_arch, txs) ->
+              let value_arch =
+                Spec.Func.update_objectState_e value_arch value_objectId
+                  value_packet_in
+              in
+              (value_ctx, value_arch, txs))
+        in
+        (* run p + vr block before scheduling packet *)
+        drive_pipe_pre >> schedule_packet Ingress
+        >> modify (fun (_, value_arch, txs) ->
+               (value_ctx_original, value_arch, txs))
+        >> return true
+
+  let schedule_multicast (arch_state : Arch.t) (mcast_grp : int) : bool state =
+    let open Arch in
+    let open Multicast in
+    match GroupMap.find_opt mcast_grp arch_state.multicast.groups with
+    | Some { node_handles; _ } ->
+        let actions =
+          node_handles
+          |> List.filter_map (fun handle ->
+                 NodeMap.find_opt handle arch_state.multicast.nodes)
+          |> List.map (fun node ->
+                 prepare_multicast_ctx node.rid node.port
+                 >> schedule_packet Egress)
+        in
+        sequence actions >> return true
+    | None -> return false
+
+  (* Ingress + Handle clone, resubmit, drop *)
+
+  let drive_ig : Value.t state =
+    let* result = apply Spec.Rel.v1model_ingress in
+    let* arch_state = get_arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* resubmitted = schedule_resubmit arch_state in
+    if resubmitted then return result
+    else
+      let* mcast_grp = get_mcast_grp in
+      if mcast_grp <> 0 then
+        schedule_multicast arch_state mcast_grp >> return result
+      else
+        let* drop = is_dropped in
+        if drop then return result else schedule_packet Egress >> return result
+
+  (* Egress + Handle clone
+
+     This field is assigned a predictable value just before the packet begins
+     egress processing, equal to the output port that this packet is destined
+     to
+
+     - 'Standard metadata' at
+     https://github.com/p4lang/behavioral-model/blob/168eca/docs/simple_switch.md *)
+
+  let prepare_egress_ctx : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let value_egress_spec =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
+        "egress_spec"
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
+        "egress_port" value_egress_spec
+    in
+    modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
+
+  let drive_eg : Value.t state =
+    let* () = prepare_egress_ctx in
+    let* result = apply Spec.Rel.v1model_egress in
+    let* arch_state = get_arch_state in
+    let* _cloned = schedule_clone arch_state in
+    let* drop = is_dropped in
+    let* () = guard (not drop) in
+    let* arch_state = get_arch_state in
+    let* recirculated = schedule_recirculate arch_state in
+    if recirculated then empty else return result
+
   (* Scheduling packets *)
 
   let drive_packet (packet : Packet.t) : unit state =
     match packet.entrypoint with
     | Ingress -> insert_packet packet >> drive_ig >> return ()
-    | Egress -> insert_packet packet >> drive_eg >> drive_pipe_post >> return ()
+    | Egress ->
+        insert_packet packet
+        >> on_result drive_eg
+             ~some:(fun _ -> drive_pipe_post >> return ())
+             ~none:(fun () -> return ())
 
   let rec run_scheduler () : unit state =
     let* arch_state = get_arch_state in

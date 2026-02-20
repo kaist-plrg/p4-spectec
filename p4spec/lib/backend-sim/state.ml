@@ -35,6 +35,27 @@ let ( let* ) = bind
 let map (m : 'a state) (f : 'a -> 'b) = bind m (fun a -> return (f a))
 let ( let+ ) = map
 
+(* Sequence: run each state action from left to right and return accumulated result *)
+
+let sequence (ms : 'a state list) : 'a list state =
+  let rec seq acc = function
+    | [] -> return (List.rev acc)
+    | m :: ms ->
+        let* x = m in
+        seq (x :: acc) ms
+  in
+  seq [] ms
+
+(* Combinators *)
+
+(* If computation succeeds, run `some`. Otherwise, run `none` *)
+
+let on_result (m : 'a state) ~(some : 'a -> 'b state) ~(none : unit -> 'b state)
+    : 'b state =
+ fun s ->
+  let result, s' = m s in
+  match result with Some x -> some x s' | None -> none () s'
+
 (* Apply: apply a function to the current context and arch, updating them *)
 
 let apply (f : Value.t -> Value.t -> Value.t * Value.t * 'a) : 'a state =
