@@ -119,14 +119,14 @@ struct
   (* Multicast interface *)
 
   let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
-    error_no_region
-      "mc_mgrp_create is not implemented for the ebpf simulator"
+    error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) : Value.t =
-    error_no_region
-      "mc_node_create is not implemented for the ebpf simulator"
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+      Value.t =
+    error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
-  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) : Value.t =
+  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
+      Value.t =
     error_no_region
       "mc_node_associate is not implemented for the ebpf simulator"
 

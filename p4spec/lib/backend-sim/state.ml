@@ -50,12 +50,11 @@ let sequence (ms : 'a state list) : 'a list state =
 
 (* If computation succeeds, run `some`. Otherwise, run `none` *)
 
-let on_result (m : 'a state) ~(some : 'a -> 'b state) ~(none : unit -> 'b state) : 'b state =
-  fun s ->
-    let (result, s') = m s in
-    match result with
-    | Some x -> some x s'
-    | None -> none () s'
+let on_result (m : 'a state) ~(some : 'a -> 'b state) ~(none : unit -> 'b state)
+    : 'b state =
+ fun s ->
+  let result, s' = m s in
+  match result with Some x -> some x s' | None -> none () s'
 
 (* Apply: apply a function to the current context and arch, updating them *)
 

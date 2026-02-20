@@ -9,9 +9,10 @@ open Util.Source
 let ( let* ) = Option.bind
 let ( ++ ) = VarSet.union
 
-let rec choice = function
+let rec choose_sequential = function
   | [] -> None
-  | f :: fs -> ( match f () with Some a -> Some a | None -> choice fs)
+  | f :: fs -> (
+      match f () with Some a -> Some a | None -> choose_sequential fs)
 
 type iter_state = {
   vars_inner : VarSet.t;
@@ -85,7 +86,7 @@ let transform_first_with_iters
             in
             Some (BinE (binop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
-          choice [ try_left; try_right ]
+          choose_sequential [ try_left; try_right ]
       | CmpE (cmpop, optyp, exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
@@ -103,7 +104,7 @@ let transform_first_with_iters
             in
             Some (CmpE (cmpop, optyp, exp_l, exp_r') $$ (at, note), iter_state)
           in
-          choice [ try_left; try_right ]
+          choose_sequential [ try_left; try_right ]
       | UpCastE (typ, exp_inner) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (UpCastE (typ, exp_inner') $$ (at, note), iter_state)
@@ -150,7 +151,7 @@ let transform_first_with_iters
             in
             Some (ConsE (exp_h, exp_t') $$ (at, note), iter_state)
           in
-          choice [ try_head; try_tail ]
+          choose_sequential [ try_head; try_tail ]
       | CatE (exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
@@ -168,7 +169,7 @@ let transform_first_with_iters
             in
             Some (CatE (exp_l, exp_r') $$ (at, note), iter_state)
           in
-          choice [ try_left; try_right ]
+          choose_sequential [ try_left; try_right ]
       | MemE (exp_l, exp_r) ->
           let try_left () =
             let* exp_l', iter_state = transform_exp acc exp_l in
@@ -186,7 +187,7 @@ let transform_first_with_iters
             in
             Some (MemE (exp_l, exp_r') $$ (at, note), iter_state)
           in
-          choice [ try_left; try_right ]
+          choose_sequential [ try_left; try_right ]
       | LenE exp_inner ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (LenE exp_inner' $$ (at, note), iter_state)
@@ -210,7 +211,7 @@ let transform_first_with_iters
             in
             Some (IdxE (exp_b, exp_i') $$ (at, note), iter_state)
           in
-          choice [ try_base; try_index ]
+          choose_sequential [ try_base; try_index ]
       | SliceE (exp_b, exp_l, exp_h) ->
           let try_base () =
             let* exp_b', iter_state = transform_exp acc exp_b in
@@ -248,7 +249,7 @@ let transform_first_with_iters
             in
             Some (SliceE (exp_b, exp_l, exp_h') $$ (at, note), iter_state)
           in
-          choice [ try_base; try_low; try_high ]
+          choose_sequential [ try_base; try_low; try_high ]
       | UpdE (exp_b, path, exp_f) ->
           let try_base () =
             let* exp_b', iter_state = transform_exp acc exp_b in
@@ -286,7 +287,7 @@ let transform_first_with_iters
             in
             Some (UpdE (exp_b, path, exp_f') $$ (at, note), iter_state)
           in
-          choice [ try_base; try_path; try_field ]
+          choose_sequential [ try_base; try_path; try_field ]
       | CallE (funcprose, targs, args) ->
           let* args_new, iter_state = transform_args acc args in
           Some (CallE (funcprose, targs, args_new) $$ (at, note), iter_state)
@@ -335,7 +336,7 @@ let transform_first_with_iters
           let iter_state = { iter_state with vars_inner; var_new; iterexps } in
           Some (IterE (exp_inner', (iter, vars)) $$ (at, note), iter_state)
     in
-    choice [ try_root; try_children ]
+    choose_sequential [ try_root; try_children ]
   and transform_exps acc (exps : exp list) : (exp list * iter_state) option =
     transform_list (transform_exp acc) Vars.free_exp exps
   and transform_arg acc (arg : arg) : (arg * iter_state) option =
@@ -368,7 +369,7 @@ let transform_first_with_iters
           in
           Some (IdxP (path_b, exp_i') $$ (at, note), iter_state)
         in
-        choice [ try_base; try_index ]
+        choose_sequential [ try_base; try_index ]
     | SliceP (path_b, exp_l, exp_h) ->
         let try_base () =
           let* path_b', iter_state = transform_path acc path_b in
@@ -406,7 +407,7 @@ let transform_first_with_iters
           in
           Some (SliceP (path_b, exp_l, exp_h') $$ (at, note), iter_state)
         in
-        choice [ try_base; try_low; try_high ]
+        choose_sequential [ try_base; try_low; try_high ]
     | DotP (path_b, atom) ->
         let* path_b', iter_state = transform_path acc path_b in
         Some (DotP (path_b', atom) $$ (at, note), iter_state)

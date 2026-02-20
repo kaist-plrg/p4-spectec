@@ -10,11 +10,7 @@ let bigint_of_value (value : value) : Bigint.t =
   value |> Value.get_num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.NumT `IntT in
-    NumV (`Int i) $$$ { vid; typ }
-  in
+  let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
   add value;
   value
 

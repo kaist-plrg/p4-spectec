@@ -12,10 +12,6 @@ let print (add : value -> unit) (at : region) (targs : targ list)
   let _typ = Extract.one at targs in
   let value = Extract.one at values_input in
   let text = !printer value in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.TextT in
-    TextV text $$$ { vid; typ }
-  in
+  let value = Value.make Il.TextT (TextV text) in
   add value;
   value

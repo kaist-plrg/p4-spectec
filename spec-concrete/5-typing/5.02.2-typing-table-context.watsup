@@ -2,9 +2,9 @@
 ;; Table context
 ;;
 
-syntax matchKey = (typeIR, id)
+syntax matchKey = typeIR `: id
 
-syntax matchAction = (prefixedNameIR, parameterIR*, argumentListIR)
+syntax matchAction = prefixedNameIR `( parameterIR* `@ argumentListIR )
 
 syntax matchPriority =
   { VALUES nat*,
@@ -73,19 +73,22 @@ def $empty_tableContext
 
 ;;; Adder for keys
 
-dec $add_key(tableContext, id, typeIR) : tableContext
+dec $add_key_tbl(tableContext, id, typeIR) : tableContext
+  hint(prose_in %0 "with match key" %1 "of type" %2 "added")
 
-def $add_key(TBLC, id, typeIR)
+def $add_key_tbl(TBLC, id, typeIR)
   = TBLC[ .KEYS = TBLC.KEYS ++ [ matchKey ] ]
-  -- if matchKey = (typeIR, id)
+  -- if matchKey = typeIR `: id
 
 ;;; Adder for actions
 
-dec $add_action(tableContext, prefixedNameIR, parameterIR*, argumentListIR) : tableContext
+dec $add_action_tbl(tableContext, prefixedNameIR, parameterIR*, argumentListIR)
+  : tableContext
+  hint(prose_in %0 "with match action" %1 `( %2 ) "applied using" %3 "added")
 
-def $add_action(TBLC, prefixedNameIR, parameterIR*, argumentListIR)
+def $add_action_tbl(TBLC, prefixedNameIR, parameterIR*, argumentListIR)
   = TBLC[ .ACTIONS = TBLC.ACTIONS ++ [ matchAction ] ]
-  -- if matchAction = (prefixedNameIR, parameterIR*, argumentListIR)
+  -- if matchAction = prefixedNameIR `( parameterIR* `@ argumentListIR )
 
 ;;; Adder for table entry priorities
 
@@ -100,48 +103,50 @@ def $add_table_priority(TBLC, n)
 
 ;;; Updater for modes
 
-dec $update_mode(tableContext, id, typeIR) : tableContext
+dec $update_mode_tbl(tableContext, id, typeIR) : tableContext
+  hint(prose_in %0 "with match mode updated based on key" %1 "of type" %2)
 
-def $update_mode(TBLC, "lpm", INT `< n >)
+def $update_mode_tbl(TBLC, "lpm", INT `< n >)
   = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
-def $update_mode(TBLC, "lpm", BIT `< n >)
+def $update_mode_tbl(TBLC, "lpm", BIT `< n >)
   = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
-def $update_mode(TBLC, "lpm", VARBIT `< n >)
+def $update_mode_tbl(TBLC, "lpm", VARBIT `< n >)
   = TBLC[ .MODE = NOPRILPM n ]
   -- if TBLC.MODE = NOPRI
 
-def $update_mode(TBLC, "lpm", TYPEDEF _ typeIR)
-  = $update_mode(TBLC, "lpm", typeIR)
-def $update_mode(TBLC, "lpm", TYPE _ typeIR)
-  = $update_mode(TBLC, "lpm", typeIR)
+def $update_mode_tbl(TBLC, "lpm", TYPEDEF _ typeIR)
+  = $update_mode_tbl(TBLC, "lpm", typeIR)
+def $update_mode_tbl(TBLC, "lpm", TYPE _ typeIR)
+  = $update_mode_tbl(TBLC, "lpm", typeIR)
 
-def $update_mode(TBLC, "lpm", _)
+def $update_mode_tbl(TBLC, "lpm", typeIR)
   = TBLC[ .MODE = PRILPM ]
+  -- if ~(typeIR <: aliasTypeIR)
   -- if TBLC.MODE = PRI
 
-def $update_mode(TBLC, "range", _)
+def $update_mode_tbl(TBLC, "range", _)
   = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
-def $update_mode(TBLC, "ternary", _)
+def $update_mode_tbl(TBLC, "ternary", _)
   = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
-def $update_mode(TBLC, "optional", _)
+def $update_mode_tbl(TBLC, "optional", _)
   = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
 
-def $update_mode(TBLC, "range", _)
+def $update_mode_tbl(TBLC, "range", _)
   = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
-def $update_mode(TBLC, "ternary", _)
+def $update_mode_tbl(TBLC, "ternary", _)
   = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
-def $update_mode(TBLC, "optional", _)
+def $update_mode_tbl(TBLC, "optional", _)
   = TBLC[ .MODE = PRILPM ]
   -- if TBLC.MODE = NOPRILPM _
 
-def $update_mode(TBLC, _, _) = TBLC
+def $update_mode_tbl(TBLC, _, _) = TBLC
   -- otherwise
 
 ;;
@@ -159,11 +164,11 @@ def $find_action'(eps, prefixedNameIR) = eps
 
 def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
   = (parameterIR*, argumentListIR)
-  -- if (prefixedNameIR, parameterIR*, argumentListIR) = matchAction_h
+  -- if prefixedNameIR `( parameterIR* `@ argumentListIR ) = matchAction_h
 
 def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
   = $find_action'(matchAction_t*, prefixedNameIR)
-  -- if (prefixedNameIR_h, _, _) = matchAction_h
+  -- if prefixedNameIR_h `(  _ `@ _ ) = matchAction_h
   -- if prefixedNameIR_h =/= prefixedNameIR
 
 ;;; Finder for last table priority

@@ -27,18 +27,16 @@ let set_of_value (value : value) : set =
 let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
   let values_element = VSet.elements set in
   let value_elements =
-    let vid = Value.fresh () in
     let typ = Il.IterT (typ_key, Il.List) in
-    ListV values_element $$$ { vid; typ }
+    Value.make typ (ListV values_element)
   in
   add value_elements;
   let value =
-    let vid = Value.fresh () in
     let typ = Il.VarT ("set" $ no_region, [ typ_key ]) in
-    CaseV
-      ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
-        [ value_elements ] )
-    $$$ { vid; typ }
+    Value.make typ
+      (CaseV
+         ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
+           [ value_elements ] ))
   in
   add value;
   value
@@ -90,11 +88,7 @@ let sub_set (add : value -> unit) (at : region) (targs : targ list)
   let value_set_a, value_set_b = Extract.two at values_input in
   let set_a = set_of_value value_set_a in
   let set_b = set_of_value value_set_b in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.BoolT in
-    BoolV (VSet.subset set_a set_b) $$$ { vid; typ }
-  in
+  let value = Value.make Il.BoolT (BoolV (VSet.subset set_a set_b)) in
   add value;
   value
 
@@ -106,10 +100,6 @@ let eq_set (add : value -> unit) (at : region) (targs : targ list)
   let value_set_a, value_set_b = Extract.two at values_input in
   let set_a = set_of_value value_set_a in
   let set_b = set_of_value value_set_b in
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.BoolT in
-    BoolV (VSet.equal set_a set_b) $$$ { vid; typ }
-  in
+  let value = Value.make Il.BoolT (BoolV (VSet.equal set_a set_b)) in
   add value;
   value

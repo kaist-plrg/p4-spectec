@@ -4,10 +4,11 @@ open Util.Source
 
 type t = Atom.t phrase list list [@@deriving yojson]
 
+let compare_atoms (atom_a : Atom.t phrase) (atom_b : Atom.t phrase) =
+  Atom.compare atom_a.it atom_b.it
+
 let compare mixop_a mixop_b =
-  let mixop_a = List.map (List.map it) mixop_a in
-  let mixop_b = List.map (List.map it) mixop_b in
-  List.compare (List.compare Atom.compare) mixop_a mixop_b
+  List.compare (List.compare compare_atoms) mixop_a mixop_b
 
 let eq mixop_a mixop_b = compare mixop_a mixop_b = 0
 

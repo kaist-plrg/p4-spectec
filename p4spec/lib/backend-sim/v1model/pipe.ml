@@ -419,11 +419,14 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_associate (value_arch : Value.t) (mgid : int) (handle : int) : Value.t =
+  let mc_node_associate (value_arch : Value.t) (mgid : int) (handle : int) :
+      Value.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch.of_value
     in
-    let multicast = Multicast.State.node_associate mgid handle arch_state.multicast in
+    let multicast =
+      Multicast.State.node_associate mgid handle arch_state.multicast
+    in
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
@@ -490,9 +493,7 @@ struct
       Spec.Rel.lvalue_read_dot_global value_ctx value_arch "standard_metadata"
         "mcast_grp"
     in
-    let _, int_mcast_grp =
-      unpack_p4_fixedBit value_mcast_grp
-    in
+    let _, int_mcast_grp = unpack_p4_fixedBit value_mcast_grp in
     Bigint.to_int_exn int_mcast_grp
 
   (* Pipeline initializer *)
@@ -561,10 +562,7 @@ struct
   (* Checksum + Deparser *)
 
   let drive_ck : Value.t state = apply Spec.Rel.v1model_check
-  let drive_dep : Value.t state =
-    let* _, value_arch, _ = get in
-    let packet_in = get_packet_in value_arch in
-    apply Spec.Rel.v1model_deparse
+  let drive_dep : Value.t state = apply Spec.Rel.v1model_deparse
 
   let drive_pipe_post : Value.t state =
     let* result = drive_ck >> remove_packet_out >> drive_dep in
@@ -651,7 +649,8 @@ struct
     in
     modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
 
-  let prepare_multicast_ctx (rid : Multicast.rid) (port : Multicast.port) : unit state =
+  let prepare_multicast_ctx (rid : Multicast.rid) (port : Multicast.port) :
+      unit state =
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
       let value_egress_rid =
@@ -713,11 +712,11 @@ struct
             let* value_ctx_original, _, _ = get in
             prepare_clone_ctx clone_type port field_index
             >> (match clone_type with
-              | I2E -> drive_pipe_pre >> return ()
-              | E2E -> return ())
+               | I2E -> drive_pipe_pre >> return ()
+               | E2E -> return ())
             >> schedule_packet Egress
             >> modify (fun (_, value_arch, txs) ->
-                (value_ctx_original, value_arch, txs))
+                   (value_ctx_original, value_arch, txs))
             >> return true
         | None -> return false)
 
@@ -728,8 +727,10 @@ struct
     | Some field_index ->
         let* value_ctx_original, _, _ = get in
         (* run ck and dep block *)
-        let* _ = prepare_recirculate_ctx field_index
-        >> drive_ck >> remove_packet_out >> drive_dep in
+        let* _ =
+          prepare_recirculate_ctx field_index
+          >> drive_ck >> remove_packet_out >> drive_dep
+        in
         (* take output packet from deparser and feed it back to pipeline *)
         let* value_ctx, value_arch, _ = get in
         let packet_in =
@@ -739,18 +740,20 @@ struct
         in
         let value_objectId = wrap_list_v "id" [ wrap_text_v "packet_in" ] in
         let value_packet_in =
-          PacketIn (Core.Object.PacketIn.init packet_in) |> object_state_to_yojson |> wrap_extern_v "objectState"
+          PacketIn (Core.Object.PacketIn.init packet_in)
+          |> object_state_to_yojson
+          |> wrap_extern_v "objectState"
         in
-        let* () = modify (fun (_, value_arch, txs) ->
-            let value_arch =
-              Spec.Func.update_objectState_e value_arch value_objectId
-                value_packet_in
-            in
-            (value_ctx, value_arch, txs))
+        let* () =
+          modify (fun (_, value_arch, txs) ->
+              let value_arch =
+                Spec.Func.update_objectState_e value_arch value_objectId
+                  value_packet_in
+              in
+              (value_ctx, value_arch, txs))
         in
         (* run p + vr block before scheduling packet *)
-        drive_pipe_pre
-        >> schedule_packet Ingress
+        drive_pipe_pre >> schedule_packet Ingress
         >> modify (fun (_, value_arch, txs) ->
                (value_ctx_original, value_arch, txs))
         >> return true
@@ -764,12 +767,12 @@ struct
         let actions =
           node_handles
           |> List.filter_map (fun handle ->
-              NodeMap.find_opt handle arch_state.multicast.nodes)
+                 NodeMap.find_opt handle arch_state.multicast.nodes)
           |> List.map (fun node ->
-              prepare_multicast_ctx node.rid node.port >> schedule_packet Egress)
+                 prepare_multicast_ctx node.rid node.port
+                 >> schedule_packet Egress)
         in
-        sequence actions
-        >> return true
+        sequence actions >> return true
 
   (* Ingress + Handle clone, resubmit, drop *)
 
@@ -782,8 +785,7 @@ struct
     else
       let* mcast_grp = get_mcast_grp in
       if mcast_grp <> 0 then
-        schedule_multicast arch_state mcast_grp
-        >> return result
+        schedule_multicast arch_state mcast_grp >> return result
       else
         let* drop = is_dropped in
         if drop then return result else schedule_packet Egress >> return result

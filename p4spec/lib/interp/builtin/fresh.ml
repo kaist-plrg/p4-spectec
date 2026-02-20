@@ -13,10 +13,6 @@ let fresh_typeId (add : value -> unit) (at : region) (targs : targ list)
   Extract.zero at values_input;
   let tid = "FRESH__" ^ string_of_int !ctr in
   ctr := !ctr + 1;
-  let value =
-    let vid = Value.fresh () in
-    let typ = Il.VarT ("typeId" $ no_region, []) in
-    TextV tid $$$ { vid; typ }
-  in
+  let value = Value.make (Il.VarT ("typeId" $ no_region, [])) (TextV tid) in
   add value;
   value

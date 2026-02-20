@@ -1,0 +1,81 @@
+[#sec-mau-abstract-mach]
+=== Match-action pipeline machine
+
+// 997
+We can describe the computational model of a match-action pipeline, embodied by
+a control block: the body of the control block is executed, similarly to the
+execution of a traditional imperative program:
+
+// 998 - Modified
+* At runtime, statements within a block are executed in the order they appear in
+  the control block.
+* Execution of the `return` statement causes immediate termination of the
+  execution of the current `control` block, and a return to the caller.
+* Execution of the `exit` statement causes the immediate termination of the
+  execution of the current `control` block and of all the enclosing caller
+  `control` blocks.
+* Applying a `table` executes the corresponding match-action unit.
+
+[#sec-sub-control]
+==== Sub-controls
+
+// 999
+P4 allows controls to invoke the services of other controls, similar to
+subroutines. To invoke the services of another control, it must be first
+instantiated; the services of an instance are invoked by calling it using its
+`apply` method.
+
+// 1000
+The following example shows a control invocation:
+
+// 1001
+[source,p4]
+----
+control Callee(inout IPv4 ipv4) { /* body omitted */ }
+control Caller(inout Headers h) {
+     Callee() instance;  // instance of callee
+     apply {
+          instance.apply(h.ipv4);  // invoke control
+     }
+}
+----
+
+// 1002
+As with parsers, when a control is instantiated, local instantiations of
+stateful objects are evaluated recursively. That is, each instantiation of a
+control has a unique set of local tables, extern objects, inner control
+instances, etc. Thus, in general, invoking a control instance twice is not
+the same as invoking two copies of the same control instance. Note however,
+that local variables do not persist across invocations of the control. This
+semantics also applies to direct invocation (see
+<<sec-direct-type-invocation>>).
+
+// 1003
+When a control is instantiated, all its local declarations of stateful
+instantiations are evaluated recursively. Each instantiation of a control
+will have a unique set of local tables, extern objects, and inner control
+instances. Thus, invoking a control instance twice is different from invoking
+two control instances each once, where the former accesses the same local
+stateful constructs while the latter access two different copies.
+
+// 1004
+The exactly-once evaluation only applies to local stateful instantiations.
+For local variable declarations, whether in the `apply` block or out, and
+whether with initializers or not, they are always evaluated when a control
+instance is invoked. That is, local variables in a control never persist
+across invocations. For variables declared outside the `apply` block, they
+are evaluated at the beginning of execution.
+
+// 1005
+All the behavior above also applies to direct invocation (see
+<<sec-direct-type-invocation>>).
+
+==== Runtime evaluation of a control
+
+// Added
+At runtime, a control is evaluated by invoking its `apply` method. The following
+algorithm describes the evaluation of a control apply method invocation:
+
+// Added
+${rulegroup-source: Call_eval/controlApplyMethodCallee}
+${rulegroup-prose: Call_eval/controlApplyMethodCallee}

@@ -80,7 +80,6 @@ module State = struct
 
   let node_associate (mgid : mgid) (handle : handle)
       ({ next_handle; groups; nodes } : t) : t =
-    let node = NodeMap.find handle nodes in
     let groups =
       GroupMap.update mgid
         (Option.map (fun group ->

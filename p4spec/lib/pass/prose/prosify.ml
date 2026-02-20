@@ -1,7 +1,7 @@
 open Domain.Lib
 open Lang
 open Xl
-open Sl
+open Ll.Ast
 open Util.Source
 
 (* Expression prosification *)
@@ -319,16 +319,16 @@ and iterate_bind (instr : Pl.instr) (iterinstrs : iterinstr list) =
       in
       Pl.ForEachI (vars_bind, instr, vars_bound) $ no_region
 
-and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
+and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.block =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs, _phantom_opt) ->
-      prosify_if_instr at ctx exp_cond iterexps instrs
+  | IfI (exp_cond, iterexps, block, _phantom_opt) ->
+      prosify_if_instr at ctx exp_cond iterexps block
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       prosify_hold_instr at ctx id_rel notexp iterexps holdcase
   | CaseI (exp, cases, phantom_opt) ->
       prosify_case_instr at ctx exp cases phantom_opt
-  | OtherwiseI instr -> prosify_otherwise_instr at ctx instr
+  | OtherwiseI block -> prosify_otherwise_instr at ctx block
   | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterinstrs) ->
       prosify_let_instr at ctx exp_l exp_r iterinstrs
@@ -337,40 +337,37 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.instr list =
   | ResultI (rel_signature, exps) ->
       prosify_result_instr at ctx rel_signature exps
   | ReturnI exp -> prosify_return_instr at ctx exp
-  | DebugI _ -> []
 
-and prosify_instrs (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
+and prosify_block (ctx : Ctx.t) (block : block) : Pl.block =
   (* Expand nested calls *)
-  let instrs = Expand.expand ctx.frees Expand.expand_nested_calls instrs in
+  let block = Expand.expand ctx.frees Expand.expand_nested_calls block in
   (* Prosify instructions *)
-  let instrs_pl = prosify_instrs' ctx instrs in
+  let block_pl = prosify_block' ctx block in
   (* Apply shorthands *)
-  Shorthand.apply_check_option_get instrs_pl
+  Shorthand.apply_check_option_get block_pl
 
-and prosify_instrs' (ctx : Ctx.t) (instrs : instr list) : Pl.instr list =
+and prosify_block' (ctx : Ctx.t) (block : block) : Pl.block =
   let is_branch_instr instr =
     match instr.it with IfI _ | CaseI _ | OtherwiseI _ -> true | _ -> false
   in
-  let num_branch_instrs =
-    instrs |> List.filter is_branch_instr |> List.length
-  in
-  let rec trailing_instrs instrs =
-    match instrs with
+  let num_branch_block = block |> List.filter is_branch_instr |> List.length in
+  let rec trailing_block block =
+    match block with
     | [] -> []
-    | instr_h :: instrs_t ->
-        if is_branch_instr instr_h then instrs_t else trailing_instrs instrs_t
+    | instr_h :: block_t ->
+        if is_branch_instr instr_h then block_t else trailing_block block_t
   in
-  if num_branch_instrs = 1 then
-    let instrs_trailing = trailing_instrs instrs in
+  if num_branch_block = 1 then
+    let block_trailing = trailing_block block in
     let ctx =
-      match instrs_trailing with
+      match block_trailing with
       | [] -> Ctx.set_branch ctx Check
       | _ -> Ctx.set_branch ctx If
     in
-    instrs |> List.concat_map (prosify_instr ctx)
+    block |> List.concat_map (prosify_instr ctx)
   else
     let ctx = Ctx.set_branch ctx If in
-    instrs |> List.concat_map (prosify_instr ctx)
+    block |> List.concat_map (prosify_instr ctx)
 
 (* If instruction prosification *)
 
@@ -381,27 +378,27 @@ and prosify_if_cond (ctx : Ctx.t) (exp : exp) (iterexps : iterexp list) :
   iterate_cond cond_pl iterexps
 
 and prosify_if_instr (at : region) (ctx : Ctx.t) (exp_cond : exp)
-    (iterexps : iterexp list) (instrs_then : instr list) : Pl.instr list =
+    (iterexps : iterexp list) (block_then : block) : Pl.block =
   let cond_pl = prosify_if_cond ctx exp_cond iterexps in
   match ctx.branch with
   | Check ->
       let instr_pl = Pl.CheckI cond_pl $ at in
-      let instrs_then_pl = prosify_instrs ctx instrs_then in
-      instr_pl :: instrs_then_pl
+      let block_then_pl = prosify_block ctx block_then in
+      instr_pl :: block_then_pl
   | If ->
       let branch_pl = Pl.If in
-      let instrs_then_pl = prosify_instrs ctx instrs_then in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let block_then_pl = prosify_block ctx block_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | ElseIf ->
       let branch_pl = Pl.ElseIf in
-      let instrs_then_pl = prosify_instrs ctx instrs_then in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let block_then_pl = prosify_block ctx block_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | Else ->
       let branch_pl = Pl.Else in
-      let instrs_then_pl = prosify_instrs ctx instrs_then in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let block_then_pl = prosify_block ctx block_then in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | Empty -> assert false
 
@@ -423,53 +420,53 @@ and prosify_hold_cond ~(hold : bool) (at : region) (ctx : Ctx.t) (id_rel : id)
   iterate_cond cond_pl iterexps
 
 and prosify_hold_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) :
-    Pl.instr list =
+    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) : Pl.block
+    =
   match holdcase with
-  | BothH (instrs_hold, instrs_not_hold) ->
-      prosify_hold_both_instr at ctx id_rel notexp iterexps instrs_hold
-        instrs_not_hold
-  | HoldH (instrs_hold, _) ->
-      prosify_hold_only_instr at ctx id_rel notexp iterexps instrs_hold
-  | NotHoldH (instrs_not_hold, _) ->
-      prosify_not_hold_only_instr at ctx id_rel notexp iterexps instrs_not_hold
+  | BothH (block_hold, block_not_hold) ->
+      prosify_hold_both_instr at ctx id_rel notexp iterexps block_hold
+        block_not_hold
+  | HoldH (block_hold, _) ->
+      prosify_hold_only_instr at ctx id_rel notexp iterexps block_hold
+  | NotHoldH (block_not_hold, _) ->
+      prosify_not_hold_only_instr at ctx id_rel notexp iterexps block_not_hold
 
 and prosify_hold_both_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list)
-    (instrs_not_hold : instr list) : Pl.instr list =
+    (notexp : notexp) (iterexps : iterexp list) (block_hold : block)
+    (block_not_hold : block) : Pl.block =
   let cond_hold_pl =
     prosify_hold_cond ~hold:true at ctx id_rel notexp iterexps
   in
-  let instrs_hold_pl = prosify_instrs ctx instrs_hold in
-  let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, instrs_hold_pl) $ at in
+  let block_hold_pl = prosify_block ctx block_hold in
+  let instr_hold_pl = Pl.BranchI (Pl.If, cond_hold_pl, block_hold_pl) $ at in
   let cond_not_hold_pl =
     prosify_hold_cond ~hold:false at ctx id_rel notexp iterexps
   in
-  let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
+  let block_not_hold_pl = prosify_block ctx block_not_hold in
   let instr_not_hold_pl =
-    Pl.BranchI (Pl.Else, cond_not_hold_pl, instrs_not_hold_pl) $ at
+    Pl.BranchI (Pl.Else, cond_not_hold_pl, block_not_hold_pl) $ at
   in
   [ instr_hold_pl; instr_not_hold_pl ]
 
 and prosify_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) (instrs_hold : instr list) :
-    Pl.instr list =
+    (notexp : notexp) (iterexps : iterexp list) (block_hold : block) : Pl.block
+    =
   let cond_hold_pl =
     prosify_hold_cond ~hold:true at ctx id_rel notexp iterexps
   in
-  let instrs_hold_pl = prosify_instrs ctx instrs_hold in
+  let block_hold_pl = prosify_block ctx block_hold in
   let instr_check_pl = Pl.CheckI cond_hold_pl $ at in
-  instr_check_pl :: instrs_hold_pl
+  instr_check_pl :: block_hold_pl
 
 and prosify_not_hold_only_instr (at : region) (ctx : Ctx.t) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) (instrs_not_hold : instr list) :
-    Pl.instr list =
+    (notexp : notexp) (iterexps : iterexp list) (block_not_hold : block) :
+    Pl.block =
   let cond_not_hold_pl =
     prosify_hold_cond ~hold:false at ctx id_rel notexp iterexps
   in
-  let instrs_not_hold_pl = prosify_instrs ctx instrs_not_hold in
+  let block_not_hold_pl = prosify_block ctx block_not_hold in
   let instr_check_pl = Pl.CheckI cond_not_hold_pl $ at in
-  instr_check_pl :: instrs_not_hold_pl
+  instr_check_pl :: block_not_hold_pl
 
 (* Case instruction prosification *)
 
@@ -491,30 +488,30 @@ and prosify_case_cond (ctx : Ctx.t) (exp : exp) (guard : guard) : Pl.cond =
   Pl.ExpCond exp_pl
 
 and prosify_case (at : region) (ctx : Ctx.t) (exp : exp) (case : case) :
-    Pl.instr list =
-  let guard, instrs_then = case in
+    Pl.block =
+  let guard, block_then = case in
   let cond_pl = prosify_case_cond ctx exp guard in
-  let instrs_then_pl = prosify_instrs ctx instrs_then in
+  let block_then_pl = prosify_block ctx block_then in
   match ctx.branch with
   | Check ->
       let instr_pl = Pl.CheckI cond_pl $ at in
-      instr_pl :: instrs_then_pl
+      instr_pl :: block_then_pl
   | If ->
       let branch_pl = Pl.If in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | ElseIf ->
       let branch_pl = Pl.ElseIf in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | Else ->
       let branch_pl = Pl.Else in
-      let instr_pl = Pl.BranchI (branch_pl, cond_pl, instrs_then_pl) $ at in
+      let instr_pl = Pl.BranchI (branch_pl, cond_pl, block_then_pl) $ at in
       [ instr_pl ]
   | Empty -> assert false
 
 and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
-    (cases : case list) : Pl.instr list =
+    (cases : case list) : Pl.block =
   match cases with
   | [] -> assert false
   | [ case ] ->
@@ -533,28 +530,28 @@ and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
       |> List.concat
 
 and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
-    (cases : case list) (phantom_opt : phantom option) : Pl.instr list =
+    (cases : case list) (phantom_opt : phantom option) : Pl.block =
   let total = Option.is_none phantom_opt in
   prosify_cases ~total at ctx exp cases
 
 (* Otherwise instruction prosification *)
 
-and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (instr : instr) :
-    Pl.instr list =
-  let instrs_pl = prosify_instr ctx instr in
-  let instr_pl = Pl.OtherwiseI instrs_pl $ at in
+and prosify_otherwise_instr (at : region) (ctx : Ctx.t) (block : block) :
+    Pl.block =
+  let block_pl = prosify_block ctx block in
+  let instr_pl = Pl.OtherwiseI block_pl $ at in
   [ instr_pl ]
 
 (* Let instruction prosification *)
 
 and prosify_let_instr (at : region) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-    (iterinstrs : iterinstr list) : Pl.instr list =
+    (iterinstrs : iterinstr list) : Pl.block =
   match prosify_let_case_instr at ctx exp_l exp_r iterinstrs with
-  | Some instrs_pl -> instrs_pl
+  | Some block_pl -> block_pl
   | None -> prosify_let_non_case_instr at ctx exp_l exp_r iterinstrs
 
 and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
-    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.instr list option =
+    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.block option =
   match exp_l.it with
   | CaseE (mixop, exps_l) -> (
       let tid =
@@ -587,7 +584,7 @@ and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
   | _ -> None
 
 and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
-    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.instr list =
+    (exp_r : exp) (iterinstrs : iterinstr list) : Pl.block =
   let exp_l_pl = prosify_exp ctx exp_l in
   let exp_r_pl = prosify_exp ctx exp_r in
   let instr_pl = Pl.LetI (exp_l_pl, exp_r_pl) $ at in
@@ -598,7 +595,7 @@ and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
 
 and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs : iterinstr list) :
-    Pl.instr list =
+    Pl.block =
   let mixop, exps = notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   let exps_input_pl = prosify_exps ctx exps_input in
@@ -625,7 +622,7 @@ and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
 (* Result instruction prosification *)
 
 and prosify_result_instr (at : region) (ctx : Ctx.t)
-    (rel_signature : rel_signature) (exps : exp list) : Pl.instr list =
+    (rel_signature : rel_signature) (exps : exp list) : Pl.block =
   let exps_pl = prosify_exps ctx exps in
   let nottyp, inputs = rel_signature in
   let _, typs = nottyp.it in
@@ -645,8 +642,7 @@ and prosify_result_instr (at : region) (ctx : Ctx.t)
 
 (* Return instruction prosification *)
 
-and prosify_return_instr (at : region) (ctx : Ctx.t) (exp : exp) : Pl.instr list
-    =
+and prosify_return_instr (at : region) (ctx : Ctx.t) (exp : exp) : Pl.block =
   let exp_pl = prosify_exp ctx exp in
   let instr_pl = Pl.ReturnI exp_pl $ at in
   [ instr_pl ]
@@ -750,27 +746,26 @@ and prosify_extern_rel_def (ctx : Ctx.t) (at : region) (externrel : externrel) :
 (* Defined relation definition prosification *)
 
 and collect_rulegroups_instr (instr : instr) :
-    (id * rel_signature * exp list * instr list) list =
+    (id * rel_signature * exp list * block) list =
   match instr.it with
-  | IfI (_, _, instrs_then, _) -> collect_rulegroups_instrs instrs_then
+  | IfI (_, _, block_then, _) -> collect_rulegroups_block block_then
   | HoldI (_, _, _, holdcase) -> (
       match holdcase with
-      | BothH (instrs_hold, instrs_nothold) ->
-          collect_rulegroups_instrs instrs_hold
-          @ collect_rulegroups_instrs instrs_nothold
-      | HoldH (instrs_hold, _) -> collect_rulegroups_instrs instrs_hold
-      | NotHoldH (instrs_nothold, _) -> collect_rulegroups_instrs instrs_nothold
-      )
+      | BothH (block_hold, block_nothold) ->
+          collect_rulegroups_block block_hold
+          @ collect_rulegroups_block block_nothold
+      | HoldH (block_hold, _) -> collect_rulegroups_block block_hold
+      | NotHoldH (block_nothold, _) -> collect_rulegroups_block block_nothold)
   | CaseI (_, cases, _) ->
-      let instrs_group = cases |> List.map snd in
-      instrs_group |> List.map collect_rulegroups_instrs |> List.concat
-  | GroupI (id_rulegroup, rel_signature, exps_input, instrs) ->
-      [ (id_rulegroup, rel_signature, exps_input, instrs) ]
+      let block_group = cases |> List.map snd in
+      block_group |> List.map collect_rulegroups_block |> List.concat
+  | GroupI (id_rulegroup, rel_signature, exps_input, block) ->
+      [ (id_rulegroup, rel_signature, exps_input, block) ]
   | _ -> []
 
-and collect_rulegroups_instrs (instrs : instr list) :
-    (id * rel_signature * exp list * instr list) list =
-  instrs |> List.map collect_rulegroups_instr |> List.concat
+and collect_rulegroups_block (block : block) :
+    (id * rel_signature * exp list * block) list =
+  block |> List.map collect_rulegroups_instr |> List.concat
 
 and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
     (rel_signature : rel_signature) (exps_input : exp list) : Pl.rulegroup_title
@@ -828,30 +823,34 @@ and prosify_rulegroup_math_title (ctx : Ctx.t) (_id_rel : id)
   Pl.MathRuleTitle (id_rulegroup, mixop, exps_pl)
 
 and prosify_rulegroup (ctx : Ctx.t) (id_rel : id)
-    (rulegroup : id * rel_signature * exp list * instr list) : Pl.rulegroup =
-  let id_rulegroup, rel_signature, exps_input, instrs = rulegroup in
+    (rulegroup : id * rel_signature * exp list * block) : Pl.rulegroup =
+  let id_rulegroup, rel_signature, exps_input, block = rulegroup in
   let rulegroup_title_pl =
     prosify_rulegroup_title ctx id_rel id_rulegroup rel_signature exps_input
   in
   let ctx =
     let frees =
-      IdSet.union (Sl.Free.free_exps exps_input) (Sl.Free.free_instrs instrs)
+      IdSet.union (Sl.Free.free_exps exps_input) (Ll.Free.free_block block)
     in
     Ctx.set_free ctx frees
   in
-  let instrs_pl = prosify_instrs ctx instrs in
-  (rulegroup_title_pl, instrs_pl)
+  let block_pl = prosify_block ctx block in
+  (rulegroup_title_pl, block_pl)
 
 and prosify_rulegroups (ctx : Ctx.t) (id_rel : id)
-    (rulegroups : (id * rel_signature * exp list * instr list) list) :
+    (rulegroups : (id * rel_signature * exp list * block) list) :
     Pl.rulegroup list =
   List.map (prosify_rulegroup ctx id_rel) rulegroups
 
 and prosify_defined_rel_def (ctx : Ctx.t) (at : region) (rel : rel) : Pl.def =
-  let id_rel, rel_signature, exps_match, instrs, _ = rel in
+  let id_rel, rel_signature, exps_match, block, elseblock_opt, _ = rel in
   let ctx = Ctx.enter_rel ctx id_rel in
   let rel_title_pl = prosify_rel_title ctx id_rel rel_signature exps_match in
-  let rulegroups = collect_rulegroups_instrs instrs in
+  let block =
+    Linearize.linearize_block block
+    @ Linearize.linearize_elseblock_opt elseblock_opt
+  in
+  let rulegroups = collect_rulegroups_block block in
   let rulegroups_pl = prosify_rulegroups ctx id_rel rulegroups in
   Pl.RelD (rel_title_pl, rulegroups_pl) $ at
 
@@ -912,19 +911,20 @@ and prosify_builtin_func_def (ctx : Ctx.t) (at : region)
 (* Table function definition prosification *)
 
 and prosify_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Pl.tablerow =
-  let exps_input, exp_output, instrs = tablerow in
+  let exps_input, exp_output, block = tablerow in
+  let block = Linearize.linearize_block block in
   let exps_input_pl = prosify_exps ctx exps_input in
   let exp_output_pl = prosify_exp ctx exp_output in
   let ctx =
     let frees =
       IdSet.union
         (Sl.Free.free_exps exps_input)
-        (IdSet.union (Sl.Free.free_exp exp_output) (Sl.Free.free_instrs instrs))
+        (IdSet.union (Sl.Free.free_exp exp_output) (Ll.Free.free_block block))
     in
     Ctx.set_free ctx frees
   in
-  let instrs_pl = prosify_instrs ctx instrs in
-  (exps_input_pl, exp_output_pl, instrs_pl)
+  let block_pl = prosify_block ctx block in
+  (exps_input_pl, exp_output_pl, block_pl)
 
 and prosify_tablerows (ctx : Ctx.t) (tablerows : tablerow list) :
     Pl.tablerow list =
@@ -941,17 +941,21 @@ and prosify_table_func_def (ctx : Ctx.t) (at : region) (tablefunc : tablefunc) :
 
 and prosify_defined_func_def (ctx : Ctx.t) (at : region)
     (definedfunc : definedfunc) : Pl.def =
-  let id, tparams, params, typ_ret, instrs, _ = definedfunc in
+  let id, tparams, params, typ_ret, block, elseblock_opt, _ = definedfunc in
   let ctx_local = Ctx.add_tparams ctx tparams in
   let func_title_pl = prosify_func_title ctx_local id tparams params typ_ret in
+  let block =
+    Linearize.linearize_block block
+    @ Linearize.linearize_elseblock_opt elseblock_opt
+  in
   let ctx =
     let frees =
-      IdSet.union (Sl.Free.free_params params) (Sl.Free.free_instrs instrs)
+      IdSet.union (Sl.Free.free_params params) (Ll.Free.free_block block)
     in
     Ctx.set_free ctx frees
   in
-  let instrs_pl = prosify_instrs ctx instrs in
-  Pl.FuncDecD (func_title_pl, instrs_pl) $ at
+  let block_pl = prosify_block ctx block in
+  Pl.FuncDecD (func_title_pl, block_pl) $ at
 
 (* Entry point *)
 

@@ -76,13 +76,13 @@ let load_defs (henv : HEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
       let td = Typdef.Defined (tparams, deftyp) in
       let tdenv = TDEnv.add tid td tdenv in
       (henv, tdenv)
-  | ExternRelD (rid, _, _, hints) | RelD (rid, _, _, _, hints) ->
+  | ExternRelD (rid, _, _, hints) | RelD (rid, _, _, _, _, hints) ->
       let henv = load_hints (`Rel rid) henv hints in
       (henv, tdenv)
   | ExternDecD (fid, _, _, _, hints)
   | BuiltinDecD (fid, _, _, _, hints)
   | TableDecD (fid, _, _, _, hints)
-  | FuncDecD (fid, _, _, _, _, hints) ->
+  | FuncDecD (fid, _, _, _, _, _, hints) ->
       let henv = load_hints (`Func fid) henv hints in
       (henv, tdenv)
 

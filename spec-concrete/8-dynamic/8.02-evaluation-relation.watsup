@@ -42,8 +42,7 @@ relation Expr_eval:
 
 syntax expressionListResult =
   | continueResult<value*>
-  | rejectTransitionResult
-  | exitResult
+  | abortResult
 
 relation Exprs_eval:
   cursor evalContext arch |- typedExpressionIR*
@@ -132,8 +131,7 @@ relation Stmt_eval:
   hint(input %0 %1 %2 %3)
   hint(prose_in "runtime evaluation of" %3#
                 ", under cursor" %0#", context" %1#", and state" %2)
-  hint(prose_out "\nthe updated context" %4#
-                 ", state" %5#", and" %6)
+  hint(prose_out "the updated context" %4#", state" %5#", and" %6)
 
 relation BlockElementStmt_eval:
   evalContext arch |- blockElementStatementIR
@@ -270,6 +268,10 @@ relation ControlBody_eval:
   evalContext arch |- controlBodyIR
                     : evalContext arch controlBodyResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#
+                ", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and result" %5)
 
 syntax controlLocalDeclarationResult =
   | continueEmptyResult
@@ -279,11 +281,17 @@ relation ControlLocalDecl_eval:
   evalContext arch |- controlLocalDeclarationIR
                     : evalContext arch controlLocalDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and result" %5)
 
 relation ControlLocalDecls_eval:
   evalContext arch |- controlLocalDeclarationIR*
                     : evalContext arch controlLocalDeclarationResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#", under context" %0#", and state" %1)
+  hint(prose_out "\nthe updated context" %3#
+                 ", state" %4#", and result" %5)
 
 ;;
 ;;;; Declaration evaluation

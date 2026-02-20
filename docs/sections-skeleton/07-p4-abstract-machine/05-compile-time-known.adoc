@@ -21,24 +21,25 @@ The following are local compile-time known values:
 - The expression `{#}` representing an invalid header or header union value.
 // - Instances constructed by instance declarations and constructor invocations.
 - Identifiers that represent declared types, actions, functions, tables, parsers, controls, or packages.
-- Sequence expression where all components are local compile-time known values.
+- Tuple expression where all components are local compile-time known values.
 - Structure-valued expressions, where all fields are local compile-time known values.
 - Expressions evaluating to a list type, where all elements are local compile-time known values.
 - Legal casts applied to local compile-time known values.
 - Indexing a local compile-time known stack or tuple value with a local compile-time known index.
 - Accessing a field of a local compile-time known struct, header, or header union value.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/`, `%`,
-  `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>>`, `~`, `>`, `<`, `==`, `!=`,
-  `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all local compile-time known
-  values.
+- The following expressions (`{plus}`, `-`, `|{plus}|`, `|-|`, `*`, `/`, `%`, `!`, `&`, `|`, `^`,
+  `&&`, `||`, `<<`, `>>`, `~`, `>`, `<`, `==`, `!=`, `\<=`, `>=`, `++`, `[:]`, `?:`)
+  when their operands are all local compile-time known values.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
   `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the type of `e` is not
   generic.
 
+ifndef::release[]
 NOTE: It is questionable whether instances constructed by instance declarations
 and constructor invocations should be considered local compile-time known
 values. So, the corresponding bullet is commented out in this document.
 A related spec issue is made here: https://github.com/p4lang/p4-spec/issues/1309.
+endif::[]
 
 // 1073
 The following are compile-time known values:
@@ -47,16 +48,14 @@ The following are compile-time known values:
 - All local compile-time known values.
 - Constructor parameters (i.e., the declared parameters for a `parser`, `control`, etc.)
 - Tuple expression where all components are compile-time known values.
-- Expressions evaluating to a list type, where all elements are compile-time known values.
 - Structure-valued expressions, where all fields are compile-time known values.
 - Expressions evaluating to a list type, where all elements are compile-time known values.
 - Legal casts applied to compile-time known values.
 - Indexing a compile-time known stack or tuple value with a compile-time known index.
 - Accessing a field of a compile-time known struct, header, or header union value.
-- The following expressions (`+`, `-`, `|+|`, `|-|`, `*`, `/`, `%`,
-  `!`, `&`, `|`, `^`, `&&`, `||`, `<< `, `>> `, `~`, `>`, `<`, `==`, `!=`,
-  `<=`, `>=`, `++`, `[:]`, `?:`) when their operands are all compile-time known
-  values.
+- The following expressions (`{plus}`, `-`, `|{plus}|`, `|-|`, `*`, `/`, `%`, `!`, `&`, `|`, `^`,
+  `&&`, `||`, `<<`, `>>`, `~`, `>`, `<`, `==`, `!=`, `\<=`, `>=`, `++`, `[:]`, `?:`)
+  when their operands are all compile-time known values.
 - Expressions of the form `e.minSizeInBits()`, `e.minSizeInBytes()`,
   `e.maxSizeInBits()` and `e.maxSizeInBytes()` where the the type of `e` is
   generic.

@@ -393,13 +393,13 @@ module DirectMeter = struct
       | _ ->
           error_no_region
             (Format.asprintf
-               "direct_counter constructor expects 1 argument, but %d were given"
+               "direct_counter constructor expects 1 argument, but %d were \
+                given"
                (List.length values_arg))
     in
     let id_enum, id_type = unpack_p4_enum value_type in
     match (id_enum, id_type) with
-    | "MeterType", "packets" ->
-        Packets Bigint.zero
+    | "MeterType", "packets" -> Packets Bigint.zero
     | "MeterType", "bytes" -> Bytes Bigint.zero
     | _ ->
         error_no_region

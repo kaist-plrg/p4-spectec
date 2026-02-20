@@ -4,7 +4,7 @@ open Sl
 open Runtime.Dynamic_Sl
 open Envs
 open Error
-open Util.Backtrace
+open Backtrace
 open Util.Source
 
 (* Error *)
@@ -13,17 +13,21 @@ let error_undef (at : region) (kind : string) (id : string) =
   error at (Format.asprintf "%s `%s` is undefined" kind id)
 
 let back_undef (at : region) (kind : string) (id : string) =
-  back at (Format.asprintf "%s `%s` is undefined" kind id)
+  back_err at (Format.asprintf "%s `%s` is undefined" kind id)
 
 let error_dup (at : region) (kind : string) (id : string) =
   error at (Format.asprintf "%s `%s` was already defined" kind id)
 
 let back_dup (at : region) (kind : string) (id : string) =
-  back at (Format.asprintf "%s `%s` was already defined" kind id)
+  back_err at (Format.asprintf "%s `%s` was already defined" kind id)
 
 (* Cursor *)
 
 type cursor = Global | Local
+
+(* Mode *)
+
+let is_det : bool ref = ref false
 
 (* Context *)
 
@@ -103,8 +107,8 @@ let load_def (def : def) : unit =
   | ExternRelD (id, _, _, _) ->
       let rel = Rel.Extern in
       add_rel_global id rel
-  | RelD (id, _, relmatch, relpaths, _) ->
-      let rel = Rel.Defined (relmatch, relpaths) in
+  | RelD (id, _, exps_match, block, elseblock_opt, _) ->
+      let rel = Rel.Defined (exps_match, block, elseblock_opt) in
       add_rel_global id rel
   | ExternDecD (id, _, _, _, _) ->
       let func = Func.Extern in
@@ -115,11 +119,13 @@ let load_def (def : def) : unit =
   | TableDecD (id, params, _typ, tablerows, _) ->
       let func = Func.Table (params, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, params, _typ, instrs, _) ->
-      let func = Func.Defined (tparams, params, instrs) in
+  | FuncDecD (id, tparams, params, _typ, block, elseblock_opt, _) ->
+      let func = Func.Defined (tparams, params, block, elseblock_opt) in
       add_func_global id func
 
-let init (spec : spec) : unit = List.iter load_def spec
+let init ~(det : bool) (spec : spec) : unit =
+  is_det := det;
+  List.iter load_def spec
 
 (* Constructor *)
 
@@ -138,7 +144,7 @@ let find_values_input_opt (ctx : t) : Value.t list option =
 let find_values_input (ctx : t) : Value.t list =
   match find_values_input_opt ctx with
   | Some values_input -> values_input
-  | None -> back no_region "cannot find input values in empty local context"
+  | None -> back_err no_region "cannot find input values in empty local context"
 
 (* Finders for values *)
 
@@ -198,19 +204,21 @@ let bound_rel (ctx : t) (rid : RId.t) : bool =
 
 (* Finders for definitions *)
 
-let find_func_opt (ctx : t) (fid : FId.t) : Func.t option =
+let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
   let fenv =
     match ctx.local with
     | Empty | Rel _ -> FEnv.empty
     | Func { fenv; _ } -> fenv
   in
   match FEnv.find_opt fid fenv with
-  | Some func -> Some func
-  | None -> FTbl.find_opt fid ctx.global.ftbl
+  | Some func -> Some (Local, func)
+  | None ->
+      FTbl.find_opt fid ctx.global.ftbl
+      |> Option.map (fun func -> (Global, func))
 
-let find_func (ctx : t) (fid : FId.t) : Func.t =
+let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   match find_func_opt ctx fid with
-  | Some func -> func
+  | Some (cursor, func) -> (cursor, func)
   | None -> back_undef fid.at "function" fid.it
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
@@ -224,7 +232,7 @@ let add_value (ctx : t) (var : Var.t) (value : Value.t) : t =
   match ctx.local with
   | Empty ->
       let id, _ = var in
-      back id.at "cannot add value to empty local context"
+      back_err id.at "cannot add value to empty local context"
   | Rel { rid; values_input; venv } ->
       let venv = VEnv.add var value venv in
       { ctx with local = Rel { rid; values_input; venv } }
@@ -237,8 +245,8 @@ let add_value (ctx : t) (var : Var.t) (value : Value.t) : t =
 let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
   if bound_typdef ctx tid then back_dup tid.at "type" tid.it;
   match ctx.local with
-  | Empty -> back tid.at "cannot add type to empty local context"
-  | Rel _ -> back tid.at "cannot add type to rule context"
+  | Empty -> back_err tid.at "cannot add type to empty local context"
+  | Rel _ -> back_err tid.at "cannot add type to rule context"
   | Func { fid; values_input; tdenv; fenv; venv } ->
       let tdenv = TDEnv.add tid td tdenv in
       { ctx with local = Func { fid; values_input; tdenv; fenv; venv } }
@@ -248,8 +256,8 @@ let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
 let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t =
   if bound_func ctx fid then back_dup fid.at "function" fid.it;
   match ctx.local with
-  | Empty -> back fid.at "cannot add function to empty local context"
-  | Rel _ -> back fid.at "cannot add function to relation context"
+  | Empty -> back_err fid.at "cannot add function to empty local context"
+  | Rel _ -> back_err fid.at "cannot add function to relation context"
   | Func { fid = fid_local; values_input; tdenv; fenv; venv } ->
       let fenv = FEnv.add fid func fenv in
       {
@@ -276,7 +284,7 @@ let localize_func (ctx : t) (fid : FId.t) (values_input : value list)
 
 let localize_clear (ctx : t) : t =
   match ctx.local with
-  | Empty -> back no_region "cannot clear empty local context"
+  | Empty -> back_err no_region "cannot clear empty local context"
   | Rel { rid; values_input; _ } ->
       { ctx with local = Rel { rid; values_input; venv = VEnv.empty } }
   | Func { fid; values_input; tdenv; fenv; _ } ->
@@ -293,15 +301,17 @@ let localize_clear (ctx : t) : t =
 let transpose (value_matrix : value list list) : value list list =
   match value_matrix with
   | [] -> []
-  | rows ->
-      let width = List.length (List.hd rows) in
-      check_back
-        (List.for_all (fun row -> List.length row = width) rows)
-        no_region "cannot transpose a matrix of value batches";
-      List.fold_right
-        (List.map2 (fun element row -> element :: row))
-        rows
-        (List.init width (fun _ -> []))
+  | row_h :: _ ->
+      let width = List.length row_h in
+      let cols = Array.make width [] in
+      List.iter
+        (fun row ->
+          check_back_err
+            (List.length row = width)
+            no_region "cannot transpose a matrix of value batches";
+          List.iteri (fun j v -> cols.(j) <- v :: cols.(j)) row)
+        (List.rev value_matrix);
+      Array.to_list cols
 
 let sub_opt (ctx : t) (vars : var list) : t option =
   (* First collect the values that are to be iterated over *)
@@ -322,7 +332,7 @@ let sub_opt (ctx : t) (vars : var list) : t option =
     in
     Some ctx_sub
   else if List.for_all Option.is_none values then None
-  else back no_region "mismatch in optionality of iterated variables"
+  else back_err no_region "mismatch in optionality of iterated variables"
 
 let sub_list (ctx : t) (vars : var list) : t list =
   (* First break the values that are to be iterated over,

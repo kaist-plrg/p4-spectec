@@ -75,7 +75,7 @@ and free_args (args : arg list) : t =
 
 let rec free_cases (cases : case list) : t =
   cases
-  |> List.map (fun (guard, instrs) -> free_guard guard + free_instrs instrs)
+  |> List.map (fun (guard, block) -> free_guard guard + free_block block)
   |> List.fold_left ( + ) empty
 
 and free_guard (guard : guard) : t =
@@ -86,16 +86,18 @@ and free_guard (guard : guard) : t =
 
 and free_instr (instr : instr) : t =
   match instr.it with
-  | IfI (exp, _, instrs, _) -> free_exp exp + free_instrs instrs
+  | IfI (exp, _, block, _) -> free_exp exp + free_block block
   | HoldI (_, (_, exps), _, _) -> free_exps exps
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
-  | OtherwiseI instr -> free_instr instr
-  | GroupI (_, _, exps, instrs) -> free_exps exps + free_instrs instrs
-  | LetI (exp_l, exp_r, _) -> free_exp exp_l + free_exp exp_r
-  | RuleI (_, (_, exps), _, _) -> free_exps exps
+  | GroupI (_, _, exps, block) -> free_exps exps + free_block block
+  | LetI (exp_l, exp_r, _, block) ->
+      free_exp exp_l + free_exp exp_r + free_block block
+  | RuleI (_, (_, exps), _, _, block) -> free_exps exps + free_block block
   | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
   | DebugI exp -> free_exp exp
 
 and free_instrs (instrs : instr list) : t =
   instrs |> List.map free_instr |> List.fold_left ( + ) empty
+
+and free_block (block : block) : t = free_instrs block

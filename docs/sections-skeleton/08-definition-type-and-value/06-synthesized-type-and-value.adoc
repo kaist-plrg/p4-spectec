@@ -58,8 +58,10 @@ N1 n1 = ...;  // initialize n1 with the default value N1.A
 See <<sec-default-expression>> for semantics of default initialization.
 
 // Added
+ifndef::release[]
 NOTE: The default type and value is new. Because every expressions must have
 a type and value, we need to represent those of `+...+`.
+endif::[]
 
 ===== Well-formedness
 
@@ -105,8 +107,10 @@ h = {#};   // This makes the header h become invalid
 ----
 
 // Added
+ifndef::release[]
 NOTE: The invalid header type and value is new. Because every expressions
 must have a type and value, we need to represent those of `+{#}+`.
+endif::[]
 
 ===== Well-formedness
 
@@ -189,12 +193,14 @@ which it evaluates. Any field names not given a value explicitly will be given
 their default value (see <<sec-initializing-with-default-values>>).
 
 // Added
+ifndef::release[]
 NOTE: The sequence type is newly introduced. In the current P4 language
 specification, sequence expressions are referred to as tuple expressions, and
 (somewhat confusingly and implicitly) has tuple type. However, this is
 problematic since tuples have limited casting rules that cannot be applied to
 several initialization scenarios. Thus, we introduce sequence types to
 represent the expression sequence within curly braces, apart from tuple types.
+endif::[]
 
 ===== Well-formedness
 
@@ -267,9 +273,11 @@ It is a compile-time error if a field name appears more than once in the same
 structure-valued expression.
 
 // Added
+ifndef::release[]
 NOTE: The record type and value is new. Because every expression must have
 a type and value, we need to represent those of `{ recordElementExpression
 optTrailingComma }`.
+endif::[]
 
 ===== Well-formedness
 
@@ -327,6 +335,7 @@ ${syntax: keysetExpression tupleKeysetExpression
 The mask (`&&&`) and range (`..`) operators have the same precedence; the just
 above the `?:` operator.
 
+[#sec-singleton-set]
 ====== Singleton sets
 
 // 524
@@ -344,6 +353,7 @@ select (hdr.ipv4.version) {
 // 526
 The label `4` denotes the singleton set containing the `int` value `4`.
 
+[#sec-universal-set]
 ====== The universal set
 
 // 527
@@ -359,6 +369,7 @@ select (hdr.ipv4.version) {
 }
 ----
 
+[#sec-mask-set]
 ====== Masks
 
 // 529
@@ -398,6 +409,7 @@ P4 architectures may impose additional restrictions on the expressions on the
 left and right-hand side of a mask operator: for example, they may require that
 either or both sub-expressions be compile-time known values.
 
+[#sec-range-set]
 ====== Ranges
 
 // 536

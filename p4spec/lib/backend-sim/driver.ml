@@ -19,16 +19,16 @@ module Make
 
   let spec : spec ref = ref Empty
 
-  let init (spec_ : spec) : unit =
+  let init ?(cache = true) ?(det = false) (spec_ : spec) : unit =
     match spec_ with
     | IL spec_il ->
         spec := IL spec_il;
         Arch.init IL_mode;
-        Interp_IL.init spec_il
+        Interp_IL.init ~cache ~det spec_il
     | SL spec_sl ->
         spec := SL spec_sl;
         Arch.init SL_mode;
-        Interp_SL.init spec_sl
+        Interp_SL.init ~cache ~det spec_sl
     | Empty -> assert false
 
   (* Logger *)
@@ -68,7 +68,7 @@ module Make
           | [] -> None
           | expect_h :: expect_t ->
               let (expect_port, expect_packet), exact = expect_h in
-              let tx_h_port, tx_h_packet = tx_h in
+              let tx_h_port, _ = tx_h in
               if expect_port = tx_h_port then
                 if compare_tx ~exact tx_h (expect_port, expect_packet) then
                   Some (expect_h, List.rev_append acc expect_t)
@@ -96,7 +96,7 @@ module Make
       | [] -> None
       | tx_h :: tx_t ->
           let expect_port, expect_packet = tx_expect in
-          let tx_h_port, tx_h_packet = tx_h in
+          let tx_h_port, _ = tx_h in
           if expect_port = tx_h_port then
             if compare_tx ~exact tx_h tx_expect then
               Some (tx_h, List.rev_append acc tx_t)

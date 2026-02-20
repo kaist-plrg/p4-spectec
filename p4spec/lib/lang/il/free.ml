@@ -74,7 +74,6 @@ let rec free_prem (prem : prem) : t =
   | IfHoldPr (_, (_, exps)) -> free_exps exps
   | IfNotHoldPr (_, (_, exps)) -> free_exps exps
   | LetPr (exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
-  | ElsePr -> empty
   | IterPr (prem, _) -> free_prem prem
   | DebugPr exp -> free_exp exp
 
@@ -101,6 +100,15 @@ let free_rulegroup (rulegroup : rulegroup) : t =
 let free_rulegroups (rulegroups : rulegroup list) : t =
   rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
 
+let free_elsegroup (elsegroup : elsegroup) : t =
+  let _, rulematch, rulepath = elsegroup.it in
+  free_rulematch rulematch + free_rulepath rulepath
+
+let free_elsegroup_opt (elsegroup_opt : elsegroup option) : t =
+  match elsegroup_opt with
+  | Some elsegroup -> free_elsegroup elsegroup
+  | None -> empty
+
 (* Clauses *)
 
 let free_clause (clause : clause) : t =
@@ -109,6 +117,13 @@ let free_clause (clause : clause) : t =
 
 let free_clauses (clauses : clause list) : t =
   clauses |> List.map free_clause |> List.fold_left ( + ) empty
+
+let free_elseclause (elseclause : elseclause) : t = free_clause elseclause
+
+let free_elseclause_opt (elseclause_opt : elseclause option) : t =
+  match elseclause_opt with
+  | Some elseclause -> free_elseclause elseclause
+  | None -> empty
 
 (* Table rows *)
 
@@ -123,7 +138,9 @@ let free_tablerows (tablerows : tablerow list) : t =
 
 let free_def (def : def) : t =
   match def.it with
-  | RelD (_, _, _, rulegroups, _) -> free_rulegroups rulegroups
+  | RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
+      free_rulegroups rulegroups + free_elsegroup_opt elsegroup_opt
   | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
-  | FuncDecD (_, _, _, _, clauses, _) -> free_clauses clauses
+  | FuncDecD (_, _, _, _, clauses, elseclause_opt, _) ->
+      free_clauses clauses + free_elseclause_opt elseclause_opt
   | _ -> empty

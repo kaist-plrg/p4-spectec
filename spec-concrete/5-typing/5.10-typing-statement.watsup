@@ -42,7 +42,7 @@ rulegroup Stmt_ok/assignmentStatement {
     ---- ;; check lvalue
     -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
     ---- ;; use lvalue as expression
-    -- if expression_lvalue = $lvalue_to_expression(lvalue)
+    -- if expression_lvalue = $lvalue_as_expression(lvalue)
     ---- ;; check binary expression
     -- if expression_binary = expression_lvalue binop expression
     -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
@@ -367,7 +367,7 @@ relation ForInitStmts_ok:
   typingContext |- forInitStatement* : typingContext forInitStatementIR*
   hint(input %0 %1)
 
-rulegroup ForInitStmts_ok/nil {
+rulegroup ForInitStmts_ok {
 
   rule ForInitStmts_ok/nil:
     TC |- eps : TC eps
@@ -870,9 +870,9 @@ rulegroup BlockElementStmts_ok {
     TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t*
                   : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
     -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h
-                                              : TC_1 f_1 blockElementStatementIR_h
+                                         : TC_1 f_1 blockElementStatementIR_h
     -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*
-                                                : TC_2 f_2 blockElementStatementIR_t*
+                                         : TC_2 f_2 blockElementStatementIR_t*
 
 }
 
