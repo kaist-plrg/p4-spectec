@@ -65,13 +65,13 @@ let should_exclude_pair (filename_p4 : string) (filename_stf : string)
 
 (* Collector for P4-STF pairing *)
 
-let p4_matches_stf basename_p4 filepath_stf =
-  match String.split_on_char '/' filepath_stf with
-  | [ basedir; _ ] -> basedir = basename_p4
-  | [ filename_stf ] ->
-      let basename_stf = Filesys.base ~suffix:".stf" filename_stf in
-      String.equal basename_p4 basename_stf
-  | _ -> false
+let p4_matches_stf filepath_p4 filepath_stf =
+  let dir_p4 = Filename.dirname filepath_p4 in
+  let base_p4 = Filesys.base ~suffix:".p4" filepath_p4 in
+  let dir_stf = Filename.dirname filepath_stf in
+  let base_stf = Filesys.base ~suffix:".stf" filepath_stf in
+
+  (base_p4 = dir_stf) || (dir_p4 = dir_stf && base_p4 = base_stf)
 
 let collect_test_pairs (arch : string) (testdirs_p4 : string list)
     (testdirs_stf : string list) (patchdir : string) : (string * string) list =
@@ -113,11 +113,10 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
   in
   filenames_p4
   |> List.filter_map (fun (basedir_p4, filename_p4) ->
-         let filename_p4_base = Filesys.base ~suffix:".p4" filename_p4 in
          let filenames_stf =
            List.filter_map
              (fun (basedir_stf, filename_stf) ->
-               if p4_matches_stf filename_p4_base filename_stf then
+               if p4_matches_stf filename_p4 filename_stf then
                  Some (basedir_stf ^ "/" ^ filename_stf)
                else None)
              filenames_stf
