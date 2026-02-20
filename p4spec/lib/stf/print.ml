@@ -72,8 +72,6 @@ let print_ctr fmt = function
 
 let print_stmt fmt = function
   | Wait -> print_string fmt "wait"
-  | MirroringAdd (session, port) ->
-      F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
   | RemoveAll -> print_string fmt "remove_all"
   | Expect (port, Some expect, exact) ->
       F.fprintf fmt "expect %a %a%a" print_port port print_expect expect
@@ -96,6 +94,8 @@ let print_stmt fmt = function
         id_or_index
         (pp_print_option print_ctr)
         ctr print_cond cond print_number number
+  | MirroringAdd (session, port) ->
+      F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
   | McGroupCreate id -> F.fprintf fmt "mc_mgrp_create %a" print_number id
   | McNodeCreate (id, port) ->
       F.fprintf fmt "mc_node_create %a %a" print_number id print_number port

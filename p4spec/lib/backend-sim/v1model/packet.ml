@@ -2,6 +2,8 @@ open Interface.Pack
 open Interface.Unpack
 module Value = Runtime.Sim.Value
 
+(* Packet clones *)
+
 module CloneInfo = struct
   type clone_type = I2E | E2E [@@deriving yojson]
   type t = clone_type * int * int [@@deriving yojson]
@@ -35,6 +37,8 @@ module CloneInfo = struct
     (value_clone_type, value_session, value_index)
 end
 
+(* Packet resubmissions *)
+
 module ResubmitInfo = struct
   type t = int [@@deriving yojson]
 
@@ -48,6 +52,8 @@ module ResubmitInfo = struct
     in
     value_index
 end
+
+(* Packet recirculations *)
 
 module RecirculateInfo = struct
   type t = int [@@deriving yojson]
@@ -63,7 +69,7 @@ module RecirculateInfo = struct
     value_index
 end
 
-type entrypoint = Ingress | Egress [@@deriving yojson]
+(* Actions on a packet *)
 
 type action = {
   clone_opt : CloneInfo.t option;
@@ -71,6 +77,13 @@ type action = {
   recirculate_opt : RecirculateInfo.t option;
 }
 [@@deriving yojson]
+
+let empty_action =
+  { clone_opt = None; resubmit_opt = None; recirculate_opt = None }
+
+(* Processing context per packet *)
+
+type entrypoint = Ingress | Egress [@@deriving yojson]
 
 type t = {
   (* Evaluation context *)

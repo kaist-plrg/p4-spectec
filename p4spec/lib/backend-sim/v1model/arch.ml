@@ -17,14 +17,10 @@ let empty =
     queue = Scheduler.empty;
     mirrortable = Mirror.Table.empty;
     multicast = Multicast.State.empty;
-    action = { resubmit_opt = None; clone_opt = None; recirculate_opt = None };
+    action = Packet.empty_action;
   }
 
-let reset (t : t) =
-  {
-    t with
-    action = { resubmit_opt = None; clone_opt = None; recirculate_opt = None };
-  }
+let reset (t : t) = { t with action = Packet.empty_action }
 
 (* Value conversion *)
 
@@ -41,6 +37,13 @@ let with_mirrortable (mirrortable : Mirror.Table.t) (t : t) =
 let with_multicast (multicast : Multicast.State.t) (t : t) =
   { t with multicast }
 
+(* Clone setters *)
+
+let with_clone_opt (clone_opt : Packet.CloneInfo.t option) (t : t) : t =
+  { t with action = { t.action with clone_opt } }
+
+let with_clone (clone : Packet.CloneInfo.t) = with_clone_opt (Some clone)
+
 (* Resubmit setters *)
 
 let with_resubmit_opt (resubmit_opt : Packet.ResubmitInfo.t option) (t : t) : t
@@ -50,12 +53,7 @@ let with_resubmit_opt (resubmit_opt : Packet.ResubmitInfo.t option) (t : t) : t
 let with_resubmit (resubmit : Packet.ResubmitInfo.t) =
   with_resubmit_opt (Some resubmit)
 
-(* Clone setters *)
-
-let with_clone_opt (clone_opt : Packet.CloneInfo.t option) (t : t) : t =
-  { t with action = { t.action with clone_opt } }
-
-let with_clone (clone : Packet.CloneInfo.t) = with_clone_opt (Some clone)
+(* Recirculate setters *)
 
 let with_recirculate_opt (recirculate_opt : Packet.RecirculateInfo.t option)
     (t : t) : t =

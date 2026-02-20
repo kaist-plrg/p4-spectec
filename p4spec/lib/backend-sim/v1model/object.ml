@@ -136,7 +136,7 @@ module Counter = struct
     (counter, value_ctx, value_arch, value_callResult)
 end
 
-(* Counter *)
+(* Register *)
 
 module Register = struct
   (* Type *)
@@ -259,6 +259,8 @@ module Register = struct
     (reg, value_ctx, value_arch, value_callResult)
 end
 
+(* Direct counter *)
+
 module DirectCounter = struct
   (* Type *)
 
@@ -356,6 +358,8 @@ module DirectCounter = struct
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
+
+(* Direct meter *)
 
 module DirectMeter = struct
   (* Type *)

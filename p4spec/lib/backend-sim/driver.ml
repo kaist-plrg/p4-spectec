@@ -54,6 +54,29 @@ module Make
 
   (* STF test runner *)
 
+  (* Find the first expect element that has the same output port,
+     then compare packet output.
+     Return matched element and the rest of the list, preserving order. *)
+
+  let extract_matching_expect (tx : IO.tx) (expect_queue : IO.expect list) :
+      (IO.expect * IO.expect list) option =
+    let tx_port, _ = tx in
+    let rec extract_matching_expect expects = function
+      | [] -> None
+      | expect_h :: expect_t ->
+          let (expect_port, expect_packet), exact = expect_h in
+          if expect_port = tx_port then
+            if compare_tx ~exact tx (expect_port, expect_packet) then
+              Some (expect_h, List.rev_append expects expect_t)
+            else
+              error_stf
+                (Format.asprintf "expected %s but got %s"
+                   (string_of_tx (expect_port, expect_packet))
+                   (string_of_tx tx))
+          else extract_matching_expect (expect_h :: expects) expect_t
+    in
+    extract_matching_expect [] expect_queue
+
   let on_tx_output (txs : IO.tx list) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
     match txs with
@@ -61,56 +84,41 @@ module Make
     | [] -> (tx_output_queue, expect_queue)
     (* Packet was transmitted *)
     | tx_h :: tx_t -> (
-        (* find the first expect element that has the same output port,
-           then compare packet output. return matched element and the
-           rest of the list, preserving order. *)
-        let rec extract_first acc = function
-          | [] -> None
-          | expect_h :: expect_t ->
-              let (expect_port, expect_packet), exact = expect_h in
-              let tx_h_port, _ = tx_h in
-              if expect_port = tx_h_port then
-                if compare_tx ~exact tx_h (expect_port, expect_packet) then
-                  Some (expect_h, List.rev_append acc expect_t)
-                else
-                  error_stf
-                    (Format.asprintf "expected %s but got %s"
-                       (string_of_tx (expect_port, expect_packet))
-                       (string_of_tx tx_h))
-              else extract_first (expect_h :: acc) expect_t
-        in
-        match extract_first [] expect_queue with
+        match extract_matching_expect tx_h expect_queue with
         | None ->
             (* No expected packet (yet) *)
             let tx_output_queue = tx_output_queue @ txs in
             (tx_output_queue, expect_queue)
         | Some (expect, expect_queue) ->
-            Format.asprintf "[PASS] Transmitted %s" (string_of_tx (fst expect))
-            |> log;
+            let tx, _ = expect in
+            Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx) |> log;
             (tx_output_queue @ tx_t, expect_queue))
 
-  let on_tx_expect ((tx_expect, exact) : IO.expect)
-      (tx_output_queue : IO.tx list) (expect_queue : IO.expect list) :
-      IO.tx list * expect list =
-    let rec extract_first acc = function
+  let extract_matching_output (expect : IO.expect)
+      (tx_output_queue : IO.tx list) : (IO.tx * IO.tx list) option =
+    let (expect_port, expect_packet), exact = expect in
+    let rec extract_matching_output txs = function
       | [] -> None
       | tx_h :: tx_t ->
-          let expect_port, expect_packet = tx_expect in
-          let tx_h_port, _ = tx_h in
-          if expect_port = tx_h_port then
-            if compare_tx ~exact tx_h tx_expect then
-              Some (tx_h, List.rev_append acc tx_t)
+          let tx_port, _ = tx_h in
+          if expect_port = tx_port then
+            if compare_tx ~exact tx_h (expect_port, expect_packet) then
+              Some (tx_h, List.rev_append txs tx_t)
             else
               error_stf
                 (Format.asprintf "expected %s but got %s"
                    (string_of_tx (expect_port, expect_packet))
                    (string_of_tx tx_h))
-          else extract_first (tx_h :: acc) tx_t
+          else extract_matching_output (tx_h :: txs) tx_t
     in
-    match extract_first [] tx_output_queue with
+    extract_matching_output [] tx_output_queue
+
+  let on_tx_expect (expect : IO.expect) (tx_output_queue : IO.tx list)
+      (expect_queue : IO.expect list) : IO.tx list * expect list =
+    match extract_matching_output expect tx_output_queue with
     | None ->
         (* No output packet (yet) *)
-        let expect_queue = expect_queue @ [ (tx_expect, exact) ] in
+        let expect_queue = expect_queue @ [ expect ] in
         (tx_output_queue, expect_queue)
     | Some (tx_output, tx_output_queue) ->
         Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
@@ -226,11 +234,6 @@ module Make
             value_tableActionInterface
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
-    | Stf.Ast.MirroringAdd (session, port) ->
-        let session = int_of_string session in
-        let port = int_of_string port in
-        let value_arch = Arch.add_mirror_session value_arch session port in
-        (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.SetDefault (table_name, table_entry_action) ->
         (* Encode name *)
         let value_tableName = wrap_text_v table_name in
@@ -256,6 +259,12 @@ module Make
           Arch.table_add_default_action value_arch value_tableName
             value_tableActionInterface
         in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    (* Other architecture updates *)
+    | Stf.Ast.MirroringAdd (session, port) ->
+        let session = int_of_string session in
+        let port = int_of_string port in
+        let value_arch = Arch.add_mirror_session value_arch session port in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.McGroupCreate mgid ->
         let mgid = int_of_string mgid in

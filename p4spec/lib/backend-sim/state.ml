@@ -38,13 +38,13 @@ let ( let+ ) = map
 (* Sequence: run each state action from left to right and return accumulated result *)
 
 let sequence (ms : 'a state list) : 'a list state =
-  let rec aux acc = function
+  let rec seq acc = function
     | [] -> return (List.rev acc)
     | m :: ms ->
         let* x = m in
-        aux (x :: acc) ms
+        seq (x :: acc) ms
   in
-  aux [] ms
+  seq [] ms
 
 (* Combinators *)
 

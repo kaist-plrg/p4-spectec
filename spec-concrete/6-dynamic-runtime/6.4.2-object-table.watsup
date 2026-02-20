@@ -219,14 +219,12 @@ dec $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR)
 def $interface_of_tableKeyIR(
     typedExpressionIR `: nameIR_matchKind annotationList `;)
   = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if nameIR_key
-      = $name_annotation_nameIR(annotationList)
+  -- if nameIR_key = $name_annotation(annotationList)
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 def $interface_of_tableKeyIR(
     typedExpressionIR `: nameIR_matchKind annotationList `;)
   = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if eps
-      = $name_annotation_nameIR(annotationList)
+  -- if eps = $name_annotation(annotationList)
   -- if nameIR_key
       = $strip_all_whitespace(
           $print_<typedExpressionIR>(typedExpressionIR))
@@ -256,7 +254,7 @@ def $alias_to_original_lookup_map(parameterIR*)
   = $extend_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, `{ (id `: id)* })
   -- if (annotationList _ _ id _ = parameterIR)*
   -- if (annotation* = $flatten_annotationList(annotationList))*
-  -- if (nameIR_names = $name_annotation_nameIR_opt(annotation))**
+  -- if (nameIR_names = $name_annotation_opt(annotation))**
   -- if (nameIR_original, nameIR_aliases*)*
       = $filter_<(nameIR, nameIR*)>((id, nameIR_names*)*, ($(|nameIR_names*| > 0))*)
   -- if nameIR_alias* = (nameIR_aliases*[0])*
@@ -296,7 +294,7 @@ def $find_tableActionIR_by_name(
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
   -- if nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if eps = $name_annotation_nameIR(annotationList)
+  -- if eps = $name_annotation(annotationList)
   -- if nameIR_action = nameIR_target
 
 def $find_tableActionIR_by_name(
@@ -306,7 +304,7 @@ def $find_tableActionIR_by_name(
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
   -- if nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if eps = $name_annotation_nameIR(annotationList)
+  -- if eps = $name_annotation(annotationList)
   -- if nameIR_action =/= nameIR_target
 
 def $find_tableActionIR_by_name(
@@ -316,7 +314,7 @@ def $find_tableActionIR_by_name(
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
   -- if nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if nameIR_annotation* = $name_annotation_nameIR(annotationList)
+  -- if nameIR_annotation* = $name_annotation(annotationList)
   -- if nameIR_annotation* =/= eps
   -- if b_hit = ((nameIR = nameIR_action) \/ (nameIR <- nameIR_annotation*))
   -- if b_hit
@@ -328,7 +326,7 @@ def $find_tableActionIR_by_name(
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
   -- if nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if nameIR_annotation* = $name_annotation_nameIR(annotationList)
+  -- if nameIR_annotation* = $name_annotation(annotationList)
   -- if nameIR_annotation* =/= eps
   -- if b_hit = ((nameIR = nameIR_action) \/ (nameIR <- nameIR_annotation*))
   -- if ~b_hit
@@ -340,7 +338,7 @@ def $find_tableActionIR_by_dotPrefix(
   ) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*, nameIR_target)
   -- if annotationList (_ `( _ ))
           `# `( _ `, _ ) `; = tableActionIR_h
-  -- if eps = $name_annotation_nameIR(annotationList)
+  -- if eps = $name_annotation(annotationList)
 
 def $find_tableActionIR_by_dotPrefix(
     tableActionIR_h :: tableActionIR_t*,
@@ -348,7 +346,7 @@ def $find_tableActionIR_by_dotPrefix(
   ) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*, nameIR)
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
-  -- if nameIR_annotation* = $name_annotation_nameIR(annotationList)
+  -- if nameIR_annotation* = $name_annotation(annotationList)
   -- if nameIR_annotation* =/= eps
   -- if eps = $filter_<nameIR>(nameIR_annotation*, $starts_with(nameIR_annotation, ".")*)
 
@@ -358,7 +356,7 @@ def $find_tableActionIR_by_dotPrefix(
   ) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*, nameIR)
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
-  -- if nameIR_annotation* = $name_annotation_nameIR(annotationList)
+  -- if nameIR_annotation* = $name_annotation(annotationList)
   -- if nameIR_annotation_dotPrefix* =
       $filter_<nameIR>(nameIR_annotation*, $starts_with(nameIR_annotation, ".")*)
   -- if nameIR_annotation_dotPrefix* =/= eps
@@ -371,7 +369,7 @@ def $find_tableActionIR_by_dotPrefix(
   ) = (nameIR_action, tableActionIR_h)
   -- if annotationList (prefixedNameIR `( argumentIR_data* ))
           `# `( _ `, parameterIR_control* ) `; = tableActionIR_h
-  -- if nameIR_annotation* = $name_annotation_nameIR(annotationList)
+  -- if nameIR_annotation* = $name_annotation(annotationList)
   -- if nameIR_annotation_dotPrefix* =
       $filter_<nameIR>(nameIR_annotation*, $starts_with(nameIR_annotation, ".")*)
   -- if nameIR_annotation_strip* = $strip_prefix(nameIR_annotation_dotPrefix, ".")*

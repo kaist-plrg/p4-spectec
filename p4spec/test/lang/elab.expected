@@ -203,109 +203,6 @@ def $filter_<X>(X*, bool*) : X* =
   -- let b_h :: b_t*{b_t <- b_t*} = bool*{bool <- bool*}
   -- if ~b_h
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:204.1-205.41
-def $filter_some_<X>(X?*) : X* =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:206.1-206.32
-  clause 0 : (X?{X <- X?}*{X? <- X?*}) = []
-  -- if X?{X <- X?}*{X? <- X?*} matches []
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:207.1-208.35
-  clause 1 : (X'?{X' <- X'?}*{X'? <- X'?*}) = X_h :: $filter_some_<X>(X_t?{X_t <- X_t?}*{X_t? <- X_t?*})
-  -- if X'?{X' <- X'?}*{X'? <- X'?*} matches _ :: _
-  -- let X?{X <- X?} :: X_t?{X_t <- X_t?}*{X_t? <- X_t?*} = X'?{X' <- X'?}*{X'? <- X'?*}
-  -- if X?{X <- X?} matches (_)
-  -- let ?(X_h) = X?{X <- X?}
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:209.1-210.28
-  clause 2 : (X'?{X' <- X'?}*{X'? <- X'?*}) = $filter_some_<X>(X_t?{X_t <- X_t?}*{X_t? <- X_t?*})
-  -- if X'?{X' <- X'?}*{X'? <- X'?*} matches _ :: _
-  -- let X?{X <- X?} :: X_t?{X_t <- X_t?}*{X_t? <- X_t?*} = X'?{X' <- X'?}*{X'? <- X'?*}
-  -- if X?{X <- X?} matches ()
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:212.1-213.54
-builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:215.1-215.45
-builtin def $sort_<X>((nat, X)*) : (nat, X)*
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:217.1-219.60
-builtin def $distinct_<K>(K*) : bool
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:225.17-225.24
-syntax set<K> = 
-   | { K* }
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:227.1-227.27
-def $empty_set<K> : set<K> =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:228.1-228.29
-  clause 0 :  = { [] }
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:230.1-231.52
-def $in_set<K>(K, set<K>) : bool =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:232.1-232.41
-  clause 0 : (K, { K_e*{K_e <- K_e*} }) = K <- K_e*{K_e <- K_e*}
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:234.1-235.60
-builtin def $intersect_set<K>(set<K>, set<K>) : set<K>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:237.1-238.53
-builtin def $union_set<K>(set<K>, set<K>) : set<K>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:240.1-241.44
-builtin def $unions_set<K>(set<K>*) : set<K>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:243.1-244.58
-builtin def $diff_set<K>(set<K>, set<K>) : set<K>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:246.1-248.47
-builtin def $sub_set<K>(set<K>, set<K>) : bool
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:250.1-252.44
-builtin def $eq_set<K>(set<K>, set<K>) : bool
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:258.21-258.27
-syntax pair<K, V> = 
-   | K : V
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:260.20-260.35
-syntax map<K, V> = set<pair<K, V>>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:262.1-263.32
-def $empty_map<K, V> : map<K, V> =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:264.1-264.32
-  clause 0 :  = { [] }
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:266.1-267.44
-def $dom_map<K, V>(map<K, V>) : set<K> =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:268.1-268.45
-  clause 0 : ({ K : V*{K <- K*, V <- V*} }) = { K*{K <- K*} }
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:270.1-271.32
-builtin def $find_map<K, V>(map<K, V>, K) : V?
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:273.1-274.33
-builtin def $find_maps<K, V>(map<K, V>*, K) : V?
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:276.1-277.50
-builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:279.1-280.59
-builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:282.1-283.73
-builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
-
-;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:285.1-285.56
-def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
-
-  ;; ../../../../spec-concrete/0-aux/0.0-stdlib.watsup:286.1-289.56
-=======
 builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
 
 builtin def $sort_<X>((nat, X)*) : (nat, X)*
@@ -360,7 +257,6 @@ builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : ({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, { K_b : V_b*{K_b <- K_b*, V_b <- V_b*} }) = { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} }
   -- let { K_c : V_c*{K_c <- K_c*, V_c <- V_c*} } = $adds_map<K, V>({ K_a : V_a*{K_a <- K_a*, V_a <- V_a*} }, K_b*{K_b <- K_b*}, V_b*{V_b <- V_b*})
 
@@ -3281,27 +3177,18 @@ def $unroll_typeIR(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:15.1-16.45
 def $unroll_aliasType(typeIR) : typeIR =
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:17.1-17.65
   clause 0 : (typeIR') = $unroll_aliasType(typeIR)
   -- if typeIR' <: newTypeIR
   -- let type _typeId typeIR = typeIR' as newTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:18.1-18.68
   clause 1 : (typeIR') = $unroll_aliasType(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
 
-  ;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:19.1-20.15
-  clause 2 : (typeIR) = typeIR
-  -- otherwise
+  clause -1 : (typeIR) = typeIR
 
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:28.1-30.55
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
 tbl def $is_defaultable_typeIR(typeIR) : bool =
   row 0 :
     (signature) bool as typeIR
@@ -3375,10 +3262,6 @@ tbl def $is_defaultable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:49.1-51.62
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
 tbl def $is_equalable_typeIR(typeIR) : bool =
   row 0 :
     (signature) void as typeIR
@@ -3461,10 +3344,6 @@ tbl def $is_equalable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/2-static-runtime/2.2.3-type-aux.watsup:71.1-73.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
 tbl def $is_assignable_typeIR(typeIR) : bool =
   row 0 :
     (signature) void as typeIR
@@ -3692,10 +3571,6 @@ syntax parameterInitializerOptIR = parameterInitializerIR?
 syntax parameterIR = 
    | annotationList direction typeIR id parameterInitializerOptIR hint(prose_fields "annotations" "direction" "type" "name" "default initializer")
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/2-static-runtime/2.3.1-type-callable.watsup:27.23-27.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
 syntax actionTypeIR = 
    | annotationList action nameIR ( parameterIR* )
 
@@ -3910,12 +3785,7 @@ def $parameterListIR_of_callableTypeDefIR(callableTypeDefIR) : parameterIR* =
 
 def $parameterListIR_of_actionTypeDefIR(actionTypeDefIR) : parameterIR* =
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/2-static-runtime/2.3.4-type-callable-def-aux.watsup:95.1-96.17
   clause 0 : (_annotationList action _nameIR ( parameterIR*{parameterIR <- parameterIR*} )) = parameterIR*{parameterIR <- parameterIR*}
-=======
-  clause 0 : (action _nameIR ( parameterIR*{parameterIR <- parameterIR*} )) = parameterIR*{parameterIR <- parameterIR*}
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
 def $parameterListIR_of_functionTypeDefIR(functionTypeDefIR) : parameterIR* =
 
@@ -4397,12 +4267,7 @@ def $subst_callableTypeIR(theta, callableTypeIR) : callableTypeIR =
 
 def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/2-static-runtime/2.5.2-type-subst.watsup:265.1-268.50
   clause 0 : (theta, callableTypeIR) = annotationList action nameIR ( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ) as callableTypeIR
-=======
-  clause 0 : (theta, callableTypeIR) = action nameIR ( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ) as callableTypeIR
->>>>>>> concrete:p4spec/test/lang/elab.expected
   -- if callableTypeIR <: actionTypeIR
   -- let annotationList action nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeIR as actionTypeIR
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
@@ -7951,28 +7816,16 @@ def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
   -- if (nameIR_f =/= nameIR_f_h)
   -- let (callableId_t_found, V_t_found)*{V_t_found <- V_t_found*, callableId_t_found <- callableId_t_found*} = $find_non_overloadeds<V>({ callableId_t : V_t*{V_t <- V_t*, callableId_t <- callableId_t*} }, nameIR_f)
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:7.1-7.36
-def $is_some_nameIR(nameIR?) : bool =
+def $name_annotation(annotationList) : nameIR* =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:11.1-11.58
-  clause 0 : (nameIR?{nameIR <- nameIR?}) = $is_some_<nameIR>(nameIR?{nameIR <- nameIR?})
-
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:8.1-8.54
-def $name_annotation_nameIR(annotationList) : nameIR* =
-
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:13.1-18.78
-  clause 0 : (annotationList) = nameIR_names_found*{nameIR_names_found <- nameIR_names_found*}
+  clause 0 : (annotationList) = $concat_<nameIR>(nameIR_found*{nameIR_found <- nameIR_found*}*{nameIR_found* <- nameIR_found**})
   -- let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList)
-  -- (let nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?} = $name_annotation_nameIR_opt(annotation))*{annotation <- annotation*, nameIR_names_opt? -> nameIR_names_opt?*}
-  -- let nameIR_names_found_opt?{nameIR_names_found_opt <- nameIR_names_found_opt?}*{nameIR_names_found_opt? <- nameIR_names_found_opt?*} = $filter_<nameIR?>(nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?}*{nameIR_names_opt? <- nameIR_names_opt?*}, $is_some_nameIR(nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?})*{nameIR_names_opt? <- nameIR_names_opt?*})
-  -- let nameIR_names_found*{nameIR_names_found <- nameIR_names_found*} = $filter_some_<nameIR>(nameIR_names_found_opt?{nameIR_names_found_opt <- nameIR_names_found_opt?}*{nameIR_names_found_opt? <- nameIR_names_found_opt?*})
+  -- (let nameIR_opt?{nameIR_opt <- nameIR_opt?} = $name_annotation_opt(annotation))*{annotation <- annotation*, nameIR_opt? -> nameIR_opt?*}
+  -- let nameIR_found*{nameIR_found <- nameIR_found*}*{nameIR_found* <- nameIR_found**} = $opt_as_seq_<nameIR>(nameIR_opt?{nameIR_opt <- nameIR_opt?})*{nameIR_opt? <- nameIR_opt?*}
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:9.1-9.54
-def $name_annotation_nameIR_opt(annotation) : nameIR? =
+def $name_annotation_opt(annotation) : nameIR? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:20.1-24.64
-  clause 0 : (annotation) = ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
+  clause 0 : (annotation) = ?($strip_prefix($strip_suffix(nameIR, "\""), "\""))
   -- if annotation matches `@%(%)`
   -- let @ name ( annotationBody ) = annotation
   -- if ("name" = $name(name))
@@ -7980,53 +7833,41 @@ def $name_annotation_nameIR_opt(annotation) : nameIR? =
   -- if annotationBody'' matches `%%`
   -- let annotationBody' annotationToken = annotationBody''
   -- if annotationBody' matches ``EMPTY`
-  -- let nameIR_name = $print_<annotationToken>(annotationToken)
+  -- let nameIR = $print_<annotationToken>(annotationToken)
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:25.1-26.15
-  clause 1 : (annotation) = ?()
-  -- otherwise
+  clause -1 : (annotation) = ?()
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:28.1-28.69
-def $name_annotation_nameIR_default(annotationList, nameIR) : nameIR =
+def $name_annotation_default(annotationList, nameIR) : nameIR =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:30.1-31.63
   clause 0 : (annotationList, nameIR) = nameIR_found
-  -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
   -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
   -- let [nameIR_found] = nameIR'*{nameIR' <- nameIR'*}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:32.1-33.54
   clause 1 : (annotationList, nameIR) = nameIR
-  -- if ([] = $name_annotation_nameIR(annotationList))
+  -- if ([] = $name_annotation(annotationList))
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:35.1-35.60
 def $find_name_annotation_opt(annotationList) : annotation? =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:36.1-36.44
   clause 0 : (annotationList) = ?()
   -- if annotationList matches ``EMPTY`
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:37.1-40.27
   clause 1 : (annotationList) = ?(annotation)
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
   -- let annotation' = annotation
   -- if annotation' matches `@%(%)`
   -- let @ name ( annotationBody ) = annotation'
-  -- let text_name = $name(name)
-  -- if ("name" = text_name)
+  -- if ("name" = $name(name))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:41.1-44.29
   clause 2 : (annotationList) = ?()
   -- if annotationList <: annotation
   -- let annotation = annotationList as annotation
   -- let annotation' = annotation
   -- if annotation' matches `@%(%)`
   -- let @ name ( annotationBody ) = annotation'
-  -- let text_name = $name(name)
-  -- if ("name" =/= text_name)
+  -- if ("name" =/= $name(name))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:45.1-47.52
   clause 3 : (annotationList) = $find_name_annotation_opt(annotationListNonEmpty as annotationList)
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
@@ -8034,42 +7875,33 @@ def $find_name_annotation_opt(annotationList) : annotation? =
   -- let annotationListNonEmpty annotation = annotationListNonEmpty'
   -- if (?() = $find_name_annotation_opt(annotation as annotationList))
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:48.1-49.60
-  clause 4 : (annotationList) = ?(annotation')
+  clause 4 : (annotationList) = ?(annotation_found)
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty' = annotationList as annotationListNonEmpty
   -- if annotationListNonEmpty' matches `%%`
   -- let annotationListNonEmpty annotation = annotationListNonEmpty'
-  -- let annotation''?{annotation'' <- annotation''?} = $find_name_annotation_opt(annotation as annotationList)
-  -- if annotation''?{annotation'' <- annotation''?} matches (_)
-  -- let ?(annotation') = annotation''?{annotation'' <- annotation''?}
+  -- let annotation'?{annotation' <- annotation'?} = $find_name_annotation_opt(annotation as annotationList)
+  -- if annotation'?{annotation' <- annotation'?} matches (_)
+  -- let ?(annotation_found) = annotation'?{annotation' <- annotation'?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:50.1-51.15
-  clause 5 : (_annotationList) = ?()
-  -- otherwise
+  clause -1 : (_annotationList) = ?()
 
-;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:53.1-53.70
 def $add_annotationList(annotationList, annotation?) : annotationList =
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:55.1-55.62
   clause 0 : (annotationList, annotation?{annotation <- annotation?}) = annotationList
   -- if annotation?{annotation <- annotation?} matches ()
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:56.1-56.57
   clause 1 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotation as annotationList
   -- if annotationList matches ``EMPTY`
   -- if annotation'?{annotation' <- annotation'?} matches (_)
   -- let ?(annotation) = annotation'?{annotation' <- annotation'?}
 
-  ;; ../../../../spec-concrete/4-p4-ir/4.3-annotation.watsup:57.1-57.96
   clause 2 : (annotationList, annotation'?{annotation' <- annotation'?}) = annotationListNonEmpty annotation as annotationList
   -- if annotationList <: annotationListNonEmpty
   -- let annotationListNonEmpty = annotationList as annotationListNonEmpty
   -- if annotation'?{annotation' <- annotation'?} matches (_)
   -- let ?(annotation) = annotation'?{annotation' <- annotation'?}
 
-;; ../../../../spec-concrete/5-typing/5.00-flow.watsup:5.15-5.25
-=======
 def $subexpressions_of_typedExpressionIR(typedExpressionIR) : typedExpressionListIR =
 
   clause 0 : (typedExpressionIR) = typedExpressionIR :: $subexpressions_of_expressionIR(expressionIR)
@@ -8169,7 +8001,6 @@ def $subexpressions_of_argumentListIR(argumentListIR) : typedExpressionListIR =
 
   clause 0 : (argumentIR*{argumentIR <- argumentIR*}) = $concat_<typedExpressionIR>($subexpressions_of_argumentIR(argumentIR)*{argumentIR <- argumentIR*})
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 syntax flow = 
    | cont
    | ret
@@ -14669,12 +14500,7 @@ relation Call_action_partial_ok: typingContext |- parameterIR* @ argumentListIR 
 
 relation TableAction_ok: typingContext tableContext |- tableAction : tableContext tableActionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:223.1-241.63
-  rulegroup prefixedNonTypeName
-=======
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -14692,37 +14518,15 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- if (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)
     -- let ?((_callableId, callableTypeDefIR)) = (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?}
     -- if callableTypeDefIR <: actionTypeIR
-<<<<<<< HEAD:p4spec/test/elab.expected
-    -- let annotationList_actionDef action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
-    -- let annotation_name?{annotation_name <- annotation_name?} = $find_name_annotation_opt(annotationList_actionDef)
+    -- let annotationList_action action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
+    -- let annotation_name?{annotation_name <- annotation_name?} = $find_name_annotation_opt(annotationList_action)
     -- let annotationList_update = $add_annotationList(annotationList, annotation_name?{annotation_name <- annotation_name?})
-    -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ [] : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR*{argumentIR <- argumentIR*}
-    -- if argumentIR*{argumentIR <- argumentIR*} matches []
-    -- let TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, [])
-    -- let tableActionIR = annotationList_update prefixedNameIR ( [] ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
-    -- output: % % |- % : TBLC_1 tableActionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:245.1-266.63
-  rulegroup prefixedNonTypeName-argumentList
-
-   match
-
-    (signature) TC TBLC_0 |- annotationList prefixedNonTypeName ( argumentList ) ; : % %
-    TC TBLC_0 |- annotationList tableActionReference ; : % %
-    -- if tableActionReference matches `%(%)`
-    -- let prefixedNonTypeName ( argumentList ) = tableActionReference
-
-   paths
-
-=======
-    -- let action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
     -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ [] : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR'*{argumentIR' <- argumentIR'*}
     -- if argumentIR'*{argumentIR' <- argumentIR'*} matches []
     -- let TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, [])
-    -- let tableActionIR = annotationList prefixedNameIR ( [] ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
+    -- let tableActionIR = annotationList_update prefixedNameIR ( [] ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
     rulepath prefixedNonTypeName-argumentList
     -- let tableActionReference' = tableActionReference
     -- if tableActionReference' matches `%(%)`
@@ -14732,29 +14536,19 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- if (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)
     -- let ?((_callableId, callableTypeDefIR)) = (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?}
     -- if callableTypeDefIR <: actionTypeIR
-    -- let annotationList_actionDef action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
-    -- let annotation_name?{annotation_name <- annotation_name?} = $find_name_annotation_opt(annotationList_actionDef)
+    -- let annotationList_action action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
+    -- let annotation_name?{annotation_name <- annotation_name?} = $find_name_annotation_opt(annotationList_action)
     -- let annotationList_update = $add_annotationList(annotationList, annotation_name?{annotation_name <- annotation_name?})
     -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
     -- (Argument_ok: local TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
     -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ argumentIR*{argumentIR <- argumentIR*} : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
-<<<<<<< HEAD:p4spec/test/elab.expected
-    -- let TBLC_1 = $add_action(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
-    -- let tableActionIR = annotationList_update prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
-=======
     -- let TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
-    -- let tableActionIR = annotationList prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
->>>>>>> concrete:p4spec/test/lang/elab.expected
+    -- let tableActionIR = annotationList_update prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
 relation TableActions_ok: typingContext tableContext |- tableAction* : tableContext tableActionListIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:274.1-275.28
-  rulegroup nil
-=======
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -14768,21 +14562,6 @@ relation TableActions_ok: typingContext tableContext |- tableAction* : tableCont
     -- if (tableAction*{tableAction <- tableAction*} = [])
     -- output: % % |- % : TBLC []
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:277.1-281.76
-  rulegroup cons
-
-   match
-
-    (signature) TC TBLC_0 |- tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} : % %
-    TC TBLC_0 |- tableAction*{tableAction <- tableAction*} : % %
-    -- if tableAction*{tableAction <- tableAction*} matches _ :: _
-    -- let tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} = tableAction*{tableAction <- tableAction*}
-
-   paths
-
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
     rulepath cons
     -- let TBLC_0 = tableContext
     -- let tableAction'*{tableAction' <- tableAction'*} = tableAction*{tableAction <- tableAction*}
@@ -14794,10 +14573,6 @@ relation TableActions_ok: typingContext tableContext |- tableAction* : tableCont
 
 relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR : parameterIR* , parameterIR* @ argumentListIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:289.1-301.42
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup 
 
    match
@@ -14816,12 +14591,7 @@ relation Call_action_default_ok: typingContext |- parameterIR* @ argumentListIR 
 
 relation TableDefaultAction_ok: typingContext tableContext |- initializer : tableActionReferenceIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:305.1-310.56
-  rulegroup prefixedNonTypeName
-=======
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -14838,22 +14608,10 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- if (?(([], [])) = $find_action(TBLC, prefixedNameIR))
     -- output: % % |- % : prefixedNameIR ( [] )
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:314.1-335.57
-  rulegroup prefixedNonTypeName-argumentList
-
-   match
-
-    (signature) TC TBLC |- = prefixedNonTypeName as callTarget ( argumentList ) as expression : %
-    TC TBLC |- = expression : %
-    -- if expression <: callExpression
-    -- let callExpression = expression as callExpression
-=======
     rulepath prefixedNonTypeName-argumentList
     -- let expression' = expression
     -- if expression' <: callExpression
     -- let callExpression = expression' as callExpression
->>>>>>> concrete:p4spec/test/lang/elab.expected
     -- if callExpression matches `%(%)`
     -- let callTarget ( argumentList ) = callExpression
     -- if callTarget <: prefixedNonTypeName
@@ -14872,10 +14630,6 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
 
 relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:537.1-544.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup simpleKeysetExpression-expression
 
    match
@@ -14894,10 +14648,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:548.1-555.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup simpleKeysetExpression-mask
 
    match
@@ -14918,10 +14668,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:559.1-566.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup simpleKeysetExpression-range
 
    match
@@ -14942,10 +14688,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:570.1-582.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup simpleKeysetExpression-default
 
    match
@@ -14970,10 +14712,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let TBLS = nolpm
     -- output: % % |- % : TBLS default as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:586.1-598.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup simpleKeysetExpression-dontcare
 
    match
@@ -14998,10 +14736,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let TBLS = nolpm
     -- output: % % |- % : TBLS _ as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:605.1-613.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tupleKeysetExpression-mask
 
    match
@@ -15022,10 +14756,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:617.1-625.53
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tupleKeysetExpression-range
 
    match
@@ -15046,10 +14776,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:629.1-641.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tupleKeysetExpression-default
 
    match
@@ -15074,10 +14800,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let TBLS = nolpm
     -- output: % % |- % : TBLS ( [default] ) as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:645.1-657.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tupleKeysetExpression-dontcare
 
    match
@@ -15102,10 +14824,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     -- let TBLS = nolpm
     -- output: % % |- % : TBLS ( [_] ) as keysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:661.1-673.54
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tupleKeysetExpression-list
 
    match
@@ -15128,10 +14846,6 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
 
 relation TableEntry_action_ok: typingContext tableContext |- tableActionReference : tableActionReferenceIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:683.1-687.56
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup prefixedNonTypeName
 
    match
@@ -15148,10 +14862,6 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- if (?(([], [])) = $find_action(TBLC, prefixedNameIR))
     -- output: % % |- % : prefixedNameIR ( [] )
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:691.1-712.57
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup prefixedNonTypeName-argumentList
 
    match
@@ -15178,10 +14888,6 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
 
 relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:722.1-786.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup non-specified
 
    match
@@ -15252,10 +14958,6 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:790.1-818.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup specified-number
 
    match
@@ -15291,10 +14993,6 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= integerLiteral :)
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:822.1-856.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup specified-expression
 
    match
@@ -15342,10 +15040,6 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
 
 relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext tableEntryIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:861.1-876.73
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup priority
 
    match
@@ -15365,10 +15059,6 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
     -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
     -- output: % % |- % : TBLC_1 tableEntryIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:880.1-894.73
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup non-priority
 
    match
@@ -15390,12 +15080,7 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
 
 relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:902.1-903.28
-  rulegroup nil
-=======
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -15409,21 +15094,6 @@ relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableConte
     -- if (tableEntry*{tableEntry <- tableEntry*} = [])
     -- output: % % |- % : TBLC []
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:905.1-909.74
-  rulegroup cons
-
-   match
-
-    (signature) TC TBLC_0 |- tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} : % %
-    TC TBLC_0 |- tableEntry*{tableEntry <- tableEntry*} : % %
-    -- if tableEntry*{tableEntry <- tableEntry*} matches _ :: _
-    -- let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} = tableEntry*{tableEntry <- tableEntry*}
-
-   paths
-
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
     rulepath cons
     -- let TBLC_0 = tableContext
     -- let tableEntry'*{tableEntry' <- tableEntry'*} = tableEntry*{tableEntry <- tableEntry*}
@@ -15435,10 +15105,6 @@ relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableConte
 
 relation TableProperty_ok: typingContext tableContext |- tableProperty : tableContext tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:919.1-923.63
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup key
 
    match
@@ -15455,10 +15121,6 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- TableKeys_ok: TC TBLC_0 |- tableKey*{tableKey <- tableKey*} : TBLC_1 tableKeyIR*{tableKeyIR <- tableKeyIR*}
     -- output: % % |- % : TBLC_1 key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} } as tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:927.1-931.72
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup actions
 
    match
@@ -15475,10 +15137,6 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- TableActions_ok: TC TBLC_0 |- tableAction*{tableAction <- tableAction*} : TBLC_1 tableActionIR*{tableActionIR <- tableActionIR*}
     -- output: % % |- % : TBLC_1 actions={ tableActionIR*{tableActionIR <- tableActionIR*} } as tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:935.1-947.70
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup entries
 
    match
@@ -15499,10 +15157,6 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- TableEntries_ok: TC TBLC_2 |- tableEntry*{tableEntry <- tableEntry*} : TBLC_3 tableEntryIR*{tableEntryIR <- tableEntryIR*}
     -- output: % % |- % : TBLC_3 annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} } as tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:951.1-961.78
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup default-action
 
    match
@@ -15521,10 +15175,6 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let tablePropertyIR = annotationList constOptIR default_action= tableActionReferenceIR ; as tablePropertyIR
     -- output: % % |- % : TBLC tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:963.1-1040.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup custom
 
    match
@@ -15593,12 +15243,7 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
 
 relation TableProperties_ok: typingContext tableContext |- tableProperty* : tableContext tablePropertyListIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1048.1-1049.28
-  rulegroup nil
-=======
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -15612,21 +15257,6 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
     -- if (tableProperty*{tableProperty <- tableProperty*} = [])
     -- output: % % |- % : TBLC []
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1051.1-1055.83
-  rulegroup cons
-
-   match
-
-    (signature) TC TBLC_0 |- tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} : % %
-    TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : % %
-    -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
-    -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
-
-   paths
-
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
     rulepath cons
     -- let TBLC_0 = tableContext
     -- let tableProperty'*{tableProperty' <- tableProperty'*} = tableProperty*{tableProperty <- tableProperty*}
@@ -15638,10 +15268,6 @@ relation TableProperties_ok: typingContext tableContext |- tableProperty* : tabl
 
 relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyListIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1118.1-1156.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup 
 
    match
@@ -15671,10 +15297,6 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
 
 relation TableType_ok: typingContext tableContext |- name : typingContext typeIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1158.1-1182.67
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup 
 
    match
@@ -19272,168 +18894,8 @@ def $is_table_application(typedExpressionIR) : bool =
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:123.1-125.15
-  clause 1 : (expressionIR # _expressionNoteIR) = $has_table_apply_expr'(expressionIR)
-  -- otherwise
-
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:105.1-105.48
-def $has_table_apply_expr'(expressionIR) : bool =
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:127.1-127.56
-  clause 0 : (expressionIR) = false
-  -- if expressionIR <: literalExpressionIR
-  -- let literalExpressionIR = expressionIR as literalExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:128.1-128.58
-  clause 1 : (expressionIR) = false
-  -- if expressionIR <: referenceExpressionIR
-  -- let referenceExpressionIR = expressionIR as referenceExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:129.1-129.56
-  clause 2 : (expressionIR) = false
-  -- if expressionIR <: defaultExpressionIR
-  -- let defaultExpressionIR = expressionIR as defaultExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:131.1-132.45
-  clause 3 : (expressionIR) = $has_table_apply_expr(typedExpressionIR)
-  -- if expressionIR <: unaryExpressionIR
-  -- let unop typedExpressionIR = expressionIR as unaryExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:134.1-137.50
-  clause 4 : (expressionIR) = ($has_table_apply_expr(typedExpressionIR_l) \/ $has_table_apply_expr(typedExpressionIR_r))
-  -- if expressionIR <: binaryExpressionIR
-  -- let typedExpressionIR_l binop typedExpressionIR_r = expressionIR as binaryExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:139.1-144.53
-  clause 5 : (expressionIR) = (($has_table_apply_expr(typedExpressionIR_cond) \/ $has_table_apply_expr(typedExpressionIR_then)) \/ $has_table_apply_expr(typedExpressionIR_else))
-  -- if expressionIR <: ternaryExpressionIR
-  -- let typedExpressionIR_cond ? typedExpressionIR_then : typedExpressionIR_else = expressionIR as ternaryExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:146.1-147.45
-  clause 6 : (expressionIR) = $has_table_apply_expr(typedExpressionIR)
-  -- if expressionIR <: castExpressionIR
-  -- let ( typeIR ) typedExpressionIR = expressionIR as castExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:149.1-149.41
-  clause 7 : (expressionIR) = false
-  -- if expressionIR <: invalidHeaderExpression
-  -- let invalidHeaderExpression = expressionIR as invalidHeaderExpression
-  -- if (invalidHeaderExpression = {#})
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:151.1-152.56
-  clause 8 : (expressionIR) = $exists_($has_table_apply_expr(typedExpressionIR)*{typedExpressionIR <- typedExpressionIR*})
-  -- if expressionIR <: sequenceExpressionIR
-  -- let sequenceExpressionIR = expressionIR as sequenceExpressionIR
-  -- if sequenceExpressionIR matches `SEQ{%}`
-  -- let seq{ typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} } = sequenceExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:153.1-154.56
-  clause 9 : (expressionIR) = $exists_($has_table_apply_expr(typedExpressionIR)*{typedExpressionIR <- typedExpressionIR*})
-  -- if expressionIR <: sequenceExpressionIR
-  -- let sequenceExpressionIR = expressionIR as sequenceExpressionIR
-  -- if sequenceExpressionIR matches `SEQ{%,...}`
-  -- let seq{ typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} ,...} = sequenceExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:156.1-157.56
-  clause 10 : (expressionIR) = $exists_($has_table_apply_expr(typedExpressionIR)*{typedExpressionIR <- typedExpressionIR*})
-  -- if expressionIR <: recordExpressionIR
-  -- let recordExpressionIR = expressionIR as recordExpressionIR
-  -- if recordExpressionIR matches `RECORD{%}`
-  -- let record{ nameIR = typedExpressionIR*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} } = recordExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:158.1-159.56
-  clause 11 : (expressionIR) = $exists_($has_table_apply_expr(typedExpressionIR)*{typedExpressionIR <- typedExpressionIR*})
-  -- if expressionIR <: recordExpressionIR
-  -- let recordExpressionIR = expressionIR as recordExpressionIR
-  -- if recordExpressionIR matches `RECORD{%,...}`
-  -- let record{ nameIR = typedExpressionIR*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} ,...} = recordExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:161.1-161.60
-  clause 12 : (expressionIR) = false
-  -- if expressionIR <: errorAccessExpressionIR
-  -- let errorAccessExpressionIR = expressionIR as errorAccessExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:162.1-164.10
-  clause 13 : (expressionIR) = false
-  -- if expressionIR <: memberAccessExpressionIR
-  -- let memberAccessBaseIR . nameIR = expressionIR as memberAccessExpressionIR
-  -- if memberAccessBaseIR matches `TYPE%`
-  -- let type prefixedNameIR = memberAccessBaseIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:165.1-167.45
-  clause 14 : (expressionIR) = $has_table_apply_expr(typedExpressionIR)
-  -- if expressionIR <: memberAccessExpressionIR
-  -- let memberAccessBaseIR . nameIR = expressionIR as memberAccessExpressionIR
-  -- if memberAccessBaseIR <: typedExpressionIR
-  -- let typedExpressionIR = memberAccessBaseIR as typedExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:169.1-172.54
-  clause 15 : (expressionIR) = ($has_table_apply_expr(typedExpressionIR_base) \/ $has_table_apply_expr(typedExpressionIR_index))
-  -- if expressionIR <: indexAccessExpressionIR
-  -- let typedExpressionIR_base [ typedExpressionIR_index ] = expressionIR as indexAccessExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:174.1-179.51
-  clause 16 : (expressionIR) = (($has_table_apply_expr(typedExpressionIR_base) \/ $has_table_apply_expr(typedExpressionIR_lo)) \/ $has_table_apply_expr(typedExpressionIR_hi))
-  -- if expressionIR <: sliceAccessExpressionIR
-  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:181.1-183.48
-  clause 17 : (expressionIR) = $exists_($has_table_apply_arg(argumentIR)*{argumentIR <- argumentIR*})
-  -- if expressionIR <: callExpressionIR
-  -- let callExpressionIR = expressionIR as callExpressionIR
-  -- if callExpressionIR matches `%(%)`
-  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:184.1-186.48
-  clause 18 : (expressionIR) = $exists_($has_table_apply_arg(argumentIR)*{argumentIR <- argumentIR*})
-  -- if expressionIR <: callExpressionIR
-  -- let callExpressionIR = expressionIR as callExpressionIR
-  -- if callExpressionIR matches `%<%>(%)`
-  -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
-  -- if callableTargetIR <: referenceExpressionIR
-  -- let referenceExpressionIR = callableTargetIR as referenceExpressionIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:187.1-190.51
-  clause 19 : (expressionIR) = ($has_table_apply_expr(typedExpressionIR) \/ $exists_($has_table_apply_arg(argumentIR)*{argumentIR <- argumentIR*}))
-  -- if expressionIR <: callExpressionIR
-  -- let callExpressionIR = expressionIR as callExpressionIR
-  -- if callExpressionIR matches `%<%>(%)`
-  -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
-  -- if callableTargetIR matches `%.%`
-  -- let typedExpressionIR . nameIR = callableTargetIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:191.1-193.48
-  clause 20 : (expressionIR) = $exists_($has_table_apply_arg(argumentIR)*{argumentIR <- argumentIR*})
-  -- if expressionIR <: callExpressionIR
-  -- let callExpressionIR = expressionIR as callExpressionIR
-  -- if callExpressionIR matches `%<%>(%)`
-  -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
-  -- if callableTargetIR matches `TYPE%.%`
-  -- let type prefixedNameIR . nameIR = callableTargetIR
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:194.1-197.62
-  clause 21 : (expressionIR) = $has_table_apply_expr'(callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) as expressionIR)
-  -- if expressionIR <: callExpressionIR
-  -- let callExpressionIR = expressionIR as callExpressionIR
-  -- if callExpressionIR matches `%<%>(%)`
-  -- let callableTargetIR' < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
-  -- if callableTargetIR' matches `(%)`
-  -- let ( callableTargetIR ) = callableTargetIR'
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:199.1-200.45
-  clause 22 : (expressionIR) = $has_table_apply_expr(typedExpressionIR)
-  -- if expressionIR <: parenthesizedExpressionIR
-  -- let ( typedExpressionIR ) = expressionIR as parenthesizedExpressionIR
-
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:349.1-352.26
 relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ simpleKeysetExpression : tableEntryState simpleKeysetExpressionIR
 
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:356.1-390.2
-=======
-relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ simpleKeysetExpression : tableEntryState simpleKeysetExpressionIR
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup expression
 
    match
@@ -19469,10 +18931,6 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : nolpm typedExpressionIR_set as simpleKeysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:394.1-444.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup mask
 
    match
@@ -19526,10 +18984,6 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- output: % % |- % @ % : nolpm typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:448.1-464.31
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup range-range
 
    match
@@ -19556,10 +19010,6 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- output: % % |- % @ % : nolpm typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:468.1-481.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup default
 
    match
@@ -19583,10 +19033,6 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- if (nameIR_matchkind =/= "exact")
     -- output: % % |- % @ % : nolpm default
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:485.1-498.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup dontcare
 
    match
@@ -19610,17 +19056,9 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- if (nameIR_matchkind =/= "exact")
     -- output: % % |- % @ % : nolpm _
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:506.1-509.29
-relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryState |- matchKey* @ simpleKeysetExpression* : tableEntryState simpleKeysetExpressionIR*
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:511.1-512.40
-  rulegroup nil
-=======
 relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryState |- matchKey* @ simpleKeysetExpression* : tableEntryState simpleKeysetExpressionIR*
 
   rulegroup 
->>>>>>> concrete:p4spec/test/lang/elab.expected
 
    match
 
@@ -19635,23 +19073,6 @@ relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryStat
     -- if (simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = [])
     -- output: % % % |- % @ % : TBLS []
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:514.1-524.59
-  rulegroup cons
-
-   match
-
-    (signature) TC TBLC TBLS_0 |- matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} @ simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} : % %
-    TC TBLC TBLS_0 |- matchKey*{matchKey <- matchKey*} @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : % %
-    -- if matchKey*{matchKey <- matchKey*} matches _ :: _
-    -- let matchKey_h :: matchKey_t*{matchKey_t <- matchKey_t*} = matchKey*{matchKey <- matchKey*}
-    -- if simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} matches _ :: _
-    -- let simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}
-
-   paths
-
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
     rulepath cons
     -- let TBLS_0 = tableEntryState
     -- let matchKey'*{matchKey' <- matchKey'*} = matchKey*{matchKey <- matchKey*}
@@ -19665,72 +19086,29 @@ relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryStat
     -- TableEntry_keysets_simple_ok: TC TBLC TBLS_2 |- matchKey_t*{matchKey_t <- matchKey_t*} @ simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} : TBLS_3 simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
     -- output: % % % |- % @ % : TBLS_3 simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1063.1-1063.48
 def $is_tableKeysProperty(tableProperty) : bool =
 
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1064.1-1064.48
-=======
-def $is_tableKeysProperty(tableProperty) : bool =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (tableProperty) = true
   -- if tableProperty matches `KEY={%}`
   -- let key={ _tableKeyList } = tableProperty
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1065.1-1066.15
-  clause 1 : (_tableProperty) = false
-  -- otherwise
-
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1068.1-1068.51
-def $is_tableActionsProperty(tableProperty) : bool =
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1069.1-1069.55
-=======
   clause -1 : (_tableProperty) = false
 
 def $is_tableActionsProperty(tableProperty) : bool =
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (tableProperty) = true
   -- if tableProperty matches `ACTIONS={%}`
   -- let actions={ _tableActionList } = tableProperty
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1070.1-1071.15
-  clause 1 : (_tableProperty) = false
-  -- otherwise
-
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1073.1-1073.57
-def $is_tableDefaultActionProperty(tableProperty) : bool =
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1074.1-1075.61
-=======
   clause -1 : (_tableProperty) = false
 
 def $is_tableDefaultActionProperty(tableProperty) : bool =
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (tableProperty) = true
   -- if tableProperty matches `%%%%;`
   -- let _annotationList _constOpt tableCustomName _initializer ; = tableProperty
   -- if ("default_action" = $tableCustomName(tableCustomName))
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1076.1-1077.15
-  clause 1 : (_tableProperty) = false
-  -- otherwise
-
-;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1079.1-1082.37
-def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableContext, tablePropertyIR*) =
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1084.1-1084.62
-  clause 0 : (TBLC, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC, [])
-  -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches []
-
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1085.1-1099.69
-=======
   clause -1 : (_tableProperty) = false
 
 def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableContext, tablePropertyIR*) =
@@ -19738,7 +19116,6 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   clause 0 : (TBLC, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC, [])
   -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches []
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 1 : (TBLC_0, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC_1, tablePropertyIR_h_updated :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*})
   -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches _ :: _
   -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -19752,10 +19129,6 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- let tableActionIR_NoAction = `empty tableActionReferenceIR_NoAction #( [] , [] );
   -- let tablePropertyIR_h_updated = actions={ tableActionIR*{tableActionIR <- tableActionIR*} ++ [tableActionIR_NoAction] } as tablePropertyIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1100.1-1109.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 2 : (TBLC_0, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC_0, tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*})
   -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches _ :: _
   -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -19766,10 +19139,6 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- let tableActionReferenceIR_NoAction = . "NoAction" ( [] )
   -- if tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/5-typing/5.14.1-typing-control-table.watsup:1110.1-1116.38
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 3 : (TBLC_0, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC_1, tablePropertyIR_h :: tablePropertyIR_t_updated*{tablePropertyIR_t_updated <- tablePropertyIR_t_updated*})
   -- if tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} matches _ :: _
   -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -20655,65 +20024,8 @@ def $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool =
   clause 0 : (key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} }) = $exists_((nameIR_matchKind = "ternary")*{nameIR_matchKind <- nameIR_matchKind*})
   -- (let _typedExpressionIR : nameIR_matchKind _annotationList ; = tableKeyIR)*{tableKeyIR <- tableKeyIR*, _annotationList -> _annotationList*, _typedExpressionIR -> _typedExpressionIR*, nameIR_matchKind -> nameIR_matchKind*}
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:45.1-48.29
 def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface) : simpleKeysetExpressionIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:50.1-63.68
-=======
-def $name_annotation_of_tableKeyIR(annotationList) : nameIR? =
-
-  clause 0 : (annotationList) = ?(nameIR_name_found)
-  -- let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList)
-  -- (let nameIR_name?{nameIR_name <- nameIR_name?} = $name_annotation_of_tableKeyIR'(annotation))*{annotation <- annotation*, nameIR_name? -> nameIR_name?*}
-  -- let nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} = nameIR_name?{nameIR_name <- nameIR_name?}*{nameIR_name? <- nameIR_name?*}
-  -- if nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*} matches [ _/1 ]
-  -- let [nameIR?{nameIR <- nameIR?}] = nameIR'?{nameIR' <- nameIR'?}*{nameIR'? <- nameIR'?*}
-  -- if nameIR?{nameIR <- nameIR?} matches (_)
-  -- let ?(nameIR_name_found) = nameIR?{nameIR <- nameIR?}
-
-  clause -1 : (annotationList) = ?()
-
-def $name_annotation_of_tableKeyIR'(annotation) : nameIR? =
-
-  clause 0 : (annotation) = ?($strip_prefix($strip_suffix(nameIR_name, "\""), "\""))
-  -- if annotation matches `@%(%)`
-  -- let @ name ( annotationBody ) = annotation
-  -- if ("name" = $name(name))
-  -- let annotationBody'' = annotationBody
-  -- if annotationBody'' matches `%%`
-  -- let annotationBody' annotationToken = annotationBody''
-  -- if annotationBody' matches ``EMPTY`
-  -- let nameIR_name = $print_<annotationToken>(annotationToken)
-
-  clause -1 : (annotation) = ?()
-
-def $name_annotation_default(annotationList, nameIR) : nameIR =
-
-  clause 0 : (annotationList, nameIR) = nameIR_found
-  -- let nameIR'?{nameIR' <- nameIR'?} = $name_annotation_of_tableKeyIR(annotationList)
-  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
-  -- let ?(nameIR_found) = nameIR'?{nameIR' <- nameIR'?}
-
-  clause 1 : (annotationList, nameIR) = nameIR
-  -- if (?() = $name_annotation_of_tableKeyIR(annotationList))
-
-def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
-
-  clause 0 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- let nameIR?{nameIR <- nameIR?} = $name_annotation_of_tableKeyIR(annotationList)
-  -- if nameIR?{nameIR <- nameIR?} matches (_)
-  -- let ?(nameIR_key) = nameIR?{nameIR <- nameIR?}
-  -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-
-  clause 1 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if (?() = $name_annotation_of_tableKeyIR(annotationList))
-  -- let nameIR_key = $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR))
-  -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-
-def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface) : simpleKeysetExpressionIR =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "exact")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20727,10 +20039,6 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let typeIR_set = set< typeIR > as typeIR
   -- let simpleKeysetExpressionIR = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set dyn ) as simpleKeysetExpressionIR
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:65.1-88.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 1 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "ternary")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20754,10 +20062,6 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:90.1-113.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 2 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "ternary")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20781,10 +20085,6 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:115.1-141.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 3 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "lpm")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20810,10 +20110,6 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:143.1-169.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 4 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "lpm")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20839,10 +20135,6 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:171.1-194.69
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 5 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "lpm")
   -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
@@ -20869,80 +20161,50 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:196.1-199.30
-def $tableObject_create_entry_keys((nameIR, nameIR, typeIR)*, tableKeysetInterface) : simpleKeysetExpressionIR* =
-
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:201.1-201.49
-  clause 0 : ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface) = []
-  -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []
-
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:202.1-213.30
-=======
 def $tableObject_create_entry_keys((nameIR, nameIR, typeIR)*, tableKeysetInterface) : simpleKeysetExpressionIR* =
 
   clause 0 : ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface) = []
   -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []
 
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 1 : ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys((nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
   -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches _ :: _
   -- let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} = (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}
   -- let simpleKeysetExpressionIR_h = $tableObject_create_entry_key((nameIR_key_h, nameIR_matchKind_h, typeIR_h), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:217.1-217.68
 def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:219.1-224.63
   clause 0 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- let nameIR*{nameIR <- nameIR*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR*{nameIR <- nameIR*} = $name_annotation(annotationList)
   -- if nameIR*{nameIR <- nameIR*} matches [ _/1 ]
   -- let [nameIR_key] = nameIR*{nameIR <- nameIR*}
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:225.1-233.63
   clause 1 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if ([] = $name_annotation_nameIR(annotationList))
+  -- if ([] = $name_annotation(annotationList))
   -- let nameIR_key = $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR))
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:235.1-238.23
 def $tableObject_create_entry_keyset(tableKeysPropertyIR, tableKeysetInterface) : keysetExpressionIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:240.1-252.71
-=======
-def $tableObject_create_entry_keyset(tableKeysPropertyIR, tableKeysetInterface) : keysetExpressionIR =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} }, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
   -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
   -- (let (nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
   -- if $eq_set<nameIR>({ nameIR_key*{nameIR_key <- nameIR_key*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
   -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys((nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:254.1-254.70
 def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:255.1-262.46
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = $extend_map<nameIR, nameIR>({ nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} }, { id : id*{id <- id*} })
   -- (let annotationList _direction _typeIR id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, annotationList -> annotationList*, id -> id*}
   -- (let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList))*{annotationList <- annotationList*, annotation* -> annotation**}
-  -- (let nameIR?{nameIR <- nameIR?} = $name_annotation_nameIR_opt(annotation))*{annotation <- annotation*, nameIR? -> nameIR?*}*{annotation* <- annotation**, nameIR?* -> nameIR?**}
+  -- (let nameIR?{nameIR <- nameIR?} = $name_annotation_opt(annotation))*{annotation <- annotation*, nameIR? -> nameIR?*}*{annotation* <- annotation**, nameIR?* -> nameIR?**}
   -- (if nameIR?{nameIR <- nameIR?} matches (_))*{nameIR? <- nameIR?*}*{nameIR?* <- nameIR?**}
   -- (let ?(nameIR_names) = nameIR?{nameIR <- nameIR?})*{nameIR? <- nameIR?*, nameIR_names -> nameIR_names*}*{nameIR?* <- nameIR?**, nameIR_names* -> nameIR_names**}
   -- let (nameIR_original, nameIR_aliases*{nameIR_aliases <- nameIR_aliases*})*{nameIR_aliases* <- nameIR_aliases**, nameIR_original <- nameIR_original*} = $filter_<(nameIR, nameIR*)>((id, nameIR_names*{nameIR_names <- nameIR_names*})*{id <- id*, nameIR_names* <- nameIR_names**}, (|nameIR_names*{nameIR_names <- nameIR_names*}| > 0)*{nameIR_names* <- nameIR_names**})
   -- let nameIR_alias*{nameIR_alias <- nameIR_alias*} = nameIR_aliases*{nameIR_aliases <- nameIR_aliases*}[0]*{nameIR_aliases* <- nameIR_aliases**}
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:266.1-268.9
 def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterface*) : int* =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:273.1-280.63
-=======
-def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterface*) : int* =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}, (nameIR_arg, i_arg)*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*}) = i_aligned*{i_aligned <- i_aligned*}
   -- let { nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} } = $alias_to_original_lookup_map(parameterIR*{parameterIR <- parameterIR*})
   -- (let nameIR?{nameIR <- nameIR?} = $find_map<nameIR, nameIR>({ nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} }, nameIR_arg))*{nameIR_arg <- nameIR_arg*, nameIR? -> nameIR?*}
@@ -20952,105 +20214,92 @@ def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterf
   -- (if int?{int <- int?} matches (_))*{int? <- int?*}
   -- (let ?(i_aligned) = int?{int <- int?})*{int? <- int?*, i_aligned -> i_aligned*}
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:269.1-271.9
 def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:282.1-284.62
   clause 0 : ({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR) = $find_map<id, int>({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, nameIR_param)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:288.1-288.83
 def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:291.1-291.46
   clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:292.1-300.38
   clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if ([] = $name_annotation_nameIR(annotationList))
+  -- if ([] = $name_annotation(annotationList))
   -- if (nameIR_action = nameIR_target)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:302.1-310.40
   clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if ([] = $name_annotation_nameIR(annotationList))
+  -- if ([] = $name_annotation(annotationList))
   -- if (nameIR_action =/= nameIR_target)
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:312.1-321.14
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
+  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
   -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if b_hit
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:323.1-332.15
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
+  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
   -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
   -- if ~b_hit
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:289.1-289.88
 def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:334.1-334.51
   clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:335.1-341.54
   clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList _prefixedNameIR ( _argumentListIR ) #( _parameterListIR , _parameterListIR' ); = tableActionIR_h
-  -- if ([] = $name_annotation_nameIR(annotationList))
+  -- if ([] = $name_annotation(annotationList))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:343.1-350.90
   clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
+  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
   -- if ([] = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*}))
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:352.1-362.46
   clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
   -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
+  -- if (nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} =/= [])
   -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
   -- if ~nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:364.1-375.64
   clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation_nameIR(annotationList)
+  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
   -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
   -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
   -- if nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:379.1-382.27
 def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:384.1-404.70
   clause 0 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
   -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
@@ -21059,30 +20308,12 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
   -- (let _annotationList _direction typeIR_param nameIR_param _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
   -- (let typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*{typeIR_param <- typeIR_param*, typeIR_param_unrolled -> typeIR_param_unrolled*}
-=======
-def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int? =
-
-  clause 0 : ({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR) = $find_map<id, int>({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, nameIR_param)
-
-def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
-
-  clause 0 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_action_update ( argumentIR*{argumentIR <- argumentIR*} )
-  -- (let _annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, argumentIR_data* -> argumentIR_data**, parameterIR_control* -> parameterIR_control**, prefixedNameIR -> prefixedNameIR*}
-  -- (let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR))*{prefixedNameIR <- prefixedNameIR*, nameIR_action -> nameIR_action*}
-  -- let (argumentIR*, parameterIR*)?{(argumentIR*, parameterIR*) <- (argumentIR*, parameterIR*)?} = $assoc_<nameIR, (argumentIR*, parameterIR*)>(nameIR_action_update, (nameIR_action, (argumentIR_data*{argumentIR_data <- argumentIR_data*}, parameterIR_control*{parameterIR_control <- parameterIR_control*}))*{argumentIR_data* <- argumentIR_data**, nameIR_action <- nameIR_action*, parameterIR_control* <- parameterIR_control**})
-  -- if (argumentIR*, parameterIR*)?{(argumentIR*, parameterIR*) <- (argumentIR*, parameterIR*)?} matches (_)
-  -- let ?((argumentIR_data_update*{argumentIR_data_update <- argumentIR_data_update*}, parameterIR_control_update*{parameterIR_control_update <- parameterIR_control_update*})) = (argumentIR*, parameterIR*)?{(argumentIR*, parameterIR*) <- (argumentIR*, parameterIR*)?}
-  -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control_update*{parameterIR_control_update <- parameterIR_control_update*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
-  -- (let _annotationList' _direction typeIR_param nameIR_param _parameterInitializerOptIR = parameterIR_control_update)*{parameterIR_control_update <- parameterIR_control_update*, _annotationList' -> _annotationList'*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
->>>>>>> concrete:p4spec/test/lang/elab.expected
   -- (let typedExpressionIR_arg = d i_arg_aligned as expressionIR # ( int as typeIR dyn ))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
   -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*{typeIR_param_unrolled <- typeIR_param_unrolled*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
   -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:406.1-428.70
   clause 1 : (actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found ( argumentIR*{argumentIR <- argumentIR*} )
   -- if (?() = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
   -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_name(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
@@ -21098,14 +20329,8 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:432.1-437.16
 def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:439.1-464.57
-=======
-def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (table typeId { frame TBL }, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = table typeId { frame TBL_updated }
   -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- if ($needs_priority_tableKeysPropertyIR(TBL.keys) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))
@@ -21116,15 +20341,8 @@ def $tableObject_add_entry(tableObject, tableEntryPriorityInterface, tableKeyset
   -- let tableEntriesPropertyIR_updated = annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] }
   -- let TBL_updated = TBL[entries = tableEntriesPropertyIR_updated]
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:468.1-471.16
 def $tableObject_add_default_action(tableObject, tableActionInterface) : tableObject =
 
-  ;; ../../../../spec-concrete/6-dynamic-runtime/6.4.2-object-table.watsup:473.1-485.76
-=======
-def $tableObject_add_default_action(tableObject, tableActionInterface) : tableObject =
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   clause 0 : (table typeId { frame TBL }, tableActionInterface) = table typeId { frame TBL_updated }
   -- let _annotationList constIR?{constIR <- constIR?} default_action= _tableActionReferenceIR ; = TBL.default_action
   -- if constIR?{constIR <- constIR?} matches ()
@@ -22836,10 +22054,6 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- ActionDecl_inst: block IC_0 |- actionDeclarationIR : IC_1
     -- output: % % |- % : IC_1 STO ?()
 
-<<<<<<< HEAD:p4spec/test/elab.expected
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:42.1-100.2
-=======
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup tableDeclarationIR
 
    match
@@ -22860,15 +22074,14 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- if frame'*{frame' <- frame'*} matches _ :: _
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = table nameIR { frame TBL } as object
-    -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
+    -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
     -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- if ([] = $name_annotation_nameIR(annotationList))
+    -- if ([] = $name_annotation(annotationList))
     -- let IC_1 = $add_var_i(block, IC_0, nameIR, ref objectId as value)
     -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
     -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
-<<<<<<< HEAD:p4spec/test/elab.expected
     rulepath tableDeclarationIR-name-annotation
     -- let IC_callee_0 = $inherit_i(block, IC_0)
     -- let IC_frame = $enter_i(IC_callee_0)
@@ -22878,10 +22091,10 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- if frame'*{frame' <- frame'*} matches _ :: _
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = table nameIR { frame TBL } as object
-    -- let nameIR_object = $name_annotation_nameIR_default(annotationList, nameIR)
+    -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
     -- let objectId = IC_0.path ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation_nameIR(annotationList)
+    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
     -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
     -- let [nameIR_annotation] = nameIR'*{nameIR' <- nameIR'*}
     -- let objectId_annotation = IC_0.path ++ [nameIR_annotation]
@@ -22890,14 +22103,8 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let constantDeclarationIR = `empty const typeIR nameIR =`value ref objectId as value ;
     -- output: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
-;; ../../../../spec-concrete/7-instantiation/7.03-inst-relation.watsup:167.1-174.42
 relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
 
-  ;; ../../../../spec-concrete/7-instantiation/7.10.2-inst-control-declaration.watsup:108.1-134.2
-=======
-relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
-
->>>>>>> concrete:p4spec/test/lang/elab.expected
   rulegroup 
 
    match

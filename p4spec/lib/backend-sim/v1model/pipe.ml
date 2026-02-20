@@ -587,7 +587,7 @@ struct
         (value_ctx, value_arch, tx :: txs))
     >> return result
 
-  (* Prepare context for resubmit/clone *)
+  (* Prepare context for resubmit/clone/recirculate/multicast *)
 
   let prepare_resubmit_ctx (index : int) : unit state =
     let* value_ctx, value_arch, _ = get in
@@ -615,6 +615,7 @@ struct
       Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
         value_index
     in
+    (* Set standard_metadata.instance_type according to clone type *)
     let value_ctx =
       let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
       let value_instance_type =
@@ -676,12 +677,12 @@ struct
     in
     modify (fun (_, value_arch, txs) -> (value_ctx, value_arch, txs))
 
-  (* Schedule resubmit/clone if needed *)
+  (* Schedule resubmit/clone/recirculate/multicast if needed *)
 
   let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
     let* value_ctx, value_arch, _ = get in
     let packet_in = get_packet_in value_arch in
-    let packet : Packet.t = { value_ctx; packet_in; entrypoint } in
+    let packet = Packet.{ value_ctx; packet_in; entrypoint } in
     let* arch_state = get_arch_state in
     let queue =
       match entrypoint with
@@ -744,7 +745,7 @@ struct
           |> object_state_to_yojson
           |> wrap_extern_v "objectState"
         in
-        let* () =
+        let* _ =
           modify (fun (_, value_arch, txs) ->
               let value_arch =
                 Spec.Func.update_objectState_e value_arch value_objectId
@@ -762,7 +763,6 @@ struct
     let open Arch in
     let open Multicast in
     match GroupMap.find_opt mcast_grp arch_state.multicast.groups with
-    | None -> return false
     | Some { node_handles; _ } ->
         let actions =
           node_handles
@@ -773,6 +773,7 @@ struct
                  >> schedule_packet Egress)
         in
         sequence actions >> return true
+    | None -> return false
 
   (* Ingress + Handle clone, resubmit, drop *)
 
