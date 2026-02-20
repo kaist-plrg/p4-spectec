@@ -23,13 +23,14 @@ rulegroup Stmt_eval/assignmentStatementIR {
                        : EC_1 ARCH_1 abortResult
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-abort:
-    p EC_0 ARCH_0 |- typedLvalueIR `= typedExpressionIR `;
+    p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
                    : EC_2 ARCH_2 abortResult
     ---- ;; evaluate l-value
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
     ---- ;; evaluate expression
+    -- if assignop = `=
     -- Expr_eval:
         p EC_1 ARCH_1 |- typedExpressionIR
                        : EC_2 ARCH_2 abortResult
@@ -51,13 +52,14 @@ rulegroup Stmt_eval/assignmentStatementIR {
                        : EC_2 ARCH_2 abortResult
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
-    p EC_0 ARCH_0 |- typedLvalueIR `= typedExpressionIR `;
+    p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
                    : EC_3 ARCH_2 `EMPTY
     ---- ;; evaluate l-value
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
     ---- ;; evaluate expression
+    -- if assignop = `=
     -- Expr_eval:
         p EC_1 ARCH_1 |- typedExpressionIR
                        : EC_2 ARCH_2 (`` value)

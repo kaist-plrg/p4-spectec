@@ -55,6 +55,12 @@ let rec remove_instr (instr : instr) : block =
   | GroupI (id_group, rel_signature, exps_group, block) ->
       let block = remove_block block in
       [ GroupI (id_group, rel_signature, exps_group, block) $ instr.at ]
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
+      let block = remove_block block in
+      [ LetI (exp_l, exp_r, iterinstrs, block) $ instr.at ]
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
+      let block = remove_block block in
+      [ RuleI (id, notexp, inputs, iterinstrs, block) $ instr.at ]
   | _ -> [ instr ]
 
 and remove_block (block : block) : block =

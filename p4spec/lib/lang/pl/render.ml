@@ -284,6 +284,15 @@ and render_exp ctx exp : string =
       F.asprintf "%s is not in %s"
         (render_exp_as_code ctx exp_e)
         (render_exp_as_code ctx exp_s)
+  | UnE
+      ( #Bool.unop,
+        _,
+        { it = CallE (ProseFuncCall (`Check (id, _, hint_false, _, args))); _ }
+      )
+    when not ctx.in_code ->
+      render_alter_hint (link ctx) hint_false (reindent_lines ~level:0)
+        render_arg args
+      |> adoc_as_link ctx ~link:id.it
   | UnE (unop, _, exp) ->
       render_unop unop ^ render_exp in_code exp |> adoc_as_code ctx
   | BinE (`ImplOp, _, exp_l, exp_r) when not ctx.in_code ->

@@ -69,13 +69,14 @@ and render_nottyps sep nottyps =
 and render_deftyp deftyp =
   match deftyp.it with
   | PlainTD plaintyp -> " = " ^ render_plaintyp plaintyp
-  | StructTD typfields -> " = {" ^ render_typfields ", " typfields ^ "}"
+  | StructTD [] -> " = {}"
+  | StructTD typfields -> " = {\n" ^ render_typfields ",\n" typfields ^ "\n}"
   | VariantTD typcases ->
       "\n   : " ^ render_typcases "\n   | " typcases ^ "\n   ;"
 
 and render_typfield typfield =
   let atom, plaintyp, _hints = typfield in
-  render_atom atom ^ " " ^ render_plaintyp plaintyp
+  "  " ^ render_atom atom ^ " " ^ render_plaintyp plaintyp
 
 and render_typfields sep typfields =
   String.concat sep (List.map render_typfield typfields)

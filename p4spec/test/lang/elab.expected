@@ -6993,11 +6993,13 @@ syntax memberAccessBaseIR =
 
 def $type_of_typedExpressionIR(typedExpressionIR) : typeIR =
 
-  clause 0 : (_expressionIR # ( typeIR _ctk )) = typeIR
+  clause 0 : (typedExpressionIR) = typeIR
+  -- let _expressionIR # ( typeIR _ctk ) = typedExpressionIR
 
 def $ctk_of_typedExpressionIR(typedExpressionIR) : ctk =
 
-  clause 0 : (_expressionIR # ( _typeIR ctk )) = ctk
+  clause 0 : (typedExpressionIR) = ctk
+  -- let _expressionIR # ( _typeIR ctk ) = typedExpressionIR
 
 syntax simpleKeysetExpressionIR = 
    | expressionIR # expressionNoteIR hint(print %0) hint(prose %0 "annotated with" %1) hint(prose_fields "expression" "note")
@@ -7055,7 +7057,8 @@ syntax typedLvalueIR =
 
 def $type_of_typedLvalueIR(typedLvalueIR) : typeIR =
 
-  clause 0 : (_lvalueIR # ( typeIR )) = typeIR
+  clause 0 : (typedLvalueIR) = typeIR
+  -- let _lvalueIR # ( typeIR ) = typedLvalueIR
 
 def $typedLvalueIR_as_typedExpressionIR(typedLvalueIR) : typedExpressionIR? =
 
@@ -13042,8 +13045,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if callTarget <: callableTarget
     -- let callableTarget = callTarget as callableTarget
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
-    -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+    -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# typeId_infer*{typeId_infer <- typeId_infer*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
     -- Call_ok: p TC |- callableTypeIR < [] # typeId_infer*{typeId_infer <- typeId_infer*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if (typeIR_ret =/= void as typeIR)
@@ -13503,8 +13505,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- if callStatement' matches `%(%);`
     -- let lvalue_callable ( argumentList ); = callStatement'
     -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
-    -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+    -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] >( argumentIR*{argumentIR <- argumentIR*} ): callableTypeIR <# typeId_impl*{typeId_impl <- typeId_impl*} >(# id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
     -- Call_ok: p TC |- callableTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} >( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ): typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_static_assert_callableTypeIR(callableTypeIR)
@@ -17803,8 +17804,8 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if forCollectionExpression' <: expression
     -- let expression = forCollectionExpression' as expression
     -- Expr_ok: local TC |- expression : typedExpressionIR
-    -- let _expressionIR # ( typeIR_list _ctk ) = typedExpressionIR
-    -- let typeIR = $unroll_typeIR(typeIR_list)
+    -- let typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- let typeIR = $unroll_typeIR(typeIR_expression)
     -- if typeIR <: listTypeIR
     -- let list< typeIR_e > = typeIR as listTypeIR
     -- if Cast_impl: typeIR_e -> typeIR_var holds
@@ -17815,8 +17816,8 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if forCollectionExpression' <: expression
     -- let expression = forCollectionExpression' as expression
     -- Expr_ok: local TC |- expression : typedExpressionIR
-    -- let _expressionIR # ( typeIR_stack _ctk ) = typedExpressionIR
-    -- let typeIR = $unroll_typeIR(typeIR_stack)
+    -- let typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- let typeIR = $unroll_typeIR(typeIR_expression)
     -- if typeIR <: headerStackTypeIR
     -- let typeIR_e [ _nat ] = typeIR as headerStackTypeIR
     -- if Type_alpha: typeIR_e ~~ typeIR_var holds
@@ -17830,14 +17831,14 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_l, typeIR_var)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_l_castd) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} = $cast_unary(typedExpressionIR_r, typeIR_var)
     -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
-    -- let ?(typedExpressionIR_r_castd) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
-    -- let _expressionIR # ( typeIR_l _ctk ) = typedExpressionIR_l_castd
-    -- let _expressionIR' # ( typeIR_r _ctk' ) = typedExpressionIR_r_castd
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- let typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
+    -- let typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted)
     -- if $compat_range(typeIR_l, typeIR_r)
-    -- output: % % |- % : typedExpressionIR_l_castd .. typedExpressionIR_r_castd
+    -- output: % % |- % : typedExpressionIR_l_casted .. typedExpressionIR_r_casted
 
 tbl def $compat_range(typeIR, typeIR) : bool =
   row 0 :
@@ -17914,8 +17915,8 @@ relation SwitchLabel_table_ok: typingContext typeId |- switchLabel : switchLabel
     -- let prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if prefixedNameIR matches ``%`
     -- let ` nameIR_label = prefixedNameIR
-    -- let typeId_table_enum = "action_list(" ++ typeId_table ++ ")"
-    -- let id_label = typeId_table_enum ++ "." ++ nameIR_label
+    -- let typeId_table_enum = $concat_text(["action_list(", typeId_table, ")"])
+    -- let id_label = $concat_text([typeId_table_enum, ".", nameIR_label])
     -- let varTypeIR?{varTypeIR <- varTypeIR?} = $find_var_t(` id_label, local, TC)
     -- if varTypeIR?{varTypeIR <- varTypeIR?} matches (_)
     -- let ?(_direction typeIR_label ctk_label value?{value <- value?}) = varTypeIR?{varTypeIR <- varTypeIR?}
@@ -24942,34 +24943,32 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedLvalueIR assignop' typedExpressionIR ; as statementIR : % % %
+    (signature) p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; as statementIR : % % %
     p EC_0 ARCH_0 |- statementIR : % % %
     -- if statementIR <: assignmentStatementIR
-    -- let typedLvalueIR assignop' typedExpressionIR ; = statementIR as assignmentStatementIR
+    -- let typedLvalueIR assignop typedExpressionIR ; = statementIR as assignmentStatementIR
 
    paths
 
     rulepath typedLvalueIR-abort
-    -- let assignop = assignop'
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: abortResult
     -- let abortResult = storageReferenceResult as abortResult
     -- output: % % % |- % : EC_1 ARCH_1 abortResult as statementResult
 
     rulepath typedLvalueIR-cont-eq-typedExpressionIR-abort
-    -- if (assignop' = =)
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: continueResult<storageReference?>
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- if (assignop = =)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % : EC_2 ARCH_2 abortResult as statementResult
 
     rulepath typedLvalueIR-cont-compound-typedExpressionIR-abort
-    -- let assignop = assignop'
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: continueResult<storageReference?>
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
@@ -24983,12 +24982,12 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- output: % % % |- % : EC_2 ARCH_2 abortResult as statementResult
 
     rulepath typedLvalueIR-cont-eq-typedExpressionIR-cont
-    -- if (assignop' = =)
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: continueResult<storageReference?>
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- if (assignop = =)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
@@ -24996,7 +24995,6 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- output: % % % |- % : EC_3 ARCH_2 `empty as statementResult
 
     rulepath typedLvalueIR-cont-compound-typedExpressionIR-cont
-    -- let assignop = assignop'
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: continueResult<storageReference?>
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>

@@ -25,9 +25,9 @@ be executed. Examples include:
   of a `switch` statement (see <<sec-switch-statement>>), and when
   it appears there, it must be the entire expression.
 * Any expression containing `table.apply().hit` or
-  `table.apply().miss` (see <<sec-invoke-mau>>), which can be
-  part of arbitrarily complex expressions in many places of a P4
-  program, such as:
+  `table.apply().miss` (see <<sec-match-action-table-invocation>>), which can
+  be part of arbitrarily complex expressions in many places of a P4 program,
+  such as:
 ** the expression in an `if` statement.
 ** the expression `e1` in a conditional expression `e1 ? e2 : e3`.
 ** in an assignment statement, in the left and/or right hand sides.
@@ -41,9 +41,10 @@ This list is not intended to be exhaustive.
 If applying the table causes an action to be executed, which in turn causes an
 `exit` statement to be executed, then evaluation of the expression ends
 immediately, and the rest of the current expression or statement does not
-complete its execution. See <<sec-expr-eval-order>> for the order of evaluation
-of the parts of an expression.  For the examples listed above, it also means
-the following behavior after the expression evaluation is interrupted.
+complete its execution. See <<sec-expression-semantics>> for the order of
+evaluation of the parts of an expression.  For the examples listed above, it
+also means the following behavior after the expression evaluation is
+interrupted.
 
 // 715
 * For a `switch` statement, if `table.apply()` exits, then none of the
