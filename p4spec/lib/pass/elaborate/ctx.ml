@@ -39,6 +39,8 @@ type t = {
   renv : REnv.t;
   (* Map from function ids to functions *)
   fenv : FEnv.t;
+  (* Map from table group ids to table groups *)
+  tenv : TEnv.t;
 }
 
 (* Constructors *)
@@ -51,6 +53,7 @@ let empty : t =
     menv = PTEnv.empty;
     renv = REnv.empty;
     fenv = FEnv.empty;
+    tenv = TEnv.empty;
   }
 
 let init () : t =
@@ -153,19 +156,41 @@ let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
 
 (* Finders for definitions *)
 
-let find_table_func_opt (ctx : t) (fid : FId.t) :
-    (param list * plaintyp * Il.tablerow list) option =
-  let func_opt = FEnv.find_opt fid ctx.fenv in
-  Option.bind func_opt (function
-    | Func.Table (params, plaintyp, tablerows) ->
-        Some (params, plaintyp, tablerows)
-    | Func.Defined _ | Func.Extern _ | Func.Builtin _ -> None)
+let find_table_group_opt (ctx : t) (gid : FId.t) : Table.Group.t option =
+  TEnv.find_opt gid ctx.tenv
 
-let find_table_func (ctx : t) (fid : FId.t) :
-    param list * plaintyp * Il.tablerow list =
-  match find_table_func_opt ctx fid with
-  | Some (params, plaintyp, tablerows) -> (params, plaintyp, tablerows)
-  | None -> error_undef fid.at "table function" fid.it
+let find_table_group (ctx : t) (gid : FId.t) : Table.Group.t =
+  match find_table_group_opt ctx gid with
+  | Some tablegroup -> tablegroup
+  | None -> error_undef gid.at "table group" gid.it
+
+let bound_table_group (ctx : t) (gid : FId.t) : bool =
+  find_table_group_opt ctx gid |> Option.is_some
+
+let find_table_func_opt (ctx : t) (gid : FId.t) (cid : FId.t) :
+    (param * plaintyp * Il.tablerow list) option =
+  let ( let* ) = Option.bind in
+  let* group = find_table_group_opt ctx gid in
+  let param, plaintyps, columns = group in
+  let* column = Table.Columns.find_opt cid columns in
+  Some (param, plaintyps, column)
+
+let find_table_func (ctx : t) (gid : FId.t) (cid : FId.t) :
+    param * plaintyp * Il.tablerow list =
+  match find_table_func_opt ctx gid cid with
+  | Some (param, plaintyp, tablerows) -> (param, plaintyp, tablerows)
+  | None -> error_undef cid.at "table function" cid.it
+
+let bound_table_func (ctx : t) (gid : FId.t) (cid : FId.t) : bool =
+  match find_table_group_opt ctx gid with
+  | Some (_, _, columns) -> Table.Columns.mem cid columns
+  | None -> false
+
+let expand_table_id (id : id) : id * id =
+  match Format.asprintf "%s" (Id.to_string id) |> String.split_on_char '.' with
+  | [ gid'; cid' ] -> (gid' $ id.at, cid' $ id.at)
+  | [ gid' ] -> (gid' $ id.at, gid' $ id.at)
+  | _ -> error id.at "table function calls must be of the form <group>.<column>"
 
 let find_defined_func_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp * Il.clause list * Il.clause option)
@@ -174,7 +199,7 @@ let find_defined_func_opt (ctx : t) (fid : FId.t) :
   Option.bind func_opt (function
     | Func.Defined (tparams, params, plaintyp, clauses, elseclause_opt) ->
         Some (tparams, params, plaintyp, clauses, elseclause_opt)
-    | Func.Table _ | Func.Extern _ | Func.Builtin _ -> None)
+    | Func.Extern _ | Func.Builtin _ -> None)
 
 let find_defined_func (ctx : t) (fid : FId.t) :
     tparam list * param list * plaintyp * Il.clause list * Il.clause option =
@@ -190,20 +215,29 @@ let find_func_signature_opt (ctx : t) (fid : FId.t) :
     (tparam list * param list * plaintyp) option =
   FEnv.find_opt fid ctx.fenv
   |> Option.map (function
-       | Func.Extern (tparams, params, plaintyp)
-       | Func.Builtin (tparams, params, plaintyp)
-       | Func.Defined (tparams, params, plaintyp, _, _) ->
-           (tparams, params, plaintyp)
-       | Func.Table (params, plaintyp, _) -> ([], params, plaintyp))
-
-let find_func_signature (ctx : t) (fid : FId.t) :
-    tparam list * param list * plaintyp =
-  match find_func_signature_opt ctx fid with
-  | Some (tparams, params, plaintyp) -> (tparams, params, plaintyp)
-  | None -> error_undef fid.at "function" fid.it
+         | Func.Extern (tparams, params, plaintyp)
+         | Func.Builtin (tparams, params, plaintyp)
+         | Func.Defined (tparams, params, plaintyp, _, _)
+         -> (tparams, params, plaintyp))
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
   find_func_signature_opt ctx fid |> Option.is_some
+
+let find_table_signature_opt (ctx : t) (fid : FId.t) :
+    (tparam list * param list * plaintyp) option =
+  let gid, cid = expand_table_id fid in
+  let ( let* ) = Option.bind in
+  let* param, plaintyp, _ = find_table_func_opt ctx gid cid in
+  Some ([], [ param ], plaintyp)
+
+let find_signature (ctx : t) (fid : FId.t) : tparam list * param list * plaintyp
+    =
+  match find_func_signature_opt ctx fid with
+  | Some sig_func -> sig_func
+  | None -> (
+      match find_table_signature_opt ctx fid with
+      | Some sig_table -> sig_table
+      | None -> error_undef fid.at "function" fid.it)
 
 (* Adders *)
 
@@ -303,6 +337,7 @@ let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup : Il.elsegroup) : t
 
 let add_extern_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
+  if bound_table_group ctx fid then error_dup fid.at "table group" fid.it;
   if bound_func ctx fid then error_dup fid.at "extern function" fid.it;
   let func = Func.Extern (tparams, params, plaintyp) in
   let fenv = FEnv.add fid func ctx.fenv in
@@ -310,35 +345,40 @@ let add_extern_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
 
 let add_builtin_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
+  if bound_table_group ctx fid then error_dup fid.at "table group" fid.it;
   if bound_func ctx fid then error_dup fid.at "builtin function" fid.it;
   let func = Func.Builtin (tparams, params, plaintyp) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_table_func_dec (ctx : t) (fid : FId.t) (params : param list)
-    (plaintyp : plaintyp) : t =
-  if bound_func ctx fid then error_dup fid.at "table function" fid.it;
-  let func = Func.Table (params, plaintyp, []) in
-  let fenv = FEnv.add fid func ctx.fenv in
-  { ctx with fenv }
+let add_table_group (ctx : t) (gid : FId.t) (param : param)
+    (plaintyp : plaintyp) (columns : Table.Columns.t) : t =
+  if bound_table_group ctx gid then error_dup gid.at "table group" gid.it;
+  if bound_func ctx gid then error_dup gid.at "function" gid.it;
+  let func = (param, plaintyp, columns) in
+  let tenv = TEnv.add gid func ctx.tenv in
+  { ctx with tenv }
 
 let add_defined_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params : param list) (plaintyp : plaintyp) : t =
+  if bound_table_group ctx fid then error_dup fid.at "table group" fid.it;
   if bound_func ctx fid then error_dup fid.at "function" fid.it;
   let func = Func.Defined (tparams, params, plaintyp, [], None) in
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_table_func_tablerows (ctx : t) (fid : FId.t)
+let add_tablerows (ctx : t) (gid : FId.t) (cid : FId.t)
     (tablerows : Il.tablerow list) : t =
-  if not (bound_func ctx fid) then
-    error_undef (List.hd tablerows).at "table function" fid.it;
-  let params, plaintyp, tablerows_found = find_table_func ctx fid in
-  if List.length tablerows_found > 0 then
-    error_dup (List.hd tablerows_found).at "table function" fid.it;
-  let func = Func.Table (params, plaintyp, tablerows) in
-  let fenv = FEnv.add fid func ctx.fenv in
-  { ctx with fenv }
+  let region = over_region [ gid.at; cid.at ] in
+  let fid = gid.it ^ "." ^ cid.it in
+  if not (bound_table_func ctx gid cid) then
+    error_undef region "table function" fid;
+  let _, _, tablerows_found = find_table_func ctx gid cid in
+  if List.length tablerows_found > 0 then error_dup region "table function" fid;
+  let params, typ, columns = find_table_group ctx gid in
+  let columns = Table.Columns.add cid tablerows columns in
+  let tenv = TEnv.add gid (params, typ, columns) ctx.tenv in
+  { ctx with tenv }
 
 let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.clause) : t =
   if not (bound_func ctx fid) then error_undef clause.at "function" fid.it;

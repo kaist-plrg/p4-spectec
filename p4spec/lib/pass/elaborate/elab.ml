@@ -642,7 +642,7 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (args : arg list) : (Ctx.t * Il.exp' * plaintyp') attempt =
-  let tparams, params, plaintyp = Ctx.find_func_signature ctx id in
+  let tparams, params, plaintyp = Ctx.find_signature ctx id in
   check
     (List.length targs = List.length tparams)
     id.at "type arguments do not match";
@@ -1233,7 +1233,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param : param) (arg : arg) :
       let arg_il = Il.DefA id_a $ arg.at in
       (ctx, arg_il)
   | DefP (id_p, tparams_p, params_p, plaintyp_p), DefA id_a ->
-      let tparams_a, params_a, plaintyp_a = Ctx.find_func_signature ctx id_a in
+      let tparams_a, params_a, plaintyp_a = Ctx.find_signature ctx id_a in
       check
         (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_p params_p
            plaintyp_p tparams_a params_a plaintyp_a)
@@ -1677,6 +1677,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.def option =
       elab_table_def_def ctx at id tablerows |> wrap_none
   | FuncDefD (id, tparams, args, exp, prems) ->
       elab_func_def ctx at id tparams args exp prems |> wrap_none
+  | TableGroupD (id, params, plaintyp, columns, hints) ->
+      elab_table_group_def ctx at id params plaintyp columns hints |> wrap_some
   | SepD -> ctx |> wrap_none
 
 and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.def list =
@@ -1840,20 +1842,55 @@ and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let def_il = Il.BuiltinDecD (id, tparams, params_il, typ_il, hints) $ at in
   (ctx, def_il)
 
-and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
-    (params : param list) (plaintyp : plaintyp) (hints : hint list) :
-    Ctx.t * Il.def =
-  let params_il = List.map (elab_param ctx) params in
+and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id) (param : param)
+    (plaintyp : plaintyp) (hints : hint list) : Ctx.t * Il.def =
+  let gid = id in
+  let cid = id in
+  (* Check and create IL definition *)
+  let param_il = elab_param ctx param in
   check
-    (List.for_all
-       (fun (param_il : Il.param) ->
-         match param_il.it with ExpP _ -> true | DefP _ -> false)
-       params_il)
+    (match param_il.it with ExpP _ -> true | DefP _ -> false)
     at "table cannot have function parameters";
   let typ_il = elab_plaintyp ctx plaintyp in
   check (typ_il.it = BoolT) typ_il.at "table must return a boolean type";
-  let ctx = Ctx.add_table_func_dec ctx id params plaintyp in
-  let def_il = Il.TableDecD (id, params_il, typ_il, [], hints) $ at in
+  let column_il = (cid, [], hints) $ at in
+  let def_il =
+    Il.TableGroupD (gid, param_il, typ_il, [ column_il ], hints) $ at
+  in
+  (* Update elaboration context *)
+  let columns = Table.Columns.empty |> Table.Columns.add (cid.it $ at) [] in
+  let ctx = Ctx.add_table_group ctx gid param plaintyp columns in
+  (ctx, def_il)
+
+and elab_table_group_def (ctx : Ctx.t) (at : region) (gid : id) (param : param)
+    (plaintyp : plaintyp) (columns : tablecol list) (hints : hint list) :
+    Ctx.t * Il.def =
+  (* Check and create IL definition *)
+  let param_il = elab_param ctx param in
+  let typ_il = elab_plaintyp ctx plaintyp in
+  let columns_il =
+    List.map
+      (fun tablecol ->
+        let cid, hints = tablecol.it in
+        (cid, [], hints) $ cid.at)
+      columns
+  in
+  let def_il = Il.TableGroupD (gid, param_il, typ_il, columns_il, hints) $ at in
+  (* Update elaboration context *)
+  (* Compare column ids *)
+  let eq_cid c1 c2 =
+    let cid1, _ = c1.it in
+    let cid2, _ = c2.it in
+    cid1 = cid2
+  in
+  check
+    (Util.Checks.distinct eq_cid columns)
+    gid.at "table group must have distinct column names";
+  (* Create columns with empty tablerows *)
+  let columns =
+    columns |> List.map (fun col -> (fst col.it, [])) |> Table.Columns.of_list
+  in
+  let ctx = Ctx.add_table_group ctx gid param plaintyp columns in
   (ctx, def_il)
 
 and elab_func_dec_def (ctx : Ctx.t) (at : region) (id : id)
@@ -1888,34 +1925,33 @@ and elab_tablerow_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp)
   let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
   (ctx, exp_il)
 
-and elab_tablerow (ctx : Ctx.t) (at : region) (id : id) (params : param list)
+and elab_tablerow (ctx : Ctx.t) (at : region) (id : id) (param : param)
     (plaintyp : plaintyp) (tablerow : tablerow) : Il.tablerow =
   let exp_pattern, exp_body = tablerow.it in
-  let exps =
-    match exp_pattern.it with TupleE exps -> exps | _ -> [ exp_pattern ]
-  in
-  let args = List.map (fun exp -> ExpA exp $ exp.at) exps in
+  let arg = ExpA exp_pattern $ exp_pattern.at in
   let ctx_local = { ctx with frees = IdSet.empty } in
   let ctx_local =
     let def = TableDefD (id, [ tablerow ]) $ at in
     El.Free.free_id_def def |> Ctx.add_frees ctx_local
   in
-  let ctx_local, args_il = elab_args ~as_def:true at ctx_local params args in
+  let ctx_local, args_il =
+    elab_args ~as_def:true at ctx_local [ param ] [ arg ]
+  in
   let ctx_local, args_il_input, sideconditions_il =
     elab_tablerow_input_with_bind ctx_local args_il
   in
   let args_il_signature = elab_tablerow_signature ctx_local args_il in
-  let exps_il_signature =
-    List.map
-      (fun arg_il ->
-        match arg_il.it with Il.ExpA exp_il -> exp_il | _ -> assert false)
-      args_il_signature
+  let exp_il_signature =
+    match args_il_signature with
+    | [ { it = Il.ExpA exp_il; _ } ] -> exp_il
+    | _ -> assert false
   in
+  let arg_il_input = List.hd args_il_input in
   let _ctx_local, exp_il =
     elab_tablerow_output_with_bind ctx_local plaintyp exp_body
   in
   let tablerow_il =
-    (exps_il_signature, args_il_input, exp_il, sideconditions_il) $ tablerow.at
+    (exp_il_signature, arg_il_input, exp_il, sideconditions_il) $ tablerow.at
   in
   tablerow_il
 
@@ -1930,7 +1966,7 @@ and pattern_of_typ (ctx : Ctx.t) (typ_il : Il.typ) : Pattern.t =
               (fun nottyp -> elab_nottyp ctx (El.NotationT nottyp))
               nottyps
           in
-          nottyps_il |> Pattern.of_list
+          nottyps_il |> List.map it |> List.map fst |> Pattern.of_list
       | _ ->
           error typ_il.at
             ("unknown variant type id: " ^ Il.Print.string_of_typid vid))
@@ -1940,84 +1976,81 @@ and pattern_of_exp (ctx : Ctx.t) (exp_il : Il.exp) : Pattern.t =
   match exp_il.it with
   | VarE _ -> pattern_of_typ ctx (exp_il.note $ exp_il.at)
   | UpCastE (_, { it = VarE _; note; at }) -> pattern_of_typ ctx (note $ at)
-  | UpCastE (_, { it = CaseE notexp_il; at; _ }) ->
-      let mixop, exps_il = notexp_il in
-      [ (mixop, List.map (fun exp_il -> exp_il.note $ exp_il.at) exps_il) $ at ]
-      |> Pattern.of_list
+  | UpCastE (_, { it = CaseE notexp_il; _ }) ->
+      let mixop, _ = notexp_il in
+      [ mixop ] |> Pattern.of_list
   | _ -> assert false
 
 and check_valid_match_tablerows (ctx : Ctx.t) (at : region)
     (typs_il_match : Il.typ list) (tablerows_il : Il.tablerow list) : unit =
   (* Split the last wildcard row (a "closer") if it exists *)
-  let split_last_wildcard_tablerows tablerows_il =
-    let rec split_last_wildcard_tablerows' tablerows_il_rev = function
+  let split_last_wildcard tablerows_il =
+    let rec split_last_wildcard' tablerows_il_rev = function
       | [] -> (None, tablerows_il)
       | [ tablerow_il ] ->
-          let exps_il_signature, _, _, _ = tablerow_il.it in
+          let exp_il_signature, _, _, _ = tablerow_il.it in
           if
-            List.for_all
-              (fun exp_il_signature ->
-                match exp_il_signature.it with
-                | Il.VarE id when Id.is_underscored id -> true
-                | _ -> false)
-              exps_il_signature
+            match exp_il_signature.it with
+            | Il.VarE id when Id.is_underscored id -> true
+            | _ -> false
           then (Some tablerow_il, List.rev tablerows_il_rev)
           else (None, tablerows_il)
       | tablerow_il_h :: tablerows_il_t ->
-          split_last_wildcard_tablerows'
+          split_last_wildcard'
             (tablerow_il_h :: tablerows_il_rev)
             tablerows_il_t
     in
-    split_last_wildcard_tablerows' [] tablerows_il
+    split_last_wildcard' [] tablerows_il
   in
-  let closer_opt, tablerows_il = split_last_wildcard_tablerows tablerows_il in
+  let closer_opt, tablerows_il = split_last_wildcard tablerows_il in
   (* Check that table rows have exclusive patterns *)
-  let tuple_tablerows =
+  let tablerows_pat =
     List.map
       (fun tablerow_il ->
-        let exps_il_signature, _, _, _ = tablerow_il.it in
-        List.map (pattern_of_exp ctx) exps_il_signature)
+        let exp_il_signature, _, _, _ = tablerow_il.it in
+        pattern_of_exp ctx exp_il_signature)
       tablerows_il
   in
-  let pattern_overlap_opt = Pattern.find_overlap tuple_tablerows in
+  let overlap_opt = Pattern.find_overlap tablerows_pat in
   check
-    (Option.is_none pattern_overlap_opt)
+    (Option.is_none overlap_opt)
     at
     (Format.asprintf "table rows have overlapping patterns: %s"
-       (match pattern_overlap_opt with
-       | Some (pattern_sets_l, pattern_sets_r) ->
-           Pattern.Tuple.to_string pattern_sets_l
-           ^ " and "
-           ^ Pattern.Tuple.to_string pattern_sets_r
+       (match overlap_opt with
+       | Some (pat_l, pat_r) ->
+           Pattern.to_string pat_l ^ " and " ^ Pattern.to_string pat_r
        | None -> ""));
   (* Check that table rows are exhaustive *)
-  let tuple_total = List.map (pattern_of_typ ctx) typs_il_match in
-  let fragments_missing = Pattern.find_missing tuple_total tuple_tablerows in
+  let total =
+    match typs_il_match with
+    | [ typ_il ] -> pattern_of_typ ctx typ_il
+    | _ -> error at "tablegroup match requires exactly one parameter"
+  in
+  let missing = Pattern.find_missing ~total tablerows_pat in
   check
-    (Option.is_some closer_opt || fragments_missing = [])
+    (Option.is_some closer_opt || Pattern.is_empty missing)
     at
     (Format.asprintf "table rows are missing patterns: %s"
-       (String.concat ", " (List.map Pattern.Tuple.to_string fragments_missing)))
+       (Pattern.to_string missing))
 
-and elab_tablerows (ctx : Ctx.t) (at : region) (id : id) (params : param list)
+and elab_tablerows (ctx : Ctx.t) (at : region) (id : id) (param : param)
     (plaintyp : plaintyp) (tablerows : tablerow list) : Il.tablerow list =
   let tablerows_il =
-    List.map (elab_tablerow ctx at id params plaintyp) tablerows
+    List.map (elab_tablerow ctx at id param plaintyp) tablerows
   in
   let typs_il_match =
-    params
-    |> List.map (elab_param ctx)
-    |> List.map (fun param_il ->
-           match param_il.it with Il.ExpP typ_il -> typ_il | _ -> assert false)
+    let param_il = elab_param ctx param in
+    match param_il.it with Il.ExpP typ_il -> [ typ_il ] | _ -> assert false
   in
   check_valid_match_tablerows ctx at typs_il_match tablerows_il;
   tablerows_il
 
 and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     (tablerows : tablerow list) : Ctx.t =
-  let params, plaintyp, _ = Ctx.find_table_func ctx id in
-  let tablerows_il = elab_tablerows ctx at id params plaintyp tablerows in
-  Ctx.add_table_func_tablerows ctx id tablerows_il
+  let gid, cid = Ctx.expand_table_id id in
+  let param, plaintyp, _ = Ctx.find_table_func ctx gid cid in
+  let tablerows_il = elab_tablerows ctx at id param plaintyp tablerows in
+  Ctx.add_tablerows ctx gid cid tablerows_il
 
 (* Elaboration of function definitions *)
 
@@ -2074,9 +2107,6 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
-  | Il.TableDecD (id, params_il, typ_il, [], hints) ->
-      let _, _, tablerows_il = Ctx.find_table_func ctx id in
-      Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
   | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], None, hints) ->
       let _, _, _, clauses_il, elseclause_il_opt =
         Ctx.find_defined_func ctx id
@@ -2084,7 +2114,6 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
       Il.FuncDecD
         (id, tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt, hints)
       $ def_il.at
-  | Il.TableDecD _ -> error def_il.at "table was already populated"
   | Il.FuncDecD _ -> error def_il.at "function was already populated"
   | _ -> def_il
 
@@ -2093,12 +2122,44 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.TableDecD (id, _, _, [], _) ->
-          warn def_il.at
-            (F.asprintf "table %s has no rows defined" (Id.to_string id))
       | Il.FuncDecD (id, _, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
+      | _ -> ())
+    spec_il;
+  spec_il
+
+(* Populate tablerows to their respective table groups *)
+
+let populate_tablerow (ctx : Ctx.t) (def_il : Il.def) : Il.def =
+  match def_il.it with
+  | Il.TableGroupD (gid, params_il, typ_il, tablecols_il, hints) ->
+      let tablecols_il =
+        List.map
+          (fun tablecol_il ->
+            let cid, _, hints = tablecol_il.it in
+            let _, _, tablerows_il = Ctx.find_table_func ctx gid cid in
+            (cid, tablerows_il, hints) $ tablecol_il.at)
+          tablecols_il
+      in
+      Il.TableGroupD (gid, params_il, typ_il, tablecols_il, hints) $ def_il.at
+  | _ -> def_il
+
+let populate_tablerows (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
+  let spec_il = List.map (populate_tablerow ctx) spec_il in
+  List.iter
+    (fun def_il ->
+      match def_il.it with
+      | Il.TableGroupD (gid, _, _, columns_il, _) ->
+          List.iter
+            (fun column_il ->
+              match column_il.it with
+              | id, [], _ ->
+                  warn column_il.at
+                    (F.asprintf "table %s has no rows defined"
+                       (Id.to_string gid ^ "." ^ Id.to_string id))
+              | _ -> ())
+            columns_il
       | _ -> ())
     spec_il;
   spec_il
@@ -2110,3 +2171,4 @@ let elab_spec (spec : spec) : Il.spec =
   let ctx, spec_il = elab_defs ctx spec in
   populate_typs ctx;
   spec_il |> populate_rules ctx |> populate_clauses ctx
+  |> populate_tablerows ctx

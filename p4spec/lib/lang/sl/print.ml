@@ -440,26 +440,31 @@ let string_of_builtin_func builtinfunc =
   let defid, tparams, params, _typ, _hints = builtinfunc in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
 
+let string_of_defined_func (func : definedfunc) =
+  let defid, tparams, params, _typ, block, elseblock_opt, _hints = func in
+  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
+  ^ "\n\n" ^ string_of_block block
+  ^ string_of_elseblock_opt ~index:(List.length block) elseblock_opt
+
 let string_of_tablerow (tablerow : tablerow) =
-  let exps_match, exp_result, instrs = tablerow in
-  Format.asprintf "\n  Row : %s -> %s:\n\n%s"
-    (string_of_exps ", " exps_match)
+  let exp_match, exp_result, instrs = tablerow in
+  Format.asprintf "\n  | %s -> %s:\n\n%s" (string_of_exp exp_match)
     (string_of_exp exp_result)
     (string_of_block ~level:2 instrs)
 
 let string_of_tablerows (tablerows : tablerow list) =
   String.concat "\n" (List.map string_of_tablerow tablerows)
 
-let string_of_table_func (tablefunc : tablefunc) =
-  let defid, params, _typ_ret, tablerows, _hints = tablefunc in
-  string_of_defid defid ^ string_of_params params ^ "\n=\n"
-  ^ string_of_tablerows tablerows
+let string_of_tablecol (tablecol : tablecol) =
+  let defid, tablerows, _hints = tablecol in
+  string_of_defid defid ^ "\n=\n" ^ string_of_tablerows tablerows
 
-let string_of_defined_func (func : definedfunc) =
-  let defid, tparams, params, _typ, block, elseblock_opt, _hints = func in
-  string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
-  ^ "\n\n" ^ string_of_block block
-  ^ string_of_elseblock_opt ~index:(List.length block) elseblock_opt
+let string_of_tablegroup (tablegroup : tablegroup) =
+  let defid, param, typ, tablecols, _hints = tablegroup in
+  string_of_defid defid ^ string_of_params [ param ] ^ ": " ^ string_of_typ typ
+  ^ "{\n"
+  ^ String.concat "\n  " (List.map string_of_tablecol tablecols)
+  ^ "\n}"
 
 (* Definitions *)
 
@@ -474,8 +479,8 @@ let rec string_of_def def =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD tablefunc -> "tbl def " ^ string_of_table_func tablefunc
   | FuncDecD func -> "def " ^ string_of_defined_func func
+  | TableGroupD tablegroup -> "tblgroup " ^ string_of_tablegroup tablegroup
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 

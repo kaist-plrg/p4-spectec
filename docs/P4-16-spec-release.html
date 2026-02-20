@@ -875,7 +875,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-02-25</span>
+<span id="revdate">2026-02-27</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -1244,6 +1244,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#_unrolling">8.7. Unrolling</a></li>
+<li><a href="#_nesting">8.8. Nesting</a></li>
 </ul>
 </li>
 <li><a href="#_p4_callables">9. P4 callables</a>
@@ -8982,7 +8983,7 @@ constructor functions.</p>
 <pre>rulegroup Type_wf/listTypeIR:
   rule Type_wf/listTypeIR:
   B |- LIST `&lt;typeIR&gt;
- -- if $nestable_list(typeIR)
+ -- if $nestable_data.list(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -9001,7 +9002,7 @@ constructor functions.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_list"><code>typeIR'</code> can be nested in a list type</a>.</p>
+<p>Check that <code><a href="nestable_data.list">$nestable_data.list(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -9123,7 +9124,7 @@ the language.</p>
 <pre>rulegroup Type_wf/tupleTypeIR:
   rule Type_wf/tupleTypeIR:
   B |- TUPLE `&lt;typeIR*&gt;
- -- (if $nestable_tuple(typeIR))*
+ -- (if $nestable_data.tuple(typeIR))*
  -- (Type_wf: B |- typeIR)*</pre>
 </div>
 </div>
@@ -9142,7 +9143,7 @@ the language.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_tuple"><code>typeIR'</code> can be nested in a tuple type</a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_data.tuple">$nestable_data.tuple(typeIR')</a></code>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
@@ -9467,7 +9468,7 @@ and only if all their corresponding elements are equal. Note that the
 <pre>rulegroup Type_wf/headerStackTypeIR:
   rule Type_wf/headerStackTypeIR:
   B |- typeIR `[_]
- -- if $nestable_headerStack(typeIR)
+ -- if $nestable_data.headerStack(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -9486,7 +9487,7 @@ and only if all their corresponding elements are equal. Note that the
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_headerStack"><code>typeIR'</code> can be nested in a header stack type</a>.</p>
+<p>Check that <code><a href="nestable_data.headerStack">$nestable_data.headerStack(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -9630,7 +9631,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
   rule Type_wf/structTypeIR:
   B |- STRUCT _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
- -- (if $nestable_struct(typeIR_field))*
+ -- (if $nestable_data.struct(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
 </div>
 </div>
@@ -9652,7 +9653,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
 <p>Check that <a href="#distinct_">the elements of <code>nameIR<sub>field</sub><sup>*</sup></code> are distinct</a>.</p>
 </li>
 <li>
-<p>Check that <a href="#nestable_struct"><code>typeIR<sub>field</sub></code> can be nested in a struct type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="nestable_data.struct"><code>typeIR<sub>field</sub></code> can be nested in a struct type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>field</sub></code> is a well-formed type, with bound type variables <code>B</code></a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
@@ -9897,7 +9898,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
   rule Type_wf/headerTypeIR:
   B |- HEADER _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
- -- (if $nestable_header(typeIR_field))*
+ -- (if $nestable_data.header(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
 </div>
 </div>
@@ -9919,7 +9920,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
 <p>Check that <a href="#distinct_">the elements of <code>nameIR<sub>field</sub><sup>*</sup></code> are distinct</a>.</p>
 </li>
 <li>
-<p>Check that <a href="#nestable_header"><code>typeIR<sub>field</sub></code> can be used in a header type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_data.header">$nestable_data.header(typeIR<sub>field</sub>)</a></code>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>field</sub></code> is a well-formed type, with bound type variables <code>B</code></a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
@@ -10274,7 +10275,7 @@ obtained from named types, as illustrated in <a href="#sec-named-type">Section 8
   rule Type_wf/headerUnionTypeIR:
   B |- HEADER_UNION _ `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
- -- (if $nestable_headerUnion(typeIR_field))*
+ -- (if $nestable_data.headerUnion(typeIR_field))*
  -- (Type_wf: B |- typeIR_field)*</pre>
 </div>
 </div>
@@ -10296,7 +10297,7 @@ obtained from named types, as illustrated in <a href="#sec-named-type">Section 8
 <p>Check that <a href="#distinct_">the elements of <code>nameIR<sub>field</sub><sup>*</sup></code> are distinct</a>.</p>
 </li>
 <li>
-<p>Check that <a href="#nestable_headerUnion"><code>typeIR<sub>field</sub></code> can be used in a header union type</a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_data.headerUnion">$nestable_data.headerUnion(typeIR<sub>field</sub>)</a></code>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR<sub>field</sub></code> is a well-formed type, with bound type variables <code>B</code></a>, for all <code>typeIR<sub>field</sub></code> in <code>typeIR<sub>field</sub><sup>*</sup></code>.</p>
@@ -10714,7 +10715,7 @@ names. Thus enum types can be obtained from named types, as illustrated in
   rule Type_wf/serializable:
   B |- ENUM _ `&lt;typeIR&gt; `{(nameIR_field = _ ;)*}
  -- if $distinct_&lt;nameIR&gt;(nameIR_field*)
- -- if $nestable_enum_serializable(typeIR)
+ -- if $nestable_data.enum_serializable(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -10753,7 +10754,7 @@ names. Thus enum types can be obtained from named types, as illustrated in
 <p>Check that <a href="#distinct_">the elements of <code>nameIR<sub>field</sub><sup>*</sup></code> are distinct</a>.</p>
 </li>
 <li>
-<p>Check that <a href="#nestable_enum_serializable"><code>typeIR'</code> can be used in a serializable enum type</a>.</p>
+<p>Check that <code><a href="nestable_data.enum_serializable">$nestable_data.enum_serializable(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -11356,7 +11357,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
 <pre>rulegroup Type_wf/typedefTypeIR:
   rule Type_wf/typedefTypeIR:
   B |- TYPEDEF _ typeIR
- -- if $nestable_typedef(typeIR)
+ -- if $nestable_alias.typedef(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -11375,7 +11376,7 @@ as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_typedef"><code>typeIR'</code> can be used in a typedef</a>.</p>
+<p>Check that <code><a href="nestable_alias.typedef">$nestable_alias.typedef(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -11489,7 +11490,7 @@ names. Thus <code>type</code> types can be obtained from named types, as illustr
 <pre>rulegroup Type_wf/newTypeIR:
   rule Type_wf/newTypeIR:
   B |- TYPE _ typeIR
- -- if $nestable_new(typeIR)
+ -- if $nestable_alias.new(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -11508,7 +11509,7 @@ names. Thus <code>type</code> types can be obtained from named types, as illustr
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_new"><code>typeIR'</code> can be used in a new type</a>.</p>
+<p>Check that <code><a href="nestable_alias.new">$nestable_alias.new(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -12255,7 +12256,7 @@ empty set.</p>
 <pre>rulegroup Type_wf/setTypeIR:
   rule Type_wf/setTypeIR:
   B |- SET `&lt;typeIR&gt;
- -- if $nestable_set(typeIR)
+ -- if $nestable_synthesized.set(typeIR)
  -- Type_wf: B |- typeIR</pre>
 </div>
 </div>
@@ -12274,7 +12275,7 @@ empty set.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#nestable_set"><code>typeIR'</code> can be used in a set type</a>.</p>
+<p>Check that <code><a href="nestable_synthesized.set">$nestable_synthesized.set(typeIR')</a></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#Type_wf"><code>typeIR'</code> is a well-formed type, with bound type variables <code>B</code></a>.</p>
@@ -12498,6 +12499,707 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_nesting">8.8. Nesting</h3>
+<div class="paragraph">
+<p><a href="#nestable_alias">$nestable_alias</a>:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>typeIR</code></th>
+<th class="tableblock halign-left valign-top"><a href="#typedef">$typedef</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#new">$new</a>(typeIR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>errorTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>stringTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedBitTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedIntTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code><br>
+<code>VARBIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nameTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_alias.typedef">$nestable_alias.typedef(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_alias.new">$nestable_alias.new(typeIR)</a></code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>newTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dataTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>externObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parserObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>controlObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>packageObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DEFAULT</code><br>
+<code>HEADER_INVALID</code><br>
+<code>MATCH_KIND</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>,</code> <code>...</code> <code>}</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>,</code> <code>...</code> <code>&gt;</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>SET</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>TABLE</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_STRUCT</code> <code>_</code> <code>{</code> <code>HIT</code> <code>_</code> <code>;</code> <code>MISS</code> <code>_</code> <code>;</code> <code>ACTION_RUN</code> <code>_</code> <code>;</code> <code>}</code><br>
+<code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><a href="#nestable_data">$nestable_data</a>:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1112%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>typeIR</code></th>
+<th class="tableblock halign-left valign-top"><a href="#list">$list</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#tuple">$tuple</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#headerStack">$headerStack</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#header">$header</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#struct_in_header">$struct_in_header</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#headerUnion">$headerUnion</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#enum_serializable">$enum_serializable</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#new_in_enum_serializable">$new_in_enum_serializable</a>(typeIR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>errorTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MATCH_KIND</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>stringTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedBitTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedIntTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>varBitTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nameTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.list">$nestable_data.list(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.tuple">$nestable_data.tuple(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.headerStack">$nestable_data.headerStack(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.header">$nestable_data.header(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.struct_in_header">$nestable_data.struct_in_header(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.headerUnion">$nestable_data.headerUnion(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.enum_serializable">$nestable_data.enum_serializable(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.new_in_enum_serializable">$nestable_data.new_in_enum_serializable(typeIR)</a></code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPE</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_data.new_in_enum_serializable">$nestable_data.new_in_enum_serializable(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tupleTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>headerStackTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR<sub>field</sub></code> <code>_</code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_data.struct_in_header(typeIR<sub>field</sub>)<sup>*</sup></code> are true</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_data.struct_in_header(typeIR<sub>field</sub>)<sup>*</sup></code> are true</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>headerTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>headerUnionTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENUM</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LIST</code> <code>&lt;</code> <code>_</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CONTROL</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>(</code> <code>_</code> <code>)</code><br>
+<code>DEFAULT</code><br>
+<code>EXTERN</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>_</code><br>
+<code>HEADER_INVALID</code><br>
+<code>PACKAGE</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>PARSER</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>(</code> <code>_</code> <code>)</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>,</code> <code>...</code> <code>}</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>,</code> <code>...</code> <code>&gt;</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>SET</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>TABLE</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_STRUCT</code> <code>_</code> <code>{</code> <code>HIT</code> <code>_</code> <code>;</code> <code>MISS</code> <code>_</code> <code>;</code> <code>ACTION_RUN</code> <code>_</code> <code>;</code> <code>}</code><br>
+<code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><a href="#nestable_synthesized">$nestable_synthesized</a>:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>typeIR</code></th>
+<th class="tableblock halign-left valign-top"><a href="#set">$set</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#tuple_in_set">$tuple_in_set</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#sequence_in_set">$sequence_in_set</a>(typeIR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>errorTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedIntTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fixedBitTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nameTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_synthesized.set">$nestable_synthesized.set(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_synthesized.tuple_in_set">$nestable_synthesized.tuple_in_set(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_synthesized.sequence_in_set">$nestable_synthesized.sequence_in_set(typeIR)</a></code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>newTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TUPLE</code> <code>&lt;</code> <code>typeIR<sup>*</sup></code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_synthesized.tuple_in_set(typeIR)<sup>*</sup></code> are true</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_synthesized.tuple_in_set(typeIR)<sup>*</sup></code> are true</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_synthesized.sequence_in_set(typeIR)<sup>*</sup></code> are true</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>enumTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SEQ</code> <code>&lt;</code> <code>typeIR<sup>*</sup></code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_synthesized.sequence_in_set(typeIR)<sup>*</sup></code> are true</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#forall_">all <code>$nestable_synthesized.sequence_in_set(typeIR)<sup>*</sup></code> are true</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>_</code> <code>[</code> <code>_</code> <code>]</code><br>
+<code>CONTROL</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>(</code> <code>_</code> <code>)</code><br>
+<code>DEFAULT</code><br>
+<code>EXTERN</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>_</code><br>
+<code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>HEADER_INVALID</code><br>
+<code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>INT</code><br>
+<code>LIST</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>MATCH_KIND</code><br>
+<code>PACKAGE</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>PARSER</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>(</code> <code>_</code> <code>)</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>,</code> <code>...</code> <code>}</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>,</code> <code>...</code> <code>&gt;</code><br>
+<code>SET</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>STRING</code><br>
+<code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_STRUCT</code> <code>_</code> <code>{</code> <code>HIT</code> <code>_</code> <code>;</code> <code>MISS</code> <code>_</code> <code>;</code> <code>ACTION_RUN</code> <code>_</code> <code>;</code> <code>}</code><br>
+<code>VARBIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><a href="#nestable_callable">$nestable_callable</a>:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>typeIR</code></th>
+<th class="tableblock halign-left valign-top"><a href="#action">$action</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#definedFunction">$definedFunction</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#externFunction">$externFunction</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#externMethod">$externMethod</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#parserApplyMethod">$parserApplyMethod</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#controlApplyMethod">$controlApplyMethod</a>(typeIR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.action">$nestable_callable.action(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.definedFunction">$nestable_callable.definedFunction(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.externFunction">$nestable_callable.externFunction(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.externMethod">$nestable_callable.externMethod(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.parserApplyMethod">$nestable_callable.parserApplyMethod(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_callable.controlApplyMethod">$nestable_callable.controlApplyMethod(typeIR)</a></code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parserObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>controlObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>packageObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tableObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>EXTERN</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>_</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>synthesizedTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>_</code> <code>[</code> <code>_</code> <code>]</code><br>
+<code>_</code><br>
+<code>BIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>BOOL</code><br>
+<code>ENUM</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>ERROR</code><br>
+<code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>INT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>LIST</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>MATCH_KIND</code><br>
+<code>STRING</code><br>
+<code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TUPLE</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>TYPE</code> <code>_</code> <code>_</code><br>
+<code>VARBIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><a href="#nestable_constructor">$nestable_constructor</a>:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><code>typeIR</code></th>
+<th class="tableblock halign-left valign-top"><a href="#extern_obj">$extern_obj</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#parser_obj">$parser_obj</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#control_obj">$control_obj</a>(typeIR)</th>
+<th class="tableblock halign-left valign-top"><a href="#package_obj">$package_obj</a>(typeIR)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_constructor.extern_obj">$nestable_constructor.extern_obj(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_constructor.parser_obj">$nestable_constructor.parser_obj(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_constructor.control_obj">$nestable_constructor.control_obj(typeIR)</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="nestable_constructor.package_obj">$nestable_constructor.package_obj(typeIR)</a></code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parserObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>controlObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>packageObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tableObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>_</code> <code>[</code> <code>_</code> <code>]</code><br>
+<code>_</code><br>
+<code>BIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>BOOL</code><br>
+<code>DEFAULT</code><br>
+<code>ENUM</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>ERROR</code><br>
+<code>EXTERN</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>_</code><br>
+<code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>HEADER_INVALID</code><br>
+<code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>INT</code><br>
+<code>INT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>LIST</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>MATCH_KIND</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>,</code> <code>...</code> <code>}</code><br>
+<code>RECORD</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>,</code> <code>...</code> <code>&gt;</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>SET</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>STRING</code><br>
+<code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_ENUM</code> <code>_</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>TABLE_STRUCT</code> <code>_</code> <code>{</code> <code>HIT</code> <code>_</code> <code>;</code> <code>MISS</code> <code>_</code> <code>;</code> <code>ACTION_RUN</code> <code>_</code> <code>;</code> <code>}</code><br>
+<code>TUPLE</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>TYPE</code> <code>_</code> <code>_</code><br>
+<code>VARBIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
@@ -13217,7 +13919,7 @@ type definition:</p>
  -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ direction typeIR _ _ = parameterIR))*
  -- if $directionless_trailing(direction*)
- -- (if $nestable_action(typeIR))*</pre>
+ -- (if $nestable_callable.action(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -13261,7 +13963,7 @@ type definition:</p>
 <p>Check that <a href="#directionless_trailing">directionless parameters in <code>direction<sup>*</sup></code> only appear at the end</a>.</p>
 </li>
 <li>
-<p>Check that <a href="#nestable_action"><code>typeIR</code> can be used in an action type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.action">$nestable_callable.action(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -13376,7 +14078,7 @@ definedFunctionTypeIR
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_definedFunction(typeIR))*
+ -- (if $nestable_callable.definedFunction(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret</pre>
 </div>
 </div>
@@ -13418,7 +14120,7 @@ definedFunctionTypeIR
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_definedFunction"><code>typeIR</code> can be used in a defined function type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.definedFunction">$nestable_callable.definedFunction(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#ReturnType_wf"><code>typeIR<sub>ret</sub></code> is a well-formed return type, with bound type variables <code>B</code></a>.</p>
@@ -13488,7 +14190,7 @@ rules for <code>extern</code> function declarations.</p>
   B |- EXTERN_FUNCTION _ `(parameterIR*) : typeIR_ret
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_externFunction(typeIR))*
+ -- (if $nestable_callable.externFunction(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret</pre>
 </div>
 </div>
@@ -13527,7 +14229,7 @@ rules for <code>extern</code> function declarations.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_externFunction"><code>typeIR</code> can be used in an extern function type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.externFunction">$nestable_callable.externFunction(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#ReturnType_wf"><code>typeIR<sub>ret</sub></code> is a well-formed return type, with bound type variables <code>B</code></a>.</p>
@@ -13689,14 +14391,14 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantion-abstract-
   B |- EXTERN_METHOD _ `(parameterIR*) : typeIR_ret
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_externMethod(typeIR))*
+ -- (if $nestable_callable.externMethod(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret
   rule CallableType_wf/abstract:
   B |- EXTERN_METHOD ABSTRACT _ `(parameterIR*) : typeIR_ret
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_externMethod(typeIR))*
+ -- (if $nestable_callable.externMethod(typeIR))*
  -- ReturnType_wf: B |- typeIR_ret</pre>
 </div>
 </div>
@@ -13739,7 +14441,7 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantion-abstract-
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_externMethod"><code>typeIR</code> can be used in an extern method type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.externMethod">$nestable_callable.externMethod(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#ReturnType_wf"><code>typeIR<sub>ret</sub></code> is a well-formed return type, with bound type variables <code>B</code></a>.</p>
@@ -13781,7 +14483,7 @@ of all the <code>abstract</code> methods (see <a href="#sec-instantion-abstract-
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_externMethod"><code>typeIR</code> can be used in an extern method type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.externMethod">$nestable_callable.externMethod(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Check that <a href="#ReturnType_wf"><code>typeIR<sub>ret</sub></code> is a well-formed return type, with bound type variables <code>B</code></a>.</p>
@@ -13853,7 +14555,7 @@ parserApplyMethodDef
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_parserApplyMethod(typeIR))*</pre>
+ -- (if $nestable_callable.parserApplyMethod(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -13894,7 +14596,7 @@ parserApplyMethodDef
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_parserApplyMethod"><code>typeIR</code> can be used in a parser apply method type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.parserApplyMethod">$nestable_callable.parserApplyMethod(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -13960,7 +14662,7 @@ controlApplyMethodDef
  -- (ParameterType_wf: B |- parameterIR)*
  -- (if (~$is_optional_parameterIR(parameterIR)))*
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_controlApplyMethod(typeIR))*</pre>
+ -- (if $nestable_callable.controlApplyMethod(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -14001,7 +14703,7 @@ controlApplyMethodDef
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_controlApplyMethod"><code>typeIR</code> can be used in a control apply method type</a>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_callable.controlApplyMethod">$nestable_callable.controlApplyMethod(typeIR)</a></code>, for all <code>typeIR</code> in <code>typeIR<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -14534,7 +15236,7 @@ is not defined.</p>
  -- Type_wf: B |- typeIR_object
  -- if externObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_constructor_extern(typeIR))*</pre>
+ -- (if $nestable_constructor.extern_obj(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -14581,7 +15283,7 @@ is not defined.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_constructor_extern"><code>typeIR'</code> can be used in an extern constructor type</a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_constructor.extern_obj">$nestable_constructor.extern_obj(typeIR')</a></code>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -14903,7 +15605,7 @@ as:</p>
  -- Type_wf: B |- typeIR_object
  -- if parserObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_constructor_parser(typeIR))*</pre>
+ -- (if $nestable_constructor.parser_obj(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -14953,7 +15655,7 @@ as:</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_constructor_parser"><code>typeIR'</code> can be used in a parser constructor type</a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_constructor.parser_obj">$nestable_constructor.parser_obj(typeIR')</a></code>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -15180,7 +15882,7 @@ as:</p>
  -- Type_wf: B |- typeIR_object
  -- if controlObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_constructor_control(typeIR))*</pre>
+ -- (if $nestable_constructor.control_obj(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -15230,7 +15932,7 @@ as:</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_constructor_control"><code>typeIR'</code> can be used in a control constructor type</a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_constructor.control_obj">$nestable_constructor.control_obj(typeIR')</a></code>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -15659,7 +16361,7 @@ with them.</p>
  -- Type_wf: B |- typeIR_object
  -- if packageObjectTypeIR = $unroll_typeIR(typeIR_object)
  -- (if (_ _ typeIR _ _ = parameterIR))*
- -- (if $nestable_constructor_package(typeIR))*</pre>
+ -- (if $nestable_constructor.package_obj(typeIR))*</pre>
 </div>
 </div>
 </div>
@@ -15706,7 +16408,7 @@ with them.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#nestable_constructor_package"><code>typeIR'</code> can be used in a package constructor type</a>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
+<p>Check that <code><a href="nestable_constructor.package_obj">$nestable_constructor.package_obj(typeIR')</a></code>, for all <code>typeIR'</code> in <code>typeIR'<sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -26916,7 +27618,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <p>Let <code>callExpressionIR</code> be <code>expressionIR</code>.</p>
 </li>
 <li>
-<p>Check that <code>callExpressionIR</code> matches pattern <code>%</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>callExpressionIR</code> matches pattern <code>_</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>constructorTargetIR</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> be <code>callExpressionIR</code>.</p>
@@ -26962,7 +27664,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <p>Let <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>;</code> be <code>callStatementIR</code>.</p>
 </li>
 <li>
-<p>Check that <code>callableTargetIR</code> matches pattern <code>%</code> <code>.</code> <code>%</code>.</p>
+<p>Check that <code>callableTargetIR</code> matches pattern <code>_</code> <code>.</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>text</code> be <code>callableTargetIR</code>.</p>
@@ -31150,7 +31852,7 @@ forCollectionExpressionIR
 <p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>r_casted</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#compat_range"><code>typeIR<sub>l</sub></code> and <code>typeIR<sub>r</sub></code> can be used as range bounds</a>.</p>
+<p>Check that <code><a href="#compat_range">$compat_range(typeIR<sub>l</sub>,</code> <code>typeIR<sub>r</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>l_casted</sub></code> <code>..</code> <code>typedExpressionIR<sub>r_casted</sub></code>.</p>
@@ -32456,7 +33158,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>`</code> <code>%</code>.</p>
+<p>Check that <code>prefixedNameIR</code> matches pattern <code>`</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
@@ -32963,7 +33665,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>switchCaseIR''</code> <code>::</code> <code>_<sup>*</sup></code> be <code>switchCaseIR'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <code>switchCaseIR''</code> matches pattern <code>%</code> <code>:</code> <code>%</code>.</p>
+<p>Check that <code>switchCaseIR''</code> matches pattern <code>_</code> <code>:</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>_</code> <code>:</code> <code>blockStatementIR</code> be <code>switchCaseIR''</code>.</p>
@@ -33747,7 +34449,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchCaseIR''</code> <code>::</code> <code>_<sup>*</sup></code> be <code>switchCaseIR'<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <code>switchCaseIR''</code> matches pattern <code>%</code> <code>:</code> <code>%</code>.</p>
+<p>Check that <code>switchCaseIR''</code> matches pattern <code>_</code> <code>:</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>_</code> <code>:</code> <code>blockStatementIR</code> be <code>switchCaseIR''</code>.</p>
@@ -53471,7 +54173,7 @@ tableActionReferenceIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>callExpression</code> matches pattern <code>%</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>callExpression</code> matches pattern <code>_</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>callTarget</code> <code>(</code> <code>argumentList</code> <code>)</code> be <code>callExpression</code>.</p>
@@ -54516,7 +55218,7 @@ invocation:</p>
 <div id="Table_eval" class="sidebarblock sidebar-title">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Table_eval">Table_eval: <code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId</code> <code>TBL</code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a></p>
+<p><a href="#Table_eval">Table_eval: <code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId</code> <code>TBL</code> <code>:</code> <code>_</code> <code>_</code> <code>_</code></a></p>
 </div>
 </div>
 </div>
@@ -56399,7 +57101,7 @@ If so, no cast is needed.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceTypeIR'</code> matches pattern <code>SEQ</code> <code>&lt;</code> <code>%</code> <code>&gt;</code>.</p>
+<p>Check that <code>sequenceTypeIR'</code> matches pattern <code>SEQ</code> <code>&lt;</code> <code>_</code> <code>&gt;</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>&lt;</code> <code>typeIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> be <code>sequenceTypeIR'</code>.</p>
@@ -58030,7 +58732,7 @@ def $cast_int(SET `&lt;typeIR&gt;, w S i) = SET `{$cast_op(typeIR, w S i)}</pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>integerValue</code> matches pattern <code>%</code> <code>.</code> <code>%</code> <code>V</code> <code>%</code>.</p>
+<p>Check that <code>integerValue</code> matches pattern <code>_</code> <code>.</code> <code>_</code> <code>V</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w<sub>max'</sub></code> <code>.</code> <code>w</code> <code>V</code> <code>i</code> be <code>integerValue</code>.</p>
@@ -58437,7 +59139,7 @@ def $cast_enum(typeIR, _ . _ . value) = $cast_op(typeIR, value)</pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>enumValue</code> matches pattern <code>%</code> <code>.</code> <code>%</code>.</p>
+<p>Check that <code>enumValue</code> matches pattern <code>_</code> <code>.</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>typeId'</code> <code>.</code> <code>nameIR</code> be <code>enumValue</code>.</p>
@@ -58584,7 +59286,7 @@ def $cast_sequence(HEADER typeId `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*},
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>(</code> <code>value<sup>*</sup></code> <code>)</code> be <code>sequenceValue</code>.</p>
@@ -58617,7 +59319,7 @@ def $cast_sequence(HEADER typeId `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*},
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>(</code> <code>value<sup>*</sup></code> <code>)</code> be <code>sequenceValue</code>.</p>
@@ -58650,7 +59352,7 @@ def $cast_sequence(HEADER typeId `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*},
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>(</code> <code>value<sup>*</sup></code> <code>)</code> be <code>sequenceValue</code>.</p>
@@ -58686,7 +59388,7 @@ def $cast_sequence(HEADER typeId `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*},
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>(</code> <code>value<sup>*</sup></code> <code>)</code> be <code>sequenceValue</code>.</p>
@@ -58719,7 +59421,7 @@ def $cast_sequence(HEADER typeId `&lt;_&gt; `{(_ typeIR_field nameIR_field ;)*},
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>%</code> <code>)</code>.</p>
+<p>Check that <code>sequenceValue</code> matches pattern <code>SEQ</code> <code>(</code> <code>_</code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>SEQ</code> <code>(</code> <code>value<sup>*</sup></code> <code>)</code> be <code>sequenceValue</code>.</p>
@@ -58785,7 +59487,7 @@ def $cast_record(HEADER typeId `&lt;_&gt; `{(_ typeIR_t_field id_t_field ;)*}, R
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>recordValue</code> matches pattern <code>RECORD</code> <code>{</code> <code>%</code> <code>}</code>.</p>
+<p>Check that <code>recordValue</code> matches pattern <code>RECORD</code> <code>{</code> <code>_</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>value<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordValue</code>.</p>
@@ -58855,7 +59557,7 @@ def $cast_record(HEADER typeId `&lt;_&gt; `{(_ typeIR_t_field id_t_field ;)*}, R
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>recordValue</code> matches pattern <code>RECORD</code> <code>{</code> <code>%</code> <code>}</code>.</p>
+<p>Check that <code>recordValue</code> matches pattern <code>RECORD</code> <code>{</code> <code>_</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>value<sub>field</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordValue</code>.</p>
@@ -61297,7 +61999,7 @@ result of callee resolution is:</p>
 <p>Let <code>_</code> <code>:</code> <code>externMethodDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>externMethodDefEnv</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodDef</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>externMethodDef</code> matches pattern <code>EXTERN_METHOD</code> <code>%</code> <code>&lt;</code> <code>%</code> <code>&gt;</code> <code>(</code> <code>%</code> <code>)</code> <code>%</code>.</p>
+<p>Check that <code>externMethodDef</code> matches pattern <code>EXTERN_METHOD</code> <code>_</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>(</code> <code>_</code> <code>)</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>EXTERN_METHOD</code> <code>nameIR'</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR<sup>?</sup></code> be <code>externMethodDef</code>.</p>
@@ -62444,7 +63146,7 @@ def $un_op(-, value) = $un_minus(value)</pre>
 <p>Let <code>integerLiteral</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w</code> <code>W</code> <code>i</code> be <code>integerLiteral</code>.</p>
@@ -62945,7 +63647,7 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -62967,7 +63669,7 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63004,7 +63706,7 @@ def $bin_plus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63094,7 +63796,7 @@ def $bin_satplus(w S i_l, w S i_r) = w S i'''
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63128,7 +63830,7 @@ def $bin_satplus(w S i_l, w S i_r) = w S i'''
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63261,7 +63963,7 @@ def $bin_minus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63283,7 +63985,7 @@ def $bin_minus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63320,7 +64022,7 @@ def $bin_minus(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63409,7 +64111,7 @@ def $bin_satminus(w S i_l, w S i_r) = w S i'''
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63440,7 +64142,7 @@ def $bin_satminus(w S i_l, w S i_r) = w S i'''
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63573,7 +64275,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63595,7 +64297,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63632,7 +64334,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63689,7 +64391,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>l</sub></code> be <code>integerLiteral</code>.</p>
@@ -63701,7 +64403,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -63743,7 +64445,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral</code> be <code>value</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>l</sub></code> be <code>integerLiteral</code>.</p>
@@ -63755,7 +64457,7 @@ def $bin_mul(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -64554,7 +65256,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>b</sub></code> be <code>integerLiteral'</code>.</p>
@@ -64576,7 +65278,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w<sub>b</sub></code> <code>W</code> <code>i<sub>b</sub></code> be <code>integerLiteral'</code>.</p>
@@ -64601,7 +65303,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w<sub>b</sub></code> <code>S</code> <code>i<sub>b</sub></code> be <code>integerLiteral'</code>.</p>
@@ -64957,7 +65659,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>enumValue'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>enumValue'</code> matches pattern <code>%</code> <code>.</code> <code>%</code>.</p>
+<p>Check that <code>enumValue'</code> matches pattern <code>_</code> <code>.</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>typeId<sub>b</sub></code> <code>.</code> <code>nameIR<sub>field_b</sub></code> be <code>enumValue'</code>.</p>
@@ -64982,7 +65684,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>enumValue'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>enumValue'</code> matches pattern <code>%</code> <code>.</code> <code>%</code> <code>.</code> <code>%</code>.</p>
+<p>Check that <code>enumValue'</code> matches pattern <code>_</code> <code>.</code> <code>_</code> <code>.</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>typeId<sub>b</sub></code> <code>.</code> <code>_</code> <code>.</code> <code>value<sub>field_b</sub></code> be <code>enumValue'</code>.</p>
@@ -65020,7 +65722,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>integerValue</code> matches pattern <code>%</code> <code>.</code> <code>%</code> <code>V</code> <code>%</code>.</p>
+<p>Check that <code>integerValue</code> matches pattern <code>_</code> <code>.</code> <code>_</code> <code>V</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w<sub>max_a</sub></code> <code>.</code> <code>_</code> <code>V</code> <code>i<sub>a</sub></code> be <code>integerValue</code>.</p>
@@ -65032,7 +65734,7 @@ def $bin_eq({#}, {#}) = true</pre>
 <p>Let <code>integerValue'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerValue'</code> matches pattern <code>%</code> <code>.</code> <code>%</code> <code>V</code> <code>%</code>.</p>
+<p>Check that <code>integerValue'</code> matches pattern <code>_</code> <code>.</code> <code>_</code> <code>V</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w<sub>max_b</sub></code> <code>.</code> <code>_</code> <code>V</code> <code>i<sub>b</sub></code> be <code>integerValue'</code>.</p>
@@ -65125,7 +65827,7 @@ def $bin_lt(w S i_l, w S i_r) = i_l' &lt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65147,7 +65849,7 @@ def $bin_lt(w S i_l, w S i_r) = i_l' &lt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65175,7 +65877,7 @@ def $bin_lt(w S i_l, w S i_r) = i_l' &lt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65244,7 +65946,7 @@ def $bin_le(w S i_l, w S i_r) = i_l' &lt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65266,7 +65968,7 @@ def $bin_le(w S i_l, w S i_r) = i_l' &lt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65294,7 +65996,7 @@ def $bin_le(w S i_l, w S i_r) = i_l' &lt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65363,7 +66065,7 @@ def $bin_gt(w S i_l, w S i_r) = i_l' &gt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65385,7 +66087,7 @@ def $bin_gt(w S i_l, w S i_r) = i_l' &gt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65413,7 +66115,7 @@ def $bin_gt(w S i_l, w S i_r) = i_l' &gt; i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65482,7 +66184,7 @@ def $bin_ge(w S i_l, w S i_r) = i_l' &gt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>D</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>D</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65504,7 +66206,7 @@ def $bin_ge(w S i_l, w S i_r) = i_l' &gt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65532,7 +66234,7 @@ def $bin_ge(w S i_l, w S i_r) = i_l' &gt;= i_r'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65602,7 +66304,7 @@ def $bin_band(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65633,7 +66335,7 @@ def $bin_band(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65708,7 +66410,7 @@ def $bin_bor(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65739,7 +66441,7 @@ def $bin_bor(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65814,7 +66516,7 @@ def $bin_bxor(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>W</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>W</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>W</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -65845,7 +66547,7 @@ def $bin_bxor(w S i_l, w S i_r) = w S i'
 <p>Let <code>integerLiteral'</code> be <code>value'</code>.</p>
 </li>
 <li>
-<p>Check that <code>integerLiteral'</code> matches pattern <code>%</code> <code>S</code> <code>%</code>.</p>
+<p>Check that <code>integerLiteral'</code> matches pattern <code>_</code> <code>S</code> <code>_</code>.</p>
 </li>
 <li>
 <p>Let <code>w'</code> <code>S</code> <code>i<sub>r</sub></code> be <code>integerLiteral'</code>.</p>
@@ -68720,7 +69422,7 @@ p4program
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-02-25 10:12:56 +0900
+Last updated 2026-02-27 00:20:41 +0900
 </div>
 </div>
 </body>

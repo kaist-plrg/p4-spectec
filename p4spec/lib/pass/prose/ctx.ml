@@ -81,8 +81,8 @@ let load_defs (henv : HEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
       (henv, tdenv)
   | ExternDecD (fid, _, _, _, hints)
   | BuiltinDecD (fid, _, _, _, hints)
-  | TableDecD (fid, _, _, _, hints)
-  | FuncDecD (fid, _, _, _, _, _, hints) ->
+  | FuncDecD (fid, _, _, _, _, _, hints)
+  | TableGroupD (fid, _, _, _, hints) ->
       let henv = load_hints (`Func fid) henv hints in
       (henv, tdenv)
 

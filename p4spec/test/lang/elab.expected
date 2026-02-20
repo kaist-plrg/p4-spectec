@@ -3189,7 +3189,9 @@ def $unroll_aliasType(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-tbl def $is_defaultable_typeIR(typeIR) : bool =
+tblgroup $is_defaultable_typeIR(typeIR) : bool {
+tbl def $is_defaultable_typeIR =
+
   row 0 :
     (signature) bool as typeIR
     (typeIR) -> true
@@ -3261,8 +3263,11 @@ tbl def $is_defaultable_typeIR(typeIR) : bool =
   row 13 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $is_equalable_typeIR(typeIR) : bool =
+tblgroup $is_equalable_typeIR(typeIR) : bool {
+tbl def $is_equalable_typeIR =
+
   row 0 :
     (signature) void as typeIR
     (typeIR) -> false
@@ -3343,8 +3348,11 @@ tbl def $is_equalable_typeIR(typeIR) : bool =
   row 14 :
     (signature) _typeIR
     (_typeIR) -> true
+}
 
-tbl def $is_assignable_typeIR(typeIR) : bool =
+tblgroup $is_assignable_typeIR(typeIR) : bool {
+tbl def $is_assignable_typeIR =
+
   row 0 :
     (signature) void as typeIR
     (typeIR) -> false
@@ -3381,6 +3389,7 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
   row 6 :
     (signature) _typeIR
     (_typeIR) -> true
+}
 
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
@@ -8749,7 +8758,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath typedefTypeIR
-    -- if $nestable_typedef(typeIR)
+    -- if $nestable_alias.typedef(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -8765,7 +8774,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath newTypeIR
-    -- if $nestable_new(typeIR)
+    -- if $nestable_alias.new(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -8781,7 +8790,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath listTypeIR
-    -- if $nestable_list(typeIR)
+    -- if $nestable_data.list(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -8797,7 +8806,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath tupleTypeIR
-    -- (if $nestable_tuple(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_data.tuple(typeIR))*{typeIR <- typeIR*}
     -- (if Type_wf: B |- typeIR holds)*{typeIR <- typeIR*}
     -- the relation holds
 
@@ -8813,7 +8822,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath headerStackTypeIR
-    -- if $nestable_headerStack(typeIR)
+    -- if $nestable_data.headerStack(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -8830,7 +8839,7 @@ relation Type_wf: bound |- typeIR
 
     rulepath structTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
-    -- (if $nestable_struct(typeIR_field))*{typeIR_field <- typeIR_field*}
+    -- (if $nestable_data.struct(typeIR_field))*{typeIR_field <- typeIR_field*}
     -- (if Type_wf: B |- typeIR_field holds)*{typeIR_field <- typeIR_field*}
     -- the relation holds
 
@@ -8847,7 +8856,7 @@ relation Type_wf: bound |- typeIR
 
     rulepath headerTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
-    -- (if $nestable_header(typeIR_field))*{typeIR_field <- typeIR_field*}
+    -- (if $nestable_data.header(typeIR_field))*{typeIR_field <- typeIR_field*}
     -- (if Type_wf: B |- typeIR_field holds)*{typeIR_field <- typeIR_field*}
     -- the relation holds
 
@@ -8864,7 +8873,7 @@ relation Type_wf: bound |- typeIR
 
     rulepath headerUnionTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
-    -- (if $nestable_headerUnion(typeIR_field))*{typeIR_field <- typeIR_field*}
+    -- (if $nestable_data.headerUnion(typeIR_field))*{typeIR_field <- typeIR_field*}
     -- (if Type_wf: B |- typeIR_field holds)*{typeIR_field <- typeIR_field*}
     -- the relation holds
 
@@ -8889,7 +8898,7 @@ relation Type_wf: bound |- typeIR
     -- if typeIR'' <: serializableEnumTypeIR
     -- let enum _typeId < typeIR >{ nameIR_field = _value ;*{_value <- _value*, nameIR_field <- nameIR_field*} } = typeIR'' as serializableEnumTypeIR
     -- if $distinct_<nameIR>(nameIR_field*{nameIR_field <- nameIR_field*})
-    -- if $nestable_enum_serializable(typeIR)
+    -- if $nestable_data.enum_serializable(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -9062,7 +9071,7 @@ relation Type_wf: bound |- typeIR
    paths
 
     rulepath setTypeIR
-    -- if $nestable_set(typeIR)
+    -- if $nestable_synthesized.set(typeIR)
     -- if Type_wf: B |- typeIR holds
     -- the relation holds
 
@@ -9177,7 +9186,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
     -- (let _annotationList' direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList' -> _annotationList'*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR -> typeIR*}
     -- if $directionless_trailing(direction*{direction <- direction*})
-    -- (if $nestable_action(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.action(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup definedFunctionTypeIR
@@ -9195,7 +9204,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_definedFunction(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.definedFunction(typeIR))*{typeIR <- typeIR*}
     -- if ReturnType_wf: B |- typeIR_ret holds
     -- the relation holds
 
@@ -9213,7 +9222,7 @@ relation CallableType_wf: bound |- callableTypeIR
     rulepath externFunctionTypeIR
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_externFunction(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.externFunction(typeIR))*{typeIR <- typeIR*}
     -- if ReturnType_wf: B |- typeIR_ret holds
     -- the relation holds
 
@@ -9251,7 +9260,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- let extern_method _nameIR ( parameterIR*{parameterIR <- parameterIR*} ): typeIR_ret = externMethodTypeIR'
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_externMethod(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.externMethod(typeIR))*{typeIR <- typeIR*}
     -- if ReturnType_wf: B |- typeIR_ret holds
     -- the relation holds
 
@@ -9262,7 +9271,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_externMethod(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.externMethod(typeIR))*{typeIR <- typeIR*}
     -- if ReturnType_wf: B |- typeIR_ret holds
     -- the relation holds
 
@@ -9281,7 +9290,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_parserApplyMethod(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.parserApplyMethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup controlApplyMethodTypeIR
@@ -9299,7 +9308,7 @@ relation CallableType_wf: bound |- callableTypeIR
     -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
     -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_controlApplyMethod(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_callable.controlApplyMethod(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup tableApplyMethodTypeIR
@@ -9371,7 +9380,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- if typeIR' <: externObjectTypeIR
     -- let externObjectTypeIR = typeIR' as externObjectTypeIR
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_constructor_extern(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_constructor.extern_obj(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup parserObjectTypeIR
@@ -9391,7 +9400,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- if typeIR' <: parserObjectTypeIR
     -- let parserObjectTypeIR = typeIR' as parserObjectTypeIR
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_constructor_parser(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_constructor.parser_obj(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup controlObjectTypeIR
@@ -9411,7 +9420,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- if typeIR' <: controlObjectTypeIR
     -- let controlObjectTypeIR = typeIR' as controlObjectTypeIR
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_constructor_control(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_constructor.control_obj(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
   rulegroup tableObjectTypeIR
@@ -9447,7 +9456,7 @@ relation ConstructorType_wf: bound |- constructorTypeIR
     -- if typeIR' <: packageObjectTypeIR
     -- let packageObjectTypeIR = typeIR' as packageObjectTypeIR
     -- (let _annotationList _direction typeIR _id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR -> typeIR*}
-    -- (if $nestable_constructor_package(typeIR))*{typeIR <- typeIR*}
+    -- (if $nestable_constructor.package_obj(typeIR))*{typeIR <- typeIR*}
     -- the relation holds
 
 relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
@@ -9470,25 +9479,24 @@ relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
     -- if ConstructorType_wf: B_inner |- constructor( parameterIR*{parameterIR <- parameterIR*} ): typeIR_object holds
     -- the relation holds
 
-tbl def $nestable_typedef(typeIR) : bool =
+tblgroup $nestable_alias(typeIR) : bool {
+tbl def $typedef =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) error as typeIR
+    (signature) errorTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: errorTypeIR
     -- let errorTypeIR = typeIR as errorTypeIR
-    -- if (errorTypeIR = error)
   row 2 :
-    (signature) string as typeIR
+    (signature) stringTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: stringTypeIR
     -- let stringTypeIR = typeIR as stringTypeIR
-    -- if (stringTypeIR = string)
   row 3 :
     (signature) integerTypeIR as typeIR
     (typeIR) -> true
@@ -9501,7 +9509,7 @@ tbl def $nestable_typedef(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 5 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_typedef(typeIR)
+    (typeIR') -> $nestable_alias.typedef(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 6 :
@@ -9538,23 +9546,23 @@ tbl def $nestable_typedef(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_new(typeIR) : bool =
+tbl def $new =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 2 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 3 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9562,7 +9570,7 @@ tbl def $nestable_new(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 4 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_new(typeIR)
+    (typeIR') -> $nestable_alias.new(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 5 :
@@ -9573,20 +9581,21 @@ tbl def $nestable_new(typeIR) : bool =
   row 6 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $nestable_list(typeIR) : bool =
+tblgroup $nestable_data(typeIR) : bool {
+tbl def $list =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) error as typeIR
+    (signature) errorTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: errorTypeIR
     -- let errorTypeIR = typeIR as errorTypeIR
-    -- if (errorTypeIR = error)
   row 2 :
     (signature) match_kind as typeIR
     (typeIR) -> true
@@ -9594,11 +9603,10 @@ tbl def $nestable_list(typeIR) : bool =
     -- let matchKindTypeIR = typeIR as matchKindTypeIR
     -- if (matchKindTypeIR = match_kind)
   row 3 :
-    (signature) string as typeIR
+    (signature) stringTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: stringTypeIR
     -- let stringTypeIR = typeIR as stringTypeIR
-    -- if (stringTypeIR = string)
   row 4 :
     (signature) integerTypeIR as typeIR
     (typeIR) -> true
@@ -9611,7 +9619,7 @@ tbl def $nestable_list(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 6 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_list(typeIR)
+    (typeIR') -> $nestable_data.list(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 7 :
@@ -9628,34 +9636,33 @@ tbl def $nestable_list(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_tuple(typeIR) : bool =
+tbl def $tuple =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) error as typeIR
+    (signature) errorTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: errorTypeIR
     -- let errorTypeIR = typeIR as errorTypeIR
-    -- if (errorTypeIR = error)
   row 2 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 3 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 4 :
-    (signature) varbit< _nat > as typeIR
+    (signature) varBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: varBitTypeIR
-    -- let varbit< _nat > = typeIR as varBitTypeIR
+    -- let varBitTypeIR = typeIR as varBitTypeIR
   row 5 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9663,7 +9670,7 @@ tbl def $nestable_tuple(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 6 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_tuple(typeIR)
+    (typeIR') -> $nestable_data.tuple(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 7 :
@@ -9705,7 +9712,8 @@ tbl def $nestable_tuple(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_headerStack(typeIR) : bool =
+tbl def $headerStack =
+
   row 0 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9713,7 +9721,7 @@ tbl def $nestable_headerStack(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 1 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_headerStack(typeIR)
+    (typeIR') -> $nestable_data.headerStack(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 2 :
@@ -9730,32 +9738,28 @@ tbl def $nestable_headerStack(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-def $nestable_struct(typeIR) : bool =
+tbl def $header =
 
-  clause 0 : (typeIR) = $nestable_tuple(typeIR)
-
-tbl def $nestable_header(typeIR) : bool =
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 2 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 3 :
-    (signature) varbit< _nat > as typeIR
+    (signature) varBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: varBitTypeIR
-    -- let varbit< _nat > = typeIR as varBitTypeIR
+    -- let varBitTypeIR = typeIR as varBitTypeIR
   row 4 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9763,7 +9767,7 @@ tbl def $nestable_header(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 5 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_header(typeIR)
+    (typeIR') -> $nestable_data.header(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 6 :
@@ -9778,30 +9782,30 @@ tbl def $nestable_header(typeIR) : bool =
     -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   row 8 :
     (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
-    (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
+    (typeIR) -> $forall_($nestable_data.struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
     -- if typeIR <: structTypeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   row 9 :
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_struct_in_header(typeIR) : bool =
+tbl def $struct_in_header =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 2 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 3 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9809,7 +9813,7 @@ tbl def $nestable_struct_in_header(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 4 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_struct_in_header(typeIR)
+    (typeIR') -> $nestable_data.struct_in_header(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 5 :
@@ -9824,14 +9828,15 @@ tbl def $nestable_struct_in_header(typeIR) : bool =
     -- let enum _typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
   row 7 :
     (signature) struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR
-    (typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
+    (typeIR) -> $forall_($nestable_data.struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
     -- if typeIR <: structTypeIR
     -- let struct _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   row 8 :
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_headerUnion(typeIR) : bool =
+tbl def $headerUnion =
+
   row 0 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9839,7 +9844,7 @@ tbl def $nestable_headerUnion(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 1 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_headerUnion(typeIR)
+    (typeIR') -> $nestable_data.headerUnion(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 2 :
@@ -9856,17 +9861,18 @@ tbl def $nestable_headerUnion(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_enum_serializable(typeIR) : bool =
+tbl def $enum_serializable =
+
   row 0 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 1 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 2 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9874,29 +9880,30 @@ tbl def $nestable_enum_serializable(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 3 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_enum_serializable(typeIR)
+    (typeIR') -> $nestable_data.enum_serializable(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 4 :
     (signature) type _typeId typeIR as typeIR
-    (typeIR') -> $nestable_new_in_enum_serializable(typeIR)
+    (typeIR') -> $nestable_data.new_in_enum_serializable(typeIR)
     -- if typeIR' <: newTypeIR
     -- let type _typeId typeIR = typeIR' as newTypeIR
   row 5 :
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_new_in_enum_serializable(typeIR) : bool =
+tbl def $new_in_enum_serializable =
+
   row 0 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 1 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 2 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9904,7 +9911,7 @@ tbl def $nestable_new_in_enum_serializable(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 3 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_new_in_enum_serializable(typeIR)
+    (typeIR') -> $nestable_data.new_in_enum_serializable(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 4 :
@@ -9915,30 +9922,31 @@ tbl def $nestable_new_in_enum_serializable(typeIR) : bool =
   row 5 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $nestable_set(typeIR) : bool =
+tblgroup $nestable_synthesized(typeIR) : bool {
+tbl def $set =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) error as typeIR
+    (signature) errorTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: errorTypeIR
     -- let errorTypeIR = typeIR as errorTypeIR
-    -- if (errorTypeIR = error)
   row 2 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 3 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 4 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9946,7 +9954,7 @@ tbl def $nestable_set(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 5 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_set(typeIR)
+    (typeIR') -> $nestable_synthesized.set(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 6 :
@@ -9956,7 +9964,7 @@ tbl def $nestable_set(typeIR) : bool =
     -- let newTypeIR = typeIR as newTypeIR
   row 7 :
     (signature) tuple< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*})
+    (typeIR') -> $forall_($nestable_synthesized.tuple_in_set(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: tupleTypeIR
     -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   row 8 :
@@ -9966,7 +9974,7 @@ tbl def $nestable_set(typeIR) : bool =
     -- let enumTypeIR = typeIR as enumTypeIR
   row 9 :
     (signature) seq< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
+    (typeIR') -> $forall_($nestable_synthesized.sequence_in_set(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%>`
@@ -9975,23 +9983,23 @@ tbl def $nestable_set(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_tuple_in_set(typeIR) : bool =
+tbl def $tuple_in_set =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 2 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 3 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -9999,7 +10007,7 @@ tbl def $nestable_tuple_in_set(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 4 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_tuple_in_set(typeIR)
+    (typeIR') -> $nestable_synthesized.tuple_in_set(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 5 :
@@ -10009,7 +10017,7 @@ tbl def $nestable_tuple_in_set(typeIR) : bool =
     -- let newTypeIR = typeIR as newTypeIR
   row 6 :
     (signature) tuple< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($nestable_tuple_in_set(typeIR)*{typeIR <- typeIR*})
+    (typeIR') -> $forall_($nestable_synthesized.tuple_in_set(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: tupleTypeIR
     -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   row 7 :
@@ -10021,23 +10029,23 @@ tbl def $nestable_tuple_in_set(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $nestable_sequence_in_set(typeIR) : bool =
+tbl def $sequence_in_set =
+
   row 0 :
-    (signature) bool as typeIR
+    (signature) boolTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
   row 1 :
-    (signature) int< _nat > as typeIR
+    (signature) fixedIntTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
+    -- let fixedIntTypeIR = typeIR as fixedIntTypeIR
   row 2 :
-    (signature) bit< _nat > as typeIR
+    (signature) fixedBitTypeIR as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
+    -- let fixedBitTypeIR = typeIR as fixedBitTypeIR
   row 3 :
     (signature) nameTypeIR as typeIR
     (typeIR) -> true
@@ -10045,7 +10053,7 @@ tbl def $nestable_sequence_in_set(typeIR) : bool =
     -- let nameTypeIR = typeIR as nameTypeIR
   row 4 :
     (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_sequence_in_set(typeIR)
+    (typeIR') -> $nestable_synthesized.sequence_in_set(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
   row 5 :
@@ -10055,7 +10063,7 @@ tbl def $nestable_sequence_in_set(typeIR) : bool =
     -- let newTypeIR = typeIR as newTypeIR
   row 6 :
     (signature) tuple< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
+    (typeIR') -> $forall_($nestable_synthesized.sequence_in_set(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: tupleTypeIR
     -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
   row 7 :
@@ -10065,7 +10073,7 @@ tbl def $nestable_sequence_in_set(typeIR) : bool =
     -- let enumTypeIR = typeIR as enumTypeIR
   row 8 :
     (signature) seq< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($nestable_sequence_in_set(typeIR)*{typeIR <- typeIR*})
+    (typeIR') -> $forall_($nestable_synthesized.sequence_in_set(typeIR)*{typeIR <- typeIR*})
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ<%>`
@@ -10073,6 +10081,281 @@ tbl def $nestable_sequence_in_set(typeIR) : bool =
   row 9 :
     (signature) _typeIR
     (_typeIR) -> false
+}
+
+tblgroup $nestable_callable(typeIR) : bool {
+tbl def $action =
+
+  row 0 :
+    (signature) int as typeIR
+    (typeIR) -> false
+    -- if typeIR <: intTypeIR
+    -- let intTypeIR = typeIR as intTypeIR
+    -- if (intTypeIR = int)
+  row 1 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.action(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 2 :
+    (signature) objectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: objectTypeIR
+    -- let objectTypeIR = typeIR as objectTypeIR
+  row 3 :
+    (signature) synthesizedTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: synthesizedTypeIR
+    -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
+  row 4 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $definedFunction =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.definedFunction(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) objectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: objectTypeIR
+    -- let objectTypeIR = typeIR as objectTypeIR
+  row 2 :
+    (signature) synthesizedTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: synthesizedTypeIR
+    -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
+  row 3 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $externFunction =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.externFunction(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) controlObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: controlObjectTypeIR
+    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+  row 3 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 4 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 5 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $externMethod =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.externMethod(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) controlObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: controlObjectTypeIR
+    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+  row 3 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 4 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 5 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $parserApplyMethod =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.parserApplyMethod(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) controlObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: controlObjectTypeIR
+    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+  row 3 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 4 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 5 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $controlApplyMethod =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_callable.controlApplyMethod(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 3 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 4 :
+    (signature) _typeIR
+    (_typeIR) -> true
+}
+
+tblgroup $nestable_constructor(typeIR) : bool {
+tbl def $extern_obj =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_constructor.extern_obj(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) controlObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: controlObjectTypeIR
+    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+  row 3 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 4 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 5 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $parser_obj =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_constructor.parser_obj(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) controlObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: controlObjectTypeIR
+    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
+  row 2 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 3 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 4 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $control_obj =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_constructor.control_obj(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) parserObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: parserObjectTypeIR
+    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
+  row 2 :
+    (signature) packageObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: packageObjectTypeIR
+    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
+  row 3 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 4 :
+    (signature) _typeIR
+    (_typeIR) -> true
+
+tbl def $package_obj =
+
+  row 0 :
+    (signature) typedef _typeId typeIR as typeIR
+    (typeIR') -> $nestable_constructor.package_obj(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  row 1 :
+    (signature) tableObjectTypeIR as typeIR
+    (typeIR) -> false
+    -- if typeIR <: tableObjectTypeIR
+    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
+  row 2 :
+    (signature) _typeIR
+    (_typeIR) -> true
+}
+
+def $nestable_data.struct(typeIR) : bool =
+
+  clause 0 : (typeIR) = $nestable_data.tuple(typeIR)
 
 def $directionless_trailing(direction*) : bool =
 
@@ -10100,263 +10383,9 @@ def $directionless_trailing'(bool, direction*) : bool =
   -- let direction_h :: direction_t*{direction_t <- direction_t*} = direction*{direction <- direction*}
   -- if (direction_h =/= `empty)
 
-tbl def $nestable_action(typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR
-    (typeIR) -> false
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-  row 1 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_action(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 2 :
-    (signature) objectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: objectTypeIR
-    -- let objectTypeIR = typeIR as objectTypeIR
-  row 3 :
-    (signature) synthesizedTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: synthesizedTypeIR
-    -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
-  row 4 :
-    (signature) _typeIR
-    (_typeIR) -> true
+tblgroup $definable_constructor(typeIR) : bool {
+tbl def $definable_constructor =
 
-tbl def $nestable_definedFunction(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_definedFunction(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) objectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: objectTypeIR
-    -- let objectTypeIR = typeIR as objectTypeIR
-  row 2 :
-    (signature) synthesizedTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: synthesizedTypeIR
-    -- let synthesizedTypeIR = typeIR as synthesizedTypeIR
-  row 3 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_externFunction(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_externFunction(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) controlObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: controlObjectTypeIR
-    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-  row 3 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 4 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 5 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_externMethod(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_externMethod(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) controlObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: controlObjectTypeIR
-    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-  row 3 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 4 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 5 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_parserApplyMethod(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_parserApplyMethod(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) controlObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: controlObjectTypeIR
-    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-  row 3 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 4 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 5 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_controlApplyMethod(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_controlApplyMethod(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 3 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 4 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_constructor_extern(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_constructor_extern(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) controlObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: controlObjectTypeIR
-    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-  row 3 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 4 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 5 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_constructor_parser(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_constructor_parser(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) controlObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: controlObjectTypeIR
-    -- let controlObjectTypeIR = typeIR as controlObjectTypeIR
-  row 2 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 3 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 4 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_constructor_control(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_constructor_control(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) parserObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: parserObjectTypeIR
-    -- let parserObjectTypeIR = typeIR as parserObjectTypeIR
-  row 2 :
-    (signature) packageObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: packageObjectTypeIR
-    -- let packageObjectTypeIR = typeIR as packageObjectTypeIR
-  row 3 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 4 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $nestable_constructor_package(typeIR) : bool =
-  row 0 :
-    (signature) typedef _typeId typeIR as typeIR
-    (typeIR') -> $nestable_constructor_package(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
-  row 1 :
-    (signature) tableObjectTypeIR as typeIR
-    (typeIR) -> false
-    -- if typeIR <: tableObjectTypeIR
-    -- let tableObjectTypeIR = typeIR as tableObjectTypeIR
-  row 2 :
-    (signature) _typeIR
-    (_typeIR) -> true
-
-tbl def $definable_constructor(typeIR) : bool =
   row 0 :
     (signature) typedef _typeId typeIR as typeIR
     (typeIR') -> $definable_constructor(typeIR)
@@ -10385,6 +10414,7 @@ tbl def $definable_constructor(typeIR) : bool =
   row 5 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
 extern relation ExternFunctionCall_eval_lctk: typingContext |- nameIR ( nameIR* )~> value
 
@@ -16993,7 +17023,9 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
 
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
 
-tbl def $compat_lnot(typeIR) : bool =
+tblgroup $compat_lnot(typeIR) : bool {
+tbl def $compat_lnot =
+
   row 0 :
     (signature) bool as typeIR
     (typeIR) -> true
@@ -17008,8 +17040,11 @@ tbl def $compat_lnot(typeIR) : bool =
   row 2 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_bnot(typeIR) : bool =
+tblgroup $compat_bnot(typeIR) : bool {
+tbl def $compat_bnot =
+
   row 0 :
     (signature) int< _nat > as typeIR
     (typeIR) -> true
@@ -17028,8 +17063,11 @@ tbl def $compat_bnot(typeIR) : bool =
   row 3 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_uplusminus(typeIR) : bool =
+tblgroup $compat_uplusminus(typeIR) : bool {
+tbl def $compat_uplusminus =
+
   row 0 :
     (signature) int as typeIR
     (typeIR) -> true
@@ -17054,300 +17092,270 @@ tbl def $compat_uplusminus(typeIR) : bool =
   row 4 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_plusminusmult(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_plusminusmult(typeIR, typeIR) : bool =
 
-tbl def $compat_satplusminus(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 1 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 2 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_satplusminus(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 3 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_satplusminus(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 4 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
 
-tbl def $compat_divmod(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 2 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 3 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
 
-tbl def $compat_shift(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) int as typeIR, int< _nat > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< _nat > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) int as typeIR, bit< _nat > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) int< _nat > as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR = typeIR' as intTypeIR
-    -- if (intTypeIR = int)
-  row 4 :
-    (signature) int< _nat > as typeIR, int< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 5 :
-    (signature) int< _nat > as typeIR, bit< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 6 :
-    (signature) bit< _nat > as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR = typeIR' as intTypeIR
-    -- if (intTypeIR = int)
-  row 7 :
-    (signature) bit< _nat > as typeIR, int< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 8 :
-    (signature) bit< _nat > as typeIR, bit< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 9 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_shift(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 10 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_shift(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 11 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
 
-tbl def $compat_compare(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_compare(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_compare(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 3 : (typeIR, typeIR_r) = $compat_plusminusmult(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
 
-tbl def $compat_bitwise(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 1 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 2 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_bitwise(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 3 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_bitwise(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 4 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 4 : (typeIR_l, typeIR) = $compat_plusminusmult(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
 
-tbl def $compat_concat(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) string as typeIR, string as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: stringTypeIR
-    -- let stringTypeIR = typeIR as stringTypeIR
-    -- if (stringTypeIR = string)
-    -- if typeIR' <: stringTypeIR
-    -- let stringTypeIR' = typeIR' as stringTypeIR
-    -- if (stringTypeIR' = string)
-  row 1 :
-    (signature) int< _nat > as typeIR, int< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) int< _nat > as typeIR, bit< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) bit< _nat > as typeIR, int< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 4 :
-    (signature) bit< _nat > as typeIR, bit< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 5 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_concat(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 6 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_concat(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 7 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_satplusminus(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 2 : (typeIR, typeIR_r) = $compat_satplusminus(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 3 : (typeIR_l, typeIR) = $compat_satplusminus(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_divmod(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR_r) = $compat_divmod(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 2 : (typeIR_l, typeIR) = $compat_divmod(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 3 : (_typeIR, _typeIR') = false
+
+def $compat_shift(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< _nat > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR = typeIR' as intTypeIR
+  -- if (intTypeIR = int)
+
+  clause 4 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 5 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 6 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR = typeIR' as intTypeIR
+  -- if (intTypeIR = int)
+
+  clause 7 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 8 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 9 : (typeIR, typeIR_r) = $compat_shift(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 10 : (typeIR_l, typeIR) = $compat_shift(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 11 : (_typeIR, _typeIR') = false
+
+def $compat_compare(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_compare(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_compare(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_bitwise(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_bitwise(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_bitwise(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_concat(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: stringTypeIR
+  -- let stringTypeIR = typeIR as stringTypeIR
+  -- if (stringTypeIR = string)
+  -- if typeIR' <: stringTypeIR
+  -- let stringTypeIR' = typeIR' as stringTypeIR
+  -- if (stringTypeIR' = string)
+
+  clause 1 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 4 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 5 : (typeIR, typeIR_r) = $compat_concat(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 6 : (typeIR_l, typeIR) = $compat_concat(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 7 : (_typeIR, _typeIR') = false
 
 def $result_concat(typeIR, typeIR) : typeIR =
 
@@ -17391,31 +17399,30 @@ def $result_concat(typeIR, typeIR) : typeIR =
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
 
-tbl def $compat_logical(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) bool as typeIR, bool as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: boolTypeIR
-    -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = bool)
-    -- if typeIR' <: boolTypeIR
-    -- let boolTypeIR' = typeIR' as boolTypeIR
-    -- if (boolTypeIR' = bool)
-  row 1 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_logical(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 2 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_logical(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 3 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_logical(typeIR, typeIR) : bool =
 
-tbl def $compat_array_index(typeIR) : bool =
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: boolTypeIR
+  -- let boolTypeIR = typeIR as boolTypeIR
+  -- if (boolTypeIR = bool)
+  -- if typeIR' <: boolTypeIR
+  -- let boolTypeIR' = typeIR' as boolTypeIR
+  -- if (boolTypeIR' = bool)
+
+  clause 1 : (typeIR, typeIR_r) = $compat_logical(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 2 : (typeIR_l, typeIR) = $compat_logical(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 3 : (_typeIR, _typeIR') = false
+
+tblgroup $compat_array_index(typeIR) : bool {
+tbl def $compat_array_index =
+
   row 0 :
     (signature) int as typeIR
     (typeIR) -> true
@@ -17440,8 +17447,11 @@ tbl def $compat_array_index(typeIR) : bool =
   row 4 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_bitslice_base(typeIR) : bool =
+tblgroup $compat_bitslice_base(typeIR) : bool {
+tbl def $compat_bitslice_base =
+
   row 0 :
     (signature) int as typeIR
     (typeIR) -> true
@@ -17466,8 +17476,11 @@ tbl def $compat_bitslice_base(typeIR) : bool =
   row 4 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_bitslice_index(typeIR) : bool =
+tblgroup $compat_bitslice_index(typeIR) : bool {
+tbl def $compat_bitslice_index =
+
   row 0 :
     (signature) int as typeIR
     (typeIR) -> true
@@ -17492,6 +17505,7 @@ tbl def $compat_bitslice_index(typeIR) : bool =
   row 4 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
 def $is_valid_bitslice(typeIR, nat, nat) : bool =
 
@@ -17771,43 +17785,38 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if $compat_range(typeIR_l, typeIR_r)
     -- output: % % |- % : typedExpressionIR_l_casted .. typedExpressionIR_r_casted
 
-tbl def $compat_range(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_range(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_range(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_range(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_range(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_range(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 def $check_switchLabel_default(switchLabel*) : bool =
 
@@ -18021,7 +18030,9 @@ relation SwitchCaseList_general_ok: typingContext flow loopctxt typeIR |- switch
     -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
     -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
 
-tbl def $compat_switch(typeIR) : bool =
+tblgroup $compat_switch(typeIR) : bool {
+tbl def $compat_switch =
+
   row 0 :
     (signature) error as typeIR
     (typeIR) -> true
@@ -18051,6 +18062,7 @@ tbl def $compat_switch(typeIR) : bool =
   row 5 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
 relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*
 
@@ -18454,43 +18466,38 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath dontcare
     -- output: % % |- % : _
 
-tbl def $compat_mask(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) int as typeIR, int as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = int)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = int)
-  row 1 :
-    (signature) int< w_l > as typeIR, int< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let int< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let int< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) bit< w_l > as typeIR, bit< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let bit< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let bit< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_mask(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_mask(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_mask(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = int)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let bit< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_mask(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
+  -- if ~typeIR_r <: typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_mask(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keysetExpressionIR
 
@@ -18711,7 +18718,9 @@ relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingC
     -- ParserLocalDecls_ok: TC_1 |- parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} : TC_2 parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*}
     -- output: % |- % : TC_2 parserLocalDeclarationIR_h :: parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*}
 
-tbl def $compat_table_exact_optional_key(typeIR) : bool =
+tblgroup $compat_table_exact_optional_key(typeIR) : bool {
+tbl def $compat_table_exact_optional_key =
+
   row 0 :
     (signature) bool as typeIR
     (typeIR) -> true
@@ -18752,8 +18761,11 @@ tbl def $compat_table_exact_optional_key(typeIR) : bool =
   row 7 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
-tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
+tblgroup $compat_table_lpm_ternary_range_key(typeIR) : bool {
+tbl def $compat_table_lpm_ternary_range_key =
+
   row 0 :
     (signature) int as typeIR
     (typeIR) -> true
@@ -18788,6 +18800,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
   row 6 :
     (signature) _typeIR
     (_typeIR) -> false
+}
 
 def $compat_table_key(nameIR, typeIR) : bool =
 

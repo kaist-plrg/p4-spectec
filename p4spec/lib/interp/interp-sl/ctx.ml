@@ -40,6 +40,8 @@ type global = {
   rtbl : RTbl.t;
   (* Map from function ids to functions *)
   ftbl : FTbl.t;
+  (* Map from table group ids to table groups *)
+  mutable tenv : TEnv.t;
 }
 
 (* Local layer *)
@@ -75,7 +77,8 @@ let global : global =
   let tdtbl = TDTbl.create ~size:500 in
   let rtbl = RTbl.create ~size:500 in
   let ftbl = FTbl.create ~size:500 in
-  { tdtbl; rtbl; ftbl }
+  let tenv = TEnv.empty in
+  { tdtbl; rtbl; ftbl; tenv }
 
 (* Adders for globals *)
 
@@ -93,6 +96,10 @@ let add_func_global (fid : FId.t) (func : Func.t) : unit =
   if FTbl.find_opt fid global.ftbl |> Option.is_some then
     error_dup fid.at "function" fid.it;
   FTbl.add fid func global.ftbl
+
+let add_tablegroup (fid : FId.t) (group : Table.Group.t) : unit =
+  if TEnv.mem fid global.tenv then error_dup fid.at "table group" fid.it;
+  global.tenv <- TEnv.add fid group global.tenv
 
 (* Global initializer *)
 
@@ -116,12 +123,18 @@ let load_def (def : def) : unit =
   | BuiltinDecD (id, _, _, _, _) ->
       let func = Func.Builtin in
       add_func_global id func
-  | TableDecD (id, params, _typ, tablerows, _) ->
-      let func = Func.Table (params, tablerows) in
-      add_func_global id func
   | FuncDecD (id, tparams, params, _typ, block, elseblock_opt, _) ->
       let func = Func.Defined (tparams, params, block, elseblock_opt) in
       add_func_global id func
+  | TableGroupD (id, param, _, columns, _) ->
+      let columns =
+        List.fold_left
+          (fun tablefuncs tablecol ->
+            let cid, tablerows, _ = tablecol in
+            Table.Funcs.add cid (param, tablerows) tablefuncs)
+          Table.Funcs.empty columns
+      in
+      add_tablegroup id columns
 
 let init ~(det : bool) (spec : spec) : unit =
   is_det := det;
@@ -204,6 +217,21 @@ let bound_rel (ctx : t) (rid : RId.t) : bool =
 
 (* Finders for definitions *)
 
+let expand_table_id (fid : FId.t) : FId.t * FId.t =
+  match
+    Format.asprintf "%s" (FId.to_string fid) |> String.split_on_char '.'
+  with
+  | [ gid'; cid' ] -> (gid' $ fid.at, cid' $ fid.at)
+  | [ gid' ] -> (gid' $ fid.at, gid' $ fid.at)
+  | _ -> back_undef fid.at "table function" fid.it
+
+let find_tablefunc_opt (ctx : t) (fid : FId.t) : Table.Func.t option =
+  let gid, cid = expand_table_id fid in
+  let ( let* ) = Option.bind in
+  let* group = TEnv.find_opt gid ctx.global.tenv in
+  let* func = Table.Funcs.find_opt cid group in
+  Some func
+
 let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
   let fenv =
     match ctx.local with
@@ -219,7 +247,10 @@ let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
 let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   match find_func_opt ctx fid with
   | Some (cursor, func) -> (cursor, func)
-  | None -> back_undef fid.at "function" fid.it
+  | None -> (
+      match find_tablefunc_opt ctx fid with
+      | Some func -> (Global, Func.Table func)
+      | None -> back_undef fid.at "function" fid.it)
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
   find_func_opt ctx fid |> Option.is_some

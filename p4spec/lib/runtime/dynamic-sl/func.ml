@@ -6,7 +6,7 @@ open Sl
 type t =
   | Extern
   | Builtin
-  | Table of param list * tablerow list
+  | Table of Table.Func.t
   | Defined of tparam list * param list * block * elseblock option
 
 let to_string = function

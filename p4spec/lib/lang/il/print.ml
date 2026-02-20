@@ -449,10 +449,10 @@ and string_of_elseclause_opt elseclause_opt =
 (* Table rows *)
 
 and string_of_tablerow tablerow =
-  let exps_signature, args, exp, prems = tablerow.it in
+  let exp_signature, arg, exp, prems = tablerow.it in
   "\n" ^ indent 2 ^ "(signature) "
-  ^ string_of_exps ", " exps_signature
-  ^ "\n" ^ indent 2 ^ string_of_args args ^ " -> " ^ string_of_exp exp
+  ^ string_of_exp exp_signature
+  ^ "\n" ^ indent 2 ^ "(" ^ string_of_arg arg ^ ") -> " ^ string_of_exp exp
   ^ string_of_prems ~level:2 prems
 
 and string_of_tablerows tablerows =
@@ -469,6 +469,10 @@ and string_of_hint hint =
   " hint(" ^ hint.El.hintid.it ^ " " ^ El.Print.string_of_exp hint.hintexp ^ ")"
 
 and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
+
+and string_of_tablecol tablecol =
+  let defid, tablerows, _hints = tablecol in
+  "tbl def " ^ string_of_defid defid ^ " =\n" ^ string_of_tablerows tablerows
 
 (* Definitions *)
 
@@ -492,10 +496,12 @@ let rec string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
-  | TableDecD (defid, params, typ, tablerows, _) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
-      ^ string_of_typ typ ^ " ="
-      ^ string_of_tablerows tablerows
+  | TableGroupD (defid, param, typ, tablecols, _) ->
+      "tblgroup " ^ string_of_defid defid ^ string_of_params [ param ] ^ " : "
+      ^ string_of_typ typ ^ " {\n"
+      ^ String.concat "\n\n"
+          (List.map (fun tablecol -> string_of_tablecol tablecol.it) tablecols)
+      ^ "\n}"
   | FuncDecD (defid, tparams, params, typ, clauses, elseclause_opt, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="

@@ -1,94 +1,72 @@
 open Domain
 open Lang
-open Il
-open Util.Source
 
-module Nottyp = struct
-  type t = nottyp
+(* A Pattern is a set of mixops.
+   Allows for an accurate representation of which mixop variants are
+   allowed, including wildcards. *)
 
-  let compare (t_a : t) (t_b : t) : int =
-    let mixop_a, typs_a = t_a.it in
-    let mixop_b, typs_b = t_b.it in
-    let compare_mixop = Mixop.compare mixop_a mixop_b in
-    if compare_mixop <> 0 then compare_mixop
-    else
-      let typs_a = List.map it typs_a in
-      let typs_b = List.map it typs_b in
-      List.compare compare typs_a typs_b
-end
-
-(* A Pattern is a set of notation types. *)
-
-include Set.Make (Nottyp)
+include Set.Make (Mixop)
 
 let to_string (pattern : t) : string =
   "{"
   ^ (elements pattern
-    |> List.map Il.Print.string_of_nottyp
+    |> List.map Il.Print.string_of_mixop
     |> String.concat " | ")
   ^ "}"
 
-(* A Pattern.Tuple matches a tuple of patterns, corresponding to a table row. *)
-
-module Tuple = struct
-  type nonrec t = t list
-
-  let to_string (tuple : t) : string =
-    "(" ^ (tuple |> List.map to_string |> String.concat ", ") ^ ")"
-end
-
 (* Exclusiveness check *)
 
-(* Two Tuples overlap if the overlap in every position *)
-let has_overlap (tup1 : Tuple.t) (tup2 : Tuple.t) : bool =
-  List.for_all2 (fun tup1 tup2 -> inter tup1 tup2 |> is_empty |> not) tup1 tup2
+let has_overlap (pat1 : t) (pat2 : t) : bool =
+  inter pat1 pat2 |> is_empty |> not
 
-(* Check whether a list of Tuples contains an overlap and returns the
-   first pair of overlapping Tuples if it exists. *)
-let find_overlap (tuples : Tuple.t list) : (Tuple.t * Tuple.t) option =
+(* Check whether a list of patterns contains an overlap and returns the
+   first pair of overlapping patterns if it exists. *)
+let find_overlap (patterns : t list) : (t * t) option =
   let rec find_overlap' = function
     | [] -> None
-    | tuple :: rest -> (
-        match List.find_opt (has_overlap tuple) rest with
-        | Some tuple_conflict -> Some (tuple, tuple_conflict)
+    | pat :: rest -> (
+        match List.find_opt (has_overlap pat) rest with
+        | Some pat_conflict -> Some (pat, pat_conflict)
         | None -> find_overlap' rest)
   in
-  find_overlap' tuples
+  find_overlap' patterns
 
 (* Exhaustiveness check *)
-
-(* Subtracting a Tuple from another Tuple to compute a list of
-   fragments. The sum of the fragments define the subtracted set. *)
-let subtract ~(from : Tuple.t) (what : Tuple.t) : Tuple.t list =
-  if not (has_overlap from what) then [ from ]
-  else
-    (* F × F' − W × W' =  (F - W) × F'  U  (F ∩ W) × (F' - W') *)
-    let rec subtract' (from : Tuple.t) (what : Tuple.t) (prefix : Tuple.t) :
-        Tuple.t list =
-      match (from, what) with
-      | [], [] -> []
-      | from :: from_rest, what :: what_rest ->
-          (* F - W *)
-          let f_diff_w = diff from what in
-          (* F ∩ W *)
-          let f_inter_w = inter from what in
-          (* (F - W) × F' *)
-          let fragment =
-            if is_empty f_diff_w then []
-            else [ List.rev (f_diff_w :: prefix) @ from_rest ]
-          in
-          (* (F ∩ W) × (F' - W) *)
-          if is_empty f_inter_w then fragment
-          else fragment @ subtract' from_rest what_rest (f_inter_w :: prefix)
-      | _ -> assert false
-    in
-    subtract' from what []
 
 (* Repeatedly subtracts each row from the total set to find
    uncovered fragments. If the result is empty, the pattern is
    exhaustive. *)
-let find_missing (total : Tuple.t) (rows : Tuple.t list) : Tuple.t list =
+let find_missing ~(total : t) (rows : t list) : t =
+  List.fold_left (fun remainder row -> diff remainder row) total rows
+
+(* Refinement: compute minimal set of non-overlapping patterns that
+   can handle all supplied columns.
+   This preserves sets that are already split, and repeatedly splits
+*)
+let refine_rows ~(total : t) (columns : t list list) : t list =
+  (* Make the wildcards explicit and append to each column. *)
+  let complete_columns =
+    List.map
+      (fun column ->
+        (* First, remove any trailing wildcard expanded as the total set *)
+        let explicit_column =
+          match List.rev column with
+          | last_row :: rest when last_row = total -> List.rev rest
+          | _ -> column
+        in
+        (* Compute the exact wildcard set and append to the column *)
+        let wildcard = find_missing ~total explicit_column in
+        explicit_column @ [ wildcard ])
+      columns
+  in
   List.fold_left
-    (fun fragments row ->
-      List.concat_map (fun fragment -> subtract ~from:fragment row) fragments)
-    [ total ] rows
+    (fun refinement column ->
+      List.concat_map
+        (fun refined_row ->
+          List.filter_map
+            (fun column ->
+              let intersection = inter refined_row column in
+              if is_empty intersection then None else Some intersection)
+            column)
+        refinement)
+    [ total ] complete_columns

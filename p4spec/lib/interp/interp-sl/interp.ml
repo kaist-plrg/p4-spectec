@@ -1773,12 +1773,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           value_output)
     else invoke_builtin_func' ()
 
-  and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (params : param list) (tablerows : tablerow list)
-      (values_input : value list) : value =
+  and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id) (param : param)
+      (tablerows : tablerow list) (values_input : value list) : value =
     let invoke_table_func' () =
       let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
-      let ctx_local = assign_params ctx ctx_local params values_input in
+      let ctx_local = assign_params ctx ctx_local [ param ] values_input in
       let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
       let flow = eval_block_sequential ctx_local instrs in
       match flow with
