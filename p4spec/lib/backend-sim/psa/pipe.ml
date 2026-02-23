@@ -6,6 +6,7 @@ open Interface.Flatten
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
+open State
 open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
@@ -350,18 +351,18 @@ struct
 
   (* Pipeline driver *)
 
-  let setup_ingress_pipe (value_ctx : Value.t) (value_arch : Value.t)
-      (rx : IO.rx) : Value.t * Value.t =
+  let setup_ingress_pipe (rx : IO.rx) : unit state =
     let port_in, packet_in = rx in
-    (* Setup packet_in extern *)
+    (* Setup packet_in object *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = object_state_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
+    let* value_ctx, value_arch, txs = get in
     let value_ctx, value_arch =
       Spec.Rel.psa_ingress_init_packet_in value_ctx value_arch
         value_packet_in_state
     in
-    (* Setup packet_out extern *)
+    (* Setup packet_out object *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = object_state_to_yojson packet_out in
     let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
@@ -373,13 +374,11 @@ struct
     let value_ctx =
       Spec.Rel.psa_ingress_init_globals value_ctx value_arch port_in
     in
-    (value_ctx, value_arch)
+    put (value_ctx, value_arch, txs)
 
-  let drive_ip (value_ctx : Value.t) (value_arch : Value.t) : Value.t * Value.t
-      =
-    let value_ctx, value_arch, value_parser_result =
-      Spec.Rel.psa_ingress_parser value_ctx value_arch
-    in
+  let drive_ip : unit state =
+    let* value_parser_result = apply Spec.Rel.psa_ingress_parser in
+    let* value_ctx, value_arch, txs = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
       | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
@@ -388,24 +387,19 @@ struct
       | Some _ -> value_ctx
       | None -> assert false
     in
-    (value_ctx, value_arch)
+    put (value_ctx, value_arch, txs)
 
-  let drive_ig (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.psa_ingress value_ctx value_arch
-
-  let drive_id (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.psa_ingress_deparser value_ctx value_arch
+  let drive_ig : Value.t state = apply Spec.Rel.psa_ingress
+  let drive_id : Value.t state = apply Spec.Rel.psa_ingress_deparser
 
   let ingress_resulting_port_packet (value_ctx : Value.t) (value_arch : Value.t)
-      : IO.tx option =
+      : IO.tx list =
     let value_drop =
       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
         "ingress_output_metadata" "drop"
     in
     let drop = unpack_p4_bool value_drop in
-    if drop then None
+    if drop then []
     else
       (* Get egress port *)
       let value_egress_port =
@@ -423,32 +417,26 @@ struct
       in
       (* Return port and packet *)
       let tx = (port, packet) in
-      Some tx
+      [ tx ]
 
-  let drive_ingress_pipe (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * IO.tx option =
-    (* Ingress parser block *)
-    let value_ctx, value_arch = drive_ip value_ctx value_arch in
-    (* Ingress block *)
-    let value_ctx, value_arch, _value_result = drive_ig value_ctx value_arch in
-    (* Ingress deparser block *)
-    let value_ctx, value_arch, _value_result = drive_id value_ctx value_arch in
-    (* Get resulting port and packet *)
-    let result_opt = ingress_resulting_port_packet value_ctx value_arch in
-    (value_ctx, value_arch, result_opt)
+  let drive_ingress_pipe : Value.t state =
+    let* result = drive_ip >> drive_ig >> drive_id in
+    let* value_ctx, value_arch, txs = get in
+    let ingress_txs = ingress_resulting_port_packet value_ctx value_arch in
+    put (value_ctx, value_arch, ingress_txs @ txs) >> return result
 
-  let setup_egress_pipe (value_ctx : Value.t) (value_arch : Value.t)
-      (rx : IO.rx) : Value.t * Value.t =
+  let setup_egress_pipe (rx : IO.rx) : unit state =
     let port_in, packet_in = rx in
-    (* Setup packet_in extern *)
+    (* Setup packet_in object *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = object_state_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
+    let* value_ctx, value_arch, txs = get in
     let value_ctx, value_arch =
       Spec.Rel.psa_egress_init_packet_in value_ctx value_arch
         value_packet_in_state
     in
-    (* Setup packet_out extern *)
+    (* Setup packet_out object *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = object_state_to_yojson packet_out in
     let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
@@ -460,13 +448,11 @@ struct
     let value_ctx =
       Spec.Rel.psa_egress_init_globals value_ctx value_arch port_in
     in
-    (value_ctx, value_arch)
+    put (value_ctx, value_arch, txs)
 
-  let drive_ep (value_ctx : Value.t) (value_arch : Value.t) : Value.t * Value.t
-      =
-    let value_ctx, value_arch, value_parser_result =
-      Spec.Rel.psa_egress_parser value_ctx value_arch
-    in
+  let drive_ep : unit state =
+    let* value_parser_result = apply Spec.Rel.psa_egress_parser in
+    let* value_ctx, value_arch, txs = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
       | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
@@ -475,15 +461,10 @@ struct
       | Some _ -> value_ctx
       | None -> assert false
     in
-    (value_ctx, value_arch)
+    put (value_ctx, value_arch, txs)
 
-  let drive_eg (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.psa_egress value_ctx value_arch
-
-  let drive_ed (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
-    Spec.Rel.psa_egress_deparser value_ctx value_arch
+  let drive_eg : Value.t state = apply Spec.Rel.psa_egress
+  let drive_ed : Value.t state = apply Spec.Rel.psa_egress_deparser
 
   let egress_resulting_port_packet (value_ctx : Value.t) (value_arch : Value.t)
       : IO.tx list =
@@ -512,34 +493,31 @@ struct
       let tx = (port, packet) in
       [ tx ]
 
-  let drive_egress_pipe (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * IO.tx list =
-    (* Egress parser block *)
-    let value_ctx, value_arch = drive_ep value_ctx value_arch in
-    (* Egress block *)
-    let value_ctx, value_arch, _value_result = drive_eg value_ctx value_arch in
-    (* Egress deparser block *)
-    let value_ctx, value_arch, _value_result = drive_ed value_ctx value_arch in
-    (* Get resulting port and packet *)
-    let result_list = egress_resulting_port_packet value_ctx value_arch in
-    (value_ctx, value_arch, result_list)
+  let drive_egress_pipe : Value.t state =
+    let* result = drive_ep >> drive_eg >> drive_ed in
+    let* value_ctx, value_arch, txs = get in
+    let egress_txs = egress_resulting_port_packet value_ctx value_arch in
+    put (value_ctx, value_arch, egress_txs @ txs) >> return result
+
+  (* Scheduling packets *)
 
   let drive_pipe (value_ctx : Value.t) (value_arch : Value.t)
       (ingress_rx : IO.rx) : Value.t * Value.t * IO.tx list =
-    (* Setup port and packet *)
-    let value_ctx, value_arch =
-      setup_ingress_pipe value_ctx value_arch ingress_rx
+    let ingress_pipe : Value.t state =
+      setup_ingress_pipe ingress_rx >> drive_ingress_pipe
     in
-    let value_ctx, value_arch, ingress_tx_opt =
-      drive_ingress_pipe value_ctx value_arch
+    let ingress_state_init = (value_ctx, value_arch, []) in
+    let _, (value_ctx, value_arch, ingress_txs) =
+      State.run ingress_pipe ingress_state_init
     in
-    match ingress_tx_opt with
-    | None -> (value_ctx, value_arch, [])
-    | Some ingress_tx ->
-        let value_ctx, value_arch =
-          setup_egress_pipe value_ctx value_arch ingress_tx
+    match ingress_txs with
+    | [] -> (value_ctx, value_arch, [])
+    | ingress_tx :: _ ->
+        let egress_pipe : Value.t state =
+          setup_egress_pipe ingress_tx >> drive_egress_pipe
         in
-        drive_egress_pipe value_ctx value_arch
+        let egress_state_init = (value_ctx, value_arch, []) in
+        State.run egress_pipe egress_state_init |> snd
 
   (* Initializer *)
 
