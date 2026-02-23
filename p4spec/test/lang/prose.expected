@@ -3737,16 +3737,41 @@ xref:cast_sequence[``sequenceValue`` casted to type ``typeIR``]
 for each ``value`` in ``value^{asterisk}^``
  .. Return ``+LIST+`` ``+[+`` ``value'^{asterisk}^`` ``+]+``.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR'^{asterisk}^`` ``+>+`` be ``typeIR``:
- .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
- .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Let ``value'^{asterisk}^`` be the list of ``value'`` and ``value'^{asterisk}^^{asterisk}^`` be the list of ``value'^{asterisk}^``, obtained by repeating:
+ .. If let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Let ``value'^{asterisk}^`` be the list of ``value'`` and ``value'^{asterisk}^^{asterisk}^`` be the list of ``value'^{asterisk}^``, obtained by repeating:
 +
 --
-  *** Let ``value'`` be xref:cast_op[``value`` casted to type ``typeIR'``].
+   **** Let ``value'`` be xref:cast_op[``value`` casted to type ``typeIR'``].
 --
 +
 for each ``typeIR'`` in ``typeIR'^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
- .. Return ``+TUPLE+`` ``+(+`` ``value'^{asterisk}^`` ``+)+``.
+  ... Return ``+TUPLE+`` ``+(+`` ``value'^{asterisk}^`` ``+)+``.
+ .. Else:
+  ... Let ``+SEQ+`` ``+(+`` ``value~seq~^{asterisk}^`` ``+,+`` ``+...+`` ``+)+`` be ``sequenceValue``.
+  ... Let ``n~typeIR~`` be the length of ``typeIR'^{asterisk}^``.
+  ... Let ``n~value~`` be the length of ``value~seq~^{asterisk}^``.
+  ... Check that ``n~typeIR~`` is greater than or equal to ``n~value~``.
+  ... Let ``typeIR~non_default~^{asterisk}^`` be ``typeIR'^{asterisk}^[1`` ``:`` ``n~value~]``.
+  ... Let ``value~non_default~^{asterisk}^`` be the list of ``value~non_default~``, obtained by repeating:
++
+--
+   **** Let ``value~non_default~`` be xref:cast_op[``value~seq~`` casted to type ``typeIR~non_default~``].
+--
++
+for each ``typeIR~non_default~`` in ``typeIR~non_default~^{asterisk}^`` and ``value~seq~`` in ``value~seq~^{asterisk}^``
+  ... Let ``int`` be ``n~typeIR~`` ``-`` ``n~value~``.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~default~`` be ``int``.
+  ... Let ``typeIR~default~^{asterisk}^`` be ``typeIR'^{asterisk}^[n~value~`` ``:`` ``n~default~]``.
+  ... Let ``value~default~^{asterisk}^`` be the list of ``value~default~``, obtained by repeating:
++
+--
+   **** Let ``value~default~`` be xref:default[the default value for type ``typeIR~default~``].
+--
++
+for each ``typeIR~default~`` in ``typeIR~default~^{asterisk}^``
+  ... Let ``value^{asterisk}^`` be ``value~non_default~^{asterisk}^`` concatenated with ``value~default~^{asterisk}^``.
+  ... Return ``+TUPLE+`` ``+(+`` ``value^{asterisk}^`` ``+)+``.
 . Else if let ``typeIR'`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR``:
  .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
  .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.

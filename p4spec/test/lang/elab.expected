@@ -6572,7 +6572,24 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- if sequenceValue matches `SEQ(%)`
   -- let seq( value*{value <- value*} ) = sequenceValue
 
-  clause 2 : (typeIR', sequenceValue) = header_stack[ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size )] as value
+  clause 2 : (typeIR', sequenceValue) = tuple( value*{value <- value*} ) as value
+  -- if typeIR' <: tupleTypeIR
+  -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
+  -- if sequenceValue matches `SEQ(%,...)`
+  -- let seq( value_seq*{value_seq <- value_seq*} ,...) = sequenceValue
+  -- let n_typeIR = |typeIR*{typeIR <- typeIR*}|
+  -- let n_value = |value_seq*{value_seq <- value_seq*}|
+  -- if (n_typeIR >= n_value)
+  -- let typeIR_non_default*{typeIR_non_default <- typeIR_non_default*} = typeIR*{typeIR <- typeIR*}[1 : n_value]
+  -- (let value_non_default = $cast_op(typeIR_non_default, value_seq))*{typeIR_non_default <- typeIR_non_default*, value_seq <- value_seq*, value_non_default -> value_non_default*}
+  -- let int = (n_typeIR - n_value)
+  -- if int <: nat
+  -- let n_default = int as nat
+  -- let typeIR_default*{typeIR_default <- typeIR_default*} = typeIR*{typeIR <- typeIR*}[n_value : n_default]
+  -- (let value_default = $default(typeIR_default))*{typeIR_default <- typeIR_default*, value_default -> value_default*}
+  -- let value*{value <- value*} = value_non_default*{value_non_default <- value_non_default*} ++ value_default*{value_default <- value_default*}
+
+  clause 3 : (typeIR', sequenceValue) = header_stack[ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size )] as value
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- if sequenceValue matches `SEQ(%)`
@@ -6580,14 +6597,14 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- (let value_cast = $cast_op(typeIR, value))*{value <- value*, value_cast -> value_cast*}
   -- let n_idx = |value*{value <- value*}|
 
-  clause 3 : (typeIR, sequenceValue) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 4 : (typeIR, sequenceValue) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   -- if sequenceValue matches `SEQ(%)`
   -- let seq( value*{value <- value*} ) = sequenceValue
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
-  clause 4 : (typeIR, sequenceValue) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 5 : (typeIR, sequenceValue) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
   -- if sequenceValue matches `SEQ(%)`
