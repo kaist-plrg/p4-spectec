@@ -38,6 +38,10 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x0C: struct_cont;
             0x0D: struct_default;
             0x0E: struct_default_abort;
+            0x0F: header_stack_size;
+            0x10: index_access_abort;
+            0x11: index_access_tuple;
+            0x12: callee_abort;
             default: accept;
         }
     }
@@ -135,6 +139,31 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     state struct_default_abort {
         h.op.a = 0x10 + h.op.a;
         Hdr2 x = { a = h.h.last.a, ... };
+        transition accept;
+    }
+
+    state header_stack_size {
+        h.op.a = 0x10 + h.op.a;
+        h.h[0].a = (bit<8>) h.h.size - 2;
+        transition accept;
+    }
+
+    state index_access_abort {
+        h.op.a = 0x10 + h.op.a;
+        bit<8> x = h.h[ h.h.last.a ].a;
+        transition accept;
+    }
+
+    state index_access_tuple {
+        h.op.a = 0x10 + h.op.a;
+        tuple<bit<8>, bit<16>> t = { 8w1, 16w2 };
+        h.h[0].a = t[0] - 1;
+        transition accept;
+    }
+
+    state callee_abort {
+        h.op.a = 0x10 + h.op.a;
+        bool x = h.h[ h.h.last.a ].isValid();
         transition accept;
     }
 }
