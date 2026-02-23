@@ -63,6 +63,7 @@ TEST_ALIASES := \
   sim-v1model-custom-il sim-v1model-custom-sl \
   sim-ebpf-p4c-il sim-ebpf-p4c-sl \
   sim-ebpf-p4testgen-il sim-ebpf-p4testgen-sl \
+  sim-psa-il sim-psa-sl \
   p4parse
 
 $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
@@ -75,7 +76,8 @@ DET_ALIASES := \
   sim-v1model-p4testgen-il-det sim-v1model-p4testgen-sl-det \
   sim-v1model-custom-il-det sim-v1model-custom-sl-det \
   sim-ebpf-p4c-il-det sim-ebpf-p4c-sl-det \
-  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det
+  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det \
+  sim-psa-il-det sim-psa-sl-det
 
 $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
 

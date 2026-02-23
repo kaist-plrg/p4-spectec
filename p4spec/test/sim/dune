@@ -33,7 +33,11 @@
    (ignore-outputs
     (diff sim_ebpf_p4testgen_il.expected sim_ebpf_p4testgen_il.actual))
    (ignore-outputs
-    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual)))))
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_psa_il.expected sim_psa_il.actual))
+   (ignore-outputs
+    (diff sim_psa_sl.expected sim_psa_sl.actual)))))
 
 ;; Fast aliases (no -det)
 
@@ -50,7 +54,9 @@
    (ignore-outputs
     (diff sim_ebpf_p4c_il.expected sim_ebpf_p4c_il.actual))
    (ignore-outputs
-    (diff sim_ebpf_p4testgen_il.expected sim_ebpf_p4testgen_il.actual)))))
+    (diff sim_ebpf_p4testgen_il.expected sim_ebpf_p4testgen_il.actual))
+   (ignore-outputs
+    (diff sim_psa_il.expected sim_psa_il.actual)))))
 
 (rule
  (alias sim-sl)
@@ -65,7 +71,9 @@
    (ignore-outputs
     (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl.actual))
    (ignore-outputs
-    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual)))))
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_psa_sl.expected sim_psa_sl.actual)))))
 
 (rule
  (alias sim-v1model-p4c-il)
@@ -136,6 +144,20 @@
   (progn
    (ignore-outputs
     (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual)))))
+
+(rule
+ (alias sim-psa-il)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_il.expected sim_psa_il.actual)))))
+
+(rule
+ (alias sim-psa-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_sl.expected sim_psa_sl.actual)))))
 
 ;; Slow aliases (with -det)
 
@@ -246,6 +268,20 @@
   (progn
    (ignore-outputs
     (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl_det.actual)))))
+
+(rule
+ (alias sim-psa-il-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_il.expected sim_psa_il_det.actual)))))
+
+(rule
+ (alias sim-psa-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_sl.expected sim_psa_sl_det.actual)))))
 
 ;; Rules to generate outputs (fast, no -det)
 
@@ -528,6 +564,62 @@
      ../../../../../testdata/p4testgen
      -p
      ../../../../../patches/ebpf)))))
+
+(rule
+ (target sim_psa_il.actual)
+ (action
+  (with-stdout-to
+   sim_psa_il.actual
+   (with-stderr-to
+    sim_psa_il.err
+    (run
+     ./test.exe
+     sim
+     -il
+     -arch
+     psa
+     -s
+     ../../../../../spec-concrete
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../../patches/psa)))))
+
+(rule
+ (target sim_psa_sl.actual)
+ (action
+  (with-stdout-to
+   sim_psa_sl.actual
+   (with-stderr-to
+    sim_psa_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     psa
+     -s
+     ../../../../../spec-concrete
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../../patches/psa)))))
 
 ;; Rules to generate outputs (slow, with -det)
 
@@ -820,3 +912,61 @@
      ../../../../../testdata/p4testgen
      -p
      ../../../../../patches/ebpf)))))
+
+(rule
+ (target sim_psa_il_det.actual)
+ (action
+  (with-stdout-to
+   sim_psa_il_det.actual
+   (with-stderr-to
+    sim_psa_il_det.err
+    (run
+     ./test.exe
+     sim
+     -il
+     -det
+     -arch
+     psa
+     -s
+     ../../../../../spec-concrete
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../../patches/psa)))))
+
+(rule
+ (target sim_psa_sl_det.actual)
+ (action
+  (with-stdout-to
+   sim_psa_sl_det.actual
+   (with-stderr-to
+    sim_psa_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     psa
+     -s
+     ../../../../../spec-concrete
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../../patches/psa)))))
